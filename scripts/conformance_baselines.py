@@ -6,6 +6,7 @@ the resulting sealed bytes.
 """
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -15,12 +16,13 @@ import shutil
 import stat
 import sys
 import tarfile
+import xml.etree.ElementTree as ET
 import zipfile
 
 from foundation_evidence import canonicalize_acceptance_archive
-from conformance_evidence import MAX_REPORT_BYTES, ConformanceError, canonical_bytes, digest, file_sha256, load_json, relative_path, sha256, synthetic_nuget_configuration
+from conformance_evidence import MAX_REPORT_BYTES, ConformanceError, canonical_bytes, digest, file_sha256, load_json, relative_path, sha256, synthetic_nuget_configuration, verify_snapshot
 from conformance_execution import OwnedRun, capture_control, no_symlinks
-from conformance_lock_preparation import prepare_project_lock, read_lock, verify_project_lock
+from conformance_lock_preparation import prepare_project_lock, read_lock, rebind_local_archives, verify_project_lock
 
 
 BASELINE = "9389016c0285c79f6f515f59805a5a41c69b0767"
@@ -36,6 +38,158 @@ BASELINES = (
     ("artifact-marker", "830972f24795ffaaaa18cb35138db7da59022313",
      "tests/fixtures/artifacts/RetainedMarker", "RetainedMarker.csproj"),
 )
+SOURCE_RECIPES_PATH = "tests/fixtures/conformance/baselines/source-consumers.json"
+SOURCE_RECIPE_POLICY = (
+    *((project, "historical-f06", "api-consumer") for project in (
+        "tests/fixtures/lifecycle/registration/RegistrationConsumer/RegistrationConsumer.csproj",
+        "tests/fixtures/configuration/LifecycleConsumer/LifecycleConsumer.csproj",
+        "tests/fixtures/discovery/RetainedConfiguration/RetainedConfiguration.csproj")),
+    *((f"tests/fixtures/{category}/RetainedMarker/RetainedMarker.csproj", "historical-f06", "marker-consumer")
+      for category in ("metadata", "artifacts")),
+    *((f"tests/fixtures/lifecycle/{name}/Hoard.Fixtures.Lifecycle.{name}.csproj",
+       "historical-f06", "provider-implementer")
+      for name in ("Protocol.One", "Protocol.Two", "Metadata", "Artifact.One", "Artifact.Two", "Identity")),
+    ("tests/fixtures/configuration/LegacyOptions/LegacyOptions.csproj", "historical-f06", "provider-implementer"),
+    *((f"tests/fixtures/{category}/{name}/{name}.csproj", "historical-f06",
+       "operational-consumer" if name == "Consumer" else "provider-implementer")
+      for category, names in (("metadata", ("Sqlite", "Memory", "HostAdapters", "Consumer")),
+                              ("artifacts", ("Local", "ObjectSemantics", "HostAdapters", "Consumer")))
+      for name in names),
+    *((f"tests/fixtures/conformance/Bindings/{name}/{name}.csproj", "candidate-source-manifest",
+       "sdk-binding-current") for name in ("Memory", "Sqlite", "Local", "ObjectSemantics")),
+)
+
+
+def validate_source_recipes(document):
+    if (not isinstance(document, dict) or set(document) !=
+            {"schemaVersion", "qualification", "baselineRevision", "recipes"}
+            or type(document["schemaVersion"]) is not int or document["schemaVersion"] != 1
+            or document["qualification"] is not False or document["baselineRevision"] != BASELINE
+            or not isinstance(document["recipes"], list)
+            or any(not isinstance(row, dict) or set(row) != {"project", "sourceKind", "role"}
+                   for row in document["recipes"])
+            or tuple((row["project"], row["sourceKind"], row["role"]) for row in document["recipes"])
+            != SOURCE_RECIPE_POLICY):
+        raise ConformanceError("EvidenceIncomplete")
+    return document
+
+
+def source_recipes(repository):
+    return validate_source_recipes(load_json(read_lock(Path(repository) / SOURCE_RECIPES_PATH)))
+
+
+def _copy_recipe_sources(source, target, manifest):
+    from conformance_sources import read_bounded
+    target.mkdir(mode=0o700)
+    for relative, expected in manifest.items():
+        original = source / relative_path(relative)
+        raw = read_bounded(original, 64 * 1024**2)
+        if hashlib.sha256(raw).hexdigest() != sha256(expected):
+            raise ConformanceError("InputChanged")
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with destination.open("xb") as output:
+            output.write(raw)
+        destination.chmod(0o400)
+    verify_snapshot(target, manifest)
+
+
+def _source_recipe_packages(project, feed, *, baseline=False):
+    raw = read_lock(project.parent / ("Baseline/packages.lock.json" if baseline else "packages.lock.json"))
+    _, packages, _ = rebind_local_archives(raw, feed)
+    assets_raw = read_lock(project.parent / "obj/project.assets.json")
+    assets = load_json(assets_raw)
+    if not isinstance(assets, dict) or not isinstance(assets.get("libraries"), dict):
+        raise ConformanceError("InputChanged")
+    actual = {}
+    for identity, library in assets["libraries"].items():
+        if not identity.startswith("Hoard."):
+            continue
+        if (not isinstance(library, dict) or library.get("type") != "package"
+                or not re.fullmatch(r"Hoard\.[A-Za-z0-9.]+/0\.1\.0", identity)):
+            raise ConformanceError("InputChanged")
+        filename = identity.replace("/", ".") + ".nupkg"
+        if filename not in packages:
+            raise ConformanceError("InputChanged")
+        package = feed / filename
+        content = base64.b64encode(hashlib.sha512(package.read_bytes()).digest()).decode("ascii")
+        if library.get("sha512") != content:
+            raise ConformanceError("InputChanged")
+        actual[filename] = file_sha256(package)
+    if not actual or actual != packages:
+        raise ConformanceError("InputChanged")
+    return packages, hashlib.sha256(assets_raw).hexdigest()
+
+
+def execute_source_recipes(repository, run, candidate, candidate_sources, baseline_sha256):
+    """Compile copied source inputs; never rebuild or modify sealed retained binaries."""
+    candidate = Path(candidate)
+    no_symlinks(candidate)
+    if run.state != "Active" or candidate == run.root or not candidate.resolve(strict=True).is_relative_to(run.root):
+        raise ConformanceError("OwnershipInvalid")
+    verify_snapshot(candidate, candidate_sources)
+    document = source_recipes(repository)
+    baseline = verify_prepared_baselines(run.root, baseline_sha256)
+    historical, = (entry for entry in baseline["entries"] if entry["id"] == "f06")
+    roots = {
+        "historical-f06": (run.root / "stores/f06", historical["sources"]),
+        "candidate-source-manifest": (candidate, candidate_sources),
+    }
+    copies = {}
+    for kind, (source, manifest) in roots.items():
+        target = run.root / "stores" / ("source-compatibility-" + kind)
+        _copy_recipe_sources(source, target, manifest)
+        copies[kind] = target
+    feed = run.root / "feed/candidate"
+    no_symlinks(feed)
+    feed_hashes = _hash_tree(feed)
+    if not feed_hashes:
+        raise ConformanceError("PrerequisiteMissing")
+    verify_snapshot(feed, feed_hashes)
+    config = run.root / "stores/source-compatibility.NuGet.Config"
+    with config.open("xb") as output:
+        output.write(synthetic_nuget_configuration(feed))
+    records = []
+    for recipe in document["recipes"]:
+        kind = recipe["sourceKind"]
+        _, manifest = roots[kind]
+        copied = copies[kind]
+        project = copied / recipe["project"]
+        if recipe["project"] not in manifest:
+            raise ConformanceError("InputChanged")
+        verify_snapshot(copied, manifest)
+        preparations = []
+        project_xml = ET.parse(project)
+        references = project_xml.findall(".//PackageReference")
+        explicit = [reference for reference in references if reference.get("Version") is not None]
+        if explicit and len(explicit) != len(references):
+            raise ConformanceError("InputChanged")
+        properties = ("-p:ManagePackageVersionsCentrally=false",) if explicit else ()
+        baseline_lock = not (project.parent / "packages.lock.json").is_file()
+        _build(run, project, config, "candidate", source_root=copied, preparations=preparations,
+               properties=properties, baseline=baseline_lock)
+        verify_snapshot(copied, manifest)
+        verify_snapshot(feed, feed_hashes)
+        for preparation in preparations:
+            verify_project_lock(preparation, copied, feed)
+        packages, assets_sha = _source_recipe_packages(project, feed, baseline=baseline_lock)
+        assembly_name = project_xml.findtext(".//AssemblyName") or project.stem
+        assembly = project.parent / "bin/Release/net10.0" / (assembly_name + ".dll")
+        no_symlinks(assembly)
+        if not assembly.is_file():
+            raise ConformanceError("EvidenceIncomplete")
+        records.append({
+            **recipe, "sourceSha256": digest(manifest), "assemblySha256": file_sha256(assembly),
+            "assetsSha256": assets_sha, "packages": packages, "lockPreparations": preparations,
+            "properties": list(properties),
+        })
+    for kind, (_, manifest) in roots.items():
+        verify_snapshot(copies[kind], manifest)
+    verify_snapshot(candidate, candidate_sources)
+    verify_prepared_baselines(run.root, baseline_sha256)
+    return {"schemaVersion": 1, "qualification": False, "mode": "source-compatibility",
+            "baselineSealSha256": baseline_sha256, "recipeSha256": digest(document),
+            "candidatePackages": feed_hashes, "recipes": records}
 
 
 def _command(run, args, *, cwd, cache_id):
@@ -115,23 +269,27 @@ def _config(run, name):
     return config, feed
 
 
-def _build(run, project, config, name, *, pack=False, feed=None, source_root=None, preparations=None):
+def _build(run, project, config, name, *, pack=False, feed=None, source_root=None, preparations=None,
+           properties=(), baseline=False):
     lock_args = []
     if preparations is not None:
-        alternate, record = prepare_project_lock(project, source_root, run.root / "feed" / name, name)
+        alternate, record = prepare_project_lock(project, source_root, run.root / "feed" / name, name,
+                                                 baseline=baseline)
         if alternate is not None:
             preparations.append(record)
             lock_args = [f"-p:NuGetLockFilePath={alternate}"]
+        elif baseline:
+            lock_args = [f"-p:NuGetLockFilePath={project.parent / 'Baseline/packages.lock.json'}"]
     _command(run, ["dotnet", "restore", str(project), "--locked-mode",
                    "--configfile", str(config), "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                   "-v", "quiet", *lock_args], cwd=project.parent, cache_id=name)
+                   "-v", "quiet", *lock_args, *properties], cwd=project.parent, cache_id=name)
     _command(run, ["dotnet", "build", str(project), "-c", "Release",
                    "--no-restore", "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                   "-v", "quiet", *lock_args], cwd=project.parent, cache_id=name)
+                   "-v", "quiet", *lock_args, *properties], cwd=project.parent, cache_id=name)
     if pack:
         _command(run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
                        "--no-restore", "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                       "-o", str(feed), "-v", "quiet", *lock_args], cwd=project.parent, cache_id=name)
+                       "-o", str(feed), "-v", "quiet", *lock_args, *properties], cwd=project.parent, cache_id=name)
         for package in feed.glob("*.nupkg"):
             canonicalize_acceptance_archive(package)
 

@@ -5492,6 +5492,35 @@ project. Focused whole-solution formatting and `git diff --check` pass. Native
 confirmation of the repaired graph is pending. No package/provider/API
 dependency, fixture source, lock, assertion, example or diagram changes.
 
+T054's internal `conformance_baselines.execute_source_recipes` now compiles
+the closed `baselines/source-consumers.json` catalog: twenty unchanged F-06
+API consumers, retained marker sources, lifecycle/configuration providers
+and operational metadata/artifact providers/consumers, plus all four current
+SDK bindings. The latter explicitly have no historical SDK release. Source
+copies, original locks, candidate feeds and sealed predecessor sources/
+binaries are checked before/after. Actual assets must reference the observed
+candidate archive SHA-512 values, not just matching version labels.
+
+Actual replay first finds the older projects' explicit versions incompatible
+with the later central-version context (`NU1004`/`NU1008`), then the three
+recipes whose original locks live in `Baseline/`. The repair preserves their
+unchanged source/project/lock bytes: explicit-version projects disable central
+versions only for their build; the shared preparer supports a closed Baseline
+lock context and writes alternate hashes only under `obj`. Ordinary and
+package-acceptance lock behavior is unchanged.
+
+A fresh isolated local replay builds all eighteen candidate packages from the
+current source snapshot, then passes all 24 recipes/48 locked restore/build
+commands (102 commands including package builds). Its genuine six-entry
+predecessor seal is independently checked before/after, including actual
+retained binaries; none is rebuilt during source replay. Twelve baseline
+tooling controls pass, including source/feed mutation and archive/asset
+substitution rejections. Full local tooling: 565 tests, zero failures/errors/
+unexpected diagnostic bytes, twenty native skips, expected incomplete exit 2.
+This is non-qualifying local source compatibility, not T055 retained runtime
+execution, T056 compiler-break controls or a delivered compatibility CLI.
+Examples/diagrams and public provider APIs remain unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

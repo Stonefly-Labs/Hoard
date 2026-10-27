@@ -7091,6 +7091,119 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_baseline_lock_preparation_preserves_retained_source_layout_and_rejects_context_substitution(self):
+        import conformance_lock_preparation as preparation
+        source = self.root / "stores/registration"
+        project = source / "retained/Consumer.csproj"
+        lock = project.parent / "Baseline/packages.lock.json"
+        lock.parent.mkdir()
+        lock.write_bytes(evidence.canonical_bytes({"version": 1, "dependencies": {"net10.0": {
+            "Hoard.Example": {"resolved": "0.1.0", "contentHash": "historical"}}}}))
+        before = lock.read_bytes()
+        prepared, record = preparation.prepare_project_lock(
+            project, source, self.root / "feed/registration", "registration", baseline=True)
+        self.assertEqual(lock.read_bytes(), before)
+        self.assertFalse((project.parent / "packages.lock.json").exists())
+        self.assertEqual(prepared.name, "F07.preparation.baseline.packages.lock.json")
+        preparation.verify_project_lock(record, source, self.root / "feed/registration")
+        for changed in (
+                record | {"originalLock": "retained/packages.lock.json"},
+                record | {"preparedLock": "retained/obj/F07.preparation.packages.lock.json"}):
+            with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                preparation.verify_project_lock(changed, source, self.root / "feed/registration")
+        with self.assertRaises(evidence.ConformanceError):
+            preparation.prepare_project_lock(project, source, self.root / "feed/registration", "registration",
+                                             baseline=True, acceptance=True)
+
+    def test_source_recipes_reject_actual_archive_and_assets_disagreement(self):
+        import base64
+        project = self.root / "stores/registration/retained/Consumer.csproj"
+        feed = self.root / "feed/registration"
+        package = feed / "Hoard.Example.0.1.0.nupkg"
+        (project.parent / "packages.lock.json").write_bytes(evidence.canonical_bytes({
+            "version": 1, "dependencies": {"net10.0": {
+                "Hoard.Example": {"resolved": "0.1.0", "contentHash": "historical"}}}}))
+        assets = {"libraries": {"Hoard.Example/0.1.0": {
+            "type": "package", "sha512": base64.b64encode(hashlib.sha512(package.read_bytes()).digest()).decode()}}}
+        path = project.parent / "obj/project.assets.json"
+        path.parent.mkdir()
+        path.write_bytes(evidence.canonical_bytes(assets))
+        packages, _ = self.baselines._source_recipe_packages(project, feed)
+        self.assertEqual(packages, {package.name: evidence.file_sha256(package)})
+        for changed in (
+                {"libraries": {}},
+                {"libraries": {"Hoard.Example/0.1.0": {"type": "package", "sha512": "old-archive"}}},
+                {"libraries": {"Hoard.Example/0.1.0": {"type": "project"}}}):
+            path.write_bytes(evidence.canonical_bytes(changed))
+            with self.subTest(changed=changed), self.assertRaises(evidence.ConformanceError):
+                self.baselines._source_recipe_packages(project, feed)
+        path.write_bytes(evidence.canonical_bytes(assets))
+        package.write_bytes(b"same version, substituted candidate archive")
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines._source_recipe_packages(project, feed)
+
+    def test_source_recipes_reject_source_or_feed_mutation_by_the_build_without_touching_sealed_inputs(self):
+        historical = self.root / "stores/f06"
+        for project, kind, _ in self.baselines.SOURCE_RECIPE_POLICY:
+            if kind == "historical-f06":
+                path = historical / project
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("<Project />")
+        entry = self.manifest["entries"][-1]
+        entry["sources"] = self.baselines._hash_tree(historical, exclude_outputs=True)
+        entry["sourceSha256"] = evidence.digest(entry["sources"])
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        seal_sha = evidence.file_sha256(self.seal)
+        candidate = self.root / "candidate"
+        candidate.mkdir()
+        (candidate / "source.cs").write_text("unchanged candidate source")
+        sources = self.baselines._hash_tree(candidate)
+        feed = self.root / "feed/candidate"
+        feed.mkdir()
+        package = feed / "Hoard.Example.0.1.0.nupkg"
+        package.write_bytes(b"candidate archive")
+        original_feed = package.read_bytes()
+        run = mock.Mock(root=self.root, state="Active")
+        for changed_kind in ("source", "feed"):
+            def mutate(*args, **kwargs):
+                changed = kwargs["source_root"] / "source.cs" if changed_kind == "source" else package
+                changed.chmod(0o600)
+                changed.write_bytes(b"build changed an admitted input")
+            with self.subTest(kind=changed_kind), \
+                    mock.patch.object(self.baselines, "_build", side_effect=mutate) as build:
+                with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                    self.baselines.execute_source_recipes(ROOT, run, candidate, sources, seal_sha)
+                self.assertEqual(build.call_count, 1)
+                self.baselines.verify_prepared_baselines(self.root, seal_sha)
+                evidence.verify_snapshot(candidate, sources)
+            for kind in ("historical-f06", "candidate-source-manifest"):
+                shutil.rmtree(self.root / "stores" / ("source-compatibility-" + kind))
+            (self.root / "stores/source-compatibility.NuGet.Config").unlink()
+            package.write_bytes(original_feed)
+
+    def test_source_recipes_reject_omitted_binding_forged_history_and_changed_surface(self):
+        recipes = self.baselines.source_recipes(ROOT)
+        challenges = []
+        omitted = copy.deepcopy(recipes)
+        omitted["recipes"] = omitted["recipes"][:-1]
+        challenges.append(omitted)
+        duplicate = copy.deepcopy(recipes)
+        duplicate["recipes"].append(duplicate["recipes"][0])
+        challenges.append(duplicate)
+        for field, value in (("sourceKind", "historical-f06"), ("role", "marker-consumer"),
+                             ("project", "../outside.csproj"), ("unreviewed", True)):
+            changed = copy.deepcopy(recipes)
+            changed["recipes"][-1][field] = value
+            challenges.append(changed)
+        for field, value in (("baselineRevision", "0" * 40), ("qualification", True),
+                             ("schemaVersion", True)):
+            changed = copy.deepcopy(recipes)
+            changed[field] = value
+            challenges.append(changed)
+        for changed in challenges:
+            with self.subTest(changed=changed), self.assertRaises(evidence.ConformanceError):
+                self.baselines.validate_source_recipes(changed)
+
     def test_package_acceptance_lock_derivation_preserves_ordinary_lock_and_closed_paths(self):
         import conformance_lock_preparation as preparation
         source = self.root / "stores/registration"

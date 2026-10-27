@@ -302,6 +302,15 @@ fixture projects. A cached project build had masked their absence from the
 solution; a fresh snapshot first failed `MSB3030`, then built successfully and
 passed all seven controls after the graph repair. Native replay remains
 pending; the earlier `022f5f8` native preparation failed and is not acceptance.
+
+T054 now compiles 24 unchanged source recipes: twenty F-06 API consumer,
+marker and provider-implementer projects plus the four current SDK bindings
+(not historical SDK releases). An actual isolated local replay builds all
+eighteen candidate packages afresh, then completes all 48 locked source
+restore/build commands. Historical source/binaries remain sealed and
+unchanged. This completes source recipes, not retained-binary candidate
+execution, compiler-break/profile acceptance or qualification; no new public
+CLI is claimed.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

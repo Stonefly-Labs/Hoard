@@ -437,6 +437,50 @@ then passes all seven cases. Focused `dotnet format Hoard.slnx --no-restore
 `git diff --check` pass. Native confirmation remains pending; no earlier
 failed receipt is relabeled, no new task is checked and no qualifier advances.
 
+### T054 actual unchanged-source compatibility recipes
+
+The closed `tests/fixtures/conformance/baselines/source-consumers.json` defines
+24 builds: twenty sources from exact F-06 Git bytes (API/marker consumers,
+six lifecycle provider families, configuration's legacy provider, operational
+metadata/artifact providers/host adapters/consumers), and four explicitly
+current-source SDK bindings. No historical SDK release is invented.
+`conformance_baselines.execute_source_recipes` compiles private copies only;
+sealed predecessor binaries are not recompiled or modified. It verifies
+complete copied source maps, exact candidate feed bytes, original/derived
+locks, actual NuGet asset archive SHA-512 values, output assembly SHA-256 and
+the original historical seal before/after.
+
+The omission/forged-history control first fails before implementation.
+Actual locked replay then exposes `NU1004`/`NU1008` from older explicit-version
+projects inheriting later central versions; their exact original references
+are preserved by a build-only central-version opt-out. The next actual run
+exposes missing ordinary locks for both retained markers and LegacyOptions:
+their unchanged historical locks are in `Baseline/`. A separately first-red
+control drives closed Baseline support in the existing lock preparer, with
+distinct `obj` alternate names and rejection of substituted ordinary/
+acceptance paths; no tracked lock or source is copied over or edited.
+
+Actual local preparation builds and seals all six genuine predecessor/F-06
+inputs before candidate builds. Seal:
+`6aded58460bf88f8ce6ccc7eefc36672cb00719eda05822a5257066a675fe8e6`.
+A fresh isolated replay then builds all eighteen candidate packages from the
+current source snapshot and passes all 24 source recipes/48 locked
+restore/build commands (102 total commands including candidate preparation).
+Both historical source/binary seals and candidate source maps remain
+unchanged. This supersedes an earlier successful replay against previously
+observed archive bytes; current-candidate package builds are independently
+observed, not inferred from equal versions.
+
+`python3 -m unittest discover -s tests/tooling -p test_conformance_evidence.py
+-k ConformanceBaselineTests -v`: passed, twelve controls, including actual
+archive/asset disagreement, source/feed mutation, omission, false history
+and lock-context substitution. `python3 scripts/conformance_unit_checks.py
+--all-tooling`: expected incomplete exit 2, 565 tests, zero failures/errors/
+unexpected diagnostic bytes, twenty native skips. T054 is complete; T055/
+T056 retained execution/compiler-break controls and compatibility profile
+admission remain open. No qualification, native ownership, historical SDK
+compatibility or newly delivered public CLI is claimed.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

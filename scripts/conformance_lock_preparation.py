@@ -66,15 +66,17 @@ def rebind_local_archives(raw, feed):
     return prepared + b"\n", packages, prepared != original
 
 
-def prepare_project_lock(project, source, feed, feed_id, *, acceptance=False):
-    if type(acceptance) is not bool:
+def prepare_project_lock(project, source, feed, feed_id, *, acceptance=False, baseline=False):
+    if type(acceptance) is not bool or type(baseline) is not bool or acceptance and baseline:
         raise ConformanceError("InputChanged")
-    original = project.parent / ("PackageAcceptance/packages.lock.json" if acceptance else "packages.lock.json")
+    original = project.parent / ("PackageAcceptance/packages.lock.json" if acceptance else
+                                 "Baseline/packages.lock.json" if baseline else "packages.lock.json")
     raw = read_lock(original)
     prepared, packages, changed = rebind_local_archives(raw, feed)
     if not changed:
         return None, None
-    filename = "F07.preparation.acceptance.packages.lock.json" if acceptance else "F07.preparation.packages.lock.json"
+    filename = ("F07.preparation.acceptance.packages.lock.json" if acceptance else
+                "F07.preparation.baseline.packages.lock.json" if baseline else "F07.preparation.packages.lock.json")
     alternate = project.parent / "obj" / filename
     no_symlinks(alternate)
     alternate.parent.mkdir(exist_ok=True, mode=0o700)
@@ -102,9 +104,12 @@ def verify_project_lock(record, source, feed):
         raise ConformanceError("InputChanged")
     project = Path(relative_path(record["project"]))
     acceptance = record["originalLock"] == (project.parent / "PackageAcceptance/packages.lock.json").as_posix()
-    filename = "F07.preparation.acceptance.packages.lock.json" if acceptance else "F07.preparation.packages.lock.json"
+    baseline = record["originalLock"] == (project.parent / "Baseline/packages.lock.json").as_posix()
+    filename = ("F07.preparation.acceptance.packages.lock.json" if acceptance else
+                "F07.preparation.baseline.packages.lock.json" if baseline else "F07.preparation.packages.lock.json")
     if (record["originalLock"] != (project.parent / (
-            "PackageAcceptance/packages.lock.json" if acceptance else "packages.lock.json")).as_posix()
+            "PackageAcceptance/packages.lock.json" if acceptance else
+            "Baseline/packages.lock.json" if baseline else "packages.lock.json")).as_posix()
             or record["preparedLock"] != (project.parent / "obj" / filename).as_posix()):
         raise ConformanceError("InputChanged")
     raw = read_lock(source / relative_path(record["originalLock"]))
