@@ -4475,6 +4475,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     coverage[next(iter(coverage))]["passed"] = True
                 if defect:
                     self.assertTrue(any(not row["passed"] for row in coverage.values()))
+                else:
+                    import configuration_evidence as configuration
+                    import discovery_evidence as discovery
+                    configuration.verify_cases([
+                        {"id": case, "passed": row["passed"], "tests": list(row["tests"])}
+                        for case, row in coverage.items() if case.startswith("CFG-")])
+                    discovery.verify_cases([
+                        {"id": case, "passed": row["passed"], "tests": list(row["tests"])}
+                        for case, row in coverage.items() if case.startswith("D")])
 
     def test_runtime_inspection_freezes_unqualified_transport_without_skipping_validation(self):
         self.inputs["mode"] = "qualification"

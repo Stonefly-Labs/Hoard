@@ -114,6 +114,13 @@ Red/green separation/preservation tests and all 545 tooling tests pass (twenty
 native skips). A separate isolated-environment local probe rejects unknown
 discovery output and is not counted as successful execution. Linux replay
 remains required; no assertion, inventory, containment or deadline is weakened.
+Linux unit job122053946415 in run40463591758 executes all 433 selected tests
+without failures/errors/skips, confirming the actual guarded-group regressions,
+but fails safely because one test emits expected progress. Capturing and
+asserting all three exact records changes a twenty-test safe-result replay
+from 295 unexpected bytes to zero, without relaxing the runner. Three focused
+inspector tests also validate opaque case rows with both original case
+verifiers. Fresh Linux wrapper confirmation remains pending.
 T046 remains unchecked, 48/86, implement/running. Production boundaries,
 provider contracts, architecture diagrams, governance, examples, infrastructure
 and release behavior are unaffected by the test-only dependency/setup repair.

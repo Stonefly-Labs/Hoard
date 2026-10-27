@@ -191,6 +191,9 @@ boundary execution inside that batch. The complete native runtime still
 requires all sixteen unchanged architecture parameters; standalone lifecycle
 validation still executes and validates its nine boundary parameters.
 All 545 tooling tests pass with twenty native skips; Linux replay is pending.
+The Linux unit job executes 433 tests without failures, errors or skips but
+rejects uncaptured expected progress from a test. That test now captures and
+asserts the exact events; the safe runner's output rejection is unchanged.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

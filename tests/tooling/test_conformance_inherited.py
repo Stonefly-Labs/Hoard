@@ -153,10 +153,15 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
             with patch.object(baselines, "export_revision", return_value=recipe), patch.object(
                     lifecycle, "prepare_registration_baseline", side_effect=registration) as old_registration, \
                     patch.object(configuration, "prepare_baseline", side_effect=retained) as old_configuration, \
-                    patch.object(discovery, "prepare_baseline", side_effect=retained) as old_discovery:
+                    patch.object(discovery, "prepare_baseline", side_effect=retained) as old_discovery, \
+                    redirect_stdout(io.StringIO()) as progress:
                 seal = inherited.prepare_controller_baselines(ROOT, run)
                 self.assertEqual((1, 1, 1), (old_registration.call_count, old_configuration.call_count,
                                             old_discovery.call_count))
+            self.assertEqual([
+                {"qualification": False, "phase": "inherited-historical-preparation", "controller": name}
+                for name in ("lifecycle", "configuration", "discovery")
+            ], [json.loads(line) for line in progress.getvalue().splitlines()])
             verified = inherited.verify_controller_baselines(run, seal)
             self.assertFalse(verified["qualification"])
             self.assertFalse(verified["nativeContainment"])

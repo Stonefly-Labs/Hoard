@@ -43,6 +43,10 @@ native sixteen-parameter architecture inventory, without reporting an
 unexecuted count. Standalone lifecycle validation keeps its original nine
 boundary parameters and result checks. Full tooling passes 545 tests (twenty
 native skips); Linux replay and complete controller acceptance remain pending.
+The Linux unit job's 433 tests have no failures/errors/skips, but its wrapper
+rejects expected test progress. The test now captures/asserts those exact
+events; a twenty-test safe replay emits zero unexpected bytes. Fresh Linux
+wrapper confirmation is still required.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

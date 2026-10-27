@@ -5239,6 +5239,17 @@ controls fail before implementation and pass afterward.
 native skips. Linux replay and complete controller acceptance remain pending;
 no assertions, catalog entries, guard policies or budgets are relaxed.
 
+The completed ownership job122053946415 in run40463591758 executes 433 Linux
+tests with zero failures/errors/skips, including the actual group-guard
+regressions, but correctly fails `UnknownDiagnostic`: the historical-baseline
+unit test leaks three expected progress records. A safe-result reproduction
+observes 295 diagnostic bytes before the repair and zero afterward, with all
+twenty inherited tests passing. The test now privately captures and asserts
+the exact three events, rather than weakening the safe runner or discarding
+unknown output. The three inherited inspector checks also confirm opaque
+coverage remains accepted by both original CFG and D case verifiers.
+Fresh Linux wrapper confirmation remains pending.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same
