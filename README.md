@@ -190,6 +190,9 @@ against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and
 mixed source, owner or per-assembly inputs; failed witnesses remain failed.
 This inspection alone does not establish native/controller qualification.
+Its retained case coverage now derives every CFG/D row from the pinned
+method assignments and all actual parameters; failed or incomplete contributing
+scopes cannot produce a passed case. This is not full-controller acceptance.
 Initial fresh lifecycle preparation fails its unchanged deadline because
 framework configuration watchers consume the observation budget. Conformance
 children now disable unused framework appsettings reload; the same unmodified

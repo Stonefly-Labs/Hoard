@@ -5218,6 +5218,14 @@ still requires the complete original evidence. The masking regression fails
 before the repair; 432 conformance tooling tests pass with twenty native skips
 after it. Linux replay and the underlying lifecycle repair remain pending.
 
+Whole-inventory inspection now derives all 36 CFG and forty D case rows from
+the independently pinned method assignments and the re-admitted opaque runtime
+witnesses, retaining every theory parameter. A case passes only when every
+contributing parameter passes and its scope has no diagnostic failure. Red
+controls catch both absent case coverage and optimistic cases from incomplete
+scopes; all three focused inherited inspector tests pass. Case coverage joins
+the retained scope-admission proof, not a full-controller/qualification claim.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

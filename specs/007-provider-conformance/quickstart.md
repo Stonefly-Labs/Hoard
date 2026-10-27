@@ -34,6 +34,9 @@ Run40461182891 narrows lifecycle command 77's failure to a bounded legacy
 evidence read. The next transport preserves closed logger admission failures
 before completion reads; a real local single-boundary safe transport passes,
 but the underlying Linux failure remains unresolved pending replay.
+The retained inherited scope proof now includes complete parameter-derived
+CFG/D case rows. Failed/incomplete scopes remain non-passing; those rows
+do not establish full-controller acceptance or qualification.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

@@ -99,6 +99,11 @@ logger failures now retain their original code before completion reads can
 mask them. Unknown output and missing positive evidence still reject.
 The regression fails before the repair; 432 conformance tooling tests pass
 with twenty native skips afterward. The next Linux replay remains required.
+Independent inherited inspection also retains all CFG/D case coverage from
+the pinned method map and complete actual parameter union. Failed or incomplete
+contributing scopes cannot yield passed cases; the three focused inherited
+inspector tests pass after red omission/optimistic-scope controls. This does
+not satisfy the remaining full-controller obligations or complete T046.
 T046 remains unchecked, 48/86, implement/running. Production boundaries,
 provider contracts, architecture diagrams, governance, examples, infrastructure
 and release behavior are unaffected by the test-only dependency/setup repair.

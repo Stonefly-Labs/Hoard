@@ -4398,7 +4398,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     "status": proof["status"], "proofSha256": evidence.digest(proof),
                 })
             witnesses = b"".join(evidence.canonical_bytes(row) + b"\n" for row in records)
-            failed = defect == "failed" and scope_index == 0
+            failed = defect in ("failed", "incomplete-scope") and scope_index == 0
             completion = {
                 **self.completion, "attemptId": attempt_id, "inputSha256": evidence.digest(local),
                 "manifestSha256": evidence.digest(manifest), "recordsSha256": hashlib.sha256(witnesses).hexdigest(),
@@ -4453,6 +4453,28 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     options["discoveries"].pop("Hoard.Architecture.Tests")
                 with self.assertRaises(evidence.ConformanceError):
                     evidence.inspect_inherited_runtime_attempts(**options)
+
+    def test_inherited_case_coverage_uses_complete_actual_parameters_and_preserves_failures(self):
+        for defect in (None, "failed", "incomplete-scope"):
+            with self.subTest(defect=defect):
+                options = self.inherited_transports(defect)
+                inspected = evidence.inspect_inherited_runtime_attempts(**options)
+                required = evidence.load_json(options["inventory_data"])["caseMethods"]
+                actual = {row["testIdentity"]: (row["status"], scope["observation"]["diagnosticCode"])
+                          for scope in inspected["scopes"]
+                          for row in scope["observation"]["witnesses"]}
+                coverage = inspected["caseCoverage"]
+                self.assertEqual(set(required), set(coverage))
+                for case, methods in required.items():
+                    expected = {identity for identity in actual if identity.split("(")[0] in methods}
+                    self.assertTrue(expected)
+                    self.assertEqual(expected, set(coverage[case]["tests"]))
+                    self.assertEqual(all(actual[identity] == ("Passed", "None") for identity in expected),
+                                     coverage[case]["passed"])
+                with self.assertRaises(TypeError):
+                    coverage[next(iter(coverage))]["passed"] = True
+                if defect:
+                    self.assertTrue(any(not row["passed"] for row in coverage.values()))
 
     def test_runtime_inspection_freezes_unqualified_transport_without_skipping_validation(self):
         self.inputs["mode"] = "qualification"

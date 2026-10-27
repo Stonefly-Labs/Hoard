@@ -1757,12 +1757,22 @@ def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, 
     if seen_scopes != scopes.keys():
         raise ConformanceError("WitnessMissing")
     expected_count = sum(map(len, scopes.values()))
+    witnesses = {row["testIdentity"]: (row["status"], scope["observation"]["diagnosticCode"])
+                 for scope in admitted for row in scope["observation"]["witnesses"]}
+    coverage = {}
+    for case, methods in load_json(inventory_data)["caseMethods"].items():
+        identities = tuple(sorted(identity for identity in witnesses if identity.split("(")[0] in methods))
+        if not identities:
+            raise ConformanceError("WitnessMissing")
+        coverage[case] = MappingProxyType({
+            "tests": identities, "passed": all(witnesses[identity] == ("Passed", "None") for identity in identities)})
     return MappingProxyType({
         "qualification": False, "profileComplete": False,
         "executionComplete": observed_count == passed_count == expected_count
         and all(row["observation"]["diagnosticCode"] == "None" for row in admitted),
         "expectedParameters": expected_count, "observedParameters": observed_count,
         "passedParameters": passed_count, "scopes": tuple(admitted),
+        "caseCoverage": MappingProxyType(coverage),
         "inventorySha256": inventory_sha, "discoverySha256": discovery_hashes,
     })
 
