@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Hoard.Abstractions.Metadata;
-using Hoard.Fixtures.Conformance.Contributor;
 using Hoard.Fixtures.Conformance.Consumer;
+using Hoard.Fixtures.Conformance.Contributor;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Metadata;
 

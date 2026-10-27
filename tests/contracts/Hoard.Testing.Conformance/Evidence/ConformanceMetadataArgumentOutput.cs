@@ -43,9 +43,16 @@ public static class ConformanceMetadataArgumentOutput
         {
             var bytes = JsonSerializer.SerializeToUtf8Bytes(new
             {
-                schemaVersion = 1, runId = RunId, caseId = CaseId, callId = call.Id,
-                sourceKind = SourceKind, sourceId = SourceId, componentRole = Role,
-                componentInstanceId = InstanceId, argumentKind = call.Kind, argumentValue = call.Value
+                schemaVersion = 1,
+                runId = RunId,
+                caseId = CaseId,
+                callId = call.Id,
+                sourceKind = SourceKind,
+                sourceId = SourceId,
+                componentRole = Role,
+                componentInstanceId = InstanceId,
+                argumentKind = call.Kind,
+                argumentValue = call.Value
             });
             foreach (var packet in ConformanceEvidencePacket.Render(Prefix, call.Id, bytes))
             { Output.WriteLine(packet); }

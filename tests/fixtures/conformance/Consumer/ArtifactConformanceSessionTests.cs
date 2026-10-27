@@ -1024,7 +1024,8 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     Assert.Equal(origins[0].SessionId, reopened.ParentSessionId);
                     origins.Add(reopened);
                     return current.Store;
-                } : null);
+                }
+            : null);
             foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
         }
         finally { await current.DisposeAsync(); }
@@ -1170,8 +1171,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
                     await session.Store.CommitAsync(staged, new(), default)).Code);
             }
-            else { committed = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Success>(
-                await session.Store.CommitAsync(staged, new(), default)).Value; }
+            else
+            {
+                committed = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Success>(
+                await session.Store.CommitAsync(staged, new(), default)).Value;
+            }
             await using var injection = await session.Faults.InjectObservationFailureAsync(
                 point, () => ValueTask.FromException(failure), default);
             if (point == ArtifactObservationPoint.ReadOpened)

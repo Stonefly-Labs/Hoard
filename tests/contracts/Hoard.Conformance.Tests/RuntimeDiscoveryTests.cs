@@ -1,9 +1,9 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using Hoard.Conformance.TestLogger;
 using Hoard.Testing.Conformance.Diagnostics;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
-using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace Hoard.Conformance.Tests;
 

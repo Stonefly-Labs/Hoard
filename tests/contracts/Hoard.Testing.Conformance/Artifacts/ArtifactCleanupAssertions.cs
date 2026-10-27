@@ -14,7 +14,8 @@ public sealed class ArtifactCleanupAssertions
     public ArtifactCleanupAssertions(
         IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
         Func<bool> ready, Func<string[]> stagingFiles) :
-        this(store, maintenance, identity, ready, _ => ValueTask.FromResult(stagingFiles())) { }
+        this(store, maintenance, identity, ready, _ => ValueTask.FromResult(stagingFiles()))
+    { }
 
     public ArtifactCleanupAssertions(
         IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
