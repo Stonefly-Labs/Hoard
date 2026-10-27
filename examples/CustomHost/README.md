@@ -189,3 +189,9 @@ Committed safe discovery subsequently admits all 509 inherited composition
 parameters from an independent frozen source/count catalog. Six architecture
 methods/16 parameters and prepared controller journeys remain required; this
 is discovery, not full execution or profile acceptance, and adds no host behavior.
+Exact `6178a77` subsequently passes that native discovery replay. A scoped safe
+controller experiment also prepares both compile-only CustomHosts and fresh
+Core/provider evidence; all 509 inherited composition and 16 boundary parameters
+then pass independent local runtime ingestion. Neither result qualifies a
+profile or completes native/controller acceptance. The example's project,
+compile-only behavior and provider selection remain unchanged.

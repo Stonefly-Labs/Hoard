@@ -122,7 +122,18 @@ prepared distribution/controller journeys remain unexecuted in this increment.
 Neither discovery nor an observed count substitutes for those runtime obligations.
 The first native discovery attempt rejects its oversized direct input list
 before child launch. A pinned closure request now verifies all images in the
-child and parent without widening recorder limits; native replay remains pending.
+child and parent without widening recorder limits; that local check alone does
+not establish native replay.
+Exact `6178a77` subsequently passes Linux run40435964976 with all 509 discovery
+identities, the 36 CP proofs/110 snapshots and actual process-resource release.
+Scoped safe controller preparation then produces five foundation packages/two
+CustomHosts, seven lifecycle journeys/ten graphs, nine configuration journeys/
+thirteen graphs/five actual publication barriers, and nine discovery journeys/
+seven observations/eighteen graphs, including the required retained binaries.
+All 509 inherited composition parameters and 16 boundary parameters subsequently
+pass independent local runtime ingestion in 58 exact class scopes. This is a
+non-qualifying diagnostic, not native inherited execution, complete historical
+controller/mutation acceptance, public profile integration or T046 completion.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

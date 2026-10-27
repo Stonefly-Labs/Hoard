@@ -126,6 +126,15 @@ remain separate, required obligations; discovery is not test execution.
 Its first Linux attempt rejects the oversized direct input list before child
 launch; the repair preserves the recorder limit with a verified closure manifest,
 not a larger or weakened input budget.
+Exact `6178a77` now passes that Linux replay, including all 509 discovery
+identities, 36 CP proofs/110 snapshots and actual process-resource release.
+Scoped legacy-controller adapters subsequently prepare fresh Core/provider/
+CustomHost evidence, retained binaries, lifecycle/configuration/discovery
+journeys and graph scans without raw diagnostic persistence. A local diagnostic
+independently admits all 509 inherited composition parameters and 16 boundary
+parameters in 58 exact class scopes, preserving the two-minute child timeout.
+Native inherited execution, complete controller/mutation acceptance and public
+profile integration remain open; T046 is still unchecked.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

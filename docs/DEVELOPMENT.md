@@ -4898,7 +4898,7 @@ Actual committed-client discovery admits all 509 composition parameters
 the six architecture methods/16 parameters and prepared controller journeys
 remain required. The native composition diagnostic now attempts this discovery
 as an additional owned child with sealed runtime/source/method inputs and exact
-output-byte hashes. Native replay of this increment is pending. T046 remains
+output-byte hashes. At that checkpoint, native replay remained pending. T046 remains
 unchecked; the public qualifying composition profile remains unfinished.
 The first expanded native attempt (`1c47134`, run40435425402) rejects
 `OwnershipInvalid` before inherited child launch because the full image closure
@@ -4907,6 +4907,37 @@ bound: a sealed request pins the full closure, verified in the child before/afte
 discovery and independently recomputed by the parent. Local actual discovery
 verifies all 178 images and admits the same 509 identities; all 137 logger/
 discovery cases pass. The original native failure remains recorded.
+
+Exact `6178a775281ed8a17742d82524b12de340b9762d` subsequently passes
+[run40435964976](https://github.com/Stonefly-Labs/Hoard/actions/runs/40435964976),
+job121964573833: 36 CP proofs/110 snapshots, all 509 inherited discovery
+identities, verified closure and actual process-resource release. This is
+discovery, not inherited runtime or profile qualification.
+
+Scoped `conformance_inherited.controller_transport` now adapts borrowed
+controller commands without changing their standalone entry points. Unknown
+commands reject before launch. Evidence variables are explicitly forwarded only
+to owned files, hashed before/after each command and restored with the original
+entry points/environment on exit. A real missing-variable boundary failure
+motivates this explicit handoff. Configuration publication uses unreaped owned
+leaders, finite exact barrier reads and complete group settlement; no raw spool
+or unbounded `communicate` is retained. Discovery bodies must use the fixed
+synthetic wire vocabulary and agree with their observation, lifecycle and exact
+byte count; a boolean/integer JSON alias first passes incorrectly, then rejects
+with canonical typed comparison.
+
+The dirty-local source snapshot
+`4f99a9b2c58ba9cf4caef1516f825c3c6f7098e92d8c4781aeaf30fd3d7e887e`
+prepares all four evidence families and independently admits all 509 composition
+and 16 boundary parameters, with 695 bound controller read inputs. The first
+whole-assembly attempts remain failed: one has an incorrect staged normative
+contract location, and the corrected layout still reaches the two-minute child
+timeout. Reproducing the frozen tests' repository-relative layout and executing
+58 exact class scopes preserves that timeout and the complete parameter union.
+The later typed-body repair admits all seven retained actual bodies; all 514
+tooling tests pass, nineteen native skips. No frozen assertion changed. Native
+inherited execution, complete controller/mutation/freshness acceptance, public
+profile integration and T046 remain unfinished; task count stays 48/86.
 
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02

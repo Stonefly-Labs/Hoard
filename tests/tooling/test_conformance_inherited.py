@@ -3,9 +3,13 @@
 import importlib.util
 import copy
 import json
+import os
 from pathlib import Path
+import subprocess
 import sys
+import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
@@ -19,6 +23,53 @@ from conformance_evidence import ConformanceError, canonical_bytes
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_evidence_is_explicitly_forwarded_bound_and_owned(self):
+        import lifecycle_evidence as lifecycle
+        import conformance_legacy as legacy
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            manifest = owner / "lifecycle-evidence.json"
+            manifest.write_bytes(b'{"graphs":[]}')
+            with inherited.controller_transport(ROOT, owner) as controls, patch.dict(
+                    os.environ, {"HOARD_LIFECYCLE_EVIDENCE": str(manifest)}), patch.object(
+                    legacy, "composition_controller_command",
+                    return_value=subprocess.CompletedProcess([], 0, "")) as command:
+                lifecycle.run("dotnet", "test", "Hoard.Architecture.Tests.csproj")
+                self.assertEqual(str(manifest), command.call_args.kwargs["env"]["HOARD_LIFECYCLE_EVIDENCE"])
+                self.assertEqual(legacy._hash(manifest), controls["inputFiles"][manifest.name])
+            with tempfile.TemporaryDirectory() as outside, inherited.controller_transport(ROOT, owner), \
+                    patch.dict(os.environ, {"HOARD_LIFECYCLE_EVIDENCE": str(Path(outside) / "manifest.json")}), \
+                    patch.object(legacy, "composition_controller_command") as command, \
+                    self.assertRaises(ConformanceError):
+                lifecycle.run("dotnet", "test", "Hoard.Architecture.Tests.csproj")
+            command.assert_not_called()
+            with inherited.controller_transport(ROOT, owner), patch.dict(
+                    os.environ, {"HOARD_LIFECYCLE_EVIDENCE": str(manifest)}), patch.object(
+                    legacy, "composition_controller_command",
+                    side_effect=lambda *args, **kwargs: manifest.write_bytes(b'{"graphs":[1]}')), \
+                    self.assertRaisesRegex(ConformanceError, "InputChanged"):
+                lifecycle.run("dotnet", "test", "Hoard.Architecture.Tests.csproj")
+
+    def test_borrowed_controller_transport_rejects_raw_diagnostics_and_restores_entry_points(self):
+        import configuration_evidence as configuration
+        import discovery_evidence as discovery
+        import foundation_evidence as foundation
+        import lifecycle_evidence as lifecycle
+        import conformance_legacy as legacy
+        modules = (foundation, lifecycle, configuration, discovery)
+        originals = [module.run for module in modules]
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary)
+            os.chmod(owner, 0o700)
+            with inherited.controller_transport(ROOT, owner), patch.object(
+                    legacy, "capture", return_value=subprocess.CompletedProcess(
+                        ["dotnet", "build", "Consumer.csproj"], 0, b"private-canary\n")):
+                for module in modules:
+                    with self.subTest(module=module.__name__), self.assertRaisesRegex(
+                            RuntimeError, "^Legacy composition command UnknownDiagnostic.$"):
+                        module.run("dotnet", "build", "Consumer.csproj")
+            self.assertEqual(originals, [module.run for module in modules])
+
     def test_expands_parameters_without_copying_private_arguments(self):
         raw = b'''public sealed class OriginalTests
 {

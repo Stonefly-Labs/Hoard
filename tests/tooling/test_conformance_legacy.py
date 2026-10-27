@@ -1,6 +1,8 @@
 import copy
+import base64
 import hashlib
 import json
+import os
 from pathlib import Path
 import selectors
 import shutil
@@ -21,6 +23,132 @@ class LegacyTransportTests(unittest.TestCase):
         self.work = ROOT / ".foundation" / "legacy-tooling" / uuid.uuid4().hex
         self.work.mkdir(parents=True, mode=0o700)
         self.addCleanup(shutil.rmtree, self.work)
+
+    def test_control_input_is_bounded_transient_and_does_not_block_output_drain(self):
+        body = "private-canary" * 10000
+        result = legacy.capture(
+            [sys.executable, "-c", "import sys;sys.stdout.buffer.write(b'v'*131072);sys.stdout.flush();"
+             "value=sys.stdin.buffer.read();print(len(value))"],
+            input=body, timeout=10)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, b"v" * 131072 + (str(len(body.encode())) + "\n").encode())
+        self.assertEqual([], list(self.work.iterdir()))
+        with patch.object(legacy.subprocess, "Popen") as start, \
+                self.assertRaisesRegex(RuntimeError, "OutputLimitExceeded"):
+            legacy.capture([sys.executable, "-c", "pass"], input="x" * 1048577)
+        start.assert_not_called()
+
+    def test_inherited_compiler_controls_keep_only_the_intended_closed_code(self):
+        args = ("dotnet", "build", "Consumer.csproj", "-v", "quiet")
+        raw = b"/private/canary.cs(1,1): error CS0535: secret-canary missing contract [Consumer.csproj]\nBuild FAILED.\n"
+        with patch.object(legacy, "capture", return_value=subprocess.CompletedProcess(args, 1, raw)):
+            result = legacy.composition_controller_command(args, expected="CS0535")
+            self.assertEqual(result.stdout, "CS0535")
+            with self.assertRaisesRegex(RuntimeError, "CommandFailed"):
+                legacy.composition_controller_command(args, expected="CS9035")
+            with self.assertRaisesRegex(RuntimeError, "CommandFailed"):
+                legacy.composition_controller_command(args)
+
+    def test_unadapted_controller_commands_reject_before_launch_or_diagnostic_persistence(self):
+        for args in (("dotnet", "test", "Hoard.Composition.Tests.csproj"),
+                     ("dotnet", "UnknownHost.dll"), ("python3", "-m", "unittest")):
+            with self.subTest(args=args), patch.object(legacy, "capture") as capture, \
+                    self.assertRaisesRegex(RuntimeError, "PrerequisiteMissing"):
+                legacy.composition_controller_command(args)
+            capture.assert_not_called()
+
+    def test_publication_barrier_output_rejects_private_or_unterminated_diagnostics(self):
+        for raw, accepted in ((b"barrier:Flush\n", True), (b"private-canary\n", False),
+                              (b"barrier:Flush\nprivate-canary", False), (b"barrier:Flush", False)):
+            reader, writer = os.pipe()
+            with os.fdopen(reader, "rb") as stream:
+                os.write(writer, raw)
+                os.close(writer)
+                output = legacy.PublicationOutput(stream, "Flush")
+                if accepted:
+                    self.assertEqual("barrier:Flush\n", output.readline())
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "UnknownDiagnostic|CommandFailed"):
+                        output.readline()
+
+    def test_publication_child_rejects_unowned_inputs_before_launch(self):
+        with patch.object(legacy.subprocess, "Popen") as start:
+            owner = self.work.resolve()
+            for arguments in (("dotnet", "/outside/ConversionProcess.dll", "/outside/old", "/outside/new", "Flush"),
+                              ("dotnet", str(owner / "Unknown.dll"), str(owner / "old"), str(owner / "new"), "Flush")):
+                with self.subTest(arguments=arguments), self.assertRaises(legacy.ConformanceError):
+                    legacy.PublicationChild(arguments, owner=owner, stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT, text=True)
+            start.assert_not_called()
+
+    def test_discovery_controller_requires_matching_closed_bodies_and_complete_host_journeys(self):
+        module_ids = ("fixture.protocol.one", "fixture.protocol.two", "fixture.legacy-options",
+                      "fixture.artifact.one", "fixture.identity", "fixture.unregistered")
+        value = {"journeys": [], "observations": [], "responseBodies": []}
+        for index, name in enumerate(("baseline", "bundled-restart", "recovery"), 1):
+            observation = {
+                "schemaVersion": 1,
+                "distribution": {"id": "package-discovery-fixture", "version": "0.1.0", "inventoryCompleteness": "partial"},
+                "host": {"phase": "running", "ready": True, "startupAdmission": True},
+                "observation": {"lifecycleId": str(uuid.UUID(int=index)), "revision": "1",
+                                "capturedAt": "2026-10-21T15:00:01Z", "publishedAt": "2026-10-21T15:00:00Z",
+                                "readinessAssessedAt": "2026-10-21T15:00:00Z"},
+                "modules": [{
+                    "id": name, "category": "protocol", "version": "0.1.0", "inclusion": "included",
+                    "registered": True, "enabled": False, "lifecyclePhase": "registered", "readiness": "disabled",
+                    "compatibility": {"hostRange": "[0.1.0,0.2.0)", "abstractionsRange": "[0.1.0,0.2.0)",
+                                      "allowHostPrerelease": False, "allowAbstractionsPrerelease": False},
+                    "provenance": {"classification": "fixture"}, "selectedRoles": [], "options": [],
+                    "capabilities": [], "reasons": [], "omittedReasonCount": 0,
+                } for name in module_ids], "reasons": [], "omittedReasonCount": 0}
+            raw = json.dumps(observation).encode()
+            value["journeys"].append({"id": name, "passed": True, "lifecycleId": str(uuid.UUID(int=index)),
+                                      "routeCalls": 1, "serviceCalls": 1, "bytes": len(raw)})
+            value["observations"].append(observation)
+            value["responseBodies"].append(base64.b64encode(raw).decode("ascii"))
+        value["journeys"].append({"id": "invalid-replacement", "passed": True, "diagnostics": 1, "activityDelta": 0})
+        args = ("dotnet", "LifecycleHost.Discovery.dll")
+        self.assertEqual(value, legacy.composition_control(args, copy.deepcopy(value)))
+        for mutation in ("private-wire-text", "private-key", "changed-body", "boolean-alias",
+                         "duplicate-lifecycle", "missing-journey"):
+            altered = copy.deepcopy(value)
+            if mutation == "private-wire-text":
+                altered["observations"][0]["modules"][0]["id"] = "private-canary"
+            elif mutation == "private-key":
+                altered["observations"][0]["private-canary"] = True
+            elif mutation == "changed-body":
+                altered["responseBodies"][0] = altered["responseBodies"][1]
+            elif mutation == "boolean-alias":
+                body = copy.deepcopy(altered["observations"][0])
+                body["schemaVersion"] = True
+                raw = json.dumps(body).encode()
+                altered["journeys"][0]["bytes"] = len(raw)
+                altered["responseBodies"][0] = base64.b64encode(raw).decode("ascii")
+            elif mutation == "duplicate-lifecycle":
+                altered["journeys"][1]["lifecycleId"] = altered["journeys"][0]["lifecycleId"]
+            else:
+                altered["journeys"].pop()
+            with self.subTest(mutation=mutation), self.assertRaises((ValueError, legacy.ConformanceError)):
+                legacy.composition_control(args, altered)
+
+    def test_inherited_journey_controls_reject_unexpected_fields_names_and_failure_labels(self):
+        args = ("dotnet", "LifecycleHost.dll")
+        good = {"journeys": [{"name": "bundled-one", "passed": True, "events": 4}]}
+        self.assertEqual(good, legacy.composition_control(args, good))
+        for mutation in ("field", "name", "status", "zero", "boolean-count"):
+            altered = copy.deepcopy(good)
+            if mutation == "field":
+                altered["private"] = "canary"
+            elif mutation == "name":
+                altered["journeys"][0]["name"] = "private-canary"
+            elif mutation == "status":
+                altered["journeys"][0]["passed"] = False
+            elif mutation == "zero":
+                altered["journeys"][0]["events"] = 0
+            else:
+                altered["journeys"][0]["events"] = True
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                legacy.composition_control(args, altered)
 
     def test_runtime_staging_refuses_diagnostics_before_copying_any_input(self):
         source = self.work / "source"

@@ -1,5 +1,7 @@
 """Bounded legacy command transport; raw child diagnostics never reach evidence."""
 
+import base64
+from datetime import datetime
 import hashlib
 from contextlib import contextmanager
 import json
@@ -26,6 +28,50 @@ from conformance_execution import (
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
 
 FQN_TERM = re.compile(r"FullyQualifiedName(!~|~|=)([a-zA-Z0-9_.]+)")
+COMPOSITION_MARKERS = {
+    "RegistrationConsumer.dll": "registration-compatible",
+    "LifecycleConsumer.dll": "lifecycle-compatible", "RetainedLifecycle.dll": "lifecycle-compatible",
+    "RetainedConfiguration.dll": "configuration-compatible",
+    "ApplicationConsumer.dll": "application-discovery-compatible",
+    "NonWebConsumer.dll": "application-discovery-compatible",
+}
+COMPOSITION_JOURNEY_HOSTS = frozenset((
+    "LifecycleHost.dll", "LifecycleHost.Custom.dll",
+    "LifecycleHost.Configuration.dll", "LifecycleHost.Configuration.Custom.dll"))
+DISCOVERY_HOSTS = frozenset(("LifecycleHost.Discovery.dll", "LifecycleHost.Discovery.Custom.dll"))
+DISCOVERY_MODULES = frozenset((
+    "fixture.protocol.one", "fixture.protocol.two", "fixture.legacy-options",
+    "fixture.artifact.one", "fixture.identity", "fixture.unregistered"))
+DISCOVERY_REASONS = {
+    "metadata-suppressed": "Review and explicitly approve safe public descriptive metadata in the host catalog.",
+    "missing-registration": "Register the included module in a custom host, rebuild, redeploy and restart.",
+    "disabled": "Change the validated bundled selection and explicitly restart if this module is needed.",
+    "binding-unavailable": "Correct the owned operation binding, rebuild the host and restart.",
+    "dependency-unavailable": "Correct the required module selection or integration and explicitly restart.",
+}
+DISCOVERY_LITERALS = frozenset((
+    *DISCOVERY_MODULES, "fixture.artifact.two", "package-discovery-fixture", "0.1.0", "partial",
+    "running", "registered", "ready", "disabled", "unknown", "included", "protocol", "metadata", "artifact", "identity",
+    "validating", "constructing", "composing-services", "building-host", "composing-routes",
+    "initializing", "assessing-readiness", "enabled", "not-ready", "failed", "stopping", "draining", "cleaning-up", "stopped",
+    "[0.1.0,0.2.0)", "fixture", "metadata-authority", "artifact-authority", "identity-scheme",
+    "label", "credential", "string", "secret", "inspect", "supported", "unavailable", "usable",
+    "package-route-service-fixture", *DISCOVERY_REASONS, *DISCOVERY_REASONS.values()))
+DISCOVERY_SHAPES = {
+    key: frozenset(fields.split()) for key, fields in {
+        "wire": "schemaVersion distribution observation host modules reasons omittedReasonCount",
+        "distribution": "id version inventoryCompleteness",
+        "observation": "lifecycleId revision capturedAt publishedAt readinessAssessedAt",
+        "host": "phase ready startupAdmission",
+        "module": "id category version inclusion registered enabled compatibility provenance lifecyclePhase "
+                  "readiness selectedRoles options capabilities reasons omittedReasonCount",
+        "compatibility": "hostRange abstractionsRange allowHostPrerelease allowAbstractionsPrerelease",
+        "provenance": "classification",
+        "option": "id type required secret",
+        "constraints": "minimumLength maximumLength minimum maximum",
+        "capability": "id version operationId owners dependencies support evidenceScope evidenceIds availability reasons omittedReasonCount",
+        "reason": "code correctiveAction",
+    }.items()}
 _retained_children = {}
 
 
@@ -92,10 +138,84 @@ class OwnedChild:
         self.settle()
 
 
-def capture(args, *, cwd=None, env=None, timeout=600):
+class PublicationOutput:
+    def __init__(self, stream, barrier):
+        self.stream = stream
+        self.expected = ("barrier:" + barrier + "\n").encode("ascii")
+        self.deadline = time.monotonic() + 15
+
+    def fileno(self):
+        return self.stream.fileno()
+
+    def readline(self):
+        data = bytearray()
+        with selectors.DefaultSelector() as selector:
+            selector.register(self.stream, selectors.EVENT_READ)
+            while data != self.expected:
+                remaining = self.deadline - time.monotonic()
+                if remaining <= 0 or not selector.select(timeout=remaining):
+                    raise RuntimeError("Legacy publication DeadlineExceeded.")
+                block = os.read(self.stream.fileno(), READ_BYTES)
+                if not block:
+                    raise RuntimeError("Legacy publication CommandFailed.")
+                data.extend(block)
+                if not self.expected.startswith(data):
+                    raise RuntimeError("Legacy publication UnknownDiagnostic.")
+        return self.expected.decode("ascii")
+
+
+class PublicationSelector(selectors.DefaultSelector):
+    def select(self, timeout=None):
+        return super().select(timeout=15 if timeout is None else min(15, timeout))
+
+
+class PublicationChild(OwnedChild):
+    def __init__(self, args, *, owner, stdout, stderr, text):
+        owner = Path(owner).resolve(strict=True)
+        if (len(args) != 5 or args[0] != "dotnet" or Path(args[1]).name != "ConversionProcess.dll"
+                or args[4] not in ("Staged", "Write", "Flush", "PrePublish", "Published")
+                or stdout != subprocess.PIPE or stderr != subprocess.STDOUT or text is not True):
+            raise ConformanceError("OwnershipInvalid")
+        for value in args[1:4]:
+            path = Path(value)
+            no_symlinks(path)
+            if not path.is_absolute() or not path.resolve().is_relative_to(owner):
+                raise ConformanceError("OwnershipInvalid")
+        if not all(Path(value).is_file() for value in args[1:3]) or Path(args[3]).exists():
+            raise ConformanceError("OwnershipInvalid")
+        environment = {key: value for key, value in os.environ.items() if not key.startswith("HOARD_")}
+        super().__init__(args, stdout=stdout, stderr=stderr, env=environment)
+        self.stdout = PublicationOutput(self._process.stdout, args[4])
+        self._complete = False
+
+    def communicate(self, timeout):
+        if self._complete:
+            return "", None
+        try:
+            self.wait(timeout)
+        finally:
+            self.settle()
+        self._complete = True
+        with self._process.stdout:
+            tail = self._process.stdout.read(TRANSIENT_BYTES + 1)
+        if len(tail) > TRANSIENT_BYTES:
+            raise RuntimeError("Legacy publication OutputLimitExceeded.")
+        if tail:
+            raise RuntimeError("Legacy publication UnknownDiagnostic.")
+        return "", None
+
+
+def capture(args, *, cwd=None, env=None, timeout=600, input=None):
     """Capture at most 1 MiB, settle the complete owned process group on all exits."""
     if not all(hasattr(os, name) for name in ("waitid", "WNOWAIT", "WEXITED", "WNOHANG", "P_PID")):
         raise RuntimeError("Legacy command PrerequisiteMissing.")
+    if input is not None:
+        try:
+            input = input.encode("utf-8", errors="strict") if isinstance(input, str) else input
+        except UnicodeError:
+            raise RuntimeError("Legacy command UnknownDiagnostic.") from None
+        if not isinstance(input, bytes) or len(input) > TRANSIENT_BYTES:
+            raise RuntimeError("Legacy command OutputLimitExceeded.")
     environment = {key: value for key, value in os.environ.items() if not key.startswith("HOARD_")}
     environment.update(env or {})
     environment.update(MSBUILDDISABLENODEREUSE="1", DOTNET_CLI_USE_MSBUILD_SERVER="0",
@@ -103,12 +223,24 @@ def capture(args, *, cwd=None, env=None, timeout=600):
     try:
         child = subprocess.Popen(
             args, cwd=cwd, env=environment, stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE if input is not None else None,
             stderr=subprocess.STDOUT, start_new_session=True)
     except OSError:
         raise RuntimeError("Legacy command CommandFailed.") from None
     data = bytearray()
     deadline = time.monotonic() + timeout
     error = None
+    writer_errors = []
+    writer = None
+    if input is not None:
+        def write_input():
+            try:
+                with child.stdin:
+                    child.stdin.write(input)
+            except OSError:
+                writer_errors.append(True)
+        writer = threading.Thread(target=write_input, daemon=True)
+        writer.start()
     try:
         with selectors.DefaultSelector() as selector:
             selector.register(child.stdout, selectors.EVENT_READ)
@@ -135,12 +267,18 @@ def capture(args, *, cwd=None, env=None, timeout=600):
     finally:
         child.stdout.close()
         _settle_group(child)
+        if writer is not None:
+            writer.join(timeout=10)
+            if writer.is_alive():
+                raise RuntimeError("Legacy command cleanup incomplete; private stores retained.")
     if error is not None:
         if isinstance(error, KeyboardInterrupt):
             raise error
         if isinstance(error, RuntimeError) and not isinstance(error, ConformanceError):
             raise error
         raise RuntimeError("Legacy command failed within its finite deadline.") from None
+    if writer_errors:
+        raise RuntimeError("Legacy command CommandFailed.")
     result = subprocess.CompletedProcess(args, child.returncode, bytes(data))
     result.child_pid = child.pid
     return result
@@ -279,6 +417,185 @@ def command(args, *, cwd=None, env=None, timeout=600):
     except (ValueError, TypeError, KeyError, UnicodeError, ConformanceError):
         pass
     raise RuntimeError("Legacy command UnknownDiagnostic.")
+
+
+def discovery_fixture_wire(value):
+    """Admit the fixed synthetic host vocabulary, never arbitrary provider text."""
+    visited = 0
+
+    def visit(entry, field, depth=0):
+        nonlocal visited
+        visited += 1
+        if visited > 10000 or depth > 16:
+            raise ValueError()
+        if field in DISCOVERY_SHAPES:
+            optional = {"option": {"constraints"}, "reason": {"moduleId", "operationId", "correlationId"}}.get(field, set())
+            required = DISCOVERY_SHAPES[field]
+            if not isinstance(entry, dict) or not required <= entry.keys() or entry.keys() - required - optional:
+                raise ValueError()
+            if field == "reason" and (not isinstance(entry["code"], str)
+                                      or DISCOVERY_REASONS.get(entry["code"]) != entry["correctiveAction"]):
+                raise ValueError()
+            for key, child in entry.items():
+                visit(child, key, depth + 1)
+        elif field in ("modules", "options", "capabilities", "reasons", "selectedRoles", "owners", "dependencies", "evidenceIds"):
+            if not isinstance(entry, list) or len(entry) > 256:
+                raise ValueError()
+            kind = {"modules": "module", "options": "option", "capabilities": "capability", "reasons": "reason"}.get(field, "id")
+            for child in entry:
+                visit(child, kind, depth + 1)
+        elif field in ("ready", "startupAdmission", "registered", "enabled", "allowHostPrerelease",
+                       "allowAbstractionsPrerelease", "required", "secret"):
+            if type(entry) is not bool:
+                raise ValueError()
+        elif field in ("schemaVersion", "omittedReasonCount", "minimumLength", "maximumLength"):
+            if (type(entry) is not int or not 0 <= entry <= 16384
+                    or field == "schemaVersion" and entry != 1
+                    or field == "omittedReasonCount" and entry != 0):
+                raise ValueError()
+        elif field in ("lifecycleId", "correlationId"):
+            if not isinstance(entry, str) or str(uuid.UUID(entry)) != entry or uuid.UUID(entry).int == 0:
+                raise ValueError()
+        elif field in ("capturedAt", "publishedAt", "readinessAssessedAt"):
+            if (not isinstance(entry, str) or re.fullmatch(
+                    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,7})?(?:Z|\+00:00)", entry) is None):
+                raise ValueError()
+            datetime.fromisoformat(entry)
+        elif field == "revision":
+            if not isinstance(entry, str) or re.fullmatch(r"[1-9][0-9]{0,19}", entry) is None:
+                raise ValueError()
+        elif field in ("minimum", "maximum"):
+            if entry not in ("-9223372036854775808", "9223372036854775807"):
+                raise ValueError()
+        elif not isinstance(entry, str) or entry not in DISCOVERY_LITERALS:
+            raise ValueError()
+
+    visit(value, "wire")
+    return value
+
+
+def discovery_host_control(args, value):
+    if (not isinstance(value, dict) or set(value) != {"journeys", "observations", "responseBodies"}
+            or any(not isinstance(value[key], list) for key in value)):
+        raise ValueError()
+    custom = Path(args[1]).name == "LifecycleHost.Discovery.Custom.dll"
+    wanted = {"baseline", "bundled-restart", "recovery", "invalid-replacement"} | ({"custom-rebuild"} if custom else set())
+    if len(value["journeys"]) != len(wanted):
+        raise ValueError()
+    journeys, successful = {}, {}
+    for row in value["journeys"]:
+        if not isinstance(row, dict) or row.get("passed") is not True:
+            raise ValueError()
+        name = row.get("id")
+        if not isinstance(name, str) or name not in wanted or name in journeys:
+            raise ValueError()
+        journeys[name] = row
+        if name == "invalid-replacement":
+            if (set(row) != {"id", "passed", "diagnostics", "activityDelta"}
+                    or type(row["diagnostics"]) is not int or not 1 <= row["diagnostics"] <= 128
+                    or type(row["activityDelta"]) is not int or row["activityDelta"] != 0):
+                raise ValueError()
+        elif (set(row) != {"id", "passed", "lifecycleId", "routeCalls", "serviceCalls", "bytes"}
+              or any(type(row[key]) is not int or row[key] != 1 for key in ("routeCalls", "serviceCalls"))
+              or type(row["bytes"]) is not int or not 0 < row["bytes"] <= TRANSIENT_BYTES
+              or not isinstance(row["lifecycleId"], str) or row["lifecycleId"] in successful):
+            raise ValueError()
+        else:
+            successful[row["lifecycleId"]] = row
+    if len(value["observations"]) != len(successful) or len(value["responseBodies"]) != len(successful):
+        raise ValueError()
+    seen = set()
+    for observation, encoded in zip(value["observations"], value["responseBodies"], strict=True):
+        discovery_fixture_wire(observation)
+        identity = observation["observation"]["lifecycleId"]
+        if not isinstance(encoded, str) or len(encoded) > 4 * ((TRANSIENT_BYTES + 2) // 3):
+            raise ValueError()
+        raw = base64.b64decode(encoded, validate=True)
+        modules = observation["modules"]
+        expected_modules = DISCOVERY_MODULES | ({"fixture.artifact.two"} if custom else set())
+        if (identity not in successful or identity in seen or len(raw) != successful[identity]["bytes"]
+                or canonical_bytes(load_json(raw)) != canonical_bytes(observation)
+                or observation["distribution"] != {
+                    "id": "package-discovery-fixture", "version": "0.1.0", "inventoryCompleteness": "partial"}
+                or observation["host"] != {"phase": "running", "ready": True, "startupAdmission": True}
+                or len(modules) != len(expected_modules) or {module["id"] for module in modules} != expected_modules):
+            raise ValueError()
+        seen.add(identity)
+    return value
+
+
+def composition_control(args, value):
+    if Path(args[1]).name in DISCOVERY_HOSTS:
+        return discovery_host_control(args, value)
+    if (Path(args[1]).name not in COMPOSITION_JOURNEY_HOSTS
+            or not isinstance(value, dict) or set(value) != {"journeys"}
+            or not isinstance(value["journeys"], list) or not 1 <= len(value["journeys"]) <= 5):
+        raise ValueError()
+    allowed = {
+        "bundled-one", "bundled-two-same-binary", "custom-artifact", "explicit-recovery",
+        "configured-one", "configured-two-same-binary", "invalid-replacement", "configured-custom-artifact"}
+    seen = set()
+    for row in value["journeys"]:
+        if (not isinstance(row, dict) or set(row) != {"name", "passed", "events"}
+                or not isinstance(row["name"], str) or row["name"] not in allowed or row["name"] in seen
+                or row["passed"] is not True or type(row["events"]) is not int or not 1 <= row["events"] <= 100000):
+            raise ValueError()
+        seen.add(row["name"])
+    return value
+
+
+def composition_controller_command(args, *, cwd=None, env=None, expected=None, input=None):
+    """Project borrowed controller diagnostics before they can become retained evidence."""
+    if not isinstance(args, (tuple, list)) or len(args) < 2:
+        raise RuntimeError("Legacy composition command PrerequisiteMissing.")
+    if args[:2] in (("dotnet", "test"), ["dotnet", "test"]):
+        if (len(args) < 3 or Path(args[2]).name != "Hoard.Architecture.Tests.csproj"
+                or expected is not None or input is not None):
+            raise RuntimeError("Legacy composition command PrerequisiteMissing.")
+        tested = test_command(args, cwd=cwd, env=env)
+        return subprocess.CompletedProcess(args, tested.returncode, tested.stdout.decode("utf-8", errors="strict"))
+    if not (args[0] == "git" and args[1] in ("rev-parse", "archive", "merge-base", "hash-object")
+            or args[0] == "dotnet" and (args[1] in ("restore", "build", "pack", "format", "--version")
+                                       or Path(args[1]).name in COMPOSITION_MARKERS
+                                       or Path(args[1]).name in COMPOSITION_JOURNEY_HOSTS
+                                       or Path(args[1]).name in DISCOVERY_HOSTS)):
+        raise RuntimeError("Legacy composition command PrerequisiteMissing.")
+    result = capture(args, cwd=cwd, env=env, input=input)
+    if expected is not None:
+        if (not result.returncode or not isinstance(expected, str)
+                or re.fullmatch(r"CS[0-9]{4,5}", expected) is None):
+            raise RuntimeError("Legacy composition command CommandFailed.")
+        codes = set()
+        for line in result.stdout.splitlines():
+            project_build_line(line)
+            codes.update(re.findall(rb"\berror (CS[0-9]{4,5})\b", line))
+        if codes != {expected.encode("ascii")}:
+            raise RuntimeError("Legacy composition command CommandFailed.")
+        return subprocess.CompletedProcess(args, result.returncode, expected)
+    if result.returncode:
+        raise RuntimeError("Legacy composition command CommandFailed.")
+    try:
+        text = result.stdout.decode("utf-8", errors="strict")
+        if args[0] == "dotnet" and args[1] in ("restore", "build", "pack", "format"):
+            for line in result.stdout.splitlines():
+                if project_build_line(line) is not None:
+                    raise ValueError()
+            return subprocess.CompletedProcess(args, 0, "")
+        if args[0] == "git":
+            if not text or re.fullmatch(r"[0-9a-f]{40,64}\n?", text):
+                return subprocess.CompletedProcess(args, 0, text)
+        if args[0] == "dotnet" and args[1] == "--version" and re.fullmatch(r"10\.[0-9]+\.[0-9]+\n?", text):
+            return subprocess.CompletedProcess(args, 0, text)
+        name = Path(args[1]).name
+        if args[0] == "dotnet" and name in COMPOSITION_MARKERS and text in (
+                COMPOSITION_MARKERS[name], COMPOSITION_MARKERS[name] + "\n"):
+            return subprocess.CompletedProcess(args, 0, text)
+        if args[0] == "dotnet" and name.endswith(".dll"):
+            value = composition_control(args, load_json(result.stdout))
+            return subprocess.CompletedProcess(args, 0, json.dumps(value, allow_nan=False))
+    except (ValueError, TypeError, KeyError, UnicodeError, ConformanceError):
+        raise RuntimeError("Legacy composition command UnknownDiagnostic.") from None
+    raise RuntimeError("Legacy composition command UnknownDiagnostic.")
 
 
 def project_control(args, value):

@@ -135,7 +135,7 @@ The original assertion/helper sources remain byte-identical to F-06. The six
 additional boundary methods/16 parameters and fresh prepared controller journeys
 are explicitly not executed by this increment. Native diagnostics now schedule
 the full discovery as an owned child with sealed method/source/runtime inputs
-and exact output-byte binding; that new Linux replay remains pending. Discovery
+and exact output-byte binding; that new Linux replay was still pending at that checkpoint. Discovery
 alone is not runtime execution, full profile integration or T046 completion.
 All 132 logger/discovery tests and 505 tooling tests pass (nineteen native
 skips). The new test-tool lock replays in locked mode; formatting and both frozen
@@ -153,6 +153,56 @@ slots. Five new request drift/duplicate/escape controls pass; all 137
 logger/discovery cases pass. Real local discovery verifies 178 runtime images
 and still admits the same 509 exact identities/output digest. This is not a
 successful native replay or complete inherited controller/profile result.
+
+### Fresh inherited controllers and complete local parameter execution
+
+Exact `6178a775281ed8a17742d82524b12de340b9762d` subsequently passes native
+[run40435964976](https://github.com/Stonefly-Labs/Hoard/actions/runs/40435964976),
+job121964573833. It admits the 36 CP proofs/110 snapshots and all 509 inherited
+discovery identities, verifies the full image closure and observes actual
+process-resource release. The original `1c47134` failure is preserved. Native
+inherited execution, controllers, boundaries and qualification remain false.
+
+A scoped adapter now borrows the unchanged foundation/lifecycle/configuration/
+discovery controllers through bounded transient transport. Unsupported commands
+reject before launch, intended compiler negatives expose only their exact closed
+compiler code, and graph inspection uses the existing typed resolver. Private
+alternate locks retain their derivation/original graph; copied snapshots route
+only Git calls to the real repository. The original entry points and environment
+are restored on exit. An actual lifecycle boundary fails when ambient evidence
+variables are stripped; explicit owned, pre/post-hashed evidence forwarding
+repairs it. Publication children retain their unreaped leader identity, enforce
+finite exact barrier reads and settle the entire group before release.
+
+Fresh preparation at dirty-local source
+`4f99a9b2c58ba9cf4caef1516f825c3c6f7098e92d8c4781aeaf30fd3d7e887e`
+produces isolated Core, five foundation packages/two CustomHosts, six lifecycle
+packages/seven journeys/ten graphs, two retained configuration binaries/nine
+journeys/thirteen graphs/five interruption barriers, and three retained discovery
+binaries/nine journeys/seven observations/eighteen graphs. No lock derivation is
+needed for these actual archives. Discovery uses only the fixed synthetic wire
+vocabulary and correlates bodies with exact observations/lifecycles/byte counts.
+
+The first whole-assembly runtime attempt fails the unchanged wire-contract test:
+staging must preserve its repository-relative normative contract location.
+The corrected layout still reaches the existing two-minute child timeout with
+incomplete observed inventory. Both failures remain failures. Exact class
+partitioning then independently admits all **509 composition and 16 architecture
+parameters across 58 scopes**, with 695 bound controller read inputs, unchanged
+frozen assertions, actual candidate/archive agreement and complete parameter
+union. Local execution receipt SHA-256:
+`07e0d34b4f73f100d49000d4cc3afcfcc42c6db2af9e4ab675e6feb6ab578b76`.
+The 36 CP proofs/110 snapshots also replay at this snapshot. Native containment
+and profile qualification are not claimed for these local experiments.
+
+A later red control exposes Python's boolean/integer equality alias in body
+correlation. Canonical typed comparison rejects it; all seven retained actual
+bodies still admit. `python3 -m unittest discover -s tests/tooling -v` passes
+514 tests with nineteen native skips; `git diff --check` passes. These are
+preparation/component results, not complete historical controller/mutation/
+freshness acceptance or public profile integration. T046 remains unchecked,
+task count remains 48/86, and implementation remains running. Product contracts,
+provider boundaries, example behavior and architecture diagrams are unaffected.
 
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
