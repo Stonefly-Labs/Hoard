@@ -33,6 +33,8 @@ CHILD_DIAGNOSTIC_BYTES = 8 * 1024 * 1024
 PROFILE_DIAGNOSTIC_BYTES = 64 * 1024 * 1024
 MAX_PROCESSES = 256
 PIDFD_SIGNAL_PROCESS_GROUP = 4
+# Synthetic hosts consume explicit immutable inputs, not framework appsettings reload.
+FIXTURE_HOST_ENVIRONMENT = MappingProxyType({"DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE": "false"})
 
 
 def single_writer(operation):
@@ -144,6 +146,7 @@ def command_environment(root, cache, supplied):
     if sum(len(key.encode("utf-8")) + len(value.encode("utf-8")) for key, value in environment.items()) > READ_BYTES:
         raise ConformanceError("OwnershipInvalid")
     environment.update({
+        **FIXTURE_HOST_ENVIRONMENT,
         "NUGET_PACKAGES": str(cache), "HOME": str(root / "cache"), "DOTNET_CLI_HOME": str(cache),
         "TMPDIR": str(cache / "tmp"), "TMP": str(cache / "tmp"), "TEMP": str(cache / "tmp"),
         "DOTNET_CLI_TELEMETRY_OPTOUT": "1", "DOTNET_NOLOGO": "1",

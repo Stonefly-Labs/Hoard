@@ -394,14 +394,16 @@ class LegacyTransportTests(unittest.TestCase):
             self.assertNotIn("private-canary", str(caught.exception))
         self.assertEqual([], list(self.work.iterdir()))
 
-    def test_owned_commands_disable_build_servers_even_when_the_parent_enables_them(self):
+    def test_owned_commands_disable_build_servers_and_unused_framework_watchers(self):
         result = legacy.capture(
             (sys.executable, "-c", "import os,json;print(json.dumps({name:os.environ[name] for name in "
-             "('MSBUILDDISABLENODEREUSE','DOTNET_CLI_USE_MSBUILD_SERVER','UseSharedCompilation')}))"),
+             "('MSBUILDDISABLENODEREUSE','DOTNET_CLI_USE_MSBUILD_SERVER','UseSharedCompilation',"
+             "'DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE')}))"),
             env={"MSBUILDDISABLENODEREUSE": "0", "DOTNET_CLI_USE_MSBUILD_SERVER": "1",
-                 "UseSharedCompilation": "true"})
+                 "UseSharedCompilation": "true", "DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE": "true"})
         self.assertEqual({"MSBUILDDISABLENODEREUSE": "1", "DOTNET_CLI_USE_MSBUILD_SERVER": "0",
-                          "UseSharedCompilation": "false"}, json.loads(result.stdout))
+                          "UseSharedCompilation": "false",
+                          "DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE": "false"}, json.loads(result.stdout))
 
     def test_interrupt_settles_real_owned_child_before_propagating(self):
         real_selector, real_popen = selectors.DefaultSelector, subprocess.Popen

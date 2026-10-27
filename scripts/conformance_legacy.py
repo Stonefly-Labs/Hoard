@@ -23,7 +23,8 @@ import zipfile
 
 from conformance_evidence import ConformanceError, admit_entity, canonical_bytes, load_json
 from conformance_execution import (
-    READ_BYTES, TRANSIENT_BYTES, no_symlinks, process_group, project_build_line, project_test_line,
+    FIXTURE_HOST_ENVIRONMENT, READ_BYTES, TRANSIENT_BYTES, no_symlinks, process_group,
+    project_build_line, project_test_line,
 )
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
 
@@ -218,7 +219,7 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
             raise RuntimeError("Legacy command OutputLimitExceeded.")
     environment = {key: value for key, value in os.environ.items() if not key.startswith("HOARD_")}
     environment.update(env or {})
-    environment.update(MSBUILDDISABLENODEREUSE="1", DOTNET_CLI_USE_MSBUILD_SERVER="0",
+    environment.update(FIXTURE_HOST_ENVIRONMENT, MSBUILDDISABLENODEREUSE="1", DOTNET_CLI_USE_MSBUILD_SERVER="0",
                        UseSharedCompilation="false")
     try:
         child = subprocess.Popen(

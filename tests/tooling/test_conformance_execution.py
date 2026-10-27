@@ -918,10 +918,12 @@ print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
         run = self.workspace()
         with mock.patch.dict(os.environ, {"UNRELATED_SECRET": "synthetic-canary", "LD_PRELOAD": "/private/canary",
                                          "TMPDIR": "/private/canary"}):
-            environment = execution.command_environment(run.root, run.root / "cache", {"HOARD_TEST": "synthetic"})
+            environment = execution.command_environment(run.root, run.root / "cache", {
+                "HOARD_TEST": "synthetic", "DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE": "true"})
         self.assertNotIn("UNRELATED_SECRET", environment)
         self.assertNotIn("LD_PRELOAD", environment)
         self.assertEqual(environment["HOARD_TEST"], "synthetic")
+        self.assertEqual(environment["DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE"], "false")
         self.assertEqual(environment["TMPDIR"], str(run.root / "cache/tmp"))
         for supplied in ({"LD_PRELOAD": "/private/canary"}, {"HOARD_TEST": "x\x00"}, {"HOARD_TEST": "x" * 16385}):
             with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):

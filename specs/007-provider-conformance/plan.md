@@ -233,6 +233,17 @@ controller phases and fresh inherited execution have not run. All 516 tooling
 tests pass with nineteen native skips. No assertion, inventory or budget is
 weakened; T046 remains unchecked and implementation remains running at 48/86.
 
+Isolated diagnostic-only timing subsequently identifies framework configuration
+watchers: host builder construction alone can consume nineteen seconds, with
+additional disposal delays. Both conformance child transports now enforce
+`DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false` using one shared fixture
+environment map. Both environment controls fail before the repair, then pass.
+The same unchanged baseline/custom binaries subsequently pass in about 150 ms
+without changing assertions or the twenty-second deadline. There is no framework
+appsettings reload scenario in these synthetic hosts; Hoard configuration,
+publication, immutable selection and explicit restart checks are not disabled.
+Fresh controller/native/profile acceptance remains a separate required gate.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled

@@ -140,8 +140,11 @@ against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and
 mixed source, owner or per-assembly inputs; failed witnesses remain failed.
 This inspection alone does not establish native/controller qualification.
-Fresh local controller re-preparation currently fails in the lifecycle-host
-journeys; the earlier 525-pass receipt is not a newer fresh execution.
+Initial fresh lifecycle preparation fails its unchanged deadline because
+framework configuration watchers consume the observation budget. Conformance
+children now disable unused framework appsettings reload; the same unmodified
+baseline/custom host binaries then pass in about 150 ms. This does not disable
+Hoard configuration/restart checks or turn the earlier receipt into a fresh run.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

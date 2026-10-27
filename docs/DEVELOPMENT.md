@@ -4976,6 +4976,19 @@ failures remain failures; neither timeouts nor assertions were weakened.
 `python3 -m unittest discover -s tests/tooling -v` passes 516 tests with nineteen
 native skips. T046 and the implementation stage remain incomplete.
 
+Subsequent isolated timing instrumentation identifies framework configuration
+watching: `WebApplication.CreateBuilder` alone can consume nineteen seconds,
+with further disposal delays. The conformance child environment now explicitly
+sets `DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false` through one shared fixture
+environment map, in both legacy transport and native owned execution. The
+unchanged baseline/custom binaries pass in roughly 150 ms with their original
+deadline and assertions; both environment regression controls first fail, then
+pass. These synthetic hosts have no framework appsettings reload scenario.
+Hoard's explicit configuration evaluation, publication, immutable active
+selection and fresh restart paths remain enabled and required. This is a
+test-harness environment setting, not a product host behavior change or a
+waiver of fresh controller/native/profile acceptance.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same
