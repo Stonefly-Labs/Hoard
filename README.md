@@ -166,6 +166,13 @@ fails. Borrowed preparation now reuses its admitted native leader's guarded
 group instead of attempting forbidden nested sessions; standalone legacy
 commands keep their independent groups. Actual outer-group exit remains
 mandatory, and the repaired native replay is not yet verified.
+Run40458672367 verifies the historical native batch and reaches CP runtime
+ingestion, then fails controller preparation with `OutputLimitExceeded`; it
+does not verify the full continuation. The next increment runs the unchanged
+BCL-only discovery reference consumer on an actual serialized fixture response,
+validates its complete fixed presentation before retaining module identities,
+and freezes its source/image/response inputs. Local six-module JSON execution
+passes; native confirmation and all other controller obligations remain open.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

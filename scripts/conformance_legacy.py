@@ -574,6 +574,66 @@ def composition_control(args, value):
     return value
 
 
+def reference_consumer_control(body, value):
+    """Verify the complete fixed-fixture presentation before retaining only module identities."""
+    bundled = "Change validated bundled configuration and explicitly restart."
+    custom = "Add the package and registration, rebuild, redeploy and explicitly restart."
+    fixture = "Fixture-tested only; not production, native-client or conformance qualification."
+    phases = {"registered", "validating", "constructing", "composing-services", "building-host", "composing-routes",
+              "initializing", "assessing-readiness", "running", "stopping", "draining", "cleaning-up", "stopped", "unknown"}
+    readiness = {"disabled", "enabled", "initializing", "ready", "not-ready", "failed", "stopping", "stopped", "unknown"}
+    dates = []
+    for key in ("capturedAt", "publishedAt", "readinessAssessedAt"):
+        stamp = body["observation"][key].removesuffix("Z").removesuffix("+00:00")
+        seconds, _, fraction = stamp.partition(".")
+        dates.append(seconds + "." + fraction.ljust(7, "0") + "+00:00")
+    expected, seen = [], set()
+    for module in body["modules"]:
+        identity = module["id"]
+        if identity not in DISCOVERY_MODULES | {"fixture.artifact.two"} or identity in seen:
+            raise ValueError()
+        seen.add(identity)
+        understood = (module["category"] in ("protocol", "metadata", "artifact", "identity")
+                      and module["inclusion"] in ("included", "unknown")
+                      and module["lifecyclePhase"] in phases and module["readiness"] in readiness
+                      and module["provenance"]["classification"] in ("fixture", "unknown")
+                      and all(role in ("metadata-authority", "artifact-authority", "identity-scheme")
+                              for role in module["selectedRoles"]))
+        included = module["inclusion"] == "included"
+        pairs = [
+            ("inclusion", "Included" if included else "Inclusion unknown"),
+            ("registration", "Registered" if module["registered"] else
+             ("Included, not registered. " if included else "Not registered. ") + custom),
+            ("enablement", "Enabled selection" if module["enabled"] else "Disabled. " + bundled),
+            ("observed readiness", module["readiness"] if understood else "Unknown/uninterpretable"),
+            ("authority phase", module["lifecyclePhase"]), *zip(("captured", "published", "assessed"), dates),
+            *((reason["code"], reason["correctiveAction"]) for reason in module["reasons"]),
+        ]
+        actions = []
+        for capability in module["capabilities"]:
+            operation = capability["operationId"]
+            pairs.extend((
+                (operation + " support", capability["support"]),
+                (operation + " evidence scope", fixture if capability["evidenceScope"] == "fixture"
+                 else capability["evidenceScope"]),
+                (operation + " availability", capability["availability"]),
+                *((operation + ": " + reason["code"], reason["correctiveAction"])
+                  for reason in capability["reasons"]),
+            ))
+            actions.append({
+                "OperationId": operation, "AccessibleName": identity + ": " + operation,
+                "Hidden": True, "Enabled": False, "Explanation": "Observation is not current; refresh before acting.",
+            })
+        expected.append({
+            "Id": identity, "ReadingOrder": [{"Order": index, "Label": identity + ": " + label, "Text": text}
+                                           for index, (label, text) in enumerate(pairs, 1)],
+            "Actions": actions,
+        })
+    if not expected or canonical_bytes(value) != canonical_bytes(expected):
+        raise ValueError()
+    return [{"Id": module["Id"]} for module in expected]
+
+
 def composition_controller_command(args, *, cwd=None, env=None, expected=None, input=None,
                                    sdk_package=None, logger_path=None):
     """Project borrowed controller diagnostics before they can become retained evidence."""
@@ -585,7 +645,19 @@ def composition_controller_command(args, *, cwd=None, env=None, expected=None, i
             raise RuntimeError("Legacy composition command PrerequisiteMissing.")
         tested = test_command(args, cwd=cwd, env=env, sdk_package=sdk_package, logger_path=logger_path)
         return subprocess.CompletedProcess(args, tested.returncode, tested.stdout.decode("utf-8", errors="strict"))
-    if not (args[0] == "git" and args[1] in ("rev-parse", "archive", "merge-base", "hash-object")
+    reference = args[0] == "dotnet" and Path(args[1]).name == "ReferenceConsumer.dll"
+    body = None
+    if reference:
+        if len(args) != 2 or expected is not None or not isinstance(input, (str, bytes)):
+            raise RuntimeError("Legacy composition command PrerequisiteMissing.")
+        try:
+            raw = input.encode("utf-8", errors="strict") if isinstance(input, str) else input
+            if len(raw) > TRANSIENT_BYTES:
+                raise ValueError()
+            body = discovery_fixture_wire(load_json(raw))
+        except (ValueError, TypeError, UnicodeError, ConformanceError):
+            raise RuntimeError("Legacy composition command UnknownDiagnostic.") from None
+    if not (reference or args[0] == "git" and args[1] in ("rev-parse", "archive", "merge-base", "hash-object")
             or args[0] == "dotnet" and (args[1] in ("restore", "build", "pack", "format", "--version")
                                        or Path(args[1]).name in COMPOSITION_MARKERS
                                        or Path(args[1]).name in COMPOSITION_JOURNEY_HOSTS
@@ -622,7 +694,8 @@ def composition_controller_command(args, *, cwd=None, env=None, expected=None, i
                 COMPOSITION_MARKERS[name], COMPOSITION_MARKERS[name] + "\n"):
             return subprocess.CompletedProcess(args, 0, text)
         if args[0] == "dotnet" and name.endswith(".dll"):
-            value = composition_control(args, load_json(result.stdout))
+            value = (reference_consumer_control(body, load_json(result.stdout)) if reference
+                     else composition_control(args, load_json(result.stdout)))
             return subprocess.CompletedProcess(args, 0, json.dumps(value, allow_nan=False))
     except (ValueError, TypeError, KeyError, UnicodeError, ConformanceError):
         raise RuntimeError("Legacy composition command UnknownDiagnostic.") from None

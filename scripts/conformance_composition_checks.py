@@ -17,7 +17,7 @@ import conformance_baselines as baselines
 import conformance_evidence as evidence
 import conformance_legacy as legacy
 from conformance_case_catalog import COMPOSITIONS, composition_snapshot_policy, composition_witnesses
-from conformance_execution import OwnedRun, capture_control, native_execution_supported
+from conformance_execution import OwnedRun, capture_control, native_execution_supported, project_event
 from conformance_inherited import (
     INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
     verify_controller_baselines,
@@ -34,6 +34,13 @@ HOST = "Hoard.Fixtures.Conformance.Host"
 SDK = "Hoard.Testing.Conformance"
 LOGGER = "Hoard.Conformance.TestLogger"
 DISCOVERY_PROJECT = "tests/fixtures/conformance/Discovery/Discovery.csproj"
+
+
+def _controller_incomplete(phase, code, lines):
+    events = [project_event(line) for line in lines]
+    print(json.dumps({"qualification": False, "phase": "inherited-preparation-incomplete",
+                      "scope": phase, "code": code,
+                      "events": [dict(event) for event in events if event["event"] == "control"]}), flush=True)
 
 
 def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_package=None, logger_path=None):
@@ -60,13 +67,20 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
         path.chmod(0o400)
     inputs = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in paths}
     arguments = [sys.executable, "-I", "-S", str(script), "--request", str(request_path), "--output", str(output_path)]
-    result = run.command(
-        arguments, cwd=source, kind="events", cache_id="inherited-" + phase, timeout=600,
-        record_execution=True, execution_inputs=tuple(inputs),
-        execution_outputs=(output_path.relative_to(run.root).as_posix(),))
+    try:
+        result = run.command(
+            arguments, cwd=source, kind="events", cache_id="inherited-" + phase, timeout=600,
+            record_execution=True, execution_inputs=tuple(inputs),
+            execution_outputs=(output_path.relative_to(run.root).as_posix(),))
+    except evidence.ConformanceError as error:
+        diagnostic = run.root / f"diagnostics/command-{run.command_sequence:04}.jsonl"
+        lines = read_bounded(diagnostic, 65536).splitlines() if diagnostic.is_file() else ()
+        _controller_incomplete(phase, str(error), lines)
+        raise
     record = evidence.load_json(run.read_execution_record(run.command_sequence))
     failures = [event["code"] for event in result.events if event["code"] != "None"]
     if failures:
+        _controller_incomplete(phase, failures[-1], [evidence.canonical_bytes(dict(event)) for event in result.events])
         raise evidence.ConformanceError(failures[-1])
     expected_events = [{"event": "control", "code": "None", "value": number}
                        for number in ((2, 3, 4, 0) if phase == "historical" else (1, 2, 3, 4, 0))]

@@ -5161,6 +5161,29 @@ group. Local conformance tooling passes 427 tests with twenty Linux-only skips;
 the actual guarded regression and complete native replay remain pending.
 No controller/profile qualification, task marker, catalog or budget changes.
 
+Run40458672367 at `c11415b` gets through the historical native wrapper and
+CP runtime ingestion, then fails the controller-preparation wrapper with
+`OutputLimitExceeded`. It is still a failed receipt. The parent now re-admits
+and exposes only its already-closed progress events on failure, so controller
+phase/error localization needs no raw child log or private exception text.
+
+The next controller increment reuses the original standalone BCL-only discovery
+consumer with an actual serialized response, not an in-process deserialization
+substitute. The complete finite presentation is independently compared before
+only module IDs are retained: missing/extra fields or lines, private text,
+foreign modules, Boolean/integer aliases and optimistic execution authority
+reject. The prepared manifest binds consumer source, image, assets, runtime
+sidecars and response bytes into the existing frozen private input closure.
+The original discovery entry point uses the same extracted execution helper.
+A direct local six-module run of the real unchanged consumer passes strict
+presentation admission, with image
+`bd676fb670f72156a7c0beca9dd79db6b2d3195abc09e246f07b396aaf1a54e0`.
+An earlier isolated fresh-home local restore safely rejects unknown diagnostics;
+that attempt is not counted as transport success. Full tooling passes 538 tests
+with twenty native skips. Native reference execution, the controller wrapper's
+output-limit cause, full controller/mutation acceptance and qualification
+remain unverified. T046 stays unchecked and implementation stays running.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

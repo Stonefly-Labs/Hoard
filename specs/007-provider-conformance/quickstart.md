@@ -20,6 +20,11 @@ The isolated-entry repair's run40457814600 still fails. Its follow-on transport
 shares the admitted native group rather than requesting a guard-prohibited new
 session; standalone legacy group ownership is unchanged. Actual Linux
 confirmation remains pending, not qualification.
+Its `c11415b` replay passes historical batch admission and reaches CP runtime
+ingestion, then fails controller preparation with `OutputLimitExceeded`.
+The next increment adds real BCL-only JSON reference-consumer execution and
+strict complete presentation admission; the local six-module component passes,
+but native execution and the other controller obligations remain unverified.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

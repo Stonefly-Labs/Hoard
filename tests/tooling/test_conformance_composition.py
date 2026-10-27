@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import textwrap
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -13,12 +13,43 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_controller_failure_exposes_only_revalidated_closed_progress(self):
+        import conformance_composition_checks as checks
+        import conformance_evidence as evidence
+        for private in (False, True):
+            with self.subTest(private=private), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                for directory in ("proofs", "diagnostics", "source/scripts"):
+                    (root / directory).mkdir(parents=True, exist_ok=True)
+                (root / "source/scripts/conformance_inherited.py").write_bytes(b"controller")
+                run = SimpleNamespace(root=root, run_id="run", root_id="root", command_sequence=0)
+
+                def fail(*args, **kwargs):
+                    run.command_sequence = 1
+                    (root / "diagnostics/command-0001.jsonl").write_bytes(
+                        b'{"event":"control","code":"None","value":2}\n'
+                        + (b"private-canary\n" if private else
+                           b'{"event":"control","code":"OutputLimitExceeded","value":0}\n'))
+                    raise evidence.ConformanceError("OutputLimitExceeded")
+
+                run.command = mock.Mock(side_effect=fail)
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output), self.assertRaises(evidence.ConformanceError):
+                    checks._controller_phase(run, ROOT, root / "source", "historical")
+                if private:
+                    self.assertEqual("", output.getvalue())
+                else:
+                    value = evidence.load_json(output.getvalue().encode())
+                    self.assertEqual("historical", value["scope"])
+                    self.assertEqual([2, 0], [event["value"] for event in value["events"]])
+                self.assertNotIn("private-canary", output.getvalue())
+
     def test_controller_phase_requires_native_parent_output_and_complete_progress(self):
         import hashlib
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
         from conformance_execution import CommandResult
-        for mutation in ("none", "changed-output", "missing-phase", "retained-process"):
+        for mutation in ("none", "changed-output", "missing-phase", "retained-process", "child-failed"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -49,6 +80,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     run.command_sequence = 1
                     events = tuple({"event": "control", "code": "None", "value": number}
                                    for number in ((2, 4, 0) if mutation == "missing-phase" else (2, 3, 4, 0)))
+                    if mutation == "child-failed":
+                        events = (*events[:2], MappingProxyType({
+                            "event": "control", "code": "OutputLimitExceeded", "value": 0}))
                     return CommandResult(0, events, 1, evidence.digest(record))
 
                 run.command = mock.Mock(side_effect=command)
@@ -58,8 +92,14 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     self.assertEqual({"seal": "bound"}, result)
                     self.assertEqual(evidence.digest(record), parent)
                 else:
-                    with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                    output = io.StringIO()
+                    with contextlib.redirect_stdout(output), self.assertRaisesRegex(
+                            evidence.ConformanceError, "OutputLimitExceeded" if mutation == "child-failed"
+                            else "ProofMismatch"):
                         checks._controller_phase(run, ROOT, source, "historical")
+                    if mutation == "child-failed":
+                        self.assertEqual([2, 3, 0], [event["value"] for event in
+                                                   evidence.load_json(output.getvalue().encode())["events"]])
 
     def test_workflow_checks_retained_historical_seal_after_stores_are_released(self):
         import hashlib

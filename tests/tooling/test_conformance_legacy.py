@@ -56,6 +56,60 @@ assert legacy._borrowed_group() is None
             with legacy.native_preparation_group({"groups": [], "children": {}}):
                 self.fail("Foreign process must not borrow a native group.")
 
+    def test_reference_consumer_requires_exact_closed_presentation_without_execution_authority(self):
+        body = {"modules": [{
+            "id": "fixture.protocol.one", "category": "protocol", "inclusion": "included",
+            "registered": True, "enabled": True, "readiness": "ready", "lifecyclePhase": "running",
+            "selectedRoles": [], "provenance": {"classification": "fixture"}, "reasons": [],
+            "capabilities": [{"operationId": "inspect", "support": "supported", "evidenceScope": "fixture",
+                              "availability": "usable", "reasons": []}],
+        }], "observation": {key: "2026-10-21T15:00:00.1234567Z"
+                           for key in ("capturedAt", "publishedAt", "readinessAssessedAt")}}
+        pairs = [
+            ("inclusion", "Included"), ("registration", "Registered"), ("enablement", "Enabled selection"),
+            ("observed readiness", "ready"), ("authority phase", "running"),
+            *[(label, "2026-10-21T15:00:00.1234567+00:00") for label in ("captured", "published", "assessed")],
+            ("inspect support", "supported"),
+            ("inspect evidence scope", "Fixture-tested only; not production, native-client or conformance qualification."),
+            ("inspect availability", "usable"),
+        ]
+        value = [{"Id": "fixture.protocol.one", "ReadingOrder": [
+            {"Order": index, "Label": "fixture.protocol.one: " + label, "Text": text}
+            for index, (label, text) in enumerate(pairs, 1)],
+                  "Actions": [{"OperationId": "inspect", "AccessibleName": "fixture.protocol.one: inspect",
+                               "Hidden": True, "Enabled": False,
+                               "Explanation": "Observation is not current; refresh before acting."}]}]
+        args = ("dotnet", "ReferenceConsumer.dll")
+        for mutation in ("none", "private-text", "missing-line", "extra-field", "foreign-module",
+                         "execution-authority", "boolean-order"):
+            altered = copy.deepcopy(value)
+            if mutation == "private-text":
+                altered[0]["ReadingOrder"][0]["Text"] = "private-canary"
+            elif mutation == "missing-line":
+                altered[0]["ReadingOrder"].pop()
+            elif mutation == "extra-field":
+                altered[0]["private"] = "private-canary"
+            elif mutation == "foreign-module":
+                altered[0]["Id"] = "private-canary"
+            elif mutation == "execution-authority":
+                altered[0]["Actions"][0]["Enabled"] = True
+            elif mutation == "boolean-order":
+                altered[0]["ReadingOrder"][0]["Order"] = True
+            with self.subTest(mutation=mutation), patch.object(
+                    legacy, "discovery_fixture_wire", return_value=body), patch.object(
+                    legacy, "capture", return_value=subprocess.CompletedProcess(args, 0, json.dumps(altered).encode())):
+                if mutation == "none":
+                    projected = legacy.composition_controller_command(args, input=json.dumps(body))
+                    self.assertEqual([{"Id": "fixture.protocol.one"}], json.loads(projected.stdout))
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "UnknownDiagnostic"):
+                        legacy.composition_controller_command(args, input=json.dumps(body))
+        for source in (None, '{"private":"private-canary"}'):
+            with self.subTest(source=source), patch.object(legacy, "capture") as capture, \
+                    self.assertRaises(RuntimeError):
+                legacy.composition_controller_command(args, input=source)
+            capture.assert_not_called()
+
     def test_control_input_is_bounded_transient_and_does_not_block_output_drain(self):
         body = "private-canary" * 10000
         result = legacy.capture(

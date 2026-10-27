@@ -56,6 +56,25 @@ remains unchecked, and all qualification flags remain false. No product,
 provider, documentation architecture/diagram, infrastructure or release
 contract changes are required.
 
+The `c11415b` replay, run40458672367, validates historical batch containment and
+reaches CP runtime ingestion, then fails controller preparation with
+`OutputLimitExceeded`; it does not establish a successful complete continuation.
+Failure reporting now re-admits only closed native progress events.
+The next increment executes the unchanged standalone JSON/BCL reference
+consumer against a real response and compares the entire finite presentation
+before projecting module IDs. Private text, omitted/extra structure, foreign
+modules, type aliases and false execution authority reject. Consumer
+source/image/assets/runtime-sidecar/response inputs join the existing frozen
+closure. The original discovery entry point reuses the extracted helper.
+Actual local six-module strict JSON execution passes, image
+`bd676fb670f72156a7c0beca9dd79db6b2d3195abc09e246f07b396aaf1a54e0`;
+an earlier fresh-home transport attempt fails safely on unknown restore output
+and is not counted green. `python3 -m unittest discover -s tests/tooling -v`
+passes 538 tests with twenty Linux-only skips. Native replay and the unresolved
+controller output-limit failure remain required. No task/qualification gate,
+assertion, catalog or budget is relaxed; product/provider/architecture diagrams,
+governance, examples, infrastructure and release behavior are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

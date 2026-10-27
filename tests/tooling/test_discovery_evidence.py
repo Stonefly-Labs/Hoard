@@ -21,6 +21,33 @@ class DiscoveryEvidenceTests(unittest.TestCase):
         SPEC.loader.exec_module(module)
         return module
 
+    def test_reference_consumer_reuses_actual_response_and_rejects_non_bcl_projects(self):
+        module = self.load()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            project = root / "tests/fixtures/discovery/ReferenceConsumer/ReferenceConsumer.csproj"
+            project.parent.mkdir(parents=True)
+            work = root / "work"
+            work.mkdir()
+            image = project.parent / "bin/Release/net10.0/ReferenceConsumer.dll"
+            image.parent.mkdir(parents=True)
+            image.write_bytes(b"reference-image")
+            body = b'{"actual":"serialized-response"}'
+            for kind in ("PackageReference", "ProjectReference", "bcl"):
+                project.write_text("<Project>" + (
+                    "" if kind == "bcl" else f'<ItemGroup><{kind} Include="unexpected"/></ItemGroup>') + "</Project>")
+                with self.subTest(kind=kind), patch.object(module, "run", return_value='[{"Id":"fixture.protocol.one"}]') as run:
+                    if kind != "bcl":
+                        with self.assertRaisesRegex(RuntimeError, "BCL-only"):
+                            module.reference_consumer(root, work, [base64.b64encode(body).decode()])
+                        run.assert_not_called()
+                    else:
+                        receipt = module.reference_consumer(root, work, [base64.b64encode(body).decode()])
+                        self.assertEqual(body.decode(), run.call_args.kwargs["input"])
+                        self.assertEqual(hashlib.sha256(body).hexdigest(), receipt["responseSha256"])
+                        self.assertEqual(hashlib.sha256(image.read_bytes()).hexdigest(), receipt["assemblySha256"])
+                        self.assertEqual(["fixture.protocol.one"], receipt["moduleIds"])
+
     def test_missing_empty_duplicate_and_stale_cases_cannot_pass(self):
         module = self.load()
         for evidence in (None, [], [{"id": "D01", "passed": True, "tests": []}],

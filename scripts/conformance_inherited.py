@@ -543,10 +543,13 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                         prepared=None if prepared_baselines is None else prepared_baselines["registration"])
                     graphs = discovery.graphs(
                         source, target, config, providers, hosts, consumers, old_provider, registration, False)
+                    reference = discovery.reference_consumer(source, target, bodies)
                     document = {"graphs": graphs, "journeys": journeys, "observations": observations,
-                                "responseBodies": bodies, "oldBinaries": retained, "packages": providers}
+                                "responseBodies": bodies, "oldBinaries": retained, "packages": providers,
+                                "referenceConsumer": reference, "referenceConsumerPassed": True}
                     summary = {"retainedBinaries": len(retained), "journeys": len(journeys),
-                               "observations": len(observations), "graphs": len(graphs)}
+                               "observations": len(observations), "graphs": len(graphs),
+                               "referenceConsumerPassed": True}
             if phase != "lifecycle":
                 manifest = target / (phase + "-evidence.json")
                 legacy._write(manifest, document)
