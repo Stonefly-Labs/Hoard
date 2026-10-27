@@ -929,6 +929,50 @@ expected incomplete exit 2. Linux confirmation remains pending. T047 remains
 unchecked; 53/86, implement/running. Product/provider contracts, examples,
 diagrams, infrastructure and governance remain unaffected.
 
+### Original composition report replay across actual cleanup
+
+The preceding publication increment is genuinely verified at exact
+`456f818651c97479076304614f93f63b70307dd5`,
+[run40601395925](https://github.com/Stonefly-Labs/Hoard/actions/runs/40601395925),
+job122533378626. The report contains 41 passed logical CP rows and nine
+incomplete QC rows, digest
+`34374d341b53f5db8f116b6139bf4119c771d6548cc367f0a401b416ba18c5fd`.
+The original CP36/110, inherited525/58, twelve negative/repair pairs,
+578 tooling tests, 41 formatters, 3,272 unchanged controller inputs and actual
+release pass. Publication is diagnostic, not final evaluation.
+
+The follow-on reader independently admits the original manifest/owner/settings,
+raw logger witnesses/proofs/completion, native command receipt and original
+immutable execution record. The writer and reader share the same strict
+execution-record validator; replay never fabricates a new command, advances
+its sequence or overwrites a receipt. Canonical physical assignments, original
+observations and logical derivations are replayed into the exact expected
+result/proof set. Completion input recomputation remains mandatory.
+
+An initial full-tooling regression exposes that actual release removes
+stores/feed/cache. Retaining those live resources or rehashing deleted inputs
+would be incorrect. The repair preserves selected image/package/lock/command
+input bytes as immutable hash-addressed evidence, with original relative
+paths/hashes in an input-bound snapshot. The original source bytes are checked
+before copying, conflicts/changes/symlinks reject and identical bytes deduplicate.
+After release the reader validates those preserved bytes against the original
+native input map and registered proof set. No universal file-read closure,
+optimistic cleanup, complete profile or qualification claim is introduced.
+
+The Linux post-release gate also mutates its actual generated report fourteen
+ways and requires each rejection without modifying original evidence.
+Local controls cover immutable command replay, receipt/record mutation despite
+rebased hashes, input retention through cleanup and changed/conflicting/escaping
+sources. These local models are not runtime-origin evidence.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence
+test_conformance_composition -q`: passed, 184 tests.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 580 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty native macOS skips,
+expected incomplete exit 2. Catalog and diff checks pass. Fresh Linux replay
+confirmation remains pending. T047/T071 stay unchecked; 53/86 implement/running.
+README/development are updated; product/provider contracts, examples, diagrams,
+infrastructure and governance are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

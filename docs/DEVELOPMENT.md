@@ -5869,6 +5869,39 @@ expected incomplete exit 2. Linux confirmation remains pending; T047 stays
 unchecked, current progress 53/86. Product/provider contracts, examples, diagrams,
 infrastructure and governance are unaffected.
 
+The publication path is now verified at exact
+`456f818651c97479076304614f93f63b70307dd5`,
+[run40601395925](https://github.com/Stonefly-Labs/Hoard/actions/runs/40601395925),
+job122533378626. The actual report has 41 passed logical CP rows and nine
+incomplete quality rows; SHA-256
+`34374d341b53f5db8f116b6139bf4119c771d6548cc367f0a401b416ba18c5fd`.
+CP36/110, inherited525/58, all original negative/repair pairs, 578 tooling
+tests, 41 formatting commands, unchanged 3,272 controller inputs and actual
+process release also pass. This does not establish final qualification.
+
+The follow-on independent diagnostic reader replays the original manifest,
+owner, settings, logger proofs/completion and native parent receipt. It rebuilds
+the exact logical result/proof set instead of trusting reported pass counts,
+and verifies measured completion inputs. Selected original runtime images,
+package archives, locks and command inputs are captured as immutable
+hash-addressed evidence before cleanup; their original relative names/hashes
+remain linked to the native input map. Stores, feed and cache are still removed.
+The copies prove those selected bytes, not universal SDK/compiler read tracing.
+Original protocol/parent records and all derivation packets are registered.
+The Linux workflow replays after release and applies fourteen mutations to the
+actual generated report, rejecting optimistic state/qualification, omitted
+results/witnesses/transport/snapshot, changed derivations/matrices/proofs and
+extra proof registrations without rewriting original runtime evidence.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence
+test_conformance_composition -q`: passed, 184 tests.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 580 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty native macOS skips,
+expected incomplete exit 2. Catalog and diff checks pass. Linux replay
+confirmation remains pending; no full-profile/qualification flag changes and
+T047/T071 remain open. Provider contracts, examples, diagrams, infrastructure
+and governance remain unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

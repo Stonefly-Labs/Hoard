@@ -3439,18 +3439,11 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
     return evidence.digest(parent)
 
 
-def category_command_proof(run, result, *, arguments, cwd, manifest, settings_data, started_ms, ended_ms):
-    record_sha = getattr(result, "execution_record_sha256", None)
-    if record_sha is None:
-        if isinstance(run, OwnedRun):
-            raise evidence.ConformanceError("OwnershipInvalid")
-        return None
-    sequence = getattr(run, "command_sequence", None)
+def _category_command_record(root, raw, *, record_sha, sequence, run_id, root_id, exit_code, arguments, cwd,
+                             started_ms, ended_ms):
     if type(sequence) is not int or not 0 < sequence <= 2**63 - 1:
         raise evidence.ConformanceError("OwnershipInvalid")
-    path = run.root / f"proofs/execution-command-{sequence:04}.json"
-    raw = (run.read_execution_record(sequence) if isinstance(run, OwnedRun)
-           else read_bounded(path, 64 * 1024))
+    path = root / f"proofs/execution-command-{sequence:04}.json"
     record = evidence.load_json(raw)
     fields = {
         "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
@@ -3467,11 +3460,10 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
             or not isinstance(record["childStartSha256"], str)
             or re.fullmatch("[0-9a-f]{64}", record["childStartSha256"]) is None
             or record["childStartSha256"] == "0" * 64
-            or type(record["exitCode"]) is not int or type(result.exit_code) is not int
-            or record["exitCode"] != result.exit_code
+            or type(record["exitCode"]) is not int or type(exit_code) is not int
+            or record["exitCode"] != exit_code
             or record["diagnosticCode"] != "None" or record["groupState"] != "Exited"
-            or record["scope"] != "ordinary" or record["runId"] != run.run_id
-            or manifest["runId"] != run.run_id or record["rootId"] != run.root_id
+            or record["scope"] != "ordinary" or record["runId"] != run_id or record["rootId"] != root_id
             or record["argvSha256"] != evidence.digest(arguments)
             or record["cwdSha256"] != hashlib.sha256(str(Path(cwd).absolute()).encode("utf-8")).hexdigest()):
         raise evidence.ConformanceError("ProofMismatch")
@@ -3493,7 +3485,61 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
                 raise evidence.ConformanceError("ProofMismatch")
     times = (started_ms, record["startedMs"], record["endedMs"], ended_ms)
     if (any(type(value) not in (int, float) or not 0 <= value <= 2**63 - 1 or not math.isfinite(value)
-            for value in times) or tuple(sorted(times)) != times or run.live_children()):
+            for value in times) or tuple(sorted(times)) != times):
+        raise evidence.ConformanceError("ProofMismatch")
+    return record
+
+
+def verify_category_command_proof(root, *, run_id, root_id, arguments, cwd, manifest, settings_data,
+                                  started_ms, ended_ms):
+    attempt = evidence._uuid(manifest["attemptId"])
+    purpose = manifest["purpose"]
+    if purpose not in ("discovery", "execution") or manifest["runId"] != run_id:
+        raise evidence.ConformanceError("ProofMismatch")
+    path = root / f"proofs/category-command-{attempt}-{purpose}.json"
+    raw = read_bounded(path, 64 * 1024)
+    receipt = evidence._runtime_json(raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "nativeContainment": evidence._constant(True),
+        "runId": evidence._constant(run_id), "rootId": evidence._constant(root_id),
+        "invocationGroupId": evidence._constant(evidence._uuid(manifest["invocationGroupId"])),
+        "attemptId": evidence._constant(attempt), "purpose": evidence._constant(purpose),
+        "commandSequence": evidence._integer,
+        "inputsSha256": evidence._constant(evidence.sha256(manifest["inputSha256"])),
+        "executionRecordSha256": evidence.sha256,
+        "manifestSha256": evidence._constant(evidence.digest(manifest)),
+        "settingsSha256": evidence._constant(hashlib.sha256(settings_data).hexdigest()),
+    }, limit=64 * 1024)
+    settings_path = root / f"proofs/settings-{attempt}.runsettings"
+    if (path.stat().st_mode & 0o777 != 0o400 or settings_path.stat().st_mode & 0o777 != 0o400
+            or read_bounded(settings_path, 256 * 1024) != settings_data):
+        raise evidence.ConformanceError("ProofMismatch")
+    sequence = receipt["commandSequence"]
+    if not 0 < sequence <= 2**63 - 1:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    record = _category_command_record(
+        root, read_bounded(root / f"proofs/execution-command-{sequence:04}.json", 64 * 1024),
+        record_sha=receipt["executionRecordSha256"], sequence=sequence, run_id=run_id, root_id=root_id,
+        exit_code=0, arguments=arguments, cwd=cwd, started_ms=started_ms, ended_ms=ended_ms)
+    return receipt, record
+
+
+def category_command_proof(run, result, *, arguments, cwd, manifest, settings_data, started_ms, ended_ms):
+    record_sha = getattr(result, "execution_record_sha256", None)
+    if record_sha is None:
+        if isinstance(run, OwnedRun):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        return None
+    sequence = getattr(run, "command_sequence", None)
+    if type(sequence) is not int or not 0 < sequence <= 2**63 - 1:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    path = run.root / f"proofs/execution-command-{sequence:04}.json"
+    raw = (run.read_execution_record(sequence) if isinstance(run, OwnedRun)
+           else read_bounded(path, 64 * 1024))
+    _category_command_record(
+        run.root, raw, record_sha=record_sha, sequence=sequence, run_id=run.run_id, root_id=run.root_id,
+        exit_code=result.exit_code, arguments=arguments, cwd=cwd, started_ms=started_ms, ended_ms=ended_ms)
+    if manifest["runId"] != run.run_id or run.live_children():
         raise evidence.ConformanceError("ProofMismatch")
     attempt = evidence._uuid(manifest["attemptId"])
     if manifest["purpose"] not in ("discovery", "execution"):

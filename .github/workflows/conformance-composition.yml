@@ -45,6 +45,7 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "scripts")
           import conformance_evidence as evidence
+          from conformance_composition_checks import verify_composition_report_controls
           from conformance_inherited import (
               BASELINE, CONTROLLER_BASELINES, verify_controller_tooling, verify_controller_invocations)
           from conformance_legacy import verify_borrowed_invocation
@@ -70,6 +71,7 @@ jobs:
           reference_observation = evidence.load_json(reference_output)
           reference_inputs = read_bounded(root / "proofs/inherited-reference-inputs.json", 2 * 1024**2)
           try:
+              verify_composition_report_controls(root, inputs, owner, summary["caseReport"])
               verify_controller_tooling(root, inherited["tooling"], inputs, owner)
               for phase, observed in (
                       ("historical", summary["historicalNativeInvocations"]),

@@ -14,6 +14,62 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_selected_runtime_input_bytes_survive_store_release_and_reject_changed_or_escaping_sources(self):
+        import hashlib
+        import shutil
+        import uuid
+        import conformance_composition_checks as checks
+        import conformance_evidence as evidence
+
+        for defect in ("none", "changed", "conflict", "symlink"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                contents = {
+                    "stores/runtime.dll": b"modeled-image", "stores/duplicate.dll": b"modeled-image",
+                    "stores/packages.lock.json": b"{}", "stores/candidate.NuGet.Config": b"<configuration/>",
+                    "feed/candidate/Modeled.Package.0.1.0.nupkg": b"modeled-package",
+                    "runtime-owner.json": b"modeled-owner"}
+                for path, data in contents.items():
+                    target = root / path
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(data)
+                hashes = {path: hashlib.sha256(data).hexdigest() for path, data in contents.items()}
+                inputs = {
+                    "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                    "runtimeAssemblies": {path: hashed for path, hashed in hashes.items() if path.endswith(".dll")},
+                    "locks": {"stores/packages.lock.json": hashes["stores/packages.lock.json"]},
+                    "packages": [{"packageId": "Modeled.Package", "version": "0.1.0",
+                                  "sha256": hashes["feed/candidate/Modeled.Package.0.1.0.nupkg"]}]}
+                record = {"inputFiles": {path: hashes[path] for path in (
+                    "runtime-owner.json", "stores/candidate.NuGet.Config", "stores/runtime.dll")}}
+                image = root / "stores/runtime.dll"
+                if defect == "changed":
+                    image.write_bytes(b"changed")
+                elif defect == "conflict":
+                    record["inputFiles"]["stores/runtime.dll"] = "0" * 64
+                elif defect == "symlink":
+                    image.unlink()
+                    image.symlink_to(root / "runtime-owner.json")
+                if defect != "none":
+                    with self.assertRaises(evidence.ConformanceError):
+                        checks._retain_composition_inputs(SimpleNamespace(root=root), inputs, record)
+                    self.assertEqual((root / "runtime-owner.json").read_bytes(), b"modeled-owner")
+                    continue
+                paths = checks._retain_composition_inputs(SimpleNamespace(root=root), inputs, record)
+                snapshot = evidence.load_json((root / paths[0]).read_bytes())
+                self.assertFalse(snapshot["qualification"])
+                self.assertEqual(snapshot["inputSha256"], evidence.digest(inputs))
+                self.assertEqual(snapshot["files"], {
+                    path: hashed for path, hashed in hashes.items() if path != "runtime-owner.json"})
+                self.assertEqual(len(paths), 5)
+                shutil.rmtree(root / "stores")
+                shutil.rmtree(root / "feed")
+                for path, hashed in snapshot["files"].items():
+                    retained = root / f"proofs/composition-runtime-inputs/{hashed}"
+                    self.assertEqual(retained.read_bytes(), contents[path])
+                    self.assertEqual(retained.stat().st_mode & 0o777, 0o400)
+
     def test_prepared_formatting_requires_exact_native_receipts_and_unchanged_closure(self):
         import hashlib
         import time
@@ -311,6 +367,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
 
     def test_workflow_checks_retained_historical_seal_after_stores_are_released(self):
         import hashlib
+        import conformance_composition_checks as composition
         import conformance_evidence as evidence
         import conformance_inherited as inherited
         workflow = (ROOT / ".github/workflows/conformance-composition.yml").read_text()
@@ -455,6 +512,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     reference["moduleCount"] = 5
                 summary = {
                     "qualification": False, "profileComplete": False, "passedComponents": 36,
+                    "caseReport": {"qualification": False, "reportState": "Incomplete"},
                     "admittedSnapshots": 110, "processResourcesReleased": True,
                     "inputSha256": evidence.digest(inputs),
                     "historicalNativeInvocations": observation_summaries["historical"],
@@ -506,12 +564,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 output = io.StringIO()
                 with mock.patch.object(sys, "argv", ["workflow", str(root), "a" * 40]), mock.patch.object(
                         evidence, "admit_entity", side_effect=lambda kind, value: value), \
+                        mock.patch.object(composition, "verify_composition_report_controls") as report_controls, \
                         contextlib.redirect_stdout(output):
                     if mutation == "none":
                         exec(code, {"__name__": "__main__"})
                         self.assertEqual({"qualification": False, "status": "Incomplete",
                                           "code": "EvidenceIncomplete"},
                                          evidence.load_json(output.getvalue().encode()))
+                        report_controls.assert_called_once_with(
+                            root, inputs, {"runId": "run", "rootId": "root"}, summary["caseReport"])
                     else:
                         with self.assertRaisesRegex(SystemExit, "WitnessMissing"):
                             exec(code, {"__name__": "__main__"})

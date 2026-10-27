@@ -756,9 +756,12 @@ class ConformanceAdmissionTests(unittest.TestCase):
                     **prototype["witnesses"][0], "executionId": execution, "testIdentity": identity,
                     "matrixId": matrix, "proofSha256": hashed})
             observed = {"witnesses": witnesses, "proofs": proofs}
+            transport_path = "proofs/modeled-transport.json"
+            transport = evidence.canonical_bytes({"model": "transport-registration"})
+            (root / transport_path).write_bytes(transport)
             result = composition._composition_case_report(
                 SimpleNamespace(root=root), inputs, inputs, observed, runtime_directory="runtime-model",
-                started_ms=0, ended_ms=1)
+                started_ms=0, ended_ms=1, transport_paths=(transport_path,))
             path = root / "proofs/composition-runtime-report.json"
             report = evidence.admit_entity("QualificationReport", evidence.load_json(path.read_bytes()))
             self.assertEqual(result["reportSha256"], evidence.file_sha256(path))
@@ -769,7 +772,12 @@ class ConformanceAdmissionTests(unittest.TestCase):
             self.assertTrue(all(row["status"] == ("Passed" if row["caseId"].startswith("CP-") else "Incomplete")
                                 for row in report["results"]))
             self.assertEqual(dict(evidence.input_manifest(root, list(report["proofs"]))), report["proofs"])
+            self.assertEqual(report["proofs"][transport_path], hashlib.sha256(transport).hexdigest())
             evidence.verify_completion_inputs(root, report)
+            owner = {"runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+                     "rootPathSha256": hashlib.sha256(str(root).encode()).hexdigest()}
+            with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                composition.verify_composition_case_report(root, inputs, owner)
             path = root / f'runtime-model/proof-{witnesses[0]["executionId"]}.json'
             path.chmod(0o600)
             path.write_bytes(b"changed")
@@ -836,6 +844,85 @@ class ConformanceAdmissionTests(unittest.TestCase):
         self.assertEqual(inventory["baselineRevision"], "9389016c0285c79f6f515f59805a5a41c69b0767")
         self.assertEqual(set(inventory["historicalBaselines"].values()),
                          {revision for _, revision, _, _ in baselines.BASELINES})
+
+
+class ConformanceCommandProofReplayTests(unittest.TestCase):
+    def test_modeled_native_command_receipt_replays_without_rewriting_original_files(self):
+        import conformance_sdk_checks as checks
+        from types import SimpleNamespace
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            run_id, group, attempt = (str(uuid.uuid4()) for _ in range(3))
+            arguments = ["dotnet", "modeled-test.dll"]
+            settings_data = b"<RunSettings/>"
+            manifest = {
+                "runId": run_id, "invocationGroupId": group, "attemptId": attempt,
+                "purpose": "execution", "inputSha256": "a" * 64}
+            record = {
+                "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
+                "startedMs": 1, "endedMs": 2, "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited",
+                "scope": "ordinary", "runId": run_id, "rootId": "modeled-root",
+                "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(root).encode()).hexdigest(),
+                "inputFiles": {"proofs/input.json": "c" * 64}}
+            record_path = root / "proofs/execution-command-0001.json"
+            settings_path = root / f"proofs/settings-{attempt}.runsettings"
+            receipt_path = root / f"proofs/category-command-{attempt}-execution.json"
+
+            def write(path, data):
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(data)
+                path.chmod(0o400)
+
+            record_data = evidence.canonical_bytes(record)
+            write(record_path, record_data)
+            write(settings_path, settings_data)
+            run = SimpleNamespace(
+                root=root, run_id=run_id, root_id="modeled-root", command_sequence=1,
+                live_children=lambda: (), read_execution_record=lambda sequence: record_data)
+            with mock.patch.object(checks, "OwnedRun", SimpleNamespace):
+                hashed = checks.category_command_proof(
+                    run, SimpleNamespace(exit_code=0, execution_record_sha256=hashlib.sha256(record_data).hexdigest()),
+                    arguments=arguments, cwd=root, manifest=manifest, settings_data=settings_data,
+                    started_ms=0, ended_ms=3)
+            receipt = evidence.load_json(receipt_path.read_bytes())
+            self.assertEqual(hashed, evidence.digest(receipt))
+
+            def replay():
+                return checks.verify_category_command_proof(
+                    root, run_id=run_id, root_id="modeled-root", arguments=arguments, cwd=root,
+                    manifest=manifest, settings_data=settings_data, started_ms=0, ended_ms=3)
+
+            original = {path.name: path.read_bytes() for path in (root / "proofs").iterdir()}
+            self.assertEqual(replay(), (receipt, record))
+            self.assertEqual({path.name: path.read_bytes() for path in (root / "proofs").iterdir()}, original)
+            for field, value in (
+                    ("nativeContainment", False), ("qualification", True), ("commandSequence", 0),
+                    ("manifestSha256", "d" * 64), ("settingsSha256", "d" * 64), ("unknown", "canary")):
+                write(receipt_path, evidence.canonical_bytes({**receipt, field: value}))
+                with self.subTest(receipt=field), self.assertRaises(evidence.ConformanceError):
+                    replay()
+            for field, value in (
+                    ("argvSha256", "d" * 64), ("cwdSha256", "d" * 64), ("rootId", "foreign"),
+                    ("childStartSha256", "0" * 64), ("groupState", "Active"), ("exitCode", False),
+                    ("startedMs", -1), ("endedMs", 4), ("unknown", "canary")):
+                changed = evidence.canonical_bytes({**record, field: value})
+                write(record_path, changed)
+                write(receipt_path, evidence.canonical_bytes({
+                    **receipt, "executionRecordSha256": hashlib.sha256(changed).hexdigest()}))
+                with self.subTest(record=field), self.assertRaises(evidence.ConformanceError):
+                    replay()
+            write(record_path, record_data)
+            write(receipt_path, evidence.canonical_bytes(receipt))
+            for path in (record_path, receipt_path, settings_path):
+                path.chmod(0o600)
+                with self.subTest(mutable=path.name), self.assertRaises(evidence.ConformanceError):
+                    replay()
+                path.chmod(0o400)
+            self.assertEqual(replay(), (receipt, record))
 
 
 class ConformanceInputTests(unittest.TestCase):

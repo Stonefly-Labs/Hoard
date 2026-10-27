@@ -25,7 +25,9 @@ from conformance_inherited import (
 )
 from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 from conformance_prepare import PREREQUISITES, Project, build_project
-from conformance_sdk_checks import BUDGETS, category_command_proof, environment, write_new
+from conformance_sdk_checks import (
+    BUDGETS, category_command_proof, environment, verify_category_command_proof, write_new,
+)
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
 
 
@@ -578,8 +580,230 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     }
 
 
+def _composition_settings(root, assembly, attempt, manifest, owner):
+    context = base64.b64encode(evidence.canonical_bytes({
+        "schemaVersion": 1, "runId": manifest["runId"],
+        "cases": {row["testIdentity"]: {"bindingId": "none", "caseId": row["caseId"]}
+                  for row in expected_rows()},
+    })).decode("ascii")
+    return runtime_settings(
+        root, assembly, attempt, evidence.digest(manifest), evidence.digest(owner),
+        "<EnvironmentVariables><HOARD_ORIGINAL_CONTEXT>" + context
+        + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
+
+
+def _composition_input_files(inputs, record):
+    files = {}
+    for selected in (
+            inputs["runtimeAssemblies"], inputs["locks"], record["inputFiles"],
+            {f"feed/candidate/{row['packageId']}.{row['version']}.nupkg": row["sha256"]
+             for row in inputs["packages"]}):
+        for path, hashed in selected.items():
+            path, hashed = evidence.relative_path(path), evidence.sha256(hashed)
+            if path in files and files[path] != hashed:
+                raise evidence.ConformanceError("InputChanged")
+            files[path] = hashed
+    return files
+
+
+def _retain_composition_inputs(run, inputs, record):
+    files = _composition_input_files(inputs, record)
+    if dict(evidence.input_manifest(run.root, list(files))) != files:
+        raise evidence.ConformanceError("InputChanged")
+    selected = {path: hashed for path, hashed in files.items() if path.startswith(("stores/", "feed/", "cache/"))}
+    directory = run.root / "proofs/composition-runtime-inputs"
+    directory.mkdir(mode=0o700)
+    paths = []
+    for hashed, path in {hashed: path for path, hashed in selected.items()}.items():
+        target = directory / hashed
+        data = read_bounded(run.root / path, 32 * 1024**2)
+        if hashlib.sha256(data).hexdigest() != hashed:
+            raise evidence.ConformanceError("InputChanged")
+        write_new(target, data)
+        paths.append(target.relative_to(run.root).as_posix())
+    snapshot = "proofs/composition-runtime-input-snapshot.json"
+    write_new(run.root / snapshot, evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "scope": "composition-runtime-selected-inputs",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "inputSha256": evidence.digest(inputs), "files": selected}))
+    return (snapshot, *paths)
+
+
+def verify_composition_case_report(root, inputs, owner, *, report_data=None):
+    report_path = root / "proofs/composition-runtime-report.json"
+    raw = read_bounded(report_path, 16 * 1024**2) if report_data is None else report_data
+    report = evidence.admit_entity("QualificationReport", evidence.load_json(raw))
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    if (report["inputs"] != inputs or inputs["profileId"] != "composition" or inputs["mode"] != "diagnostic"
+            or report["state"] != "Incomplete" or report["qualification"] is not False
+            or tuple(report["scope"]) != ("composition-runtime-diagnostic",)
+            or owner["runId"] != inputs["runId"] or owner["invocationGroupId"] != inputs["invocationGroupId"]
+            or owner["rootPathSha256"] != hashlib.sha256(str(root).encode()).hexdigest()):
+        raise evidence.ConformanceError("ProofMismatch")
+    if dict(evidence.input_manifest(root, list(report["proofs"]))) != report["proofs"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    manifests = [path for path in report["proofs"] if re.fullmatch(r"runtime-input-[0-9a-f-]{36}\.json", path)]
+    if len(manifests) != 1:
+        raise evidence.ConformanceError("WitnessMissing")
+    manifest_path, = manifests
+    manifest_data = read_bounded(root / manifest_path, 2 * 1024**2)
+    manifest = evidence.load_json(manifest_data)
+    attempt = evidence._uuid(manifest["attemptId"])
+    runtime_directory = f"runtime-{attempt}"
+    settings_path = f"proofs/settings-{attempt}.runsettings"
+    command_path = f"proofs/category-command-{attempt}-execution.json"
+    owner_data = read_bounded(root / "runtime-owner.json", 65536)
+    if (evidence.load_json(owner_data) != owner or manifest_path != f"runtime-input-{attempt}.json"
+            or manifest["runInputsPath"] != "proofs/composition-inputs.json"
+            or manifest["attemptSequence"] != 1 or manifest["purpose"] != "execution"
+            or manifest["expected"] != expected_rows()):
+        raise evidence.ConformanceError("ProofMismatch")
+    cases = expected_cases("composition")
+    results = {row["caseId"] + "/" + row["matrixId"]: row for row in report["results"]}
+    if (len(results) != len(cases) or set(results) != {case.case_id + "/" + case.matrix_id for case in cases}
+            or any(len(row["attempts"]) != 1 for row in results.values())):
+        raise evidence.ConformanceError("WitnessMissing")
+    first = report["results"][0]["attempts"][0]
+    started_ms, ended_ms = first["startedMs"], first["endedMs"]
+    staged = root / "stores/composition-runtime"
+    assembly = staged / "Hoard.Composition.Tests.dll"
+    settings = _composition_settings(root, assembly, attempt, manifest, owner)
+    receipt, record = verify_category_command_proof(
+        root, run_id=inputs["runId"], root_id=owner["rootId"], manifest=manifest,
+        arguments=runtime_arguments(assembly, root / settings_path,
+                                    [row["testIdentity"] for row in expected_rows()]),
+        cwd=staged, settings_data=settings, started_ms=started_ms, ended_ms=ended_ms)
+    required = {
+        manifest_path, "runtime-owner.json", "proofs/composition-inputs.json", settings_path, command_path,
+        f"proofs/execution-command-{receipt['commandSequence']:04}.json",
+        runtime_directory + "/witnesses.jsonl", runtime_directory + "/completion.json",
+        "proofs/category-composition-diagnostic-completion-inputs.json",
+    }
+    if not required <= report["proofs"].keys() or not isinstance(record.get("inputFiles"), dict):
+        raise evidence.ConformanceError("WitnessMissing")
+    config = "stores/candidate.NuGet.Config"
+    bound_paths = {
+        manifest_path, "proofs/composition-inputs.json", "runtime-owner.json", settings_path,
+        "proofs/environment-admission.json", "proofs/composition-environment-admission.json", config,
+        *(path.relative_to(root).as_posix() for path in (
+            assembly, staged / f"{HOST}.dll", staged / f"{SDK}.dll", staged / f"{LOGGER}.dll",
+            staged / "Hoard.Composition.Tests.deps.json", staged / "Hoard.Composition.Tests.runtimeconfig.json")),
+    }
+    if (set(record["inputFiles"]) != bound_paths
+            or evidence.load_json(read_bounded(root / "proofs/composition-inputs.json", 2 * 1024**2)) != inputs):
+        raise evidence.ConformanceError("ProofMismatch")
+    files = _composition_input_files(inputs, record)
+    selected = {path: hashed for path, hashed in files.items() if path.startswith(("stores/", "feed/", "cache/"))}
+    snapshot_path = "proofs/composition-runtime-input-snapshot.json"
+    snapshot = evidence._runtime_json(read_bounded(root / snapshot_path, 2 * 1024**2), {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "scope": evidence._constant("composition-runtime-selected-inputs"),
+        "runId": evidence._constant(inputs["runId"]),
+        "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
+        "inputSha256": evidence._constant(evidence.digest(inputs)), "files": evidence._hash_map,
+    }, limit=2 * 1024**2)
+    retained = {path: hashed for path, hashed in files.items() if path not in selected}
+    retained.update({f"proofs/composition-runtime-inputs/{hashed}": hashed for hashed in selected.values()})
+    if (snapshot["files"] != selected or snapshot_path not in report["proofs"]
+            or any(report["proofs"].get(path) != hashed for path, hashed in retained.items())
+            or any((root / path).stat().st_mode & 0o777 != 0o400 for path in retained)
+            or selected.get(config) != inputs["configurationSha256"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    observed = evidence.ingest_runtime_attempt(
+        inputs=inputs, manifest_data=manifest_data, owner_data=owner_data,
+        witnesses_data=read_bounded(root / runtime_directory / "witnesses.jsonl", 1024 * 1024),
+        completion_data=read_bounded(root / runtime_directory / "completion.json", 64 * 1024),
+        proofs={path.name: read_bounded(path, 64 * 1024)
+                for path in (root / runtime_directory).glob("proof-*.json")},
+        expected_tests={row["testIdentity"]: ("none", row["matrixId"]) for row in expected_rows()},
+        manifest_sha256=hashlib.sha256(manifest_data).hexdigest(),
+        owner_sha256=hashlib.sha256(owner_data).hexdigest(),
+        started_ms=record["startedMs"], ended_ms=record["endedMs"],
+        original_inputs={"none": {row["testIdentity"]: {
+            "owner": ((staged / f"{HOST}.dll").relative_to(root).as_posix(), HOST)}
+            for row in expected_rows()}},
+    )
+    if (observed["diagnosticCode"] != "None" or tuple(report["witnesses"]) != observed["witnesses"]
+            or any(report["proofs"].get(runtime_directory + "/" + path) != hashed
+                   for path, hashed in observed["proofs"].items())):
+        raise evidence.ConformanceError("ProofMismatch")
+    registered = set(retained) | required | {snapshot_path}
+    registered.update(runtime_directory + "/" + path for path in observed["proofs"])
+    selected = {row["testIdentity"]: row for row in observed["witnesses"]}
+    for case in cases:
+        if case.witnesses:
+            material = evidence.composition_case_material(
+                inputs, case_id=case.case_id, matrix_id=case.matrix_id,
+                witnesses=[selected[identity] for identity in case.witnesses],
+                sequence=1, started_ms=started_ms, ended_ms=ended_ms)
+            expected = evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]])
+            if any(report["proofs"].get(path) != hashlib.sha256(data).hexdigest()
+                   or read_bounded(root / path, 512 * 1024) != data
+                   for path, data in material["sourceProofs"].items()):
+                raise evidence.ConformanceError("ProofMismatch")
+            registered.update(material["sourceProofs"])
+        else:
+            expected = evidence._catalog_case_result(inputs, case, "Incomplete", [{
+                "sequence": 1, "startedMs": started_ms, "endedMs": ended_ms, "status": "Incomplete",
+                "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"}])
+        if results[case.case_id + "/" + case.matrix_id] != expected:
+            raise evidence.ConformanceError("ProofMismatch")
+    if report["proofs"].keys() != registered:
+        raise evidence.ConformanceError("ProofMismatch")
+    evidence.verify_completion_inputs(root, report)
+    return {
+        "qualification": False, "reportState": "Incomplete", "reportSha256": hashlib.sha256(raw).hexdigest(),
+        "passedCases": sum(bool(case.witnesses) for case in cases),
+        "incompleteCases": sum(not case.witnesses for case in cases),
+    }
+
+
+def verify_composition_report_controls(root, inputs, owner, summary):
+    if verify_composition_case_report(root, inputs, owner) != summary:
+        raise evidence.ConformanceError("ProofMismatch")
+    report = evidence.load_json(read_bounded(root / "proofs/composition-runtime-report.json", 16 * 1024**2))
+    mutations = []
+    for field, value in (("qualification", True), ("state", "Complete")):
+        changed = evidence.load_json(evidence.canonical_bytes(report))
+        changed[field] = value
+        mutations.append(changed)
+    for collection in ("results", "witnesses"):
+        changed = evidence.load_json(evidence.canonical_bytes(report))
+        changed[collection].pop(0)
+        mutations.append(changed)
+    for prefix in ("runtime-input-", "runtime-owner.json", "proofs/settings-",
+                   "proofs/category-command-", "proofs/execution-command-",
+                   "proofs/composition-runtime-input-snapshot.json"):
+        changed = evidence.load_json(evidence.canonical_bytes(report))
+        key, = (key for key in changed["proofs"] if key.startswith(prefix))
+        del changed["proofs"][key]
+        mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    derivation = next(key for key in changed["proofs"] if re.fullmatch(r"proofs/composition-CP-.*", key))
+    changed["proofs"][derivation] = "0" * 64
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["results"][0]["matrixId"] = "foreign"
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["witnesses"][0]["proofSha256"] = "0" * 64
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["proofs"]["proofs/composition-runtime-report.json"] = evidence.file_sha256(
+        root / "proofs/composition-runtime-report.json")
+    mutations.append(changed)
+    for changed in mutations:
+        try:
+            verify_composition_case_report(root, inputs, owner, report_data=evidence.canonical_bytes(changed))
+        except evidence.ConformanceError:
+            continue
+        raise evidence.ConformanceError("ProofMismatch")
+    if len(mutations) != 14:
+        raise evidence.ConformanceError("WitnessMissing")
+
+
 def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_directory, started_ms, ended_ms,
-                             resources=()):
+                             resources=(), transport_paths=()):
     inputs = evidence.admit_entity("RunInputs", inputs)
     post_inputs = evidence.admit_entity("RunInputs", post_inputs)
     evidence.verify_input_recomputation(inputs, post_inputs)
@@ -594,6 +818,8 @@ def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_dire
         raise evidence.ConformanceError("WitnessMissing")
     proofs = {runtime_directory + "/" + evidence.relative_path(path): evidence.sha256(hashed)
               for path, hashed in observed["proofs"].items()}
+    if transport_paths:
+        proofs.update(evidence.input_manifest(run.root, list(transport_paths)))
     if dict(evidence.input_manifest(run.root, list(proofs))) != proofs:
         raise evidence.ConformanceError("ProofMismatch")
     results = []
@@ -700,14 +926,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
     }
     manifest_path = run.root / f"runtime-input-{attempt}.json"
     write_new(manifest_path, evidence.canonical_bytes(manifest))
-    context = base64.b64encode(evidence.canonical_bytes({
-        "schemaVersion": 1, "runId": run.run_id,
-        "cases": {row["testIdentity"]: {"bindingId": "none", "caseId": row["caseId"]} for row in expected},
-    })).decode("ascii")
-    settings_data = runtime_settings(
-        run.root, assembly, attempt, evidence.digest(manifest), evidence.digest(owner),
-        "<EnvironmentVariables><HOARD_ORIGINAL_CONTEXT>" + context
-        + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
+    settings_data = _composition_settings(run.root, assembly, attempt, manifest, owner)
     settings_path = run.root / f"proofs/settings-{attempt}.runsettings"
     write_new(settings_path, settings_data)
     bound_paths = (
@@ -776,9 +995,19 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
         "configurationSha256": evidence.file_sha256(config),
         "environment": post_environment, "environmentSha256": evidence.digest(post_environment),
     })
+    retained_inputs = _retain_composition_inputs(run, inputs, record)
     case_report = _composition_case_report(
         run, inputs, post_inputs, admitted, runtime_directory=output.relative_to(run.root).as_posix(),
-        started_ms=started, ended_ms=ended, resources=run.resource_projection())
+        started_ms=started, ended_ms=ended, resources=run.resource_projection(),
+        transport_paths=(
+            *retained_inputs, *(path for path in command_inputs
+                                if not path.startswith(("stores/", "feed/", "cache/"))),
+            f"proofs/category-command-{attempt}-execution.json",
+            f"proofs/execution-command-{record['sequence']:04}.json",
+            output.relative_to(run.root).as_posix() + "/witnesses.jsonl",
+            output.relative_to(run.root).as_posix() + "/completion.json"))
+    if verify_composition_case_report(run.root, inputs, owner) != case_report:
+        raise evidence.ConformanceError("ProofMismatch")
     return {
         "schemaVersion": 1, "qualification": False, "nativeContainment": True, "profileComplete": False,
         "safeRuntimeAdmission": True, "runId": run.run_id, "attemptId": attempt,

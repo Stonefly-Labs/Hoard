@@ -432,6 +432,20 @@ the nine not-yet-evaluated quality obligations stay `Incomplete`, never passed
 by inference. Local safe tooling observes 578 tests without failures/errors or
 unexpected diagnostic bytes, with twenty native skips. Linux confirmation of
 this report-publication increment remains pending; T047 remains unchecked.
+That publication is now confirmed at exact `456f818`,
+[run40601395925](https://github.com/Stonefly-Labs/Hoard/actions/runs/40601395925),
+job122533378626: 41 logical CP rows pass, nine quality rows stay `Incomplete`,
+and the existing CP36/110, inherited525/58 and 578-tooling-test continuation
+passes with actual process release. The report remains nonqualifying.
+The next increment independently replays the original logger transport,
+native command receipt, exact logical derivations and completion inputs.
+Hash-addressed immutable copies preserve selected runtime images, packages,
+locks and command inputs after owned stores/feed/cache cleanup; this is not
+universal file-read tracing. Fourteen generated-report rejection controls are
+wired into the post-release Linux check. Local focused checks pass 184 tests;
+full safe tooling observes 580 tests, zero failures/errors/unexpected bytes and
+twenty explicit native macOS skips (expected incomplete exit 2). Linux
+confirmation of this replay increment remains pending; T047/T071 stay open.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.
