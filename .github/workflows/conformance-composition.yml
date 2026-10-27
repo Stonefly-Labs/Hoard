@@ -45,7 +45,7 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "scripts")
           import conformance_evidence as evidence
-          from conformance_inherited import BASELINE, CONTROLLER_BASELINES
+          from conformance_inherited import BASELINE, CONTROLLER_BASELINES, verify_controller_tooling
           from conformance_sources import read_bounded
           root = Path(sys.argv[1])
           summary = evidence.load_json(read_bounded(root / "proofs/composition-diagnostic-summary.json", 65536))
@@ -57,6 +57,10 @@ jobs:
           inherited = summary["inheritedRuntime"]
           mutations = inherited["discoveryMutations"]
           scenarios = inherited["discoveryScenarios"]
+          try:
+              verify_controller_tooling(root, inherited["tooling"], inputs, owner)
+          except evidence.ConformanceError:
+              raise SystemExit("WitnessMissing") from None
           if (summary["qualification"] is not False or summary["profileComplete"] is not False
                   or summary["passedComponents"] != 36 or summary["admittedSnapshots"] != 110
                   or summary["processResourcesReleased"] is not True

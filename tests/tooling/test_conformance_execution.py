@@ -137,6 +137,31 @@ class ConformanceExecutionTests(unittest.TestCase):
                     self.assertEqual(len("private-canary\n") if outcome == "output" else 0,
                                      packet["unexpectedDiagnosticBytes"])
 
+    def test_projected_tooling_observes_every_declared_test_not_only_success_totals(self):
+        import conformance_unit_checks as checks
+
+        class First(unittest.TestCase):
+            def runTest(self):
+                pass
+
+        class Second(unittest.TestCase):
+            def runTest(self):
+                pass
+
+        class OmittingSuite(unittest.TestSuite):
+            def run(self, result, debug=False):
+                self._tests[0](result)
+                return result
+
+        for mode in ("complete", "omitted", "deadline"):
+            suite = (OmittingSuite if mode == "omitted" else unittest.TestSuite)([First(), Second()])
+            with self.subTest(mode=mode), mock.patch.object(
+                    unittest.defaultTestLoader, "discover", return_value=suite):
+                packet = checks.run_checks(all_tooling=True, deadline=0 if mode == "deadline" else None)
+                self.assertEqual(2, len(packet["expectedTests"]))
+                self.assertEqual(2 if mode == "complete" else 1, len(packet["observedTests"]))
+                self.assertEqual("None" if mode == "complete" else "EvidenceIncomplete", packet["code"])
+
     def test_rejects_existing_foreign_symlink_and_nonprivate_roots(self):
         sentinel = self.parent / "sentinel"
         sentinel.mkdir()

@@ -5348,6 +5348,36 @@ GUIDs, duplicate parameters, and omitted adapter/suite summaries reject in
 focused red/green controls. This is diagnostic provenance, not native or
 full-controller qualification; Linux confirmation remains pending.
 
+Native `750e4d9`, run40480747075/job122110128501, reaches mutation admission but
+fails `InputChanged` at the original-source comparison before any negative.
+Reusing the prepared build tree as an original snapshot is invalid: that tree
+also admits explicit package-acceptance lock derivations. Mutation execution
+now receives a separately created immutable snapshot from the same verified
+repository manifest, with only the actual compiled discovery driver staged
+under its excluded build output. Descriptor-relative creation, no-follow reads,
+original byte hashes and pre/post repository agreement are unchanged. A new
+control first exposes the missing independent snapshot, then verifies that
+prepared changes neither enter the new snapshot nor become accepted originals.
+The failed native receipt remains failed; repaired native execution is pending.
+
+Complete tooling runs in the trusted owning supervisor, where its native
+executor regressions can allocate their own independently owned groups. It
+never runs inside a provider child or gains an exception to the provider's
+session/group escape ban. The shared safe runner records the complete declared
+and actually started test inventories, bounded diagnostic counts and per-test
+safe failure locations; cooperative scheduling stops after the current bounded
+test at its deadline. Source bytes are compared before/after, tracked test-module
+coverage is exact, and missing/duplicate tests, skips, expected failures,
+unexpected successes or output cannot pass. A retained input/run/root-bound
+proof is independently re-admitted by the workflow after store release.
+Its explicit `trusted-tooling-supervisor` role and `nativeContainment=false`
+prevent it from being mistaken for native provider execution. This does not
+advance full-controller/profile qualification or T046. Public provider
+contracts, examples, diagrams, governance and infrastructure are unaffected.
+Actual local supervisor replay observes all 557 declared/started tests, zero
+failures/errors/unexpected diagnostic bytes and twenty native skips; the
+result is correctly `EvidenceIncomplete`, not passing tooling acceptance.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

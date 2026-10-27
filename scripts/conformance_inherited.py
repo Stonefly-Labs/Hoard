@@ -508,6 +508,105 @@ def execution_scopes(discoveries, methods):
     return {key: tuple(rows) for key, rows in sorted(scopes.items())}
 
 
+def _admit_tooling_result(packet, sources):
+    fields = {"mode", "scope", "qualification", "code", "tests", "failures", "errors", "skipped", "failedTests",
+              "expectedFailures", "unexpectedSuccesses", "unexpectedDiagnosticBytes", "freeScratchBytes",
+              "expectedTests", "observedTests"}
+    if not isinstance(packet, dict) or set(packet) != fields:
+        raise ConformanceError("WitnessMissing")
+    modules = {Path(path).stem for path in sources
+               if Path(path).parent.as_posix() == "tests/tooling"
+               and Path(path).name.startswith("test_") and Path(path).suffix == ".py"}
+    expected, observed = packet["expectedTests"], packet["observedTests"]
+    counts = ("failures", "errors", "skipped", "expectedFailures", "unexpectedSuccesses", "unexpectedDiagnosticBytes")
+    if (packet["mode"] != "diagnostic" or packet["scope"] != "tooling" or packet["qualification"] is not False
+            or not isinstance(packet["code"], str) or packet["code"] not in DIAGNOSTIC_CODES
+            or not isinstance(expected, list) or not 1 <= len(expected) <= 10000
+            or any(not isinstance(identity, str) or len(identity) > 512
+                   or re.fullmatch(r"[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+", identity) is None
+                   for identity in expected)
+            or len(expected) != len(set(expected)) or {identity.split(".")[0] for identity in expected} != modules
+            or not isinstance(observed, list) or any(identity not in expected for identity in observed)
+            or len(observed) != len(set(observed))
+            or type(packet["tests"]) is not int or packet["tests"] != len(observed)
+            or any(type(packet[key]) is not int or not 0 <= packet[key] <= 2**63 - 1
+                   for key in (*counts, "freeScratchBytes"))):
+        raise ConformanceError("WitnessMissing")
+    if packet["code"] == "None" and (
+            expected != observed or packet["failedTests"] != [] or any(packet[key] != 0 for key in counts)):
+        raise ConformanceError("EvidenceIncomplete")
+
+
+def verify_controller_tooling(root, summary, inputs, owner):
+    import conformance_legacy as legacy
+    from conformance_evidence import _number
+    from conformance_sources import read_bounded
+
+    path = Path(root) / "proofs/inherited-controller-tooling.json"
+    legacy.no_symlinks(path)
+    raw = read_bounded(path, 2 * 1024**2)
+    document = load_json(raw)
+    if (not isinstance(summary, dict) or set(summary) != {
+            "qualification", "nativeContainment", "role", "sha256", "tests", "sourceManifestSha256"}
+            or not isinstance(document, dict) or set(document) != {
+                "schemaVersion", "qualification", "nativeContainment", "role", "runId", "rootId",
+                "sourceManifestSha256", "startedMs", "endedMs", "result"}
+            or type(document["schemaVersion"]) is not int or document["schemaVersion"] != 1
+            or not isinstance(document["result"], dict)
+            or any(value["qualification"] is not False or value["nativeContainment"] is not False
+                   or value["role"] != "trusted-tooling-supervisor" for value in (summary, document))
+            or summary["sha256"] != hashlib.sha256(raw).hexdigest()
+            or document["runId"] != inputs["runId"] or document["rootId"] != owner["rootId"]
+            or any(value["sourceManifestSha256"] != inputs["sourceManifestSha256"] for value in (summary, document))
+            or inputs["sourceManifestSha256"] != digest(inputs["sourceManifest"])
+            or type(summary["tests"]) is not int
+            or not 0 <= _number(document["endedMs"]) - _number(document["startedMs"]) <= 600000):
+        raise ConformanceError("ProofMismatch")
+    _admit_tooling_result(document["result"], inputs["sourceManifest"])
+    if document["result"]["code"] != "None" or summary["tests"] != document["result"]["tests"]:
+        raise ConformanceError("EvidenceIncomplete")
+
+
+def run_controller_tooling(repository, run, sources):
+    """Run trusted harness regressions in their owning supervisor, not a provider child."""
+    import time
+    import conformance_legacy as legacy
+    import conformance_unit_checks as checks
+    from conformance_evidence import source_manifest
+
+    if (Path(checks.__file__).resolve().parents[1] != Path(repository).resolve()
+            or run.state != "Active" or legacy._borrowed_group() is not None or run.live_children()):
+        raise ConformanceError("OwnershipInvalid")
+    if dict(source_manifest(repository)) != dict(sources):
+        raise ConformanceError("InputChanged")
+    started = time.monotonic()
+    deadline = min(run.deadline, started + 600)
+    if started >= deadline:
+        raise ConformanceError("DeadlineExceeded")
+    packet = checks.run_checks(all_tooling=True, deadline=deadline)
+    ended = time.monotonic()
+    if dict(source_manifest(repository)) != dict(sources):
+        raise ConformanceError("InputChanged")
+    if run.live_children():
+        raise ConformanceError("CleanupIncomplete")
+    _admit_tooling_result(packet, sources)
+    if packet["code"] == "None" and ended >= deadline:
+        raise ConformanceError("EvidenceIncomplete")
+    document = {
+        "schemaVersion": 1, "qualification": False, "nativeContainment": False,
+        "role": "trusted-tooling-supervisor", "runId": run.run_id, "rootId": run.root_id,
+        "sourceManifestSha256": digest(sources), "startedMs": started * 1000, "endedMs": ended * 1000,
+        "result": packet,
+    }
+    path = run.root / "proofs/inherited-controller-tooling.json"
+    legacy._write(path, document)
+    path.chmod(0o400)
+    if packet["code"] != "None":
+        raise ConformanceError(packet["code"])
+    return {"qualification": False, "nativeContainment": False, "role": "trusted-tooling-supervisor",
+            "sha256": legacy._hash(path), "tests": packet["tests"], "sourceManifestSha256": digest(sources)}
+
+
 CONTROLLER_BASELINES = "proofs/inherited-controller-baselines.json"
 
 

@@ -281,12 +281,32 @@ class CompositionDiagnosticTests(unittest.TestCase):
         code = compile(textwrap.dedent(script), "<composition-workflow>", "exec")
         for mutation in ("none", "changed-bytes", "resealed-foreign-root", "false-qualification",
                          "missing-mutation", "missing-repair", "mutation-qualification",
-                         "missing-adapter", "missing-discovery-suite"):
+                         "missing-adapter", "missing-discovery-suite", "tooling-skip",
+                         "missing-tooling-test", "stale-tooling-source", "tooling-native-claim"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
                 inputs = {"runId": "run", "sourceRevision": "a" * 40, "sourceState": "clean-ci",
                           "mode": "diagnostic", "profileId": "composition"}
+                inputs["sourceManifest"] = {"tests/tooling/test_control.py": "a" * 64}
+                inputs["sourceManifestSha256"] = evidence.digest(inputs["sourceManifest"])
+                tooling = {
+                    "schemaVersion": 1, "qualification": False, "nativeContainment": False,
+                    "role": "trusted-tooling-supervisor", "runId": "run", "rootId": "root",
+                    "startedMs": 1, "endedMs": 2,
+                    "sourceManifestSha256": "b" * 64 if mutation == "stale-tooling-source"
+                    else inputs["sourceManifestSha256"],
+                    "result": {
+                        "mode": "diagnostic", "qualification": False, "scope": "tooling", "code": "None",
+                        "tests": 1, "failures": 0, "errors": 0,
+                        "skipped": 1 if mutation == "tooling-skip" else 0,
+                        "expectedFailures": 0, "unexpectedSuccesses": 0, "unexpectedDiagnosticBytes": 0,
+                        "freeScratchBytes": 123,
+                        "failedTests": [], "expectedTests": ["test_control.Case.test_assertion"],
+                        "observedTests": [] if mutation == "missing-tooling-test"
+                        else ["test_control.Case.test_assertion"],
+                    },
+                }
                 baseline = {"runId": "run", "rootId": "root", "qualification": False,
                             "nativeContainment": False, "mode": "preparation",
                             "schemaVersion": 1, "baselineRevision": inherited.BASELINE,
@@ -333,12 +353,19 @@ class CompositionDiagnosticTests(unittest.TestCase):
                             "adapterScenarios": 3 if mutation == "missing-adapter" else 4,
                             "suites": 9 if mutation == "missing-discovery-suite" else 10,
                         },
+                        "tooling": {
+                            "qualification": False, "nativeContainment": mutation == "tooling-native-claim",
+                            "role": "trusted-tooling-supervisor", "tests": 1,
+                            "sourceManifestSha256": inputs["sourceManifestSha256"],
+                            "sha256": evidence.digest(tooling),
+                        },
                     },
                 }
                 (root / inherited.CONTROLLER_BASELINES).write_bytes(
                     raw + b"\n" if mutation == "changed-bytes" else raw)
                 for path, value in (("proofs/composition-diagnostic-summary.json", summary),
                                     ("proofs/composition-inputs.json", inputs),
+                                    ("proofs/inherited-controller-tooling.json", tooling),
                                     ("runtime-owner.json", {"runId": "run", "rootId": "root"})):
                     (root / path).write_bytes(evidence.canonical_bytes(value))
                 output = io.StringIO()

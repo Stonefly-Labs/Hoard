@@ -472,8 +472,14 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     write_new(run.root / "proofs/inherited-scope-admission.json", evidence.canonical_bytes(admitted))
     discovery_evidence.verify_performance(evidence.load_json(read_bounded(
         root / "performance/performance.json", 65536)), run.run_id)
+    mutation_source, mutation_sources = evidence.snapshot_sources(repository, run, name="inherited-mutation-source")
+    if dict(mutation_sources) != dict(sources):
+        raise evidence.ConformanceError("InputChanged")
+    mutation_driver = mutation_source / Path(DISCOVERY_PROJECT).parent / "bin/Release/net10.0"
+    mutation_driver.parent.mkdir(parents=True, mode=0o700)
+    legacy._copy_runtime((source / DISCOVERY_PROJECT).parent / "bin/Release/net10.0", mutation_driver)
     mutations, mutation_parent = _controller_phase(
-        run, repository, source, "mutations", baseline_seal=baseline_seal,
+        run, repository, mutation_source, "mutations", baseline_seal=baseline_seal,
         sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
     if (mutations.get("qualification") is not False
             or {row["id"] for row in mutations["mutations"]} != {row[0] for row in discovery_evidence.MUTATIONS}
@@ -708,6 +714,8 @@ def execute(repository, destination):
         summary["historicalPreparationParentSha256"] = historical_parent
         summary["inheritedRuntime"] = _inherited_runtime(
             run, repository, source, sources, config, feed, baseline_seal)
+        from conformance_inherited import run_controller_tooling
+        summary["inheritedRuntime"]["tooling"] = run_controller_tooling(repository, run, sources)
         evidence.verify_snapshot(source, prepared_sources)
         evidence.verify_snapshot(replay, prepared_sources)
         for record in records:

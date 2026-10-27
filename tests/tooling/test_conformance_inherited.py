@@ -26,6 +26,54 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_tooling_binds_full_source_and_actual_complete_supervisor_execution(self):
+        import time
+        import conformance_evidence as evidence
+        import conformance_unit_checks as checks
+
+        identity = "test_control.Case.test_assertion"
+        sources = {"tests/tooling/test_control.py": "a" * 64}
+        for mutation in ("none", "changed-source", "missing-observation", "foreign-module", "skipped",
+                         "borrowed-provider-group", "live-child"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                run = SimpleNamespace(root=root, state="Active", run_id="run", root_id="root",
+                                      deadline=time.monotonic() + 600,
+                                      live_children=lambda: {123} if mutation == "live-child" else set())
+                packet = {
+                    "mode": "diagnostic", "scope": "tooling", "qualification": False, "code": "None",
+                    "tests": 1, "failures": 0, "errors": 0, "skipped": 0, "failedTests": [],
+                    "expectedFailures": 0, "unexpectedSuccesses": 0, "unexpectedDiagnosticBytes": 0,
+                    "freeScratchBytes": 123,
+                    "expectedTests": [identity], "observedTests": [identity],
+                }
+                if mutation == "missing-observation":
+                    packet.update(tests=0, observedTests=[])
+                elif mutation == "foreign-module":
+                    packet.update(expectedTests=["foreign.Case.test_assertion"],
+                                  observedTests=["foreign.Case.test_assertion"])
+                elif mutation == "skipped":
+                    packet.update(skipped=1, code="EvidenceIncomplete")
+                with patch.object(evidence, "source_manifest", side_effect=[
+                        sources, {} if mutation == "changed-source" else sources]), \
+                        patch.object(checks, "run_checks", return_value=packet) as execute, \
+                        patch("conformance_legacy._borrowed_group",
+                              return_value=123 if mutation == "borrowed-provider-group" else None):
+                    if mutation == "none":
+                        result = inherited.run_controller_tooling(ROOT, run, sources)
+                        self.assertFalse(result["qualification"])
+                        self.assertFalse(result["nativeContainment"])
+                        self.assertEqual(1, result["tests"])
+                        self.assertEqual(file_sha256(root / "proofs/inherited-controller-tooling.json"), result["sha256"])
+                        self.assertTrue(execute.call_args.kwargs["all_tooling"])
+                        self.assertLessEqual(execute.call_args.kwargs["deadline"], run.deadline)
+                    else:
+                        with self.assertRaises(ConformanceError):
+                            inherited.run_controller_tooling(ROOT, run, sources)
+                        if mutation in ("borrowed-provider-group", "live-child"):
+                            execute.assert_not_called()
+
     def test_selected_mutation_discovery_requires_actual_complete_unchanged_images(self):
         import conformance_legacy as legacy
         method = "Hoard.Composition.Tests.DiscoveryBoundsTests.Check"

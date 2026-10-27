@@ -1185,6 +1185,26 @@ class ConformanceInputTests(unittest.TestCase):
         run.transition("Settling")
         run.release()
 
+    def test_independent_mutation_snapshot_does_not_inherit_prepared_lock_or_source_changes(self):
+        from conformance_execution import OwnedRun
+        run = OwnedRun.allocate(self.parent / "run", self.repo, profile="harness")
+        try:
+            prepared, original = evidence.snapshot_sources(self.repo, run)
+            path = prepared / "src/check.cs"
+            path.chmod(0o600)
+            path.write_text("prepared derivation")
+            fresh, inputs = evidence.snapshot_sources(self.repo, run, name="inherited-mutation-source")
+            self.assertEqual(original, inputs)
+            evidence.verify_snapshot(fresh, original)
+            with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                evidence.verify_snapshot(prepared, original)
+            with self.assertRaises(evidence.ConformanceError):
+                evidence.snapshot_sources(self.repo, run, name="../outside")
+            self.assertFalse((self.parent / "outside").exists())
+        finally:
+            run.transition("Settling")
+            run.release()
+
     def test_exact_parameter_witnesses_cannot_borrow_counts_labels_or_input_hashes(self):
         run_id, group_id = str(uuid.uuid4()), str(uuid.uuid4())
         witness = {

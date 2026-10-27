@@ -277,6 +277,34 @@ their repairs. All fifteen discovery logger cases pass, as do the focused
 inherited controls. Linux replay and controller-bound tooling remain pending;
 this increment does not close T046 or advance qualification.
 
+### Independent mutation source and controller-bound tooling
+
+Exact `750e4d931634236710da6a735f8eeb2e6a98b497` fails native
+run40480747075/job122110128501 at original mutation-source admission
+(`InputChanged`, `conformance_inherited.py:353`), before any negative executes.
+The prepared build tree may contain explicitly admitted acceptance-lock
+derivations and cannot satisfy an original-source contract. Mutation execution
+now uses a fresh descriptor-relative immutable snapshot of the same original
+repository manifest and a staged copy of the actual compiled discovery driver.
+Prepared-source validation is not weakened or reset. The independent-snapshot
+control first fails, then passes; native replay remains pending.
+
+The complete tooling suite now executes as trusted owning-supervisor logic,
+separate from native provider children. Their group/session escape ban remains
+unchanged. The shared safe runner records declared and actual test identities,
+and the controller binds complete tracked module coverage, source bytes,
+run/root identity and scheduling bounds before retaining a private safe proof.
+The workflow independently re-admits it after store release. Omitted tests,
+stale source, skips, output and native-containment overclaims have rejecting
+controls. Its explicit role and `nativeContainment=false` distinguish harness
+validation from provider execution; neither full-controller nor profile
+qualification advances, and T046 remains unchecked.
+Actual local owning-supervisor execution observes all 557 declared tests with
+the identical started inventory, zero failures/errors/unexpected diagnostic
+bytes and twenty native skips. It correctly returns `EvidenceIncomplete` and
+retains the failed/incomplete proof, rather than treating local skips as
+acceptance. The original source/scope checks and actual resource release pass.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

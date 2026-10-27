@@ -1119,21 +1119,22 @@ def source_identity(root, *, ci_revision=None):
     return MappingProxyType({"sourceRevision": revision, "sourceState": state})
 
 
-def snapshot_sources(root, owned_run):
+def snapshot_sources(root, owned_run, *, name="snapshot"):
+    name = stable_id(name)
     before = source_manifest(root)
     owned_run._check_ledger()
-    snapshot = owned_run.root / "snapshot"
+    snapshot = owned_run.root / name
     owner = owned_run._root_descriptor()
     try:
-        os.mkdir("snapshot", mode=0o700, dir_fd=owner)
-        directory = os.open("snapshot", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=owner)
+        os.mkdir(name, mode=0o700, dir_fd=owner)
+        directory = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=owner)
         try:
             total = 0
             deadline = time.monotonic() + 5
             with _input_root(root) as (_, source):
                 for relative, expected in before.items():
-                    with _input_parent(directory, relative, create=True) as (parent, name):
-                        target = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                    with _input_parent(directory, relative, create=True) as (parent, filename):
+                        target = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                                          0o400, dir_fd=parent)
                         with os.fdopen(target, "wb") as output:
                             hashed, size = _source_file(

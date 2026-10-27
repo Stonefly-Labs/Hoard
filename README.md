@@ -250,6 +250,20 @@ the inherited inspector joins all 137 discovery parameters, every original
 suite class across ten groups and D01..D40 to independently admitted witnesses.
 Missing/substituted case GUIDs, duplicate parameters and failed scopes reject
 or remain incomplete. Native confirmation of this increment is pending.
+Native mutation integration at `750e4d9`,
+[run40480747075](https://github.com/Stonefly-Labs/Hoard/actions/runs/40480747075),
+fails the original-source comparison before any negative executes. The prepared
+build tree can contain independently admitted acceptance-lock derivations and
+must not be treated as the original snapshot. Mutation execution now gets a
+separate descriptor-relative immutable source snapshot and the actual staged
+discovery driver; no changed-source exception is introduced.
+Controller-bound full tooling now runs as trusted supervisor logic, not inside
+a provider child whose native guard intentionally forbids nested sessions.
+Every declared/started test and complete tracked test-module set are retained
+with source/run/root binding. Skips, omitted tests, unexpected diagnostics and
+stale inputs cannot pass. This tooling control explicitly makes no native
+containment claim and does not relax provider-child confinement. Its Linux
+replay and the independent-snapshot repair remain pending; T046 stays open.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

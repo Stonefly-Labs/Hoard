@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import shutil
 import sys
+import time
 import unittest
 
 
@@ -17,14 +18,25 @@ METADATA_INVENTORY_FAILURE = ("test_metadata_evidence.MetadataEvidenceTests."
 
 
 class SafeResult(unittest.TestResult):
-    def __init__(self):
+    def __init__(self, *, deadline=None):
         super().__init__()
+        self.observed_tests = []
+        self.deadline = deadline
         root = Path(__file__).resolve().parents[1]
         self.source_roles = {
             str(path): path.relative_to(root).as_posix()
             for folder, pattern in (("scripts", "*.py"), ("tests/tooling", "test_*.py"))
             for path in (root / folder).glob(pattern)}
         self.locations = {}
+
+    def startTest(self, test):
+        super().startTest(test)
+        self.observed_tests.append(test.id())
+
+    def stopTest(self, test):
+        super().stopTest(test)
+        if self.deadline is not None and time.monotonic() >= self.deadline:
+            self.stop()
 
     def _exc_info_to_string(self, error, test):
         from conformance_evidence import ConformanceError
@@ -158,26 +170,43 @@ def metadata_inventory_main(arguments):
     return packet["exitCode"]
 
 
-def main(arguments=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--all-tooling", action="store_true")
-    args = parser.parse_args(arguments)
+def run_checks(*, all_tooling=False, deadline=None):
     root = Path(__file__).resolve().parents[1]
     diagnostics = DiagnosticBoundary()
     with contextlib.redirect_stdout(diagnostics), contextlib.redirect_stderr(diagnostics):
         suite = unittest.defaultTestLoader.discover(
-            str(root / "tests/tooling"), pattern="test_*.py" if args.all_tooling else "test_conformance_*.py")
-        result = SafeResult()
+            str(root / "tests/tooling"), pattern="test_*.py" if all_tooling else "test_conformance_*.py")
+
+        def identities(selected):
+            for test in selected:
+                if isinstance(test, unittest.TestSuite):
+                    yield from identities(test)
+                else:
+                    yield test.id()
+
+        expected = list(identities(suite))
+        result = SafeResult(deadline=deadline)
         suite.run(result)
-    code = ("AssertionFailed" if result.failures or result.errors else
-            "EvidenceIncomplete" if result.skipped or not result.testsRun else
+    code = ("AssertionFailed" if result.failures or result.errors or result.unexpectedSuccesses else
+            "EvidenceIncomplete" if result.skipped or result.expectedFailures or not result.testsRun
+            or result.shouldStop or result.observed_tests != expected else
             "UnknownDiagnostic" if diagnostics.bytes else "None")
-    print(json.dumps({"mode": "diagnostic", "qualification": False, "code": code,
-                      "scope": "tooling" if args.all_tooling else "conformance",
-                      "tests": result.testsRun, "failures": len(result.failures), "errors": len(result.errors),
-                      "skipped": len(result.skipped), "failedTests": failed_tests(result),
-                      "unexpectedDiagnosticBytes": diagnostics.bytes,
-                      "freeScratchBytes": shutil.disk_usage(root).free}))
+    return {"mode": "diagnostic", "qualification": False, "code": code,
+            "scope": "tooling" if all_tooling else "conformance",
+            "tests": result.testsRun, "failures": len(result.failures), "errors": len(result.errors),
+            "skipped": len(result.skipped), "failedTests": failed_tests(result),
+            "expectedFailures": len(result.expectedFailures), "unexpectedSuccesses": len(result.unexpectedSuccesses),
+            "expectedTests": expected, "observedTests": result.observed_tests,
+            "unexpectedDiagnosticBytes": diagnostics.bytes, "freeScratchBytes": shutil.disk_usage(root).free}
+
+
+def main(arguments=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--all-tooling", action="store_true")
+    args = parser.parse_args(arguments)
+    packet = run_checks(all_tooling=args.all_tooling)
+    print(json.dumps({key: value for key, value in packet.items() if key not in ("expectedTests", "observedTests")}))
+    code = packet["code"]
     return 0 if code == "None" else 2 if code in ("EvidenceIncomplete", "UnknownDiagnostic") else 1
 
 
