@@ -16,6 +16,7 @@
     <Project Path="tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj" />
     <Project Path="tests/contracts/Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
   </Folder>
+  <Folder Name="/tests/fixtures/" />
   <Folder Name="/tests/fixtures/conformance/">
     <Project Path="tests/fixtures/conformance/Bindings/Local/Local.csproj">
       <Build Project="false" />
@@ -41,6 +42,12 @@
     <Project Path="tests/fixtures/conformance/Host/Host.csproj">
       <Build Project="false" />
     </Project>
+  </Folder>
+  <Folder Name="/tests/fixtures/conformance/Compatibility/">
+    <Project Path="tests/fixtures/conformance/Compatibility/Baseline/Baseline.csproj" />
+    <Project Path="tests/fixtures/conformance/Compatibility/Broken/Broken.csproj" />
+    <Project Path="tests/fixtures/conformance/Compatibility/Compatible/Compatible.csproj" />
+    <Project Path="tests/fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
     <Project Path="tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj" />

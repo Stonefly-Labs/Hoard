@@ -5479,6 +5479,19 @@ not historical source/retained compatibility acceptance or T056. Full local
 tooling observes 561 tests, no failures/errors/unexpected diagnostic bytes,
 and twenty native skips; expected incomplete exit 2.
 
+The exact `022f5f8` native
+[run40490532226](https://github.com/Stonefly-Labs/Hoard/actions/runs/40490532226)
+fails controller preparation at command44; it is not acceptance. An actual
+fresh source snapshot exposes a related whole-solution build failure:
+`MSB3030`, missing compatibility fixture outputs. Direct project builds and
+cached solution builds had hidden that the four fixture projects were absent
+from the solution's build graph. They are now explicit default-build projects.
+A second fresh snapshot restores with locked mode, builds the full solution
+and passes all seven compatibility controls without rebuilding the test
+project. Focused whole-solution formatting and `git diff --check` pass. Native
+confirmation of the repaired graph is pending. No package/provider/API
+dependency, fixture source, lock, assertion, example or diagram changes.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

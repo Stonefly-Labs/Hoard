@@ -296,6 +296,12 @@ source-comment change fails that attribution. All seven controls pass in
 source mode and an isolated redirected package-mode build, completing T051's
 test controls. These are controlled fixtures, not completed historical
 source/binary compatibility acceptance.
+
+The clean whole-solution build now explicitly includes all four compatibility
+fixture projects. A cached project build had masked their absence from the
+solution; a fresh snapshot first failed `MSB3030`, then built successfully and
+passed all seven controls after the graph repair. Native replay remains
+pending; the earlier `022f5f8` native preparation failed and is not acceptance.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

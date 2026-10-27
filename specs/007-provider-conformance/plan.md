@@ -419,6 +419,24 @@ T046 remains open: guarded batch containment does not supply independent
 native invocation/input receipts for every inner controller command. No
 full-controller/profile/qualification flag advances.
 
+### Clean whole-solution fixture graph repair
+
+Exact `022f5f8` native
+[run40490532226](https://github.com/Stonefly-Labs/Hoard/actions/runs/40490532226)/
+job122146328586 fails controller preparation (command44), not acceptance.
+The safe diagnostic does not establish a compiler error code. A separate
+actual fresh-source locked restore/full-solution build reproduces `MSB3030`
+because the compatibility fixtures were not explicit solution build projects;
+cached default outputs and direct project builds had hidden the defect.
+`dotnet sln Hoard.slnx add` registers all four nonpackable test projects as
+default builds without adding product/provider references. A second fresh
+source snapshot's locked restore and full solution build pass; `dotnet test`
+with `--no-build --no-restore --filter FullyQualifiedName~CompatibilityBaselineTests`
+then passes all seven cases. Focused `dotnet format Hoard.slnx --no-restore
+--verify-no-changes` over the three linked binary fixture source files and
+`git diff --check` pass. Native confirmation remains pending; no earlier
+failed receipt is relabeled, no new task is checked and no qualifier advances.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
