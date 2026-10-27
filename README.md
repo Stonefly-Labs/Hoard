@@ -217,7 +217,16 @@ CP36/110, inherited525/58, 2,281 unchanged bound inputs and actual release.
 The next increment prepares missing solution-project assets in locked mode,
 includes the previously unbuilt contributor package in the private candidate
 feed, and binds every tracked source input before a separate whole-solution
-native formatter command. Native confirmation of that increment is pending.
+native formatter command. That increment now passes at exact `cfb20eca20f41d0a85b1f7c0adb76baf89ef20d8`,
+[run40471161893](https://github.com/Stonefly-Labs/Hoard/actions/runs/40471161893),
+job122080437087: all 41 formatter commands, including the whole source solution,
+CP36/110, inherited525/58, all 3,181 unchanged bound inputs and actual release.
+`solutionFormatting=true`; full-controller acceptance and qualification remain false.
+The next discovery-mutation prerequisite admits an inherited wrapper assertion
+only when its symbol exactly equals the selected composition test method.
+Actual assertion prefixes and stack frames remain mandatory; sibling methods,
+unrelated namespaces and unknown failures cannot borrow assertion provenance.
+This does not yet execute the original mutation negatives or complete T046.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

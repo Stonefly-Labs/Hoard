@@ -116,7 +116,9 @@ public sealed class RuntimeResultRecorder : IDisposable
                 && input.Packages.Any(file => file.Id == entry.PackageId));
             RuntimeSafety.Require(entry.AssertionSymbol is null
                 || (entry.AssertionSymbol.Length <= 256
-                    && entry.AssertionSymbol.StartsWith("Hoard.Testing.Conformance.", StringComparison.Ordinal)
+                    && (entry.AssertionSymbol.StartsWith("Hoard.Testing.Conformance.", StringComparison.Ordinal)
+                        || entry.AssertionSymbol.StartsWith("Hoard.Composition.Tests.", StringComparison.Ordinal)
+                            && entry.AssertionSymbol == entry.FullyQualifiedName)
                     && entry.AssertionSymbol.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_')));
         }
     }

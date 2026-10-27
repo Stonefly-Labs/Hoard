@@ -1089,6 +1089,44 @@ public sealed class RuntimeLoggerTests
     }
 
     [Theory]
+    [InlineData("matching")]
+    [InlineData("sibling")]
+    [InlineData("foreign-namespace")]
+    [InlineData("wrong-frame")]
+    [InlineData("unknown-prefix")]
+    public void Inherited_wrapper_assertions_require_the_exact_selected_method_and_actual_assertion_frame(string mutation)
+    {
+        using var owned = new OwnedInput();
+        const string method = "Hoard.Composition.Tests.DiscoveryGuard.Check";
+        var symbol = mutation switch
+        {
+            "sibling" => "Hoard.Composition.Tests.DiscoveryGuard.Other",
+            "foreign-namespace" => "Hoard.Metadata.Tests.DiscoveryGuard.Check",
+            _ => method
+        };
+        owned.Input.Expected[0] = owned.Input.Expected[0] with
+        { TestIdentity = method + "(value: 0)", FullyQualifiedName = method, AssertionSymbol = symbol };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        if (mutation is "sibling" or "foreign-namespace")
+        { Assert.Throws<InvalidDataException>(() => owned.Open()); return; }
+        using var recorder = owned.Open();
+        var result = owned.Result(0, TestOutcome.Failed);
+        result.ErrorMessage = mutation == "unknown-prefix" ? "private-canary" : "Assert.True() Failure";
+        result.ErrorStackTrace = "   at " + (mutation == "wrong-frame" ? method + "Other" : method)
+            + "()\n/private/canary-path";
+        recorder.Observe(result);
+        recorder.Complete();
+        var matched = mutation == "matching";
+        Assert.Equal(matched ? ConformanceDiagnosticCode.AssertionFailed
+            : ConformanceDiagnosticCode.UnknownDiagnostic, recorder.Diagnostic);
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Assert.Single(
+            Directory.GetFiles(owned.Output, "proof-*.json"))));
+        Assert.Equal(matched ? "Assertion" : "Unknown", proof.RootElement.GetProperty("failureKind").GetString());
+        Assert.Equal(matched ? method : null, proof.RootElement.GetProperty("assertionSymbol").GetString());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData("duplicate", ConformanceDiagnosticCode.EvidenceIncomplete)]
     [InlineData("parameter", ConformanceDiagnosticCode.WitnessMissing)]
     [InlineData("qualified-name", ConformanceDiagnosticCode.WitnessMissing)]

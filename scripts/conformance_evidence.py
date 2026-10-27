@@ -1280,7 +1280,8 @@ def _assertion_symbol(value):
     if value is None:
         return None
     if (not isinstance(value, str) or len(value) > 256
-            or re.fullmatch(r"Hoard\.Testing\.Conformance\.[a-zA-Z0-9_.]+", value, re.ASCII) is None):
+            or re.fullmatch(r"Hoard\.(?:Testing\.Conformance|Composition\.Tests)\.[a-zA-Z0-9_.]+",
+                            value, re.ASCII) is None):
         _invalid()
     return value
 
@@ -1489,6 +1490,10 @@ def _runtime_manifest(inputs, manifest_data, owner_data, expected_tests,
                     rf"\([a-zA-Z_][a-zA-Z0-9_]*: {parameter}(?:, [a-zA-Z_][a-zA-Z0-9_]*: {parameter})*\)",
                     suffix, re.ASCII) is None)
                 or entry["assemblyId"] not in assemblies or entry["packageId"] not in packages):
+            raise ConformanceError("WitnessMissing")
+        if (entry["assertionSymbol"] is not None
+                and entry["assertionSymbol"].startswith("Hoard.Composition.Tests.")
+                and entry["assertionSymbol"] != name):
             raise ConformanceError("WitnessMissing")
     return inputs, manifest, expected, assemblies, packages, expected_tests
 

@@ -5283,8 +5283,27 @@ run40468960470/job122073676284: 548 tests, zero failures/errors/skips or
 unexpected diagnostic bytes. Neither receipt claims full-controller acceptance.
 The next whole-solution formatting increment restores missing assets in locked
 mode, including `Build=false` projects, adds the needed private contributor
-package and freezes every tracked source input. Its native confirmation and
-controller-bound tooling/mutation obligations remain pending.
+package and freezes every tracked source input. Native confirmation now passes
+at exact `cfb20eca20f41d0a85b1f7c0adb76baf89ef20d8`,
+run40471161893/job122080437087: 41 individually admitted formatter commands
+(7/9/12/12 prepared plus one whole solution), CP36/110, inherited525/58,
+all 3,181 unchanged inputs and actual release. `solutionFormatting=true`;
+full-controller acceptance and qualification remain false.
+CP input `b96fce78a07444eb9854eaa1695b0515288ed2be9a75dd3d0d3e28418cf93323`;
+scope admission `f38a3a5b9be1ae2f73ad25f638818dd76313f54e9b52c6f2600a17f987b29fbc`;
+historical seal `af6d8b561b9b8ef9b5ea35b4cd116fa872bd6fce5b40d837a2264f376372a1fc`.
+Controller-bound tooling/mutation obligations remain pending.
+
+The safe logger and Python transport admission now permit a composition-wrapper
+assertion symbol only when it exactly equals the selected fully qualified
+method. Existing shared SDK assertions remain supported. An actual bounded
+xUnit assertion prefix and exact stack frame are still required; an unknown
+failure remains unknown, and an assertion failure never becomes passing evidence.
+Five focused logger controls first expose the missing wrapper admission, then
+pass with all 129 logger cases; all 550 tooling tests pass with twenty explicit
+native skips. The original mutation red/repair executions remain unimplemented.
+Provider contracts, public examples and architecture diagrams are unaffected:
+this increment changes private evidence classification, not provider behavior.
 
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL

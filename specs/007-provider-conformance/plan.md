@@ -210,8 +210,25 @@ package needed by the solution's consumer. Original source locks remain
 unchanged; any local-archive lock rebinding retains its derivation. Every
 tracked source input joins the frozen read closure before formatting.
 Nine parent/solution tests and all 437 conformance tooling tests pass locally
-(twenty explicit native skips). Native confirmation is pending; full foundation
-fixtures, mutation and attributable controller-tooling obligations remain open.
+(twenty explicit native skips). Native confirmation now passes at exact
+`cfb20eca20f41d0a85b1f7c0adb76baf89ef20d8`,
+run40471161893/job122080437087: all 41 formatter commands, including the
+whole source solution, CP36/110, inherited525/58, all 3,181 unchanged bound
+inputs and actual release. `solutionFormatting=true`, but full-controller
+acceptance and qualification remain false.
+CP input `b96fce78a07444eb9854eaa1695b0515288ed2be9a75dd3d0d3e28418cf93323`;
+scope admission `f38a3a5b9be1ae2f73ad25f638818dd76313f54e9b52c6f2600a17f987b29fbc`;
+historical seal `af6d8b561b9b8ef9b5ea35b4cd116fa872bd6fce5b40d837a2264f376372a1fc`.
+
+The next mutation prerequisite permits an assertion symbol from the composition
+wrapper only when it exactly matches its selected fully qualified method, in
+both logger admission and Python transport re-admission. Exact transient xUnit
+prefix/frame classification remains unchanged; sibling methods and unrelated
+namespaces reject, and unknown failures cannot become assertion evidence.
+The added controls first fail, then pass with all 129 C# logger cases.
+All 550 tooling tests pass locally, with twenty explicit native skips.
+Full foundation fixtures, actual mutation red/repair runs and attributable
+controller-tooling obligations remain open; T046 remains unchecked.
 
 ## Shared authority admission and explicit restart controls
 

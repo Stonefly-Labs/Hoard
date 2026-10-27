@@ -6933,6 +6933,26 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.completion.update(diagnosticCode="UnknownDiagnostic", complete=False)
         self.assertEqual(self.ingest()["diagnosticCode"], "UnknownDiagnostic")
 
+    def test_inherited_wrapper_assertion_symbol_must_equal_its_selected_method(self):
+        method = "Hoard.Composition.Tests.DiscoveryGuard.Check"
+        for symbol in (method, method + "Other", "Hoard.Metadata.Tests.DiscoveryGuard.Check"):
+            with self.subTest(symbol=symbol):
+                self.setUp()
+                self.identity = method + "(value: 1)"
+                self.manifest["expected"][0].update(
+                    testIdentity=self.identity, fullyQualifiedName=method, assertionSymbol=symbol)
+                self.proof.update(testIdentity=self.identity, status="Failed", failureKind="Assertion",
+                                  assertionSymbol=symbol, manifestSha256=evidence.digest(self.manifest))
+                self.witness.update(testIdentity=self.identity, status="Failed", proofSha256=evidence.digest(self.proof))
+                self.completion.update(diagnosticCode="AssertionFailed", manifestSha256=evidence.digest(self.manifest))
+                if symbol == method:
+                    observed = self.ingest()
+                    self.assertEqual("AssertionFailed", observed["diagnosticCode"])
+                    self.assertEqual("Failed", observed["witnesses"][0]["status"])
+                else:
+                    with self.assertRaises(evidence.ConformanceError):
+                        self.ingest()
+
     def test_unknown_or_missing_results_retain_only_safe_attributed_prefix(self):
         self.completion.update(diagnosticCode="WitnessMissing", complete=False, observedCount=2)
         result = self.ingest()
