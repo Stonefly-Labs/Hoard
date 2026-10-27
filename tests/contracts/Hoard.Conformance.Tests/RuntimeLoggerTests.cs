@@ -12,6 +12,107 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("execution")]
+    [InlineData("discovery")]
+    public void Literal_and_opaque_aliases_cannot_count_the_same_actual_parameter_twice(string purpose)
+    {
+        using var owned = new OwnedInput(2, purpose: purpose);
+        var literal = owned.Input.Expected[0].TestIdentity;
+        var result = owned.Result(0);
+        owned.Input.Expected[1] = owned.Input.Expected[1] with
+        { TestIdentity = OpaqueIdentity(result.TestCase, literal) };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        using var recorder = owned.Open();
+        if (purpose == "discovery") { recorder.ObserveDiscovery(result.TestCase); }
+        else { recorder.Observe(result); }
+        recorder.Complete();
+        Assert.Equal(ConformanceDiagnosticCode.ProofMismatch, recorder.Diagnostic);
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("execution", "unchanged")]
+    [InlineData("execution", "changed")]
+    [InlineData("execution", "copied-identity")]
+    [InlineData("execution", "changed-case")]
+    [InlineData("discovery", "unchanged")]
+    [InlineData("discovery", "changed")]
+    [InlineData("discovery", "copied-identity")]
+    [InlineData("discovery", "changed-case")]
+    public void Opaque_parameter_identities_bind_exact_private_arguments_without_persisting_them(string purpose, string mutation)
+    {
+        using var owned = new OwnedInput(purpose: purpose);
+        const string privateIdentity = "Hoard.Frozen.Check(value: \"/private/canary?credential=seeded-canary\")";
+        var result = owned.Result(0);
+        var opaque = OpaqueIdentity(result.TestCase, privateIdentity);
+        owned.Input.Expected[0] = owned.Input.Expected[0] with { TestIdentity = opaque };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        if (mutation == "changed-case") { result.TestCase.Id = Guid.NewGuid(); }
+        result.DisplayName = mutation switch
+        {
+            "changed" => privateIdentity + "changed-canary",
+            "copied-identity" => opaque,
+            _ => privateIdentity
+        };
+        result.TestCase.DisplayName = result.DisplayName;
+        using (var recorder = owned.Open())
+        {
+            if (purpose == "discovery") { recorder.ObserveDiscovery(result.TestCase); }
+            else { recorder.Observe(result); }
+            recorder.Complete();
+            Assert.Equal(mutation == "unchanged" ? ConformanceDiagnosticCode.None : ConformanceDiagnosticCode.WitnessMissing,
+                recorder.Diagnostic);
+        }
+        var file = Path.Combine(owned.Output, purpose == "discovery" ? "discovered.jsonl" : "witnesses.jsonl");
+        if (mutation != "unchanged") { Assert.Empty(File.ReadAllText(file)); }
+        else
+        {
+            using var record = JsonDocument.Parse(File.ReadAllText(file));
+            Assert.Equal(opaque, record.RootElement.GetProperty("testIdentity").GetString());
+        }
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("execution")]
+    [InlineData("discovery")]
+    public void Opaque_identities_distinguish_actual_cases_with_identically_truncated_displays(string purpose)
+    {
+        using var owned = new OwnedInput(2, purpose: purpose);
+        const string privateIdentity = "Hoard.Frozen.Check(value: \"/private/canary\"...)";
+        var results = new[] { owned.Result(0), owned.Result(1) };
+        for (var index = 0; index < results.Length; index++)
+        {
+            results[index].TestCase.Id = Guid.NewGuid();
+            results[index].TestCase.DisplayName = privateIdentity;
+            results[index].DisplayName = privateIdentity;
+            owned.Input.Expected[index] = owned.Input.Expected[index] with
+            { TestIdentity = OpaqueIdentity(results[index].TestCase, privateIdentity) };
+        }
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        using (var recorder = owned.Open())
+        {
+            foreach (var result in results)
+            {
+                if (purpose == "discovery") { recorder.ObserveDiscovery(result.TestCase); }
+                else { recorder.Observe(result); }
+            }
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        var records = File.ReadAllLines(Path.Combine(owned.Output,
+            purpose == "discovery" ? "discovered.jsonl" : "witnesses.jsonl"));
+        Assert.Equal(2, records.Length);
+        Assert.Equal(2, records.Select(line => JsonDocument.Parse(line).RootElement.GetProperty("testIdentity").GetString())
+            .Distinct(StringComparer.Ordinal).Count());
+        AssertSafe(owned.Output);
+    }
+
+    private static string OpaqueIdentity(TestCase test, string display) =>
+        test.FullyQualifiedName + "(testCaseSha256: \""
+        + Hash(Encoding.UTF8.GetBytes(test.Id.ToString("D") + "\n" + display)) + "\")";
+
+    [Theory]
     [InlineData("declaration-rejected")]
     [InlineData("multiple-ready")]
     [InlineData("mapping-rejected")]

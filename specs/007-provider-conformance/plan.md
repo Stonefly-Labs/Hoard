@@ -72,8 +72,42 @@ admits thirty-six exact parameter identities and 110 snapshots at source digest
 consumer `cf86b2ec64a45c37c680d8492f1235fd27321b9004d1d426986de6e3abd79862`.
 All 34 source matrix cases, 112 logger cases and 500 tooling tests pass
 (nineteen native skips). Focused formatting and frozen inventories pass.
-Native replay of this larger scope remains pending; T046 remains unchecked,
+Native replay of this larger scope subsequently passes at exact
+`59d9eff5c6c8ddc4ea2a95e5662154c846dab52b`, run40431979915/job121951597034:
+36 proofs/110 snapshots, native containment and actual process-resource release.
+Input digest `e5eedb2fde12d5f24017729c6d89c7bff968a6d09dcf11ed428701803cb61382`;
+command parent `94155b6be757b838eb525680b237f4abaeba30777c0ac23facc2fa65067e6cc6`;
+consumer `083146b4df18d63a099e3c4b8074d393345db6eb6eb37a99827d2ca38646d94f`;
+source `ce5b22d7dd1303c6ea7d2a6b7d73058253535c272d2f40c81d24a5568b066b2c`.
+Profile completeness and qualification remain false. T046 remains unchecked,
 48/86, until inherited inventories and full profile integration are complete.
+
+### Opaque inherited case identities
+
+A real inherited configuration discovery exposes twenty parameters but only
+twelve unique xUnit displays: argument rendering truncates private JSON. The
+first display-only hash experiment rejects `WitnessMissing`; no duplicate
+identity or omitted parameter is accepted. Opaque `testCaseSha256` now hashes
+strict UTF-8 `adapter-case-id-in-D-format + "\n" + actual-display`, retaining
+neither input. Literal safe identities retain their existing behavior; changing
+the case ID/display, copying an opaque label or declaring literal/opaque aliases
+rejects. Separate execution/discovery controls distinguish identical truncated
+displays with different actual case IDs. All 124 logger tests pass.
+
+Fresh seventeen-package construction/fresh-cache locked replay still admits
+36 CP proofs/110 snapshots. A bounded source-mode inherited experiment discovers
+and independently admits all twenty actual CFG-02 structure parameters; the
+assertion source matches frozen F-06 commit
+`9389016c0285c79f6f515f59805a5a41c69b0767`, SHA-256
+`db303dd4514b5708e7de91ab326751492ca974fb55d05db738d2abf9e6deec27`.
+Abstractions/Core/Hosting/Application runtime images match candidate archives.
+Source digest `10e169be4cf986d036b2391f99e0f932382fa7565746814156e0a14a2281bd39`;
+consumer `ef9152167782df3648a59f1d693157e3a3c0b19e0a89186b08120c3f43e2dc26`;
+manifest `fd009178931ac8f22b7f01578c1b333f02173aec47c7b335429ea1ee4f76e947`;
+input `d68243b6b6584984502def8beea1c68fd1fad5544faae45258bc445f49342888`.
+Retained safe records contain none of the private canaries. This experiment uses
+a private discovery client and is not a committed complete inherited controller,
+native containment receipt, public profile result or T046 completion.
 
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart

@@ -4854,6 +4854,27 @@ Its success does not qualify the later thirty-six-row scope. T046 remains
 unchecked, 48/86, pending complete inherited lifecycle/configuration/discovery
 integration and profile evaluation.
 
+Exact `59d9eff5c6c8ddc4ea2a95e5662154c846dab52b` subsequently passes the complete
+CP diagnostic scope in run40431979915/job121951597034: 36 proofs/110 snapshots,
+native containment and actual process-resource release. It remains explicitly
+non-qualifying, with native SQLite provenance unobserved.
+
+The next T046 transport increment discovers an inherited identity collision:
+xUnit truncates twenty configuration-structure theory displays into twelve
+distinct strings. Hashing only display text therefore fails exact inventory
+admission. Opaque identities now use `testCaseSha256`, the lowercase SHA-256 of
+strict UTF-8 `adapter-case-id-in-D-format + "\n" + actual-display`. The actual
+adapter ID and private display are consumed only in memory. An independently
+discovered exact manifest and real execution admit all twenty cases without
+persisting private arguments; source bytes match the frozen F-06 assertion file
+and platform runtime bytes match actual candidate archives. Changed displays,
+changed IDs, copied opaque labels and literal/opaque aliases fail closed.
+All 124 logger cases pass, and the same fresh seventeen-package/fresh-cache
+component still admits all 36 CP proofs/110 snapshots. This bounded source-mode
+experiment is not a complete inherited inventory/controller or native profile
+receipt. T046 remains unchecked, 48/86; production APIs, architecture diagrams,
+governance, infrastructure and release behavior are unaffected.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

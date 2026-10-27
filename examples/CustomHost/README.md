@@ -178,4 +178,10 @@ Exact `cb8d6eb` subsequently passes the seventeen-row native replay. The full
 CP-01..20 safe component now admits thirty-six exact package identities/110
 snapshots; declaration rejection/repair, disabled effects and route publication
 remain separate observations. Full inherited/profile acceptance and native
-replay of the larger scope remain open.
+replay of the larger scope remained open at that checkpoint. Exact `59d9eff`
+now passes the 36-proof/110-snapshot native replay with real process release.
+Twenty unchanged historical configuration-theory cases also pass independent
+safe runtime admission in a bounded source-mode experiment; private argument
+displays remain in memory and adapter case IDs disambiguate truncated names.
+This compile-only example is unaffected; complete inherited/profile acceptance
+remains open.

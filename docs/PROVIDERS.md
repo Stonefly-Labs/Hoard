@@ -105,7 +105,15 @@ identities/110 snapshots, including every declaration-theory parameter.
 Route-conflict observations preserve the real early rollback stops and zero
 disposal callbacks for unmaterialized fixture services; complete root stop
 does not invent module disposal. Inherited inventories/full-profile acceptance
-and native replay of the larger scope remain unfinished.
+remain unfinished. Exact `59d9eff` separately passes the larger native scope
+with actual process-resource release. A bounded inherited configuration
+experiment now admits all twenty historical structure-theory cases, preserving
+unchanged assertion source and candidate platform image/archive agreement.
+Opaque `testCaseSha256` identities bind the actual adapter ID plus private
+display in memory; hashing display alone is insufficient because xUnit truncates
+twenty cases into twelve distinct names. Private arguments are not retained,
+and changed case IDs/displays or duplicate literal aliases reject. This does
+not yet integrate complete inherited inventories or qualify a profile.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

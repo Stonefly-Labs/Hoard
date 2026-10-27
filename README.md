@@ -111,7 +111,14 @@ fifty-one snapshots and actual process-resource release. Safe component scope
 now covers every CP-01..20 row: thirty-six actual parameter identities and
 110 snapshots pass fresh package replay/independent ingestion. Four previously
 omitted endpoint-declaration parameters are now explicit in the catalog.
-Full inherited/profile acceptance and expanded native replay remain open.
+Exact `59d9eff` passes the expanded Linux replay with all 36 proofs/110
+snapshots and actual process-resource release. Inherited configuration
+transport now independently admits twenty unchanged historical theory cases
+without retaining their private argument displays. Because xUnit truncates
+those displays into only twelve unique names, opaque identities bind both
+the actual adapter case ID and display; changed IDs/arguments and ambiguous
+literal aliases reject. Complete inherited inventories/profile acceptance
+remain open; these component checks do not qualify a profile.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

@@ -150,10 +150,17 @@ public sealed class RuntimeResultRecorder : IDisposable
     {
         RuntimeSafety.Require(++observed <= RuntimeSafety.MaxTests, "OutputLimitExceeded");
         VerifyProvenance();
-        RuntimeSafety.Require(identity is { Length: > 0 and <= 1024 }
-            && expected.ContainsKey(identity), "WitnessMissing");
-        var entry = expected[identity];
-        RuntimeSafety.Require(seen.Add(identity), "EvidenceIncomplete");
+        RuntimeSafety.Require(identity is { Length: > 0 and <= 4096 }
+            && selectedMethods.Contains(test.FullyQualifiedName), "WitnessMissing");
+        var opaque = test.FullyQualifiedName + "(testCaseSha256: \""
+            + RuntimeSafety.Hash(new UTF8Encoding(false, true).GetBytes(test.Id.ToString("D") + "\n" + identity)) + "\")";
+        var literal = expected.ContainsKey(identity)
+            && !identity.StartsWith(test.FullyQualifiedName + "(testCaseSha256: ", StringComparison.Ordinal);
+        RuntimeSafety.Require(!(literal && expected.ContainsKey(opaque)), "ProofMismatch");
+        var admittedIdentity = literal ? identity : opaque;
+        RuntimeSafety.Require(expected.ContainsKey(admittedIdentity), "WitnessMissing");
+        var entry = expected[admittedIdentity];
+        RuntimeSafety.Require(seen.Add(entry.TestIdentity), "EvidenceIncomplete");
         RuntimeSafety.Require(test.FullyQualifiedName == entry.FullyQualifiedName, "WitnessMissing");
         var assembly = assemblies[entry.AssemblyId];
         var path = RuntimeSafety.OwnedPath(root, assembly.Path);
