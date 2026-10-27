@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -154,9 +155,13 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 directory.mkdir()
                 (directory / "project.assets.json").write_bytes(b"fresh")
 
-            with mock.patch.object(checks.baselines, "_command", side_effect=restore) as command:
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output), mock.patch.object(
+                    checks.baselines, "_command", side_effect=restore) as command:
                 checks._prepare_solution_formatting(run, source, config, feed)
             self.assertEqual(1, command.call_count)
+            self.assertEqual({"qualification": False, "phase": "inherited-solution-assets", "project": 2},
+                             json.loads(output.getvalue()))
             for name in ("One", "Two"):
                 self.assertEqual(original, (source / name / "packages.lock.json").read_bytes())
 

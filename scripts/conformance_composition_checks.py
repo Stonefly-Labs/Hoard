@@ -124,7 +124,7 @@ def _prepare_solution_formatting(run, source, config, feed):
     if solution.tag != "Solution" or not 1 <= len(projects) <= 128 or len(set(projects)) != len(projects):
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
     records = []
-    for relative in projects:
+    for ordinal, relative in enumerate(projects, 1):
         project = source / relative
         legacy.no_symlinks(project)
         if project.suffix != ".csproj" or not project.is_file():
@@ -133,6 +133,8 @@ def _prepare_solution_formatting(run, source, config, feed):
         legacy.no_symlinks(assets)
         if assets.is_file():
             continue
+        print(json.dumps({"qualification": False, "phase": "inherited-solution-assets",
+                          "project": ordinal}), flush=True)
         alternate, record = prepare_project_lock(project, source, feed, "candidate")
         properties = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"]
         if alternate is not None:
