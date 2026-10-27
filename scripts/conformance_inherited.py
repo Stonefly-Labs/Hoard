@@ -705,7 +705,7 @@ def controller_child_main(argv=None):
         authorized_output = True
         run = SimpleNamespace(root=owner, run_id=request["runId"], root_id=request["rootId"], command_sequence=0)
         progress = ControllerProgress(stream)
-        with redirect_stdout(progress):
+        with legacy.native_preparation_group(header), redirect_stdout(progress):
             if request["phase"] == "historical":
                 if any(request[key] is not None for key in ("baselineSeal", "sdkPackage", "loggerPath")):
                     raise ConformanceError("EvidenceSchemaInvalid")

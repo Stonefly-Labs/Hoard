@@ -161,6 +161,11 @@ Historical and controller preparation now also attempt separate owned native
 child scopes, with sealed requests/results, exact native parent receipts and
 closed progress projection. Native confirmation of those new scopes is pending;
 their batch containment is not complete per-obligation controller acceptance.
+The isolated-entry repair reaches the native child, but run40457814600 still
+fails. Borrowed preparation now reuses its admitted native leader's guarded
+group instead of attempting forbidden nested sessions; standalone legacy
+commands keep their independent groups. Actual outer-group exit remains
+mandatory, and the repaired native replay is not yet verified.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

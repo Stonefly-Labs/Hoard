@@ -24,6 +24,38 @@ class LegacyTransportTests(unittest.TestCase):
         self.work.mkdir(parents=True, mode=0o700)
         self.addCleanup(shutil.rmtree, self.work)
 
+    @unittest.skipUnless(sys.platform == "linux", "Requires actual Linux process-group guard.")
+    def test_native_preparation_borrows_guarded_group_without_attempting_a_new_session(self):
+        program = """
+import os, sys
+sys.path.insert(0, sys.argv[1])
+import conformance_legacy as legacy
+from conformance_process import install_group_guard
+install_group_guard()
+try:
+    legacy.capture([sys.executable, "-c", "print('closed')"])
+except RuntimeError as error:
+    assert str(error) == "Legacy command CommandFailed."
+else:
+    raise AssertionError("unguarded legacy launch unexpectedly succeeded")
+pid = os.getpid()
+header = {"groups": [pid], "children": {str(pid): legacy.process_identity(pid)}}
+with legacy.native_preparation_group(header):
+    result = legacy.capture([sys.executable, "-c", "print('closed')"])
+    assert result.returncode == 0 and result.stdout == b"closed\\n"
+assert legacy._borrowed_group() is None
+"""
+        result = subprocess.run(
+            [sys.executable, "-I", "-S", "-c", program, str(ROOT / "scripts")],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True, timeout=20, check=False)
+        self.assertEqual(0, result.returncode, result.stderr.decode("utf-8", errors="replace"))
+        self.assertEqual(b"", result.stdout)
+
+    def test_native_preparation_rejects_an_unadmitted_group(self):
+        with self.assertRaisesRegex(legacy.ConformanceError, "OwnershipInvalid"):
+            with legacy.native_preparation_group({"groups": [], "children": {}}):
+                self.fail("Foreign process must not borrow a native group.")
+
     def test_control_input_is_bounded_transient_and_does_not_block_output_drain(self):
         body = "private-canary" * 10000
         result = legacy.capture(

@@ -16,6 +16,10 @@ seals historical controller binaries before candidate builds, then uses separate
 writable prebuilt replays. Public Linux run40455993703 at `f602db4` passes that
 ordering, 2,011 bound inputs, CP36/110 and inherited525/58 with real release.
 The next native historical/controller batch wrappers remain pending confirmation.
+The isolated-entry repair's run40457814600 still fails. Its follow-on transport
+shares the admitted native group rather than requesting a guard-prohibited new
+session; standalone legacy group ownership is unchanged. Actual Linux
+confirmation remains pending, not qualification.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

@@ -4,6 +4,7 @@ import base64
 from datetime import datetime
 import hashlib
 from contextlib import contextmanager
+from contextvars import ContextVar
 import json
 import math
 import os
@@ -23,7 +24,7 @@ import zipfile
 
 from conformance_evidence import ConformanceError, admit_entity, canonical_bytes, load_json
 from conformance_execution import (
-    FIXTURE_HOST_ENVIRONMENT, READ_BYTES, TRANSIENT_BYTES, no_symlinks, process_group,
+    FIXTURE_HOST_ENVIRONMENT, READ_BYTES, TRANSIENT_BYTES, no_symlinks, process_group, process_identity,
     project_build_line, project_test_line,
 )
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
@@ -74,19 +75,47 @@ DISCOVERY_SHAPES = {
         "reason": "code correctiveAction",
     }.items()}
 _retained_children = {}
+_preparation_group = ContextVar("preparation_group", default=None)
+
+
+@contextmanager
+def native_preparation_group(header):
+    """Borrow only this admitted native leader's guarded group, never create an escaping session."""
+    pid = os.getpid()
+    if (sys.platform != "linux" or os.getpgrp() != pid or pid not in header.get("groups", ())
+            or header.get("children", {}).get(str(pid)) != process_identity(pid)):
+        raise ConformanceError("OwnershipInvalid")
+    token = _preparation_group.set(pid)
+    try:
+        yield
+    finally:
+        _preparation_group.reset(token)
+
+
+def _borrowed_group():
+    group = _preparation_group.get()
+    if group is not None and (group != os.getpid() or group != os.getpgrp()):
+        raise ConformanceError("OwnershipInvalid")
+    return group
 
 
 def _settle_group(child):
     deadline = time.monotonic() + 10
     try:
-        while process_group(child.pid, deadline=deadline):
-            if time.monotonic() >= deadline:
-                raise RuntimeError("Legacy command cleanup incomplete.")
-            try:
-                os.killpg(child.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            time.sleep(0.01)
+        if _borrowed_group() is not None:
+            if os.getpgid(child.pid) != _borrowed_group():
+                raise ConformanceError("OwnershipInvalid")
+            if child.poll() is None:
+                child.kill()
+        else:
+            while process_group(child.pid, deadline=deadline):
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("Legacy command cleanup incomplete.")
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                time.sleep(0.01)
         child.wait(timeout=max(0.001, deadline - time.monotonic()))
     except (OSError, RuntimeError, ConformanceError, subprocess.SubprocessError):
         _retained_children[child.pid] = child
@@ -100,7 +129,7 @@ class OwnedChild:
     def __init__(self, args, **kwargs):
         if not all(hasattr(os, name) for name in ("waitid", "WNOWAIT", "WEXITED", "WNOHANG", "P_PID")):
             raise RuntimeError("Legacy command PrerequisiteMissing.")
-        kwargs["start_new_session"] = True
+        kwargs["start_new_session"] = _borrowed_group() is None
         self._process = subprocess.Popen(args, **kwargs)
         self.returncode = None
         self._settled = False
@@ -207,7 +236,7 @@ class PublicationChild(OwnedChild):
 
 
 def capture(args, *, cwd=None, env=None, timeout=600, input=None):
-    """Capture at most 1 MiB, settle the complete owned process group on all exits."""
+    """Capture at most 1 MiB; native batches retain responsibility for their complete group."""
     if not all(hasattr(os, name) for name in ("waitid", "WNOWAIT", "WEXITED", "WNOHANG", "P_PID")):
         raise RuntimeError("Legacy command PrerequisiteMissing.")
     if input is not None:
@@ -225,7 +254,7 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
         child = subprocess.Popen(
             args, cwd=cwd, env=environment, stdout=subprocess.PIPE,
             stdin=subprocess.PIPE if input is not None else None,
-            stderr=subprocess.STDOUT, start_new_session=True)
+            stderr=subprocess.STDOUT, start_new_session=_borrowed_group() is None)
     except OSError:
         raise RuntimeError("Legacy command CommandFailed.") from None
     data = bytearray()
@@ -261,7 +290,7 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
             if time.monotonic() >= deadline:
                 raise RuntimeError("Legacy command exceeded its finite deadline.")
             time.sleep(0.01)
-        if process_group(child.pid):
+        if _borrowed_group() is None and process_group(child.pid):
             raise RuntimeError("Legacy command left an unsettled descendant.")
     except (OSError, subprocess.SubprocessError, RuntimeError, ConformanceError, KeyboardInterrupt) as caught:
         error = caught

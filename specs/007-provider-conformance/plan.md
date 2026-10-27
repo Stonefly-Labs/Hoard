@@ -43,6 +43,19 @@ Native confirmation is pending. Batch preparation containment is not a native
 receipt for each inner command or complete controller/mutation acceptance;
 all full-controller/profile qualification flags remain false.
 
+Run40457814600 at `b86f79d` still fails in native historical preparation after
+the isolated import repair. The follow-on correction preserves the native
+guard's ban on new sessions: borrowed commands share only the admitted
+leader's existing group, checked against its PID/start ledger witness.
+Inner cleanup reaps direct children; actual complete-group settlement remains
+mandatory in the outer native receipt. Standalone legacy group ownership is
+unchanged. The new Linux-only guard regression contrasts the rejected old
+launch with the admitted shared-group launch; local conformance tooling passes
+427 tests with twenty native skips. Linux confirmation is pending, T046
+remains unchecked, and all qualification flags remain false. No product,
+provider, documentation architecture/diagram, infrastructure or release
+contract changes are required.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

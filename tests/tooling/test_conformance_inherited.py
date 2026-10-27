@@ -2,7 +2,7 @@
 
 import importlib.util
 import copy
-from contextlib import redirect_stdout
+from contextlib import nullcontext, redirect_stdout
 import io
 import json
 import os
@@ -71,7 +71,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     return {"path": inherited.CONTROLLER_BASELINES, "sha256": "a" * 64}
 
                 output = io.StringIO()
-                with redirect_stdout(output), patch.object(
+                with redirect_stdout(output), patch("conformance_legacy.native_preparation_group",
+                                                     return_value=nullcontext()), patch.object(
                         inherited, "prepare_controller_baselines", side_effect=prepare):
                     code = inherited.controller_child_main(["--request", str(request), "--output", str(result)])
                 self.assertEqual(2 if failure else 0, code)

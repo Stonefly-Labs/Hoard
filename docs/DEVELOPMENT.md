@@ -5146,6 +5146,21 @@ only the sealed script directory explicitly. No private input or traceback is
 emitted. The nineteen inherited and five composition/workflow checks pass;
 native replay of this bootstrap repair is pending.
 
+Run40457814600 at `b86f79d` passes isolated import bootstrap but fails during
+native historical preparation; it is not a successful receipt. The native
+guard prohibits `setsid`, while the legacy transports normally request a new
+session. Preparation now borrows only its admitted leader's existing group:
+Linux leader identity and the ownership ledger's PID/start witness must agree.
+Direct children are bounded and reaped without killing their shared group.
+Descendant settlement remains the outer native owner's responsibility; a
+retained descendant still fails that parent's actual group-exit check. The
+standalone legacy transports retain their separate-session ownership behavior.
+A Linux-only regression installs the actual guard, first requires rejection
+of a legacy nested-session launch, then executes the same child in the admitted
+group. Local conformance tooling passes 427 tests with twenty Linux-only skips;
+the actual guarded regression and complete native replay remain pending.
+No controller/profile qualification, task marker, catalog or budget changes.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same
