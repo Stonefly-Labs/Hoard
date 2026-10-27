@@ -76,11 +76,15 @@ pass independent ingestion. The dedicated native composition diagnostic records
 the command/input closure and checks process-resource release separately from
 cooperative module-root cleanup. Its first Linux attempt rejects unsealed
 command inputs. Its sealed successor reaches launch but rejects test output
-through the build projector; the corrected test projector awaits native replay.
+through the build projector. The corrected test projector passes the Linux
+thirteen-row replay at exact `e9a1589`, including actual process-resource release.
 The schema-denial and corrupt-manifest recovery rows now add distinct actual
 denial/repair owners, closed failure/admission/worker/root counters and retained
 failed prefixes. Actual admission passes thirteen package proofs/thirty-three
 snapshots; a successful repair waits for both real worker entries first.
+The short native component has its own diagnostic workflow, not a qualifying
+profile. Its component environment explicitly leaves SQLite provenance
+unobserved rather than claiming the platform-only probe measured that library.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

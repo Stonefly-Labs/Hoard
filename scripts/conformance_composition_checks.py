@@ -62,7 +62,11 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
         if evidence.file_sha256(staged / f"{name}.dll") not in package["runtimeAssemblies"].values():
             raise evidence.ConformanceError("PackageMismatch")
     print(json.dumps({"qualification": False, "phase": "runtime-environment"}), flush=True)
-    observed_environment = environment(run)
+    observed_environment = evidence.admit_entity("Environment", {
+        **environment(run), "nativeSqlite": "unobserved",
+    })
+    write_new(run.root / "proofs/composition-environment-admission.json",
+              evidence.canonical_bytes(observed_environment))
     ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
     if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
         raise evidence.ConformanceError("InputChanged")
@@ -119,6 +123,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
     write_new(settings_path, settings_data)
     bound_paths = (
         manifest_path, inputs_path, run.root / "runtime-owner.json", settings_path,
+        run.root / "proofs/environment-admission.json", run.root / "proofs/composition-environment-admission.json",
         config, assembly, staged / f"{HOST}.dll", staged / f"{SDK}.dll", staged / f"{LOGGER}.dll",
         staged / "Hoard.Composition.Tests.deps.json", staged / "Hoard.Composition.Tests.runtimeconfig.json",
     )
@@ -179,6 +184,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
         "admittedSnapshots": sum(map(len, admitted["compositionObservations"].values())),
         "lockDerivationsSha256": evidence.digest(records),
         "lockedFreshCacheReplay": True, "moduleOwnershipQualification": False,
+        "environment": evidence.load_json(evidence.canonical_bytes(observed_environment)),
     }
 
 

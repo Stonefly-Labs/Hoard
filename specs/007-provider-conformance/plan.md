@@ -90,6 +90,35 @@ jobs remain failed; complete native/controller acceptance and T044 remain open.
 Task/checklist status remains 46/86. Production contracts/architecture and
 governance/infrastructure/release behavior remain unaffected.
 
+### First successful native composition replay
+
+Exact source `e9a158979d1d3e2028d6aefd3286aa48668da9f7` passes job121934813948
+in run40426812284 on Linux. Its actual seventeen-package graph and fresh-cache
+locked replay yield thirteen independently admitted proofs/thirty-three
+snapshots; immutable command/input binding and completion recomputation precede
+real process-resource release. Native containment is true, while module/root
+qualification, complete profile and qualification remain explicitly false.
+Receipt input digest:
+`1cfb3268e232344a65dc582c0434c651c6d18ac09e4c6904198e9b3e594d2360`;
+manifest:
+`737ce3b483683b50589f85b09527bc9d0eba0cf235218a39e1937cebdf2df90c`;
+owned command parent:
+`d59f6ccc3a7bfbf99e6860d10d96c1f045d30438d3f9cdd5f6e4587784e2d64a`;
+consumer:
+`7527d519c0203e81c1f90d035c17091797673d8da0c1142330ed1bc9f9b37920`.
+The original unsealed-input and wrong-projector failures remain failures.
+Other jobs in this workflow are not inferred successful from the component.
+Bounded architecture review reports no confirmed defect; it is not final T081
+or an independent certification of native evidence.
+
+The short component job moves to an independent diagnostic workflow, avoiding
+serialization behind long-running baseline/category checks. Its platform probe
+is now kept separate from component environment admission: SQLite native
+version/provenance remains explicitly unobserved, with both environment files
+bound to the actual command and the admitted environment exposed in the summary.
+Native replay of this metadata/workflow follow-up remains pending. Task/checklist
+status remains 46/86 until the current native input boundary is verified.
+
 ## Foundation continuation
 
 The maintainer's subsequent instruction to make decisions and keep implementing

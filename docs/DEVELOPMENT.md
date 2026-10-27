@@ -4778,6 +4778,24 @@ projector. The corrected entry uses the existing closed `tests` projector,
 without relaxing diagnostics. Native replay is pending; both failed native jobs
 remain failures. Complete containment/controller acceptance and T044 remain open.
 
+Exact `e9a158979d1d3e2028d6aefd3286aa48668da9f7` subsequently passes the native
+composition job in run40426812284: all thirteen proofs/thirty-three snapshots,
+fresh-cache locked replay, immutable command/input validation, completion input
+recomputation and actual process-resource release. Module/root qualification and
+profile completion remain false. The private command parent digest is
+`d59f6ccc3a7bfbf99e6860d10d96c1f045d30438d3f9cdd5f6e4587784e2d64a`.
+Both earlier failed jobs remain recorded; this is not a full workflow/profile
+result. Bounded architecture review finds no confirmed defect and does not
+replace final T081 review or independently establish native acceptance.
+
+The short job now lives in `conformance-composition.yml`, with independent
+concurrency from the longer foundations workflow; no older diagnostic need be
+cancelled merely to admit a new composition probe. A small follow-up separates
+the platform probe from the component environment, explicitly marking SQLite
+version/provenance `unobserved` and binding both environment files to the owned
+command. The summary exposes this admitted environment. Native validation of
+that metadata/workflow follow-up is pending; no full qualification is implied.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

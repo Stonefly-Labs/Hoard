@@ -83,13 +83,18 @@ The dedicated `conformance_composition_checks.py` diagnostic builds seventeen
 archives, fresh-cache locked-replays the consumer, and binds these rows to an
 owned native command. Its first Linux attempt rejects writable command inputs;
 the sealing repair subsequently reaches launch but rejects test output through
-the build projector. The corrected test projector awaits native execution.
+the build projector. The corrected test projector passes actual Linux execution
+of all thirteen selected proofs/thirty-three snapshots at exact `e9a1589`.
 Process-resource release remains
 explicitly separate from module-root qualification.
 Schema-denial/recovery repairs now bind each phase to its distinct actual
 composition owner. All thirteen selected package proofs/thirty-three snapshots
 pass independent ingestion, including failed-prefix retention and real worker
 entry before observing successful repair. Full profile acceptance remains open.
+Native composition diagnostics now have an independent workflow so a short
+component replay does not wait behind longer baseline/category diagnostics.
+SQLite version/provenance remains explicitly unobserved in this component scope;
+the platform and component environment files are separately bound inputs.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

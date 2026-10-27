@@ -159,7 +159,8 @@ proofs/twenty-one snapshots. The separate native diagnostic records an owned
 command and checks process-resource cleanup, not module-root qualification.
 Its first Linux attempt rejects writable command inputs; its sealed successor
 then rejects test output through the build projector. The corrected test
-projector awaits native replay. Distinct actual owners now cover schema denial
+projector passes Linux native replay at exact `e9a1589`. Distinct actual owners now cover schema denial
 and corrupt-manifest recovery with repaired worker entry, bringing safe component
 admission to thirteen proofs/thirty-three snapshots. This compile-only
-custom-host example is unchanged.
+custom-host example is unchanged. The separate short native diagnostic workflow
+does not qualify SQLite provenance, which remains explicitly unobserved.
