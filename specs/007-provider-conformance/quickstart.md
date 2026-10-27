@@ -10,8 +10,11 @@ observations on supported Linux hosts; they deliberately remain
 `bash scripts/validate-conformance.sh --profile composition --evidence /fresh/private/path`
 now attempts CP36/110 and all 525 inherited parameters, not qualification.
 Exact standalone Linux run40451900182 at `f319b77` passes that native scope;
-the public-entry replay is pending. Full controller/mutation acceptance,
-pre-candidate historical sealing and independent profile evaluation remain open.
+public-entry run40453911841 at `5d2e959` also passes while retaining incomplete
+exit 2 and false qualification. The composition executor now prepares and
+seals historical controller binaries before candidate builds, then uses separate
+writable prebuilt replays; native confirmation of this ordering change is pending.
+Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.
 The initial concrete Memory adapter has explicit current/legacy factories,

@@ -10,6 +10,21 @@ assertion extraction, five-profile workflow, custom checklist approval or qualif
 result is delivered. Public product contracts and required outcomes remain
 unchanged; necessary fixture-private controls are extended as recorded below.
 
+## Pre-candidate inherited historical preparation
+
+The composition continuation prepares one F-01 registration consumer, two F-02
+configuration binaries and three F-03 discovery binaries from the pinned F-06
+recipes before candidate feed creation or any candidate command. Its private
+run/root-bound seal includes recipe/source hashes, complete prebuilt project
+outputs, assets and local archives, excluding mutable package caches. Candidate
+compatibility works on writable copies; historical originals remain sealed and
+are reverified before/after preparation and runtime execution. Focused red/green
+checks cover ordering, no-rebuild replay, foreign/changed inputs and dependency
+replacement confined to copies. Native replay remains pending; this does not
+give borrowed preparation native command receipts, complete controller/mutation
+acceptance or qualification. T046 remains unchecked, 48/86, implement/running.
+Production contracts, examples, diagrams and infrastructure are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
@@ -306,7 +321,13 @@ missing dispatch/failure propagation, then cover complete selection, omitted/
 duplicate/focused/custom/mixed rejection, native failure codes and safe borrowed
 exceptions. CI now runs the public shell entry and checks expected incomplete
 exit plus completed native summary/source/input/release evidence; an early exit
-2 cannot pass alone. Public-entry Linux replay is pending. Full controller/
+2 cannot pass alone. Public-entry run40453911841 at `5d2e959` now passes:
+36 CP proofs/110 snapshots, inherited525/58, all 696 unchanged inputs and
+process release, with expected incomplete exit 2. Source digest
+`c8bedc8e0824d47b282afe64d16500183e018c27b7f1678c3022ec3c3d0d06e3`;
+input `0046b7bc06d865c41791c1b7f2b2eff5d048a3ee31e5d0409339b0d4d09d3a68`;
+scope admission `843700209e04f1db13fbc300d2f200a67cc1f1d83cb9eb70af9982d1ada81c7c`.
+Full controller/
 mutation acceptance, historical pre-candidate sealing and independent profile
 evaluation remain open. No task/checklist marker advances.
 

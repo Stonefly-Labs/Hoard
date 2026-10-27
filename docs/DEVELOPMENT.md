@@ -5068,8 +5068,35 @@ exceptions produce a safe incomplete result. The composition diagnostic workflow
 now exercises this public entry and requires its expected nonqualifying exit,
 completed native summary, exact CI source/input agreement and released resources.
 An early incomplete failure cannot pass just by returning 2. Public-entry Linux
-replay is pending. Historical pre-candidate sealing, full controller/mutation
+replay subsequently passes at `5d2e959` in run40453911841/job122022680973:
+CP36/110, inherited525/58, all 696 unchanged private inputs and released
+processes, with expected incomplete exit 2. Source
+`c8bedc8e0824d47b282afe64d16500183e018c27b7f1678c3022ec3c3d0d06e3`;
+CP input `0046b7bc06d865c41791c1b7f2b2eff5d048a3ee31e5d0409339b0d4d09d3a68`;
+inherited scope admission
+`843700209e04f1db13fbc300d2f200a67cc1f1d83cb9eb70af9982d1ada81c7c`.
+Historical pre-candidate sealing, full controller/mutation
 acceptance, portable independent evaluation and T046 remain unfinished.
+
+The historical-ordering continuation exports the exact F-06 recipes before
+creating the candidate feed or executing candidate commands. Registration is
+prepared once against F-01; configuration retains its two F-02 binaries and
+discovery its three F-03 binaries. A private run/root-bound descriptor seals
+recipe/source bytes, projects, build outputs, assets and local archives.
+Package caches are not represented as immutable historical project trees.
+All sealed inputs are rehashed before/after borrowing and around runtime
+children. Candidate compatibility recipes copy complete prebuilt project trees
+into separate writable replays; they do not restore/build the historical
+projects again or replace sealed originals with candidate dependencies.
+Registration's original standalone behavior remains available without a
+prepared input. The first focused regressions reject the missing preparation
+API; subsequent checks cover late preparation, foreign seals, changed ownership,
+changed binaries and dependency replacement confined to a replay. Native
+confirmation of the reordered public route is pending. Borrowed preparation
+still does not have native owning-command receipts; full controller acceptance,
+profile evaluation and qualification remain incomplete. T046 is unchecked.
+These are tooling changes; product contracts, examples, diagrams, infrastructure
+and release behavior are unaffected.
 
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02

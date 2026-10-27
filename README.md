@@ -145,8 +145,16 @@ Controller boundary checks explicitly bind the prepared SDK archive and logger,
 rather than discovering an unrelated parent feed or building in the checkout.
 The public `--profile composition` route now attempts these same observations,
 but still returns `Incomplete`/`EvidenceIncomplete` (exit 2), never qualification.
-Its public-entry Linux replay is pending. Complete controller/mutation acceptance,
-historical sealing and profile evaluation remain open; T046 is still unchecked.
+Public-entry Linux run40453911841 at `5d2e959` passes the complete observed scope,
+source/input checks and process release, while preserving exit 2 and false
+qualification. The next continuation prepares the
+registration, configuration and discovery historical binaries from frozen F-06
+recipes before creating the candidate feed or launching candidate commands.
+Sealed sources, project outputs, assets and archives are verified before/after
+use; candidate dependencies replace only writable replay copies, never the
+sealed originals. Native replay of this ordering change is pending. Complete
+controller/mutation acceptance and profile evaluation remain open; T046 is
+still unchecked.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

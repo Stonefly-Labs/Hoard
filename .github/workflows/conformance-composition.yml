@@ -42,13 +42,16 @@ jobs:
           python3 - "$private_parent/run" "$GITHUB_SHA" <<'PY'
           import sys
           from pathlib import Path
+          from types import SimpleNamespace
           sys.path.insert(0, "scripts")
           import conformance_evidence as evidence
+          from conformance_inherited import CONTROLLER_BASELINES, verify_controller_baselines
           from conformance_sources import read_bounded
           root = Path(sys.argv[1])
           summary = evidence.load_json(read_bounded(root / "proofs/composition-diagnostic-summary.json", 65536))
           inputs = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
               root / "proofs/composition-inputs.json", 2 * 1024**2)))
+          owner = evidence.load_json(read_bounded(root / "runtime-owner.json", 65536))
           inherited = summary["inheritedRuntime"]
           if (summary["qualification"] is not False or summary["profileComplete"] is not False
                   or summary["passedComponents"] != 36 or summary["admittedSnapshots"] != 110
@@ -56,10 +59,17 @@ jobs:
                   or inputs["sourceRevision"] != sys.argv[2] or inputs["sourceState"] != "clean-ci"
                   or inputs["mode"] != "diagnostic" or inputs["profileId"] != "composition"
                   or summary["inputSha256"] != evidence.digest(inputs)
+                  or owner["runId"] != inputs["runId"]
                   or inherited["qualification"] is not False or inherited["profileComplete"] is not False
                   or inherited["executionComplete"] is not True or inherited["nativeContainment"] is not True
+                  or inherited["controllerNativeContainment"] is not False
+                  or inherited["fullControllerAcceptance"] is not False
+                  or inherited["historicalBinariesPreparedBeforeCandidate"] is not True
                   or inherited["passedParameters"] != 525 or inherited["scopes"] != 58
                   or len(inherited["commands"]) != 58):
               raise SystemExit("WitnessMissing")
+          verify_controller_baselines(
+              SimpleNamespace(root=root, run_id=inputs["runId"], root_id=owner["rootId"]),
+              {"path": CONTROLLER_BASELINES, "sha256": inherited["historicalBaselineSealSha256"]})
           print('{"qualification":false,"status":"Incomplete","code":"EvidenceIncomplete"}')
           PY

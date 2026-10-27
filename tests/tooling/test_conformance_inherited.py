@@ -10,6 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -25,6 +26,141 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_baselines_are_prepared_before_candidate_and_replayed_without_rebuild(self):
+        import configuration_evidence as configuration
+        import discovery_evidence as discovery
+        import foundation_evidence as foundation
+        import lifecycle_evidence as lifecycle
+        import conformance_baselines as baselines
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            for name in ("stores", "proofs", "feed"):
+                (owner / name).mkdir()
+            recipe = owner / "stores/f06-recipes"
+            recipe.mkdir()
+            (recipe / "recipe.cs").write_bytes(b"frozen recipe")
+            run = SimpleNamespace(root=owner, run_id="run", root_id="root", command_sequence=0)
+
+            def retained(root, work, update):
+                result = []
+                names = (("RetainedLifecycle", "RetainedConfiguration", "LegacyOptions")
+                         if work.name == "discovery" else ("LegacyOptions", "LifecycleConsumer"))
+                for name in names:
+                    project = work / "retained" / name
+                    binary = project / "bin/Release/net10.0" / (name + ".dll")
+                    binary.parent.mkdir(parents=True)
+                    binary.write_bytes(name.encode())
+                    (binary.parent / "Hoard.Core.dll").write_bytes(b"old dependency")
+                    assets = project / "obj/project.assets.json"
+                    assets.parent.mkdir()
+                    assets.write_bytes(b"{}")
+                    (project / (name + ".csproj")).write_bytes(b"<Project/>")
+                    result.append({"name": name, "baseline": (discovery if work.name == "discovery"
+                                                              else configuration).BASELINE,
+                                   "assembly": str(binary),
+                                   "sha256": file_sha256(binary), "assets": str(assets)})
+                return result
+
+            def registration(root, work, config, update):
+                binary = work / "registration-old/bin/Release/net10.0/RegistrationConsumer.dll"
+                binary.parent.mkdir(parents=True)
+                binary.write_bytes(b"old registration")
+                return {"assembly": str(binary), "sha256": file_sha256(binary)}
+
+            with patch.object(baselines, "export_revision", return_value=recipe), patch.object(
+                    lifecycle, "prepare_registration_baseline", side_effect=registration) as old_registration, \
+                    patch.object(configuration, "prepare_baseline", side_effect=retained) as old_configuration, \
+                    patch.object(discovery, "prepare_baseline", side_effect=retained) as old_discovery:
+                seal = inherited.prepare_controller_baselines(ROOT, run)
+                self.assertEqual((1, 1, 1), (old_registration.call_count, old_configuration.call_count,
+                                            old_discovery.call_count))
+            verified = inherited.verify_controller_baselines(run, seal)
+            self.assertFalse(verified["qualification"])
+            self.assertFalse(verified["nativeContainment"])
+            original = Path(verified["retained"]["configuration"][0]["assembly"])
+            target = owner / "stores/replay"
+            target.mkdir()
+            with inherited.controller_transport(ROOT, owner), patch.object(
+                    configuration, "prepare_baseline") as rebuild:
+                replay = inherited.replay_controller_baseline(owner, verified, "configuration", target)
+            rebuild.assert_not_called()
+            copied = Path(replay[0]["assembly"])
+            self.assertEqual(original.read_bytes(), copied.read_bytes())
+            self.assertTrue(Path(replay[0]["assets"]).is_file())
+            self.assertTrue((copied.parents[3] / "LegacyOptions.csproj").is_file())
+            (copied.parent / "Hoard.Core.dll").write_bytes(b"candidate dependency")
+            self.assertEqual(b"old dependency", (original.parent / "Hoard.Core.dll").read_bytes())
+            inherited.verify_controller_baselines(run, seal)
+            run.root_id = "foreign-root"
+            with self.assertRaises(ConformanceError):
+                inherited.verify_controller_baselines(run, seal)
+            run.root_id = "root"
+            original.chmod(0o600)
+            original.write_bytes(b"changed")
+            with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+                inherited.verify_controller_baselines(run, seal)
+            with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+                inherited.prepare_controller_baselines(ROOT, run)
+
+    def test_controller_baselines_reject_late_preparation_foreign_seals_and_changed_identity(self):
+        import conformance_baselines as baselines
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            (owner / "feed").mkdir()
+            run = SimpleNamespace(root=owner, run_id="run", root_id="root", command_sequence=1)
+            with patch.object(baselines, "export_revision") as export:
+                with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+                    inherited.prepare_controller_baselines(ROOT, run)
+                run.command_sequence = 0
+                (owner / "feed/candidate").mkdir()
+                with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+                    inherited.prepare_controller_baselines(ROOT, run)
+                export.assert_not_called()
+            with self.assertRaises(ConformanceError):
+                inherited.verify_controller_baselines(
+                    run, {"path": str(ROOT / "global.json"), "sha256": file_sha256(ROOT / "global.json")})
+
+    def test_registration_replay_preserves_sealed_binary_and_dependency_inputs(self):
+        import foundation_evidence as foundation
+        import lifecycle_evidence as lifecycle
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            source = owner / "snapshot"
+            recipe = source / "tests/fixtures/lifecycle/registration/RegistrationConsumer"
+            recipe.mkdir(parents=True)
+            (recipe / "RegistrationConsumer.csproj").write_bytes(b"<Project/>")
+            old = owner / "sealed/RegistrationConsumer.dll"
+            old.parent.mkdir()
+            old.write_bytes(b"old consumer")
+            dependency = old.parent / "Hoard.Core.dll"
+            dependency.write_bytes(b"old core")
+            for path in (old, dependency):
+                path.chmod(0o400)
+            work = owner / "replay"
+            work.mkdir()
+
+            def build(project):
+                binary = project.parent / "bin/Release/net10.0/RegistrationConsumer.dll"
+                binary.parent.mkdir(parents=True)
+                binary.write_bytes(b"new consumer")
+                (binary.parent / "Hoard.Core.dll").write_bytes(b"candidate core")
+                binary.with_suffix(".runtimeconfig.json").write_text(json.dumps({
+                    "runtimeOptions": {"frameworks": [{"name": "Microsoft.AspNetCore.App"}]}}))
+                return binary
+
+            prepared = {"assembly": str(old), "sha256": file_sha256(old)}
+            with inherited.controller_transport(ROOT, owner), patch.object(
+                    lifecycle, "prepare_registration_baseline") as rebuild, patch.object(
+                    foundation, "restore"), patch.object(foundation, "build", side_effect=build), patch.object(
+                    lifecycle, "run", return_value="registration-compatible"):
+                lifecycle.registration_compatibility(source, work, owner / "NuGet.Config", False, prepared=prepared)
+            rebuild.assert_not_called()
+            self.assertEqual(b"old consumer", (work / "registration-old/RegistrationConsumer.dll").read_bytes())
+            self.assertEqual(b"candidate core", (work / "registration-old/Hoard.Core.dll").read_bytes())
+            self.assertEqual(b"old core", dependency.read_bytes())
+            self.assertEqual(prepared["sha256"], file_sha256(old))
+            self.assertEqual(0o400, old.stat().st_mode & 0o777)
+
     def test_controller_runtime_inputs_are_explicit_owned_and_immutable(self):
         import lifecycle_evidence as lifecycle
         import conformance_legacy as legacy

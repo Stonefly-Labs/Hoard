@@ -19,7 +19,7 @@ from conformance_case_catalog import COMPOSITIONS, composition_snapshot_policy, 
 from conformance_execution import OwnedRun, capture_control, native_execution_supported
 from conformance_inherited import (
     INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
-    prepare_controller_evidence,
+    prepare_controller_baselines, prepare_controller_evidence, verify_controller_baselines,
 )
 from conformance_lock_preparation import verify_project_lock
 from conformance_prepare import PREREQUISITES, Project, build_project
@@ -122,7 +122,7 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
     return summary, raw, request_path, output_path, vstest
 
 
-def _inherited_runtime(run, repository, source, sources, config, feed):
+def _inherited_runtime(run, repository, source, sources, config, feed, baseline_seal):
     import discovery_evidence
 
     print(json.dumps({"qualification": False, "phase": "inherited-source-build"}), flush=True)
@@ -135,7 +135,9 @@ def _inherited_runtime(run, repository, source, sources, config, feed):
     print(json.dumps({"qualification": False, "phase": "inherited-controller-preparation"}), flush=True)
     controllers = prepare_controller_evidence(
         repository, run.root, source, sdk_package=feed / f"{SDK}.0.1.0.nupkg",
-        logger_path=source / f"tests/contracts/{LOGGER}/bin/Release/net10.0/{LOGGER}.dll")
+        logger_path=source / f"tests/contracts/{LOGGER}/bin/Release/net10.0/{LOGGER}.dll",
+        prepared_baselines=verify_controller_baselines(run, baseline_seal))
+    historical = verify_controller_baselines(run, baseline_seal)
     root = run.root / "stores/inherited-runtime"
     root.mkdir(mode=0o700)
     normative = root / "specs/004-module-discovery/contracts/openapi.json"
@@ -143,7 +145,10 @@ def _inherited_runtime(run, repository, source, sources, config, feed):
     shutil.copy2(source / "specs/004-module-discovery/contracts/openapi.json", normative)
     driver = root / "driver"
     legacy._copy_runtime((source / DISCOVERY_PROJECT).parent / "bin/Release/net10.0", driver)
-    files = controller_read_inputs(run.root, controllers["manifests"], extra=(normative,))
+    files = controller_read_inputs(
+        run.root, controllers["manifests"],
+        extra=(normative, run.root / baseline_seal["path"],
+               *(run.root / name for name in historical["files"])))
     closure_path = run.root / "proofs/inherited-controller-read-inputs.json"
     write_new(closure_path, evidence.canonical_bytes(files))
     prior = evidence.load_json(read_bounded(run.root / "proofs/composition-inputs.json", 2 * 1024**2))
@@ -266,11 +271,14 @@ def _inherited_runtime(run, repository, source, sources, config, feed):
         root / "performance/performance.json", 65536)), run.run_id)
     if dict(evidence.source_manifest(repository)) != dict(sources):
         raise evidence.ConformanceError("InputChanged")
+    verify_controller_baselines(run, baseline_seal)
     return {
         "qualification": False, "profileComplete": False, "executionComplete": True,
         "nativeContainment": True, "controllerNativeContainment": False, "fullControllerAcceptance": False,
         "passedParameters": admitted["passedParameters"], "scopes": len(attempts),
         "scopeAdmissionSha256": evidence.digest(admitted), "controllerReadInputCount": len(files),
+        "historicalBaselineSealSha256": baseline_seal["sha256"],
+        "historicalBinariesPreparedBeforeCandidate": True,
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
     }
 
@@ -430,6 +438,8 @@ def execute(repository, destination):
         (run.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
         (run.root / "cache/.local").chmod(0o700)
         source, sources = evidence.snapshot_sources(repository, run)
+        print(json.dumps({"qualification": False, "phase": "inherited-historical-preparation"}), flush=True)
+        baseline_seal = prepare_controller_baselines(repository, run)
         config, feed = baselines._config(run, "candidate")
         projects = (
             *PREREQUISITES,
@@ -468,7 +478,8 @@ def execute(repository, destination):
         evidence.verify_snapshot(replay, prepared_sources)
         write_new(run.root / "proofs/composition-lock-derivations.json", evidence.canonical_bytes(records))
         summary = _runtime(run, repository, source, sources, config, feed, records, replay)
-        summary["inheritedRuntime"] = _inherited_runtime(run, repository, source, sources, config, feed)
+        summary["inheritedRuntime"] = _inherited_runtime(
+            run, repository, source, sources, config, feed, baseline_seal)
         evidence.verify_snapshot(source, prepared_sources)
         evidence.verify_snapshot(replay, prepared_sources)
         for record in records:
