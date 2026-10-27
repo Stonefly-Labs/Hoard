@@ -743,6 +743,21 @@ T046 remains unchecked, 52/86, implement/running; full-controller/profile/
 qualification flags remain false. Product/provider contracts, examples,
 diagrams, infrastructure and governance are unaffected.
 
+The initial v3 selected-input attempt at exact
+`c7dcb739c991b305a25842bbf95f538945a97d62` fails
+[run40590586172](https://github.com/Stonefly-Labs/Hoard/actions/runs/40590586172),
+job122493477463, in historical preparation with `EvidenceSchemaInvalid`.
+Original control400211 and a focused red regression expose an empty selected
+file map being passed to the generic nonempty proof-manifest helper.
+The repair admits the explicitly partial empty map, retaining its digest and
+one-to-one launch pairing without weakening nonempty pre/post hash validation.
+The Linux guarded test exercises an actual empty-map native command as well.
+Focused regressions: 67 tests, zero failures, one Linux skip. Full safe tooling:
+573 tests, zero failures/errors/unexpected diagnostic bytes, twenty native macOS
+skips, expected incomplete exit 2. Native repair confirmation remains pending;
+the failed attempt is not acceptance. T046 remains unchecked, 52/86,
+implement/running, all full-controller/profile/qualification flags false.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

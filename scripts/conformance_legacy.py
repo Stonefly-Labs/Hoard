@@ -211,7 +211,7 @@ def _native_input_snapshot(args, cwd, env):
         return None
     owner, reader, _ = context
     files = reader(tuple(args), cwd=cwd, env=env)
-    if not isinstance(files, dict) or dict(input_manifest(owner, list(files))) != files:
+    if not isinstance(files, dict) or files and dict(input_manifest(owner, list(files))) != files:
         raise ConformanceError("InputChanged")
     return files
 
@@ -226,7 +226,7 @@ def _native_invocation_complete(invocation, exit_code, files):
     context = _preparation_input_context.get()
     if context is not None:
         owner, _, snapshots = context
-        if not isinstance(files, dict) or dict(input_manifest(owner, list(files))) != files:
+        if not isinstance(files, dict) or files and dict(input_manifest(owner, list(files))) != files:
             raise ConformanceError("InputChanged")
         snapshots.append({
             "qualification": False, "inputClosureComplete": False, "scope": "selected-declared-inputs",

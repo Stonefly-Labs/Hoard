@@ -24,6 +24,13 @@ class LegacyTransportTests(unittest.TestCase):
         self.work.mkdir(parents=True, mode=0o700)
         self.addCleanup(shutil.rmtree, self.work)
 
+    def test_native_selected_input_snapshot_allows_a_command_without_selected_file_arguments(self):
+        context = legacy._preparation_input_context.set((self.work, lambda *args, **kwargs: {}, []))
+        try:
+            self.assertEqual({}, legacy._native_input_snapshot(("dotnet", "--version"), None, None))
+        finally:
+            legacy._preparation_input_context.reset(context)
+
     @unittest.skipUnless(sys.platform == "linux", "Requires actual Linux process-group guard.")
     def test_native_preparation_borrows_guarded_group_without_attempting_a_new_session(self):
         program = """
@@ -46,7 +53,7 @@ tracked = owner / "tracked-input"
 tracked.write_bytes(b"unchanged")
 expected = legacy._hash(tracked)
 def read_inputs(args, **kwargs):
-    return {"tracked-input": expected}
+    return {} if args == ("/bin/true",) else {"tracked-input": expected}
 with legacy.native_preparation_group(header, input_owner=owner, input_reader=read_inputs) as journal:
     invocations = journal["invocations"]
     result = legacy.capture([sys.executable, "-c", "print('closed')"])
@@ -74,8 +81,8 @@ with legacy.native_preparation_group(header, input_owner=owner, input_reader=rea
     assert invocations[-1]["exitCode"] == -legacy.signal.SIGKILL
     legacy.verify_borrowed_invocations(invocations, group_pid=pid, group_start_sha256=header["children"][str(pid)])
     legacy.verify_borrowed_input_snapshots(journal["inputSnapshots"], 3)
-    assert all(snapshot["files"] == {"tracked-input": legacy._hash(tracked)}
-               for snapshot in journal["inputSnapshots"])
+    assert [snapshot["files"] for snapshot in journal["inputSnapshots"]] == [
+        {"tracked-input": expected}, {}, {"tracked-input": expected}]
     try:
         legacy.capture([sys.executable, "-c", "from pathlib import Path;Path(" + repr(str(tracked)) +
                         ").write_bytes(b'changed')"])

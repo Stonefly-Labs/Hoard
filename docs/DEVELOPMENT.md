@@ -5715,6 +5715,23 @@ implement/running, all full-controller/profile/qualification flags false.
 Provider contracts, examples, diagrams, infrastructure and governance are
 unaffected by this test-transport continuation.
 
+The first v3 native attempt, exact `c7dcb739c991b305a25842bbf95f538945a97d62`,
+[run40590586172](https://github.com/Stonefly-Labs/Hoard/actions/runs/40590586172),
+job122493477463, fails historical preparation with `EvidenceSchemaInvalid`.
+Original finite control400211 and a focused red regression identify the generic
+proof-manifest helper's nonempty-list requirement: some actual commands have no
+selected declared file arguments. The repair preserves an explicitly empty
+partial map and its canonical digest while retaining every nonempty pre/post
+hash check, aligned launch count, native ownership check and false closure flag.
+The actual guarded Linux test now also covers an empty-map native launch.
+Focused regressions: 67 tests, zero failures, one Linux-only skip.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 573 tests, zero
+failures/errors/unexpected diagnostic bytes, twenty native macOS skips, expected
+incomplete exit 2. Native repair confirmation remains pending; the failed attempt
+is retained as failure. T046 stays unchecked, 52/86, implement/running.
+Provider contracts, examples, diagrams, infrastructure and governance remain
+unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

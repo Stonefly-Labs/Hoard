@@ -369,6 +369,13 @@ but explicitly does not claim complete compiler/runtime I/O closure. Local safe
 tooling observes 572 tests with no failures/errors or unexpected diagnostic bytes;
 twenty native macOS skips remain incomplete, not acceptance. Linux confirmation
 of these new selected-input snapshots is pending; T046 remains unchecked, 52/86.
+The first v3 native attempt at `c7dcb73` fails historical preparation because
+the generic nonempty proof-manifest helper rejects a legitimately empty selected
+file map. A focused regression reproduces that exact schema error; the repair
+retains an explicit empty partial snapshot for commands without selected files,
+without weakening nonempty input checks. Full local safe tooling now observes
+573 tests with zero failures/errors and twenty native skips. Native replay of
+the repair remains pending; the failed attempt is not acceptance.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.
