@@ -5833,6 +5833,22 @@ expected incomplete exit 2. No task/qualification flags change; 52/86,
 implement/running. Provider contracts, examples, diagrams, infrastructure and
 governance remain unaffected.
 
+T046 is now checked after criterion-level reconciliation with the specification,
+not by changing a runtime qualification flag. Its required integration is
+verified at exact native `cf6a9a6`: all 525 inherited parameters/58 fresh scopes,
+complete frozen source-owned inventories, exact manifests/witnesses, source/
+package/runtime agreement, independent original parent/output admission and
+actual release. `inspect_inherited_runtime_attempts` rejects omitted scopes,
+parameters, reused attempts/executions and mixed source, owner or image inputs;
+the original discovery/controller negatives and repairs also execute.
+Earlier continuation notes treated universal compiler/SDK/runtime read-I/O
+closure as an extra T046 gate. T046/FR-018 do not require syscall tracing.
+The approved specification remains the acceptance boundary; no new tracing
+requirement or relaxation of attribution, completeness or sanitation is added.
+Selected per-command snapshots remain partial, and all full-controller/profile/
+qualification flags remain false. T047 and final independent proof evaluation
+remain open. Current progress: 53/86, implement/running.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

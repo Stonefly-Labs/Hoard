@@ -880,6 +880,30 @@ expected incomplete exit 2. Implementation remains 52/86, implement/running.
 Provider contracts, examples, diagrams, infrastructure and governance are
 unaffected.
 
+### T046 criterion-level completion boundary
+
+T046 is complete against its actual integration requirements, with exact
+`cf6a9a6` native run40594189002/job122505782182 as the runtime receipt.
+This is not a promotion of the diagnostic run to full-profile qualification.
+The finite acceptance mapping is:
+
+| T046 requirement | Delivered evidence |
+| --- | --- |
+| Complete inherited inventories | Frozen source-owned lifecycle/configuration/discovery inventory; all 525 parameters across 58 exact scopes, discovery137/four required adapters/ten suites. |
+| Fresh child manifests and exact witnesses | Fresh run/attempt/execution identities, exact discovery partitions, manifest/owner/input/package/image links and original safe logger proofs; omitted boundaries/parameters and replayed attempts/executions reject. |
+| Source/input agreement | Repository and copied source checks, original declared runtime descriptors, pre/post bound files, per-assembly inputs and shared owner agreement; mixed source, owner or image inputs reject. |
+| Safe reuse of original controllers | Original native parent/output/journal/snapshot admission, closed progress/errors, original assertions and all twelve original negative/repair pairs, independently checked after actual release. |
+
+Earlier continuation notes inferred an additional universal compiler/import/
+SDK/runtime read-I/O closure gate. T046 and FR-018 require attribution and
+completeness of the declared evidence, not syscall tracing of the toolchain.
+The approved specification is the acceptance boundary; no additional tracing
+feature is introduced and no specified invariant is relaxed. Selected command
+snapshots retain `inputClosureComplete=false`; all full-controller/profile/
+qualification flags remain false. Full composition acceptance T047 and final
+independent proof evaluation T071 remain open. T046's checkbox records only
+the verified integration task. Current progress: 53/86, implement/running.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
