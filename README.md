@@ -180,6 +180,11 @@ workspaces also retain the complete current project/contract closure; fresh
 source restore/build, seven positive guard cases and formatting pass after
 declaring the source test's directly consumed Abstractions/Versioning inputs.
 No actual mutation or full-controller acceptance is inferred from that setup.
+Run40461182891 locates the lifecycle failure in bounded legacy evidence reads.
+Legacy transport now checks closed logger admission failures before requiring
+completion, preserving the actual safe failure code instead of masking it as
+an output limit. A real local single-boundary transport passes; the Linux
+failure and complete controller acceptance remain unresolved.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

@@ -30,6 +30,10 @@ execution; the follow-on diagnostic projects only allowlisted source locations.
 Current discovery mutation setup now includes its full dependency/contract
 closure. Fresh source build, seven positive guard cases and formatting pass;
 negative mutation execution and full controller acceptance remain required.
+Run40461182891 narrows lifecycle command 77's failure to a bounded legacy
+evidence read. The next transport preserves closed logger admission failures
+before completion reads; a real local single-boundary safe transport passes,
+but the underlying Linux failure remains unresolved pending replay.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

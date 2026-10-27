@@ -953,6 +953,15 @@ def stage_sdk(package, sdk):
 
 def validate_transport(root, manifest, result, *, started, ended, assertion=None):
     """Independently correlate logger completion, exact results and individual proofs."""
+    events = []
+    try:
+        for line in result.stdout.splitlines():
+            if event := project_test_line(line):
+                events.append(dict(event))
+    except ConformanceError:
+        raise RuntimeError("Legacy runtime UnknownDiagnostic.") from None
+    if len(events) == 1 and events[0]["code"] != "None" and events[0]["value"] == 0:
+        raise ConformanceError(events[0]["code"])
     attempt = manifest["attemptId"]
     output = root / f"runtime-{attempt}"
     completion = load_json(read_bounded(output / "completion.json", 64 * 1024))
@@ -1015,13 +1024,6 @@ def validate_transport(root, manifest, result, *, started, ended, assertion=None
             or {path.name for path in output.iterdir()} != files
             or (result.returncode > 0) != bool(failures) or result.returncode < 0):
         raise RuntimeError("Legacy runtime EvidenceIncomplete.")
-    events = []
-    try:
-        for line in result.stdout.splitlines():
-            if event := project_test_line(line):
-                events.append(dict(event))
-    except ConformanceError:
-        raise RuntimeError("Legacy runtime UnknownDiagnostic.") from None
     if events != [{"event": "control", "code": diagnostic, "value": len(expected)}]:
         raise RuntimeError("Legacy runtime completion was not observed.")
     for entry in (*manifest["assemblies"], *manifest["packages"]):

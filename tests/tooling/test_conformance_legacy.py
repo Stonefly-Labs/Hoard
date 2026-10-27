@@ -427,6 +427,20 @@ assert legacy._borrowed_group() is None
             legacy.validate_transport(self.work, manifest, result, started=99, ended=102)
         self.assertNotIn("private-canary", str(caught.exception))
 
+    def test_logger_admission_failure_preserves_its_closed_code_without_completion(self):
+        manifest, result, _, _ = self.packet()
+        completion = self.work / f'runtime-{manifest["attemptId"]}' / "completion.json"
+        completion.unlink()
+        for code in ("OwnershipInvalid", "EvidenceSchemaInvalid", "InputChanged", "ProofMismatch"):
+            result.stdout = legacy.canonical_bytes({"event": "control", "code": code, "value": 0})
+            result.returncode = 1
+            with self.subTest(code=code), self.assertRaises(legacy.ConformanceError) as caught:
+                legacy.validate_transport(self.work, manifest, result, started=99, ended=102)
+            self.assertEqual(code, str(caught.exception))
+        result.stdout = b"private-canary"
+        with self.assertRaisesRegex(RuntimeError, "^Legacy runtime UnknownDiagnostic.$"):
+            legacy.validate_transport(self.work, manifest, result, started=99, ended=102)
+
     def test_assertion_negative_requires_actual_matching_failed_witness_and_nonzero_exit(self):
         manifest, result, _, assertion = self.packet(failed=True)
         _, failures = legacy.validate_transport(self.work, manifest, result, started=99, ended=102, assertion=assertion)

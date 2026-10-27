@@ -5207,6 +5207,17 @@ mutation or complete controller is claimed. Full tooling passes 541 tests
 with twenty native skips. Native lifecycle diagnosis/repair and the remaining
 full-controller obligations continue; no catalog, assertion or budget changes.
 
+Run40461182891 at `bf7c2fc` identifies `conformance_sources.py:57`, a bounded
+legacy evidence read, in lifecycle command 77. A local real architecture
+boundary invocation passes through discovery, the safe logger and independent
+completion/proof validation. It does not reproduce the Linux failure.
+Legacy validation now projects bounded stdout first and preserves a closed
+zero-observation logger failure before attempting to read absent completion.
+Unknown text still rejects, and successful or expected-negative execution
+still requires the complete original evidence. The masking regression fails
+before the repair; 432 conformance tooling tests pass with twenty native skips
+after it. Linux replay and the underlying lifecycle repair remain pending.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

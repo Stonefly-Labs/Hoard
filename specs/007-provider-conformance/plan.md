@@ -91,6 +91,14 @@ project formatting pass. `python3 -m unittest discover -s tests/tooling -v`
 passes 541 tests (twenty native skips). No actual mutation detections,
 controller completion or qualification follow from setup/positive success.
 The lifecycle output limit remains unresolved pending source-location replay.
+Run40461182891 at `bf7c2fc` resolves that location to the bounded evidence reader
+at `conformance_sources.py:57`, in lifecycle command 77. A real local single
+architecture boundary passes the existing safe legacy transport, so that
+component success does not establish a Linux repair. Closed zero-observation
+logger failures now retain their original code before completion reads can
+mask them. Unknown output and missing positive evidence still reject.
+The regression fails before the repair; 432 conformance tooling tests pass
+with twenty native skips afterward. The next Linux replay remains required.
 T046 remains unchecked, 48/86, implement/running. Production boundaries,
 provider contracts, architecture diagrams, governance, examples, infrastructure
 and release behavior are unaffected by the test-only dependency/setup repair.
