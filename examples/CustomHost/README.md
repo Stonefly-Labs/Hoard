@@ -157,5 +157,9 @@ containment or a complete qualifying profile.
 The initializer-failure row extends actual safe component admission to ten
 proofs/twenty-one snapshots. The separate native diagnostic records an owned
 command and checks process-resource cleanup, not module-root qualification.
-Its first Linux attempt rejects writable command inputs; the sealing repair
-awaits native execution. This compile-only custom-host example is unchanged.
+Its first Linux attempt rejects writable command inputs; its sealed successor
+then rejects test output through the build projector. The corrected test
+projector awaits native replay. Distinct actual owners now cover schema denial
+and corrupt-manifest recovery with repaired worker entry, bringing safe component
+admission to thirteen proofs/thirty-three snapshots. This compile-only
+custom-host example is unchanged.

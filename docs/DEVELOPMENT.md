@@ -4758,6 +4758,26 @@ the failed attempt is not reclassified. Superseded run40421829046 was cancelled,
 not observed green. CP-14 schema branches, CP-18, complete containment/profile
 integration and T044 remain open.
 
+The paired schema-denial/recovery increment binds each actual composition owner
+separately instead of attributing both roots to an unused aggregate fixture.
+Frozen owner indices require denial/stopped evidence from owner zero and
+repair/stopped evidence from distinct owner one, in global stage order. Safe
+failed attempts retain their original ordered owner/snapshot prefixes without
+claiming repair. Controls reject swapped/reused/missing owners, early repair,
+erased failures, optimistic cleanup and unauthorized/missing worker entry.
+Actual repair snapshots await both real protocol/identity worker entries;
+an initial component attempt exposes the missing wait rather than treating an
+asynchronous one-worker snapshot as success. Fresh seventeen-package construction
+and fresh-cache locked replay then independently admit all thirteen proofs and
+thirty-three snapshots. All 95 logger cases and 496 tooling tests pass with
+nineteen native skips; catalog/inventory/format checks pass.
+
+The sealed native successor at `97a24f1`, run40425468998, reaches `runtime-command`
+but fails `UnknownDiagnostic`: it routed VSTest output through the closed build
+projector. The corrected entry uses the existing closed `tests` projector,
+without relaxing diagnostics. Native replay is pending; both failed native jobs
+remain failures. Complete containment/controller acceptance and T044 remain open.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

@@ -1554,15 +1554,19 @@ def ingest_runtime_discovery(*, inputs, manifest_data, owner_data, discoveries_d
     })
 
 
-def _ingest_original_observations(inputs, observations, *, original_inputs, entry, prior_observations, prior_instances):
+def _ingest_original_observations(inputs, observations, *, original_inputs, entry, prior_observations, prior_instances,
+                                  require_success=True):
     from conformance_case_catalog import CATEGORY_BINDING_SLOTS, original_witness_parents, original_witness_policy
     if not observations:
         return ()
     policy = original_witness_policy(entry["testIdentity"])
     parents = original_witness_parents(entry["testIdentity"])
-    if policy is None or parents is None or len(observations) != len(parents):
+    if policy is None or parents is None:
         raise ConformanceError("WitnessMissing")
     category, kind, roles = policy
+    if len(observations) != len(parents) and not (
+            category == "composition" and not require_success and len(observations) < len(parents)):
+        raise ConformanceError("WitnessMissing")
     binding_id = entry["bindingId"]
     binding = next((item for item in inputs["bindings"] if item["bindingId"] == binding_id), None)
     if category == "composition":
@@ -1713,7 +1717,7 @@ def _ingest_metadata_arguments(inputs, raw, origins, originals, prior_ids, bindi
 
 
 def _ingest_composition_observations(raw, originals, prior_ids, *, require_success, test_identity):
-    from conformance_case_catalog import composition_snapshot_policy
+    from conformance_case_catalog import composition_snapshot_owner_indices, composition_snapshot_policy
     policy = composition_snapshot_policy(test_identity)
     if not raw:
         return ()
@@ -1730,14 +1734,18 @@ def _ingest_composition_observations(raw, originals, prior_ids, *, require_succe
         "stage": _one_of(*(stage for stage, _ in policy)),
         "counters": _record({name: counter for name in policy[0][1]}),
     })
-    owners = {origin["observationId"] for origin in originals if origin["kind"] == "original-owner"}
+    owners = tuple(origin["observationId"] for origin in originals if origin["kind"] == "original-owner")
+    owner_indices = composition_snapshot_owner_indices(test_identity)
     stages = set()
     admitted = []
     for value in raw:
         observation = fields(value)
         identity, source = observation["observationId"], observation["sourceId"]
         key = source, observation["stage"]
-        if identity in prior_ids or source not in owners or identity == source or key in stages:
+        index = len(admitted)
+        if (index >= len(policy) or owner_indices[index] >= len(owners)
+                or source != owners[owner_indices[index]] or observation["stage"] != policy[index][0]
+                or identity in prior_ids or identity == source or key in stages):
             raise ConformanceError("ProofMismatch")
         prior_ids.add(identity)
         stages.add(key)
@@ -1747,11 +1755,8 @@ def _ingest_composition_observations(raw, originals, prior_ids, *, require_succe
         admitted.append(observation)
     if not admitted:
         return ()
-    for source in owners:
-        actual = tuple(row["stage"] for row in admitted if row["sourceId"] == source)
-        expected_stages = tuple(stage for stage, _ in policy)
-        if actual != (expected_stages if require_success else expected_stages[:len(actual)]):
-            raise ConformanceError("WitnessMissing")
+    if require_success and len(admitted) != len(policy):
+        raise ConformanceError("WitnessMissing")
     return tuple(admitted)
 
 
@@ -1846,7 +1851,8 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
             case_id=entry["caseId"], prior_sessions=prior_sessions, prior_instances=prior_instances)
         originals = _ingest_original_observations(
             inputs, proof.get("originalObservations", ()), original_inputs=original_inputs, entry=entry,
-            prior_observations=prior_observations, prior_instances=prior_instances)
+            prior_observations=prior_observations, prior_instances=prior_instances,
+            require_success=witness["status"] == "Passed")
         if (set(prior_sessions) & set(prior_observations)
                 or prior_arguments & (set(prior_sessions) | set(prior_observations))):
             raise ConformanceError("ProofMismatch")
@@ -1858,10 +1864,10 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         if compositions and inputs["profileId"] != "composition":
             raise ConformanceError("ProofMismatch")
         if inputs["profileId"] == "composition":
-            from conformance_case_catalog import composition_snapshot_policy, original_witness_policy
+            from conformance_case_catalog import composition_snapshot_policy, original_witness_parents, original_witness_policy
             policy = original_witness_policy(entry["testIdentity"])
             if (witness["status"] == "Passed" and policy is not None and policy[0] == "composition"
-                    and (len(originals) != 1
+                    and (len(originals) != len(original_witness_parents(entry["testIdentity"]))
                          or len(compositions) != len(composition_snapshot_policy(entry["testIdentity"])))):
                 raise ConformanceError("WitnessMissing")
         if len(origins) + len(originals) + len(arguments) + len(compositions) > 128:

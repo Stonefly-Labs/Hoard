@@ -96,6 +96,10 @@ internal static class RuntimeOriginOutput
                             "unsafeActivities", "rootDisposal", "stopComplete", "initializations", "assessments",
                             "workers", "stops", "disposals");
                         break;
+                    case "admission-denied" or "denial-stopped" or "repair-admitted" or "repair-stopped":
+                        Keys(counters, "ready", "admission", "phaseFailures", "fallbackRoots", "workers",
+                            "stopComplete", "rootDisposal", "unsafeActivities");
+                        break;
                     default: throw RuntimeSafety.Error("ProofMismatch");
                 }
                 foreach (var counter in counters.EnumerateObject())

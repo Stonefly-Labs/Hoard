@@ -37,8 +37,8 @@ def expected_rows():
         ("CP-14", "initializer-failed"),
         ("CP-15", "cancel-initialization"), ("CP-15", "cancel-readiness"),
         ("CP-16", "late-initialization"), ("CP-17", "stop-fault"), ("CP-17", "late-stop"),
-    ) for identity in (composition_witnesses(case, matrix)[:1] if case == "CP-14"
-                       else composition_witnesses(case, matrix))]
+        ("CP-18", "recovery-failed"),
+    ) for identity in composition_witnesses(case, matrix)]
 
 
 def _runtime(run, repository, source, sources, config, feed, records, replay):
@@ -132,7 +132,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
     print(json.dumps({"qualification": False, "phase": "runtime-command"}), flush=True)
     started = time.monotonic() * 1000
     result = run.command(
-        arguments, cwd=staged, kind="build", cache_id="composition-runtime", timeout=180,
+        arguments, cwd=staged, kind="tests", cache_id="composition-runtime", timeout=180,
         record_execution=True, execution_inputs=tuple(command_inputs))
     ended = time.monotonic() * 1000
     parent_sha = category_command_proof(

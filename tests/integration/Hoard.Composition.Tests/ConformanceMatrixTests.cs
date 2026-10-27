@@ -1000,14 +1000,41 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         }
     }
 
+    private sealed class AdmissionObservation(ITestOutputHelper output, string identity, PackagedComposition fixture)
+    {
+        private readonly ConformanceOriginalObservation? owner =
+            ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, "none", "original-owner", null, null, ("owner", fixture));
+
+        public bool Write(string stage, HoardServiceComposition lease, HoardStartResult start)
+        {
+            if (owner is null) { return false; }
+            ConformanceCompositionObservationOutput.Write(output, owner, stage,
+                new Dictionary<string, int>(StringComparer.Ordinal)
+                {
+                    ["ready"] = lease.Lifecycle.Snapshot.Ready ? 1 : 0,
+                    ["admission"] = lease.Lifecycle.Snapshot.StartupAdmission ? 1 : 0,
+                    ["phaseFailures"] = start.Diagnostics.Count(item => item.RuleCode == "PhaseFailure"),
+                    ["fallbackRoots"] = Directory.Exists(fixture.DisabledRoot) ? 1 : 0,
+                    ["workers"] = fixture.Probes.Values.Sum(probe => probe.Workers),
+                    ["stopComplete"] = lease.StopResult?.Complete == true ? 1 : 0,
+                    ["rootDisposal"] = (int?)(lease.StopResult?.RootDisposal) ?? 6,
+                    ["unsafeActivities"] = lease.StopResult?.UnsafeActivities.Length ?? 0
+                });
+            return true;
+        }
+    }
+
     [Theory]
     [InlineData("sqlite")]
     [InlineData("memory")]
     public async Task CP14_schema_admission_denies_empty_store_without_explicit_create_and_repair_succeeds(string provider)
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP14_schema_admission_denies_empty_store_without_explicit_create_and_repair_succeeds)}(provider: \"{provider}\")";
         foreach (var createEmpty in new[] { false, true })
         {
             await using var fixture = new PackagedComposition();
+            var observation = new AdmissionObservation(output, identity, fixture);
             await using var evaluation = await fixture.Builder.EvaluateConfigurationAsync(
                 new(fixture.Configuration(provider, "object", createEmpty)), Versions, new());
             Assert.Equal(HoardConfigurationOutcome.Validated, evaluation.Outcome);
@@ -1024,15 +1051,20 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.All(fixture.Probes.Values, probe => Assert.Equal(0, probe.Workers));
             }
             Assert.False(Directory.Exists(fixture.DisabledRoot));
+            if (createEmpty)
+            { await LifecycleTestHarness.Until(() => fixture.Probes.Values.All(probe => probe.Workers == 1)); }
+            observation.Write(createEmpty ? "repair-admitted" : "admission-denied", lease, result);
             await lease.DisposeAsync();
             Assert.True(lease.StopResult!.Complete);
-            output.WriteLine($"CP-14/schema/{provider}/create-{createEmpty}: admission={(result.Ready ? 1 : 0)}; fallback-roots=0; stop-complete=1");
+            if (!observation.Write(createEmpty ? "repair-stopped" : "denial-stopped", lease, result))
+            { output.WriteLine($"CP-14/schema/{provider}/create-{createEmpty}: admission={(result.Ready ? 1 : 0)}; fallback-roots=0; stop-complete=1"); }
         }
     }
 
     [Fact]
     public async Task CP18_real_local_recovery_rejects_corrupt_manifest_without_fallback_and_exact_repair_recovers()
     {
+        var testIdentity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP18_real_local_recovery_rejects_corrupt_manifest_without_fallback_and_exact_repair_recovers)}";
         await using var owner = new PackagedComposition();
         ArtifactStoreIdentity identity;
         await using (var initial = await ArtifactFixtureSession.CreateForQualificationAsync("local", owner.ArtifactRoot))
@@ -1044,6 +1076,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         {
             if (repaired) { await File.WriteAllBytesAsync(manifest, original); }
             await using var fixture = new PackagedComposition(owner.Root);
+            var observation = new AdmissionObservation(output, testIdentity, fixture);
             fixture.Web.Services.AddSingleton(new ArtifactFixtureAdmissionProfile
             { Mode = ArtifactInitializationMode.ReopenCompatible, Store = identity });
             await using var evaluation = await fixture.Builder.EvaluateConfigurationAsync(
@@ -1062,9 +1095,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.All(fixture.Probes.Values, probe => Assert.Equal(0, probe.Workers));
             }
             Assert.False(Directory.Exists(fixture.DisabledRoot));
+            if (repaired)
+            { await LifecycleTestHarness.Until(() => fixture.Probes.Values.All(probe => probe.Workers == 1)); }
+            observation.Write(repaired ? "repair-admitted" : "admission-denied", lease, result);
             await lease.DisposeAsync();
             Assert.True(lease.StopResult!.Complete);
-            output.WriteLine($"CP-18/local/repaired-{repaired}: ready={(result.Ready ? 1 : 0)}; alternate-roots=0; stop-complete=1");
+            if (!observation.Write(repaired ? "repair-stopped" : "denial-stopped", lease, result))
+            { output.WriteLine($"CP-18/local/repaired-{repaired}: ready={(result.Ready ? 1 : 0)}; alternate-roots=0; stop-complete=1"); }
         }
     }
 

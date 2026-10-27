@@ -75,7 +75,12 @@ before complete owner disposal. Ten actual package proofs/twenty-one snapshots
 pass independent ingestion. The dedicated native composition diagnostic records
 the command/input closure and checks process-resource release separately from
 cooperative module-root cleanup. Its first Linux attempt rejects unsealed
-command inputs; the read-only sealing repair awaits native execution.
+command inputs. Its sealed successor reaches launch but rejects test output
+through the build projector; the corrected test projector awaits native replay.
+The schema-denial and corrupt-manifest recovery rows now add distinct actual
+denial/repair owners, closed failure/admission/worker/root counters and retained
+failed prefixes. Actual admission passes thirteen package proofs/thirty-three
+snapshots; a successful repair waits for both real worker entries first.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

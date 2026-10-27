@@ -12,6 +12,46 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("admission-denied")]
+    [InlineData("denial-stopped")]
+    [InlineData("repair-admitted")]
+    [InlineData("repair-stopped")]
+    public void Admission_snapshots_preserve_bounded_failure_and_root_observations(string stage)
+    {
+        using var owned = new OwnedInput();
+        var owner = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-owner", [("owner", new OriginalProbe())]);
+        var counters = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["ready"] = 0,
+            ["admission"] = 0,
+            ["phaseFailures"] = 1,
+            ["fallbackRoots"] = 0,
+            ["workers"] = 0,
+            ["stopComplete"] = 0,
+            ["rootDisposal"] = 6,
+            ["unsafeActivities"] = 0
+        };
+        var lines = ConformanceOriginalObservationOutput.Render(owner).Concat(
+            ConformanceCompositionObservationOutput.Render(owner, stage, counters));
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        var snapshot = Assert.Single(proof.RootElement.GetProperty("compositionObservations").EnumerateArray());
+        Assert.Equal(stage, snapshot.GetProperty("stage").GetString());
+        Assert.Equal(1, snapshot.GetProperty("counters").GetProperty("phaseFailures").GetInt32());
+        Assert.Equal(6, snapshot.GetProperty("counters").GetProperty("rootDisposal").GetInt32());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData("caller-cancelled")]
     [InlineData("ownership-retained")]
     [InlineData("ownership-settled")]

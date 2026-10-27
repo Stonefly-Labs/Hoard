@@ -13,6 +13,9 @@ public static class ConformanceCompositionObservationOutput
     private static readonly ImmutableHashSet<string> OwnershipNames =
         ["callbackSettled", "workCompleted", "workFaulted", "ready", "admission", "unsafeActivities",
          "rootDisposal", "stopComplete", "initializations", "assessments", "workers", "stops", "disposals"];
+    private static readonly ImmutableHashSet<string> AdmissionNames =
+        ["ready", "admission", "phaseFailures", "fallbackRoots", "workers",
+         "stopComplete", "rootDisposal", "unsafeActivities"];
 
     public static ImmutableArray<string> Render(ConformanceOriginalObservation source, string stage,
         IReadOnlyDictionary<string, int> counters)
@@ -24,6 +27,7 @@ public static class ConformanceCompositionObservationOutput
             "before-initialization" or "ready" or "stopped" => Names,
             "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped"
                 or "initialization-denied" => OwnershipNames,
+            "admission-denied" or "denial-stopped" or "repair-admitted" or "repair-stopped" => AdmissionNames,
             _ => throw new ArgumentException("ProofMismatch")
         };
         if (source.Kind != "original-owner")

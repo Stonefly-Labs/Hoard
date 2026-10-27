@@ -59,6 +59,37 @@ run40421829046 was cancelled, not admitted as successful evidence.
 CP-14 schema admission, CP-18, complete ownership/containment/profile evaluation
 and T044 remain incomplete; task/checklist status remains 46/86.
 
+### Distinct denial/repair owners and native test projection
+
+Schema admission and real corrupt-manifest recovery now emit four safe stages
+from their two actual fixture/composition owners. The frozen source policy
+requires distinct owner instances and exact owner-indexed global stage order.
+The producer captures the fixture building each root, not an unused aggregate/
+directory fixture.
+Failed attempts retain correctly ordered original owner/snapshot prefixes.
+Three complete-owner positives and a partial-failure control first reproduce
+missing policy. Independent challenges reject reused/swapped/missing owners,
+repair-first output, erased failure, false admission/root cleanup and missing
+or early worker entry. Actual package execution exposes a worker-entry race;
+success now waits on both actual probes before recording repair readiness.
+
+Fresh seventeen-package construction and fresh-cache locked replay independently
+admit thirteen actual proofs/thirty-three snapshots. The diagnostic source hash
+is `ca461432e9b3caabeeef9bdcfe5d8fba81926774b8a74c5a2eddf19950d26ce5`,
+consumer `a4793a3490cfffd0f6135b0bd5e13fb4db97f505eabd8dec7d0944abc2f988b0`.
+All 95 logger cases and 496 tooling tests pass (nineteen native skips), with
+catalog/inventory/format checks intact.
+
+Native run40425468998 at exact `97a24f1` passes private consumer/source
+recomputation, fresh locked replay, staging, environment and input admission.
+It reaches command launch but fails `UnknownDiagnostic` because the entry uses
+the closed build projector for VSTest output. It now uses the existing closed
+`tests` projector; no diagnostic fallback is introduced. Native validation of
+this correction and the thirteen-row scope is pending. Both original failed
+jobs remain failed; complete native/controller acceptance and T044 remain open.
+Task/checklist status remains 46/86. Production contracts/architecture and
+governance/infrastructure/release behavior remain unaffected.
+
 ## Foundation continuation
 
 The maintainer's subsequent instruction to make decisions and keep implementing

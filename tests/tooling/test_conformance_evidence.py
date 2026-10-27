@@ -1215,6 +1215,93 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def admission_transport(self, case_id="CP-18", row=0):
+        import conformance_case_catalog as catalog
+        _, options = self.composition_transport()
+        old_identity = self.identity
+        variant = "initializer-failed" if case_id == "CP-14" else "recovery-failed"
+        identities = catalog.composition_witnesses(case_id, variant)
+        self.identity = identities[row + 1] if case_id == "CP-14" else identities[row]
+        self.manifest["expected"][0].update(
+            testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0], caseId=case_id)
+        first = self.proof["originalObservations"][0]
+        first.update(testIdentity=self.identity, caseId=case_id)
+        second = copy.deepcopy(first)
+        second["observationId"] = str(uuid.uuid4())
+        second["components"]["owner"]["instanceId"] = str(uuid.uuid4())
+        self.proof["originalObservations"].append(second)
+        snapshots = []
+        for index, stage in enumerate(("admission-denied", "denial-stopped", "repair-admitted", "repair-stopped")):
+            stopped = index % 2 == 1
+            snapshots.append({
+                "schemaVersion": 1, "observationId": str(uuid.uuid4()),
+                "sourceId": (first if index < 2 else second)["observationId"],
+                "stage": stage, "counters": {
+                    "ready": int(index == 2), "admission": int(index == 2),
+                    "phaseFailures": int(index < 2), "fallbackRoots": 0, "workers": 2 if index >= 2 else 0,
+                    "stopComplete": int(stopped), "rootDisposal": 0 if stopped else 6,
+                    "unsafeActivities": 0}})
+        self.proof.update(testIdentity=self.identity, caseId=case_id, compositionObservations=snapshots,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+        self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        options["original_inputs"]["none"][self.identity] = options["original_inputs"]["none"].pop(old_identity)
+        options["expected_tests"] = {self.identity: ("none", "none")}
+        return snapshots, options
+
+    def test_denial_and_repair_require_distinct_actual_composition_owners(self):
+        for case_id, row in (("CP-14", 0), ("CP-14", 1), ("CP-18", 0)):
+            for mutation in (None, "same-owner", "swapped-owner", "repair-first", "missing-owner",
+                             "false-ready", "erased-failure", "optimistic-stop", "early-worker", "missing-worker"):
+                with self.subTest(case_id=case_id, row=row, mutation=mutation):
+                    self.setUp()
+                    snapshots, options = self.admission_transport(case_id, row)
+                    owners = self.proof["originalObservations"]
+                    if mutation == "same-owner":
+                        snapshots[2]["sourceId"] = snapshots[0]["sourceId"]
+                        snapshots[3]["sourceId"] = snapshots[0]["sourceId"]
+                    elif mutation == "swapped-owner":
+                        snapshots[0]["sourceId"] = owners[1]["observationId"]
+                        snapshots[1]["sourceId"] = owners[1]["observationId"]
+                    elif mutation == "missing-owner":
+                        owners.pop()
+                    elif mutation == "repair-first":
+                        snapshots[:] = snapshots[2:] + snapshots[:2]
+                    elif mutation == "false-ready":
+                        snapshots[0]["counters"]["ready"] = 1
+                    elif mutation == "erased-failure":
+                        snapshots[0]["counters"]["phaseFailures"] = 0
+                    elif mutation == "optimistic-stop":
+                        snapshots[0]["counters"]["rootDisposal"] = 0
+                    elif mutation == "early-worker":
+                        snapshots[0]["counters"]["workers"] = 1
+                    elif mutation == "missing-worker":
+                        snapshots[2]["counters"]["workers"] = 1
+                    self.witness["proofSha256"] = evidence.digest(self.proof)
+                    if mutation is None:
+                        self.assertEqual(self.ingest(**options)["witnesses"][0]["status"], "Passed")
+                    else:
+                        with self.assertRaises(evidence.ConformanceError):
+                            self.ingest(**options)
+
+    def test_failed_denial_retains_its_original_owner_prefix_without_claiming_repair(self):
+        for count in range(3):
+            with self.subTest(snapshots=count):
+                self.setUp()
+                snapshots, options = self.admission_transport()
+                self.proof["originalObservations"].pop()
+                del snapshots[count:]
+                if not count:
+                    self.proof["schemaVersion"] = 2
+                    del self.proof["compositionObservations"]
+                self.proof.update(status="Failed", failureKind="Unknown")
+                self.witness.update(status="Failed", proofSha256=evidence.digest(self.proof))
+                self.completion.update(diagnosticCode="UnknownDiagnostic", complete=False)
+                observed = self.ingest(**options)
+                self.assertEqual(observed["witnesses"][0]["status"], "Failed")
+                self.assertEqual(len(observed["originalObservations"][self.execution]), 1)
+                self.assertEqual(len(observed["compositionObservations"][self.execution]), count)
+
     def ownership_transport(self, case_id="CP-16", variant="late-initialization", row=0):
         import conformance_case_catalog as catalog
         _, options = self.composition_transport()

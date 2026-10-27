@@ -666,6 +666,9 @@ def original_witness_parents(identity):
     """The independently selected creation/reopen forest for one exact execution."""
     if original_witness_policy(identity) is None:
         return None
+    owners = composition_snapshot_owner_indices(identity)
+    if owners is not None:
+        return (None,) * (max(owners) + 1)
     if identity in AUTHORITY_INTEGRATION_ROWS:
         return None, None, None
     return ORIGINAL_METADATA_FORESTS.get(identity, ORIGINAL_ARTIFACT_FORESTS.get(identity, (None,)))
@@ -866,6 +869,16 @@ def independent_version_witnesses(name):
 
 
 def composition_snapshot_policy(identity):
+    admission = (*composition_witnesses("CP-14", "initializer-failed")[1:],
+                 *composition_witnesses("CP-18", "recovery-failed"))
+    if identity in admission:
+        return tuple((stage, MappingProxyType({
+            "ready": int(index == 2), "admission": int(index == 2),
+            "phaseFailures": int(index < 2), "fallbackRoots": 0, "workers": 2 if index >= 2 else 0,
+            "stopComplete": int(index % 2 == 1), "rootDisposal": 0 if index % 2 == 1 else 6,
+            "unsafeActivities": 0,
+        })) for index, stage in enumerate(
+            ("admission-denied", "denial-stopped", "repair-admitted", "repair-stopped")))
     baseline = (*composition_witnesses("CP-01", "baseline"), *composition_witnesses("CP-02", "replacement"))
     if identity in baseline:
         rows = []
@@ -915,6 +928,13 @@ def composition_snapshot_policy(identity):
             return (("ownership-retained", MappingProxyType(counters)),
                     ("ownership-settled", MappingProxyType(settled)))
     return None
+
+
+def composition_snapshot_owner_indices(identity):
+    policy = composition_snapshot_policy(identity)
+    if policy is None:
+        return None
+    return (0, 0, 1, 1) if policy[0][0] == "admission-denied" else (0,) * len(policy)
 
 
 def composition_witnesses(case_id, variant):
