@@ -85,6 +85,10 @@ snapshots; a successful repair waits for both real worker entries first.
 The short native component has its own diagnostic workflow, not a qualifying
 profile. Its component environment explicitly leaves SQLite provenance
 unobserved rather than claiming the platform-only probe measured that library.
+Exact `f6e9db4` passes this independent native workflow with all thirteen proofs/
+thirty-three snapshots and real process-resource release. This closes the
+bounded CP-14..18 probe implementation (T044), not complete provider or
+composition qualification; CP-19/20 integration and inherited inventories remain.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

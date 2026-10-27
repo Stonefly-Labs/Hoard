@@ -164,3 +164,6 @@ and corrupt-manifest recovery with repaired worker entry, bringing safe componen
 admission to thirteen proofs/thirty-three snapshots. This compile-only
 custom-host example is unchanged. The separate short native diagnostic workflow
 does not qualify SQLite provenance, which remains explicitly unobserved.
+Exact `f6e9db4` passes all thirteen selected native cases with actual
+process-resource release, closing bounded T044 probes, not the qualifying
+composition profile or remaining authority/restart integration.

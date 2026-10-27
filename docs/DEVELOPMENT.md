@@ -4796,6 +4796,17 @@ version/provenance `unobserved` and binding both environment files to the owned
 command. The summary exposes this admitted environment. Native validation of
 that metadata/workflow follow-up is pending; no full qualification is implied.
 
+The independent composition workflow now passes at exact
+`f6e9db42f227686c865c924ba5b00cfe5bd4e3b5`, run40427660565/job121937366800.
+Its thirteen real proofs/thirty-three snapshots pass input/environment binding,
+native child execution, independent admission and actual process-resource
+release. The summary explicitly records SQLite `unobserved`, Linux x86_64,
+SDK10.0.403/runtime10.0.14 and the actual hosted runner/filesystem; it does not
+pretend the setup action's requested SDK10.0.203 is the selected SDK under
+`global.json` roll-forward. T044 is now checked, 47/86; implementation continues
+to T045. This closes bounded CP-14..18 probes, not full profile qualification,
+portable evidence retention or final architecture review.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

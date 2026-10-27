@@ -95,6 +95,10 @@ Native composition diagnostics now have an independent workflow so a short
 component replay does not wait behind longer baseline/category diagnostics.
 SQLite version/provenance remains explicitly unobserved in this component scope;
 the platform and component environment files are separately bound inputs.
+The independent Linux replay at exact `f6e9db4` verifies this environment/input
+boundary and all thirteen cases with actual process-resource release, closing
+T044. Implementation remains in progress at 47/86 tasks; authority/restart,
+inherited inventories and complete profile acceptance remain unfinished.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

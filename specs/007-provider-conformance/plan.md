@@ -119,6 +119,31 @@ bound to the actual command and the admitted environment exposed in the summary.
 Native replay of this metadata/workflow follow-up remains pending. Task/checklist
 status remains 46/86 until the current native input boundary is verified.
 
+### T044 verified native completion
+
+The independent composition workflow at exact
+`f6e9db42f227686c865c924ba5b00cfe5bd4e3b5` succeeds:
+run40427660565/job121937366800. Thirteen actual proofs/thirty-three snapshots
+pass the updated immutable command/environment closure, real owned child
+execution, independent stage/owner/counter admission and actual process-resource
+release. The admitted environment honestly records SQLite `unobserved`,
+Linux x86_64, filesystem `ext2-ext3`, SDK10.0.403/runtime10.0.14 and runner
+`ubuntu24.20261023.334.3`; setup action input is not mistaken for selected SDK.
+Input digest:
+`80ad51a39f961ebf31779d4cec6890836f6f41272a81d7f289eea331d0efdd0c`;
+owned command parent:
+`834cfdc8ee67b35cc07e23cf2cdc2b52ae7914b5a6d32eb8deb00c61ae8d7884`;
+source digest:
+`d854b7b49ad9b7ac2f134e1ec581c29d6f14069b2ebfadfd5776b4cdb3c64f30`.
+
+T044's bounded CP-14..18 implementation/probe obligations are now complete:
+required failure, cancellation, retained initializer/shutdown work, real later
+settlement and exact child ownership remain distinct from cooperative module
+cleanup. Task count is 47/86. T045 authority/restart, inherited inventories,
+complete composition/profile acceptance, portable proof retention and final
+T081 remain open. The checkpoint remains `implement / running`; no completion,
+convergence, merge or release is requested.
+
 ## Foundation continuation
 
 The maintainer's subsequent instruction to make decisions and keep implementing
