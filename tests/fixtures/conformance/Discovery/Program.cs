@@ -5,18 +5,19 @@ using Microsoft.TestPlatform.VsTestConsole.TranslationLayer;
 
 try
 {
-    if (args.Length != 4 || new FileInfo(args[2]).Length is <= 0 or > 1024 * 1024)
+    if (args.Length != 5)
     { throw new InvalidDataException("EvidenceSchemaInvalid"); }
-    var methods = JsonSerializer.Deserialize<string[]>(File.ReadAllBytes(args[2]))
-        ?? throw new InvalidDataException("EvidenceSchemaInvalid");
-    var collector = new RuntimeCaseDiscovery(args[1], methods);
-    var wrapper = new VsTestConsoleWrapper(Path.GetFullPath(args[0]));
+    var root = Path.GetFullPath(args[0]);
+    var request = RuntimeCaseDiscovery.ReadRequest(root, args[2], args[3]);
+    var assembly = Path.Combine(root, request.Assemblies.Single(image => image.Id == "test-assembly").Path);
+    var collector = new RuntimeCaseDiscovery(assembly, request.Methods);
+    var wrapper = new VsTestConsoleWrapper(Path.GetFullPath(args[1]));
     try
     {
         wrapper.StartSession();
-        wrapper.InitializeExtensions([Path.Combine(Path.GetDirectoryName(Path.GetFullPath(args[1]))!,
+        wrapper.InitializeExtensions([Path.Combine(Path.GetDirectoryName(assembly)!,
             "xunit.runner.visualstudio.testadapter.dll")]);
-        wrapper.DiscoverTests([Path.GetFullPath(args[1])],
+        wrapper.DiscoverTests([assembly],
             "<RunSettings><RunConfiguration><MaxCpuCount>1</MaxCpuCount>"
             + "<TestSessionTimeout>120000</TestSessionTimeout></RunConfiguration></RunSettings>", collector);
         if (collector.Diagnostic != ConformanceDiagnosticCode.None)
@@ -24,7 +25,8 @@ try
         var bytes = JsonSerializer.SerializeToUtf8Bytes(collector.Cases,
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         if (bytes.Length > 2 * 1024 * 1024) { throw new InvalidDataException("OutputLimitExceeded"); }
-        using (var output = new FileStream(args[3], FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        RuntimeCaseDiscovery.ReadRequest(root, args[2], args[3]);
+        using (var output = RuntimeCaseDiscovery.CreateOutput(root, args[4]))
         { output.Write(bytes); }
         Console.WriteLine(JsonSerializer.Serialize(new { @event = "control", code = "None", value = collector.Cases.Count }));
     }

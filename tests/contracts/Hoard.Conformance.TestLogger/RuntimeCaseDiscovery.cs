@@ -7,9 +7,41 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 namespace Hoard.Conformance.TestLogger;
 
 public sealed record RuntimeDiscoveredCase(string TestIdentity, string FullyQualifiedName);
+public sealed record RuntimeDiscoveryRequest(string[] Methods, RuntimeFile[] Assemblies);
 
 public sealed class RuntimeCaseDiscovery : ITestDiscoveryEventsHandler
 {
+    public static FileStream CreateOutput(string root, string relative)
+    {
+        RuntimeSafety.PrivateRoot(root);
+        return new FileStream(RuntimeSafety.OwnedPath(root, relative), FileMode.CreateNew, FileAccess.Write, FileShare.None);
+    }
+
+    public static RuntimeDiscoveryRequest ReadRequest(string root, string relative, string digest)
+    {
+        RuntimeSafety.PrivateRoot(root);
+        var request = RuntimeSafety.Read<RuntimeDiscoveryRequest>(RuntimeSafety.OwnedPath(root, relative), digest);
+        RuntimeSafety.Require(request.Methods is { Length: > 0 and <= RuntimeSafety.MaxTests }
+            && request.Methods.Distinct(StringComparer.Ordinal).Count() == request.Methods.Length
+            && request.Assemblies is { Length: > 0 and <= 256 }, "WitnessMissing");
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var paths = new HashSet<string>(StringComparer.Ordinal);
+        long bytes = 0;
+        foreach (var image in request.Assemblies)
+        {
+            RuntimeSafety.Require(image is not null && ids.Add(image.Id) && paths.Add(image.Path),
+                "ProofMismatch");
+            RuntimeSafety.Id(image.Id);
+            RuntimeSafety.Digest(image.Sha256);
+            var path = RuntimeSafety.OwnedPath(root, image.Path);
+            bytes += new FileInfo(path).Length;
+            RuntimeSafety.Require(bytes <= 512 * 1024 * 1024, "OutputLimitExceeded");
+            RuntimeSafety.Require(RuntimeSafety.FileHash(path) == image.Sha256, "InputChanged");
+        }
+        RuntimeSafety.Require(ids.Contains("test-assembly"), "WitnessMissing");
+        return request;
+    }
+
     private readonly string assembly;
     private readonly string assemblySha256;
     private readonly HashSet<string> methods;

@@ -70,18 +70,34 @@ def _inherited_discovery(run, source, sources, config, feed, observed_environmen
     methods_path = run.root / "proofs/inherited-discovery-methods.json"
     output_path = run.root / "proofs/inherited-discovery-cases.json"
     write_new(methods_path, evidence.canonical_bytes(selected))
-    inputs = [source / INVENTORY_PATH, methods_path]
+    images = []
     for folder in (runtime, driver):
-        inputs.extend(path for path in folder.rglob("*") if path.is_file()
+        images.extend(path for path in folder.rglob("*") if path.is_file()
                       and (path.suffix in (".dll", ".so", ".dylib")
                            or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
-    for path in inputs:
+    request_path = run.root / "proofs/inherited-discovery-request.json"
+    assembly = runtime / "Hoard.Composition.Tests.dll"
+    request = {
+        "methods": selected, "assemblies": [{
+            "id": "test-assembly" if path == assembly else f"discovery-image-{index}",
+            "path": path.relative_to(run.root).as_posix(), "sha256": evidence.file_sha256(path),
+        } for index, path in enumerate(images)],
+    }
+    write_new(request_path, evidence.canonical_bytes(request))
+    inputs = [source / INVENTORY_PATH, methods_path, request_path, assembly,
+              *(driver / name for name in (
+                  "Hoard.Fixtures.Conformance.Discovery.dll", "Hoard.Fixtures.Conformance.Discovery.deps.json",
+                  "Hoard.Fixtures.Conformance.Discovery.runtimeconfig.json",
+                  "Hoard.Conformance.TestLogger.dll", "Microsoft.TestPlatform.VsTestConsole.TranslationLayer.dll",
+                  "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll"))]
+    for path in {*inputs, *images}:
         path.chmod(0o400)
     bound = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in inputs}
     print(json.dumps({"qualification": False, "phase": "inherited-exact-discovery"}), flush=True)
     result = run.command(
-        ["dotnet", str(driver / "Hoard.Fixtures.Conformance.Discovery.dll"), str(vstest),
-         str(runtime / "Hoard.Composition.Tests.dll"), str(methods_path), str(output_path)],
+        ["dotnet", str(driver / "Hoard.Fixtures.Conformance.Discovery.dll"), str(run.root), str(vstest),
+         request_path.relative_to(run.root).as_posix(), evidence.digest(request),
+         output_path.relative_to(run.root).as_posix()],
         cwd=runtime, cache_id="inherited-discovery", timeout=180, record_execution=True,
         execution_inputs=tuple(bound), execution_outputs=(output_path.relative_to(run.root).as_posix(),))
     if result.exit_code:
@@ -93,6 +109,8 @@ def _inherited_discovery(run, source, sources, config, feed, observed_environmen
             or record.get("outputFiles") != {
                 output_path.relative_to(run.root).as_posix(): hashlib.sha256(raw).hexdigest()}
             or any(evidence.file_sha256(run.root / path) != hashed for path, hashed in bound.items())):
+        raise evidence.ConformanceError("InputChanged")
+    if any(evidence.file_sha256(run.root / row["path"]) != row["sha256"] for row in request["assemblies"]):
         raise evidence.ConformanceError("InputChanged")
     return {
         "qualification": False, "profileComplete": False, "executionComplete": False,

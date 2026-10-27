@@ -141,6 +141,19 @@ All 132 logger/discovery tests and 505 tooling tests pass (nineteen native
 skips). The new test-tool lock replays in locked mode; formatting and both frozen
 inventory checks pass. T046 stays unchecked and the task count stays 48/86.
 
+The first expanded Linux attempt at exact `1c47134`,
+run40435425402/job121962825477, passes the CP child and reaches inherited
+discovery but rejects `OwnershipInvalid` before launching that child: the full
+runtime closure exceeds the immutable recorder's sixteen direct-file limit.
+The limit is preserved. A sealed, independently bound request now enumerates the
+complete image closure; the discovery child verifies every image before/after
+discovery, and the parent independently recomputes every hash after execution.
+Only the request, catalog, consumer and direct driver inputs occupy recorder
+slots. Five new request drift/duplicate/escape controls pass; all 137
+logger/discovery cases pass. Real local discovery verifies 178 runtime images
+and still admits the same 509 exact identities/output digest. This is not a
+successful native replay or complete inherited controller/profile result.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled

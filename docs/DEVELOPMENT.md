@@ -4900,6 +4900,13 @@ remain required. The native composition diagnostic now attempts this discovery
 as an additional owned child with sealed runtime/source/method inputs and exact
 output-byte hashes. Native replay of this increment is pending. T046 remains
 unchecked; the public qualifying composition profile remains unfinished.
+The first expanded native attempt (`1c47134`, run40435425402) rejects
+`OwnershipInvalid` before inherited child launch because the full image closure
+exceeds the recorder's sixteen direct-file bound. The repair preserves that
+bound: a sealed request pins the full closure, verified in the child before/after
+discovery and independently recomputed by the parent. Local actual discovery
+verifies all 178 images and admits the same 509 identities; all 137 logger/
+discovery cases pass. The original native failure remains recorded.
 
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02

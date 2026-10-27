@@ -123,6 +123,9 @@ The committed safe discovery client now independently admits all 509 inherited
 composition parameters against an immutable F-06 source/count catalog. Six
 additional architecture methods/16 parameters and prepared controller journeys
 remain separate, required obligations; discovery is not test execution.
+Its first Linux attempt rejects the oversized direct input list before child
+launch; the repair preserves the recorder limit with a verified closure manifest,
+not a larger or weakened input budget.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

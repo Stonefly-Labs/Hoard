@@ -120,6 +120,9 @@ F-06 catalog covers 203 methods/525 parameters: all 509 composition parameters
 are discovered and admitted, while six architecture methods/16 parameters and
 prepared distribution/controller journeys remain unexecuted in this increment.
 Neither discovery nor an observed count substitutes for those runtime obligations.
+The first native discovery attempt rejects its oversized direct input list
+before child launch. A pinned closure request now verifies all images in the
+child and parent without widening recorder limits; native replay remains pending.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

@@ -2,11 +2,45 @@ using Hoard.Conformance.TestLogger;
 using Hoard.Testing.Conformance.Diagnostics;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
+using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace Hoard.Conformance.Tests;
 
 public sealed class RuntimeDiscoveryTests
 {
+    [Theory]
+    [InlineData("none")]
+    [InlineData("changed-image")]
+    [InlineData("changed-request")]
+    [InlineData("duplicate-image")]
+    [InlineData("escaped-image")]
+    public void Discovery_request_binds_all_images_without_expanding_parent_command_limits(string mutation)
+    {
+        using var owned = new RuntimeLoggerTests.OwnedInput();
+        var image = new RuntimeFile("test-assembly", "tests.dll",
+            Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(owned.AssemblyPath))));
+        var request = new RuntimeDiscoveryRequest(["Hoard.Frozen.Check"],
+            mutation == "duplicate-image" ? [image, image] : [image]);
+        if (mutation == "escaped-image")
+        { request.Assemblies[0] = image with { Path = "../tests.dll" }; }
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(request, RuntimeLoggerTests.Json);
+        var digest = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        File.WriteAllBytes(Path.Combine(owned.Root, "discovery-request.json"), bytes);
+        if (mutation == "changed-image") { File.AppendAllText(owned.AssemblyPath, "changed"); }
+        if (mutation == "changed-request") { File.AppendAllText(Path.Combine(owned.Root, "discovery-request.json"), " "); }
+        if (mutation != "none")
+        {
+            Assert.Throws<InvalidDataException>(() =>
+                RuntimeCaseDiscovery.ReadRequest(owned.Root, "discovery-request.json", digest));
+            return;
+        }
+        Assert.Single(RuntimeCaseDiscovery.ReadRequest(owned.Root, "discovery-request.json", digest).Assemblies);
+        Assert.Throws<InvalidDataException>(() => RuntimeCaseDiscovery.CreateOutput(owned.Root, "../outside.json"));
+        using (RuntimeCaseDiscovery.CreateOutput(owned.Root, "discovery-output.json")) { }
+        Assert.Throws<IOException>(() => RuntimeCaseDiscovery.CreateOutput(owned.Root, "discovery-output.json"));
+    }
+
     [Theory]
     [InlineData("none", ConformanceDiagnosticCode.None)]
     [InlineData("missing-method", ConformanceDiagnosticCode.WitnessMissing)]
