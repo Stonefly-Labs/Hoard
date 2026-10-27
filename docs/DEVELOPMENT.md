@@ -5016,6 +5016,13 @@ candidate builds, complete controller/mutation obligations, public composition
 profile integration and T046 remain unfinished. No budget or frozen assertion
 changes, and no new qualification claim follows.
 
+The first extended native replay, run40449473314 at `d6b2aeb`, passes package
+construction, whole CP execution/admission and inherited source builds, then
+fails during borrowed preparation with `EvidenceIncomplete`. It is not a
+525-parameter native success. Closed controller/operation/error-code progress
+now identifies preparation failures without persisting raw diagnostics;
+that subsequent diagnostic replay is pending.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

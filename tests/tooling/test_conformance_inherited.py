@@ -2,6 +2,8 @@
 
 import importlib.util
 import copy
+from contextlib import redirect_stdout
+import io
 import json
 import os
 from pathlib import Path
@@ -123,7 +125,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             owner = Path(temporary)
             os.chmod(owner, 0o700)
-            with inherited.controller_transport(ROOT, owner), patch.object(
+            diagnostics = io.StringIO()
+            with inherited.controller_transport(ROOT, owner), redirect_stdout(diagnostics), patch.object(
                     legacy, "capture", return_value=subprocess.CompletedProcess(
                         ["dotnet", "build", "Consumer.csproj"], 0, b"private-canary\n")):
                 for module in modules:
@@ -131,6 +134,12 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                             RuntimeError, "^Legacy composition command UnknownDiagnostic.$"):
                         module.run("dotnet", "build", "Consumer.csproj")
             self.assertEqual(originals, [module.run for module in modules])
+            self.assertNotIn("private-canary", diagnostics.getvalue())
+            self.assertEqual([{
+                "qualification": False, "phase": "inherited-controller-failure",
+                "controller": "preparation", "commandSequence": index, "operation": "build",
+                "code": "UnknownDiagnostic",
+            } for index in range(1, 5)], [json.loads(line) for line in diagnostics.getvalue().splitlines()])
 
     def test_expands_parameters_without_copying_private_arguments(self):
         raw = b'''public sealed class OriginalTests

@@ -2,6 +2,7 @@
 
 from collections import Counter
 from contextlib import contextmanager
+import json
 import os
 from pathlib import Path
 import re
@@ -36,9 +37,12 @@ def controller_transport(repository, owner):
     environment = {key: value for key, value in os.environ.items()
                    if key.startswith("HOARD_") or key == "NUGET_PACKAGES"}
     preparations = {}
-    state = {"lockDerivations": [], "inputFiles": {}}
+    state = {"lockDerivations": [], "inputFiles": {}, "phase": "preparation", "commandSequence": 0}
 
     def command(*arguments, cwd=None, env=None, expected=None, input=None):
+        if not arguments or any(not isinstance(argument, str) for argument in arguments):
+            raise ConformanceError("OwnershipInvalid")
+        state["commandSequence"] += 1
         arguments = list(arguments)
         effective = dict(env or {})
         bound = {}
@@ -82,6 +86,20 @@ def controller_transport(repository, owner):
             return legacy.composition_controller_command(
                 arguments, cwd=repository if arguments[0] == "git" else cwd,
                 env=effective, expected=expected, input=input)
+        except RuntimeError as error:
+            codes = ("CommandFailed", "UnknownDiagnostic", "PrerequisiteMissing", "OutputLimitExceeded")
+            code = next((code for code in codes
+                         if str(error) == "Legacy composition command " + code + "."), "EvidenceIncomplete")
+            print(json.dumps({
+                "qualification": False, "phase": "inherited-controller-failure",
+                "controller": state["phase"] if state["phase"] in (
+                    "foundation", "lifecycle", "configuration", "discovery") else "preparation",
+                "commandSequence": state["commandSequence"],
+                "operation": arguments[1] if len(arguments) >= 2 and arguments[0] == "dotnet" and arguments[1] in (
+                    "restore", "build", "pack", "format", "test", "--version") else "control",
+                "code": code,
+            }), flush=True)
+            raise
         finally:
             if any(legacy._hash(path) != hashed for path, hashed in bound.items()):
                 raise ConformanceError("InputChanged")
@@ -230,6 +248,9 @@ def prepare_controller_evidence(repository, owner, source):
     manifests, phases = {}, {}
     with controller_transport(repository, owner) as controls:
         for phase in ("foundation", "lifecycle", "configuration", "discovery"):
+            controls["phase"] = phase
+            print(json.dumps({"qualification": False, "phase": "inherited-controller-preparation",
+                              "controller": phase}), flush=True)
             target = owner / "stores" / ("inherited-controller-" + phase)
             target.mkdir(mode=0o700)
             if phase == "foundation":

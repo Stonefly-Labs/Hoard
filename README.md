@@ -134,7 +134,7 @@ journeys and graph scans without raw diagnostic persistence. A local diagnostic
 independently admits all 509 inherited composition parameters and 16 boundary
 parameters in 58 exact class scopes, preserving the two-minute child timeout.
 The committed native diagnostic now stages both inherited assemblies, prepares
-all four borrowed controller families and executes the complete 525-parameter
+all four borrowed controller families and attempts the complete 525-parameter
 union through exact owned class scopes. Native replay of this extension is
 pending; borrowed controller preparation is not native controller acceptance.
 Complete controller/mutation acceptance and public profile integration remain

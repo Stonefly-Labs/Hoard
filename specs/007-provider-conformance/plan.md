@@ -267,6 +267,12 @@ Historical pre-candidate binary sealing, complete controller/mutation acceptance
 and public-profile integration remain open. T046 is unchecked, 48/86,
 implement/running; no timeout, assertion, contract or qualification gate changes.
 
+First extended native run40449473314 at `d6b2aeb` passes packages, CP runtime
+admission and inherited builds, then fails borrowed preparation with
+`EvidenceIncomplete`. No inherited native success is inferred. Closed fixed
+controller/operation/error-code progress is added to identify the failing
+preparation step without raw diagnostics; subsequent replay is pending.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled
