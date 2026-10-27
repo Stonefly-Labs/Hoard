@@ -799,6 +799,38 @@ attempts remain failures; T046 remains unchecked, 52/86, implement/running, all
 full-controller/profile/qualification flags false. Provider contracts, examples,
 diagrams, infrastructure and governance remain unaffected.
 
+### Verified native selected-input replay
+
+Exact `cf6a9a6f2bb34e70cf2a78d00db1e020660b2cee` passes
+[run40594189002](https://github.com/Stonefly-Labs/Hoard/actions/runs/40594189002),
+job122505782182. Its original historical45/controllers230/reference1/mutations73
+launches have aligned v3 selected-input snapshots, independently re-admitted
+against original parent/output records after actual process/cache/store release.
+CP36/110, inherited525/58, all twelve original negative/repair pairs (29
+parameters each), discovery137/four adapters/ten suites, all 574 tooling tests,
+41 formatters and 3,272 unchanged controller inputs pass. The original BCL
+reference replay covers six modules/eighteen inputs.
+
+Source/input digest:
+`8cb09c947dbb1aef00dcdb77c52c3da04a6647b5cabe8b64ee55b805b50d3fa7`.
+Scope admission:
+`9b9a13ce7443a96c832955169f158566a374d10f43659f5541974edff4b46e66`.
+Historical seal:
+`e8da46c620004ca88439405012aa11c76a3ededffc01731176ebe28db0fc81fa`.
+Snapshot-array digests, in historical/controller/reference/mutation order:
+`68ea834e6e86721041a876f25b2751de666717efbe745d915330bf7cee45a542`,
+`eb7f43b89453d758fabd0e257f86841e6211c7a1251fa915dafe348e527c06f1`,
+`0db81d99e3c349c76511819a25cf971cbcab86ae83d61dc374a5bd3015fceb72`,
+`053a2d35cc97cc6da40a8459dbed1ebb96a98e635ddada8232de0c9b5cbff0f9`.
+
+The receipt still emits `inputClosureComplete=false`,
+`controllerNativeContainment=false`, `fullControllerAcceptance=false`,
+`profileComplete=false` and `qualification=false`. Its selected declarations
+are not complete dynamic MSBuild/import/glob/SDK/runtime I/O closure.
+Earlier failed/cancelled runs remain failures/cancellations. T046 remains
+unchecked, 52/86, implement/running. Provider contracts, examples, diagrams,
+infrastructure and governance are unaffected by this evidence-only checkpoint.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

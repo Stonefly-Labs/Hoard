@@ -391,6 +391,16 @@ follow literal linked source, project references, imports and assembly hints,
 and include nested admitted Hoard package files. Dynamic MSBuild evaluation
 remains outside this partial claim. Local safe tooling remains 574 tests with
 zero failures/errors and twenty native skips; native confirmation is pending.
+Exact `cf6a9a6` now passes native v3 replay in
+[run40594189002](https://github.com/Stonefly-Labs/Hoard/actions/runs/40594189002),
+job122505782182. All 45 historical, 230 controller, one reference and 73 mutation
+launches retain independently admitted original journals and selected-input
+snapshots after actual release. The run observes CP36/110, inherited525/58,
+all twelve original negative/repair pairs, discovery137/four adapters/ten suites,
+574 tooling tests, 41 formatters and 3,272 unchanged bound inputs.
+Selected declarations remain partial: this is not complete dynamic MSBuild,
+SDK or runtime I/O closure, full-profile acceptance or qualification.
+T046 remains unchecked, 52/86, implement/running.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

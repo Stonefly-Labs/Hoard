@@ -5782,6 +5782,23 @@ not complete compiler/import/runtime I/O closure; T046 remains unchecked,
 Provider contracts, examples, diagrams, infrastructure and governance remain
 unaffected.
 
+Exact `cf6a9a6f2bb34e70cf2a78d00db1e020660b2cee` confirms the repaired v3
+transport in
+[run40594189002](https://github.com/Stonefly-Labs/Hoard/actions/runs/40594189002),
+job122505782182. The original 45 historical, 230 controller, one reference and
+73 mutation launches each retain selected-input snapshots, independently admitted
+against their original parent/output records after actual release. CP36/110,
+inherited525/58, all twelve original negative/repair pairs with 29 parameters
+per side, discovery137/four adapters/ten suites, all 574 tooling tests,
+41 formatters and 3,272 unchanged controller inputs pass on Linux.
+The original BCL reference replay retains six modules/eighteen inputs.
+`inputClosureComplete`, `controllerNativeContainment`, `fullControllerAcceptance`,
+`profileComplete` and `qualification` remain false as emitted; native component
+acceptance does not establish complete dynamic MSBuild/SDK/runtime input closure
+or final profile evaluation. T046 remains unchecked, 52/86, implement/running.
+Provider contracts, examples, diagrams, infrastructure and governance are
+unaffected by this evidence-only checkpoint.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged
