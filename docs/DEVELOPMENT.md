@@ -5258,6 +5258,8 @@ assets and archive caches and requires an individually re-admitted native
 command receipt for every selected project. Local receipt/input-drift controls
 pass; native confirmation is pending. This does not establish whole-solution
 native formatting, full controller/tooling/mutation acceptance or qualification.
+Rehashing uses the existing bounded descriptor-relative input reader; a
+same-byte symlink substitution fails without admitting an unbound target.
 
 The safe-unit wrapper at `8f46a2c` is independently green in run40465825259,
 job122064084083: 433 tests, zero failures/errors/skips and code `None`.

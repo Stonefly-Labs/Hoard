@@ -19,7 +19,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
         for mutation in ("none", "foreign-root", "argv", "cwd", "inputs", "sequence", "hash",
-                         "retained", "live-child", "failed", "changed-source", "changed-closure",
+                         "retained", "live-child", "failed", "changed-source", "changed-closure", "symlink",
                          "duplicate", "missing-phase", "missing-assets"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
@@ -37,6 +37,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                                   for path in (project, assets)})
                 source = root / "independent.cs"
                 source.write_bytes(b"class Original {}")
+                outside = root / "not-bound.cs"
+                outside.write_bytes(source.read_bytes())
                 files[source.name] = evidence.file_sha256(source)
                 if mutation == "duplicate":
                     projects["foundation"] *= 2
@@ -79,6 +81,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         changed = source if mutation == "changed-source" else closure
                         changed.chmod(0o600)
                         changed.write_bytes(b"changed")
+                    elif mutation == "symlink":
+                        source.unlink()
+                        source.symlink_to(outside)
                     return SimpleNamespace(
                         exit_code=1 if mutation == "failed" else 0, events=(),
                         execution_record_sha256="0" * 64 if mutation == "hash" else evidence.digest(record))
@@ -100,7 +105,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         for number, phase in enumerate(projects, 1)
                     ], [evidence.load_json(line.encode()) for line in output.getvalue().splitlines()])
                 else:
-                    code = ("InputChanged" if mutation.startswith("changed-") else
+                    code = ("InputChanged" if mutation.startswith("changed-") or mutation == "symlink" else
                             "CommandFailed" if mutation == "failed" else
                             "EvidenceSchemaInvalid" if mutation == "missing-phase" else "ProofMismatch")
                     with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(

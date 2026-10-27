@@ -166,6 +166,11 @@ The complete map is rehashed before and after each command, including generated
 NuGet props/targets, automatically discovered assets and actual Hoard archive
 caches. Focused controls reject missing/duplicate/foreign inputs, stale receipts,
 retained children and changed indirect source or descriptor bytes.
+An additional red control substitutes a same-byte symlink for an indirect
+source; the initial path-based rehash misses it. Formatter rehashing now uses
+the existing descriptor-relative, no-follow, byte/count/deadline-bounded
+`input_manifest` reader for both full closure and direct command inputs.
+All eight parent and twenty-one inherited checks pass after that repair.
 All 435 conformance tooling tests pass with twenty explicit native skips.
 The source solution formatting repair passes and thirteen focused C# discovery
 tests pass; no behavior or consumer assertions changed. Prepared formatter

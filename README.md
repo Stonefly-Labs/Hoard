@@ -209,6 +209,8 @@ Prepared-project formatter commands now require individual native receipts and
 unchanged generated NuGet imports/assets as well as the full private input map.
 Their native confirmation is pending; solution-wide formatting and the remaining
 full-controller obligations are not inferred from prepared-project formatting.
+Formatter rehashing reuses the bounded descriptor-relative input reader;
+same-byte symlink substitutions reject instead of borrowing an unbound file.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

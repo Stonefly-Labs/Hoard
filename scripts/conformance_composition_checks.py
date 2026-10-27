@@ -145,7 +145,7 @@ def _format_prepared_controllers(run, controllers, files, closure_path):
         raise evidence.ConformanceError("InputChanged")
 
     def verify_inputs():
-        if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in frozen.items()):
+        if dict(evidence.input_manifest(run.root, list(frozen))) != frozen:
             raise evidence.ConformanceError("InputChanged")
 
     verify_inputs()
@@ -156,8 +156,8 @@ def _format_prepared_controllers(run, controllers, files, closure_path):
         verify_inputs()
         print(json.dumps({"qualification": False, "phase": "inherited-prepared-formatting",
                           "controller": phase, "command": len(commands) + 1}), flush=True)
-        bound = {item.relative_to(run.root).as_posix(): evidence.file_sha256(item)
-                 for item in (path, closure_path, project, assets)}
+        bound = dict(evidence.input_manifest(run.root, [
+            item.relative_to(run.root).as_posix() for item in (path, closure_path, project, assets)]))
         arguments = ["dotnet", "format", str(project), "--verify-no-changes", "--no-restore", "-v", "quiet"]
         sequence = run.command_sequence + 1
         started = time.monotonic() * 1000
