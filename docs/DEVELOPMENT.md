@@ -5799,6 +5799,21 @@ or final profile evaluation. T046 remains unchecked, 52/86, implement/running.
 Provider contracts, examples, diagrams, infrastructure and governance are
 unaffected by this evidence-only checkpoint.
 
+The composition report-schema boundary now derives case/matrix keys and CP
+parameter identities from the independent catalog. Six red controls expose
+acceptance of omitted/duplicate/foreign parameters, unknown cases/matrices and
+excluded mandatory composition coverage. The repair rejects each while
+preserving a failed parameter prefix and an empty interrupted attempt.
+These synthetic schema controls do not establish runtime origin, re-evaluate
+proof bytes or complete T048/T071. Existing runtime ingestion still independently
+rejects false readiness and optimistic retained-owner cleanup.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence -q`:
+passed, 171 tests. `python3 scripts/conformance_unit_checks.py --all-tooling`:
+576 tests, zero failures/errors/unexpected diagnostic bytes, twenty native macOS
+skips, expected incomplete exit 2. SDK catalog and diff checks pass.
+No task or qualification flag changes; product/provider contracts, examples,
+diagrams, infrastructure and governance remain unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

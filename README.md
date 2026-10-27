@@ -401,6 +401,14 @@ all twelve original negative/repair pairs, discovery137/four adapters/ten suites
 Selected declarations remain partial: this is not complete dynamic MSBuild,
 SDK or runtime I/O closure, full-profile acceptance or qualification.
 T046 remains unchecked, 52/86, implement/running.
+Report schema admission now independently checks composition case/matrix keys
+and exact CP parameter sets. A passing row cannot omit a theory parameter,
+duplicate its label under a new execution ID, substitute a foreign parameter
+or exclude mandatory composition coverage. Failed prefixes and interrupted
+attempts remain nonqualifying evidence. These are schema controls, not runtime
+good controls or the final evaluator; T048 and T071 remain open.
+Full local safe tooling observes 576 tests with zero failures/errors or unexpected
+diagnostic bytes and twenty explicit native skips.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

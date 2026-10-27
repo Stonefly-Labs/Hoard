@@ -569,10 +569,12 @@ def _validate_input_links(inputs):
 
 
 def _validate_report_links(report):
-    from conformance_case_catalog import CATEGORY_QUALITY_BASIS
+    from conformance_case_catalog import CATEGORY_QUALITY_BASIS, expected_cases
 
     inputs = report["inputs"]
     quality_basis = CATEGORY_QUALITY_BASIS.get(inputs["profileId"], {})
+    composition_cases = ({case.key: case for case in expected_cases("composition")}
+                         if inputs["profileId"] == "composition" else None)
     input_sha = digest(inputs)
     executions = {witness["executionId"]: witness for witness in report["witnesses"]}
     packages = {package["sha256"] for package in inputs["packages"]}
@@ -602,6 +604,12 @@ def _validate_report_links(report):
         if (result["runId"] != inputs["runId"] or result["profileId"] != inputs["profileId"]
                 or not set(result["proofSha256"]).issubset(proofs)):
             _invalid()
+        composition_case = None
+        if composition_cases is not None:
+            composition_case = composition_cases.get((
+                result["profileId"], result["bindingId"], result["matrixId"], result["caseId"]))
+            if composition_case is None or not result["applicable"]:
+                _invalid()
         for attempt in result["attempts"]:
             quality_link = False
             if (result["bindingId"] == result["matrixId"] == "none"
@@ -623,6 +631,12 @@ def _validate_report_links(report):
                         or (attempt["status"] == "Passed" and witness["status"] != "Passed")):
                     _invalid()
                 referenced.add(execution_id)
+            if composition_case is not None and composition_case.witnesses:
+                identities = tuple(executions[identity]["testIdentity"] for identity in attempt["witnessIds"])
+                expected = set(composition_case.witnesses)
+                if (len(identities) != len(set(identities)) or not set(identities) <= expected
+                        or attempt["status"] == "Passed" and set(identities) != expected):
+                    _invalid()
     if referenced != set(executions) or any(resource["runId"] != inputs["runId"] for resource in report["resources"]):
         _invalid()
     if report["qualification"] and (

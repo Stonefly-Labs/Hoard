@@ -619,6 +619,79 @@ class ConformanceAdmissionTests(unittest.TestCase):
         with self.assertRaises(evidence.ConformanceError):
             evidence.admit_entity("QualificationReport", report)
 
+    def composition_report(self):
+        import conformance_case_catalog as catalog
+        report = self.report()
+        inputs = report["inputs"]
+        inputs.update(profileId="composition", bindings=[], invocation=["profile", "composition"])
+        inputs["budgets"]["profileSeconds"] = 3600
+        case, = (case for case in catalog.expected_cases("composition") if case.case_id == "CP-16")
+        result = report["results"][0]
+        result.update(profileId="composition", bindingId="none", matrixId=case.matrix_id, caseId=case.case_id)
+        prototype = report["witnesses"][0]
+        report["witnesses"] = [{
+            **prototype, "executionId": str(uuid.uuid4()), "testIdentity": identity,
+            "bindingId": "none", "matrixId": case.matrix_id, "inputSha256": evidence.digest(inputs),
+            "proofSha256": hashlib.sha256(identity.encode("ascii")).hexdigest(),
+        } for identity in case.witnesses]
+        attempt = result["attempts"][0]
+        attempt["witnessIds"] = [row["executionId"] for row in report["witnesses"]]
+        attempt["proofSha256"] = [row["proofSha256"] for row in report["witnesses"]]
+        result["proofSha256"] = list(attempt["proofSha256"])
+        report["proofs"] = {f'runtime/proof-{row["executionId"]}.json': row["proofSha256"]
+                            for row in report["witnesses"]}
+        report["postInputSha256"] = evidence.digest(inputs)
+        return report
+
+    def test_composition_report_schema_rejects_missing_duplicate_and_foreign_cp_parameters(self):
+        evidence.admit_entity("QualificationReport", self.composition_report())
+        for mutation in ("missing", "duplicate-parameter", "foreign-parameter", "foreign-case",
+                         "foreign-matrix", "excluded"):
+            with self.subTest(mutation=mutation):
+                report = self.composition_report()
+                result = report["results"][0]
+                attempt = result["attempts"][0]
+                witnesses = report["witnesses"]
+                if mutation == "missing":
+                    missing = witnesses.pop()
+                    attempt["witnessIds"].remove(missing["executionId"])
+                    attempt["proofSha256"].remove(missing["proofSha256"])
+                    result["proofSha256"].remove(missing["proofSha256"])
+                elif mutation == "duplicate-parameter":
+                    witnesses[1]["testIdentity"] = witnesses[0]["testIdentity"]
+                elif mutation == "foreign-parameter":
+                    witnesses[0]["testIdentity"] = "Tests.Successful_host_exit"
+                elif mutation == "foreign-case":
+                    result["caseId"] = "CP-99"
+                elif mutation == "foreign-matrix":
+                    result["matrixId"] = "foreign.observe"
+                    for witness in witnesses:
+                        witness["matrixId"] = result["matrixId"]
+                else:
+                    result.update(status="NotApplicable", applicable=False,
+                                  exclusionRule="non-durable-fixture", attempts=[], proofSha256=[])
+                    report["witnesses"] = []
+                with self.assertRaises(evidence.ConformanceError):
+                    evidence.admit_entity("QualificationReport", report)
+
+    def test_composition_report_schema_preserves_failed_prefix_and_empty_interruption(self):
+        for status, code in (("Failed", "AssertionFailed"), ("Incomplete", "DeadlineExceeded")):
+            with self.subTest(status=status):
+                report = self.composition_report()
+                result = report["results"][0]
+                result["status"] = status
+                result["attempts"][0].update(status=status, diagnosticCode=code)
+                report["witnesses"] = report["witnesses"][:1] if status == "Failed" else []
+                for witness in report["witnesses"]:
+                    witness["status"] = status
+                attempt = result["attempts"][0]
+                attempt["witnessIds"] = [row["executionId"] for row in report["witnesses"]]
+                attempt["proofSha256"] = [row["proofSha256"] for row in report["witnesses"]]
+                result["proofSha256"] = list(attempt["proofSha256"])
+                admitted = evidence.admit_entity("QualificationReport", report)
+                self.assertEqual(admitted["results"][0]["status"], status)
+                self.assertFalse(admitted["qualification"])
+
     def test_an_attempt_cannot_borrow_other_dimensions_or_outside_execution_times(self):
         for dimension, value in (("bindingId", "memory"), ("matrixId", "other")):
             report = self.report()

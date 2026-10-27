@@ -831,6 +831,27 @@ Earlier failed/cancelled runs remain failures/cancellations. T046 remains
 unchecked, 52/86, implement/running. Provider contracts, examples, diagrams,
 infrastructure and governance are unaffected by this evidence-only checkpoint.
 
+### Composition report-schema parameter agreement
+
+Report admission now independently expands the composition catalog rather than
+trusting a successful result label and linked execution IDs alone. Six red
+controls expose missing theory parameters, duplicate parameter labels under
+distinct executions, foreign parameters, unknown case/matrix keys and invented
+mandatory exclusions. All reject after the repair. Failed prefixes and empty
+interrupted attempts retain their original nonqualifying statuses.
+The tests are explicitly synthetic schema controls, not runtime-good controls;
+they do not independently replay proof bytes or complete T048/T071.
+Existing original runtime-ingestion controls for false readiness, erased faults,
+optimistic cleanup, missing terminal stages and changed ownership remain intact.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence -q`:
+passed, 171 tests. `python3 scripts/conformance_unit_checks.py --all-tooling`:
+576 tests, zero failures/errors/unexpected diagnostic bytes, twenty native macOS
+skips, expected incomplete exit 2. `python3 scripts/conformance_case_catalog.py
+--check-sdk` and `git diff --check`: passed. T046/T048/T071 remain unchecked;
+52/86, implement/running. Product/provider contracts, examples, diagrams,
+infrastructure and governance are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
