@@ -349,6 +349,14 @@ and reaped exit. Parent admission cross-checks the group's PID/start against its
 original native execution record instead of accepting command hashes alone.
 The group remains explicitly borrowed until the parent proves actual settlement.
 Native confirmation of this stricter receipt is pending; T046 remains open.
+Exact `8bdce75` now confirms the earlier reference-phase component in
+[run40579834470](https://github.com/Stonefly-Labs/Hoard/actions/runs/40579834470):
+six original modules, eighteen unchanged inputs and actual release. It does not
+confirm the later child-identity/journal extensions. The next increment journals
+actual bounded and interactive launches across the native controller phases,
+binding the closed observations to their original parent/output packets.
+Publication still inspects staging before killing the original child.
+Per-command input closure and T046/full-profile acceptance remain unfinished.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

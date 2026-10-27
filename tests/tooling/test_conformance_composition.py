@@ -214,7 +214,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_evidence as evidence
         from conformance_execution import CommandResult
         for phase, mutation in ((phase, mutation) for phase in ("historical", "mutations", "reference")
-                                for mutation in ("none", "changed-output", "missing-phase", "retained-process", "child-failed")):
+                                for mutation in ("none", "changed-output", "missing-phase", "retained-process",
+                                                 "child-failed", "missing-invocation", "foreign-invocation",
+                                                 "duplicate-invocation")):
             with self.subTest(phase=phase, mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -236,9 +238,19 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 def command(arguments, **kwargs):
                     request = Path(arguments[arguments.index("--request") + 1])
                     output = Path(arguments[arguments.index("--output") + 1])
+                    invocation = {
+                        "schemaVersion": 1, "qualification": False, "groupState": "Borrowed",
+                        "groupPid": 101 if mutation == "foreign-invocation" else 100,
+                        "groupStartSha256": "a" * 64, "childPid": 102, "childStartSha256": "b" * 64,
+                        "childState": "Exited", "exitCode": 0, "argvSha256": "c" * 64,
+                        "cwdSha256": "d" * 64, "stdinSha256": None}
+                    invocations = ([] if mutation == "missing-invocation" else
+                                   [invocation] * (2 if mutation == "duplicate-invocation" else 1))
+                    child_result = {"seal": "bound", **({"invocation": invocation} if phase == "reference" else {})}
                     raw = evidence.canonical_bytes({
-                        "schemaVersion": 1, "qualification": False, "phase": phase,
-                        "runId": "run", "rootId": "root", "result": {"seal": "bound"},
+                        "schemaVersion": 2, "qualification": False, "phase": phase,
+                        "runId": "run", "rootId": "root", "result": child_result,
+                        "invocations": invocations,
                     })
                     output.write_bytes(raw + b"\n" if mutation == "changed-output" else raw)
                     record.update(
@@ -246,6 +258,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         cwdSha256=hashlib.sha256(str(source).encode()).hexdigest(),
                         inputFiles={path: evidence.file_sha256(root / path) for path in kwargs["execution_inputs"]},
                         outputFiles={output.relative_to(root).as_posix(): hashlib.sha256(raw).hexdigest()},
+                        childPid=100, childStartSha256="a" * 64,
                         groupState="Retained" if mutation == "retained-process" else "Exited",
                         exitCode=0, diagnosticCode="None",
                     )
@@ -272,9 +285,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 run.command = mock.Mock(side_effect=command)
                 run.read_execution_record = mock.Mock(side_effect=lambda sequence: evidence.canonical_bytes(record))
                 if mutation == "none":
-                    result, parent = checks._controller_phase(run, ROOT, source, phase, reference=reference)
-                    self.assertEqual({"seal": "bound"}, result)
+                    result, parent, invocations = checks._controller_phase(
+                        run, ROOT, source, phase, reference=reference)
+                    self.assertEqual("bound", result["seal"])
                     self.assertEqual(evidence.digest(record), parent)
+                    self.assertEqual(1, invocations["count"])
                 else:
                     output = io.StringIO()
                     with contextlib.redirect_stdout(output), self.assertRaisesRegex(
@@ -301,7 +316,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                          "missing-material-journey", "materials-qualification", "materials-foreign-manifest",
                          "reference-modules", "reference-native", "reference-inputs",
                          "reference-parent", "reference-output", "reference-child-owner",
-                         "reference-child-start", "reference-child-live", "reference-child-input"):
+                         "reference-child-start", "reference-child-live", "reference-child-input",
+                         "native-invocation-omitted", "native-invocation-output",
+                         "native-invocation-count", "native-invocation-closure"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -366,8 +383,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     "exitCode": 0, "argvSha256": reference["argvSha256"], "cwdSha256": reference["cwdSha256"],
                     "stdinSha256": "0" * 64 if mutation == "reference-child-input" else reference["responseSha256"]}
                 reference_output = evidence.canonical_bytes({
-                    "schemaVersion": 1, "qualification": False, "phase": "reference",
-                    "runId": "run", "rootId": "root", "result": dict(reference)})
+                    "schemaVersion": 2, "qualification": False, "phase": "reference",
+                    "runId": "run", "rootId": "root", "result": dict(reference),
+                    "invocations": [reference["invocation"]]})
                 reference_parent = {
                     "runId": "foreign" if mutation == "reference-parent" else "run",
                     "rootId": "root", "sequence": 1, "groupState": "Exited",
@@ -381,15 +399,42 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 (root / "proofs/execution-command-0001.json").write_bytes(parent_raw)
                 (root / "proofs/inherited-reference-result.json").write_bytes(reference_output)
                 (root / "proofs/inherited-reference-inputs.json").write_bytes(reference_inputs)
+                observation_summaries = {}
+                for phase, sequence in (("reference", 1), ("historical", 2), ("controllers", 3), ("mutations", 4)):
+                    invocation = {**reference["invocation"], "groupPid": 100, "groupStartSha256": "f" * 64}
+                    rows = [] if phase == "controllers" and mutation == "native-invocation-omitted" else [invocation]
+                    if phase != "reference":
+                        packet = evidence.canonical_bytes({
+                            "schemaVersion": 2, "qualification": False, "phase": phase,
+                            "runId": "run", "rootId": "root", "result": {}, "invocations": rows})
+                        command = {**reference_parent, "runId": "run", "sequence": sequence, "outputFiles": {
+                            f"proofs/inherited-{phase}-result.json": hashlib.sha256(packet).hexdigest()}}
+                        if phase == "controllers" and mutation == "native-invocation-output":
+                            command["outputFiles"][f"proofs/inherited-{phase}-result.json"] = "0" * 64
+                        parent_bytes = evidence.canonical_bytes(command)
+                        (root / f"proofs/inherited-{phase}-result.json").write_bytes(packet)
+                        (root / f"proofs/execution-command-{sequence:04}.json").write_bytes(parent_bytes)
+                    else:
+                        parent_bytes = parent_raw
+                        rows = [reference["invocation"]]
+                    observation_summaries[phase] = {
+                        "qualification": False, "nativeContainment": True, "inputClosureComplete":
+                        phase == "controllers" and mutation == "native-invocation-closure",
+                        "scope": "borrowed-launch-observations",
+                        "count": 0 if phase == "controllers" and mutation == "native-invocation-count" else 1,
+                        "sha256": evidence.digest(rows), "sequence": sequence,
+                        "parentSha256": hashlib.sha256(parent_bytes).hexdigest()}
                 reference.update(nativeContainment=mutation != "reference-native",
                                  sequence=1, parentSha256=hashlib.sha256(parent_raw).hexdigest(),
-                                 inputCount=8 if mutation == "reference-inputs" else 9)
+                                 inputCount=8 if mutation == "reference-inputs" else 9,
+                                 nativeInvocations=observation_summaries["reference"])
                 if mutation == "reference-modules":
                     reference["moduleCount"] = 5
                 summary = {
                     "qualification": False, "profileComplete": False, "passedComponents": 36,
                     "admittedSnapshots": 110, "processResourcesReleased": True,
                     "inputSha256": evidence.digest(inputs),
+                    "historicalNativeInvocations": observation_summaries["historical"],
                     "inheritedRuntime": {
                         "qualification": False, "profileComplete": False, "executionComplete": True,
                         "nativeContainment": True, "controllerNativeContainment": False,
@@ -398,6 +443,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         "passedParameters": 525, "scopes": 58, "commands": [{}] * 58,
                         "controllerPreparation": {"discovery": {"manifestSha256": "d" * 64}},
                         "referenceConsumer": reference,
+                        "nativeInvocations": {phase: observation_summaries[phase]
+                                              for phase in ("controllers", "mutations")},
                         "discoveryMutations": {
                             "qualification": mutation == "mutation-qualification",
                             "mutations": 11 if mutation == "missing-mutation" else 12,

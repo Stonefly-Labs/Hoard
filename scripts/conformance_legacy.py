@@ -80,6 +80,7 @@ DISCOVERY_SHAPES = {
     }.items()}
 _retained_children = {}
 _preparation_group = ContextVar("preparation_group", default=None)
+_preparation_invocations = ContextVar("preparation_invocations", default=None)
 
 
 @contextmanager
@@ -90,9 +91,12 @@ def native_preparation_group(header):
             or header.get("children", {}).get(str(pid)) != process_identity(pid)):
         raise ConformanceError("OwnershipInvalid")
     token = _preparation_group.set(pid)
+    invocations = []
+    observations = _preparation_invocations.set(invocations)
     try:
-        yield
+        yield invocations
     finally:
+        _preparation_invocations.reset(observations)
         _preparation_group.reset(token)
 
 
@@ -104,7 +108,7 @@ def _borrowed_group():
 
 
 def verify_borrowed_invocation(value, *, argv_sha256, cwd_sha256, stdin_sha256,
-                               group_pid, group_start_sha256=None):
+                               group_pid, group_start_sha256=None, exit_code=0):
     fields = {
         "schemaVersion", "qualification", "groupState", "groupPid", "groupStartSha256",
         "childPid", "childStartSha256", "childState", "exitCode",
@@ -113,7 +117,8 @@ def verify_borrowed_invocation(value, *, argv_sha256, cwd_sha256, stdin_sha256,
             or not isinstance(value, dict) or set(value) != fields
             or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 1
             or value["qualification"] is not False or value["groupState"] != "Borrowed"
-            or value["childState"] != "Exited" or type(value["exitCode"]) is not int or value["exitCode"] != 0
+            or type(exit_code) is not int
+            or value["childState"] != "Exited" or type(value["exitCode"]) is not int or value["exitCode"] != exit_code
             or type(value["groupPid"]) is not int or value["groupPid"] != group_pid or value["groupPid"] <= 0
             or type(value["childPid"]) is not int or value["childPid"] <= 0 or value["childPid"] == group_pid
             or any(not isinstance(value[key], str) or re.fullmatch("[0-9a-f]{64}", value[key]) is None
@@ -123,6 +128,65 @@ def verify_borrowed_invocation(value, *, argv_sha256, cwd_sha256, stdin_sha256,
             or value["argvSha256"] != argv_sha256 or value["cwdSha256"] != cwd_sha256
             or value["stdinSha256"] != stdin_sha256):
         raise ConformanceError("ProofMismatch")
+
+
+def verify_borrowed_invocations(values, *, group_pid, group_start_sha256):
+    if (not isinstance(values, list) or not 1 <= len(values) <= 10000
+            or not isinstance(group_start_sha256, str) or re.fullmatch("[0-9a-f]{64}", group_start_sha256) is None):
+        raise ConformanceError("ProofMismatch")
+    children = set()
+    for value in values:
+        if (not isinstance(value, dict) or type(value.get("exitCode")) is not int
+                or value["exitCode"] not in (0, 1, -signal.SIGKILL)
+                or value.get("stdinSha256") is not None and (
+                    not isinstance(value["stdinSha256"], str)
+                    or re.fullmatch("[0-9a-f]{64}", value["stdinSha256"]) is None)):
+            raise ConformanceError("ProofMismatch")
+        verify_borrowed_invocation(
+            value, argv_sha256=value.get("argvSha256"), cwd_sha256=value.get("cwdSha256"),
+            stdin_sha256=value.get("stdinSha256"), group_pid=group_pid,
+            group_start_sha256=group_start_sha256, exit_code=value["exitCode"])
+        key = value["childPid"], value["childStartSha256"]
+        if key in children:
+            raise ConformanceError("ProofMismatch")
+        children.add(key)
+
+
+def _native_invocation_start(args, cwd, input):
+    group = _borrowed_group()
+    if group is None:
+        return None
+    if (not isinstance(args, (list, tuple)) or not args
+            or any(not isinstance(argument, str) or "\x00" in argument for argument in args)):
+        raise ConformanceError("OwnershipInvalid")
+    return {
+        "schemaVersion": 1, "qualification": False, "groupState": "Borrowed",
+        "groupPid": group, "groupStartSha256": process_identity(group),
+        "argvSha256": hashlib.sha256(canonical_bytes(args)).hexdigest(),
+        "cwdSha256": hashlib.sha256(str(Path(cwd or os.getcwd()).absolute()).encode("utf-8")).hexdigest(),
+        "stdinSha256": None if input is None else hashlib.sha256(input).hexdigest(),
+    }
+
+
+def _native_invocation_child(invocation, child, *, deadline=None):
+    if invocation is not None:
+        # Before wait, even a fast-exiting child's unreaped PID still belongs to this launch.
+        identity = process_identity(child.pid, deadline=deadline, include_exited=True)
+        group = invocation["groupPid"]
+        if identity is None or os.getpgid(child.pid) != group or process_identity(group) != invocation["groupStartSha256"]:
+            raise ConformanceError("OwnershipInvalid")
+        invocation.update(childPid=child.pid, childStartSha256=identity)
+
+
+def _native_invocation_complete(invocation, exit_code):
+    if invocation is None:
+        return None
+    observation = {**invocation, "childState": "Exited", "exitCode": exit_code}
+    journal = _preparation_invocations.get()
+    if journal is None or len(journal) >= 10000:
+        raise ConformanceError("OutputLimitExceeded")
+    journal.append(observation)
+    return observation
 
 
 def _settle_group(child):
@@ -156,9 +220,17 @@ class OwnedChild:
         if not all(hasattr(os, name) for name in ("waitid", "WNOWAIT", "WEXITED", "WNOHANG", "P_PID")):
             raise RuntimeError("Legacy command PrerequisiteMissing.")
         kwargs["start_new_session"] = _borrowed_group() is None
+        self._native_invocation = _native_invocation_start(args, kwargs.get("cwd"), None)
+        if self._native_invocation is not None:
+            args = tuple(args)
         self._process = subprocess.Popen(args, **kwargs)
         self.returncode = None
         self._settled = False
+        try:
+            _native_invocation_child(self._native_invocation, self._process)
+        except (OSError, ConformanceError):
+            self.settle()
+            raise
 
     def __getattr__(self, name):
         return getattr(self._process, name)
@@ -186,6 +258,7 @@ class OwnedChild:
             _settle_group(self._process)
             self.returncode = self._process.returncode
             self._settled = True
+            self.native_invocation = _native_invocation_complete(self._native_invocation, self.returncode)
 
     def __enter__(self):
         return self
@@ -277,19 +350,9 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
     environment.update(FIXTURE_HOST_ENVIRONMENT, MSBUILDDISABLENODEREUSE="1", DOTNET_CLI_USE_MSBUILD_SERVER="0",
                        UseSharedCompilation="false")
     group = _borrowed_group()
-    invocation = None
-    if group is not None:
-        if (not isinstance(args, (list, tuple)) or not args
-                or any(not isinstance(argument, str) or "\x00" in argument for argument in args)):
-            raise ConformanceError("OwnershipInvalid")
+    invocation = _native_invocation_start(args, cwd, input)
+    if invocation is not None:
         args = tuple(args)
-        invocation = {
-            "schemaVersion": 1, "qualification": False, "groupState": "Borrowed",
-            "groupPid": group, "groupStartSha256": process_identity(group),
-            "argvSha256": hashlib.sha256(canonical_bytes(args)).hexdigest(),
-            "cwdSha256": hashlib.sha256(str(Path(cwd or os.getcwd()).absolute()).encode("utf-8")).hexdigest(),
-            "stdinSha256": None if input is None else hashlib.sha256(input).hexdigest(),
-        }
     try:
         child = subprocess.Popen(
             args, cwd=cwd, env=environment, stdout=subprocess.PIPE,
@@ -312,12 +375,7 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
         writer = threading.Thread(target=write_input, daemon=True)
         writer.start()
     try:
-        if invocation is not None:
-            # Before wait, even a fast-exiting child's unreaped PID still belongs to this launch.
-            identity = process_identity(child.pid, deadline=deadline, include_exited=True)
-            if identity is None or os.getpgid(child.pid) != group or process_identity(group) != invocation["groupStartSha256"]:
-                raise ConformanceError("OwnershipInvalid")
-            invocation.update(childPid=child.pid, childStartSha256=identity)
+        _native_invocation_child(invocation, child, deadline=deadline)
         with selectors.DefaultSelector() as selector:
             selector.register(child.stdout, selectors.EVENT_READ)
             while selector.get_map():
@@ -358,7 +416,7 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
     result = subprocess.CompletedProcess(args, child.returncode, bytes(data))
     result.child_pid = child.pid
     if invocation is not None:
-        result.native_invocation = {**invocation, "childState": "Exited", "exitCode": child.returncode}
+        result.native_invocation = _native_invocation_complete(invocation, child.returncode)
     return result
 
 

@@ -40,7 +40,7 @@ else:
     raise AssertionError("unguarded legacy launch unexpectedly succeeded")
 pid = os.getpid()
 header = {"groups": [pid], "children": {str(pid): legacy.process_identity(pid)}}
-with legacy.native_preparation_group(header):
+with legacy.native_preparation_group(header) as invocations:
     result = legacy.capture([sys.executable, "-c", "print('closed')"])
     assert result.returncode == 0 and result.stdout == b"closed\\n"
     observed = result.native_invocation
@@ -54,6 +54,17 @@ with legacy.native_preparation_group(header):
     fast = legacy.capture(["/bin/true"])
     assert fast.native_invocation["childState"] == "Exited"
     assert fast.native_invocation["childStartSha256"] != observed["childStartSha256"]
+    assert invocations == [observed, fast.native_invocation]
+    with legacy.OwnedChild(
+            [sys.executable, "-c", "import time;print('barrier',flush=True);time.sleep(60)"],
+            stdout=legacy.subprocess.PIPE, stderr=legacy.subprocess.STDOUT) as owned:
+        with owned.stdout:
+            assert owned.stdout.readline() == b"barrier\\n"
+            owned.kill()
+            assert owned.wait(timeout=5) == -legacy.signal.SIGKILL
+    assert len(invocations) == 3 and invocations[-1] == owned.native_invocation
+    assert invocations[-1]["exitCode"] == -legacy.signal.SIGKILL
+    legacy.verify_borrowed_invocations(invocations, group_pid=pid, group_start_sha256=header["children"][str(pid)])
 assert legacy._borrowed_group() is None
 """
         result = subprocess.run(

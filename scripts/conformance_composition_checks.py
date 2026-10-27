@@ -116,13 +116,21 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
         raise evidence.ConformanceError("ProofMismatch")
     value = evidence.load_json(raw)
     if (not isinstance(value, dict) or set(value) != {
-            "schemaVersion", "qualification", "phase", "runId", "rootId", "result"}
-            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 1
+            "schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations"}
+            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 2
             or value["qualification"] is not False or value["phase"] != phase
             or value["runId"] != run.run_id or value["rootId"] != run.root_id
             or not isinstance(value["result"], dict)):
         raise evidence.ConformanceError("ProofMismatch")
-    return value["result"], result.execution_record_sha256
+    legacy.verify_borrowed_invocations(
+        value["invocations"], group_pid=record["childPid"], group_start_sha256=record["childStartSha256"])
+    if phase == "reference" and value["invocations"] != [value["result"].get("invocation")]:
+        raise evidence.ConformanceError("ProofMismatch")
+    return value["result"], result.execution_record_sha256, {
+        "qualification": False, "nativeContainment": True, "inputClosureComplete": False,
+        "scope": "borrowed-launch-observations", "count": len(value["invocations"]),
+        "sha256": evidence.digest(value["invocations"]), "sequence": run.command_sequence,
+        "parentSha256": result.execution_record_sha256}
 
 
 def _native_reference_consumer(run, repository, source, controllers, baseline_seal):
@@ -153,7 +161,7 @@ def _native_reference_consumer(run, repository, source, controllers, baseline_se
         "inputMapPath": closure.relative_to(run.root).as_posix(), "inputMapSha256": evidence.digest(files)}
     if dict(evidence.input_manifest(run.root, list(files))) != files:
         raise evidence.ConformanceError("InputChanged")
-    observed, parent = _controller_phase(
+    observed, parent, invocations = _controller_phase(
         run, repository, source, "reference", baseline_seal=baseline_seal, reference=descriptor)
     expected = {
         "qualification": False, "moduleCount": len(reference["moduleIds"]),
@@ -171,7 +179,7 @@ def _native_reference_consumer(run, repository, source, controllers, baseline_se
             or dict(evidence.input_manifest(run.root, list(files))) != files):
         raise evidence.ConformanceError("ProofMismatch")
     return {**observed, "nativeContainment": True, "parentSha256": parent,
-            "sequence": run.command_sequence, "inputCount": len(files)}
+            "sequence": run.command_sequence, "inputCount": len(files), "nativeInvocations": invocations}
 
 
 def _prepare_solution_formatting(run, source, config, feed):
@@ -387,7 +395,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     logger = run.root / "proofs/inherited-controller-logger.dll"
     shutil.copy2(source / f"tests/contracts/{LOGGER}/bin/Release/net10.0/{LOGGER}.dll", logger)
     verify_controller_baselines(run, baseline_seal)
-    controllers, controller_parent = _controller_phase(
+    controllers, controller_parent, controller_invocations = _controller_phase(
         run, repository, source, "controllers", baseline_seal=baseline_seal,
         sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
     _prepare_solution_formatting(run, source, config, feed)
@@ -534,7 +542,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     mutation_driver = mutation_source / Path(DISCOVERY_PROJECT).parent / "bin/Release/net10.0"
     mutation_driver.parent.mkdir(parents=True, mode=0o700)
     legacy._copy_runtime((source / DISCOVERY_PROJECT).parent / "bin/Release/net10.0", mutation_driver)
-    mutations, mutation_parent = _controller_phase(
+    mutations, mutation_parent, mutation_invocations = _controller_phase(
         run, repository, mutation_source, "mutations", baseline_seal=baseline_seal,
         sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
     verify_discovery_mutation_membership(run.root, mutations, admitted["discoveryCoverage"]["scenarios"])
@@ -552,6 +560,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
         "preparedFormatting": formatting,
         "discoveryMaterials": materials,
+        "nativeInvocations": {"controllers": controller_invocations, "mutations": mutation_invocations},
         "referenceConsumer": reference_consumer,
         "discoveryScenarios": {
             "qualification": False, "sha256": evidence.digest(admitted["discoveryCoverage"]),
@@ -724,7 +733,8 @@ def execute(repository, destination):
         (run.root / "cache/.local").chmod(0o700)
         source, sources = evidence.snapshot_sources(repository, run)
         print(json.dumps({"qualification": False, "phase": "inherited-historical-preparation"}), flush=True)
-        baseline_seal, historical_parent = _controller_phase(run, repository, source, "historical")
+        baseline_seal, historical_parent, historical_invocations = _controller_phase(
+            run, repository, source, "historical")
         verify_controller_baselines(run, baseline_seal)
         config, feed = baselines._config(run, "candidate")
         projects = (
@@ -767,6 +777,7 @@ def execute(repository, destination):
         write_new(run.root / "proofs/composition-lock-derivations.json", evidence.canonical_bytes(records))
         summary = _runtime(run, repository, source, sources, config, feed, records, replay)
         summary["historicalPreparationParentSha256"] = historical_parent
+        summary["historicalNativeInvocations"] = historical_invocations
         summary["inheritedRuntime"] = _inherited_runtime(
             run, repository, source, sources, config, feed, baseline_seal)
         from conformance_inherited import run_controller_tooling

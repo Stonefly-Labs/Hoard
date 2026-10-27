@@ -45,7 +45,8 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "scripts")
           import conformance_evidence as evidence
-          from conformance_inherited import BASELINE, CONTROLLER_BASELINES, verify_controller_tooling
+          from conformance_inherited import (
+              BASELINE, CONTROLLER_BASELINES, verify_controller_tooling, verify_controller_invocations)
           from conformance_legacy import verify_borrowed_invocation
           from conformance_sources import read_bounded
           root = Path(sys.argv[1])
@@ -70,12 +71,18 @@ jobs:
           reference_inputs = read_bounded(root / "proofs/inherited-reference-inputs.json", 2 * 1024**2)
           try:
               verify_controller_tooling(root, inherited["tooling"], inputs, owner)
+              for phase, observed in (
+                      ("historical", summary["historicalNativeInvocations"]),
+                      ("controllers", inherited["nativeInvocations"]["controllers"]),
+                      ("mutations", inherited["nativeInvocations"]["mutations"]),
+                      ("reference", reference["nativeInvocations"])):
+                  verify_controller_invocations(root, observed, phase, inputs["runId"], owner["rootId"])
               verify_borrowed_invocation(
                   reference["invocation"], argv_sha256=reference["argvSha256"],
                   cwd_sha256=reference["cwdSha256"], stdin_sha256=reference["responseSha256"],
                   group_pid=reference_parent["childPid"],
                   group_start_sha256=reference_parent["childStartSha256"])
-          except evidence.ConformanceError:
+          except (evidence.ConformanceError, KeyError, TypeError):
               raise SystemExit("WitnessMissing") from None
           if (summary["qualification"] is not False or summary["profileComplete"] is not False
                   or summary["passedComponents"] != 36 or summary["admittedSnapshots"] != 110
@@ -107,16 +114,16 @@ jobs:
                   or reference["inputMapSha256"] != hashlib.sha256(reference_inputs).hexdigest()
                   or reference["parentSha256"] != hashlib.sha256(reference_parent_raw).hexdigest()
                   or set(reference_observation) != {
-                      "schemaVersion", "qualification", "phase", "runId", "rootId", "result"}
+                      "schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations"}
                   or type(reference_observation["schemaVersion"]) is not int
-                  or reference_observation["schemaVersion"] != 1
+                  or reference_observation["schemaVersion"] != 2
                   or reference_observation["qualification"] is not False
                   or reference_observation["phase"] != "reference"
                   or reference_observation["runId"] != inputs["runId"]
                   or reference_observation["rootId"] != owner["rootId"]
                   or reference_observation["result"] != {
                       key: value for key, value in reference.items()
-                      if key not in ("nativeContainment", "parentSha256", "sequence", "inputCount")}
+                      if key not in ("nativeContainment", "parentSha256", "sequence", "inputCount", "nativeInvocations")}
                   or reference_parent["runId"] != inputs["runId"] or reference_parent["rootId"] != owner["rootId"]
                   or reference_parent["sequence"] != reference["sequence"]
                   or reference_parent["groupState"] != "Exited" or reference_parent["exitCode"] != 0

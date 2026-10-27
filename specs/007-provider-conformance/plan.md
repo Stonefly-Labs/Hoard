@@ -667,6 +667,39 @@ infrastructure/governance boundaries are unchanged.
 Superseded documentation-only `12b1dee` runs40576797722/40576797976 were explicitly
 cancelled to admit the reference implementation replay; neither is acceptance.
 
+### Native reference confirmation and bounded controller launch journals
+
+Exact `8bdce752366307f89509dad1a4e9168771c1753a` passes
+[run40579834470](https://github.com/Stonefly-Labs/Hoard/actions/runs/40579834470),
+job122456613486. The unchanged standalone consumer admits six modules and
+eighteen unchanged input files. Its map is
+`849a2c264eafe68260ffa68ec10e0e6982628d8ab7b2da4f522a7bfc8c880f0c`;
+native parent is `b96a5a6024dc580937eda85af5f1f42eed33222a9fc44d712ab27923dc754dca`.
+CP36/110, inherited525/58, twelve original negatives/repairs with 29 parameters
+each, discovery137/four adapters/ten suites, 571 tooling tests, 41 formatters,
+3,216 unchanged inputs and actual release also pass. Scope admission is
+`734848be915df6cd035521913a250d96258e8c09890b3422af02df97ab586903`.
+All six run40579834545 foundations jobs pass. These are original reference-phase
+receipts, not confirmation of the subsequent child-identity/journal changes.
+
+The bounded native group context now journals actual finite and interactive
+launches across historical/controllers/reference/mutations. Each successful
+settlement appends only closed process/group identities, launch/stdin hashes
+and reaped exit. Configuration's original staging-before-kill assertions and
+owned group semantics are unchanged. Internal success transport v2 binds the
+journal into the original exact parent output. Parent and independent CI
+admission reject omitted/duplicate/foreign/unsettled observations, wrong output
+hashes/counts and optimistic closure claims; the reference journal must equal
+its one actual child packet.
+
+Journal summaries explicitly say `inputClosureComplete=false`. They do not
+establish every controller command's complete input read set or advance any
+full-controller/profile/qualification flag. Full safe tooling: 571 tests, zero
+failures/errors/unexpected diagnostic bytes, twenty native macOS skips, expected
+incomplete exit 2. Native journal confirmation is pending. T046 remains
+unchecked, 52/86, implement/running. Product/provider contracts, examples,
+diagrams, infrastructure and governance are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

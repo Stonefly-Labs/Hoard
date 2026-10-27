@@ -1066,6 +1066,45 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
             "formatting": {"path": formatting.relative_to(owner).as_posix(), "sha256": legacy._hash(formatting)}}
 
 
+def verify_controller_invocations(owner, summary, phase, run_id, root_id):
+    import conformance_legacy as legacy
+    from conformance_sources import read_bounded
+
+    fields = {"qualification", "nativeContainment", "inputClosureComplete", "scope",
+              "count", "sha256", "parentSha256", "sequence"}
+    if (phase not in ("historical", "controllers", "mutations", "reference")
+            or not isinstance(summary, dict) or set(summary) != fields
+            or summary["qualification"] is not False or summary["nativeContainment"] is not True
+            or summary["inputClosureComplete"] is not False or summary["scope"] != "borrowed-launch-observations"
+            or type(summary["sequence"]) is not int or not 1 <= summary["sequence"] <= 10000
+            or type(summary["count"]) is not int or not 1 <= summary["count"] <= 10000):
+        raise ConformanceError("ProofMismatch")
+    owner = Path(owner)
+    legacy.no_symlinks(owner / "proofs")
+    parent_raw = read_bounded(owner / f"proofs/execution-command-{summary['sequence']:04}.json", 65536)
+    output_name = f"proofs/inherited-{phase}-result.json"
+    output_raw = read_bounded(owner / output_name, 16 * 1024**2)
+    parent, output = load_json(parent_raw), load_json(output_raw)
+    if (not isinstance(parent, dict) or not isinstance(output, dict)
+            or set(output) != {"schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations"}
+            or type(output["schemaVersion"]) is not int or output["schemaVersion"] != 2
+            or output["qualification"] is not False or output["phase"] != phase
+            or output["runId"] != run_id or output["rootId"] != root_id or not isinstance(output["result"], dict)
+            or parent.get("runId") != run_id or parent.get("rootId") != root_id
+            or type(parent.get("sequence")) is not int or parent["sequence"] != summary["sequence"]
+            or parent.get("groupState") != "Exited" or type(parent.get("exitCode")) is not int or parent["exitCode"] != 0
+            or parent.get("diagnosticCode") != "None"
+            or parent.get("outputFiles") != {output_name: hashlib.sha256(output_raw).hexdigest()}
+            or hashlib.sha256(parent_raw).hexdigest() != summary["parentSha256"]
+            or not isinstance(output["invocations"], list)
+            or len(output["invocations"]) != summary["count"] or digest(output["invocations"]) != summary["sha256"]):
+        raise ConformanceError("ProofMismatch")
+    legacy.verify_borrowed_invocations(
+        output["invocations"], group_pid=parent.get("childPid"), group_start_sha256=parent.get("childStartSha256"))
+    if phase == "reference" and output["invocations"] != [output["result"].get("invocation")]:
+        raise ConformanceError("ProofMismatch")
+
+
 def controller_read_inputs(owner, manifests, *, extra=()):
     """Bind private fixture inputs; this is not a native controller I/O trace."""
     import conformance_legacy as legacy
@@ -1233,7 +1272,7 @@ def controller_child_main(argv=None):
         authorized_output = True
         run = SimpleNamespace(root=owner, run_id=request["runId"], root_id=request["rootId"], command_sequence=0)
         progress = ControllerProgress(stream)
-        with legacy.native_preparation_group(header), redirect_stdout(progress):
+        with legacy.native_preparation_group(header) as invocations, redirect_stdout(progress):
             if request["phase"] == "historical":
                 if any(request[key] is not None for key in ("baselineSeal", "sdkPackage", "loggerPath")):
                     raise ConformanceError("EvidenceSchemaInvalid")
@@ -1267,8 +1306,8 @@ def controller_child_main(argv=None):
         if progress.pending:
             raise ConformanceError("UnknownDiagnostic")
         legacy._write(args.output, {
-            "schemaVersion": 1, "qualification": False, "phase": request["phase"],
-            "runId": run.run_id, "rootId": run.root_id, "result": result,
+            "schemaVersion": 2, "qualification": False, "phase": request["phase"],
+            "runId": run.run_id, "rootId": run.root_id, "result": result, "invocations": invocations,
         })
         stream.write('{"event":"control","code":"None","value":0}\n')
         return 0

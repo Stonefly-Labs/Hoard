@@ -321,7 +321,7 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
 
                 output = io.StringIO()
                 with redirect_stdout(output), patch("conformance_legacy.native_preparation_group",
-                                                     return_value=nullcontext()), patch.object(
+                                                     return_value=nullcontext([])), patch.object(
                         inherited, "prepare_controller_baselines", side_effect=prepare):
                     code = inherited.controller_child_main(["--request", str(request), "--output", str(result)])
                 self.assertEqual(2 if failure else 0, code)

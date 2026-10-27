@@ -5648,6 +5648,34 @@ twenty native macOS skips, expected incomplete exit 2. Linux confirmation is
 pending; T046 remains unchecked, 52/86, implement/running. Provider contracts,
 examples, diagrams, infrastructure and governance are unaffected.
 
+Exact `8bdce752366307f89509dad1a4e9168771c1753a` now passes
+[run40579834470](https://github.com/Stonefly-Labs/Hoard/actions/runs/40579834470),
+job122456613486. The original unchanged BCL replay admits six modules/eighteen
+inputs; input map `849a2c264eafe68260ffa68ec10e0e6982628d8ab7b2da4f522a7bfc8c880f0c`,
+native parent `b96a5a6024dc580937eda85af5f1f42eed33222a9fc44d712ab27923dc754dca`.
+CP36/110, inherited525/58, all twelve original negatives/repairs (29 parameters
+each), discovery137/four adapters/ten suites, all 571 tooling tests, 41
+formatters, 3,216 unchanged inputs and actual release also pass. All six
+foundations jobs pass in run40579834545. This confirms the earlier reference
+phase, not the later actual-child receipt or journal extension.
+
+The next extension retains a bounded closed launch journal for historical,
+controller, reference and mutation native phases. Both finite capture and
+interactive `OwnedChild` settlement append actual process/group identities,
+argv/cwd, supplied stdin digest and reaped status. The original configuration
+controller still checks staging before its kill; no timing/assertion is
+replaced. Internal success packets use schema version 2 and include that
+journal. Parent admission rejects missing, duplicate, foreign-group and
+unsettled observations. CI independently re-opens each original packet/native
+parent and checks exact output/hash/owner linkage; reference must match its
+single original child observation. Summary receipts explicitly retain
+`inputClosureComplete=false`: this is launch observation, not every command's
+complete read set. Full safe tooling remains 571 tests with zero failures/
+errors/unexpected diagnostic bytes, twenty native macOS skips and expected
+incomplete exit 2. Native journal confirmation remains pending; T046 remains
+unchecked, 52/86, implement/running. Provider contracts, examples, diagrams,
+infrastructure and governance are unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged
