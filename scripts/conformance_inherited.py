@@ -18,13 +18,18 @@ import uuid
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from conformance_evidence import ConformanceError, digest, load_json
+from conformance_evidence import ConformanceError, DIAGNOSTIC_CODES, digest, load_json
 
 INVENTORY_PATH = "tests/fixtures/conformance/baselines/composition-inventory.json"
 BASELINE = "9389016c0285c79f6f515f59805a5a41c69b0767"
 INVENTORY_SHA256 = "9b45196787d57b0437c14e73345b1a0ba4b1544a41d95f7fca3ea32b7635de50"
 GROUPS = frozenset(("lifecycle", "configuration", "discovery"))
 ASSEMBLIES = frozenset(("Hoard.Composition.Tests", "Hoard.Architecture.Tests"))
+CONTROLLER_ERROR_SOURCES = (
+    "conformance_inherited.py", "conformance_legacy.py", "conformance_lock_preparation.py",
+    "conformance_evidence.py", "conformance_sources.py", "foundation_evidence.py",
+    "lifecycle_evidence.py", "configuration_evidence.py", "discovery_evidence.py", "conformance_execution.py",
+)
 
 
 @contextmanager
@@ -116,10 +121,11 @@ def controller_transport(repository, owner, *, sdk_package=None, logger_path=Non
             return legacy.composition_controller_command(
                 arguments, cwd=repository if arguments[0] == "git" else cwd,
                 env=effective, expected=expected, input=input, **runtime)
-        except RuntimeError as error:
+        except (RuntimeError, ConformanceError) as error:
             codes = ("CommandFailed", "UnknownDiagnostic", "PrerequisiteMissing", "OutputLimitExceeded")
-            code = next((code for code in codes
-                         if str(error) == "Legacy composition command " + code + "."), "EvidenceIncomplete")
+            code = (str(error) if isinstance(error, ConformanceError) else
+                    next((code for code in codes
+                          if str(error) == "Legacy composition command " + code + "."), "EvidenceIncomplete"))
             print(json.dumps({
                 "qualification": False, "phase": "inherited-controller-failure",
                 "controller": state["phase"] if state["phase"] in (
@@ -650,8 +656,7 @@ class ControllerProgress(io.TextIOBase):
                             or not 1 <= value["commandSequence"] <= 65535
                             or value["operation"] not in ("restore", "build", "pack", "format", "test",
                                                           "--version", "control")
-                            or value["code"] not in ("CommandFailed", "UnknownDiagnostic", "PrerequisiteMissing",
-                                                     "OutputLimitExceeded", "EvidenceIncomplete")):
+                            or value["code"] not in DIAGNOSTIC_CODES or value["code"] == "None"):
                         raise ConformanceError("UnknownDiagnostic")
                     event = {"event": "control", "code": value["code"], "value": value["commandSequence"]}
                 else:
@@ -730,6 +735,15 @@ def controller_child_main(argv=None):
         return 0
     except (ConformanceError, OSError, RuntimeError, ValueError, TypeError, KeyError) as error:
         code = str(error) if isinstance(error, ConformanceError) else "EvidenceIncomplete"
+        sources = {str(Path(__file__).resolve().with_name(name)): index * 100000
+                   for index, name in enumerate(CONTROLLER_ERROR_SOURCES, 1)}
+        frame, location = error.__traceback__, None
+        while frame is not None:
+            if frame.tb_frame.f_code.co_filename in sources and 0 < frame.tb_lineno < 100000:
+                location = sources[frame.tb_frame.f_code.co_filename] + frame.tb_lineno
+            frame = frame.tb_next
+        if authorized_output and location is not None:
+            stream.write(json.dumps({"event": "control", "code": code, "value": location}) + "\n")
         if authorized_output and not args.output.exists():
             legacy._write(args.output, {
                 "schemaVersion": 1, "qualification": False, "phase": request["phase"],

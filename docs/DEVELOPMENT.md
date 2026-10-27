@@ -5184,6 +5184,29 @@ with twenty native skips. Native reference execution, the controller wrapper's
 output-limit cause, full controller/mutation acceptance and qualification
 remain unverified. T046 stays unchecked and implementation stays running.
 
+Run40459781590 at `79b6757` localizes `OutputLimitExceeded` to lifecycle
+preparation (after foundation), before the new reference consumer can execute.
+Its failed receipt remains failed. The next diagnostic preserves conformance
+error codes through borrowed command projection and emits only numeric
+allowlisted script/line witnesses after child authorization; no exception
+message, source line, arbitrary filename or private path is emitted.
+
+The original discovery mutation workspace's selective F-04 copy omits current
+test SDK/fixture/contract inputs. A focused reproduction fails on the missing
+Host project. Setup now copies the complete source/tests/specs/examples trees,
+excluding build/package outputs through the existing copy helper, plus the
+solution marker and root build inputs. Actual fresh compilation then exposes
+missing directly consumed Abstractions and NuGet.Versioning references in the
+source-mode composition test project. Both are now explicit; locked source
+restore records Versioning as direct at the same 7.9.0 version/content hash.
+Package-mode references/lock remain unchanged. Actual fresh source
+restore/build, all seven positive static-association guard cases and
+`dotnet format <copied-composition-project> --verify-no-changes --no-restore -v quiet`
+pass. These are setup/positive checks, not mutation detections: no negative
+mutation or complete controller is claimed. Full tooling passes 541 tests
+with twenty native skips. Native lifecycle diagnosis/repair and the remaining
+full-controller obligations continue; no catalog, assertion or budget changes.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

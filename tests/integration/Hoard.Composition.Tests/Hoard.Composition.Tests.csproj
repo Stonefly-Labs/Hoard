@@ -13,9 +13,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
+    <PackageReference Include="NuGet.Versioning" PrivateAssets="all" />
     <Compile Include="../../fixtures/conformance/Host/CompositionFixtures.cs" Link="Conformance/CompositionFixtures.cs" />
     <Compile Include="../../fixtures/conformance/Host/OwnershipFixtures.cs" Link="Conformance/OwnershipFixtures.cs" />
     <Compile Include="../../fixtures/conformance/Host/VersionFixtures.cs" Link="Conformance/VersionFixtures.cs" />
+    <ProjectReference Include="../../../src/Hoard.Abstractions/Hoard.Abstractions.csproj" />
     <ProjectReference Include="../../../src/Hoard.Hosting/Hoard.Hosting.csproj" />
     <ProjectReference Include="../../../src/Hoard.Application/Hoard.Application.csproj" />
     <ProjectReference Include="../../fixtures/discovery/ReferenceConsumer/ReferenceConsumer.csproj" />

@@ -515,14 +515,10 @@ def runtime_failures(path, method):
 
 def mutations(root, work):
     target = work / "mutations"
-    for relative in ("src", "tests/integration/Hoard.Composition.Tests", "tests/fixtures/discovery/ReferenceConsumer"):
+    for relative in ("src", "tests", "specs", "examples"):
         foundation.copy_source(root / relative, target / relative)
-    for relative in ("Directory.Build.props", "Directory.Packages.props", "global.json"):
+    for relative in ("Directory.Build.props", "Directory.Packages.props", "global.json", "Hoard.slnx"):
         shutil.copy2(root / relative, target / relative)
-    shutil.copy2(root / "tests/FoundationEvidence.cs", target / "tests/FoundationEvidence.cs")
-    contract = target / "specs/004-module-discovery/contracts"
-    contract.mkdir(parents=True)
-    shutil.copy2(root / "specs/004-module-discovery/contracts/openapi.json", contract / "openapi.json")
     project = target / "tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj"
     run("dotnet", "restore", str(project), "--locked-mode", "-v", "quiet")
     detected = []

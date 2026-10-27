@@ -75,6 +75,26 @@ controller output-limit failure remain required. No task/qualification gate,
 assertion, catalog or budget is relaxed; product/provider/architecture diagrams,
 governance, examples, infrastructure and release behavior are unaffected.
 
+The `79b6757` replay, run40459781590, fails in lifecycle preparation after
+foundation, before reference execution. Closed diagnostic projection now
+preserves typed conformance failures and numeric authorized script/line
+witnesses, never raw exception text or paths.
+
+The F-04 mutation workspace's incomplete F-07 dependency closure is reproduced
+by a missing Host project. Copying complete source/tests/specs/examples trees
+and root solution/build inputs fixes that setup omission. A real fresh build
+also exposes source-mode direct Abstractions/Versioning dependencies, now
+declared explicitly. Source locked restore retains Versioning 7.9.0 and its
+unchanged content hash; package-mode graph/lock are unaffected. Fresh source
+restore/build, seven actual positive static-association guard cases and copied
+project formatting pass. `python3 -m unittest discover -s tests/tooling -v`
+passes 541 tests (twenty native skips). No actual mutation detections,
+controller completion or qualification follow from setup/positive success.
+The lifecycle output limit remains unresolved pending source-location replay.
+T046 remains unchecked, 48/86, implement/running. Production boundaries,
+provider contracts, architecture diagrams, governance, examples, infrastructure
+and release behavior are unaffected by the test-only dependency/setup repair.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

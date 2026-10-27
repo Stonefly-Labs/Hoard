@@ -42,7 +42,19 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     value = evidence.load_json(output.getvalue().encode())
                     self.assertEqual("historical", value["scope"])
                     self.assertEqual([2, 0], [event["value"] for event in value["events"]])
+                    self.assertEqual([], value["locations"])
                 self.assertNotIn("private-canary", output.getvalue())
+
+    def test_controller_failure_location_decodes_only_known_script_numbers(self):
+        import conformance_composition_checks as checks
+        import conformance_evidence as evidence
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            checks._controller_incomplete("controllers", "OutputLimitExceeded", [
+                evidence.canonical_bytes({"event": "control", "code": "OutputLimitExceeded", "value": value})
+                for value in (300018, 9900001, 200000)])
+        self.assertEqual([{"source": "conformance_lock_preparation.py", "line": 18}],
+                         evidence.load_json(output.getvalue().encode())["locations"])
 
     def test_controller_phase_requires_native_parent_output_and_complete_progress(self):
         import hashlib

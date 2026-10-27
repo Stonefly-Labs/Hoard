@@ -48,6 +48,40 @@ class DiscoveryEvidenceTests(unittest.TestCase):
                         self.assertEqual(hashlib.sha256(image.read_bytes()).hexdigest(), receipt["assemblySha256"])
                         self.assertEqual(["fixture.protocol.one"], receipt["moduleIds"])
 
+    def test_mutation_workspace_preserves_current_project_and_contract_closure(self):
+        module = self.load()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve() / "source"
+            work = Path(temporary).resolve() / "work"
+            work.mkdir()
+            files = {
+                "src/Hoard.Hosting/Hosting.csproj": "<Project/>",
+                "tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj":
+                    '<Project><ItemGroup><ProjectReference Include="../../fixtures/conformance/Host/Host.csproj"/>'
+                    '</ItemGroup></Project>',
+                "tests/fixtures/conformance/Host/Host.csproj": "<Project/>",
+                "tests/fixtures/discovery/ReferenceConsumer/ReferenceConsumer.csproj": "<Project/>",
+                "tests/FoundationEvidence.cs": "class FoundationEvidence {}",
+                "specs/004-module-discovery/contracts/openapi.json": "{}",
+                "specs/007-provider-conformance/contracts/catalog.json": "{}",
+                "examples/CustomHost/CustomHost.csproj": "<Project/>",
+                "Directory.Build.props": "<Project/>", "Directory.Packages.props": "<Project/>",
+                "global.json": "{}", "Hoard.slnx": "<Solution/>",
+            }
+            for name, text in files.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text)
+
+            def restore(*args, **kwargs):
+                self.assertEqual(("dotnet", "restore"), args[:2])
+                for name, text in files.items():
+                    self.assertEqual(text, (work / "mutations" / name).read_text())
+
+            with patch.object(module, "run", side_effect=restore) as run, patch.object(module, "MUTATIONS", ()):
+                self.assertEqual([], module.mutations(root, work))
+            run.assert_called_once()
+
     def test_missing_empty_duplicate_and_stale_cases_cannot_pass(self):
         module = self.load()
         for evidence in (None, [], [{"id": "D01", "passed": True, "tests": []}],

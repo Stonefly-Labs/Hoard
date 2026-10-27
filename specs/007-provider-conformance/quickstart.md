@@ -25,6 +25,11 @@ ingestion, then fails controller preparation with `OutputLimitExceeded`.
 The next increment adds real BCL-only JSON reference-consumer execution and
 strict complete presentation admission; the local six-module component passes,
 but native execution and the other controller obligations remain unverified.
+Run40459781590 localizes the failure to lifecycle preparation, before reference
+execution; the follow-on diagnostic projects only allowlisted source locations.
+Current discovery mutation setup now includes its full dependency/contract
+closure. Fresh source build, seven positive guard cases and formatting pass;
+negative mutation execution and full controller acceptance remain required.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

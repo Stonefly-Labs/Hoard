@@ -19,7 +19,7 @@ import conformance_legacy as legacy
 from conformance_case_catalog import COMPOSITIONS, composition_snapshot_policy, composition_witnesses
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, project_event
 from conformance_inherited import (
-    INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
+    CONTROLLER_ERROR_SOURCES, INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
     verify_controller_baselines,
 )
 from conformance_lock_preparation import verify_project_lock
@@ -38,8 +38,15 @@ DISCOVERY_PROJECT = "tests/fixtures/conformance/Discovery/Discovery.csproj"
 
 def _controller_incomplete(phase, code, lines):
     events = [project_event(line) for line in lines]
+    locations = []
+    for event in events:
+        source, line = divmod(event["value"], 100000)
+        if (event["event"] == "control" and event["code"] != "None"
+                and 1 <= source <= len(CONTROLLER_ERROR_SOURCES) and line):
+            locations.append({"source": CONTROLLER_ERROR_SOURCES[source - 1], "line": line})
     print(json.dumps({"qualification": False, "phase": "inherited-preparation-incomplete",
                       "scope": phase, "code": code,
+                      "locations": locations,
                       "events": [dict(event) for event in events if event["event"] == "control"]}), flush=True)
 
 

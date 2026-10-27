@@ -81,6 +81,9 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 self.assertEqual({"event": "control", "code": "None", "value": 2}, lines[0])
                 self.assertEqual({"event": "control", "code": "EvidenceIncomplete" if failure else "None",
                                   "value": 0}, lines[-1])
+                if failure:
+                    self.assertTrue(any(event["code"] == "EvidenceIncomplete"
+                                        and 100000 < event["value"] < 200000 for event in lines))
                 self.assertTrue(result.exists())
                 self.assertNotIn("private-canary", result.read_text())
                 if failure:
@@ -97,6 +100,15 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
             progress.write("x" * 4097)
 
+    def test_controller_progress_preserves_closed_conformance_errors_without_masking_their_codes(self):
+        output = io.StringIO()
+        progress = inherited.ControllerProgress(output)
+        progress.write(json.dumps({
+            "qualification": False, "phase": "inherited-controller-failure", "controller": "lifecycle",
+            "commandSequence": 3, "operation": "test", "code": "InputChanged",
+        }) + "\n")
+        self.assertEqual({"event": "control", "code": "InputChanged", "value": 3},
+                         json.loads(output.getvalue()))
     def test_controller_baselines_are_prepared_before_candidate_and_replayed_without_rebuild(self):
         import configuration_evidence as configuration
         import discovery_evidence as discovery

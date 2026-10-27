@@ -173,6 +173,13 @@ BCL-only discovery reference consumer on an actual serialized fixture response,
 validates its complete fixed presentation before retaining module identities,
 and freezes its source/image/response inputs. Local six-module JSON execution
 passes; native confirmation and all other controller obligations remain open.
+Run40459781590 still fails in lifecycle preparation before reference-consumer
+execution. Failure diagnostics now preserve closed conformance codes and
+allowlisted script/line locations, not private tracebacks. Discovery mutation
+workspaces also retain the complete current project/contract closure; fresh
+source restore/build, seven positive guard cases and formatting pass after
+declaring the source test's directly consumed Abstractions/Versioning inputs.
+No actual mutation or full-controller acceptance is inferred from that setup.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and
