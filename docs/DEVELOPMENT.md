@@ -5137,6 +5137,15 @@ wrong receipt property name before native handoff. Native replay is pending;
 `controllerNativeContainment`, `fullControllerAcceptance`, `profileComplete`
 and `qualification` remain false. No frozen case, assertion or timeout changes.
 
+Run40457447997 at `f6372fe` fails before candidate construction with
+`UnknownDiagnostic`: isolated Python omits the script directory, so the new
+child cannot import its sibling modules. An actual `-I -S` entry regression
+first exits 1 with an import failure, then safely returns its expected
+`EvidenceSchemaInvalid` event/exit 2 for a malformed request after admitting
+only the sealed script directory explicitly. No private input or traceback is
+emitted. The nineteen inherited and five composition/workflow checks pass;
+native replay of this bootstrap repair is pending.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

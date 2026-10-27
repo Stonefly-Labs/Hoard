@@ -15,6 +15,9 @@ from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 import uuid
 
+if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from conformance_evidence import ConformanceError, digest, load_json
 
 INVENTORY_PATH = "tests/fixtures/conformance/baselines/composition-inventory.json"

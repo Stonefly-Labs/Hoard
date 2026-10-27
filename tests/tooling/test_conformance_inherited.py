@@ -26,6 +26,22 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_isolated_controller_entry_rejects_bad_request_without_import_traceback(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            request = owner / "request.json"
+            request.write_bytes(b"private-canary")
+            output = owner / "must-not-exist.json"
+            result = subprocess.run(
+                [sys.executable, "-I", "-S", str(ROOT / "scripts/conformance_inherited.py"),
+                 "--request", str(request), "--output", str(output)],
+                capture_output=True, timeout=15, check=False)
+            self.assertEqual(2, result.returncode)
+            self.assertEqual(b"", result.stderr)
+            self.assertEqual({"event": "control", "code": "EvidenceSchemaInvalid", "value": 0},
+                             json.loads(result.stdout))
+            self.assertFalse(output.exists())
+
     def test_controller_child_projects_progress_and_unknown_failures_before_persistence(self):
         run_id = "11111111-1111-4111-8111-111111111111"
         for failure in (False, True):
