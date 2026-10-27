@@ -137,6 +137,8 @@ The committed native diagnostic now stages both inherited assemblies, prepares
 all four borrowed controller families and attempts the complete 525-parameter
 union through exact owned class scopes. Native replay of this extension is
 pending; borrowed controller preparation is not native controller acceptance.
+Borrowed recipes use writable owned copies, leaving immutable source snapshots
+sealed; the native-only read-only-copy regression is reproduced and repaired.
 Complete controller/mutation acceptance and public profile integration remain
 open; T046 is still unchecked.
 The internal inherited-runtime inspector now re-admits raw logger transport

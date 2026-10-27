@@ -500,7 +500,17 @@ def main(arguments=None):
         return execute(args.root, args.evidence)
     except (evidence.ConformanceError, OSError, ValueError, RuntimeError) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "EvidenceIncomplete"
-        print(json.dumps({"qualification": False, "status": "Incomplete", "code": code}))
+        failure = {"qualification": False, "status": "Incomplete", "code": code}
+        known_sources = {str(Path(__file__).with_name(name)): name for name in (
+            "conformance_composition_checks.py", "conformance_inherited.py", "conformance_legacy.py",
+            "foundation_evidence.py", "lifecycle_evidence.py", "configuration_evidence.py", "discovery_evidence.py")}
+        frame = None if isinstance(error, evidence.ConformanceError) else error.__traceback__
+        while frame is not None:
+            name = known_sources.get(frame.tb_frame.f_code.co_filename)
+            if name is not None:
+                failure.update(source=name, line=frame.tb_lineno)
+            frame = frame.tb_next
+        print(json.dumps(failure))
         return 2
 
 

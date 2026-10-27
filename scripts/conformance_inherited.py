@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
@@ -33,6 +34,7 @@ def controller_transport(repository, owner):
     modules = (foundation, lifecycle, configuration, discovery)
     originals = {module: module.run for module in modules}
     original_graph = foundation.inspection_graph
+    original_copy = foundation.copy_source
     original_processes, original_selectors = configuration.subprocess, configuration.selectors
     environment = {key: value for key, value in os.environ.items()
                    if key.startswith("HOARD_") or key == "NUGET_PACKAGES"}
@@ -110,9 +112,38 @@ def controller_transport(repository, owner):
     def graph(projects, ownership, *, resolve=None):
         return original_graph(projects, ownership, resolve=resolve or legacy.resolve_project)
 
+    def copy_source(source, target):
+        source, target = Path(source), Path(target)
+        for path in (source, target):
+            legacy.no_symlinks(path)
+            if not path.is_absolute() or not path.resolve().is_relative_to(owner):
+                raise ConformanceError("OwnershipInvalid")
+        if source == owner or target.resolve().is_relative_to(source.resolve()):
+            raise ConformanceError("OwnershipInvalid")
+        count, size = 0, 0
+        ignored = shutil.ignore_patterns("bin", "obj", "*.nupkg")
+        for directory, directories, filenames in os.walk(source, followlinks=False):
+            omitted = ignored(directory, directories + filenames)
+            directories[:] = [name for name in directories if name not in omitted]
+            for name in (*directories, *(name for name in filenames if name not in omitted)):
+                path = Path(directory) / name
+                legacy.no_symlinks(path)
+                count += 1
+                if path.is_file():
+                    size += path.stat().st_size
+                elif not path.is_dir():
+                    raise ConformanceError("OwnershipInvalid")
+                if count > 50000 or size > 256 * 1024**2:
+                    raise ConformanceError("OutputLimitExceeded")
+        result = original_copy(source, target)
+        for path in (target, *target.rglob("*")):
+            path.chmod(0o700 if path.is_dir() else 0o600 | (path.stat().st_mode & 0o111))
+        return result
+
     try:
         foundation.run = command
         foundation.inspection_graph = graph
+        foundation.copy_source = copy_source
         for module in (lifecycle, configuration, discovery):
             module.run = text_command
         configuration.subprocess = SimpleNamespace(
@@ -127,6 +158,7 @@ def controller_transport(repository, owner):
     finally:
         configuration.subprocess, configuration.selectors = original_processes, original_selectors
         foundation.inspection_graph = original_graph
+        foundation.copy_source = original_copy
         for module, original in originals.items():
             module.run = original
         for key in list(os.environ):

@@ -25,6 +25,49 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_native_preparation_failure_location_cannot_persist_exception_text_or_paths(self):
+        import conformance_composition_checks as checks
+        for error in (RuntimeError("private-canary"), PermissionError(13, "private-canary", "/private-canary")):
+            output = io.StringIO()
+            with self.subTest(error=type(error).__name__), redirect_stdout(output), patch.object(
+                    checks, "execute", side_effect=error):
+                self.assertEqual(2, checks.main(["--evidence", "/unused"]))
+            self.assertNotIn("private-canary", output.getvalue())
+            observed = json.loads(output.getvalue())
+            self.assertEqual({
+                "qualification": False, "status": "Incomplete", "code": "EvidenceIncomplete",
+                "source": "conformance_composition_checks.py", "line": observed["line"],
+            }, observed)
+            self.assertIs(type(observed["line"]), int)
+            self.assertGreater(observed["line"], 0)
+
+    def test_controller_copies_are_writable_without_unsealing_source_snapshot(self):
+        import foundation_evidence as foundation
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            source = owner / "snapshot"
+            source.mkdir()
+            project = source / "CustomHost.csproj"
+            project.write_bytes(b"<Project>Artifact.One</Project>")
+            project.chmod(0o400)
+            target = owner / "custom-host"
+            original = foundation.copy_source
+            with inherited.controller_transport(ROOT, owner):
+                foundation.copy_source(source, target)
+                self.assertEqual(0o600, (target / project.name).stat().st_mode & 0o777)
+                (target / project.name).write_bytes(b"<Project>Artifact.Two</Project>")
+                with tempfile.TemporaryDirectory() as outside:
+                    sentinel = Path(outside) / "sentinel.cs"
+                    sentinel.write_bytes(b"outside")
+                    (source / "alias.cs").symlink_to(sentinel)
+                    with self.assertRaises(ConformanceError):
+                        foundation.copy_source(source, owner / "unsafe")
+                    self.assertFalse((owner / "unsafe").exists())
+                    self.assertEqual(b"outside", sentinel.read_bytes())
+            self.assertIs(original, foundation.copy_source)
+            self.assertEqual(0o400, project.stat().st_mode & 0o777)
+            self.assertEqual(b"<Project>Artifact.One</Project>", project.read_bytes())
+
     def test_controller_input_closure_binds_private_sources_assets_and_package_inputs(self):
         with tempfile.TemporaryDirectory() as temporary:
             owner = Path(temporary).resolve()

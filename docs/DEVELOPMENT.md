@@ -5023,6 +5023,18 @@ fails during borrowed preparation with `EvidenceIncomplete`. It is not a
 now identifies preparation failures without persisting raw diagnostics;
 that subsequent diagnostic replay is pending.
 
+Run40449999083 at `6c2ddca` localizes the same failure to foundation preparation,
+outside its command transport. A focused reproduction identifies a native-only
+input difference: the owned source snapshot is mode 0400, and legacy source
+copying preserves that mode before the second CustomHost recipe edits its
+derived project/program. That write fails on an ordinary runner. The scoped
+controller adapter now makes only bounded, symlink-free owned working copies
+writable; original snapshot bytes/modes remain sealed. The regression first
+fails, then passes, and an outside sentinel/symlink challenge rejects before
+copying. Native confirmation of this repair is pending. Failure output also
+retains only allowlisted repository script names/line numbers, not raw exception
+messages, paths or child diagnostics.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

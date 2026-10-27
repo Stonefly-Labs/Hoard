@@ -273,6 +273,15 @@ admission and inherited builds, then fails borrowed preparation with
 controller/operation/error-code progress is added to identify the failing
 preparation step without raw diagnostics; subsequent replay is pending.
 
+Run40449999083 at `6c2ddca` localizes failure to foundation preparation outside
+the command transport. A red/green reproduction shows that copied mode-0400
+native snapshot files cannot be edited for the second CustomHost recipe.
+Scoped borrowing now derives writable bounded owned source copies, rejects
+symlinks/foreign paths before copying and preserves original snapshot modes and
+bytes. The outside sentinel remains unchanged. Native confirmation is pending;
+closed failure locations identify only allowlisted script names/line numbers,
+never raw exception messages or paths.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled
