@@ -1233,7 +1233,14 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "stage": stage, "counters": dict(counters)}
             for stage in ("ownership-retained", "ownership-settled")]
         snapshots[1]["counters"].update(callbackSettled=1, workCompleted=1, workFaulted=row)
-        if case_id == "CP-15":
+        if case_id == "CP-14":
+            snapshots[0]["stage"] = "initialization-denied"
+            snapshots[1]["stage"] = "ownership-stopped"
+            for snapshot in snapshots:
+                snapshot["counters"].update(callbackSettled=1, workCompleted=1, workFaulted=1, unsafeActivities=0, stops=1)
+            snapshots[0]["counters"]["rootDisposal"] = 6
+            snapshots[1]["counters"].update(rootDisposal=0, stopComplete=1, stops=1, disposals=1)
+        elif case_id == "CP-15":
             snapshots[0]["stage"] = "caller-cancelled"
             snapshots[1]["stage"] = "ownership-stopped"
             for snapshot in snapshots:
@@ -1253,6 +1260,28 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         options["original_inputs"]["none"][self.identity] = options["original_inputs"]["none"].pop(old_identity)
         options["expected_tests"] = {self.identity: ("none", "none")}
         return snapshots, options
+
+    def test_initializer_denial_requires_real_fault_before_complete_owner_cleanup(self):
+        for mutation in (None, "false-admission", "erased-fault", "erased-rollback", "premature-release", "missing-stop"):
+            with self.subTest(mutation=mutation):
+                self.setUp()
+                snapshots, options = self.ownership_transport("CP-14", "initializer-failed")
+                if mutation == "false-admission":
+                    snapshots[0]["counters"]["admission"] = 1
+                elif mutation == "erased-fault":
+                    snapshots[0]["counters"]["workFaulted"] = 0
+                elif mutation == "erased-rollback":
+                    snapshots[0]["counters"]["stops"] = 0
+                elif mutation == "premature-release":
+                    snapshots[0]["counters"]["rootDisposal"] = 0
+                elif mutation == "missing-stop":
+                    snapshots.pop()
+                self.witness["proofSha256"] = evidence.digest(self.proof)
+                if mutation is None:
+                    self.assertEqual(self.ingest(**options)["witnesses"][0]["status"], "Passed")
+                else:
+                    with self.assertRaises(evidence.ConformanceError):
+                        self.ingest(**options)
 
     def test_retained_ownership_snapshots_require_actual_settlement_without_reclassifying_the_root(self):
         for row in (0, 1):

@@ -25,7 +25,8 @@ public static class OwnershipFixtures
                 if (failAfterRelease)
                 {
                     throw new InvalidOperationException(
-                        "credential=conformance-secret; https://unsafe.example/token; /private/conformance");
+                        "credential=conformance-secret; https://unsafe.example/token; /private/conformance",
+                        new Exception("seeded-secret"));
                 }
             }
             finally { settled.TrySetResult(); }

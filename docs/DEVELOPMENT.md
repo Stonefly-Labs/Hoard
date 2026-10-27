@@ -4739,6 +4739,25 @@ incomplete even when process resources release. The added Linux workflow job
 has not yet executed; 493 local tooling tests pass with nineteen native skips.
 This is not a qualifying profile, final T044 closure or portable proof retention.
 
+The initializer-failure row now uses the same packaged controlled callback and
+safe owner transport. It records faulted work and the rollback stop already
+performed by `StartAsync`, while distinguishing the absent public stop result
+from later complete root disposal. One independent-policy and one logger-stage
+test first fail. Actual package execution then exposes an incorrect pre-disposal
+stop-count assumption; the exact policy now requires the observed rollback
+stop and rejects its omission. Eight focused source rows, 91 logger cases,
+494 tooling tests (nineteen native skips), fresh seventeen-package locked replay
+and independent ingestion of ten proofs/twenty-one snapshots pass.
+
+The original native diagnostic at `168828c`, run40423940683, fails `InputChanged`
+before launching the test child: its command closure contains ordinary writable
+build/configuration files, but owned execution requires mode 0400. The entry now
+seals all declared runtime images and bound command files before capture, and
+emits bounded closed phase labels. Native validation of this repair is pending;
+the failed attempt is not reclassified. Superseded run40421829046 was cancelled,
+not observed green. CP-14 schema branches, CP-18, complete containment/profile
+integration and T044 remain open.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

@@ -517,17 +517,16 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         await using var logs = new LifecycleTestHarness();
         registry.Web.Logging.AddProvider(logs);
         registry.Probes["artifact-other"] = Add<ArtifactOther>(registry.Builder, Declaration("artifact-other", ModuleCategory.Artifact));
-        var entered = Barrier();
-        registry.Probes["artifact"].Initialize = _ =>
-        {
-            entered.TrySetResult();
-            throw new InvalidOperationException("credential=conformance-secret; https://unsafe.example/token; /private/conformance",
-                new Exception("seeded-secret"));
-        };
+        var callback = new OwnershipFixtures.ControlledCallback(cooperative: true, failAfterRelease: true);
+        callback.Release();
+        registry.Probes["artifact"].Initialize = callback.RunAsync;
+        var observation = new OwnershipObservation(output,
+            $"{typeof(ConformanceMatrixTests).FullName}.{nameof(Required_initialization_failure_has_no_readiness_or_fallback_and_cleans_owner)}(id: \"{id}\", phase: \"{phase}\")",
+            registry, callback);
         await using var running = await registry.BuildAsync(registry.Validate().Composition!);
         await running.App.MapHoardModulesAsync(running.Lease);
         var result = await running.Lease.Lifecycle.StartAsync();
-        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await callback.Entered.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.False(result.Ready);
         Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
         Assert.Contains(result.Diagnostics, item => item.RuleCode == "PhaseFailure" && item.ModuleId == "artifact");
@@ -536,12 +535,14 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         Assert.Equal(0, registry.Probes["artifact"].Workers);
         Assert.Equal(0, registry.Probes["artifact"].Assessments);
         Inactive(registry.Probes["artifact-other"]);
+        observation.Write("initialization-denied", running.Lease);
         await running.DisposeAsync();
         Assert.True(running.Lease.StopResult!.Complete);
         Assert.Equal(1, registry.Probes["artifact"].Stops);
         Assert.Equal(1, registry.Probes["artifact"].Disposals);
         SafeFailure(logs, running.Lease.StopResult, running.Lease.Lifecycle.Snapshot);
-        Observe($"{id}/{phase}", registry, running.Lease);
+        if (!observation.Write("ownership-stopped", running.Lease))
+        { Observe($"{id}/{phase}", registry, running.Lease); }
     }
 
     [Theory]

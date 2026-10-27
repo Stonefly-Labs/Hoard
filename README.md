@@ -77,11 +77,13 @@ thirteen owner-linked safe snapshots, preserving actual task faults and retained
 incomplete roots after settlement. Together with both baseline rows, nine safe
 proofs and nineteen snapshots pass independent ingestion. Native containment and
 full ownership/profile acceptance remain unfinished.
-The dedicated `conformance_composition_checks.py` diagnostic now builds seventeen
-archives, fresh-cache locked-replays the consumer, and binds these nine rows to
-an owned native command and its immutable inputs. Its Linux workflow job is
-pending execution; local macOS checks cannot establish native containment.
-Process-resource release is explicitly separate from module-root qualification.
+The initializer-failure row now also emits safe fault/rollback/cleanup snapshots:
+ten actual package proofs and twenty-one snapshots pass independent ingestion.
+The dedicated `conformance_composition_checks.py` diagnostic builds seventeen
+archives, fresh-cache locked-replays the consumer, and binds these rows to an
+owned native command. Its first Linux attempt rejects writable command inputs;
+the sealing repair awaits native execution. Process-resource release remains
+explicitly separate from module-root qualification.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

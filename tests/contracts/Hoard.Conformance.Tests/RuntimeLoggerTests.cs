@@ -16,6 +16,7 @@ public sealed class RuntimeLoggerTests
     [InlineData("ownership-retained")]
     [InlineData("ownership-settled")]
     [InlineData("ownership-stopped")]
+    [InlineData("initialization-denied")]
     public void Ownership_snapshots_preserve_bounded_callback_and_root_observations(string stage)
     {
         using var owned = new OwnedInput();

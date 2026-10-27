@@ -90,7 +90,8 @@ internal static class RuntimeOriginOutput
                             "ready", "admission", "disabledRoots", "protocolRequests", "identityRequests",
                             "stopComplete", "unsafeActivities");
                         break;
-                    case "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped":
+                    case "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped"
+                        or "initialization-denied":
                         Keys(counters, "callbackSettled", "workCompleted", "workFaulted", "ready", "admission",
                             "unsafeActivities", "rootDisposal", "stopComplete", "initializations", "assessments",
                             "workers", "stops", "disposals");

@@ -154,7 +154,8 @@ initialization and shutdown late faults, without treating finite caller return
 or eventual callback settlement as a released lifecycle root. All seven rows now
 have independently checked safe observations; this does not supply native child
 containment or a complete qualifying profile.
-The separate native composition diagnostic now records an owned command and
-independently admits these observations before process-resource cleanup.
-Its first Linux execution is pending; it does not certify module-root release
-or change this compile-only custom-host example.
+The initializer-failure row extends actual safe component admission to ten
+proofs/twenty-one snapshots. The separate native diagnostic records an owned
+command and checks process-resource cleanup, not module-root qualification.
+Its first Linux attempt rejects writable command inputs; the sealing repair
+awaits native execution. This compile-only custom-host example is unchanged.

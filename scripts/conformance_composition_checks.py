@@ -34,12 +34,15 @@ def expected_rows():
         "matrixId": matrix + ".observe", "caseId": case, "assertionSymbol": None,
     } for case, matrix in (
         ("CP-01", "baseline"), ("CP-02", "replacement"),
+        ("CP-14", "initializer-failed"),
         ("CP-15", "cancel-initialization"), ("CP-15", "cancel-readiness"),
         ("CP-16", "late-initialization"), ("CP-17", "stop-fault"), ("CP-17", "late-stop"),
-    ) for identity in composition_witnesses(case, matrix)]
+    ) for identity in (composition_witnesses(case, matrix)[:1] if case == "CP-14"
+                       else composition_witnesses(case, matrix))]
 
 
 def _runtime(run, repository, source, sources, config, feed, records, replay):
+    print(json.dumps({"qualification": False, "phase": "runtime-staging"}), flush=True)
     project = replay / PROJECT
     runtime = project.parent / "bin/Release/net10.0"
     legacy.stage_sdk(feed / f"{SDK}.0.1.0.nupkg", runtime / f"{SDK}.dll")
@@ -58,11 +61,13 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
         package = next(row for row in packages if row["packageId"] == name)
         if evidence.file_sha256(staged / f"{name}.dll") not in package["runtimeAssemblies"].values():
             raise evidence.ConformanceError("PackageMismatch")
+    print(json.dumps({"qualification": False, "phase": "runtime-environment"}), flush=True)
     observed_environment = environment(run)
     ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
     if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
         raise evidence.ConformanceError("InputChanged")
     group, attempt = str(uuid.uuid4()), str(uuid.uuid4())
+    print(json.dumps({"qualification": False, "phase": "runtime-inputs"}), flush=True)
     inputs = evidence.admit_entity("RunInputs", {
         "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group,
         "profileId": "composition", "mode": "diagnostic",
@@ -117,9 +122,14 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
         config, assembly, staged / f"{HOST}.dll", staged / f"{SDK}.dll", staged / f"{LOGGER}.dll",
         staged / "Hoard.Composition.Tests.deps.json", staged / "Hoard.Composition.Tests.runtimeconfig.json",
     )
+    for path in bound_paths:
+        path.chmod(0o400)
+    for image in images:
+        (run.root / image["path"]).chmod(0o400)
     command_inputs = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path)
                       for path in bound_paths}
     arguments = runtime_arguments(assembly, settings_path, [row["testIdentity"] for row in expected])
+    print(json.dumps({"qualification": False, "phase": "runtime-command"}), flush=True)
     started = time.monotonic() * 1000
     result = run.command(
         arguments, cwd=staged, kind="build", cache_id="composition-runtime", timeout=180,
@@ -132,6 +142,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
     if parent_sha is None or record.get("inputFiles") != command_inputs:
         raise evidence.ConformanceError("ProofMismatch")
     output = run.root / f"runtime-{attempt}"
+    print(json.dumps({"qualification": False, "phase": "runtime-ingestion"}), flush=True)
     admitted = evidence.ingest_runtime_attempt(
         inputs=inputs, manifest_data=evidence.canonical_bytes(manifest), owner_data=evidence.canonical_bytes(owner),
         witnesses_data=read_bounded(output / "witnesses.jsonl", 1024 * 1024),
@@ -153,6 +164,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
                    != len(composition_snapshot_policy(row["testIdentity"]))
                    for row in admitted["witnesses"])):
         raise evidence.ConformanceError("WitnessMissing")
+    print(json.dumps({"qualification": False, "phase": "completion-inputs"}), flush=True)
     if (dict(evidence.source_manifest(repository)) != dict(sources)
             or any(evidence.file_sha256(run.root / path) != hashed
                    for path, hashed in {**inputs["runtimeAssemblies"], **inputs["locks"], **command_inputs}.items())):
@@ -194,9 +206,11 @@ def execute(repository, destination):
             record = build_project(run, source, project, config, feed, update=False, historical_lock=True)
             if record is not None:
                 records.append(record)
+        print(json.dumps({"qualification": False, "phase": "consumer-build"}), flush=True)
         build_project(run, source, Project(PROJECT, package_mode=True), config, feed, update=True)
         consumer_lock = Path(PROJECT).parent / "PackageAcceptance/packages.lock.json"
         prepared_sources = {**sources, consumer_lock.as_posix(): evidence.file_sha256(source / consumer_lock)}
+        print(json.dumps({"qualification": False, "phase": "source-recomputation"}), flush=True)
         evidence.verify_snapshot(source, prepared_sources)
         replay = run.root / "stores/composition-locked-replay"
         for relative in prepared_sources:
@@ -205,6 +219,7 @@ def execute(repository, destination):
             shutil.copy2(source / relative, target)
         properties = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet",
                       "-p:ConformancePackageAcceptance=true"]
+        print(json.dumps({"qualification": False, "phase": "locked-replay"}), flush=True)
         for arguments in (
             ["dotnet", "restore", str(replay / PROJECT), "--locked-mode", "--configfile", str(config)],
             ["dotnet", "build", str(replay / PROJECT), "-c", "Release", "--no-restore"],
@@ -217,6 +232,7 @@ def execute(repository, destination):
         evidence.verify_snapshot(replay, prepared_sources)
         for record in records:
             verify_project_lock(record, source, feed)
+        print(json.dumps({"qualification": False, "phase": "process-release"}), flush=True)
         run.transition("Settling")
         run.release()
         resources = run.resource_projection()

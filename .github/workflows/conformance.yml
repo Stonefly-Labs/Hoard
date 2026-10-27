@@ -106,7 +106,7 @@ jobs:
         with:
           dotnet-version: 10.0.203
           global-json-file: global.json
-      - name: Admit nine exact-child observations and release process resources
+      - name: Admit selected exact-child observations and release process resources
         shell: bash
         run: |
           set -euo pipefail

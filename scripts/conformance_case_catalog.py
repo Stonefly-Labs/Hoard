@@ -886,6 +886,11 @@ def composition_snapshot_policy(identity):
         "callbackSettled", "workCompleted", "workFaulted", "ready", "admission", "unsafeActivities",
         "rootDisposal", "stopComplete", "initializations", "assessments", "workers", "stops", "disposals")}
     counters["initializations"] = 1
+    if identity == composition_witnesses("CP-14", "initializer-failed")[0]:
+        counters.update(callbackSettled=1, workCompleted=1, workFaulted=1, rootDisposal=6, stops=1)
+        stopped = {**counters, "rootDisposal": 0, "stopComplete": 1, "stops": 1, "disposals": 1}
+        return (("initialization-denied", MappingProxyType(counters)),
+                ("ownership-stopped", MappingProxyType(stopped)))
     for phase in ("initialization", "readiness"):
         if identity in composition_witnesses("CP-15", "cancel-" + phase):
             counters.update(rootDisposal=6, assessments=int(phase == "readiness"))

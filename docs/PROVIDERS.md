@@ -70,10 +70,12 @@ module counters. Independent stage policies reject false settlement/release;
 settled retained roots remain incomplete. Nine actual safe proofs and nineteen
 snapshots pass together with baseline/replacement. Native containment, complete
 ownership/profile integration and qualification remain open.
-The dedicated native composition diagnostic records the actual command/input
-closure, independently ingests these nine safe rows, and separately checks owned
-process-resource release. It does not interpret process exit as cooperative
-module-root cleanup. Linux execution of this new diagnostic is pending.
+The initializer-failure row also preserves actual task faults and rollback stop
+before complete owner disposal. Ten actual package proofs/twenty-one snapshots
+pass independent ingestion. The dedicated native composition diagnostic records
+the command/input closure and checks process-resource release separately from
+cooperative module-root cleanup. Its first Linux attempt rejects unsealed
+command inputs; the read-only sealing repair awaits native execution.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

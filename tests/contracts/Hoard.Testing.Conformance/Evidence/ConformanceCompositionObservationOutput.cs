@@ -22,7 +22,8 @@ public static class ConformanceCompositionObservationOutput
         var names = stage switch
         {
             "before-initialization" or "ready" or "stopped" => Names,
-            "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped" => OwnershipNames,
+            "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped"
+                or "initialization-denied" => OwnershipNames,
             _ => throw new ArgumentException("ProofMismatch")
         };
         if (source.Kind != "original-owner")

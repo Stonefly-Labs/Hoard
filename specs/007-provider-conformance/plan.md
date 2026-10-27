@@ -33,6 +33,32 @@ code from pending native evidence. Production architecture/ADR diagrams,
 charter, product scope, governance, infrastructure and release behavior are
 unaffected by this test-only diagnostic.
 
+### Initializer denial and native input-sealing repair
+
+The actual required-initialization failure now shares the packaged controlled
+callback, preserving both unsafe exception and nested canary. Safe snapshots
+record actual faulted work, false admission and the rollback stop before public
+root disposal, then the complete stopped outcome. Tests first reproduce absent
+independent policy and closed logger stage. Fresh package execution also rejects
+an incorrect assumption that rollback had not called stop; the exact policy now
+requires the real stop count and independently challenges its omission.
+
+Eight focused source rows, all 91 logger cases and 494 tooling tests pass
+(nineteen native skips), with frozen inventories/catalog and formatting intact.
+Fresh seventeen-package construction/fresh-cache locked replay independently
+admits ten actual proofs/twenty-one snapshots. Private component source digest
+`8ba35795b51807195f8fa3ecf3fb611e91e336d2b8f991301b617fb0f9fa74ef`
+is separate from subsequent documentation changes, not exact-head Linux proof.
+
+The first Linux job at exact `168828c` in run40423940683 fails `InputChanged`:
+ordinary writable configuration/runtime files were not sealed to the owning
+command recorder's required mode 0400. It never establishes native test-child
+execution. The repair seals bound files/all runtime images before capture and
+adds closed bounded phase diagnostics; native replay is pending. Superseded
+run40421829046 was cancelled, not admitted as successful evidence.
+CP-14 schema admission, CP-18, complete ownership/containment/profile evaluation
+and T044 remain incomplete; task/checklist status remains 46/86.
+
 ## Foundation continuation
 
 The maintainer's subsequent instruction to make decisions and keep implementing
