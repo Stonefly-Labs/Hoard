@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import sys
 import time
 import uuid
 from xml.sax.saxutils import escape
@@ -19,7 +20,7 @@ from conformance_case_catalog import COMPOSITIONS, composition_snapshot_policy, 
 from conformance_execution import OwnedRun, capture_control, native_execution_supported
 from conformance_inherited import (
     INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
-    prepare_controller_baselines, prepare_controller_evidence, verify_controller_baselines,
+    verify_controller_baselines,
 )
 from conformance_lock_preparation import verify_project_lock
 from conformance_prepare import PREREQUISITES, Project, build_project
@@ -33,6 +34,63 @@ HOST = "Hoard.Fixtures.Conformance.Host"
 SDK = "Hoard.Testing.Conformance"
 LOGGER = "Hoard.Conformance.TestLogger"
 DISCOVERY_PROJECT = "tests/fixtures/conformance/Discovery/Discovery.csproj"
+
+
+def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_package=None, logger_path=None):
+    if phase not in ("historical", "controllers"):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if phase == "historical" and (run.command_sequence != 0 or (run.root / "feed/candidate").exists()):
+        raise evidence.ConformanceError("InputChanged")
+    request_path = run.root / f"proofs/inherited-{phase}-request.json"
+    output_path = run.root / f"proofs/inherited-{phase}-result.json"
+    script = source / "scripts/conformance_inherited.py"
+    request = {
+        "schemaVersion": 1, "phase": phase, "owner": str(run.root), "repository": str(repository),
+        "runId": run.run_id, "rootId": run.root_id, "source": source.relative_to(run.root).as_posix(),
+        "baselineSeal": baseline_seal,
+        "sdkPackage": None if sdk_package is None else sdk_package.relative_to(run.root).as_posix(),
+        "loggerPath": None if logger_path is None else logger_path.relative_to(run.root).as_posix(),
+    }
+    write_new(request_path, evidence.canonical_bytes(request))
+    paths = [request_path, script]
+    if baseline_seal is not None:
+        paths.append(run.root / baseline_seal["path"])
+    paths.extend(path for path in (sdk_package, logger_path) if path is not None)
+    for path in paths:
+        path.chmod(0o400)
+    inputs = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in paths}
+    arguments = [sys.executable, "-I", "-S", str(script), "--request", str(request_path), "--output", str(output_path)]
+    result = run.command(
+        arguments, cwd=source, kind="events", cache_id="inherited-" + phase, timeout=600,
+        record_execution=True, execution_inputs=tuple(inputs),
+        execution_outputs=(output_path.relative_to(run.root).as_posix(),))
+    record = evidence.load_json(run.read_execution_record(run.command_sequence))
+    failures = [event["code"] for event in result.events if event["code"] != "None"]
+    if failures:
+        raise evidence.ConformanceError(failures[-1])
+    expected_events = [{"event": "control", "code": "None", "value": number}
+                       for number in ((2, 3, 4, 0) if phase == "historical" else (1, 2, 3, 4, 0))]
+    if (result.exit_code or list(result.events) != expected_events
+            or record["runId"] != run.run_id or record["rootId"] != run.root_id
+            or record["argvSha256"] != evidence.digest(arguments)
+            or record["cwdSha256"] != hashlib.sha256(str(source).encode("utf-8")).hexdigest()
+            or record["inputFiles"] != inputs or record["groupState"] != "Exited"
+            or record["exitCode"] != 0 or record["diagnosticCode"] != "None"):
+        raise evidence.ConformanceError("ProofMismatch")
+    raw = read_bounded(output_path, 16 * 1024**2)
+    if (record.get("outputFiles") != {
+            output_path.relative_to(run.root).as_posix(): hashlib.sha256(raw).hexdigest()}
+            or result.execution_record_sha256 != evidence.digest(record)):
+        raise evidence.ConformanceError("ProofMismatch")
+    value = evidence.load_json(raw)
+    if (not isinstance(value, dict) or set(value) != {
+            "schemaVersion", "qualification", "phase", "runId", "rootId", "result"}
+            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 1
+            or value["qualification"] is not False or value["phase"] != phase
+            or value["runId"] != run.run_id or value["rootId"] != run.root_id
+            or not isinstance(value["result"], dict)):
+        raise evidence.ConformanceError("ProofMismatch")
+    return value["result"], result.execution_record_sha256
 
 
 def expected_rows():
@@ -133,10 +191,12 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
                 ["dotnet", "build", str(source / relative), "-c", "Release", "--no-restore"]):
             baselines._command(run, [*arguments, *properties], cwd=source, cache_id="inherited-discovery")
     print(json.dumps({"qualification": False, "phase": "inherited-controller-preparation"}), flush=True)
-    controllers = prepare_controller_evidence(
-        repository, run.root, source, sdk_package=feed / f"{SDK}.0.1.0.nupkg",
-        logger_path=source / f"tests/contracts/{LOGGER}/bin/Release/net10.0/{LOGGER}.dll",
-        prepared_baselines=verify_controller_baselines(run, baseline_seal))
+    logger = run.root / "proofs/inherited-controller-logger.dll"
+    shutil.copy2(source / f"tests/contracts/{LOGGER}/bin/Release/net10.0/{LOGGER}.dll", logger)
+    verify_controller_baselines(run, baseline_seal)
+    controllers, controller_parent = _controller_phase(
+        run, repository, source, "controllers", baseline_seal=baseline_seal,
+        sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
     historical = verify_controller_baselines(run, baseline_seal)
     root = run.root / "stores/inherited-runtime"
     root.mkdir(mode=0o700)
@@ -279,6 +339,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         "scopeAdmissionSha256": evidence.digest(admitted), "controllerReadInputCount": len(files),
         "historicalBaselineSealSha256": baseline_seal["sha256"],
         "historicalBinariesPreparedBeforeCandidate": True,
+        "controllerPreparationParentSha256": controller_parent,
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
     }
 
@@ -439,7 +500,8 @@ def execute(repository, destination):
         (run.root / "cache/.local").chmod(0o700)
         source, sources = evidence.snapshot_sources(repository, run)
         print(json.dumps({"qualification": False, "phase": "inherited-historical-preparation"}), flush=True)
-        baseline_seal = prepare_controller_baselines(repository, run)
+        baseline_seal, historical_parent = _controller_phase(run, repository, source, "historical")
+        verify_controller_baselines(run, baseline_seal)
         config, feed = baselines._config(run, "candidate")
         projects = (
             *PREREQUISITES,
@@ -478,6 +540,7 @@ def execute(repository, destination):
         evidence.verify_snapshot(replay, prepared_sources)
         write_new(run.root / "proofs/composition-lock-derivations.json", evidence.canonical_bytes(records))
         summary = _runtime(run, repository, source, sources, config, feed, records, replay)
+        summary["historicalPreparationParentSha256"] = historical_parent
         summary["inheritedRuntime"] = _inherited_runtime(
             run, repository, source, sources, config, feed, baseline_seal)
         evidence.verify_snapshot(source, prepared_sources)

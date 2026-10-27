@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import textwrap
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -12,6 +13,54 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_controller_phase_requires_native_parent_output_and_complete_progress(self):
+        import hashlib
+        import conformance_composition_checks as checks
+        import conformance_evidence as evidence
+        from conformance_execution import CommandResult
+        for mutation in ("none", "changed-output", "missing-phase", "retained-process"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                source = root / "stores/source"
+                (source / "scripts").mkdir(parents=True)
+                (source / "scripts/conformance_inherited.py").write_bytes(b"frozen controller")
+                run = SimpleNamespace(root=root, run_id="run", root_id="root", command_sequence=0)
+                record = {}
+
+                def command(arguments, **kwargs):
+                    request = Path(arguments[arguments.index("--request") + 1])
+                    output = Path(arguments[arguments.index("--output") + 1])
+                    raw = evidence.canonical_bytes({
+                        "schemaVersion": 1, "qualification": False, "phase": "historical",
+                        "runId": "run", "rootId": "root", "result": {"seal": "bound"},
+                    })
+                    output.write_bytes(raw + b"\n" if mutation == "changed-output" else raw)
+                    record.update(
+                        runId="run", rootId="root", argvSha256=evidence.digest(arguments),
+                        cwdSha256=hashlib.sha256(str(source).encode()).hexdigest(),
+                        inputFiles={path: evidence.file_sha256(root / path) for path in kwargs["execution_inputs"]},
+                        outputFiles={output.relative_to(root).as_posix(): hashlib.sha256(raw).hexdigest()},
+                        groupState="Retained" if mutation == "retained-process" else "Exited",
+                        exitCode=0, diagnosticCode="None",
+                    )
+                    self.assertIn(request.relative_to(root).as_posix(), kwargs["execution_inputs"])
+                    self.assertEqual((output.relative_to(root).as_posix(),), kwargs["execution_outputs"])
+                    run.command_sequence = 1
+                    events = tuple({"event": "control", "code": "None", "value": number}
+                                   for number in ((2, 4, 0) if mutation == "missing-phase" else (2, 3, 4, 0)))
+                    return CommandResult(0, events, 1, evidence.digest(record))
+
+                run.command = mock.Mock(side_effect=command)
+                run.read_execution_record = mock.Mock(side_effect=lambda sequence: evidence.canonical_bytes(record))
+                if mutation == "none":
+                    result, parent = checks._controller_phase(run, ROOT, source, "historical")
+                    self.assertEqual({"seal": "bound"}, result)
+                    self.assertEqual(evidence.digest(record), parent)
+                else:
+                    with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                        checks._controller_phase(run, ROOT, source, "historical")
+
     def test_workflow_checks_retained_historical_seal_after_stores_are_released(self):
         import hashlib
         import conformance_evidence as evidence

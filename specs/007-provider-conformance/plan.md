@@ -20,10 +20,28 @@ outputs, assets and local archives, excluding mutable package caches. Candidate
 compatibility works on writable copies; historical originals remain sealed and
 are reverified before/after preparation and runtime execution. Focused red/green
 checks cover ordering, no-rebuild replay, foreign/changed inputs and dependency
-replacement confined to copies. Native replay remains pending; this does not
+replacement confined to copies. Public Linux run40455993703 at `f602db4` passes
+CP36/110, inherited525/58, all 2,011 unchanged inputs, process release and
+post-release seal checks after expected incomplete exit 2. Historical seal
+`631487499f5d50dc15c8930abedd533d0bb23ff6678814005470c631e675026a`;
+scope admission `4a938c6af12ea17f9bed55e81fb1b48ab34534dea4cef0ce9ec4cf6615fc59dd`.
+The original `b10def8` execution observes the same complete runtime scope but
+its workflow fails by trying to rehash deleted stores; that receipt stays failed.
+This does not
 give borrowed preparation native command receipts, complete controller/mutation
 acceptance or qualification. T046 remains unchecked, 48/86, implement/running.
 Production contracts, examples, diagrams and infrastructure are unaffected.
+
+The follow-on transport attempts historical preparation and four-family
+controller preparation in separate bounded native child scopes. Immutable
+requests/results, exact parent argv/cwd/input/output agreement, complete closed
+phase progress and actual namespace/group exit are required before reuse.
+The logger is staged separately from mutable source build outputs. Focused
+tests reject raw progress/private errors, changed output, omitted phases and
+unsettled parents; an incorrect result-property name first fails and is repaired.
+Native confirmation is pending. Batch preparation containment is not a native
+receipt for each inner command or complete controller/mutation acceptance;
+all full-controller/profile qualification flags remain false.
 
 ## Shared authority admission and explicit restart controls
 

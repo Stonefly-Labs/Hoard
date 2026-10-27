@@ -1,15 +1,19 @@
 """Exact source-owned inherited composition inventories and opaque discovery admission."""
 
 from collections import Counter
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
+import argparse
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import sys
 from types import SimpleNamespace
 import xml.etree.ElementTree as ET
+import uuid
 
 from conformance_evidence import ConformanceError, digest, load_json
 
@@ -614,3 +618,121 @@ def controller_read_inputs(owner, manifests, *, extra=()):
     for path in manifests.values():
         collect(load_json(read_bounded(Path(path), 16 * 1024**2)))
     return dict(sorted(files.items()))
+
+
+class ControllerProgress(io.TextIOBase):
+    """Translate only fixed controller progress into native safe events."""
+
+    def __init__(self, stream):
+        self.stream, self.pending = stream, ""
+
+    def write(self, text):
+        if len(self.pending) + len(text) > 4096:
+            raise ConformanceError("OutputLimitExceeded")
+        self.pending += text
+        while "\n" in self.pending:
+            line, self.pending = self.pending.split("\n", 1)
+            try:
+                value = load_json(line.encode("utf-8", errors="strict"))
+                controllers = ("foundation", "lifecycle", "configuration", "discovery")
+                if not isinstance(value, dict) or value.get("qualification") is not False:
+                    raise ConformanceError("UnknownDiagnostic")
+                if value.get("phase") == "inherited-controller-failure":
+                    if (set(value) != {"qualification", "phase", "controller", "commandSequence", "operation", "code"}
+                            or value["controller"] not in (*controllers, "preparation")
+                            or type(value["commandSequence"]) is not int
+                            or not 1 <= value["commandSequence"] <= 65535
+                            or value["operation"] not in ("restore", "build", "pack", "format", "test",
+                                                          "--version", "control")
+                            or value["code"] not in ("CommandFailed", "UnknownDiagnostic", "PrerequisiteMissing",
+                                                     "OutputLimitExceeded", "EvidenceIncomplete")):
+                        raise ConformanceError("UnknownDiagnostic")
+                    event = {"event": "control", "code": value["code"], "value": value["commandSequence"]}
+                else:
+                    if (value.get("phase") not in (
+                            "inherited-controller-preparation", "inherited-historical-preparation")
+                            or set(value) != {"qualification", "phase", "controller"}
+                            or value.get("controller") not in controllers):
+                        raise ConformanceError("UnknownDiagnostic")
+                    event = {"event": "control", "code": "None", "value": controllers.index(value["controller"]) + 1}
+            except (ConformanceError, UnicodeError):
+                raise ConformanceError("UnknownDiagnostic") from None
+            self.stream.write(json.dumps(event) + "\n")
+            self.stream.flush()
+        return len(text)
+
+
+def controller_child_main(argv=None):
+    parser = argparse.ArgumentParser(description="Owned nonqualifying inherited controller child.")
+    parser.add_argument("--request", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args(argv)
+    stream = sys.stdout
+    authorized_output = False
+    try:
+        import conformance_legacy as legacy
+        from conformance_evidence import relative_path, stable_id
+        from conformance_sources import read_bounded
+
+        request = load_json(read_bounded(args.request, 65536))
+        if (not isinstance(request, dict) or set(request) != {
+                "schemaVersion", "phase", "owner", "repository", "runId", "rootId", "source",
+                "baselineSeal", "sdkPackage", "loggerPath"}
+                or type(request["schemaVersion"]) is not int or request["schemaVersion"] != 1
+                or request["phase"] not in ("historical", "controllers")
+                or not isinstance(request["runId"], str)
+                or str(uuid.UUID(request["runId"])) != request["runId"]):
+            raise ConformanceError("EvidenceSchemaInvalid")
+        stable_id(request["rootId"])
+        owner, repository = Path(request["owner"]), Path(request["repository"])
+        for path in (owner, repository, args.request, args.output):
+            legacy.no_symlinks(path)
+            if not path.is_absolute():
+                raise ConformanceError("OwnershipInvalid")
+        if (args.request.parent != owner / "proofs" or args.output.parent != owner / "proofs"
+                or args.output.exists() or owner == repository or owner.is_relative_to(repository)):
+            raise ConformanceError("OwnershipInvalid")
+        header = load_json(read_bounded(owner / "ownership.json", 65536))
+        preflight = load_json(read_bounded(owner / "proofs/preflight.json", 65536))
+        if (header["schemaVersion"] != 2 or header["state"] != "Active"
+                or header["runId"] != request["runId"] or header["rootId"] != request["rootId"]
+                or preflight["schemaVersion"] != 1 or preflight["qualification"] is not False
+                or preflight["profileId"] != "composition"):
+            raise ConformanceError("OwnershipInvalid")
+        authorized_output = True
+        run = SimpleNamespace(root=owner, run_id=request["runId"], root_id=request["rootId"], command_sequence=0)
+        progress = ControllerProgress(stream)
+        with redirect_stdout(progress):
+            if request["phase"] == "historical":
+                if any(request[key] is not None for key in ("baselineSeal", "sdkPackage", "loggerPath")):
+                    raise ConformanceError("EvidenceSchemaInvalid")
+                result = prepare_controller_baselines(repository, run)
+            else:
+                prepared = verify_controller_baselines(run, request["baselineSeal"])
+                result = prepare_controller_evidence(
+                    repository, owner, owner / relative_path(request["source"]),
+                    sdk_package=owner / relative_path(request["sdkPackage"]),
+                    logger_path=owner / relative_path(request["loggerPath"]), prepared_baselines=prepared)
+                verify_controller_baselines(run, request["baselineSeal"])
+        if progress.pending:
+            raise ConformanceError("UnknownDiagnostic")
+        legacy._write(args.output, {
+            "schemaVersion": 1, "qualification": False, "phase": request["phase"],
+            "runId": run.run_id, "rootId": run.root_id, "result": result,
+        })
+        stream.write('{"event":"control","code":"None","value":0}\n')
+        return 0
+    except (ConformanceError, OSError, RuntimeError, ValueError, TypeError, KeyError) as error:
+        code = str(error) if isinstance(error, ConformanceError) else "EvidenceIncomplete"
+        if authorized_output and not args.output.exists():
+            legacy._write(args.output, {
+                "schemaVersion": 1, "qualification": False, "phase": request["phase"],
+                "runId": request["runId"], "rootId": request["rootId"],
+                "status": "Incomplete", "diagnosticCode": code,
+            })
+        stream.write(json.dumps({"event": "control", "code": code, "value": 0}) + "\n")
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(controller_child_main())

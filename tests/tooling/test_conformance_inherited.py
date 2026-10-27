@@ -26,6 +26,60 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_child_projects_progress_and_unknown_failures_before_persistence(self):
+        run_id = "11111111-1111-4111-8111-111111111111"
+        for failure in (False, True):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                owner = Path(temporary).resolve()
+                (owner / "proofs").mkdir()
+                (owner / "source").mkdir()
+                (owner / "ownership.json").write_bytes(canonical_bytes({
+                    "schemaVersion": 2, "runId": run_id, "rootId": "root", "state": "Active"}))
+                (owner / "proofs/preflight.json").write_bytes(canonical_bytes({
+                    "schemaVersion": 1, "qualification": False, "profileId": "composition"}))
+                request = owner / "proofs/request.json"
+                request.write_bytes(canonical_bytes({
+                    "schemaVersion": 1, "phase": "historical", "owner": str(owner), "repository": str(ROOT),
+                    "runId": run_id, "rootId": "root", "source": "source", "baselineSeal": None,
+                    "sdkPackage": None, "loggerPath": None,
+                }))
+                result = owner / "proofs/result.json"
+
+                def prepare(repository, run):
+                    self.assertEqual((ROOT, owner, run_id, "root", 0),
+                                     (repository, run.root, run.run_id, run.root_id, run.command_sequence))
+                    print(json.dumps({"qualification": False, "phase": "inherited-historical-preparation",
+                                      "controller": "lifecycle"}))
+                    if failure:
+                        raise RuntimeError("private-canary")
+                    return {"path": inherited.CONTROLLER_BASELINES, "sha256": "a" * 64}
+
+                output = io.StringIO()
+                with redirect_stdout(output), patch.object(
+                        inherited, "prepare_controller_baselines", side_effect=prepare):
+                    code = inherited.controller_child_main(["--request", str(request), "--output", str(result)])
+                self.assertEqual(2 if failure else 0, code)
+                self.assertNotIn("private-canary", output.getvalue())
+                lines = [json.loads(line) for line in output.getvalue().splitlines()]
+                self.assertEqual({"event": "control", "code": "None", "value": 2}, lines[0])
+                self.assertEqual({"event": "control", "code": "EvidenceIncomplete" if failure else "None",
+                                  "value": 0}, lines[-1])
+                self.assertTrue(result.exists())
+                self.assertNotIn("private-canary", result.read_text())
+                if failure:
+                    self.assertEqual({"schemaVersion": 1, "qualification": False, "phase": "historical",
+                                      "runId": run_id, "rootId": "root", "status": "Incomplete",
+                                      "diagnosticCode": "EvidenceIncomplete"}, json.loads(result.read_bytes()))
+
+    def test_controller_child_progress_rejects_raw_text_without_echo(self):
+        output = io.StringIO()
+        progress = inherited.ControllerProgress(output)
+        with self.assertRaisesRegex(ConformanceError, "UnknownDiagnostic"):
+            progress.write("private-canary\n")
+        self.assertEqual("", output.getvalue())
+        with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
+            progress.write("x" * 4097)
+
     def test_controller_baselines_are_prepared_before_candidate_and_replayed_without_rebuild(self):
         import configuration_evidence as configuration
         import discovery_evidence as discovery

@@ -5106,6 +5106,37 @@ exact digest, run/root identity, baseline and nonqualifying mode instead of
 requiring deleted stores to exist. Changed bytes, resealed foreign ownership
 and false qualification reject. Native confirmation remains pending.
 
+Run40455417840 at `b10def8` confirms the historical ordering at runtime:
+CP36/110, inherited525/58, all 2,011 bound private inputs, unchanged sealed
+historical binaries and actual process release. Its workflow still fails at
+the post-release rehash described above; it is not a successful CI receipt.
+Historical seal:
+`1cacc48475daded10bdb3703281bbb4faea284156885dd74bdfd9ce933afc358`;
+inherited scope admission:
+`02b398e7dac50857ebe185b5611715b3dec24cc561067c6107c3641c01355592`.
+The separately pushed `f602db4` workflow repair passes
+run40455993703/job122030077361: the same CP36/110, inherited525/58, 2,011
+unchanged inputs and released resources, plus successful retained-seal CI
+checks after expected incomplete exit 2. Source
+`e121bffd8100e8697ca8081aff8aa0e1be84a8e08d8860794c19f781108c7a21`;
+input `181606131048af27205ee3fa87d7ce73ec5e463d4ded075577ec7636ea4ce1d2`;
+seal `631487499f5d50dc15c8930abedd533d0bb23ff6678814005470c631e675026a`;
+scope `4a938c6af12ea17f9bed55e81fb1b48ab34534dea4cef0ce9ec4cf6615fc59dd`.
+
+The next continuation wraps historical preparation and four-family controller
+preparation in two bounded native child scopes. Each has a sealed request,
+source-script binding, native argv/cwd/input/output receipt, exact closed phase
+progress and actual namespace/group exit before its result can be consumed.
+Controller preparation uses a separately staged immutable logger so a solution
+rebuild cannot overwrite a native-bound logger input. Legacy subprocesses
+remain inside those scopes; this is batch containment, not a native receipt
+for every inner command or complete controller obligations. Raw progress,
+unknown failures, changed outputs, omitted phases and optimistic retained-group
+claims reject in focused checks. The first parent regression also catches a
+wrong receipt property name before native handoff. Native replay is pending;
+`controllerNativeContainment`, `fullControllerAcceptance`, `profileComplete`
+and `qualification` remain false. No frozen case, assertion or timeout changes.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

@@ -13,7 +13,9 @@ Exact standalone Linux run40451900182 at `f319b77` passes that native scope;
 public-entry run40453911841 at `5d2e959` also passes while retaining incomplete
 exit 2 and false qualification. The composition executor now prepares and
 seals historical controller binaries before candidate builds, then uses separate
-writable prebuilt replays; native confirmation of this ordering change is pending.
+writable prebuilt replays. Public Linux run40455993703 at `f602db4` passes that
+ordering, 2,011 bound inputs, CP36/110 and inherited525/58 with real release.
+The next native historical/controller batch wrappers remain pending confirmation.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

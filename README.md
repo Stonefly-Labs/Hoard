@@ -152,9 +152,15 @@ registration, configuration and discovery historical binaries from frozen F-06
 recipes before creating the candidate feed or launching candidate commands.
 Sealed sources, project outputs, assets and archives are verified before/after
 use; candidate dependencies replace only writable replay copies, never the
-sealed originals. Native replay of this ordering change is pending. Complete
+sealed originals. Public Linux run40455993703 at `f602db4` passes this ordering,
+CP36/110, inherited525/58, all 2,011 bound inputs and real process release.
+Complete
 controller/mutation acceptance and profile evaluation remain open; T046 is
 still unchecked.
+Historical and controller preparation now also attempt separate owned native
+child scopes, with sealed requests/results, exact native parent receipts and
+closed progress projection. Native confirmation of those new scopes is pending;
+their batch containment is not complete per-obligation controller acceptance.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and
