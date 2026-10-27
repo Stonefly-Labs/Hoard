@@ -226,7 +226,15 @@ The next discovery-mutation prerequisite admits an inherited wrapper assertion
 only when its symbol exactly equals the selected composition test method.
 Actual assertion prefixes and stack frames remain mandatory; sibling methods,
 unrelated namespaces and unknown failures cannot borrow assertion provenance.
-This does not yet execute the original mutation negatives or complete T046.
+That prerequisite alone does not execute the mutation negatives or complete T046.
+Actual local, non-native mutation execution now exposes and repairs an opaque
+adapter-headline correlation defect: only the hash of an admitted actual failed
+result's display can discharge its `[FAIL]` headline, in either event order.
+The original `catalog-bound` mutation then produces all seven intended assertion
+failures with complete safe transport. `source-identity` still rejects with an
+unknown runtime failure; its frozen wrapper dereferences `Failure!.Code` before
+asserting that capture failed. It is not counted as assertion evidence.
+Remaining mutations/repairs and native full-controller acceptance remain open.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

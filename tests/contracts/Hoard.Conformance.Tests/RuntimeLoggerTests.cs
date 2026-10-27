@@ -1243,6 +1243,47 @@ public sealed class RuntimeLoggerTests
     }
 
     [Theory]
+    [InlineData("before")]
+    [InlineData("after")]
+    [InlineData("foreign-headline")]
+    [InlineData("passing-result")]
+    [InlineData("unknown-failure")]
+    [InlineData("null-reference")]
+    public void Opaque_failure_headlines_require_the_actual_admitted_failed_result_without_retaining_its_display(string mutation)
+    {
+        using var owned = new OwnedInput();
+        var result = owned.Result(0, mutation == "passing-result" ? TestOutcome.Passed : TestOutcome.Failed);
+        result.TestCase.Id = Guid.NewGuid();
+        result.DisplayName = result.TestCase.DisplayName = "Hoard.Frozen.Check(value: \"/private/canary-secret\")";
+        owned.Input.Expected[0] = owned.Input.Expected[0] with
+        {
+            TestIdentity = result.TestCase.FullyQualifiedName + "(testCaseSha256: \""
+                + Hash(Encoding.UTF8.GetBytes(result.TestCase.Id.ToString("D") + "\n" + result.DisplayName)) + "\")"
+        };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        if (result.Outcome == TestOutcome.Failed)
+        {
+            result.ErrorMessage = mutation switch
+            {
+                "unknown-failure" => "private-canary",
+                "null-reference" => "System.NullReferenceException : private-canary",
+                _ => "Assert.True() Failure"
+            };
+            result.ErrorStackTrace = "   at Hoard.Testing.Conformance.FrozenAssertion.Check()";
+        }
+        using var recorder = owned.Open();
+        var headline = "[xUnit.net 00:00:00.01] " + result.DisplayName
+            + (mutation == "foreign-headline" ? "Other" : "") + " [FAIL]";
+        if (mutation != "after") { recorder.ObserveMessage(headline); }
+        recorder.Observe(result);
+        if (mutation == "after") { recorder.ObserveMessage(headline); }
+        recorder.Complete();
+        Assert.Equal(mutation is "before" or "after" ? ConformanceDiagnosticCode.AssertionFailed
+            : ConformanceDiagnosticCode.UnknownDiagnostic, recorder.Diagnostic);
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData(false, ConformanceDiagnosticCode.AssertionFailed)]
     [InlineData(true, ConformanceDiagnosticCode.UnknownDiagnostic)]
     public void Adapter_rendering_is_correlated_to_actual_failure_lines_not_trusted_as_an_assertion(

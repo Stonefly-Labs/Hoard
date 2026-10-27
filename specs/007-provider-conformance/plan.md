@@ -230,6 +230,24 @@ All 550 tooling tests pass locally, with twenty explicit native skips.
 Full foundation fixtures, actual mutation red/repair runs and attributable
 controller-tooling obligations remain open; T046 remains unchecked.
 
+### Actual discovery failure-headline correlation and remaining guard semantics
+
+Local actual execution of the unchanged mutation recipe exposes an opaque
+adapter headline that is not discharged by the original literal-identity check.
+Only hashes from an admitted actual failed result now correlate its `[FAIL]`
+headline, in either event order. The new before/after controls first fail,
+then all 135 logger cases pass, including foreign/passing/unknown/null-reference
+rejection; focused formatting and 29 legacy controls pass (one native skip).
+The original `catalog-bound` red run produces all seven actual assertion
+failures with complete safe transport. This is local/non-native/nonqualifying.
+`source-identity` then reaches one failed actual witness but correctly remains
+`UnknownDiagnostic`/incomplete: the frozen wrapper dereferences `Failure!.Code`
+before the assertion, while the intended mutant permits success. It must not
+be optimistically classified as an assertion failure. Remaining red/repair
+runs and native integration remain open. Preserving the frozen baseline needs
+a separate narrowly typed guard-failure receipt; revising that baseline needs
+explicit approval. No task or controller/profile completion flag advances.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

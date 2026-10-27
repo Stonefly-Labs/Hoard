@@ -351,6 +351,7 @@ public sealed class RuntimeResultRecorder : IDisposable
     {
         if (result.ErrorMessage is not { Length: <= 16_384 }
             || result.ErrorStackTrace is not { Length: <= 65_536 }) { return; }
+        AddFailureLine((result.DisplayName ?? result.TestCase.DisplayName) + " [FAIL]");
         AddFailureLine("Stack Trace:");
         foreach (var text in new[] { result.ErrorMessage, result.ErrorStackTrace })
         {

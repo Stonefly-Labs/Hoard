@@ -5305,6 +5305,25 @@ native skips. The original mutation red/repair executions remain unimplemented.
 Provider contracts, public examples and architecture diagrams are unaffected:
 this increment changes private evidence classification, not provider behavior.
 
+Actual local, non-native discovery mutation execution exposes an opaque failure
+headline mismatch: the adapter renders the private original display while the
+manifest contains only its actual GUID/display hash. The safe logger now
+correlates a `[FAIL]` headline only to an admitted actual failed result, using
+the existing bounded transient hash sets in either event order. Raw displays
+remain absent from evidence; foreign headlines, passing results and unknown
+exceptions cannot become assertion evidence. Both event-order controls first
+fail, then all 135 logger cases and focused formatting pass. All 29 legacy
+tooling controls pass with one explicit native skip.
+The original `catalog-bound` mutation now produces all seven actual assertion
+failures with complete safe transport. The next original `source-identity`
+mutation produces one actual failed witness but remains `UnknownDiagnostic`/
+incomplete: its frozen wrapper reads `Failure!.Code` before asserting failure,
+while the intended mutant returns a successful observation with no failure.
+No remaining mutation, repair, native containment or qualification is inferred.
+Resolving this needs either distinct typed expected guard-failure evidence or
+an explicitly approved revision of the frozen wrapper baseline, not relabeling
+an unknown exception as an assertion. T046 remains unchecked.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged
