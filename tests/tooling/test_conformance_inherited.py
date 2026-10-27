@@ -26,6 +26,18 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_compatibility_fixture_source_baseline_is_derived_from_immutable_git_bytes(self):
+        import hashlib
+
+        data = json.loads((ROOT / "tests/fixtures/conformance/Compatibility/source-baseline.json").read_bytes())
+        paths = ["tests/fixtures/compatibility/BinaryMemberRemoval/" + name for name in (
+            "Consumer/Program.cs", "Old/Contract.cs", "New/Contract.cs")]
+        expected = {path: hashlib.sha256(subprocess.check_output(
+            ["git", "show", inherited.BASELINE + ":" + path], cwd=ROOT)).hexdigest() for path in paths}
+        self.assertEqual({
+            "schemaVersion": 1, "baselineRevision": inherited.BASELINE,
+            "scope": "controlled-binary-member-removal-fixture-sources", "sources": expected}, data)
+
     def test_mutation_scopes_require_exact_positive_parameters_and_actual_negative_and_repair_results(self):
         import xml.etree.ElementTree as ET
         import conformance_legacy as legacy

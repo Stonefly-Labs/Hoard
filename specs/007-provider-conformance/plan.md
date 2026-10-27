@@ -382,7 +382,42 @@ references never become SDK/product/provider dependencies or plugin loading.
 Full local tooling still observes 560 tests, no failures/errors/unexpected
 diagnostic bytes and twenty native skips. No old SDK release is invented;
 historical source recipes, sealed retained replay and source compiler-break
-controls remain open, so T051/T056 stay unchecked.
+controls remain open at that checkpoint.
+
+### T051 source/binary test controls and native material admission
+
+T051 is complete within its test-control scope. Portable PDB source hashes
+now corroborate the exact three existing fixture sources frozen from Git
+commit `9389016c0285c79f6f515f59805a5a41c69b0767`; each actual PDB's content
+ID/stamp must match its PE CodeView entry. Tooling independently derives the
+frozen source JSON from those immutable Git blobs. All seven C# cases pass in
+source mode and actual isolated redirected package mode. An actual private
+build adding only a trailing consumer-source comment preserves the three
+binary behaviors but fails exactly the consumer source-attribution row,
+with six controls passing. This is not a historical old-SDK release, full
+source-recipe replay, sealed predecessor compatibility execution or source
+compiler-break acceptance; T054..T056 remain open. Full local tooling
+observes 561 tests, zero failures/errors/unexpected diagnostic bytes and
+twenty native skips, correctly incomplete/exit 2.
+
+Exact `a42d0834343291fbe9d6ede57c04f5c8212e3c56` also passes native
+[run40487687455](https://github.com/Stonefly-Labs/Hoard/actions/runs/40487687455)/
+job122134815231. All eleven packages/three retained binaries/eighteen graphs/
+nine journeys, current performance and exact actual positive/mutation
+parameter membership pass. CP36/110, inherited525/58, twelve negative/repair
+pairs at 29 parameters each, 560 controller-bound tooling tests, 41 formatter
+commands, all 3,186 unchanged bound inputs and actual release are admitted.
+CP input: `109bbb2799c97bc9945d796e0386895889fb7f80969f2a36a929276e16996fc4`;
+scope: `091dcd01db7d3a86a6061b4ab0e47a007e03f4d6eccf29ce23ba96607095e65a`;
+material manifest:
+`fb592a359c4963f034625606c6729c8cefe40dd90a36d2d2812ce9aa904bf99d`;
+mutation result:
+`9d2e75d2bdd7f184215a48d6fce982a1fb2a1a5700022eefc94af6b26c96714a`;
+tooling:
+`926e36caeb02e4f0afb863770c2c80b6d91a1701b7833bdbc6dad10ff1b2d1fa`.
+T046 remains open: guarded batch containment does not supply independent
+native invocation/input receipts for every inner controller command. No
+full-controller/profile/qualification flag advances.
 
 ## Shared authority admission and explicit restart controls
 

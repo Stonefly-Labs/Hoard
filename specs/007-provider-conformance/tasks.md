@@ -139,7 +139,7 @@ compatible counterparts pass unchanged consumers.
 ### Tests first
 
 - [X] T050 [P] [US3] Add every range/candidate/flag row from `contracts/matrix.md` in `tests/integration/Hoard.Composition.Tests/ConformanceVersionTests.cs`, expanded across host/abstractions/required and enabled-optional dependency axes, malformed inputs and independent prerelease flags; use actual runtime validator plus existing classifier, no new range parser (FR-010,011,019; QC-22..24).
-- [ ] T051 [P] [US3] Add source/retained-binary provenance and intended-break controls in `tests/contracts/Hoard.Conformance.Tests/CompatibilityBaselineTests.cs`, rejecting candidate-rebuilt baselines or accidental old DLL resolution (FR-012,018,019; QC-25,26).
+- [X] T051 [P] [US3] Add source/retained-binary provenance and intended-break controls in `tests/contracts/Hoard.Conformance.Tests/CompatibilityBaselineTests.cs`, rejecting candidate-rebuilt baselines or accidental old DLL resolution (FR-012,018,019; QC-25,26).
 - [X] T052 [P] [US3] Extend `tests/architecture/Hoard.Architecture.Tests/ConformanceArchitectureTests.cs` with SDK-outside-production positive/negative graph cases, complete required scan checks and inspection-failure challenges; preserve all eight established rules, declared-unused/transitive/public/IL cases and both Identity path edge orders (FR-013,019; QC-27,28).
 
 ### Implementation

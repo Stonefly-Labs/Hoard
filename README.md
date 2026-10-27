@@ -281,14 +281,21 @@ scoped parameters; a separately built positive assembly corroborates their
 28 unique selected identities, not the complete native positive inventory.
 Full local tooling observes 560 tests without failures/errors or
 unexpected diagnostic bytes, but twenty native skips keep it incomplete.
-Native confirmation of these additional gates remains pending.
+Exact `a42d083` now passes their native replay in
+[run40487687455](https://github.com/Stonefly-Labs/Hoard/actions/runs/40487687455):
+all material gates and cross-scope parameter joins, 560 controller-bound
+tooling tests, 3,186 unchanged bound inputs and actual release. T046 remains
+open; batch containment is not per-inner-command native provenance.
 Compatibility controls now invoke the unchanged existing binary consumer
 against explicitly built same-name/version broken and compatible contracts.
 Actual loaded SHA-256/MVID evidence prevents accidental old-DLL resolution,
 and replacing an already loaded baseline with actual candidate bytes rejects.
-The three controls pass in source mode and an isolated redirected package-mode
-build. These are controlled fixtures, not completed historical source/binary
-compatibility acceptance; T051 remains open.
+Portable PDB attribution additionally requires each actual PE/PDB pairing and
+the compiler's source SHA-256 frozen from F-06 Git bytes. A behavior-preserving
+source-comment change fails that attribution. All seven controls pass in
+source mode and an isolated redirected package-mode build, completing T051's
+test controls. These are controlled fixtures, not completed historical
+source/binary compatibility acceptance.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

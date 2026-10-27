@@ -1,12 +1,46 @@
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Runtime.Loader;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Hoard.Testing.Conformance.Evidence;
 
 namespace Hoard.Conformance.Tests;
 
 public sealed class CompatibilityBaselineTests
 {
+    [Theory]
+    [InlineData("baseline", "BinaryContract.dll", "Old/Contract.cs")]
+    [InlineData("broken", "BinaryContract.dll", "New/Contract.cs")]
+    [InlineData("compatible", "BinaryContract.dll", "Old/Contract.cs")]
+    [InlineData("consumer", "RetainedConsumer.dll", "Consumer/Program.cs")]
+    public void Compiled_source_provenance_matches_actual_pe_pdb_and_frozen_historical_source(
+        string variant, string name, string relative)
+    {
+        var image = Image(variant, name);
+        using var imageStream = File.OpenRead(image);
+        using var pe = new PEReader(imageStream);
+        var entry = Assert.Single(pe.ReadDebugDirectory(), value => value.Type == DebugDirectoryEntryType.CodeView);
+        var codeView = pe.ReadCodeViewDebugDirectoryData(entry);
+        using var pdbStream = File.OpenRead(Path.ChangeExtension(image, ".pdb"));
+        using var provider = MetadataReaderProvider.FromPortablePdbStream(pdbStream);
+        var reader = provider.GetMetadataReader();
+        var header = reader.DebugMetadataHeader ?? throw new InvalidOperationException("ProofMismatch");
+        var content = new BlobContentId(header.Id);
+        Assert.Equal(codeView.Guid, content.Guid);
+        Assert.Equal(entry.Stamp, content.Stamp);
+        var source = "tests/fixtures/compatibility/BinaryMemberRemoval/" + relative;
+        var document = Assert.Single(reader.Documents.Select(reader.GetDocument),
+            value => reader.GetString(value.Name).Replace('\\', '/') == "/_/" + source);
+        Assert.Equal(new Guid("8829d00f-11b8-4213-878b-770e8597ac16"), reader.GetGuid(document.HashAlgorithm));
+        using var frozenStream = typeof(CompatibilityBaselineTests).Assembly.GetManifestResourceStream(
+            "Hoard.Conformance.CompatibilitySourceBaseline");
+        using var frozen = JsonDocument.Parse(frozenStream ?? throw new InvalidOperationException("WitnessMissing"));
+        Assert.Equal(frozen.RootElement.GetProperty("sources").GetProperty(source).GetString(),
+            Convert.ToHexStringLower(reader.GetBlobBytes(document.Hash)));
+    }
+
     [Theory]
     [InlineData("broken", false)]
     [InlineData("compatible", true)]

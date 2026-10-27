@@ -11,6 +11,8 @@
     <Using Include="Xunit" />
     <EmbeddedResource Include="../../fixtures/conformance/baselines/inventory.json"
                       LogicalName="Hoard.Conformance.FrozenInventory" />
+    <EmbeddedResource Include="../../fixtures/conformance/Compatibility/source-baseline.json"
+                      LogicalName="Hoard.Conformance.CompatibilitySourceBaseline" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj"
@@ -37,10 +39,14 @@
              Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
       <Output TaskParameter="TargetOutputs" ItemName="CompatibilityConsumerImage" />
     </MSBuild>
-    <Copy SourceFiles="@(CompatibilityBaselineImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/baseline" />
-    <Copy SourceFiles="@(CompatibilityBrokenImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/broken" />
-    <Copy SourceFiles="@(CompatibilityCompatibleImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/compatible" />
-    <Copy SourceFiles="@(CompatibilityConsumerImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/consumer" />
+    <Copy SourceFiles="@(CompatibilityBaselineImage);@(CompatibilityBaselineImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/baseline" />
+    <Copy SourceFiles="@(CompatibilityBrokenImage);@(CompatibilityBrokenImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/broken" />
+    <Copy SourceFiles="@(CompatibilityCompatibleImage);@(CompatibilityCompatibleImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/compatible" />
+    <Copy SourceFiles="@(CompatibilityConsumerImage);@(CompatibilityConsumerImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/consumer" />
   </Target>
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
     <ProjectReference Include="../Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />

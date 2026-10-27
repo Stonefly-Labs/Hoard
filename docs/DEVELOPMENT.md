@@ -5422,6 +5422,22 @@ Native admission of these new gates is pending; T046 remains unchecked.
 Public provider contracts, examples, diagrams, governance and infrastructure
 are unaffected.
 
+Exact `a42d0834343291fbe9d6ede57c04f5c8212e3c56` now passes
+[run40487687455](https://github.com/Stonefly-Labs/Hoard/actions/runs/40487687455),
+job122134815231: all eleven feed packages/three retained binaries/eighteen
+graphs/nine journeys, current-run performance and actual positive-to-negative/
+repair parameter equality are admitted. It also admits CP36/110,
+inherited525/58, all twelve negatives/repairs at 29 parameters each, all 560
+controller-bound tooling tests, 41 formatter commands, 3,186 unchanged bound
+inputs and actual release. Scope:
+`091dcd01db7d3a86a6061b4ab0e47a007e03f4d6eccf29ce23ba96607095e65a`;
+material manifest:
+`fb592a359c4963f034625606c6729c8cefe40dd90a36d2d2812ce9aa904bf99d`;
+tooling:
+`926e36caeb02e4f0afb863770c2c80b6d91a1701b7833bdbc6dad10ff1b2d1fa`.
+T046 remains open: the native batch boundary is not independently observed
+native invocation/input evidence for every inner controller command.
+
 The partial T051 binary controls link the existing
 `compatibility/BinaryMemberRemoval` consumer and Old/New contract sources into
 four nonpackable test projects with distinct project/package identities.
@@ -5446,9 +5462,22 @@ in the actual isolated package-mode build with
 `BaseOutputPath=bin/package-diagnostic/` and an independently reverified
 prepared root lock. Combined source-mode compatibility/binding controls pass
 23 tests; focused formatting passes. Historical source-consumer recipes,
-sealed predecessor replay and source-break controls remain unfinished; T051
-and T056 are not marked complete. Product/provider contracts, examples,
+sealed predecessor replay and source-break execution remain unfinished.
+Product/provider contracts, examples,
 diagrams, governance and infrastructure are unaffected.
+
+T051 additionally verifies actual portable PDB document hashes against the
+three unchanged fixture sources frozen from the exact F-06 commit. Each PDB's
+content ID/stamp must match its actual PE's CodeView record before source
+attribution. Tooling independently recomputes the frozen JSON from Git blobs,
+not the current working source or candidate labels. All seven source/binary
+controls pass in source mode and actual isolated redirected package mode.
+A private actual build with only a trailing comment added to the retained
+consumer still preserves binary behavior but fails exactly its source
+attribution row; six other controls pass. This completes T051's test controls,
+not historical source/retained compatibility acceptance or T056. Full local
+tooling observes 561 tests, no failures/errors/unexpected diagnostic bytes,
+and twenty native skips; expected incomplete exit 2.
 
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
