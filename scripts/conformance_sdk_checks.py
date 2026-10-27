@@ -3971,6 +3971,25 @@ def execute(repository, destination, *, category=None):
                   "-p:ArtifactPackageAcceptance=true", "-p:BaseOutputPath=" + ARTIFACT_TEST_OUTPUT + "/"))
         artifact_wrapper_runtime(candidate, feed)
         build_artifact_assertion_consumer(run, candidate, config, feed)
+        if category is None:
+            print(json.dumps({"qualification": False, "phase": "compatibility-replay"}), flush=True)
+            build(run, candidate / "src/Hoard.Application/Hoard.Application.csproj", config,
+                  "compatibility-application", feed=feed)
+            source_compatibility = baselines.execute_source_recipes(
+                repository, run, candidate, sources, seal_sha)
+            write_new(run.root / "proofs/source-compatibility.json", evidence.canonical_bytes(source_compatibility))
+            retained_compatibility = baselines.execute_retained_consumers(
+                run, candidate, sources, config, seal_sha)
+            write_new(run.root / "proofs/retained-compatibility.json", evidence.canonical_bytes(retained_compatibility))
+            print(json.dumps({
+                "qualification": False, "phase": "compatibility-replay-admitted",
+                "sourceRecipes": len(source_compatibility["recipes"]),
+                "retainedScenarios": len(retained_compatibility["scenarios"]),
+                "loadedAssemblies": sum(row["loadedAssemblies"] for row in retained_compatibility["scenarios"]),
+                "sourceSha256": evidence.digest(source_compatibility),
+                "retainedSha256": evidence.digest(retained_compatibility),
+                "baselineSealSha256": seal_sha,
+            }), flush=True)
         print(json.dumps({"qualification": False, "phase": "inspection-preparation"}), flush=True)
         inspection_records = build_inspection_projects(run, candidate, config, feed)
         verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",

@@ -5521,6 +5521,50 @@ This is non-qualifying local source compatibility, not T055 retained runtime
 execution, T056 compiler-break controls or a delivered compatibility CLI.
 Examples/diagrams and public provider APIs remain unaffected.
 
+Exact `1f94d191d1268c5a45aaa54a70474e529e7aea5b` now passes the clean-solution
+graph's native
+[run40493145991](https://github.com/Stonefly-Labs/Hoard/actions/runs/40493145991)/
+job122151817568: CP36/110, inherited525/58, all twelve negatives/repairs at
+29 parameters each, discovery137/4/10, material11/3/18/9, all 561 tooling tests,
+41 formatter commands, 3,208 unchanged bound inputs and actual release.
+Scope: `7626f987228559bfd2e2414bf2f44566a04e51e073b01503b4ad32ad932a3d25`;
+tooling: `48e47152f93c8acd012f0c344f9e5b4afb7724af612c03564fd68d042570acd8`.
+Earlier `022f5f8`/`ed04d63` failures are not relabeled; T046 and all full-profile
+and qualification claims remain open.
+
+T055's new observer is a fixed BCL-only, nonpackable test project. The harness
+supplies it explicitly as a CLR startup hook to unchanged retained executable
+bytes; no consumer/provider DLL or dependency/runtime JSON is rewritten.
+Private runtime copies replace only four platform DLLs from exact candidate
+archives. The observer temporarily captures bounded console text, validates
+the original exact safe output and records actual loaded paths, SHA-256 and
+loaded-versus-PE MVID. Only finite events and safe hash/MVID proof rows persist.
+It is not a provider discovery/loading mechanism or production dependency.
+
+An actual local replay passes all nine predecessor/F-06 scenarios with forty
+loaded assembly observations, preserving the original six-entry seal and
+every retained consumer/provider/dependency byte. Memory/SQLite and local/
+object-semantics execute the frozen operational consumers' journeys, not
+the full current common suites; old metadata/artifact markers remain
+marker-only. Actual wrong-hash and old-location challenges reject
+`InputChanged`/`ProofMismatch` despite application exit zero.
+
+Native execution now binds request/staging manifests, observer and retained
+entry DLL inputs plus exact observation bytes to each owning command record.
+Independent admission rejects edited observations, missing/duplicate/foreign
+loaded identities, candidate hash or MVID-shape changes, false qualification
+and optimistic success. It is wired to all-SDK diagnostics only; selected
+category qualification is unchanged. Scoped architecture review found writable
+observer inputs and the missing candidate Application archive. Sealing the
+observer before native capture and explicitly packing Application before
+all-SDK replay resolve those findings. The actual input-reader regression first
+rejects the writable observer, then passes after sealing. This is not T081's
+final review. Fifteen baseline controls and focused observer formatting pass.
+Full local tooling: 568 tests, zero failures/errors/
+unexpected diagnostic bytes, twenty native skips, expected incomplete exit 2.
+Native confirmation is pending, so T055 stays unchecked. README/plan updated;
+public provider contracts, examples, diagrams and infrastructure are unchanged.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

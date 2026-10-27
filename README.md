@@ -300,8 +300,10 @@ source/binary compatibility acceptance.
 The clean whole-solution build now explicitly includes all four compatibility
 fixture projects. A cached project build had masked their absence from the
 solution; a fresh snapshot first failed `MSB3030`, then built successfully and
-passed all seven controls after the graph repair. Native replay remains
-pending; the earlier `022f5f8` native preparation failed and is not acceptance.
+passed all seven controls after the graph repair. Exact `1f94d19` now passes
+[native run40493145991](https://github.com/Stonefly-Labs/Hoard/actions/runs/40493145991),
+including all controller preparation, 561 tooling tests and actual release.
+The earlier `022f5f8` and `ed04d63` native failures remain failures.
 
 T054 now compiles 24 unchanged source recipes: twenty F-06 API consumer,
 marker and provider-implementer projects plus the four current SDK bindings
@@ -311,6 +313,15 @@ restore/build commands. Historical source/binaries remain sealed and
 unchanged. This completes source recipes, not retained-binary candidate
 execution, compiler-break/profile acceptance or qualification; no new public
 CLI is claimed.
+
+T055 now has actual local unchanged-binary execution for nine predecessor/
+F-06 scenarios against candidate platform assemblies, with forty loaded-byte/
+MVID observations. The two markers remain marker-only; operational F-06
+consumers exercise memory/SQLite and local/object-semantics journeys without
+claiming the full common suites. Actual hash and old-location challenges fail
+even when the application exits zero. Native command/output binding is wired
+into the all-SDK diagnostics but awaits native confirmation, so T055 remains
+unchecked and no compatibility profile or qualification is claimed.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

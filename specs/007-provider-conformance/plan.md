@@ -481,6 +481,70 @@ T056 retained execution/compiler-break controls and compatibility profile
 admission remain open. No qualification, native ownership, historical SDK
 compatibility or newly delivered public CLI is claimed.
 
+### Native clean-solution graph confirmation
+
+Exact `1f94d191d1268c5a45aaa54a70474e529e7aea5b` passes
+[run40493145991](https://github.com/Stonefly-Labs/Hoard/actions/runs/40493145991)/
+job122151817568. Independently allowlisted log projection confirms CP36/110,
+inherited525/58, all twelve negatives/repairs at29 parameters each,
+discovery137/four adapters/ten suites, material11/3/18/9, all561 tooling tests,
+41 formatter commands, all3,208 unchanged bound inputs and actual release.
+CP input: `12afbab5de81bf629c1d05aaf5e3a10aeb49a0b1f9f082103c396ff547933050`;
+scope: `7626f987228559bfd2e2414bf2f44566a04e51e073b01503b4ad32ad932a3d25`;
+historical seal: `4be7f02c082b23e28b19c58780389defc97868faaea652691e514e0e06fb4a88`;
+material: `0e23c1d1c183978a9f3c9eb83149a0416206c6aed79ef2f4a98727ce0f47dcf5`;
+mutation result:
+`3edfa87fe94a0381dcd979743b243dbac1b84a0397d0ddbaf385ed248b754422`;
+tooling: `48e47152f93c8acd012f0c344f9e5b4afb7724af612c03564fd68d042570acd8`.
+The repaired graph is now natively corroborated. Earlier022/ed04 failures
+remain failures; T046 and full-controller/profile/qualification flags stay open.
+
+### T055 actual retained consumers and pending native binding
+
+A fixed, nonpackable BCL-only observer runs as an explicitly supplied CLR
+startup hook, not provider discovery or a production dependency. It leaves
+every retained executable/provider binary and deps/runtime JSON unchanged.
+Runtime copies replace only four platform DLLs from observed candidate
+archives. Exact original output is checked in bounded transient memory;
+actual loaded path/SHA-256 and loaded-versus-PE MVID checks produce finite
+events and safe proof rows. The global startup type is required by the CLR,
+not an SDK/provider API addition.
+
+Actual local replay executes all nine unchanged predecessor/F-06 scenarios:
+registration, lifecycle, configuration, two markers, memory/SQLite and
+local/object-semantics operational consumers. Forty loaded assembly rows
+pass; the original six-entry seal and retained dependencies remain unchanged.
+The two markers remain marker-only, and the four operational consumers do
+not pretend to execute the full current common suites. Actual wrong-hash
+and old-location challenges produce `InputChanged`/`ProofMismatch` even with
+application exit0; exit success alone is never admitted.
+
+Native `OwnedRun` execution binds the observer, retained entry DLL, request
+and staging manifests and exact observation output to each native command
+record. Independent admission rejects output-byte edits (including rehashed
+MVID changes), missing/duplicate/foreign identities, altered candidate hash,
+malformed MVID, unknown fields and optimistic success. The staging and
+observer admission controls first fail before implementation. Integration is
+limited to all-SDK diagnostics; selected category qualification is unaffected.
+
+Scoped architecture review identifies two native preparation blockers: the
+compiled observer was writable and the all-SDK feed omitted Application.
+The observer is now sealed read-only before native input capture; a focused
+regression first reaches `InputChanged`, then admits the actual native input
+reader. The all-SDK branch explicitly builds/packs Application before replay,
+without changing selected-category requirements. This scoped review does not
+complete the final T081 review.
+
+`python3 -m unittest discover -s tests/tooling -p test_conformance_evidence.py
+-k ConformanceBaselineTests -v`: passed,15 controls. Observer locked restore/
+Release build and focused `dotnet format --no-restore --verify-no-changes`:
+passed. Actual local retained observer probe: nine positives and two intended
+rejecting controls, explicitly nonqualifying/non-native. Full safe tooling:
+568 tests, zero failures/errors/unexpected diagnostic bytes, twenty native
+skips, expected incomplete exit2. `git diff --check`: passed. T055 remains
+unchecked until native command binding is actually corroborated; no
+compatibility-profile or qualification flag advances.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

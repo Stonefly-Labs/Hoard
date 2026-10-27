@@ -30,6 +30,10 @@ from conformance_execution import (
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
 
 FQN_TERM = re.compile(r"FullyQualifiedName(!~|~|=)([a-zA-Z0-9_.]+)")
+ARTIFACT_CONSUMER_OPERATIONS = (
+    "ReserveWriteAsync", "StageAsync", "RenewAsync", "CommitAsync", "OpenReadAsync", "ValidateAsync",
+    "ReconcileAsync", "AbandonAsync", "ReserveDeleteAsync", "DeleteAsync", "ObserveAsync", "CleanupAsync",
+    "CopyToAsync", "CloseAsync", "AcquireAsync", "RetainAsync")
 COMPOSITION_MARKERS = {
     "RegistrationConsumer.dll": "registration-compatible",
     "LifecycleConsumer.dll": "lifecycle-compatible", "RetainedLifecycle.dll": "lifecycle-compatible",
@@ -745,10 +749,8 @@ def project_control(args, value):
                 raise ValueError()
         return value
     if Path(args[1]).name == "Hoard.Fixtures.Artifacts.Consumer.dll" and args[2] in ("local", "object"):
-        operations = ("ReserveWriteAsync", "StageAsync", "RenewAsync", "CommitAsync", "OpenReadAsync", "ValidateAsync",
-                      "ReconcileAsync", "AbandonAsync", "ReserveDeleteAsync", "DeleteAsync", "ObserveAsync", "CleanupAsync",
-                      "CopyToAsync", "CloseAsync", "AcquireAsync", "RetainAsync")
-        if value != {"qualification": False, "provider": args[2], "roundTrip": True, "operations": list(operations)}:
+        if value != {"qualification": False, "provider": args[2], "roundTrip": True,
+                     "operations": list(ARTIFACT_CONSUMER_OPERATIONS)}:
             raise ValueError()
         return value
     if Path(args[1]).name == "Hoard.Fixtures.Artifacts.Consumer.dll" and args[2] == "qualification":

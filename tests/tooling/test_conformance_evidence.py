@@ -7091,6 +7091,104 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_retained_observer_is_sealed_for_actual_native_input_capture_before_any_consumer(self):
+        import time
+        from conformance_execution import OwnedRun
+        run = OwnedRun.allocate(self.root / "observer-run", ROOT, profile="harness")
+        run.transition("Active")
+        try:
+            candidate = run.root / "snapshot"
+            project = candidate / self.baselines.OBSERVER_PROJECT
+            project.parent.mkdir(parents=True)
+            project.write_text("<Project />")
+            sources = self.baselines._hash_tree(candidate)
+            observer = project.parent / "bin/Release/net10.0/Hoard.Conformance.Compatibility.Observer.dll"
+
+            def build(*args, **kwargs):
+                observer.parent.mkdir(parents=True)
+                observer.write_bytes(b"newly compiled observer bytes")
+                observer.chmod(0o644)
+
+            def native_boundary(*args, **kwargs):
+                captured = run._capture_execution_inputs(
+                    (observer.relative_to(run.root).as_posix(),), time.monotonic() + 5)
+                self.assertEqual(next(iter(captured.values()))[0], evidence.file_sha256(observer))
+                raise evidence.ConformanceError("DeadlineExceeded")
+
+            with mock.patch.object(self.baselines, "_build", side_effect=build), \
+                    mock.patch.object(self.baselines, "stage_retained_runtime", side_effect=native_boundary) as stage:
+                with self.assertRaisesRegex(evidence.ConformanceError, "DeadlineExceeded"):
+                    self.baselines.execute_retained_consumers(run, candidate, sources, run.root / "config", "a" * 64)
+                self.assertEqual(stage.call_count, 1)
+        finally:
+            run.transition("Settling")
+            run.release()
+
+    def test_retained_observation_requires_bound_bytes_exact_loaded_identities_and_finite_success(self):
+        request = {"scenario": "registration", "required": ["RegistrationConsumer", "Hoard.Abstractions"],
+                   "images": [{"path": "stores/runtime/RegistrationConsumer.dll", "sha256": "a" * 64},
+                              {"path": "stores/runtime/Hoard.Abstractions.dll", "sha256": "b" * 64}]}
+        good = {"schemaVersion": 1, "qualification": False, "scenario": "registration", "code": "None",
+                "loaded": [{"name": "Hoard.Abstractions", "sha256": "b" * 64, "moduleVersionId": str(uuid.uuid4())},
+                           {"name": "RegistrationConsumer", "sha256": "a" * 64, "moduleVersionId": str(uuid.uuid4())}]}
+        raw = evidence.canonical_bytes(good)
+        expected = hashlib.sha256(raw).hexdigest()
+        self.baselines.verify_retained_observation(raw, request, expected)
+        changed = copy.deepcopy(good)
+        changed["loaded"][0]["moduleVersionId"] = str(uuid.uuid4())
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines.verify_retained_observation(evidence.canonical_bytes(changed), request, expected)
+        challenges = [good | {"loaded": good["loaded"][:-1]}, good | {"qualification": True},
+                      good | {"code": "ProofMismatch"}, good | {"schemaVersion": True},
+                      good | {"loaded": good["loaded"] + good["loaded"][:1]},
+                      good | {"unexpected": True}]
+        for field, value in (("name", "Foreign.Consumer"), ("sha256", "c" * 64), ("moduleVersionId", "not-a-guid")):
+            changed = copy.deepcopy(good)
+            changed["loaded"][0][field] = value
+            challenges.append(changed)
+        for changed in challenges:
+            altered = evidence.canonical_bytes(changed)
+            with self.subTest(changed=changed), self.assertRaises(evidence.ConformanceError):
+                self.baselines.verify_retained_observation(altered, request, hashlib.sha256(altered).hexdigest())
+
+    def test_retained_runtime_staging_replaces_only_platform_and_preserves_every_frozen_dependency(self):
+        source = self.root / "stores/registration"
+        prefix = "retained/bin/Release/net10.0/"
+        images = {
+            "RegistrationConsumer.dll": b"unchanged retained caller",
+            "RegistrationConsumer.deps.json": b"unchanged dependency graph",
+            "RegistrationConsumer.runtimeconfig.json": b"unchanged runtime configuration",
+            "Retained.Dependency.dll": b"unchanged retained dependency",
+            **{f"Hoard.{name}.dll": b"old platform " + name.encode()
+               for name in ("Abstractions", "Core", "Hosting")},
+        }
+        entry = self.manifest["entries"][0]
+        for name, raw in images.items():
+            path = source / prefix / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+            entry["binaries"][prefix + name] = evidence.file_sha256(path)
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        seal_sha = evidence.file_sha256(self.seal)
+        feed = self.root / "feed/candidate"
+        feed.mkdir()
+        for name in ("Abstractions", "Core", "Hosting", "Application"):
+            with zipfile.ZipFile(feed / f"Hoard.{name}.0.1.0.nupkg", "w") as archive:
+                archive.writestr(f"lib/net10.0/Hoard.{name}.dll", b"actual candidate " + name.encode())
+        run = mock.Mock(root=self.root, state="Active")
+        runtime = self.baselines.stage_retained_runtime(run, seal_sha, "registration")
+        directory = self.root / runtime["runtimePath"]
+        for name, raw in images.items():
+            expected = b"actual candidate " + name.removeprefix("Hoard.").removesuffix(".dll").encode() \
+                if name.startswith("Hoard.") else raw
+            self.assertEqual((directory / name).read_bytes(), expected)
+            self.assertEqual((source / prefix / name).read_bytes(), raw)
+        self.baselines.verify_prepared_baselines(self.root, seal_sha)
+        changed = source / prefix / "Retained.Dependency.dll"
+        changed.write_bytes(b"same-named substituted frozen dependency")
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            self.baselines.stage_retained_runtime(run, seal_sha, "lifecycle")
+
     def test_baseline_lock_preparation_preserves_retained_source_layout_and_rejects_context_substitution(self):
         import conformance_lock_preparation as preparation
         source = self.root / "stores/registration"

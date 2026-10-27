@@ -48,6 +48,7 @@
     <Project Path="tests/fixtures/conformance/Compatibility/Broken/Broken.csproj" />
     <Project Path="tests/fixtures/conformance/Compatibility/Compatible/Compatible.csproj" />
     <Project Path="tests/fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj" />
+    <Project Path="tests/fixtures/conformance/Compatibility/Observer/Observer.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">
     <Project Path="tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj" />

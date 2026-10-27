@@ -16,6 +16,7 @@ import shutil
 import stat
 import sys
 import tarfile
+import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -39,6 +40,9 @@ BASELINES = (
      "tests/fixtures/artifacts/RetainedMarker", "RetainedMarker.csproj"),
 )
 SOURCE_RECIPES_PATH = "tests/fixtures/conformance/baselines/source-consumers.json"
+RETAINED_SCENARIOS = ("registration", "lifecycle", "configuration", "metadata-marker", "artifact-marker",
+                      "memory", "sqlite", "local", "object")
+OBSERVER_PROJECT = "tests/fixtures/conformance/Compatibility/Observer/Observer.csproj"
 SOURCE_RECIPE_POLICY = (
     *((project, "historical-f06", "api-consumer") for project in (
         "tests/fixtures/lifecycle/registration/RegistrationConsumer/RegistrationConsumer.csproj",
@@ -190,6 +194,205 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
     return {"schemaVersion": 1, "qualification": False, "mode": "source-compatibility",
             "baselineSealSha256": baseline_sha256, "recipeSha256": digest(document),
             "candidatePackages": feed_hashes, "recipes": records}
+
+
+def retained_recipe(scenario):
+    from conformance_legacy import COMPOSITION_MARKERS, ARTIFACT_CONSUMER_OPERATIONS
+    consumers = {
+        "registration": "RegistrationConsumer.dll", "lifecycle": "LifecycleConsumer.dll",
+        "configuration": "RetainedConfiguration.dll",
+        "metadata-marker": "RetainedMarker.dll", "artifact-marker": "RetainedMarker.dll",
+    }
+    if scenario in consumers:
+        assembly = consumers[scenario]
+        expected = (scenario + "-compatible" if scenario.endswith("-marker") else COMPOSITION_MARKERS[assembly])
+        return scenario, "retained/bin/Release/net10.0/", assembly, expected
+    if scenario in ("memory", "sqlite"):
+        return ("f06", "tests/fixtures/metadata/Consumer/bin/Release/net10.0/",
+                "Hoard.Fixtures.Metadata.Consumer.dll", "metadata-package-consumer-compatible")
+    if scenario in ("local", "object"):
+        expected = {"qualification": False, "provider": scenario, "roundTrip": True,
+                    "operations": list(ARTIFACT_CONSUMER_OPERATIONS)}
+        return ("f06", "tests/fixtures/artifacts/Consumer/bin/Release/net10.0/",
+                "Hoard.Fixtures.Artifacts.Consumer.dll", canonical_bytes(expected).decode("utf-8"))
+    raise ConformanceError("UnsupportedProfile")
+
+
+def stage_retained_runtime(run, baseline_sha256, scenario):
+    from conformance_sources import read_bounded
+    if run.state != "Active":
+        raise ConformanceError("OwnershipInvalid")
+    sealed = verify_prepared_baselines(run.root, baseline_sha256)
+    baseline_id, prefix, assembly, _ = retained_recipe(scenario)
+    baseline, = (entry for entry in sealed["entries"] if entry["id"] == baseline_id)
+    images = {path.removeprefix(prefix): hashed
+              for path, hashed in baseline["binaries"].items() if path.startswith(prefix)}
+    stem = assembly.removesuffix(".dll")
+    if (not {assembly, stem + ".deps.json", stem + ".runtimeconfig.json"} <= images.keys()
+            or len(images) > 1024):
+        raise ConformanceError("EvidenceIncomplete")
+    runtime = run.root / "stores" / ("retained-compatibility-" + scenario)
+    runtime.mkdir(mode=0o700)
+    for relative, expected in images.items():
+        original = run.root / "stores" / baseline_id / prefix / relative_path(relative)
+        raw = read_bounded(original, 64 * 1024**2)
+        if hashlib.sha256(raw).hexdigest() != expected:
+            raise ConformanceError("InputChanged")
+        destination = runtime / relative
+        destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with destination.open("xb") as output:
+            output.write(raw)
+        destination.chmod(0o400)
+    packages, platform = {}, {}
+    for name in ("Abstractions", "Core", "Hosting", "Application"):
+        filename = f"Hoard.{name}.dll"
+        package = run.root / "feed/candidate" / f"Hoard.{name}.0.1.0.nupkg"
+        no_symlinks(package)
+        if not package.is_file() or package.stat().st_size > 64 * 1024**2:
+            raise ConformanceError("InputChanged")
+        package_sha = file_sha256(package)
+        try:
+            with zipfile.ZipFile(package) as archive:
+                entries = [item for item in archive.infolist() if item.filename == "lib/net10.0/" + filename]
+                if len(entries) != 1 or not 0 < entries[0].file_size <= 16 * 1024**2:
+                    raise ConformanceError("InputChanged")
+                raw = archive.read(entries[0])
+        except zipfile.BadZipFile:
+            raise ConformanceError("InputChanged") from None
+        if file_sha256(package) != package_sha:
+            raise ConformanceError("InputChanged")
+        packages[package.name] = package_sha
+        platform[filename] = hashlib.sha256(raw).hexdigest()
+        destination = runtime / filename
+        if destination.exists():
+            destination.chmod(0o600)
+        destination.write_bytes(raw)
+        destination.chmod(0o400)
+    verify_prepared_baselines(run.root, baseline_sha256)
+    return {
+        "scenario": scenario, "baselineId": baseline_id, "baselineSealSha256": baseline_sha256,
+        "runtimePath": runtime.relative_to(run.root).as_posix(), "assembly": assembly,
+        "frozenFiles": images, "candidatePackages": packages, "candidateAssemblies": platform,
+        "stagedFiles": _hash_tree(runtime), "commonSuiteExecuted": False,
+        "scope": "operational-consumer" if scenario in ("memory", "sqlite", "local", "object") else
+                 "marker-only" if scenario.endswith("-marker") else "inherited-api",
+    }
+
+
+def retained_request(staged, output_path):
+    scenario = staged["scenario"]
+    _, _, _, expected = retained_recipe(scenario)
+    names = [name for name in staged["stagedFiles"] if "/" not in name and name.endswith(".dll")
+             and not name.startswith(("System.", "Microsoft.Extensions.", "Microsoft.AspNetCore."))]
+    required = [staged["assembly"].removesuffix(".dll"), "Hoard.Abstractions"]
+    if scenario not in ("memory", "sqlite", "local", "object"):
+        required.append("Hoard.Hosting")
+    else:
+        family = "Metadata" if scenario in ("memory", "sqlite") else "Artifacts"
+        provider = {"memory": "Memory", "sqlite": "Sqlite", "local": "Local", "object": "ObjectSemantics"}[scenario]
+        required.append(f"Hoard.Fixtures.{family}.{provider}")
+    return {
+        "schemaVersion": 1, "scenario": scenario, "outputPath": output_path, "expectedOutput": expected,
+        "images": [{"path": staged["runtimePath"] + "/" + name, "sha256": staged["stagedFiles"][name]}
+                   for name in sorted(names)], "required": required}
+
+
+def verify_retained_observation(raw, request, expected_sha256):
+    if len(raw) > 1024**2 or hashlib.sha256(raw).hexdigest() != sha256(expected_sha256):
+        raise ConformanceError("ProofMismatch")
+    observed = load_json(raw)
+    if (not isinstance(observed, dict) or set(observed) !=
+            {"schemaVersion", "qualification", "scenario", "code", "loaded"}
+            or type(observed["schemaVersion"]) is not int or observed["schemaVersion"] != 1
+            or observed["qualification"] is not False or observed["scenario"] != request["scenario"]
+            or observed["code"] != "None" or not isinstance(observed["loaded"], list)
+            or not 2 <= len(observed["loaded"]) <= 128):
+        raise ConformanceError("ProofMismatch")
+    expected = {Path(image["path"]).stem: image["sha256"] for image in request["images"]}
+    names = []
+    for image in observed["loaded"]:
+        if (not isinstance(image, dict) or set(image) != {"name", "sha256", "moduleVersionId"}
+                or not isinstance(image["name"], str) or image["name"] not in expected
+                or image["sha256"] != expected[image["name"]] or not isinstance(image["moduleVersionId"], str)):
+            raise ConformanceError("ProofMismatch")
+        try:
+            mvid = uuid.UUID(image["moduleVersionId"])
+        except ValueError:
+            raise ConformanceError("ProofMismatch") from None
+        if mvid.int == 0 or str(mvid) != image["moduleVersionId"]:
+            raise ConformanceError("ProofMismatch")
+        names.append(image["name"])
+    if names != sorted(set(names)) or not set(request["required"]) <= set(names):
+        raise ConformanceError("ProofMismatch")
+    return observed
+
+
+def execute_retained_consumers(run, candidate, candidate_sources, config, baseline_sha256):
+    from conformance_sources import read_bounded
+    if type(run) is not OwnedRun or run.state != "Active":
+        raise ConformanceError("OwnershipInvalid")
+    verify_snapshot(candidate, candidate_sources)
+    _build(run, candidate / OBSERVER_PROJECT, config, "compatibility-observer")
+    verify_snapshot(candidate, candidate_sources)
+    observer = (candidate / OBSERVER_PROJECT).parent / (
+        "bin/Release/net10.0/Hoard.Conformance.Compatibility.Observer.dll")
+    no_symlinks(observer)
+    observer.chmod(0o400)
+    observer_relative = observer.relative_to(run.root).as_posix()
+    observer_sha = file_sha256(observer)
+    records = []
+    for scenario in RETAINED_SCENARIOS:
+        staged = stage_retained_runtime(run, baseline_sha256, scenario)
+        runtime = run.root / staged["runtimePath"]
+        namespace = "retained-compatibility-" + scenario
+        request_path, output_path = f"proofs/{namespace}-request.json", f"proofs/{namespace}-observation.json"
+        manifest_path = f"proofs/{namespace}-staged.json"
+        request = retained_request(staged, output_path)
+        for path, document in ((request_path, request), (manifest_path, staged)):
+            with (run.root / path).open("xb") as output:
+                output.write(canonical_bytes(document))
+            (run.root / path).chmod(0o400)
+        workspace = run.root / "stores" / (namespace + "-workspace")
+        workspace.mkdir(mode=0o700)
+        env = {
+            "DOTNET_STARTUP_HOOKS": str(observer), "HOARD_COMPATIBILITY_ROOT": str(run.root),
+            "HOARD_COMPATIBILITY_REQUEST": request_path, "HOARD_METADATA_WORKSPACE": str(workspace)}
+        if scenario in ("memory", "sqlite"):
+            env["HOARD_METADATA_PROVIDER"] = scenario
+        arguments = [scenario, str(workspace)] if scenario in ("local", "object") else []
+        entry = runtime / staged["assembly"]
+        verify_snapshot(runtime, staged["stagedFiles"])
+        result = run.command(
+            ["dotnet", str(entry), *arguments], cwd=workspace, kind="events", env=env,
+            cache_id="retained-compatibility", timeout=120, record_execution=True,
+            execution_inputs=(observer_relative, entry.relative_to(run.root).as_posix(), request_path, manifest_path),
+            execution_outputs=(output_path,))
+        sequence = run.command_sequence
+        command_raw = run.read_execution_record(sequence)
+        command = load_json(command_raw)
+        raw = read_bounded(run.root / output_path, 1024**2)
+        observed = verify_retained_observation(raw, request, command["outputFiles"].get(output_path))
+        if (result.exit_code or len(result.events) != 1 or result.events[0] !=
+                {"event": "test", "code": "None", "value": len(observed["loaded"])}):
+            raise ConformanceError("CommandFailed")
+        verify_snapshot(runtime, staged["stagedFiles"])
+        if file_sha256(observer) != observer_sha:
+            raise ConformanceError("InputChanged")
+        for filename, expected in staged["candidatePackages"].items():
+            no_symlinks(run.root / "feed/candidate" / filename)
+            if file_sha256(run.root / "feed/candidate" / filename) != expected:
+                raise ConformanceError("InputChanged")
+        verify_prepared_baselines(run.root, baseline_sha256)
+        records.append({
+            "scenario": scenario, "scope": staged["scope"], "commonSuiteExecuted": False,
+            "sequence": sequence, "executionSha256": hashlib.sha256(command_raw).hexdigest(),
+            "requestSha256": file_sha256(run.root / request_path),
+            "stagedSha256": file_sha256(run.root / manifest_path),
+            "observationSha256": hashlib.sha256(raw).hexdigest(), "loadedAssemblies": len(observed["loaded"]),
+        })
+    verify_snapshot(candidate, candidate_sources)
+    return {"schemaVersion": 1, "qualification": False, "mode": "retained-compatibility",
+            "baselineSealSha256": baseline_sha256, "observerSha256": observer_sha, "scenarios": records}
 
 
 def _command(run, args, *, cwd, cache_id):
