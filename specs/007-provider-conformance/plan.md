@@ -545,6 +545,45 @@ skips, expected incomplete exit2. `git diff --check`: passed. T055 remains
 unchecked until native command binding is actually corroborated; no
 compatibility-profile or qualification flag advances.
 
+### T056 actual consumed-symbol source break and bounded native continuation
+
+The closed `Compatibility/break-controls.json` reuses original RequiredMember
+and BinaryMemberRemoval fixtures. An actual local eight-command source replay
+compiles the unchanged historical implementer, observes exact `CS0535` for
+`RequiredContract.IProvider.Required()`, then restores only the compatible
+contract and reproduces the same consumer source/output bytes. Originals and
+the six-entry historical seal remain unchanged. No consumer migration masks
+the regression. A specific native compiler projector discards paths while
+requiring the exact original implementer/interface/member; other same-code
+diagnostics reject. Missing symbol evidence, unrelated compiler errors and
+exit-zero reject. Its focused projection test fails before implementation.
+Native command inputs include the original source/project, actual broken
+contract and the full frozen input descriptor; its original execution record
+is retained separately from the repaired compilation.
+
+The full SDK inventory now selects the three existing actual binary
+exception/compatible/substitution controls. Actual VSTest discovery agrees
+with all three exact display identities. These are isolated controls, not a
+claim that candidate-rebuilt binaries are old released SDK consumers.
+
+The separate Linux compatibility diagnostic uses the same SDK preparation and
+replay, then verifies repository/candidate/historical inputs before actual
+owned process/store/cache cleanup. It is explicitly non-qualifying, leaves
+the full SDK and selected-category jobs intact and has a thirty-minute internal
+budget/thirty-five-minute job budget. New native source/retained/control
+confirmation remains pending; T055/T056 stay unchecked.
+
+The actual private source-break probe passes all eight commands with historical
+seal `6aded58460bf88f8ce6ccc7eefc36672cb00719eda05822a5257066a675fe8e6`,
+explicitly local/non-native/nonqualifying. Exact source-symbol projection and
+sixteen baseline controls pass. Actual three-case display agreement passes.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 570 tests, zero
+failures/errors/unexpected diagnostic bytes, twenty native skips, expected
+incomplete exit2. The first run exposed two positional smoke-test assumptions;
+keeping the original leading scenario order repairs them without relaxing tests.
+No product/provider API, historical source/lock, architecture diagram,
+infrastructure or governance changes occur.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

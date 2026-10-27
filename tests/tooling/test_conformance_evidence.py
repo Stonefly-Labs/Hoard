@@ -7091,6 +7091,20 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_source_break_rejects_success_unrelated_compiler_failures_and_missing_symbol_witness(self):
+        from types import SimpleNamespace
+        intended = {"event": "build", "code": "CommandFailed", "value": 535}
+        self.baselines.verify_source_break_result(SimpleNamespace(exit_code=1, events=(intended,)))
+        for result in (
+                SimpleNamespace(exit_code=0, events=(intended,)),
+                SimpleNamespace(exit_code=1, events=()),
+                SimpleNamespace(exit_code=1, events=({"event": "build", "code": "CommandFailed", "value": 0},)),
+                SimpleNamespace(exit_code=1, events=(intended, {**intended, "value": 1004})),
+                SimpleNamespace(exit_code=1, events=({**intended, "event": "control"},)),
+                SimpleNamespace(exit_code=1, events=({**intended, "code": "None"},))):
+            with self.subTest(result=result), self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                self.baselines.verify_source_break_result(result)
+
     def test_retained_observer_is_sealed_for_actual_native_input_capture_before_any_consumer(self):
         import time
         from conformance_execution import OwnedRun

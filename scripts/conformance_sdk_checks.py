@@ -158,6 +158,16 @@ SCENARIOS = (
     ("unknown", (SMOKE + "Unknown",), "UnknownDiagnostic", "Failed", 1, "Unknown"),
     ("skipped", (SMOKE + "Skipped",), "EvidenceIncomplete", "Incomplete", 0, "SkippedOrUnknown"),
     ("stdout", (SMOKE + "PassingOutput",), "UnknownDiagnostic", "Passed", 0, "None"),
+    ("compatibility-binary", (
+        "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+        'Unchanged_retained_consumer_observes_actual_candidate_not_an_accidental_old_contract'
+        '(variant: "broken", compatible: False)',
+        "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+        'Unchanged_retained_consumer_observes_actual_candidate_not_an_accidental_old_contract'
+        '(variant: "compatible", compatible: True)',
+        "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+        "Loaded_baseline_capture_rejects_replacement_with_actual_same_version_candidate_bytes",
+    ), "None", "Passed", 0, "None"),
     ("ranges", tuple(
         "Hoard.Conformance.Tests.RuntimeLoggerTests.Finite_version_ranges_preserve_exact_parameter_identity"
         + f'(range: "{value}")' for value in ("[1.2.0,2.0.0)", "(2.0.0,1.0.0]", "[1.2.3]")),
@@ -3827,13 +3837,14 @@ def _execute_selected_category(run, repository, candidate, inputs, *, binding_so
     return _category_report(run, inputs, post, summary, resources=run.resource_projection())
 
 
-def execute(repository, destination, *, category=None):
-    if category not in (None, "metadata", "artifacts"):
+def execute(repository, destination, *, category=None, compatibility_only=False):
+    if category not in (None, "metadata", "artifacts") or compatibility_only and category is not None:
         raise evidence.ConformanceError("UnsupportedProfile")
     if not native_execution_supported() or not callable(getattr(evidence, "ingest_runtime_attempt", None)):
         raise evidence.ConformanceError("PrerequisiteMissing")
     run = OwnedRun.allocate(destination, repository, profile=category or "baseline")
-    run.deadline = min(run.deadline, time.monotonic() + (60 if category is not None else 100) * 60)
+    minutes = 30 if compatibility_only else 60 if category is not None else 100
+    run.deadline = min(run.deadline, time.monotonic() + minutes * 60)
     try:
         home = run.root / "cache"
         home.mkdir(exist_ok=True, mode=0o700)
@@ -3981,15 +3992,35 @@ def execute(repository, destination, *, category=None):
             retained_compatibility = baselines.execute_retained_consumers(
                 run, candidate, sources, config, seal_sha)
             write_new(run.root / "proofs/retained-compatibility.json", evidence.canonical_bytes(retained_compatibility))
-            print(json.dumps({
+            source_break = baselines.execute_source_break(run, candidate, sources, config, seal_sha)
+            write_new(run.root / "proofs/source-break-control.json", evidence.canonical_bytes(source_break))
+            compatibility_summary = {
                 "qualification": False, "phase": "compatibility-replay-admitted",
                 "sourceRecipes": len(source_compatibility["recipes"]),
                 "retainedScenarios": len(retained_compatibility["scenarios"]),
                 "loadedAssemblies": sum(row["loadedAssemblies"] for row in retained_compatibility["scenarios"]),
                 "sourceSha256": evidence.digest(source_compatibility),
                 "retainedSha256": evidence.digest(retained_compatibility),
+                "sourceBreakSha256": evidence.digest(source_break),
                 "baselineSealSha256": seal_sha,
-            }), flush=True)
+            }
+            print(json.dumps(compatibility_summary), flush=True)
+            if compatibility_only:
+                if (dict(evidence.source_manifest(repository)) != dict(sources)
+                        or evidence.source_identity(repository, ci_revision=ci_revision) != identity):
+                    raise evidence.ConformanceError("InputChanged")
+                evidence.verify_snapshot(candidate, sources)
+                baselines.verify_prepared_baselines(run.root, seal_sha)
+                run.transition("Settling")
+                run.release()
+                if any(resource["state"] != "Released" for resource in run.resource_projection()):
+                    raise evidence.ConformanceError("CleanupIncomplete")
+                summary = {**compatibility_summary, "phase": "compatibility-replay-released",
+                           "profileComplete": False, "processResourcesReleased": True}
+                write_new(run.root / "proofs/compatibility-diagnostic-summary.json",
+                          evidence.canonical_bytes(summary))
+                print(json.dumps(summary), flush=True)
+                return 0
         print(json.dumps({"qualification": False, "phase": "inspection-preparation"}), flush=True)
         inspection_records = build_inspection_projects(run, candidate, config, feed)
         verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",
@@ -4363,6 +4394,8 @@ def main():
     parser.add_argument("--evidence", type=Path)
     parser.add_argument("--category", choices=("metadata", "artifacts"),
                         help="only the selected native extraction batch; reports remain non-qualifying")
+    parser.add_argument("--compatibility-only", action="store_true",
+                        help="only source/retained compatibility diagnostics with owned cleanup; never qualification")
     parser.add_argument("--probe", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--inspection-project", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--inspection-output", type=Path, help=argparse.SUPPRESS)
@@ -4370,19 +4403,22 @@ def main():
     try:
         if options.inspection_project is not None or options.inspection_output is not None:
             if (options.inspection_project is None or options.inspection_output is None
-                    or options.probe is not None or options.evidence is not None or options.category is not None):
+                    or options.probe is not None or options.evidence is not None or options.category is not None
+                    or options.compatibility_only):
                 raise evidence.ConformanceError()
             probe_inspection_project(options.inspection_project, options.inspection_output)
             return 0
         if options.probe is not None:
-            if options.category is not None:
+            if options.category is not None or options.compatibility_only:
                 raise evidence.ConformanceError()
             probe(options.probe)
             return 0
         if options.evidence is None:
             raise evidence.ConformanceError("PrerequisiteMissing")
-        return execute(options.root.resolve(), options.evidence, **({"category": options.category}
-                                                                  if options.category is not None else {}))
+        return execute(
+            options.root.resolve(), options.evidence,
+            **({"category": options.category} if options.category is not None else {}),
+            **({"compatibility_only": True} if options.compatibility_only else {}))
     except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
         status = evidence.failure_status(code)

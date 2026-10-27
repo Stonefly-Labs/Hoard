@@ -5565,6 +5565,32 @@ unexpected diagnostic bytes, twenty native skips, expected incomplete exit 2.
 Native confirmation is pending, so T055 stays unchecked. README/plan updated;
 public provider contracts, examples, diagrams and infrastructure are unchanged.
 
+The next T056 increment reuses the original RequiredMember and BinaryMemberRemoval
+fixtures. Actual local source replay performs eight restore/build commands:
+unchanged implementer success, exact `CS0535` for
+`RequiredContract.IProvider.Required()`, then success after restoring only the
+compatible contract. Consumer source and deterministic output bytes are unchanged;
+all historical originals/seals remain intact. A dedicated native build projector
+admits that precise consumed member, never another `CS0535` member or raw paths.
+Result admission rejects unrelated compiler errors, exit-zero and missing symbol
+witnesses. The three existing actual binary exception/compatible/substitution
+controls join the full SDK's exact runtime inventory; actual VSTest discovery
+corroborates all three display identities.
+
+`python3 scripts/conformance_sdk_checks.py --root "$PWD" --evidence
+"$PRIVATE_EVIDENCE/run" --compatibility-only` is a bounded non-qualifying
+diagnostic, not the public compatibility profile. It shares the full SDK's
+preparation and replay path, then verifies unchanged repository/candidate/historical
+inputs and releases all owned processes, caches and stores. Its separate Linux
+job does not remove any full SDK/category obligation. T055/T056 remain unchecked
+pending native evidence. The actual private source-break probe passes; exact
+symbol projection and sixteen baseline controls pass. Full safe tooling observes
+570 tests, zero failures/errors/unexpected diagnostic bytes and twenty native
+skips, expected incomplete exit 2. A first run exposed two smoke-test positional
+assumptions; preserving the original leading scenario order repairs that integration.
+Provider contracts, examples, architecture diagrams, infrastructure and governance
+are unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

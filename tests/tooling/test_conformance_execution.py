@@ -30,6 +30,25 @@ class ConformanceExecutionTests(unittest.TestCase):
     def workspace(self):
         return execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
 
+    def test_source_break_projection_requires_the_exact_consumed_member_not_just_compiler_code(self):
+        prefix = "/private/canary/Provider.cs(1,25): error CS0535: "
+        suffix = " [/private/canary/RequiredConsumer.csproj]"
+        message = "'Provider' does not implement interface member 'IProvider.Required()'"
+        self.assertEqual(
+            dict(execution.project_compatibility_source_line((prefix + message + suffix).encode())),
+            {"event": "build", "code": "CommandFailed", "value": 535})
+        for changed in (
+                message.replace("Required()", "Other()"),
+                message.replace("'Provider'", "'OtherProvider'"),
+                message.replace("IProvider", "OtherInterface"),
+                message + " private-canary",
+                message.replace("Required()", "Required(string)")):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ConformanceError, "UnknownDiagnostic"):
+                execution.project_compatibility_source_line((prefix + changed + suffix).encode())
+        self.assertEqual(
+            dict(execution.project_compatibility_source_line(b"Build FAILED.")),
+            {"event": "build", "code": "CommandFailed", "value": 0})
+
     def test_ownership_controls_do_not_require_artifact_transfer_capacity(self):
         with mock.patch.object(execution.shutil, "disk_usage", return_value=SimpleNamespace(free=0)):
             run = self.workspace()

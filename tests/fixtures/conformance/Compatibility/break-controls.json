@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "qualification": false,
+  "baselineRevision": "9389016c0285c79f6f515f59805a5a41c69b0767",
+  "source": {
+    "fixture": "tests/fixtures/compatibility/RequiredMember",
+    "compilerCode": "CS0535",
+    "symbol": "RequiredContract.IProvider.Required()",
+    "repair": "restore-compatible-contract"
+  },
+  "binary": {
+    "fixture": "tests/fixtures/conformance/Compatibility",
+    "failure": "MissingMethodException",
+    "symbol": "BinaryContract.Api.Describe()",
+    "consumerRecompiled": false
+  }
+}

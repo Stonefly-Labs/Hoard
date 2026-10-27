@@ -322,6 +322,13 @@ claiming the full common suites. Actual hash and old-location challenges fail
 even when the application exits zero. Native command/output binding is wired
 into the all-SDK diagnostics but awaits native confirmation, so T055 remains
 unchecked and no compatibility profile or qualification is claimed.
+The next controlled source challenge now reproduces actual `CS0535` for
+`RequiredContract.IProvider.Required()` with the unchanged historical
+implementer; restoring only the compatible contract passes with the same
+source and output assembly bytes. Other member names cannot borrow that
+compiler code. A separate bounded Linux compatibility diagnostic now exercises
+source/retained replay and owned cleanup without replacing the full SDK job;
+native confirmation and T056's complete binary integration remain pending.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

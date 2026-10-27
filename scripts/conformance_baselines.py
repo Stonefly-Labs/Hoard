@@ -43,6 +43,14 @@ SOURCE_RECIPES_PATH = "tests/fixtures/conformance/baselines/source-consumers.jso
 RETAINED_SCENARIOS = ("registration", "lifecycle", "configuration", "metadata-marker", "artifact-marker",
                       "memory", "sqlite", "local", "object")
 OBSERVER_PROJECT = "tests/fixtures/conformance/Compatibility/Observer/Observer.csproj"
+BREAK_CONTROLS_PATH = "tests/fixtures/conformance/Compatibility/break-controls.json"
+BREAK_CONTROLS = {
+    "schemaVersion": 1, "qualification": False, "baselineRevision": BASELINE,
+    "source": {"fixture": "tests/fixtures/compatibility/RequiredMember", "compilerCode": "CS0535",
+               "symbol": "RequiredContract.IProvider.Required()", "repair": "restore-compatible-contract"},
+    "binary": {"fixture": "tests/fixtures/conformance/Compatibility", "failure": "MissingMethodException",
+               "symbol": "BinaryContract.Api.Describe()", "consumerRecompiled": False},
+}
 SOURCE_RECIPE_POLICY = (
     *((project, "historical-f06", "api-consumer") for project in (
         "tests/fixtures/lifecycle/registration/RegistrationConsumer/RegistrationConsumer.csproj",
@@ -194,6 +202,78 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
     return {"schemaVersion": 1, "qualification": False, "mode": "source-compatibility",
             "baselineSealSha256": baseline_sha256, "recipeSha256": digest(document),
             "candidatePackages": feed_hashes, "recipes": records}
+
+
+def verify_source_break_result(result):
+    if (result.exit_code != 1 or not result.events
+            or any(dict(event) not in (
+                {"event": "build", "code": "CommandFailed", "value": 0},
+                {"event": "build", "code": "CommandFailed", "value": 535}) for event in result.events)
+            or not any(event["value"] == 535 for event in result.events)):
+        raise ConformanceError("ProofMismatch")
+
+
+def execute_source_break(run, candidate, candidate_sources, config, baseline_sha256):
+    """Challenge the unchanged historical implementer, then repair only its contract."""
+    from conformance_sources import read_bounded
+    verify_snapshot(candidate, candidate_sources)
+    controls = load_json(read_bounded(candidate / BREAK_CONTROLS_PATH, 4096))
+    if canonical_bytes(controls) != canonical_bytes(BREAK_CONTROLS):
+        raise ConformanceError("EvidenceIncomplete")
+    baseline = verify_prepared_baselines(run.root, baseline_sha256)
+    historical, = (entry for entry in baseline["entries"] if entry["id"] == "f06")
+    copied = run.root / "stores/compatibility-source-break"
+    _copy_recipe_sources(run.root / "stores/f06", copied, historical["sources"])
+    fixture = copied / controls["source"]["fixture"]
+    for variant in ("Old", "New"):
+        _build(run, fixture / variant / "RequiredContract.csproj", config, "compatibility-source")
+    contracts = {variant: fixture / variant / "bin/Release/net10.0/RequiredContract.dll"
+                 for variant in ("Old", "New")}
+    for contract in contracts.values():
+        no_symlinks(contract)
+        contract.chmod(0o400)
+    hashes = {variant: file_sha256(contract) for variant, contract in contracts.items()}
+    if hashes["Old"] == hashes["New"]:
+        raise ConformanceError("ProofMismatch")
+    project = fixture / "Consumer/RequiredConsumer.csproj"
+    original = historical["sources"][project.with_name("Provider.cs").relative_to(copied).as_posix()]
+    _build(run, project, config, "compatibility-source",
+           properties=("-p:ContractAssembly=" + str(contracts["Old"]),))
+    output = project.parent / "bin/Release/net10.0/RequiredConsumer.dll"
+    baseline_output = file_sha256(output)
+    manifest_path = "proofs/compatibility-source-break-inputs.json"
+    manifest = {"sources": historical["sources"], "contracts": hashes, "controls": digest(controls)}
+    with (run.root / manifest_path).open("xb") as destination:
+        destination.write(canonical_bytes(manifest))
+    (run.root / manifest_path).chmod(0o400)
+    arguments = ["dotnet", "build", str(project), "-c", "Release", "--no-restore",
+                 "-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet",
+                 "-p:ContractAssembly=" + str(contracts["New"])]
+    result = run.command(
+        arguments, cwd=project.parent, cache_id="compatibility-source", kind="compatibility-source",
+        env={"DOTNET_ROLL_FORWARD": "Disable"}, record_execution=True,
+        execution_inputs=(manifest_path, project.relative_to(run.root).as_posix(),
+                          project.with_name("Provider.cs").relative_to(run.root).as_posix(),
+                          contracts["New"].relative_to(run.root).as_posix()))
+    sequence = run.command_sequence
+    verify_source_break_result(result)
+    negative = run.read_execution_record(sequence)
+    _command(run, [*arguments[:-1], "-p:ContractAssembly=" + str(contracts["Old"])],
+             cwd=project.parent, cache_id="compatibility-source")
+    if baseline_output != file_sha256(output):
+        raise ConformanceError("InputChanged")
+    verify_snapshot(copied, historical["sources"])
+    verify_snapshot(candidate, candidate_sources)
+    verify_prepared_baselines(run.root, baseline_sha256)
+    if any(file_sha256(contracts[variant]) != value for variant, value in hashes.items()):
+        raise ConformanceError("InputChanged")
+    return {"schemaVersion": 1, "qualification": False, "mode": "source-break-control",
+            "baselineSealSha256": baseline_sha256, "controlsSha256": digest(controls),
+            "consumerSourceSha256": original, "consumerAssemblySha256": baseline_output,
+            "contracts": hashes, "compilerCode": controls["source"]["compilerCode"],
+            "symbol": controls["source"]["symbol"], "repair": controls["source"]["repair"],
+            "negativeSequence": sequence, "negativeExecutionSha256": hashlib.sha256(negative).hexdigest(),
+            "inputsSha256": file_sha256(run.root / manifest_path)}
 
 
 def retained_recipe(scenario):

@@ -289,6 +289,17 @@ def project_build_line(line):
     raise ConformanceError("UnknownDiagnostic")
 
 
+def project_compatibility_source_line(line):
+    projected = project_build_line(line)
+    if projected is not None and projected["value"] == 535:
+        text = line.decode("utf-8", errors="strict").strip()
+        if re.fullmatch(
+                r".+\([0-9]+,[0-9]+\): error CS0535: 'Provider' does not implement "
+                r"interface member 'IProvider\.Required\(\)' \[.+\]", text) is None:
+            raise ConformanceError("UnknownDiagnostic")
+    return projected
+
+
 def project_test_line(line):
     try:
         text = line.decode("utf-8", errors="strict").strip()
@@ -764,7 +775,7 @@ class OwnedRun:
                 or self.live_children(deadline=deadline)
                 or not isinstance(args, (list, tuple)) or not args
                 or any(not isinstance(arg, str) or "\x00" in arg for arg in args)
-                or kind not in ("events", "build", "tests", "discovery", "metadata-marker")):
+                or kind not in ("events", "build", "compatibility-source", "tests", "discovery", "metadata-marker")):
             raise ConformanceError("OwnershipInvalid")
         if self.retained_bytes + SAFE_EVENT_BYTES > PROFILE_DIAGNOSTIC_BYTES:
             raise ConformanceError("OutputLimitExceeded")
@@ -841,7 +852,8 @@ class OwnedRun:
             nonlocal retained, transfer_deadline
             try:
                 event = (project_discovery_line(line, discovery_tests) if kind == "discovery"
-                         else {"build": project_build_line, "tests": project_test_line,
+                         else {"build": project_build_line, "compatibility-source": project_compatibility_source_line,
+                               "tests": project_test_line,
                                "events": project_event, "metadata-marker": project_metadata_marker_line}[kind](line))
             except ConformanceError as error:
                 if str(error) == "OutputLimitExceeded":
