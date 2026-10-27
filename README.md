@@ -320,15 +320,20 @@ MVID observations. The two markers remain marker-only; operational F-06
 consumers exercise memory/SQLite and local/object-semantics journeys without
 claiming the full common suites. Actual hash and old-location challenges fail
 even when the application exits zero. Native command/output binding is wired
-into the all-SDK diagnostics but awaits native confirmation, so T055 remains
-unchecked and no compatibility profile or qualification is claimed.
+into the all-SDK diagnostics; exact `87e9399` now confirms all nine scenarios,
+forty loaded assemblies, 24 source recipes and actual owned cleanup in
+[run40501112699](https://github.com/Stonefly-Labs/Hoard/actions/runs/40501112699),
+closing T055 without claiming a complete compatibility profile or qualification.
 The next controlled source challenge now reproduces actual `CS0535` for
 `RequiredContract.IProvider.Required()` with the unchanged historical
 implementer; restoring only the compatible contract passes with the same
 source and output assembly bytes. Other member names cannot borrow that
 compiler code. A separate bounded Linux compatibility diagnostic now exercises
 source/retained replay and owned cleanup without replacing the full SDK job;
-native confirmation and T056's complete binary integration remain pending.
+exact `87e9399` now also passes the precise source break/repair and all three
+native binary controls, closing T056's isolated control scope. Implementation
+continues at 52/86; full compatibility/composition profiles and independent
+evaluation remain unfinished.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

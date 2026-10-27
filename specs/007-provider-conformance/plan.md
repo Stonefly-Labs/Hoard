@@ -584,6 +584,40 @@ keeping the original leading scenario order repairs them without relaxing tests.
 No product/provider API, historical source/lock, architecture diagram,
 infrastructure or governance changes occur.
 
+### T055/T056 native confirmation
+
+Exact `87e9399515ecdbc7faddc8b95154b346d0450894` passes
+[run40501112699](https://github.com/Stonefly-Labs/Hoard/actions/runs/40501112699),
+including all six jobs. Job122179087309 independently confirms 24 unchanged
+source recipes, nine retained scenarios and forty actual loaded assembly
+observations. Its admitted and released summaries agree on every proof hash;
+actual owned process/cache/store release passes, while profileComplete and
+qualification remain false.
+Source: `fe40c2cae55bb1c82d84b8128fa22e3a259e7ecd5731a4dce702e7a744260d4f`;
+retained: `831db8eb8752efc0017c45e2a46f80f490453483127a4c0a70750ce1abc7ff94`;
+source break:
+`a6cd9644165c5e9c9620df183c4306c16cc3ecdf3bbf4bdeb1f5dd28c584cc79`;
+historical seal:
+`5e4b57e68fb578558f90b0c1ce49431ff84b5118b5ed832021476ffa92b5225f`.
+
+The separate full SDK job122179087412 passes all three exact controlled binary
+exception/compatible/substitution witnesses. Its independently projected
+source-selected scope has discovery
+`dc741ec6f4c202b2cc40912485eef579093216ad81fa2bec4c170ccd056d29e5`,
+completion `fab74acf8a9fd0ca703db2eaa6a1c207d4f6f5222aec62b9c0a1533f2eec7bb9`,
+and inputs `98e20c29089f85e10027b831d134a4a75bfbd4741489cc841340550b06679754`.
+Actual exception type, unchanged consumer bytes and exact candidate resolution
+are required by those original controls, not inferred from a three-test count.
+The source control's exact consumed-member compiler red and contract-only repair
+are admitted in the separate native proof above.
+
+T055 and T056 are now checked, 52/86, implement/running. Superseded
+`a4a10ff` foundations run40499315656 was explicitly cancelled to admit the current
+checkpoint, never relabeled a pass. T046, full composition/compatibility profiles,
+portable independent verification and qualification remain unfinished. Product/
+provider contracts, examples, diagrams, infrastructure and governance are
+unaffected by this evidence checkpoint.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
