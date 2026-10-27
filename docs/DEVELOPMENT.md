@@ -5814,6 +5814,25 @@ skips, expected incomplete exit 2. SDK catalog and diff checks pass.
 No task or qualification flag changes; product/provider contracts, examples,
 diagrams, infrastructure and governance remain unaffected.
 
+Composition's original runtime assignment uses physical `.observe` rows:
+one real parameter can assert both rejection and its repair. Final logical
+matrix rows must not rewrite that execution's original matrix or invent a new
+execution ID. A shared physical assignment catalog and explicit input-bound
+case-derivation packet now support this relationship. Report admission checks
+the canonical case, exact parameters, original physical assignments, input/run
+identity, snapshot-policy digest, time bounds and registered derivation digest.
+Missing/altered derivations and changed original matrix/case reject.
+The controls remain synthetic schema/derivation controls, not runtime-good
+controls or independent replay of original proof bytes. The diagnostic runner's
+physical assignments remain unchanged.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence
+test_conformance_composition -q`: passed, 181 tests.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 577 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty native macOS skips,
+expected incomplete exit 2. No task/qualification flags change; 52/86,
+implement/running. Provider contracts, examples, diagrams, infrastructure and
+governance remain unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

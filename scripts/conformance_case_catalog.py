@@ -1035,6 +1035,13 @@ def composition_snapshot_owner_indices(identity):
     return (0, 0, 1, 1) if policy[0][0] in ("admission-denied", "store-denied") else (0,) * len(policy)
 
 
+def composition_execution_cases():
+    return MappingProxyType({
+        identity: (case_id, variant + ".observe")
+        for case_id, variants in COMPOSITIONS for variant in variants
+        for identity in composition_witnesses(case_id, variant)})
+
+
 def composition_witnesses(case_id, variant):
     prefix = "Hoard.Composition.Tests.ConformanceMatrixTests."
     declarations = {

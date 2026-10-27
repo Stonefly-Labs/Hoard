@@ -409,6 +409,14 @@ attempts remain nonqualifying evidence. These are schema controls, not runtime
 good controls or the final evaluator; T048 and T071 remain open.
 Full local safe tooling observes 576 tests with zero failures/errors or unexpected
 diagnostic bytes and twenty explicit native skips.
+The next report seam preserves one original physical execution when its
+assertions cover separate logical rejection/repair rows. Explicit input-bound
+derivation packets link canonical cases to unchanged original witness fields;
+missing/changed derivations and relabelled executions reject. The diagnostic
+runner and report evaluator now share the same physical assignment catalog.
+These synthetic derivation controls are not final runtime proof evaluation.
+Full local safe tooling observes 577 tests without failures/errors or unexpected
+diagnostic bytes, with twenty native skips; implementation remains 52/86.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

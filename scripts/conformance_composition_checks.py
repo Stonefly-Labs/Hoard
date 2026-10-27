@@ -17,7 +17,7 @@ from xml.sax.saxutils import escape
 import conformance_baselines as baselines
 import conformance_evidence as evidence
 import conformance_legacy as legacy
-from conformance_case_catalog import COMPOSITIONS, composition_snapshot_policy, composition_witnesses
+from conformance_case_catalog import composition_execution_cases, composition_snapshot_policy
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, project_event
 from conformance_inherited import (
     CONTROLLER_ERROR_SOURCES, INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
@@ -302,10 +302,9 @@ def expected_rows():
     rows = [{
         "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
         "assemblyId": "test-assembly", "packageId": SDK, "bindingId": "none",
-        "matrixId": matrix + ".observe", "caseId": case, "assertionSymbol": None,
-    } for case, variants in COMPOSITIONS for matrix in variants
-      for identity in composition_witnesses(case, matrix)]
-    return list({row["testIdentity"]: row for row in rows}.values())
+        "matrixId": matrix, "caseId": case, "assertionSymbol": None,
+    } for identity, (case, matrix) in composition_execution_cases().items()]
+    return rows
 
 
 def _inherited_discovery(run, source, sources, feed, observed_environment, *, assembly_name, runtime, driver):

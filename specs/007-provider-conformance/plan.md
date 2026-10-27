@@ -852,6 +852,34 @@ skips, expected incomplete exit 2. `python3 scripts/conformance_case_catalog.py
 52/86, implement/running. Product/provider contracts, examples, diagrams,
 infrastructure and governance are unaffected.
 
+### Original physical execution versus logical composition cases
+
+The existing diagnostic assignment is a physical `.observe` row. One genuine
+parameter asserts both a rejection and its repair; CP-13 likewise shares its
+original incompatible/compatible observation. Logical catalog rows use separate
+canonical matrices. Rewriting the runtime witness to match those logical labels
+would break attribution, while unconditionally demanding matrix equality cannot
+represent the original assertion coverage.
+
+The physical assignment map is now shared by the diagnostic runner and report
+admission, preserving its existing last-assignment semantics and ordering.
+An explicit canonical case-derivation packet binds the original unmodified
+witnesses, run/input identity, logical case/matrix, snapshot-policy digest,
+attempt sequence and interval. A modeled rejection/repair pair shares exactly
+one original execution; missing/changed derivations and altered original matrix
+or case reject. Existing exact CP parameter checks still apply.
+These are synthetic schema/derivation controls, not runtime-good controls or
+independent original-proof replay. They do not complete T046/T048/T071 or
+change qualification flags.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence
+test_conformance_composition -q`: passed, 181 tests.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 577 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty native macOS skips,
+expected incomplete exit 2. Implementation remains 52/86, implement/running.
+Provider contracts, examples, diagrams, infrastructure and governance are
+unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

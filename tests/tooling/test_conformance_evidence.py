@@ -692,6 +692,47 @@ class ConformanceAdmissionTests(unittest.TestCase):
                 self.assertEqual(admitted["results"][0]["status"], status)
                 self.assertFalse(admitted["qualification"])
 
+    def test_composition_derivations_preserve_one_original_execution_for_rejection_and_repair(self):
+        import conformance_case_catalog as catalog
+        import conformance_composition_checks as composition
+        report = self.composition_report()
+        prototype = report["witnesses"][0]
+        identity, = catalog.composition_witnesses("CP-04", "duplicate")
+        witness = {**prototype, "testIdentity": identity, "matrixId": "duplicate.observe"}
+        originals = copy.deepcopy(witness)
+        report["witnesses"] = [witness]
+        report["results"] = []
+        report["proofs"] = {"runtime/original.json": witness["proofSha256"]}
+        for matrix in ("duplicate.reject", "duplicate.repair"):
+            material = evidence.composition_case_material(
+                report["inputs"], case_id="CP-04", matrix_id=matrix, witnesses=[witness],
+                sequence=1, started_ms=0, ended_ms=1)
+            case, = (case for case in catalog.expected_cases("composition") if case.matrix_id == matrix)
+            report["results"].append(evidence.load_json(evidence.canonical_bytes(
+                evidence._catalog_case_result(report["inputs"], case, "Passed", [material["attempt"]]))))
+            report["proofs"].update({path: hashlib.sha256(raw).hexdigest()
+                                     for path, raw in material["sourceProofs"].items()})
+        admitted = evidence.admit_entity("QualificationReport", report)
+        self.assertEqual(len(admitted["results"]), 2)
+        self.assertEqual(len(admitted["witnesses"]), 1)
+        self.assertEqual(witness, originals)
+        self.assertFalse(admitted["qualification"])
+        physical = {row["testIdentity"]: (row["caseId"], row["matrixId"]) for row in composition.expected_rows()}
+        self.assertEqual(physical, catalog.composition_execution_cases())
+        for defect in ("missing-derivation", "changed-derivation", "changed-original-matrix", "foreign-case"):
+            changed = copy.deepcopy(report)
+            path, = (path for path in changed["proofs"] if "duplicate.reject" in path)
+            if defect == "missing-derivation":
+                del changed["proofs"][path]
+            elif defect == "changed-derivation":
+                changed["proofs"][path] = "f" * 64
+            elif defect == "changed-original-matrix":
+                changed["witnesses"][0]["matrixId"] = "duplicate.repair"
+            else:
+                changed["results"][0]["caseId"] = "CP-05"
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", changed)
+
     def test_an_attempt_cannot_borrow_other_dimensions_or_outside_execution_times(self):
         for dimension, value in (("bindingId", "memory"), ("matrixId", "other")):
             report = self.report()
