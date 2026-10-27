@@ -13,6 +13,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
@@ -26,6 +27,59 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_runtime_inputs_bind_original_logger_descriptors_images_and_archives(self):
+        from conformance_sources import runtime_arguments, runtime_settings
+
+        for defect in (None, "manifest", "owner", "inputs", "image", "package", "foreign-root", "escaping-root",
+                       "foreign-image", "unknown-setting"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                runtime = root / "stores/runtime"
+                assembly = runtime / "assemblies/Fixture.dll"
+                assembly.parent.mkdir(parents=True)
+                assembly.write_bytes(b"fixture image")
+                package = runtime / "resources/sdk.nupkg"
+                package.parent.mkdir()
+                package.write_bytes(b"fixture package")
+                attempt = str(uuid.uuid4())
+                owner = runtime / "runtime-owner.json"
+                owner.write_bytes(canonical_bytes({"schemaVersion": 1, "rootId": "fixture"}))
+                inputs = runtime / "legacy-inputs.json"
+                inputs.write_bytes(canonical_bytes({"schemaVersion": 1, "configuration": {}}))
+                manifest = runtime / f"runtime-input-{attempt}.json"
+                images = [{"id": "test-assembly", "path": assembly.relative_to(runtime).as_posix(),
+                           "sha256": file_sha256(assembly)}]
+                if defect == "foreign-image":
+                    images[0]["path"] = "../outside.dll"
+                manifest.write_bytes(canonical_bytes({
+                    "schemaVersion": 1, "attemptId": attempt, "inputSha256": file_sha256(inputs),
+                    "runInputsPath": inputs.relative_to(runtime).as_posix(), "assemblies": images,
+                    "packages": [{"id": "shared-sdk", "path": package.relative_to(runtime).as_posix(),
+                                  "sha256": file_sha256(package)}]}))
+                settings = runtime / "resources/settings.runsettings"
+                logger_root = (root.parent if defect == "foreign-root" else
+                               runtime / "../../.." if defect == "escaping-root" else runtime)
+                settings.write_bytes(runtime_settings(
+                    logger_root, assembly, attempt,
+                    file_sha256(manifest), file_sha256(owner), ""))
+                if defect == "unknown-setting":
+                    settings.write_bytes(settings.read_bytes().replace(
+                        b"</OwnerSha256>", b"</OwnerSha256><Unexpected>value</Unexpected>"))
+                elif defect in ("manifest", "owner", "inputs", "image", "package"):
+                    {"manifest": manifest, "owner": owner, "inputs": inputs,
+                     "image": assembly, "package": package}[defect].write_bytes(b"changed")
+                arguments = runtime_arguments(assembly, settings, ["Fixture.Case"])
+                if defect in ("foreign-root", "escaping-root"):
+                    with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                        inherited.controller_command_read_inputs(root, arguments, env={})
+                elif defect is not None:
+                    with self.assertRaises(ConformanceError):
+                        inherited.controller_command_read_inputs(root, arguments, env={})
+                else:
+                    files = inherited.controller_command_read_inputs(root, arguments, env={})
+                    for path in (manifest, owner, inputs, assembly, package, settings):
+                        self.assertEqual(file_sha256(path), files[path.relative_to(root).as_posix()])
+
     def test_controller_command_read_inputs_bind_selected_sources_imports_runtime_and_configuration(self):
         for operation in ("build", "implicit-build", "restore", "runtime", "relative", "environment", "foreign"):
             with self.subTest(operation=operation), tempfile.TemporaryDirectory() as temporary:

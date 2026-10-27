@@ -376,6 +376,13 @@ retains an explicit empty partial snapshot for commands without selected files,
 without weakening nonempty input checks. Full local safe tooling now observes
 573 tests with zero failures/errors and twenty native skips. Native replay of
 the repair remains pending; the failed attempt is not acceptance.
+The next selected-input increment follows the original safe logger's settings
+to its owned runtime manifest, owner, run-input document, assembly images and
+SDK archive. Their declared hashes join the same before/after launch checks;
+substitutions, foreign/escaping roots and unknown logger settings reject.
+Local safe tooling observes 574 tests without failures/errors or unexpected
+diagnostic bytes, with twenty explicit native skips. Complete input closure
+and T046 acceptance remain open.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

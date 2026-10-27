@@ -5732,6 +5732,28 @@ is retained as failure. T046 stays unchecked, 52/86, implement/running.
 Provider contracts, examples, diagrams, infrastructure and governance remain
 unaffected.
 
+The next T046 selected-input increment reads the actual `HoardSafe` logger
+configuration from the original runsettings. It follows the existing owned
+Root/AttemptId/ManifestSha256/OwnerSha256 descriptors rather than reconstructing
+a replacement authority. The matching original runtime manifest, owner,
+run-input document, declared images and SDK archives join the same per-launch
+pre/post map; expected content hashes must agree before the child starts.
+Duplicate/conflicting descriptors, changed manifest/owner/input/image/archive,
+foreign or escaping roots, escaped relative image paths and unknown logger
+configuration fields reject. Full runtime schema/result semantics remain with
+the existing logger and transport admission, not a second result evaluator.
+
+The new focused control first exposes one omitted descriptor and eight missing
+rejections; its repaired ten-subcase control passes. Linked regressions: 68 tests,
+zero failures, one Linux-only skip. `python3 scripts/conformance_unit_checks.py
+--all-tooling`: 574 tests, zero failures/errors/unexpected diagnostic bytes,
+twenty native macOS skips, expected incomplete exit 2. Native confirmation of
+this extension remains pending. It is still selected-declared-input capture,
+not complete compiler/import/runtime I/O closure; T046 remains unchecked,
+52/86, implement/running, all full-controller/profile/qualification flags false.
+Provider contracts, examples, diagrams, infrastructure and governance remain
+unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

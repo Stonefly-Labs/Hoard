@@ -1066,6 +1066,58 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
             "formatting": {"path": formatting.relative_to(owner).as_posix(), "sha256": legacy._hash(formatting)}}
 
 
+def controller_runtime_read_inputs(owner, settings):
+    from conformance_evidence import _uuid, relative_path, sha256
+    from conformance_sources import read_bounded
+    import conformance_legacy as legacy
+
+    try:
+        configuration = ET.fromstring(read_bounded(settings, 256 * 1024)).findall(
+            "./LoggerRunSettings/Loggers/Logger[@friendlyName='HoardSafe']/Configuration")
+    except ET.ParseError:
+        raise ConformanceError("EvidenceSchemaInvalid") from None
+    fields = {"Root", "AttemptId", "ManifestSha256", "OwnerSha256"}
+    if (len(configuration) != 1 or len(configuration[0]) != len(fields)
+            or {child.tag for child in configuration[0]} != fields
+            or any(child.attrib or len(child) or not isinstance(child.text, str) or not child.text
+                   for child in configuration[0])):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    values = {child.tag: child.text for child in configuration[0]}
+    root = Path(values["Root"])
+    legacy.no_symlinks(root)
+    if not root.is_absolute():
+        raise ConformanceError("OwnershipInvalid")
+    root = root.resolve(strict=True)
+    if not root.is_relative_to(owner) or not root.is_dir():
+        raise ConformanceError("OwnershipInvalid")
+    attempt = _uuid(values["AttemptId"])
+    manifest_path = root / f"runtime-input-{attempt}.json"
+    raw = read_bounded(manifest_path, 2 * 1024**2)
+    if hashlib.sha256(raw).hexdigest() != sha256(values["ManifestSha256"]):
+        raise ConformanceError("InputChanged")
+    manifest = load_json(raw)
+    if (not isinstance(manifest, dict) or type(manifest.get("schemaVersion")) is not int
+            or manifest["schemaVersion"] != 1 or manifest.get("attemptId") != attempt
+            or not {"runInputsPath", "inputSha256", "assemblies", "packages"} <= manifest.keys()):
+        raise ConformanceError("ProofMismatch")
+    files = {
+        manifest_path: values["ManifestSha256"], root / "runtime-owner.json": sha256(values["OwnerSha256"]),
+        root / relative_path(manifest["runInputsPath"]): sha256(manifest["inputSha256"]),
+    }
+    for kind, maximum in (("assemblies", 128), ("packages", 1024)):
+        rows = manifest.get(kind)
+        if not isinstance(rows, list) or not 1 <= len(rows) <= maximum:
+            raise ConformanceError("EvidenceSchemaInvalid")
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"id", "path", "sha256"}:
+                raise ConformanceError("EvidenceSchemaInvalid")
+            path, hashed = root / relative_path(row["path"]), sha256(row["sha256"])
+            if path in files and files[path] != hashed:
+                raise ConformanceError("ProofMismatch")
+            files[path] = hashed
+    return files
+
+
 def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
     """Capture selected declared inputs, not a complete native I/O trace."""
     import conformance_legacy as legacy
@@ -1075,7 +1127,7 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
     if (not isinstance(arguments, (list, tuple)) or not arguments
             or any(not isinstance(argument, str) for argument in arguments)):
         raise ConformanceError("OwnershipInvalid")
-    extra, mutable = set(), set()
+    extra, mutable, declared = set(), set(), {}
     dotnet = Path(arguments[0]).name == "dotnet"
     restoring = (dotnet and len(arguments) > 1 and (arguments[1] == "restore"
                  or arguments[1] in ("build", "pack", "format") and "--no-restore" not in arguments))
@@ -1090,11 +1142,12 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
             if path.suffix not in (".dll", ".csproj", ".slnx", ".json", ".runsettings", ".config"):
                 continue
             path = directory / path
+        legacy.no_symlinks(path)
+        path = path.resolve()
         if not path.is_relative_to(owner):
             if dotnet and path.suffix in (".dll", ".csproj", ".slnx"):
                 raise ConformanceError("OwnershipInvalid")
             continue
-        legacy.no_symlinks(path)
         if not path.is_file():
             continue
         extra.add(path)
@@ -1108,6 +1161,12 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
                     mutable.add(path.parent / "packages.lock.json")
         elif path.suffix == ".dll":
             extra.update(item for item in path.parent.iterdir() if item.is_file())
+        elif path.suffix == ".runsettings":
+            for item, hashed in controller_runtime_read_inputs(owner, path).items():
+                if item in declared and declared[item] != hashed:
+                    raise ConformanceError("ProofMismatch")
+                declared[item] = hashed
+                extra.add(item)
         elif path.name == "NuGet.Config":
             try:
                 configuration = ET.fromstring(read_bounded(path, 65536))
@@ -1126,6 +1185,8 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
         if key in environment:
             extra.add(Path(environment[key]))
     files = controller_read_inputs(owner, {}, extra=sorted(extra))
+    if any(files[path.relative_to(owner).as_posix()] != hashed for path, hashed in declared.items()):
+        raise ConformanceError("InputChanged")
     for path in mutable:
         files.pop(path.relative_to(owner).as_posix(), None)
     return files

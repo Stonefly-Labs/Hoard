@@ -758,6 +758,22 @@ skips, expected incomplete exit 2. Native repair confirmation remains pending;
 the failed attempt is not acceptance. T046 remains unchecked, 52/86,
 implement/running, all full-controller/profile/qualification flags false.
 
+The next selected-input increment follows the original `HoardSafe` settings
+descriptors to the owned runtime manifest, owner, run-input document, declared
+assembly images and SDK archive. Original content hashes must match; these files
+then share the launcher's existing pre/post checks. It does not invent new logger
+authority or replace existing runtime schema/result validation. Changed manifest/
+owner/input/image/archive, foreign/escaping roots, escaped image paths, unknown
+settings and conflicting descriptors reject. The focused control first exposes
+omitted original descriptors and missing substitutions; its ten subcases now
+pass. Linked regressions: 68 tests, zero failures, one Linux skip. Full safe
+tooling: 574 tests, zero failures/errors/unexpected diagnostic bytes, twenty
+native macOS skips, expected incomplete exit 2. Native confirmation is pending.
+Selected declarations remain partial, T046 remains unchecked, 52/86,
+implement/running, all full-controller/profile/qualification flags false.
+Provider contracts, examples, diagrams, infrastructure and governance are
+unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
