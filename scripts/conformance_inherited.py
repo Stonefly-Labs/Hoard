@@ -562,6 +562,82 @@ def execution_scopes(discoveries, methods):
     return {key: tuple(rows) for key, rows in sorted(scopes.items())}
 
 
+def replay_reference_consumer(owner, descriptor):
+    import conformance_legacy as legacy
+    from conformance_evidence import input_manifest, relative_path, sha256
+    from conformance_sources import read_bounded
+
+    owner = Path(owner).resolve(strict=True)
+    if not isinstance(descriptor, dict) or set(descriptor) != {
+            "manifestPath", "manifestSha256", "inputMapPath", "inputMapSha256"}:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    manifest = owner / relative_path(descriptor["manifestPath"])
+    inputs_path = owner / relative_path(descriptor["inputMapPath"])
+    raw = read_bounded(inputs_path, 2 * 1024**2)
+    files = load_json(raw)
+    if hashlib.sha256(raw).hexdigest() != sha256(descriptor["inputMapSha256"]):
+        raise ConformanceError("InputChanged")
+    if (not isinstance(files, dict) or not files
+            or dict(input_manifest(owner, list(files))) != files):
+        raise ConformanceError("InputChanged")
+    raw = read_bounded(manifest, 16 * 1024**2)
+    if (hashlib.sha256(raw).hexdigest() != sha256(descriptor["manifestSha256"])
+            or files.get(manifest.relative_to(owner).as_posix()) != descriptor["manifestSha256"]):
+        raise ConformanceError("InputChanged")
+    document = load_json(raw)
+    reference = document.get("referenceConsumer") if isinstance(document, dict) else None
+    if not isinstance(reference, dict) or set(reference) != {
+            "source", "assembly", "assemblySha256", "assets", "runtimeConfig", "dependencies",
+            "response", "responseSha256", "moduleIds"}:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    if (any(not isinstance(reference[key], str) for key in
+            ("source", "assembly", "assemblySha256", "assets", "runtimeConfig", "dependencies",
+             "response", "responseSha256"))
+            or not isinstance(reference["moduleIds"], list)
+            or any(not isinstance(value, str) for value in reference["moduleIds"])):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    source = Path(reference["source"])
+    legacy.no_symlinks(source)
+    if (not source.is_absolute() or not source.is_relative_to(owner)
+            or not source.resolve(strict=True).is_relative_to(owner)):
+        raise ConformanceError("OwnershipInvalid")
+    paths = {key: Path(reference[key]) for key in
+             ("assembly", "assets", "runtimeConfig", "dependencies", "response")}
+    project = source / "ReferenceConsumer.csproj"
+    code = [path for path in source.rglob("*.cs")
+            if not {"bin", "obj"}.intersection(path.relative_to(source).parts)]
+    if not code:
+        raise ConformanceError("EvidenceIncomplete")
+    for path in (project, *code, *paths.values()):
+        legacy.no_symlinks(path)
+        if (not path.is_absolute() or not path.is_relative_to(owner)
+                or not path.resolve(strict=True).is_relative_to(owner)
+                or path.relative_to(owner).as_posix() not in files):
+            raise ConformanceError("OwnershipInvalid")
+    try:
+        declaration = ET.fromstring(read_bounded(project, 65536))
+    except ET.ParseError:
+        raise ConformanceError("EvidenceSchemaInvalid") from None
+    if (declaration.findall(".//PackageReference") or declaration.findall(".//ProjectReference")
+            or paths["assembly"].name != "ReferenceConsumer.dll"
+            or files[paths["assembly"].relative_to(owner).as_posix()] != reference["assemblySha256"]
+            or files[paths["response"].relative_to(owner).as_posix()] != reference["responseSha256"]):
+        raise ConformanceError("InputChanged")
+    arguments = ["dotnet", str(paths["assembly"])]
+    observed = legacy.composition_controller_command(arguments, input=read_bounded(paths["response"], 1024**2))
+    modules = load_json(observed.stdout.encode("utf-8", errors="strict"))
+    if (observed.returncode or not isinstance(modules, list) or not modules
+            or any(not isinstance(module, dict) or set(module) != {"Id"}
+                   or module["Id"] not in legacy.DISCOVERY_MODULES for module in modules)
+            or [module["Id"] for module in modules] != reference["moduleIds"]
+            or dict(input_manifest(owner, list(files))) != files):
+        raise ConformanceError("ProofMismatch")
+    return {"qualification": False, "moduleCount": len(modules),
+            "moduleIdsSha256": digest(reference["moduleIds"]), "inputMapSha256": descriptor["inputMapSha256"],
+            "argvSha256": digest(arguments), "cwdSha256": hashlib.sha256(os.getcwd().encode("utf-8")).hexdigest(),
+            "assemblySha256": reference["assemblySha256"], "responseSha256": reference["responseSha256"]}
+
+
 def verify_discovery_materials(owner, preparation, performance, run_id):
     import conformance_legacy as legacy
     import discovery_evidence as discovery
@@ -1121,11 +1197,14 @@ def controller_child_main(argv=None):
         from conformance_sources import read_bounded
 
         request = load_json(read_bounded(args.request, 65536))
-        if (not isinstance(request, dict) or set(request) != {
+        fields = {
                 "schemaVersion", "phase", "owner", "repository", "runId", "rootId", "source",
                 "baselineSeal", "sdkPackage", "loggerPath"}
+        if isinstance(request, dict) and request.get("phase") == "reference":
+            fields.add("reference")
+        if (not isinstance(request, dict) or set(request) != fields
                 or type(request["schemaVersion"]) is not int or request["schemaVersion"] != 1
-                or request["phase"] not in ("historical", "controllers", "mutations")
+                or request["phase"] not in ("historical", "controllers", "mutations", "reference")
                 or not isinstance(request["runId"], str)
                 or str(uuid.UUID(request["runId"])) != request["runId"]):
             raise ConformanceError("EvidenceSchemaInvalid")
@@ -1159,6 +1238,12 @@ def controller_child_main(argv=None):
                     repository, owner, owner / relative_path(request["source"]),
                     sdk_package=owner / relative_path(request["sdkPackage"]),
                     logger_path=owner / relative_path(request["loggerPath"]), prepared_baselines=prepared)
+                verify_controller_baselines(run, request["baselineSeal"])
+            elif request["phase"] == "reference":
+                if request["sdkPackage"] is not None or request["loggerPath"] is not None:
+                    raise ConformanceError("EvidenceSchemaInvalid")
+                verify_controller_baselines(run, request["baselineSeal"])
+                result = replay_reference_consumer(owner, request["reference"])
                 verify_controller_baselines(run, request["baselineSeal"])
             else:
                 from conformance_evidence import admit_entity

@@ -58,6 +58,15 @@ jobs:
           mutations = inherited["discoveryMutations"]
           scenarios = inherited["discoveryScenarios"]
           materials = inherited["discoveryMaterials"]
+          reference = inherited["referenceConsumer"]
+          if type(reference.get("sequence")) is not int or reference["sequence"] <= 0:
+              raise SystemExit("WitnessMissing")
+          reference_parent_raw = read_bounded(
+              root / f"proofs/execution-command-{reference['sequence']:04}.json", 65536)
+          reference_parent = evidence.load_json(reference_parent_raw)
+          reference_output = read_bounded(root / "proofs/inherited-reference-result.json", 65536)
+          reference_observation = evidence.load_json(reference_output)
+          reference_inputs = read_bounded(root / "proofs/inherited-reference-inputs.json", 2 * 1024**2)
           try:
               verify_controller_tooling(root, inherited["tooling"], inputs, owner)
           except evidence.ConformanceError:
@@ -86,6 +95,30 @@ jobs:
                   or materials["feedPackages"] != 11 or materials["retainedBinaries"] != 3
                   or materials["graphs"] != 18 or materials["journeys"] != 9
                   or materials["manifestSha256"] != inherited["controllerPreparation"]["discovery"]["manifestSha256"]
+                  or reference["qualification"] is not False or reference["nativeContainment"] is not True
+                  or reference["moduleCount"] != 6 or reference["inputCount"] < 8
+                  or len(evidence.load_json(reference_inputs)) != reference["inputCount"]
+                  or reference["inputMapSha256"] != hashlib.sha256(reference_inputs).hexdigest()
+                  or reference["parentSha256"] != hashlib.sha256(reference_parent_raw).hexdigest()
+                  or set(reference_observation) != {
+                      "schemaVersion", "qualification", "phase", "runId", "rootId", "result"}
+                  or type(reference_observation["schemaVersion"]) is not int
+                  or reference_observation["schemaVersion"] != 1
+                  or reference_observation["qualification"] is not False
+                  or reference_observation["phase"] != "reference"
+                  or reference_observation["runId"] != inputs["runId"]
+                  or reference_observation["rootId"] != owner["rootId"]
+                  or reference_observation["result"] != {
+                      key: value for key, value in reference.items()
+                      if key not in ("nativeContainment", "parentSha256", "sequence", "inputCount")}
+                  or reference_parent["runId"] != inputs["runId"] or reference_parent["rootId"] != owner["rootId"]
+                  or reference_parent["sequence"] != reference["sequence"]
+                  or reference_parent["groupState"] != "Exited" or reference_parent["exitCode"] != 0
+                  or reference_parent["diagnosticCode"] != "None"
+                  or reference_parent["inputFiles"].get(
+                      "proofs/inherited-reference-inputs.json") != reference["inputMapSha256"]
+                  or reference_parent["outputFiles"] != {
+                      "proofs/inherited-reference-result.json": hashlib.sha256(reference_output).hexdigest()}
                   or inherited["passedParameters"] != 525 or inherited["scopes"] != 58
                   or len(inherited["commands"]) != 58):
               raise SystemExit("WitnessMissing")

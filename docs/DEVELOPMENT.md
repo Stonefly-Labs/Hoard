@@ -5610,6 +5610,25 @@ candidate identity, not merely totals. Full profiles, T046 and independent
 qualification remain unfinished. Cancelled superseded run40499315656 is not
 counted as acceptance.
 
+The next T046 continuation gives the existing standalone BCL discovery consumer
+its own native reference phase after complete solution preparation. It executes
+the original compiled consumer and serialized response without recompilation.
+The supervisor freezes the manifest, source/project/import/asset/sidecar/response
+closure, then checks the identical map before and after the invocation. The
+child admits the exact original presentation through the existing safe transport;
+the parent independently checks its module and actual argv/cwd digests against
+the original manifest, owning native command and exact output packet.
+The workflow separately re-admits that original input/output/parent linkage.
+Changed or omitted source/runtime inputs, foreign paths, direct package
+dependencies, unknown descriptor fields and output substitution reject.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 571 tests, zero
+failures/errors/unexpected diagnostic bytes, twenty native macOS skips, expected
+incomplete exit 2. `git diff --check`: passed. Linux confirmation of this new
+phase remains pending; every other inner-command receipt is still required.
+T046 remains unchecked, 52/86, implement/running; full-controller/profile/
+qualification flags remain false. Provider contracts, examples, diagrams,
+infrastructure and governance are unaffected by this test-only continuation.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

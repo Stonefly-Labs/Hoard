@@ -26,6 +26,74 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_native_reference_replay_requires_unchanged_complete_inputs_and_actual_original_consumer(self):
+        import conformance_legacy as legacy
+        from conformance_evidence import digest
+
+        for defect in (None, "changed", "omitted", "foreign", "output", "during", "source-omitted",
+                       "dependency", "unknown-field"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                source = root / "stores/reference"
+                source.mkdir(parents=True)
+                files = {
+                    "project": source / "ReferenceConsumer.csproj",
+                    "assembly": source / "ReferenceConsumer.dll",
+                    "assets": source / "obj/project.assets.json",
+                    "runtimeConfig": source / "ReferenceConsumer.runtimeconfig.json",
+                    "dependencies": source / "ReferenceConsumer.deps.json",
+                    "response": source / "observation.json",
+                    "code": source / "Program.cs",
+                }
+                for path in files.values():
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(b"<Project />" if path.suffix == ".csproj" else b"{}")
+                if defect == "dependency":
+                    files["project"].write_bytes(b'<Project><PackageReference Include="Unexpected" /></Project>')
+                reference = {key: str(path) for key, path in files.items() if key not in ("project", "code")}
+                reference.update(source=str(source), assemblySha256=file_sha256(files["assembly"]),
+                                 responseSha256=file_sha256(files["response"]), moduleIds=["fixture.protocol.one"])
+                if defect == "unknown-field":
+                    reference["private"] = "synthetic-canary"
+                manifest = root / "stores/discovery-evidence.json"
+                manifest.write_bytes(canonical_bytes({"referenceConsumer": reference}))
+                inputs = {path.relative_to(root).as_posix(): file_sha256(path)
+                          for path in (*files.values(), manifest)}
+                if defect == "omitted":
+                    inputs.pop(files["response"].relative_to(root).as_posix())
+                if defect == "source-omitted":
+                    inputs.pop(files["code"].relative_to(root).as_posix())
+                if defect == "foreign":
+                    reference["assembly"] = str(root.parent / "ReferenceConsumer.dll")
+                    manifest.write_bytes(canonical_bytes({"referenceConsumer": reference}))
+                    inputs[manifest.relative_to(root).as_posix()] = file_sha256(manifest)
+                packet = root / "proofs/reference-inputs.json"
+                packet.write_bytes(canonical_bytes(inputs))
+                descriptor = {
+                    "manifestPath": manifest.relative_to(root).as_posix(), "manifestSha256": file_sha256(manifest),
+                    "inputMapPath": packet.relative_to(root).as_posix(), "inputMapSha256": file_sha256(packet)}
+                if defect == "changed":
+                    files["response"].write_bytes(b"changed")
+                result = SimpleNamespace(returncode=0, stdout=json.dumps(
+                    [{"Id": "fixture.protocol.two" if defect == "output" else "fixture.protocol.one"}]))
+                def command(*args, **kwargs):
+                    if defect == "during":
+                        files["response"].write_bytes(b"changed while executing")
+                    return result
+                with patch.object(legacy, "composition_controller_command", side_effect=command) as invoke:
+                    if defect:
+                        with self.assertRaises(ConformanceError):
+                            inherited.replay_reference_consumer(root, descriptor)
+                    else:
+                        observed = inherited.replay_reference_consumer(root, descriptor)
+                        self.assertEqual(observed["moduleCount"], 1)
+                        self.assertEqual(observed["moduleIdsSha256"], digest(reference["moduleIds"]))
+                        invoke.assert_called_once_with(
+                            ["dotnet", str(files["assembly"])], input=b"{}")
+                    if defect in ("changed", "omitted", "foreign", "source-omitted", "dependency", "unknown-field"):
+                        invoke.assert_not_called()
+
     def test_compatibility_fixture_source_baseline_is_derived_from_immutable_git_bytes(self):
         import hashlib
 

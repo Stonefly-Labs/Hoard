@@ -334,6 +334,15 @@ exact `87e9399` now also passes the precise source break/repair and all three
 native binary controls, closing T056's isolated control scope. Implementation
 continues at 52/86; full compatibility/composition profiles and independent
 evaluation remain unfinished.
+The next T046 increment replays the unchanged standalone BCL discovery consumer
+inside a separately owned native reference phase, without rebuilding it.
+The parent binds its original discovery manifest, complete frozen input map,
+argv/cwd digests and exact child output to the settled native command record.
+Missing or changed source/runtime inputs, dependency additions, foreign paths
+and substituted output reject. Native confirmation of this new component is
+pending; it does not supply individual receipts for every other inner controller
+command. T046 stays unchecked and full-controller/profile qualification stays
+false.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

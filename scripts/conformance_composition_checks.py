@@ -51,8 +51,11 @@ def _controller_incomplete(phase, code, lines):
                       "events": [dict(event) for event in events if event["event"] == "control"]}), flush=True)
 
 
-def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_package=None, logger_path=None):
-    if phase not in ("historical", "controllers", "mutations"):
+def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_package=None, logger_path=None,
+                      reference=None):
+    if phase not in ("historical", "controllers", "mutations", "reference"):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if (phase == "reference") != (reference is not None):
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
     if phase == "historical" and (run.command_sequence != 0 or (run.root / "feed/candidate").exists()):
         raise evidence.ConformanceError("InputChanged")
@@ -66,11 +69,15 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
         "sdkPackage": None if sdk_package is None else sdk_package.relative_to(run.root).as_posix(),
         "loggerPath": None if logger_path is None else logger_path.relative_to(run.root).as_posix(),
     }
+    if reference is not None:
+        request["reference"] = reference
     write_new(request_path, evidence.canonical_bytes(request))
     paths = [request_path, script]
     if baseline_seal is not None:
         paths.append(run.root / baseline_seal["path"])
     paths.extend(path for path in (sdk_package, logger_path) if path is not None)
+    if reference is not None:
+        paths.extend(run.root / evidence.relative_path(reference[key]) for key in ("manifestPath", "inputMapPath"))
     if phase == "mutations":
         paths.append(run.root / "proofs/composition-inputs.json")
     for path in paths:
@@ -92,7 +99,7 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
     if failures:
         _controller_incomplete(phase, failures[-1], [evidence.canonical_bytes(dict(event)) for event in result.events])
         raise evidence.ConformanceError(failures[-1])
-    ordinals = ((2, 3, 4, 0) if phase == "historical" else
+    ordinals = ((0,) if phase == "reference" else (2, 3, 4, 0) if phase == "historical" else
                 (*range(1, 25), 0) if phase == "mutations" else (1, 2, 3, 4, 0))
     expected_events = [{"event": "control", "code": "None", "value": number} for number in ordinals]
     if (result.exit_code or list(result.events) != expected_events
@@ -116,6 +123,48 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
             or not isinstance(value["result"], dict)):
         raise evidence.ConformanceError("ProofMismatch")
     return value["result"], result.execution_record_sha256
+
+
+def _native_reference_consumer(run, repository, source, controllers, baseline_seal):
+    preparation = controllers["phases"]["discovery"]
+    manifest = run.root / evidence.relative_path(preparation["manifestPath"])
+    raw = read_bounded(manifest, 16 * 1024**2)
+    if hashlib.sha256(raw).hexdigest() != preparation["manifestSha256"]:
+        raise evidence.ConformanceError("InputChanged")
+    reference = evidence.load_json(raw)["referenceConsumer"]
+    source_directory = Path(reference["source"])
+    legacy.no_symlinks(source_directory)
+    if (not source_directory.is_absolute() or source_directory == run.root
+            or not source_directory.is_relative_to(run.root)
+            or not source_directory.resolve(strict=True).is_relative_to(run.root)):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    project = source_directory / "ReferenceConsumer.csproj"
+    code = [path for path in source_directory.rglob("*.cs")
+            if not {"bin", "obj"}.intersection(path.relative_to(source_directory).parts)]
+    files = controller_read_inputs(run.root, {}, extra=(
+        manifest, project, *code, *(Path(reference[key]) for key in
+                                  ("assembly", "assets", "runtimeConfig", "dependencies", "response"))))
+    closure = run.root / "proofs/inherited-reference-inputs.json"
+    write_new(closure, evidence.canonical_bytes(files))
+    for relative in files:
+        (run.root / relative).chmod(0o400)
+    descriptor = {
+        "manifestPath": preparation["manifestPath"], "manifestSha256": preparation["manifestSha256"],
+        "inputMapPath": closure.relative_to(run.root).as_posix(), "inputMapSha256": evidence.digest(files)}
+    if dict(evidence.input_manifest(run.root, list(files))) != files:
+        raise evidence.ConformanceError("InputChanged")
+    observed, parent = _controller_phase(
+        run, repository, source, "reference", baseline_seal=baseline_seal, reference=descriptor)
+    expected = {
+        "qualification": False, "moduleCount": len(reference["moduleIds"]),
+        "moduleIdsSha256": evidence.digest(reference["moduleIds"]), "inputMapSha256": evidence.digest(files),
+        "argvSha256": evidence.digest(["dotnet", reference["assembly"]]),
+        "cwdSha256": hashlib.sha256(str(source).encode("utf-8")).hexdigest(),
+        "assemblySha256": reference["assemblySha256"], "responseSha256": reference["responseSha256"]}
+    if (observed != expected or dict(evidence.input_manifest(run.root, list(files))) != files):
+        raise evidence.ConformanceError("ProofMismatch")
+    return {**observed, "nativeContainment": True, "parentSha256": parent,
+            "sequence": run.command_sequence, "inputCount": len(files)}
 
 
 def _prepare_solution_formatting(run, source, config, feed):
@@ -335,6 +384,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         run, repository, source, "controllers", baseline_seal=baseline_seal,
         sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
     _prepare_solution_formatting(run, source, config, feed)
+    reference_consumer = _native_reference_consumer(run, repository, source, controllers, baseline_seal)
     historical = verify_controller_baselines(run, baseline_seal)
     root = run.root / "stores/inherited-runtime"
     root.mkdir(mode=0o700)
@@ -495,6 +545,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
         "preparedFormatting": formatting,
         "discoveryMaterials": materials,
+        "referenceConsumer": reference_consumer,
         "discoveryScenarios": {
             "qualification": False, "sha256": evidence.digest(admitted["discoveryCoverage"]),
             "parameters": len(admitted["discoveryCoverage"]["scenarios"]),

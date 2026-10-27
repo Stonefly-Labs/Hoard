@@ -618,6 +618,31 @@ portable independent verification and qualification remain unfinished. Product/
 provider contracts, examples, diagrams, infrastructure and governance are
 unaffected by this evidence checkpoint.
 
+### T046 independently owned unchanged reference invocation
+
+The original standalone JSON/BCL discovery consumer now executes in a separate
+native reference phase after all solution preparation. It is not recompiled.
+The supervisor freezes the full source/project/import/asset/sidecar/response
+closure and original discovery manifest. The child admits only the exact
+manifest/descriptor schema, owned non-symlink paths, BCL-only project and
+unchanged complete declared inputs before/after actual execution. The existing
+transport independently checks the original presentation, not merely a count.
+
+The native parent binds request/script/historical seal/manifest/input descriptor,
+actual argv/cwd digests and exact output bytes to its original settled command
+record. The workflow re-admits the native parent, original output packet and
+input-map linkage. Modeled controls reject changed/omitted/during-execution
+inputs, missing source, foreign paths, added package dependencies, unknown fields,
+substituted module output and false or foreign native bindings.
+
+Full safe tooling: 571 tests, zero failures/errors/unexpected diagnostic bytes,
+twenty native macOS skips, expected incomplete exit 2. `git diff --check`: passed.
+Native confirmation is pending. This is one separately owned inner-controller
+component, not individual native receipts for every controller invocation.
+T046 remains unchecked, 52/86, implement/running. Full-controller/profile/
+qualification flags remain false. Production/provider contracts, examples,
+diagrams, infrastructure and governance are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

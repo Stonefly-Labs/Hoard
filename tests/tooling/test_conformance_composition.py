@@ -213,12 +213,20 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
         from conformance_execution import CommandResult
-        for phase, mutation in ((phase, mutation) for phase in ("historical", "mutations")
+        for phase, mutation in ((phase, mutation) for phase in ("historical", "mutations", "reference")
                                 for mutation in ("none", "changed-output", "missing-phase", "retained-process", "child-failed")):
             with self.subTest(phase=phase, mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
                 (root / "proofs/composition-inputs.json").write_bytes(b"{}")
+                reference = None
+                if phase == "reference":
+                    reference = {}
+                    for role in ("manifest", "inputMap"):
+                        path = root / "proofs" / (role + ".json")
+                        path.write_bytes(b"{}")
+                        reference[role + "Path"] = path.relative_to(root).as_posix()
+                        reference[role + "Sha256"] = evidence.file_sha256(path)
                 source = root / "stores/source"
                 (source / "scripts").mkdir(parents=True)
                 (source / "scripts/conformance_inherited.py").write_bytes(b"frozen controller")
@@ -245,10 +253,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     self.assertEqual((output.relative_to(root).as_posix(),), kwargs["execution_outputs"])
                     if phase == "mutations":
                         self.assertIn("proofs/composition-inputs.json", kwargs["execution_inputs"])
+                    if phase == "reference":
+                        self.assertEqual(evidence.load_json(request.read_bytes())["reference"], reference)
+                        self.assertTrue({reference["manifestPath"], reference["inputMapPath"]}
+                                        <= set(kwargs["execution_inputs"]))
                     run.command_sequence = 1
-                    ordinals = (2, 3, 4, 0) if phase == "historical" else (*range(1, 25), 0)
+                    ordinals = ((0,) if phase == "reference" else (2, 3, 4, 0) if phase == "historical"
+                                else (*range(1, 25), 0))
                     if mutation == "missing-phase":
-                        ordinals = (*ordinals[:1], *ordinals[2:])
+                        ordinals = ordinals[:-1]
                     events = tuple({"event": "control", "code": "None", "value": number}
                                    for number in ordinals)
                     if mutation == "child-failed":
@@ -259,7 +272,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 run.command = mock.Mock(side_effect=command)
                 run.read_execution_record = mock.Mock(side_effect=lambda sequence: evidence.canonical_bytes(record))
                 if mutation == "none":
-                    result, parent = checks._controller_phase(run, ROOT, source, phase)
+                    result, parent = checks._controller_phase(run, ROOT, source, phase, reference=reference)
                     self.assertEqual({"seal": "bound"}, result)
                     self.assertEqual(evidence.digest(record), parent)
                 else:
@@ -267,9 +280,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     with contextlib.redirect_stdout(output), self.assertRaisesRegex(
                             evidence.ConformanceError, "OutputLimitExceeded" if mutation == "child-failed"
                             else "ProofMismatch"):
-                        checks._controller_phase(run, ROOT, source, phase)
+                        checks._controller_phase(run, ROOT, source, phase, reference=reference)
                     if mutation == "child-failed":
-                        self.assertEqual(([2, 3, 0] if phase == "historical" else [1, 2, 0]), [event["value"] for event in
+                        expected = [0, 0] if phase == "reference" else [2, 3, 0] if phase == "historical" else [1, 2, 0]
+                        self.assertEqual(expected, [event["value"] for event in
                                                    evidence.load_json(output.getvalue().encode())["events"]])
 
     def test_workflow_checks_retained_historical_seal_after_stores_are_released(self):
@@ -284,7 +298,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                          "missing-adapter", "missing-discovery-suite", "tooling-skip",
                          "missing-tooling-test", "stale-tooling-source", "tooling-native-claim",
                          "missing-feed-package", "missing-retained-binary", "missing-material-graph",
-                         "missing-material-journey", "materials-qualification", "materials-foreign-manifest"):
+                         "missing-material-journey", "materials-qualification", "materials-foreign-manifest",
+                         "reference-modules", "reference-native", "reference-inputs",
+                         "reference-parent", "reference-output"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -334,6 +350,31 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 elif mutation == "false-qualification":
                     baseline["qualification"] = True
                 raw = evidence.canonical_bytes(baseline)
+                reference_inputs = evidence.canonical_bytes({f"stores/input-{number}": "c" * 64 for number in range(9)})
+                reference = {
+                    "qualification": False, "moduleCount": 6, "moduleIdsSha256": "a" * 64,
+                    "inputMapSha256": hashlib.sha256(reference_inputs).hexdigest(),
+                    "assemblySha256": "b" * 64, "responseSha256": "c" * 64}
+                reference_output = evidence.canonical_bytes({
+                    "schemaVersion": 1, "qualification": False, "phase": "reference",
+                    "runId": "run", "rootId": "root", "result": dict(reference)})
+                reference_parent = {
+                    "runId": "foreign" if mutation == "reference-parent" else "run",
+                    "rootId": "root", "sequence": 1, "groupState": "Exited",
+                    "exitCode": 0, "diagnosticCode": "None",
+                    "inputFiles": {"proofs/inherited-reference-inputs.json": reference["inputMapSha256"]},
+                    "outputFiles": {"proofs/inherited-reference-result.json":
+                                    "0" * 64 if mutation == "reference-output"
+                                    else hashlib.sha256(reference_output).hexdigest()}}
+                parent_raw = evidence.canonical_bytes(reference_parent)
+                (root / "proofs/execution-command-0001.json").write_bytes(parent_raw)
+                (root / "proofs/inherited-reference-result.json").write_bytes(reference_output)
+                (root / "proofs/inherited-reference-inputs.json").write_bytes(reference_inputs)
+                reference.update(nativeContainment=mutation != "reference-native",
+                                 sequence=1, parentSha256=hashlib.sha256(parent_raw).hexdigest(),
+                                 inputCount=8 if mutation == "reference-inputs" else 9)
+                if mutation == "reference-modules":
+                    reference["moduleCount"] = 5
                 summary = {
                     "qualification": False, "profileComplete": False, "passedComponents": 36,
                     "admittedSnapshots": 110, "processResourcesReleased": True,
@@ -345,6 +386,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         "historicalBaselineSealSha256": hashlib.sha256(raw).hexdigest(),
                         "passedParameters": 525, "scopes": 58, "commands": [{}] * 58,
                         "controllerPreparation": {"discovery": {"manifestSha256": "d" * 64}},
+                        "referenceConsumer": reference,
                         "discoveryMutations": {
                             "qualification": mutation == "mutation-qualification",
                             "mutations": 11 if mutation == "missing-mutation" else 12,
