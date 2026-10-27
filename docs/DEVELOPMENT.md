@@ -4939,6 +4939,43 @@ tooling tests pass, nineteen native skips. No frozen assertion changed. Native
 inherited execution, complete controller/mutation/freshness acceptance, public
 profile integration and T046 remain unfinished; task count stays 48/86.
 
+`conformance_evidence.inspect_inherited_runtime_attempts` now owns independent
+whole-inventory inspection. It derives exact class scopes from both frozen
+discovery inventories, supplies its own complete expected parameter sets, and
+re-admits every scope's raw manifest, owner, witnesses, completion and proofs.
+The union must include every composition and boundary scope exactly once.
+Scope inputs share source/package/environment/run identity and owner bytes;
+runtime/configuration inputs must also agree within each assembly. Changed
+case assignments, partial theories, omitted boundaries, replayed attempts or
+executions and resealed cross-scope inputs reject. Valid failed transport
+remains inspectable but never becomes a complete passing execution. Results
+stay immutable, nonqualifying and separate from historical controller, native
+containment and public-profile acceptance. This internal inspector is not a
+new public CLI or evidence of those still-open gates.
+
+The inspector re-admits all 525 retained actual parameters across 58 scopes at
+the earlier `4f99a9b` source, after checking the recorded controller inputs,
+runtime/package bytes and snapshot with its explicitly bound prepared consumer
+lock. Receipt SHA-256:
+`4e154892a495985df4277f1d4eac543c72c95d4b8e780dda6142882c59f63a86`.
+This is historical transport inspection, not fresh execution or retained
+parent-clock corroboration; its bounds come from the retained witnesses.
+
+At dirty-local source
+`824ab5a64b4a610f996a9d4ec3669306adb4e762fca039766008452103c8e9ee`,
+fresh seventeen-package construction/locked replay and foundation preparation
+pass. Both whole-CP and class-CP attempts reach the unchanged two-minute timeout
+(29/36 and 30/36 passed); all 36 parameters/110 snapshots then pass in fourteen
+complete method scopes. No theory is split. Fresh lifecycle preparation fails
+in the host journeys on three attempts, including a controlled-environment run.
+Related same-binary probes observe cancellation at the unchanged twenty-second
+fixture deadline. One controlled probe passes both hosts, but fresh preparation
+still fails, so neither the cause nor an environment repair is established.
+The later controller phases and fresh inherited execution have not run. Earlier
+failures remain failures; neither timeouts nor assertions were weakened.
+`python3 -m unittest discover -s tests/tooling -v` passes 516 tests with nineteen
+native skips. T046 and the implementation stage remain incomplete.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

@@ -4324,6 +4324,136 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                             with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
                                 self.ingest(**options)
 
+    def inherited_transports(self, defect=None):
+        import conformance_inherited as inherited
+
+        raw = (ROOT / inherited.INVENTORY_PATH).read_bytes()
+        frozen = evidence.load_json(raw)
+        sources = frozen["sourceFiles"]
+        discoveries = {}
+        scopes = {}
+        groups = {row["fullyQualifiedName"]: row["group"] for row in frozen["entries"]}
+        for assembly in sorted(inherited.ASSEMBLIES):
+            discovered = []
+            for entry in frozen["entries"]:
+                name = entry["fullyQualifiedName"]
+                if name.startswith(assembly + "."):
+                    discovered.extend({
+                        "fullyQualifiedName": name,
+                        "testIdentity": name + '(testCaseSha256: "' + f"{index:064x}" + '")',
+                    } for index in range(entry["parameterCount"]))
+            discoveries[assembly] = evidence.canonical_bytes(discovered)
+            for row in discovered:
+                scopes.setdefault((assembly, row["fullyQualifiedName"].rsplit(".", 1)[0]), []).append({
+                    **row, "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
+                    "bindingId": "none", "matrixId": "inherited." + groups[row["fullyQualifiedName"]],
+                    "caseId": "inherited-" + groups[row["fullyQualifiedName"]], "assertionSymbol": None,
+                })
+        inputs = copy.deepcopy(self.inputs)
+        inputs.update(profileId="composition", sourceManifest=sources, sourceManifestSha256=evidence.digest(sources))
+        inputs["packages"][0]["packageId"] = "Hoard.Testing.Conformance"
+        inputs["bindings"] = []
+        inputs["budgets"]["profileSeconds"] = 3600
+        attempts = []
+        reused_attempt, reused_execution = str(uuid.uuid4()), str(uuid.uuid4())
+        for scope_index, ((assembly, test_class), expected) in enumerate(sorted(scopes.items())):
+            local = copy.deepcopy(inputs)
+            owner = copy.deepcopy(self.owner)
+            if defect == "mixed-configuration" and scope_index == 1:
+                local["configurationSha256"] = "0" * 64
+            elif defect == "mixed-source" and scope_index == 1:
+                local["sourceRevision"] = "0" * 40
+            elif defect == "wrong-source":
+                local["sourceManifest"] = {**sources, "foreign.cs": "0" * 64}
+                local["sourceManifestSha256"] = evidence.digest(local["sourceManifest"])
+            elif defect == "mixed-owner" and scope_index == 1:
+                owner["rootId"] = "foreign-root"
+            if defect == "partial-theory" and scope_index == 1:
+                expected = expected[:-1]
+            elif defect == "wrong-case" and scope_index == 1:
+                expected = [{**row, "caseId": "foreign-case"} for row in expected]
+            attempt_id = reused_attempt if defect == "reused-attempt" else str(uuid.uuid4())
+            manifest = {
+                **self.manifest, "inputSha256": evidence.digest(local), "attemptId": attempt_id,
+                "expected": expected,
+                "assemblies": [{**self.manifest["assemblies"][0], "id": "test-assembly"}],
+                "packages": [{**self.manifest["packages"][0], "id": "Hoard.Testing.Conformance"}],
+            }
+            records, proofs = [], {}
+            for row_index, row in enumerate(expected):
+                execution = (reused_execution if defect == "reused-execution" and row_index == 0
+                             else str(uuid.uuid4()))
+                failed = defect == "failed" and scope_index == row_index == 0
+                proof = {
+                    **self.proof, "executionId": execution, "attemptId": attempt_id,
+                    "testIdentity": row["testIdentity"], "bindingId": "none", "matrixId": row["matrixId"],
+                    "caseId": row["caseId"], "inputSha256": evidence.digest(local),
+                    "manifestSha256": evidence.digest(manifest), "ownerSha256": evidence.digest(owner),
+                    "status": "Failed" if failed else "Passed", "failureKind": "Unknown" if failed else "None",
+                }
+                proofs[f"proof-{execution}.json"] = evidence.canonical_bytes(proof)
+                records.append({
+                    **self.witness, "executionId": execution, "testIdentity": row["testIdentity"],
+                    "bindingId": "none", "matrixId": row["matrixId"], "inputSha256": evidence.digest(local),
+                    "status": proof["status"], "proofSha256": evidence.digest(proof),
+                })
+            witnesses = b"".join(evidence.canonical_bytes(row) + b"\n" for row in records)
+            failed = defect == "failed" and scope_index == 0
+            completion = {
+                **self.completion, "attemptId": attempt_id, "inputSha256": evidence.digest(local),
+                "manifestSha256": evidence.digest(manifest), "recordsSha256": hashlib.sha256(witnesses).hexdigest(),
+                "observedCount": len(records), "expectedCount": len(expected),
+                "diagnosticCode": "UnknownDiagnostic" if failed else "None", "complete": not failed,
+            }
+            attempts.append({
+                "assembly": assembly, "testClass": test_class, "transport": {
+                    "inputs": local, "manifest_data": evidence.canonical_bytes(manifest),
+                    "owner_data": evidence.canonical_bytes(owner), "witnesses_data": witnesses, "proofs": proofs,
+                    "completion_data": evidence.canonical_bytes(completion),
+                    "expected_tests": {row["testIdentity"]: ("none", row["matrixId"]) for row in expected},
+                    "manifest_sha256": evidence.digest(manifest), "owner_sha256": evidence.digest(owner),
+                    "started_ms": 9, "ended_ms": 12,
+                },
+            })
+        return {"inventory_data": raw, "sources": sources, "discoveries": discoveries, "attempts": attempts}
+
+    def test_inherited_class_scopes_re_admit_every_parameter_without_qualifying_controllers(self):
+        options = self.inherited_transports()
+        inspected = evidence.inspect_inherited_runtime_attempts(**options)
+        self.assertTrue(inspected["executionComplete"])
+        self.assertFalse(inspected["qualification"])
+        self.assertFalse(inspected["profileComplete"])
+        self.assertEqual(inspected["expectedParameters"], inspected["passedParameters"])
+        actual = {row["testIdentity"] for scope in inspected["scopes"]
+                  for row in scope["observation"]["witnesses"]}
+        discovered = {row["testIdentity"] for data in options["discoveries"].values()
+                      for row in evidence.load_json(data)}
+        self.assertEqual(actual, discovered)
+        with self.assertRaises(TypeError):
+            inspected["scopes"][0]["observation"]["proofs"]["foreign"] = "0" * 64
+        failed = evidence.inspect_inherited_runtime_attempts(**self.inherited_transports("failed"))
+        self.assertFalse(failed["executionComplete"])
+        self.assertEqual(failed["passedParameters"], failed["expectedParameters"] - 1)
+        self.assertEqual(failed["scopes"][0]["observation"]["diagnosticCode"], "UnknownDiagnostic")
+
+    def test_inherited_scopes_reject_omission_replay_and_resealed_cross_scope_inputs(self):
+        for defect in ("mixed-configuration", "mixed-source", "wrong-source", "mixed-owner",
+                       "partial-theory", "wrong-case", "reused-attempt", "reused-execution",
+                       "missing-scope", "duplicate-scope", "missing-boundaries", "missing-discovery"):
+            with self.subTest(defect=defect):
+                options = self.inherited_transports(defect)
+                if defect == "missing-scope":
+                    options["attempts"].pop()
+                elif defect == "duplicate-scope":
+                    options["attempts"][-1] = options["attempts"][0]
+                elif defect == "missing-boundaries":
+                    options["attempts"] = [row for row in options["attempts"]
+                                           if row["assembly"] == "Hoard.Composition.Tests"]
+                elif defect == "missing-discovery":
+                    options["discoveries"].pop("Hoard.Architecture.Tests")
+                with self.assertRaises(evidence.ConformanceError):
+                    evidence.inspect_inherited_runtime_attempts(**options)
+
     def test_runtime_inspection_freezes_unqualified_transport_without_skipping_validation(self):
         self.inputs["mode"] = "qualification"
         input_sha = evidence.digest(self.inputs)

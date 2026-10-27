@@ -1678,6 +1678,88 @@ def inspect_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data
         "qualification": False, "inputs": captured, "inputsSha256": digest(captured), "observation": observed})
 
 
+def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, attempts):
+    """Re-admit the complete frozen inventories across disjoint class scopes."""
+    from conformance_inherited import execution_scopes, inventory
+
+    sources = _hash_map(sources)
+    scopes = execution_scopes(discoveries, inventory(inventory_data, sources))
+    inventory_sha = hashlib.sha256(inventory_data).hexdigest()
+    discovery_hashes = MappingProxyType({
+        assembly: hashlib.sha256(raw).hexdigest() for assembly, raw in discoveries.items()})
+    admitted = []
+    seen_scopes, seen_attempts, seen_executions = set(), set(), set()
+    common_inputs = owner_sha = None
+    assembly_inputs = {}
+    observed_count = passed_count = 0
+    for attempt in attempts:
+        if (len(admitted) >= len(scopes) or not isinstance(attempt, dict)
+                or set(attempt) != {"assembly", "testClass", "transport"}
+                or not isinstance(attempt["assembly"], str) or not isinstance(attempt["testClass"], str)
+                or not isinstance(attempt["transport"], dict)):
+            raise ConformanceError("EvidenceSchemaInvalid")
+        key = (attempt["assembly"], attempt["testClass"])
+        if key not in scopes or key in seen_scopes:
+            raise ConformanceError("WitnessMissing")
+        expected = {row["testIdentity"]: row for row in scopes[key]}
+        transport = attempt["transport"]
+        allowed = {
+            "inputs", "manifest_data", "owner_data", "witnesses_data", "proofs", "completion_data",
+            "expected_tests", "manifest_sha256", "owner_sha256", "started_ms", "ended_ms",
+            "origin_inputs", "original_inputs",
+        }
+        required = allowed - {"expected_tests", "origin_inputs", "original_inputs"}
+        if not required <= transport.keys() or transport.keys() - allowed:
+            raise ConformanceError("EvidenceSchemaInvalid")
+        inspected = inspect_runtime_attempt(**{
+            **transport, "expected_tests": {
+                identity: (row["bindingId"], row["matrixId"]) for identity, row in expected.items()},
+        })
+        inputs, observation = inspected["inputs"], inspected["observation"]
+        manifest = load_json(transport["manifest_data"])
+        if (inputs["profileId"] != "composition" or inputs["sourceManifest"] != sources
+                or inputs["sourceManifestSha256"] != digest(sources)
+                or {row["testIdentity"]: row for row in manifest["expected"]} != expected
+                or manifest["attemptId"] in seen_attempts):
+            raise ConformanceError("InputChanged")
+        shared = digest({name: value for name, value in inputs.items()
+                         if name not in ("runtimeAssemblies", "configurationSha256", "invocation")})
+        per_assembly = digest({
+            "runtimeAssemblies": inputs["runtimeAssemblies"],
+            "configurationSha256": inputs["configurationSha256"],
+        })
+        if (common_inputs is not None and shared != common_inputs
+                or owner_sha is not None and transport["owner_sha256"] != owner_sha
+                or key[0] in assembly_inputs and assembly_inputs[key[0]] != per_assembly):
+            raise ConformanceError("InputChanged")
+        executions = {row["executionId"] for row in observation["witnesses"]}
+        if executions & seen_executions:
+            raise ConformanceError("ProofMismatch")
+        seen_scopes.add(key)
+        seen_attempts.add(manifest["attemptId"])
+        seen_executions.update(executions)
+        common_inputs, owner_sha = shared, transport["owner_sha256"]
+        assembly_inputs[key[0]] = per_assembly
+        observed_count += len(observation["witnesses"])
+        passed_count += sum(row["status"] == "Passed" for row in observation["witnesses"])
+        admitted.append(MappingProxyType({
+            "assembly": key[0], "testClass": key[1], "attemptId": manifest["attemptId"],
+            "inputSha256": inspected["inputsSha256"], "manifestSha256": transport["manifest_sha256"],
+            "ownerSha256": owner_sha, "observation": observation,
+        }))
+    if seen_scopes != scopes.keys():
+        raise ConformanceError("WitnessMissing")
+    expected_count = sum(map(len, scopes.values()))
+    return MappingProxyType({
+        "qualification": False, "profileComplete": False,
+        "executionComplete": observed_count == passed_count == expected_count
+        and all(row["observation"]["diagnosticCode"] == "None" for row in admitted),
+        "expectedParameters": expected_count, "observedParameters": observed_count,
+        "passedParameters": passed_count, "scopes": tuple(admitted),
+        "inventorySha256": inventory_sha, "discoverySha256": discovery_hashes,
+    })
+
+
 def _ingest_metadata_arguments(inputs, raw, origins, originals, prior_ids, binding_id):
     if raw and not any(binding["bindingId"] == binding_id and binding["category"] == "metadata"
                        for binding in inputs["bindings"]):

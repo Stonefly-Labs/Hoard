@@ -199,3 +199,14 @@ def admit_discovery(data, methods, *, assembly):
     if dict(counts) != {name: entry["parameterCount"] for name, entry in expected.items()}:
         raise ConformanceError("WitnessMissing")
     return sorted(admitted, key=lambda row: row["testIdentity"])
+
+
+def execution_scopes(discoveries, methods):
+    if not isinstance(discoveries, dict) or set(discoveries) != ASSEMBLIES:
+        raise ConformanceError("WitnessMissing")
+    scopes = {}
+    for assembly in sorted(ASSEMBLIES):
+        for row in admit_discovery(discoveries[assembly], methods, assembly=assembly):
+            key = (assembly, row["fullyQualifiedName"].rsplit(".", 1)[0])
+            scopes.setdefault(key, []).append(row)
+    return {key: tuple(rows) for key, rows in sorted(scopes.items())}

@@ -135,6 +135,13 @@ independently admits all 509 inherited composition parameters and 16 boundary
 parameters in 58 exact class scopes, preserving the two-minute child timeout.
 Native inherited execution, complete controller/mutation acceptance and public
 profile integration remain open; T046 is still unchecked.
+The internal inherited-runtime inspector now re-admits raw logger transport
+against both complete discovery inventories and exact class partitions. It
+rejects omitted boundaries/theory parameters, replayed attempts/executions and
+mixed source, owner or per-assembly inputs; failed witnesses remain failed.
+This inspection alone does not establish native/controller qualification.
+Fresh local controller re-preparation currently fails in the lifecycle-host
+journeys; the earlier 525-pass receipt is not a newer fresh execution.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

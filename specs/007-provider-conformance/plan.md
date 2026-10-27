@@ -156,6 +156,13 @@ successful native replay or complete inherited controller/profile result.
 
 ### Fresh inherited controllers and complete local parameter execution
 
+The committed evidence inspector now independently derives complete class
+partitions from both frozen discovery inventories and re-admits their raw
+runtime transports. It enforces full parameter union, exact source/case/owner
+agreement, stable per-assembly inputs and globally distinct attempts/executions.
+Failed witnesses remain failed; complete inspection is explicitly nonqualifying.
+This does not complete T046's fresh historical controller/native/profile gates.
+
 Exact `6178a775281ed8a17742d82524b12de340b9762d` subsequently passes native
 [run40435964976](https://github.com/Stonefly-Labs/Hoard/actions/runs/40435964976),
 job121964573833. It admits the 36 CP proofs/110 snapshots and all 509 inherited
@@ -203,6 +210,28 @@ preparation/component results, not complete historical controller/mutation/
 freshness acceptance or public profile integration. T046 remains unchecked,
 task count remains 48/86, and implementation remains running. Product contracts,
 provider boundaries, example behavior and architecture diagrams are unaffected.
+
+The new inspector also re-admits that retained actual 525-parameter transport
+across all 58 scopes. It checks recorded controller inputs, runtime/package bytes
+and the snapshot with its explicitly bound prepared consumer lock. Historical
+inspection receipt SHA-256:
+`4e154892a495985df4277f1d4eac543c72c95d4b8e780dda6142882c59f63a86`.
+This is not fresh execution or parent-clock corroboration: inspection bounds
+are derived from the retained witnesses, not retained owning-controller clocks.
+
+At dirty-local source
+`824ab5a64b4a610f996a9d4ec3669306adb4e762fca039766008452103c8e9ee`,
+fresh seventeen-package construction/locked replay and foundation preparation
+pass. Whole-CP and class-CP attempts retain incomplete 29/36 and 30/36 results at
+the unchanged two-minute deadline. Fourteen complete method scopes then admit
+all 36 CP parameters/110 snapshots without splitting theories. Fresh lifecycle
+preparation fails in the host journeys on three attempts, including a controlled
+environment. Same-binary diagnostic probes observe cancellation at the unchanged
+twenty-second fixture deadline. A controlled probe passes both hosts but does
+not repair fresh preparation; the cause remains unresolved. Subsequent
+controller phases and fresh inherited execution have not run. All 516 tooling
+tests pass with nineteen native skips. No assertion, inventory or budget is
+weakened; T046 remains unchecked and implementation remains running at 48/86.
 
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
