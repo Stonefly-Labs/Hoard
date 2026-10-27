@@ -497,6 +497,60 @@ def run_discovery_mutations(repository, owner, source, sources, sdk, *, sdk_pack
         for row in negatives]}
 
 
+def verify_discovery_mutation_membership(owner, mutations, scenarios):
+    import conformance_legacy as legacy
+    import discovery_evidence as discovery
+    from conformance_case_catalog import INHERITED_GUARD_FAILURES
+    from conformance_sources import read_bounded
+
+    recipes = {row[0]: row[4] for row in discovery.MUTATIONS}
+    if not isinstance(mutations, dict):
+        raise ConformanceError("WitnessMissing")
+    rows = mutations.get("mutations")
+    if (mutations.get("qualification") is not False or not isinstance(rows, list) or len(rows) != len(recipes)
+            or any(not isinstance(row, dict) or not isinstance(row.get("id"), str) for row in rows)
+            or {row["id"] for row in rows} != set(recipes)
+            or not isinstance(scenarios, (tuple, list, set, frozenset))
+            or any(not isinstance(name, str) for name in scenarios)
+            or len(scenarios) != len(set(scenarios))):
+        raise ConformanceError("WitnessMissing")
+    owner = Path(owner).resolve(strict=True)
+    for row in rows:
+        identity = row["id"]
+        expected = {name for name in scenarios if name.split("(")[0].rsplit(".", 1)[-1] == recipes[identity]}
+        if (row.get("passed") is not True or not expected
+                or len({name.split("(")[0] for name in expected}) != 1):
+            raise ConformanceError("WitnessMissing")
+        guard = "inherited-discovery-guard-" + identity in INHERITED_GUARD_FAILURES
+        for phase, directory, filename in (
+                ("negative", "mutation-results", "red.trx"), ("repair", "repair-results", "repair.trx")):
+            observed = row.get(phase)
+            if (not isinstance(observed, dict) or not isinstance(observed.get("projection"), str)
+                    or type(observed.get("parameters")) is not int
+                    or type(observed.get("failedParameters")) is not int):
+                raise ConformanceError("WitnessMissing")
+            path = owner / "stores/inherited-discovery-mutations" / directory / identity / filename
+            if Path(observed["projection"]) != path:
+                raise ConformanceError("OwnershipInvalid")
+            raw = read_bounded(path, 2 * 1024**2)
+            if hashlib.sha256(raw).hexdigest() != observed.get("projectionSha256"):
+                raise ConformanceError("InputChanged")
+            legacy.verify_projection(path, expected_binding="none" if guard else "legacy",
+                                     expected_environment={"HOARD_DISCOVERY_MUTATION": "active"})
+            if read_bounded(path, 2 * 1024**2) != raw:
+                raise ConformanceError("InputChanged")
+            entries = [node for node in ET.fromstring(raw).iter()
+                       if node.tag.rsplit("}", 1)[-1] == "UnitTestResult"]
+            failed = [node.get("testName") for node in entries if node.get("outcome") == "Failed"]
+            if (len(entries) != len(expected) or {node.get("testName") for node in entries} != expected
+                    or any(node.get("outcome") not in ("Passed", "Failed") for node in entries)
+                    or observed["parameters"] != len(expected) or observed["failedParameters"] != len(failed)
+                    or (phase == "negative" and (not failed or row.get("failedTests") != failed
+                        or observed.get("failureKind") != ("Guard" if guard else "Assertion")))
+                    or (phase == "repair" and (failed or observed.get("failureKind") != "None"))):
+                raise ConformanceError("WitnessMissing")
+
+
 def execution_scopes(discoveries, methods):
     if not isinstance(discoveries, dict) or set(discoveries) != ASSEMBLIES:
         raise ConformanceError("WitnessMissing")
@@ -506,6 +560,40 @@ def execution_scopes(discoveries, methods):
             key = (assembly, row["fullyQualifiedName"].rsplit(".", 1)[0])
             scopes.setdefault(key, []).append(row)
     return {key: tuple(rows) for key, rows in sorted(scopes.items())}
+
+
+def verify_discovery_materials(owner, preparation, performance, run_id):
+    import conformance_legacy as legacy
+    import discovery_evidence as discovery
+    from conformance_sources import read_bounded
+
+    owner = Path(owner).resolve(strict=True)
+    work = owner / "stores/inherited-controller-discovery"
+    manifest = work / "discovery-evidence.json"
+    legacy.no_symlinks(manifest)
+    raw = read_bounded(manifest, 16 * 1024**2)
+    if (not isinstance(preparation, dict)
+            or preparation.get("manifestPath") != manifest.relative_to(owner).as_posix()
+            or hashlib.sha256(raw).hexdigest() != preparation.get("manifestSha256")):
+        raise ConformanceError("InputChanged")
+    document = load_json(raw)
+    if (not isinstance(document, dict) or document.get("referenceConsumerPassed") is not True):
+        raise ConformanceError("WitnessMissing")
+    performance_path = owner / "stores/inherited-runtime/performance/performance.json"
+    legacy.no_symlinks(performance_path)
+    if Path(performance) != performance_path:
+        raise ConformanceError("OwnershipInvalid")
+    observed = load_json(read_bounded(performance_path, 65536))
+    try:
+        discovery.verify_materials({**document, "runId": run_id, "performance": observed}, work)
+    except (KeyError, OSError, RuntimeError, TypeError, ValueError):
+        raise ConformanceError("WitnessMissing") from None
+    return {
+        "qualification": False, "manifestSha256": preparation["manifestSha256"],
+        "performanceSha256": digest(observed), "feedPackages": len(document["feedPackages"]),
+        "retainedBinaries": len(document["oldBinaries"]), "graphs": len(document["graphs"]),
+        "journeys": len(document["journeys"]),
+    }
 
 
 def _admit_tooling_result(packet, sources):
@@ -865,9 +953,14 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                     graphs = discovery.graphs(
                         source, target, config, providers, hosts, consumers, old_provider, registration, False)
                     reference = discovery.reference_consumer(source, target, bodies)
+                    feed_packages = [
+                        {"id": package.name, "package": str(package),
+                         "sha512": hashlib.sha512(read_bounded(package, 64 * 1024**2)).hexdigest()}
+                        for package in sorted((target / "feed").glob("*.nupkg"))]
                     document = {"graphs": graphs, "journeys": journeys, "observations": observations,
                                 "responseBodies": bodies, "oldBinaries": retained, "packages": providers,
-                                "referenceConsumer": reference, "referenceConsumerPassed": True}
+                                "referenceConsumer": reference, "referenceConsumerPassed": True,
+                                "feedPackages": feed_packages}
                     summary = {"retainedBinaries": len(retained), "journeys": len(journeys),
                                "observations": len(observations), "graphs": len(graphs),
                                "referenceConsumerPassed": True}

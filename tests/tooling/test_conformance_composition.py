@@ -282,7 +282,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
         for mutation in ("none", "changed-bytes", "resealed-foreign-root", "false-qualification",
                          "missing-mutation", "missing-repair", "mutation-qualification",
                          "missing-adapter", "missing-discovery-suite", "tooling-skip",
-                         "missing-tooling-test", "stale-tooling-source", "tooling-native-claim"):
+                         "missing-tooling-test", "stale-tooling-source", "tooling-native-claim",
+                         "missing-feed-package", "missing-retained-binary", "missing-material-graph",
+                         "missing-material-journey", "materials-qualification", "materials-foreign-manifest"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -342,6 +344,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         "fullControllerAcceptance": False, "historicalBinariesPreparedBeforeCandidate": True,
                         "historicalBaselineSealSha256": hashlib.sha256(raw).hexdigest(),
                         "passedParameters": 525, "scopes": 58, "commands": [{}] * 58,
+                        "controllerPreparation": {"discovery": {"manifestSha256": "d" * 64}},
                         "discoveryMutations": {
                             "qualification": mutation == "mutation-qualification",
                             "mutations": 11 if mutation == "missing-mutation" else 12,
@@ -352,6 +355,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
                             "qualification": False, "parameters": 137,
                             "adapterScenarios": 3 if mutation == "missing-adapter" else 4,
                             "suites": 9 if mutation == "missing-discovery-suite" else 10,
+                        },
+                        "discoveryMaterials": {
+                            "qualification": mutation == "materials-qualification",
+                            "manifestSha256": "f" * 64 if mutation == "materials-foreign-manifest" else "d" * 64,
+                            "performanceSha256": "e" * 64,
+                            "feedPackages": 10 if mutation == "missing-feed-package" else 11,
+                            "retainedBinaries": 2 if mutation == "missing-retained-binary" else 3,
+                            "graphs": 17 if mutation == "missing-material-graph" else 18,
+                            "journeys": 8 if mutation == "missing-material-journey" else 9,
                         },
                         "tooling": {
                             "qualification": False, "nativeContainment": mutation == "tooling-native-claim",

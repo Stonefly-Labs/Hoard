@@ -26,6 +26,71 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_mutation_scopes_require_exact_positive_parameters_and_actual_negative_and_repair_results(self):
+        import xml.etree.ElementTree as ET
+        import conformance_legacy as legacy
+        import discovery_evidence as discovery
+        from conformance_case_catalog import INHERITED_GUARD_FAILURES
+
+        for mutation in ("none", "foreign-parameter", "omitted-repair", "false-negative",
+                         "false-count", "changed-projection", "foreign-path", "omitted-mutation",
+                         "malformed-row", "boolean-count"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                scenarios, rows = set(), []
+                for identity, _, _, _, method in discovery.MUTATIONS:
+                    name = "Hoard.Composition.Tests.DiscoveryTests." + method
+                    scenario = name + '(testCaseSha256: "' + "a" * 64 + '")'
+                    scenarios.add(scenario)
+                    row = {"id": identity, "passed": True, "failedTests": [scenario]}
+                    for phase, directory, outcome in (
+                            ("negative", "mutation-results", "Failed"), ("repair", "repair-results", "Passed")):
+                        path = root / "stores/inherited-discovery-mutations" / directory / identity / (
+                            "red.trx" if phase == "negative" else "repair.trx")
+                        path.parent.mkdir(parents=True)
+                        element = ET.Element("TestRun")
+                        ET.SubElement(element, "UnitTestResult", testName=scenario, outcome=outcome)
+                        path.write_bytes(ET.tostring(element))
+                        guard = "inherited-discovery-guard-" + identity in INHERITED_GUARD_FAILURES
+                        row[phase] = {
+                            "projection": str(path), "projectionSha256": file_sha256(path), "parameters": 1,
+                            "failedParameters": int(phase == "negative"),
+                            "failureKind": "None" if phase == "repair" else "Guard" if guard else "Assertion",
+                        }
+                    rows.append(row)
+                if mutation in ("foreign-parameter", "omitted-repair", "false-negative"):
+                    phase = "repair" if mutation == "omitted-repair" else "negative"
+                    entry = rows[0][phase]
+                    tree = ET.Element("TestRun")
+                    if mutation != "omitted-repair":
+                        ET.SubElement(tree, "UnitTestResult",
+                            testName=rows[0]["failedTests"][0].replace("a" * 64, "b" * 64)
+                            if mutation == "foreign-parameter" else rows[0]["failedTests"][0],
+                            outcome="Passed" if mutation == "false-negative" else "Failed")
+                    Path(entry["projection"]).write_bytes(ET.tostring(tree))
+                    entry["projectionSha256"] = file_sha256(Path(entry["projection"]))
+                elif mutation == "false-count":
+                    rows[0]["negative"]["parameters"] = 2
+                elif mutation == "changed-projection":
+                    rows[0]["negative"]["projectionSha256"] = "0" * 64
+                elif mutation == "foreign-path":
+                    rows[0]["negative"]["projection"] = str(root / "foreign.trx")
+                elif mutation == "omitted-mutation":
+                    rows.pop()
+                elif mutation == "malformed-row":
+                    del rows[0]["id"]
+                elif mutation == "boolean-count":
+                    rows[0]["negative"]["parameters"] = True
+                with patch.object(legacy, "verify_projection") as verify:
+                    if mutation == "none":
+                        inherited.verify_discovery_mutation_membership(
+                            root, {"qualification": False, "mutations": rows}, scenarios)
+                        self.assertEqual(24, verify.call_count)
+                    else:
+                        with self.assertRaises(ConformanceError):
+                            inherited.verify_discovery_mutation_membership(
+                                root, {"qualification": False, "mutations": rows}, scenarios)
+
     def test_controller_tooling_binds_full_source_and_actual_complete_supervisor_execution(self):
         import time
         import conformance_evidence as evidence

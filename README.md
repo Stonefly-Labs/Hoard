@@ -264,6 +264,18 @@ with source/run/root binding. Skips, omitted tests, unexpected diagnostics and
 stale inputs cannot pass. This tooling control explicitly makes no native
 containment claim and does not relax provider-child confinement. Its Linux
 replay and the independent-snapshot repair remain pending; T046 stays open.
+Discovery now also reuses the original material-verification gate for all
+eleven immutable feed archives, three retained binaries, eighteen graphs,
+nine package journeys and current-run performance. The controller manifest is
+hash-bound before admission. Each negative and repair scope is independently
+re-admitted and must contain exactly its method's actual positive parameter
+identities; failed-name lists and counters cannot substitute for those results.
+Local retained execution confirms twelve negative/repair pairs over 29
+scoped parameters; a separately built positive assembly corroborates their
+28 unique selected identities, not the complete native positive inventory.
+Full local tooling observes 560 tests without failures/errors or
+unexpected diagnostic bytes, but twenty native skips keep it incomplete.
+Native confirmation of these additional gates remains pending.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

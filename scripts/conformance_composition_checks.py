@@ -320,8 +320,6 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
 
 
 def _inherited_runtime(run, repository, source, sources, config, feed, baseline_seal):
-    import discovery_evidence
-
     print(json.dumps({"qualification": False, "phase": "inherited-source-build"}), flush=True)
     properties = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"]
     for relative in (PROJECT, ARCHITECTURE_PROJECT, DISCOVERY_PROJECT):
@@ -470,8 +468,9 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     if not admitted["executionComplete"]:
         raise evidence.ConformanceError("WitnessMissing")
     write_new(run.root / "proofs/inherited-scope-admission.json", evidence.canonical_bytes(admitted))
-    discovery_evidence.verify_performance(evidence.load_json(read_bounded(
-        root / "performance/performance.json", 65536)), run.run_id)
+    from conformance_inherited import verify_discovery_materials, verify_discovery_mutation_membership
+    materials = verify_discovery_materials(
+        run.root, controllers["phases"]["discovery"], root / "performance/performance.json", run.run_id)
     mutation_source, mutation_sources = evidence.snapshot_sources(repository, run, name="inherited-mutation-source")
     if dict(mutation_sources) != dict(sources):
         raise evidence.ConformanceError("InputChanged")
@@ -481,10 +480,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     mutations, mutation_parent = _controller_phase(
         run, repository, mutation_source, "mutations", baseline_seal=baseline_seal,
         sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
-    if (mutations.get("qualification") is not False
-            or {row["id"] for row in mutations["mutations"]} != {row[0] for row in discovery_evidence.MUTATIONS}
-            or len(mutations["mutations"]) != len(discovery_evidence.MUTATIONS)):
-        raise evidence.ConformanceError("WitnessMissing")
+    verify_discovery_mutation_membership(run.root, mutations, admitted["discoveryCoverage"]["scenarios"])
     if dict(evidence.source_manifest(repository)) != dict(sources):
         raise evidence.ConformanceError("InputChanged")
     verify_controller_baselines(run, baseline_seal)
@@ -498,6 +494,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         "controllerPreparationParentSha256": controller_parent,
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
         "preparedFormatting": formatting,
+        "discoveryMaterials": materials,
         "discoveryScenarios": {
             "qualification": False, "sha256": evidence.digest(admitted["discoveryCoverage"]),
             "parameters": len(admitted["discoveryCoverage"]["scenarios"]),

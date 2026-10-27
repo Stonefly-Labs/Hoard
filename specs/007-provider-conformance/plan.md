@@ -305,6 +305,37 @@ bytes and twenty native skips. It correctly returns `EvidenceIncomplete` and
 retains the failed/incomplete proof, rather than treating local skips as
 acceptance. The original source/scope checks and actual resource release pass.
 
+### Shared discovery materials and cross-scope parameter admission
+
+The original complete discovery verifier now calls an extracted shared
+`verify_materials` gate with unchanged checks. The inherited controller records
+the exact actual feed archives and their SHA-512 bytes, and the supervisor
+reuses that gate for eleven packages, three retained binaries with historical
+provenance, eighteen graphs, nine journeys/serialized observations and the
+current run's performance. It admits the fixed controller-manifest bytes
+against the native preparation hash, rather than trusting summary counts.
+Missing/extra packages, changed archives/binaries, incomplete graphs,
+malformed retained metadata and stale performance have rejecting controls.
+The workflow also rejects omitted material counts, foreign manifest binding
+and false qualification. The new material control and five workflow
+omission/qualification challenges first fail before implementation/repair.
+
+After the native mutation worker returns, the supervisor independently
+re-admits all actual projections and joins their complete parameter sets to
+the selected methods in the independently admitted positive discovery
+inventory. Declared failed names, red/repair counts and typed failure kinds
+must agree with actual results. Foreign/omitted parameters, missing repairs,
+changed projections, malformed rows and boolean counters reject; the new
+membership control, malformed-row and boolean-count challenges first fail.
+Actual retained local execution passes all twelve pairs/29 repair parameters
+against actual repair-scope identities. A separately built actual positive
+assembly corroborates all 28 unique selected identities against the retained
+pairs, without claiming a complete native positive replay. Full local tooling
+observes 560 tests, zero failures/errors
+or unexpected diagnostic bytes, and twenty native skips: exit 2,
+`EvidenceIncomplete`, not acceptance. Native confirmation remains pending;
+T046 and full-controller/profile qualification remain open.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

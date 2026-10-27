@@ -466,6 +466,10 @@ def verify_full_evidence(evidence, root, work):
                 or entry.get("mutantSha256") != hashlib.sha256(source.replace(original, replacement).encode()).hexdigest()
                 or entry.get("failedTests") != runtime_failures(work / "mutation-results" / identity / "red.trx", method)):
             raise RuntimeError("Stale or mismatched actual runtime mutation evidence.")
+    verify_materials(evidence, work)
+
+
+def verify_materials(evidence, work):
     verify_journeys(evidence.get("journeys"))
     verify_observations(evidence["journeys"], evidence.get("observations"), evidence.get("responseBodies"))
     verify_performance(evidence.get("performance"), evidence["runId"])

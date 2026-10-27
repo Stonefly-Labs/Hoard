@@ -380,6 +380,74 @@ class DiscoveryEvidenceTests(unittest.TestCase):
                 "responseBodies": bodies, "performance": self.performance(), "oldBinaries": binaries,
                 "graphs": graphs, "feedPackages": packages}
 
+    def test_materials_gate_rejects_incomplete_graph_feed_and_retained_binary_provenance(self):
+        module = self.load()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            evidence = self.synthetic_full(module, root)
+            module.verify_materials(evidence, root)
+            for mutation in ("graph", "binary", "binary-hash", "package", "package-hash", "extra-package"):
+                changed = copy.deepcopy(evidence)
+                if mutation == "graph":
+                    changed["graphs"].pop()
+                elif mutation == "binary":
+                    changed["oldBinaries"].pop()
+                elif mutation == "binary-hash":
+                    changed["oldBinaries"][0]["sha256"] = "0" * 64
+                elif mutation == "package":
+                    changed["feedPackages"].pop()
+                elif mutation == "package-hash":
+                    changed["feedPackages"][0]["sha512"] = "0" * 128
+                else:
+                    (root / "feed/Unexpected.0.1.0.nupkg").write_bytes(b"unexpected")
+                with self.subTest(mutation=mutation), self.assertRaises(RuntimeError):
+                    module.verify_materials(changed, root)
+
+    def test_controller_materials_require_bound_manifest_actual_bytes_and_current_performance(self):
+        import conformance_inherited as inherited
+        from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
+
+        module = self.load()
+        for mutation in ("none", "manifest-path", "manifest-bytes", "reference", "binary-bytes",
+                         "package-bytes", "performance-run", "performance-path", "malformed-binary"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                work = root / "stores/inherited-controller-discovery"
+                work.mkdir(parents=True)
+                document = self.synthetic_full(module, work)
+                if mutation == "reference":
+                    document["referenceConsumerPassed"] = False
+                elif mutation == "malformed-binary":
+                    del document["oldBinaries"][0]["sha256"]
+                manifest = work / "discovery-evidence.json"
+                manifest.write_bytes(canonical_bytes(document))
+                preparation = {
+                    "manifestPath": manifest.relative_to(root).as_posix(), "manifestSha256": file_sha256(manifest)}
+                performance = root / "stores/inherited-runtime/performance/performance.json"
+                performance.parent.mkdir(parents=True)
+                observed = self.performance()
+                if mutation == "performance-run":
+                    observed["runId"] = "stale"
+                performance.write_bytes(canonical_bytes(observed))
+                if mutation == "manifest-path":
+                    preparation["manifestPath"] = "../discovery-evidence.json"
+                elif mutation == "manifest-bytes":
+                    manifest.write_bytes(canonical_bytes({**document, "changed": True}))
+                elif mutation == "binary-bytes":
+                    Path(document["oldBinaries"][0]["assembly"]).write_bytes(b"changed")
+                elif mutation == "package-bytes":
+                    Path(document["feedPackages"][0]["package"]).write_bytes(b"changed")
+                elif mutation == "performance-path":
+                    performance = root / "foreign-performance.json"
+                if mutation == "none":
+                    result = inherited.verify_discovery_materials(root, preparation, performance, "current")
+                    self.assertFalse(result["qualification"])
+                    self.assertEqual((11, 3, 18), (
+                        result["feedPackages"], result["retainedBinaries"], result["graphs"]))
+                else:
+                    with self.assertRaises(ConformanceError):
+                        inherited.verify_discovery_materials(root, preparation, performance, "current")
+
     def test_full_evidence_rejects_missing_stale_unsafe_and_mismatched_mechanism_proof(self):
         module = self.load()
         with tempfile.TemporaryDirectory() as directory:

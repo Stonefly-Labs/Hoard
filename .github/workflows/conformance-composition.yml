@@ -57,6 +57,7 @@ jobs:
           inherited = summary["inheritedRuntime"]
           mutations = inherited["discoveryMutations"]
           scenarios = inherited["discoveryScenarios"]
+          materials = inherited["discoveryMaterials"]
           try:
               verify_controller_tooling(root, inherited["tooling"], inputs, owner)
           except evidence.ConformanceError:
@@ -81,6 +82,10 @@ jobs:
                   or mutations["negativeParameters"] != 29 or mutations["repairedParameters"] != 29
                   or scenarios["qualification"] is not False or scenarios["parameters"] != 137
                   or scenarios["adapterScenarios"] != 4 or scenarios["suites"] != 10
+                  or materials["qualification"] is not False
+                  or materials["feedPackages"] != 11 or materials["retainedBinaries"] != 3
+                  or materials["graphs"] != 18 or materials["journeys"] != 9
+                  or materials["manifestSha256"] != inherited["controllerPreparation"]["discovery"]["manifestSha256"]
                   or inherited["passedParameters"] != 525 or inherited["scopes"] != 58
                   or len(inherited["commands"]) != 58):
               raise SystemExit("WitnessMissing")

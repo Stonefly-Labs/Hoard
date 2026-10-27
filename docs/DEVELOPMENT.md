@@ -5378,6 +5378,32 @@ Actual local supervisor replay observes all 557 declared/started tests, zero
 failures/errors/unexpected diagnostic bytes and twenty native skips; the
 result is correctly `EvidenceIncomplete`, not passing tooling acceptance.
 
+Discovery material admission shares the existing original verifier rather
+than replacing it with preparation counts: it requires the exact eleven-file
+feed and actual SHA-512 bytes, all three retained binary/provenance records,
+eighteen graph records, nine package journeys and matching current-run
+performance. The owning supervisor reads the fixed controller manifest once
+and checks its preparation hash before admitting these materials. Malformed
+or changed materials become closed failures. CI rejects omitted materials,
+foreign manifest binding and qualification overclaims after store release.
+No new full-controller or native-containment claim is introduced.
+
+The supervisor also independently re-admits all twelve actual negative and
+repair projections and compares each complete parameter set with its selected
+method in the admitted positive discovery inventory. It verifies actual
+failure names, typed assertion/finite-Guard classification, repair success and
+integer counters; path substitutions, missing repairs, foreign parameters,
+changed bytes and malformed rows reject. Actual retained local execution
+passes this gate for all twelve pairs/29 parameters against the actual repair
+scope identities. A separate actual positive-assembly discovery also
+corroborates all 28 unique selected identities against those retained pairs.
+Neither local check stands in for the full native positive inventory.
+Complete local tooling now observes 560 tests, no failures,
+errors or unexpected diagnostic bytes, and twenty explicit native skips.
+Native admission of these new gates is pending; T046 remains unchecked.
+Public provider contracts, examples, diagrams, governance and infrastructure
+are unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged
