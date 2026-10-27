@@ -5732,6 +5732,34 @@ is retained as failure. T046 stays unchecked, 52/86, implement/running.
 Provider contracts, examples, diagrams, infrastructure and governance remain
 unaffected.
 
+Exact `b5d6319d9b018ba017b3c3933573204d59fe6ed9` reaches the mutation
+phase in
+[run40591427509](https://github.com/Stonefly-Labs/Hoard/actions/runs/40591427509),
+job122496379218, then fails `OwnershipInvalid` at original
+`conformance_inherited.py:1095`. The original discovery launcher supplies the
+installed SDK's VSTest DLL as a data argument to the owned discovery driver.
+A focused red control reproduces the selector wrongly treating every DLL
+argument as the executable. Actual dotnet/VSTest executable and foreign project
+targets still reject; supplementary SDK arguments remain environmental inputs,
+not private owned files or evidence of complete SDK-byte closure.
+Superseded `ec66f5e` composition run40592633301, containing the same reproduced
+selector defect, is explicitly cancelled and never counted as acceptance.
+All six `c72ba97` foundations jobs now pass in run40584775863.
+
+The selected-file collector also follows literal Compile/ProjectReference/Import/
+HintPath declarations, bounded cyclic project traversal and recursively admitted
+Hoard cache files. Linked-source/import/project and nested-package omissions
+first fail focused controls, then pass; foreign links reject. It deliberately
+does not interpret dynamic MSBuild expressions or imported/glob evaluation.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_inherited
+test_conformance_composition test_conformance_legacy -q`: passed, 68 tests with
+one Linux skip. `python3 scripts/conformance_unit_checks.py --all-tooling`:
+574 tests, zero failures/errors/unexpected diagnostic bytes, twenty native macOS
+skips, expected incomplete exit 2. Native replay remains pending, both original
+failed attempts remain failures, and T046 stays unchecked at 52/86,
+implement/running. Provider contracts, examples, diagrams, infrastructure and
+governance remain unaffected.
+
 The next T046 selected-input increment reads the actual `HoardSafe` logger
 configuration from the original runsettings. It follows the existing owned
 Root/AttemptId/ManifestSha256/OwnerSha256 descriptors rather than reconstructing

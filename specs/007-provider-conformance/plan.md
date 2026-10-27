@@ -774,6 +774,31 @@ implement/running, all full-controller/profile/qualification flags false.
 Provider contracts, examples, diagrams, infrastructure and governance are
 unaffected.
 
+The empty-map repair at exact `b5d6319d9b018ba017b3c3933573204d59fe6ed9`
+reaches mutations in
+[run40591427509](https://github.com/Stonefly-Labs/Hoard/actions/runs/40591427509),
+job122496379218, then fails `OwnershipInvalid` at original
+`conformance_inherited.py:1095`. Its owned discovery driver receives the installed
+SDK VSTest DLL as a supplementary data argument, not its executable. A focused
+red reproduces that incorrect classification. The repair retains rejection of
+actual foreign dotnet/VSTest executables and project targets, without calling
+supplementary SDK environment inputs private owned files or complete SDK-byte
+closure. Superseded `ec66f5e` composition run40592633301 has the same reproduced
+defect and is explicitly cancelled, not acceptance. All six `c72ba97` foundations
+jobs now pass in run40584775863.
+
+Selected capture also follows literal linked source/project/import/assembly-hint
+declarations with bounded cyclic traversal and recursively includes admitted
+Hoard package-cache files. Focused controls first expose missing linked inputs
+and nested package images, then pass; foreign source links reject. Dynamic
+MSBuild/import/glob evaluation remains outside this partial selected-input claim.
+Linked regressions: 68 tests, zero failures, one Linux skip. Full safe tooling:
+574 tests, zero failures/errors/unexpected diagnostic bytes, twenty native macOS
+skips, expected incomplete exit 2. Native replay remains pending. Earlier failed
+attempts remain failures; T046 remains unchecked, 52/86, implement/running, all
+full-controller/profile/qualification flags false. Provider contracts, examples,
+diagrams, infrastructure and governance remain unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

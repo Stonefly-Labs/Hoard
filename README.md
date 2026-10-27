@@ -383,6 +383,14 @@ substitutions, foreign/escaping roots and unknown logger settings reject.
 Local safe tooling observes 574 tests without failures/errors or unexpected
 diagnostic bytes, with twenty explicit native skips. Complete input closure
 and T046 acceptance remain open.
+The empty-map repair at `b5d6319` reaches mutation discovery, then fails because
+the selector mistakes the installed SDK's supplementary VSTest path for the
+owned driver's executable. The repair preserves foreign executable/project
+rejection while distinguishing that SDK data argument. Selected inputs also
+follow literal linked source, project references, imports and assembly hints,
+and include nested admitted Hoard package files. Dynamic MSBuild evaluation
+remains outside this partial claim. Local safe tooling remains 574 tests with
+zero failures/errors and twenty native skips; native confirmation is pending.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

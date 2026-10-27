@@ -81,7 +81,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                         self.assertEqual(file_sha256(path), files[path.relative_to(root).as_posix()])
 
     def test_controller_command_read_inputs_bind_selected_sources_imports_runtime_and_configuration(self):
-        for operation in ("build", "implicit-build", "restore", "runtime", "relative", "environment", "foreign"):
+        for operation in ("build", "implicit-build", "restore", "runtime", "relative", "environment",
+                          "project-links", "package", "foreign", "foreign-link", "sdk-argument", "foreign-vstest"):
             with self.subTest(operation=operation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 project = root / "stores/project/Fixture.csproj"
@@ -101,8 +102,33 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 sidecar.write_bytes(b"{}")
                 original = root / "stores/original.json"
                 original.write_bytes(b"unchanged original")
-                arguments = (["dotnet", str(assembly), str(original)] if operation == "runtime"
+                linked = root / "stores/Linked.cs"
+                imported = root / "stores/Imported.props"
+                dependency = root / "stores/dependency/Dependency.csproj"
+                dependency_code = dependency.parent / "Dependency.cs"
+                package_image = root / "cache/hoard.fixture/0.1.0/lib/net10.0/Hoard.Fixture.dll"
+                if operation == "project-links":
+                    linked.write_bytes(b"linked source")
+                    imported.write_bytes(b"<Project />")
+                    dependency.parent.mkdir()
+                    dependency.write_bytes(
+                        b'<Project><ItemGroup><ProjectReference Include="../project/Fixture.csproj" />'
+                        b'</ItemGroup></Project>')
+                    dependency_code.write_bytes(b"dependency source")
+                    project.write_bytes(
+                        b'<Project><Import Project="../Imported.props" /><ItemGroup>'
+                        b'<Compile Include="../Linked.cs" />'
+                        b'<ProjectReference Include="../dependency/Dependency.csproj" /></ItemGroup></Project>')
+                elif operation == "package":
+                    package_image.parent.mkdir(parents=True)
+                    package_image.write_bytes(b"actual cached assembly")
+                    assets.write_bytes(canonical_bytes({
+                        "libraries": {"Hoard.Fixture/0.1.0": {"type": "package", "path": "hoard.fixture/0.1.0"}},
+                        "packageFolders": {str(root / "cache"): {}}}))
+                arguments = (["dotnet", str(assembly), str(original)] if operation in ("runtime", "sdk-argument")
                              else ["dotnet", operation, str(project)])
+                if operation == "sdk-argument":
+                    arguments.append("/opt/dotnet/sdk/10.0.203/vstest.console.dll")
                 if operation == "build":
                     arguments.append("--no-restore")
                 elif operation == "implicit-build":
@@ -111,8 +137,17 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     arguments = ["dotnet", "build", project.name, "--no-restore"]
                 elif operation == "environment":
                     arguments = ["dotnet", "build", str(project), "--no-restore"]
-                if operation == "foreign":
-                    arguments = ["dotnet", str(root.parent / "Foreign.dll")]
+                elif operation in ("project-links", "package", "foreign-link"):
+                    arguments = ["dotnet", "build", str(project), "--no-restore"]
+                if operation == "foreign-link":
+                    project.write_bytes(b'<Project><ItemGroup><Compile Include="../../../Outside.cs" />'
+                                        b'</ItemGroup></Project>')
+                    with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                        inherited.controller_command_read_inputs(root, arguments, env={})
+                    continue
+                if operation in ("foreign", "foreign-vstest"):
+                    arguments = ["dotnet", *(["vstest"] if operation == "foreign-vstest" else []),
+                                 str(root.parent / "Foreign.dll")]
                     with self.assertRaises(ConformanceError):
                         inherited.controller_command_read_inputs(root, arguments)
                     continue
@@ -121,9 +156,15 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     root, arguments, cwd=project.parent, env=environment)
                 if operation == "environment":
                     self.assertIn(original.relative_to(root).as_posix(), observed)
+                elif operation == "project-links":
+                    self.assertTrue({path.relative_to(root).as_posix()
+                                     for path in (linked, imported, dependency, dependency_code)} <= set(observed))
+                elif operation == "package":
+                    self.assertEqual(file_sha256(package_image),
+                                     observed[package_image.relative_to(root).as_posix()])
                 self.assertEqual(observed, {
                     path: file_sha256(root / path) for path in observed})
-                if operation == "runtime":
+                if operation in ("runtime", "sdk-argument"):
                     self.assertTrue({path.relative_to(root).as_posix() for path in (assembly, sidecar, original)}
                                     <= set(observed))
                 else:

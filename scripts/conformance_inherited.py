@@ -1132,7 +1132,50 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
     restoring = (dotnet and len(arguments) > 1 and (arguments[1] == "restore"
                  or arguments[1] in ("build", "pack", "format") and "--no-restore" not in arguments))
     directory = Path(cwd or os.getcwd()).resolve(strict=True)
-    for argument in arguments[1:]:
+
+    def project_files(project):
+        pending, visited = [project], set()
+        while pending:
+            current = pending.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            if len(visited) > 2048:
+                raise ConformanceError("OutputLimitExceeded")
+            extra.add(current)
+            extra.update(item for item in current.parent.rglob("*.cs")
+                         if not {"bin", "obj"}.intersection(item.relative_to(current.parent).parts))
+            if restoring:
+                mutable.update(current.parent / name for name in (
+                    "obj/project.assets.json", f"obj/{current.name}.nuget.g.props",
+                    f"obj/{current.name}.nuget.g.targets"))
+                if "--locked-mode" not in arguments:
+                    mutable.add(current.parent / "packages.lock.json")
+            try:
+                document = ET.fromstring(read_bounded(current, 1024 * 1024))
+            except ET.ParseError:
+                raise ConformanceError("EvidenceSchemaInvalid") from None
+            for node in document.iter():
+                tag = node.tag.split("}")[-1]
+                if tag not in ("Compile", "ProjectReference", "Import", "HintPath"):
+                    continue
+                value = node.text if tag == "HintPath" else node.get("Project" if tag == "Import" else "Include")
+                if not isinstance(value, str):
+                    continue
+                for expression in value.split(";"):
+                    if not expression or any(token in expression for token in ("$(", "@(", "%(", "*", "?")):
+                        continue
+                    item = current.parent / expression.replace("\\", "/")
+                    legacy.no_symlinks(item)
+                    item = item.resolve()
+                    if not item.is_relative_to(owner):
+                        raise ConformanceError("OwnershipInvalid")
+                    if item.is_file():
+                        extra.add(item)
+                        if tag == "ProjectReference":
+                            pending.append(item)
+
+    for index, argument in enumerate(arguments[1:], 1):
         for prefix in ("--Settings:", "-p:NuGetLockFilePath="):
             if argument.startswith(prefix):
                 argument = argument[len(prefix):]
@@ -1145,20 +1188,19 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
         legacy.no_symlinks(path)
         path = path.resolve()
         if not path.is_relative_to(owner):
-            if dotnet and path.suffix in (".dll", ".csproj", ".slnx"):
+            target = index == 1 or index == 2 and arguments[1] in (
+                "build", "restore", "pack", "publish", "test", "vstest", "msbuild", "exec", "format")
+            if dotnet and (path.suffix in (".csproj", ".slnx") or path.suffix == ".dll" and target):
                 raise ConformanceError("OwnershipInvalid")
             continue
         if not path.is_file():
             continue
         extra.add(path)
-        if path.suffix in (".csproj", ".slnx"):
+        if path.suffix == ".csproj":
+            project_files(path)
+        elif path.suffix == ".slnx":
             extra.update(item for item in path.parent.rglob("*.cs")
                          if not {"bin", "obj"}.intersection(item.relative_to(path.parent).parts))
-            if restoring:
-                mutable.update(path.parent / name for name in (
-                    "obj/project.assets.json", f"obj/{path.name}.nuget.g.props", f"obj/{path.name}.nuget.g.targets"))
-                if "--locked-mode" not in arguments:
-                    mutable.add(path.parent / "packages.lock.json")
         elif path.suffix == ".dll":
             extra.update(item for item in path.parent.iterdir() if item.is_file())
         elif path.suffix == ".runsettings":
@@ -1262,7 +1304,7 @@ def controller_read_inputs(owner, manifests, *, extra=()):
             for identity, entry in assets["libraries"].items():
                 if identity.startswith("Hoard.") and entry["type"] == "package":
                     for cache in assets["packageFolders"]:
-                        for item in (Path(cache) / entry["path"]).glob("*"):
+                        for item in (Path(cache) / entry["path"]).rglob("*"):
                             if item.is_file():
                                 bind(item)
         if path.suffix in (".csproj", ".slnx"):
