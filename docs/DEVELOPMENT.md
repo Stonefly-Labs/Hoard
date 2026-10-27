@@ -5378,6 +5378,24 @@ Actual local supervisor replay observes all 557 declared/started tests, zero
 failures/errors/unexpected diagnostic bytes and twenty native skips; the
 result is correctly `EvidenceIncomplete`, not passing tooling acceptance.
 
+Exact `1606a448c920c956efb144637b34a89626dd7717` now passes Linux
+[run40484685752](https://github.com/Stonefly-Labs/Hoard/actions/runs/40484685752),
+job122123411570. It admits CP36/110, inherited525/58, all twelve discovery
+negatives and repairs with 29 parameters each, all 137 discovery parameters,
+four adapter scenarios/ten suites, 41 formatter commands and all 3,181
+unchanged bound inputs. Controller-bound tooling admits all 557 declared and
+started tests with no skips or unexpected diagnostics; its private proof is
+independently re-admitted after actual store/process release. The repaired
+independent mutation snapshot is therefore natively confirmed. Scope admission
+is `6d591b8bea07eba994c7abe4d3d30e19ce5c4be875bfc65fbbd8b78d207df98b`,
+mutation result
+`ae98b8e4c026481f73bbb82038f6d9b86c5c1b4c040d24e701186ff8c79ba24b`
+and tooling proof
+`ce0d5d6797ab0e0af8c1781c9453621cc1ed148d3fe4a0c81fcdc1ce0e4a23f1`.
+The original failed receipts remain failed, and the explicit full-controller/
+profile/qualification flags remain false. New material and cross-scope
+membership gates at `a42d083` await their separate native replay.
+
 Discovery material admission shares the existing original verifier rather
 than replacing it with preparation counts: it requires the exact eleven-file
 feed and actual SHA-512 bytes, all three retained binary/provenance records,

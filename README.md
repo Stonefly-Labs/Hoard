@@ -262,8 +262,14 @@ a provider child whose native guard intentionally forbids nested sessions.
 Every declared/started test and complete tracked test-module set are retained
 with source/run/root binding. Skips, omitted tests, unexpected diagnostics and
 stale inputs cannot pass. This tooling control explicitly makes no native
-containment claim and does not relax provider-child confinement. Its Linux
-replay and the independent-snapshot repair remain pending; T046 stays open.
+containment claim and does not relax provider-child confinement. Exact
+`1606a44` now passes Linux
+[run40484685752](https://github.com/Stonefly-Labs/Hoard/actions/runs/40484685752):
+CP36/110, inherited525/58, all twelve negatives/repairs with 29 parameters each,
+137 discovery parameters/four adapter scenarios/ten suites, 41 formatter
+commands, 3,181 unchanged bound inputs and actual release. Controller-bound
+tooling admits all 557 tests with no skips or unexpected diagnostics.
+Full-controller acceptance and qualification remain false; T046 stays open.
 Discovery now also reuses the original material-verification gate for all
 eleven immutable feed archives, three retained binaries, eighteen graphs,
 nine package journeys and current-run performance. The controller manifest is

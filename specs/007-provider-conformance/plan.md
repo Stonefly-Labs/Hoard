@@ -305,6 +305,26 @@ bytes and twenty native skips. It correctly returns `EvidenceIncomplete` and
 retains the failed/incomplete proof, rather than treating local skips as
 acceptance. The original source/scope checks and actual resource release pass.
 
+Native confirmation at exact `1606a448c920c956efb144637b34a89626dd7717`,
+[run40484685752](https://github.com/Stonefly-Labs/Hoard/actions/runs/40484685752)/
+job122123411570, now passes the repaired mutation snapshot and owning-supervisor
+tooling. It admits CP36/110, inherited525/58, all twelve negatives/repairs with
+29 parameters each, discovery137/four adapters/ten suites, 41 formatter
+commands, all 3,181 unchanged bound inputs and actual release. All 557 tooling
+tests run without skips or unexpected diagnostics; post-release independent
+proof admission succeeds. CP input:
+`9ff6cab6b951c6604b33a241e75b0040737bdecc3132d3bbf3913276abe48f4b`;
+scope: `6d591b8bea07eba994c7abe4d3d30e19ce5c4be875bfc65fbbd8b78d207df98b`;
+historical seal:
+`20a508d41edd7a183130aa3a3f837780c65fae0eed41d3d36fda3f8a0667fe98`;
+mutation result:
+`ae98b8e4c026481f73bbb82038f6d9b86c5c1b4c040d24e701186ff8c79ba24b`;
+tooling:
+`ce0d5d6797ab0e0af8c1781c9453621cc1ed148d3fe4a0c81fcdc1ce0e4a23f1`.
+Earlier failed receipts stay failed. This increment does not change the false
+full-controller/profile/qualification flags or close T046. The next material/
+cross-scope gates at `a42d083` have their own pending native replay.
+
 ### Shared discovery materials and cross-scope parameter admission
 
 The original complete discovery verifier now calls an extracted shared
