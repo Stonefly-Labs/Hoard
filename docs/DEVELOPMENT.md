@@ -5629,6 +5629,25 @@ T046 remains unchecked, 52/86, implement/running; full-controller/profile/
 qualification flags remain false. Provider contracts, examples, diagrams,
 infrastructure and governance are unaffected by this test-only continuation.
 
+The follow-up reference receipt comes from the actual bounded launcher rather
+than reconstructing command facts alone. While the native preparation group is
+borrowed, capture observes the actual child PID/kernel-start identity and group,
+freezes launch argv/cwd and stdin digest, and attaches the reaped exit status.
+The reference projection preserves only this closed safe packet. The parent
+and independent workflow match the observed group PID/start to the original
+native execution record, in addition to the complete unchanged input/output
+binding. The child is exited; the group is explicitly still `Borrowed` until
+the native parent proves its settlement. No escaping/nested session is created.
+An unreaped fast-exiting child can retain its kernel identity without being
+classified as live: ordinary liveness/cleanup identity probes keep their
+existing zombie exclusion. Modeled missing/foreign/live/stdin-substituted
+receipts reject; the actual guarded Linux transport test also checks a
+fast-exiting native command. `python3 scripts/conformance_unit_checks.py
+--all-tooling`: 571 tests, zero failures/errors/unexpected diagnostic bytes,
+twenty native macOS skips, expected incomplete exit 2. Linux confirmation is
+pending; T046 remains unchecked, 52/86, implement/running. Provider contracts,
+examples, diagrams, infrastructure and governance are unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

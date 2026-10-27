@@ -155,7 +155,7 @@ def command_environment(root, cache, supplied):
     return environment
 
 
-def process_identity(pid, *, deadline=None):
+def process_identity(pid, *, deadline=None, include_exited=False):
     if type(pid) is not int or pid <= 0:
         raise ConformanceError("OwnershipInvalid")
     if sys.platform == "linux":
@@ -168,7 +168,7 @@ def process_identity(pid, *, deadline=None):
             if os.fstat(source.fileno()).st_uid != os.getuid():
                 raise ConformanceError("OwnershipInvalid")
             encoded = source.read(4097)
-        return linux_process_identity(pid, encoded)
+        return linux_process_identity(pid, encoded, include_exited=include_exited)
     code, output = capture_control(
         ["ps", "-p", str(pid), "-o", "pid=,uid=,pgid=,lstart=,stat="],
         limit=4096, timeout=control_timeout(deadline))
@@ -184,14 +184,14 @@ def process_identity(pid, *, deadline=None):
     return hashlib.sha256(" ".join(fields[:-1]).encode("ascii")).hexdigest()
 
 
-def linux_process_identity(pid, encoded):
+def linux_process_identity(pid, encoded, *, include_exited=False):
     prefix, separator, remainder = encoded.rpartition(b") ")
     fields = remainder.split()
     if (len(encoded) > 4096 or not separator or not prefix.startswith(str(pid).encode("ascii") + b" (")
             or len(fields) < 20 or fields[0] not in (b"R", b"S", b"D", b"Z", b"T", b"t", b"X", b"x", b"K", b"W", b"P", b"I")
             or any(not fields[index].isdigit() for index in (1, 2, 3, 19))):
         raise ConformanceError("OwnershipInvalid")
-    if fields[0] in (b"Z", b"X", b"x"):
+    if not include_exited and fields[0] in (b"Z", b"X", b"x"):
         return None
     identity = b":".join((str(pid).encode("ascii"), str(os.getuid()).encode("ascii"),
                           fields[2], fields[3], fields[19]))

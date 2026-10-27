@@ -43,6 +43,17 @@ header = {"groups": [pid], "children": {str(pid): legacy.process_identity(pid)}}
 with legacy.native_preparation_group(header):
     result = legacy.capture([sys.executable, "-c", "print('closed')"])
     assert result.returncode == 0 and result.stdout == b"closed\\n"
+    observed = result.native_invocation
+    assert observed["groupPid"] == pid and observed["groupStartSha256"] == header["children"][str(pid)]
+    assert observed["childPid"] != pid and observed["childPid"] > 0
+    assert len(observed["childStartSha256"]) == 64
+    assert observed["childState"] == "Exited" and observed["groupState"] == "Borrowed"
+    assert observed["exitCode"] == 0 and observed["stdinSha256"] is None
+    assert observed["argvSha256"] == legacy.hashlib.sha256(
+        legacy.canonical_bytes([sys.executable, "-c", "print('closed')"])).hexdigest()
+    fast = legacy.capture(["/bin/true"])
+    assert fast.native_invocation["childState"] == "Exited"
+    assert fast.native_invocation["childStartSha256"] != observed["childStartSha256"]
 assert legacy._borrowed_group() is None
 """
         result = subprocess.run(

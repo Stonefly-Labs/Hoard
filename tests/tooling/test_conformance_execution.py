@@ -935,6 +935,9 @@ print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
         reused = execution.linux_process_identity(42, image(b"test) internal name", 101))
         self.assertEqual(original, renamed)
         self.assertNotEqual(original, reused)
+        zombie = image(b"already exited", 100).replace(b") S ", b") Z ")
+        self.assertIsNone(execution.linux_process_identity(42, zombie))
+        self.assertEqual(original, execution.linux_process_identity(42, zombie, include_exited=True))
         for malformed in (b"42 (bad) S", b"43 (different) S", b"x" * 4097):
             with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
                 execution.linux_process_identity(42, malformed)

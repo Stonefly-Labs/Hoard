@@ -643,6 +643,30 @@ T046 remains unchecked, 52/86, implement/running. Full-controller/profile/
 qualification flags remain false. Production/provider contracts, examples,
 diagrams, infrastructure and governance are unaffected.
 
+### Actual reference-child identity and borrowed-group receipt
+
+The bounded legacy launcher now observes actual native child PID/start identity,
+actual guarded group PID/start, launch argv/cwd, supplied stdin digest and reaped
+exit. The reference projection preserves that closed packet. Parent admission
+and the independent workflow compare the group PID/start with the original
+native wrapper execution record, as well as command/input/output hashes.
+Missing native observation, foreign group/start, live child and substituted
+stdin reject. Child exit is not group exit: the packet explicitly says
+`childState=Exited`, `groupState=Borrowed`, and the owning native parent must
+separately establish final settlement. Existing native group restrictions are
+unchanged; no nested/escaping session or optimistic cleanup label is introduced.
+
+Identity capture explicitly permits the original unreaped fast-exiting child;
+ordinary liveness probes still exclude zombies. The Linux guarded transport
+control checks actual borrowed launches, including a fast native exit. Local
+safe tooling remains 571 tests, zero failures/errors/unexpected diagnostic
+bytes, twenty native macOS skips, expected incomplete exit 2. Native confirmation
+is pending. T046 remains unchecked, 52/86, implement/running. Full-controller/
+profile/qualification flags and production/provider/example/diagram/
+infrastructure/governance boundaries are unchanged.
+Superseded documentation-only `12b1dee` runs40576797722/40576797976 were explicitly
+cancelled to admit the reference implementation replay; neither is acceptance.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

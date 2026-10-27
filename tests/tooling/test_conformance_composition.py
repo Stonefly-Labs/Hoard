@@ -300,7 +300,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                          "missing-feed-package", "missing-retained-binary", "missing-material-graph",
                          "missing-material-journey", "materials-qualification", "materials-foreign-manifest",
                          "reference-modules", "reference-native", "reference-inputs",
-                         "reference-parent", "reference-output"):
+                         "reference-parent", "reference-output", "reference-child-owner",
+                         "reference-child-start", "reference-child-live", "reference-child-input"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -354,13 +355,23 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 reference = {
                     "qualification": False, "moduleCount": 6, "moduleIdsSha256": "a" * 64,
                     "inputMapSha256": hashlib.sha256(reference_inputs).hexdigest(),
+                    "argvSha256": "d" * 64, "cwdSha256": "e" * 64,
                     "assemblySha256": "b" * 64, "responseSha256": "c" * 64}
+                reference["invocation"] = {
+                    "schemaVersion": 1, "qualification": False, "groupState": "Borrowed",
+                    "groupPid": 101 if mutation == "reference-child-owner" else 100,
+                    "groupStartSha256": "0" * 64 if mutation == "reference-child-start" else "f" * 64,
+                    "childPid": 102, "childStartSha256": "1" * 64,
+                    "childState": "Running" if mutation == "reference-child-live" else "Exited",
+                    "exitCode": 0, "argvSha256": reference["argvSha256"], "cwdSha256": reference["cwdSha256"],
+                    "stdinSha256": "0" * 64 if mutation == "reference-child-input" else reference["responseSha256"]}
                 reference_output = evidence.canonical_bytes({
                     "schemaVersion": 1, "qualification": False, "phase": "reference",
                     "runId": "run", "rootId": "root", "result": dict(reference)})
                 reference_parent = {
                     "runId": "foreign" if mutation == "reference-parent" else "run",
                     "rootId": "root", "sequence": 1, "groupState": "Exited",
+                    "childPid": 100, "childStartSha256": "f" * 64,
                     "exitCode": 0, "diagnosticCode": "None",
                     "inputFiles": {"proofs/inherited-reference-inputs.json": reference["inputMapSha256"]},
                     "outputFiles": {"proofs/inherited-reference-result.json":

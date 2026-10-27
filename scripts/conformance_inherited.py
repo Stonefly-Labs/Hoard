@@ -632,9 +632,15 @@ def replay_reference_consumer(owner, descriptor):
             or [module["Id"] for module in modules] != reference["moduleIds"]
             or dict(input_manifest(owner, list(files))) != files):
         raise ConformanceError("ProofMismatch")
+    invocation = getattr(observed, "native_invocation", None)
+    argv_sha256 = digest(arguments)
+    cwd_sha256 = hashlib.sha256(os.getcwd().encode("utf-8")).hexdigest()
+    legacy.verify_borrowed_invocation(
+        invocation, argv_sha256=argv_sha256, cwd_sha256=cwd_sha256,
+        stdin_sha256=reference["responseSha256"], group_pid=os.getpid())
     return {"qualification": False, "moduleCount": len(modules),
             "moduleIdsSha256": digest(reference["moduleIds"]), "inputMapSha256": descriptor["inputMapSha256"],
-            "argvSha256": digest(arguments), "cwdSha256": hashlib.sha256(os.getcwd().encode("utf-8")).hexdigest(),
+            "argvSha256": argv_sha256, "cwdSha256": cwd_sha256, "invocation": invocation,
             "assemblySha256": reference["assemblySha256"], "responseSha256": reference["responseSha256"]}
 
 

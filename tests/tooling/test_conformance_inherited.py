@@ -27,11 +27,12 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
     def test_native_reference_replay_requires_unchanged_complete_inputs_and_actual_original_consumer(self):
+        import hashlib
         import conformance_legacy as legacy
         from conformance_evidence import digest
 
         for defect in (None, "changed", "omitted", "foreign", "output", "during", "source-omitted",
-                       "dependency", "unknown-field"):
+                       "dependency", "unknown-field", "missing-native", "foreign-group", "native-input"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -75,8 +76,22 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     "inputMapPath": packet.relative_to(root).as_posix(), "inputMapSha256": file_sha256(packet)}
                 if defect == "changed":
                     files["response"].write_bytes(b"changed")
+                native = {
+                    "schemaVersion": 1, "qualification": False, "groupState": "Borrowed",
+                    "groupPid": os.getpid(), "groupStartSha256": "a" * 64,
+                    "childPid": os.getpid() + 1, "childStartSha256": "b" * 64,
+                    "childState": "Exited", "exitCode": 0,
+                    "argvSha256": digest(["dotnet", str(files["assembly"])]),
+                    "cwdSha256": hashlib.sha256(os.getcwd().encode()).hexdigest(),
+                    "stdinSha256": reference["responseSha256"],
+                }
+                if defect == "foreign-group":
+                    native["groupPid"] += 1
+                elif defect == "native-input":
+                    native["stdinSha256"] = "0" * 64
                 result = SimpleNamespace(returncode=0, stdout=json.dumps(
-                    [{"Id": "fixture.protocol.two" if defect == "output" else "fixture.protocol.one"}]))
+                    [{"Id": "fixture.protocol.two" if defect == "output" else "fixture.protocol.one"}]),
+                    **({} if defect == "missing-native" else {"native_invocation": native}))
                 def command(*args, **kwargs):
                     if defect == "during":
                         files["response"].write_bytes(b"changed while executing")
@@ -89,6 +104,7 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                         observed = inherited.replay_reference_consumer(root, descriptor)
                         self.assertEqual(observed["moduleCount"], 1)
                         self.assertEqual(observed["moduleIdsSha256"], digest(reference["moduleIds"]))
+                        self.assertEqual(observed["invocation"], native)
                         invoke.assert_called_once_with(
                             ["dotnet", str(files["assembly"])], input=b"{}")
                     if defect in ("changed", "omitted", "foreign", "source-omitted", "dependency", "unknown-field"):

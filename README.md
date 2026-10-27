@@ -343,6 +343,12 @@ and substituted output reject. Native confirmation of this new component is
 pending; it does not supply individual receipts for every other inner controller
 command. T046 stays unchecked and full-controller/profile qualification stays
 false.
+The follow-up reference receipt now observes the actual launched child's PID/
+kernel-start identity, borrowed guarded group, argv/cwd, supplied stdin digest
+and reaped exit. Parent admission cross-checks the group's PID/start against its
+original native execution record instead of accepting command hashes alone.
+The group remains explicitly borrowed until the parent proves actual settlement.
+Native confirmation of this stricter receipt is pending; T046 remains open.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

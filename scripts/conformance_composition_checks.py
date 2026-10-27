@@ -161,7 +161,14 @@ def _native_reference_consumer(run, repository, source, controllers, baseline_se
         "argvSha256": evidence.digest(["dotnet", reference["assembly"]]),
         "cwdSha256": hashlib.sha256(str(source).encode("utf-8")).hexdigest(),
         "assemblySha256": reference["assemblySha256"], "responseSha256": reference["responseSha256"]}
-    if (observed != expected or dict(evidence.input_manifest(run.root, list(files))) != files):
+    invocation = observed.get("invocation")
+    record = evidence.load_json(run.read_execution_record(run.command_sequence))
+    legacy.verify_borrowed_invocation(
+        invocation, argv_sha256=expected["argvSha256"], cwd_sha256=expected["cwdSha256"],
+        stdin_sha256=expected["responseSha256"], group_pid=record["childPid"],
+        group_start_sha256=record["childStartSha256"])
+    if (observed != {**expected, "invocation": invocation}
+            or dict(evidence.input_manifest(run.root, list(files))) != files):
         raise evidence.ConformanceError("ProofMismatch")
     return {**observed, "nativeContainment": True, "parentSha256": parent,
             "sequence": run.command_sequence, "inputCount": len(files)}

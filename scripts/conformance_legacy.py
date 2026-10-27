@@ -103,6 +103,28 @@ def _borrowed_group():
     return group
 
 
+def verify_borrowed_invocation(value, *, argv_sha256, cwd_sha256, stdin_sha256,
+                               group_pid, group_start_sha256=None):
+    fields = {
+        "schemaVersion", "qualification", "groupState", "groupPid", "groupStartSha256",
+        "childPid", "childStartSha256", "childState", "exitCode",
+        "argvSha256", "cwdSha256", "stdinSha256"}
+    if (type(group_pid) is not int or group_pid <= 0
+            or not isinstance(value, dict) or set(value) != fields
+            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 1
+            or value["qualification"] is not False or value["groupState"] != "Borrowed"
+            or value["childState"] != "Exited" or type(value["exitCode"]) is not int or value["exitCode"] != 0
+            or type(value["groupPid"]) is not int or value["groupPid"] != group_pid or value["groupPid"] <= 0
+            or type(value["childPid"]) is not int or value["childPid"] <= 0 or value["childPid"] == group_pid
+            or any(not isinstance(value[key], str) or re.fullmatch("[0-9a-f]{64}", value[key]) is None
+                   for key in ("childStartSha256", "groupStartSha256", "argvSha256", "cwdSha256"))
+            or value["childStartSha256"] == value["groupStartSha256"]
+            or group_start_sha256 is not None and value["groupStartSha256"] != group_start_sha256
+            or value["argvSha256"] != argv_sha256 or value["cwdSha256"] != cwd_sha256
+            or value["stdinSha256"] != stdin_sha256):
+        raise ConformanceError("ProofMismatch")
+
+
 def _settle_group(child):
     deadline = time.monotonic() + 10
     try:
@@ -254,11 +276,25 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
     environment.update(env or {})
     environment.update(FIXTURE_HOST_ENVIRONMENT, MSBUILDDISABLENODEREUSE="1", DOTNET_CLI_USE_MSBUILD_SERVER="0",
                        UseSharedCompilation="false")
+    group = _borrowed_group()
+    invocation = None
+    if group is not None:
+        if (not isinstance(args, (list, tuple)) or not args
+                or any(not isinstance(argument, str) or "\x00" in argument for argument in args)):
+            raise ConformanceError("OwnershipInvalid")
+        args = tuple(args)
+        invocation = {
+            "schemaVersion": 1, "qualification": False, "groupState": "Borrowed",
+            "groupPid": group, "groupStartSha256": process_identity(group),
+            "argvSha256": hashlib.sha256(canonical_bytes(args)).hexdigest(),
+            "cwdSha256": hashlib.sha256(str(Path(cwd or os.getcwd()).absolute()).encode("utf-8")).hexdigest(),
+            "stdinSha256": None if input is None else hashlib.sha256(input).hexdigest(),
+        }
     try:
         child = subprocess.Popen(
             args, cwd=cwd, env=environment, stdout=subprocess.PIPE,
             stdin=subprocess.PIPE if input is not None else None,
-            stderr=subprocess.STDOUT, start_new_session=_borrowed_group() is None)
+            stderr=subprocess.STDOUT, start_new_session=group is None)
     except OSError:
         raise RuntimeError("Legacy command CommandFailed.") from None
     data = bytearray()
@@ -276,6 +312,12 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
         writer = threading.Thread(target=write_input, daemon=True)
         writer.start()
     try:
+        if invocation is not None:
+            # Before wait, even a fast-exiting child's unreaped PID still belongs to this launch.
+            identity = process_identity(child.pid, deadline=deadline, include_exited=True)
+            if identity is None or os.getpgid(child.pid) != group or process_identity(group) != invocation["groupStartSha256"]:
+                raise ConformanceError("OwnershipInvalid")
+            invocation.update(childPid=child.pid, childStartSha256=identity)
         with selectors.DefaultSelector() as selector:
             selector.register(child.stdout, selectors.EVENT_READ)
             while selector.get_map():
@@ -315,6 +357,8 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
         raise RuntimeError("Legacy command CommandFailed.")
     result = subprocess.CompletedProcess(args, child.returncode, bytes(data))
     result.child_pid = child.pid
+    if invocation is not None:
+        result.native_invocation = {**invocation, "childState": "Exited", "exitCode": child.returncode}
     return result
 
 
@@ -700,7 +744,10 @@ def composition_controller_command(args, *, cwd=None, env=None, expected=None, i
         if args[0] == "dotnet" and name.endswith(".dll"):
             value = (reference_consumer_control(body, load_json(result.stdout)) if reference
                      else composition_control(args, load_json(result.stdout)))
-            return subprocess.CompletedProcess(args, 0, json.dumps(value, allow_nan=False))
+            projected = subprocess.CompletedProcess(args, 0, json.dumps(value, allow_nan=False))
+            if hasattr(result, "native_invocation"):
+                projected.native_invocation = result.native_invocation
+            return projected
     except (ValueError, TypeError, KeyError, UnicodeError, ConformanceError):
         raise RuntimeError("Legacy composition command UnknownDiagnostic.") from None
     raise RuntimeError("Legacy composition command UnknownDiagnostic.")
