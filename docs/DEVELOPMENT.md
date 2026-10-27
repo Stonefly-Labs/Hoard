@@ -5849,6 +5849,26 @@ Selected per-command snapshots remain partial, and all full-controller/profile/
 qualification flags remain false. T047 and final independent proof evaluation
 remain open. Current progress: 53/86, implement/running.
 
+The composition component now writes `proofs/composition-runtime-report.json`
+after original runtime admission and fresh completion measurements. Every
+canonical CP case references unchanged original witnesses plus its explicit
+derivation packet. All nine quality obligations remain `Incomplete`; report
+state is `Incomplete`, qualification is false and resources describe the point
+of capture, not final cleanup. Source identity, packages, locks, runtime images,
+configuration and an actual completion environment probe are recomputed;
+only the existing free-space measurement exception applies. Original proof bytes,
+derived packets and the immutable completion document are hash-registered.
+This is diagnostic publication, not final independent proof/origin evaluation.
+A modeled full-catalog control confirms complete logical rows and rejects changed
+original proof bytes; it is not counted as runtime evidence.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence
+test_conformance_composition -q`: passed, 182 tests.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 578 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty native macOS skips,
+expected incomplete exit 2. Linux confirmation remains pending; T047 stays
+unchecked, current progress 53/86. Product/provider contracts, examples, diagrams,
+infrastructure and governance are unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

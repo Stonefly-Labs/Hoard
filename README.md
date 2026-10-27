@@ -425,6 +425,13 @@ is 53/86, implement/running. Universal compiler/SDK/runtime file-read tracing
 was an additional implementation-note assumption, not a T046/FR-018 requirement;
 selected-input observations remain explicitly partial. Full composition
 acceptance (T047) and independent qualification (T071) remain unfinished.
+The native composition component now writes a nonqualifying logical-case report
+from its admitted original witnesses and explicit derivation packets, with
+fresh completion input/environment measurements. CP rows retain their outcomes;
+the nine not-yet-evaluated quality obligations stay `Incomplete`, never passed
+by inference. Local safe tooling observes 578 tests without failures/errors or
+unexpected diagnostic bytes, with twenty native skips. Linux confirmation of
+this report-publication increment remains pending; T047 remains unchecked.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

@@ -904,6 +904,31 @@ qualification flags remain false. Full composition acceptance T047 and final
 independent proof evaluation T071 remain open. T046's checkbox records only
 the verified integration task. Current progress: 53/86, implement/running.
 
+### Diagnostic logical composition report publication
+
+The actual composition runtime now publishes
+`proofs/composition-runtime-report.json` from its already admitted original
+witnesses. Each canonical CP row retains an explicit derivation packet; the
+nine quality obligations remain `Incomplete` pending their full evaluation.
+The report remains `Incomplete`, `qualification=false`, with resources observed
+at capture rather than a claim of final cleanup.
+
+Completion reconstructs source identity/manifest, candidate package identities,
+locks, runtime image hashes, configuration and a fresh owned environment probe.
+Input recomputation must agree, apart from the existing free-space measurement
+exception. Original proof bytes and derived/completion packets are registered
+by actual hashes; changed original proof bytes reject before publication.
+The modeled full-catalog publication control is not runtime evidence.
+Independent original-proof/origin replay and final qualification remain open.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_evidence
+test_conformance_composition -q`: passed, 182 tests.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 578 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty native macOS skips,
+expected incomplete exit 2. Linux confirmation remains pending. T047 remains
+unchecked; 53/86, implement/running. Product/provider contracts, examples,
+diagrams, infrastructure and governance remain unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

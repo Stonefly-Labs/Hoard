@@ -17,7 +17,7 @@ from xml.sax.saxutils import escape
 import conformance_baselines as baselines
 import conformance_evidence as evidence
 import conformance_legacy as legacy
-from conformance_case_catalog import composition_execution_cases, composition_snapshot_policy
+from conformance_case_catalog import composition_execution_cases, composition_snapshot_policy, expected_cases
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, project_event
 from conformance_inherited import (
     CONTROLLER_ERROR_SOURCES, INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
@@ -578,6 +578,58 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     }
 
 
+def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_directory, started_ms, ended_ms,
+                             resources=()):
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    post_inputs = evidence.admit_entity("RunInputs", post_inputs)
+    evidence.verify_input_recomputation(inputs, post_inputs)
+    if inputs["profileId"] != "composition" or inputs["mode"] != "diagnostic":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    runtime_directory = evidence.relative_path(runtime_directory)
+    witnesses = tuple(evidence.admit_entity("RuntimeWitness", row) for row in observed["witnesses"])
+    selected = {row["testIdentity"]: row for row in witnesses}
+    if (len(selected) != len(witnesses) or selected.keys() != composition_execution_cases().keys()
+            or any(row["status"] != "Passed" for row in witnesses)
+            or set(observed["proofs"]) != {f'proof-{row["executionId"]}.json' for row in witnesses}):
+        raise evidence.ConformanceError("WitnessMissing")
+    proofs = {runtime_directory + "/" + evidence.relative_path(path): evidence.sha256(hashed)
+              for path, hashed in observed["proofs"].items()}
+    if dict(evidence.input_manifest(run.root, list(proofs))) != proofs:
+        raise evidence.ConformanceError("ProofMismatch")
+    results = []
+    for case in expected_cases("composition"):
+        if case.witnesses:
+            material = evidence.composition_case_material(
+                inputs, case_id=case.case_id, matrix_id=case.matrix_id,
+                witnesses=[selected[identity] for identity in case.witnesses],
+                sequence=1, started_ms=started_ms, ended_ms=ended_ms)
+            for path, raw in material["sourceProofs"].items():
+                write_new(run.root / path, raw)
+                proofs[path] = hashlib.sha256(raw).hexdigest()
+            results.append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
+        else:
+            results.append(evidence._catalog_case_result(inputs, case, "Incomplete", [{
+                "sequence": 1, "startedMs": started_ms, "endedMs": ended_ms, "status": "Incomplete",
+                "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"}]))
+    completion = "proofs/category-composition-diagnostic-completion-inputs.json"
+    raw = evidence.canonical_bytes(post_inputs)
+    write_new(run.root / completion, raw)
+    proofs[completion] = hashlib.sha256(raw).hexdigest()
+    report = evidence.admit_entity("QualificationReport", {
+        "schemaVersion": 1, "catalogRevision": evidence.CATALOG_REVISION, "inputs": inputs,
+        "postInputSha256": evidence.digest(post_inputs), "results": results, "witnesses": witnesses,
+        "resources": resources, "proofs": proofs, "state": "Incomplete", "qualification": False,
+        "scope": ["composition-runtime-diagnostic"]})
+    evidence.verify_completion_inputs(run.root, report)
+    raw = evidence.canonical_bytes(report)
+    write_new(run.root / "proofs/composition-runtime-report.json", raw)
+    return {
+        "qualification": False, "reportState": "Incomplete", "reportSha256": hashlib.sha256(raw).hexdigest(),
+        "passedCases": sum(row["status"] == "Passed" for row in results),
+        "incompleteCases": sum(row["status"] == "Incomplete" for row in results),
+    }
+
+
 def _runtime(run, repository, source, sources, config, feed, records, replay):
     print(json.dumps({"qualification": False, "phase": "runtime-staging"}), flush=True)
     project = replay / PROJECT
@@ -711,6 +763,22 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
             or any(evidence.file_sha256(run.root / path) != hashed
                    for path, hashed in {**inputs["runtimeAssemblies"], **inputs["locks"], **command_inputs}.items())):
         raise evidence.ConformanceError("InputChanged")
+    post_sources = evidence.source_manifest(repository)
+    post_environment = evidence.admit_entity("Environment", {
+        **environment(run, phase="completion"), "nativeSqlite": "unobserved"})
+    post_inputs = evidence.admit_entity("RunInputs", {
+        **inputs, **evidence.source_identity(repository, ci_revision=ci_revision),
+        "sourceManifest": post_sources, "sourceManifestSha256": evidence.digest(post_sources),
+        "packages": [evidence.package_identity(feed, row["packageId"], row["version"])
+                     for row in inputs["packages"]],
+        "locks": {path: evidence.file_sha256(run.root / path) for path in inputs["locks"]},
+        "runtimeAssemblies": {path: evidence.file_sha256(run.root / path) for path in inputs["runtimeAssemblies"]},
+        "configurationSha256": evidence.file_sha256(config),
+        "environment": post_environment, "environmentSha256": evidence.digest(post_environment),
+    })
+    case_report = _composition_case_report(
+        run, inputs, post_inputs, admitted, runtime_directory=output.relative_to(run.root).as_posix(),
+        started_ms=started, ended_ms=ended, resources=run.resource_projection())
     return {
         "schemaVersion": 1, "qualification": False, "nativeContainment": True, "profileComplete": False,
         "safeRuntimeAdmission": True, "runId": run.run_id, "attemptId": attempt,
@@ -722,6 +790,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
         "lockDerivationsSha256": evidence.digest(records),
         "lockedFreshCacheReplay": True, "moduleOwnershipQualification": False,
         "environment": evidence.load_json(evidence.canonical_bytes(observed_environment)),
+        "caseReport": case_report,
     }
 
 

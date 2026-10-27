@@ -733,6 +733,51 @@ class ConformanceAdmissionTests(unittest.TestCase):
             with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
                 evidence.admit_entity("QualificationReport", changed)
 
+    def test_composition_diagnostic_report_retains_every_logical_case_without_qualification(self):
+        import conformance_case_catalog as catalog
+        import conformance_composition_checks as composition
+        from types import SimpleNamespace
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            (root / "runtime-model").mkdir()
+            prototype = self.composition_report()
+            inputs = prototype["inputs"]
+            witnesses, proofs = [], {}
+            for identity, (_, matrix) in catalog.composition_execution_cases().items():
+                execution = str(uuid.uuid4())
+                path = "runtime-model/proof-" + execution + ".json"
+                raw = evidence.canonical_bytes({"model": identity})
+                (root / path).write_bytes(raw)
+                hashed = hashlib.sha256(raw).hexdigest()
+                proofs[Path(path).name] = hashed
+                witnesses.append({
+                    **prototype["witnesses"][0], "executionId": execution, "testIdentity": identity,
+                    "matrixId": matrix, "proofSha256": hashed})
+            observed = {"witnesses": witnesses, "proofs": proofs}
+            result = composition._composition_case_report(
+                SimpleNamespace(root=root), inputs, inputs, observed, runtime_directory="runtime-model",
+                started_ms=0, ended_ms=1)
+            path = root / "proofs/composition-runtime-report.json"
+            report = evidence.admit_entity("QualificationReport", evidence.load_json(path.read_bytes()))
+            self.assertEqual(result["reportSha256"], evidence.file_sha256(path))
+            self.assertEqual(result["reportState"], "Incomplete")
+            self.assertFalse(report["qualification"])
+            self.assertEqual(len(report["witnesses"]), len(witnesses))
+            self.assertEqual(len(report["results"]), len(catalog.expected_cases("composition")))
+            self.assertTrue(all(row["status"] == ("Passed" if row["caseId"].startswith("CP-") else "Incomplete")
+                                for row in report["results"]))
+            self.assertEqual(dict(evidence.input_manifest(root, list(report["proofs"]))), report["proofs"])
+            evidence.verify_completion_inputs(root, report)
+            path = root / f'runtime-model/proof-{witnesses[0]["executionId"]}.json'
+            path.chmod(0o600)
+            path.write_bytes(b"changed")
+            with self.assertRaises(evidence.ConformanceError):
+                composition._composition_case_report(
+                    SimpleNamespace(root=root), inputs, inputs, observed, runtime_directory="runtime-model",
+                    started_ms=0, ended_ms=1)
+
     def test_an_attempt_cannot_borrow_other_dimensions_or_outside_execution_times(self):
         for dimension, value in (("bindingId", "memory"), ("matrixId", "other")):
             report = self.report()
