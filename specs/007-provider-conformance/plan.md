@@ -149,9 +149,29 @@ The next input-closure red control exposes missing owned ancestor
 `global.json` and project `packages.lock.json`. Those files now enter the
 bounded frozen read-input map. Each changed file changes that map; symlinked
 context rejects without touching the outside sentinel. All twenty inherited
-and seven native-parent tests pass; fresh native confirmation of the enlarged
-closure remains pending. Product/provider/governance/architecture/example/
+and seven native-parent tests pass. Exact `8f46a2c32d1a6f84bf5fc26b6da3959df2417348`
+now passes run40465825066/job122060866936: CP36/110, inherited525/58,
+2,124 unchanged bound inputs and actual release. CP input
+`eab2aa6b3bf31f8c4d0326c9842ae5237a13bd88e729370a609922f745794b82`;
+scope admission `89d818d8a53e10e540f8cdd5f6ca8eafd4154595e0e472fc37019132967f33c3`;
+historical seal `3b5eafa94f606c5a1b1ac6bdeab73145e4e1786f03fdb8a9ae3dcfe0d321032e`.
+Product/provider/governance/architecture/example/
 infrastructure/release contracts are unaffected by this test-only repair.
+
+The next controller increment captures the exact prepared-project formatter
+inventory from each original recipe. Each command runs as a separate guarded
+native child and must match its actual owner, sequence, argv, cwd, exit,
+settled group, full input-map descriptor and project/assets input receipt.
+The complete map is rehashed before and after each command, including generated
+NuGet props/targets, automatically discovered assets and actual Hoard archive
+caches. Focused controls reject missing/duplicate/foreign inputs, stale receipts,
+retained children and changed indirect source or descriptor bytes.
+All 435 conformance tooling tests pass with twenty explicit native skips.
+The source solution formatting repair passes and thirteen focused C# discovery
+tests pass; no behavior or consumer assertions changed. Prepared formatter
+native confirmation remains pending. Whole-solution native formatting,
+unprepared foundation architecture/breaking fixtures, full tooling and mutation
+obligations remain open; no qualification flag or task marker is advanced.
 
 ## Shared authority admission and explicit restart controls
 

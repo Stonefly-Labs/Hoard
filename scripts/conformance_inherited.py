@@ -488,7 +488,7 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
     owner, source = Path(owner).resolve(strict=True), Path(source).resolve(strict=True)
     if source == owner or not source.is_relative_to(owner):
         raise ConformanceError("OwnershipInvalid")
-    manifests, phases = {}, {}
+    manifests, phases, format_projects = {}, {}, {}
     with controller_transport(repository, owner, sdk_package=sdk_package, logger_path=logger_path) as controls:
         for phase in ("foundation", "lifecycle", "configuration", "discovery"):
             controls["phase"] = phase
@@ -505,6 +505,8 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                 document["hosts"] = foundation.hosts(source, target, config, False)
                 document["sourceHashesAfter"] = foundation.source_hashes(source)
                 summary = {"providerPackages": len(providers), "customHosts": len(document["hosts"])}
+                projects = [project for base in ("providers", "architecture", "hosts", "compatibility")
+                            for project in sorted((target / base).glob("**/*.csproj"))]
             elif phase == "lifecycle":
                 config, providers = lifecycle.prepare_packages(source, target, False)
                 registration = lifecycle.registration_compatibility(
@@ -515,6 +517,7 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                 manifest = Path(os.environ["HOARD_LIFECYCLE_EVIDENCE"])
                 document = load_json(read_bounded(manifest, 16 * 1024**2))
                 summary = {"providerPackages": len(providers), "journeys": journeys, "graphs": len(graphs)}
+                projects = [*(Path(proof["project"]) for proof in providers), *hosts, registration]
             else:
                 module = configuration if phase == "configuration" else discovery
                 retained = (module.prepare_baseline(source, target, False) if prepared_baselines is None
@@ -533,6 +536,8 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                                 "publication": publication, "packages": providers}
                     summary = {"retainedBinaries": len(retained), "journeys": len(journeys),
                                "graphs": len(graphs), "publicationBarriers": len(publication["barriers"])}
+                    projects = [*(Path(proof["project"]) for proof in providers), *hosts,
+                                provider, consumer, registration, conversion]
                 else:
                     old = next(entry for entry in retained if entry["name"] == "LegacyOptions")
                     old_provider = Path(old["assembly"]).parents[3] / "LegacyOptions.csproj"
@@ -555,6 +560,8 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                     summary = {"retainedBinaries": len(retained), "journeys": len(journeys),
                                "observations": len(observations), "graphs": len(graphs),
                                "referenceConsumerPassed": True}
+                    projects = [*hosts, *consumers.values(), *(Path(proof["project"]) for proof in providers)]
+            format_projects[phase] = [Path(project).relative_to(owner).as_posix() for project in projects]
             if phase != "lifecycle":
                 manifest = target / (phase + "-evidence.json")
                 legacy._write(manifest, document)
@@ -566,8 +573,11 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
             }
         legacy._write(owner / "proofs/inherited-controller-lock-derivations.json", controls["lockDerivations"])
         legacy._write(owner / "proofs/inherited-controller-command-inputs.json", controls["inputFiles"])
+        formatting = owner / "proofs/inherited-controller-format-projects.json"
+        legacy._write(formatting, format_projects)
     return {"qualification": False, "fullControllerAcceptance": False, "nativeContainment": False,
-            "manifests": manifests, "phases": phases}
+            "manifests": manifests, "phases": phases,
+            "formatting": {"path": formatting.relative_to(owner).as_posix(), "sha256": legacy._hash(formatting)}}
 
 
 def controller_read_inputs(owner, manifests, *, extra=()):
@@ -587,11 +597,20 @@ def controller_read_inputs(owner, manifests, *, extra=()):
             raise ConformanceError("OwnershipInvalid")
         path = path.resolve(strict=True)
         relative = path.relative_to(owner).as_posix()
-        if relative not in files:
-            size += path.stat().st_size
-            if len(files) >= 50000 or size > 256 * 1024**2:
-                raise ConformanceError("OutputLimitExceeded")
-            files[relative] = file_sha256(path)
+        if relative in files:
+            return
+        size += path.stat().st_size
+        if len(files) >= 50000 or size > 256 * 1024**2:
+            raise ConformanceError("OutputLimitExceeded")
+        files[relative] = file_sha256(path)
+        if path.name == "project.assets.json":
+            assets = load_json(read_bounded(path, 16 * 1024**2))
+            for identity, entry in assets["libraries"].items():
+                if identity.startswith("Hoard.") and entry["type"] == "package":
+                    for cache in assets["packageFolders"]:
+                        for item in (Path(cache) / entry["path"]).glob("*"):
+                            if item.is_file():
+                                bind(item)
         if path.suffix in (".csproj", ".slnx"):
             for directory in path.parents:
                 if not directory.is_relative_to(owner):
@@ -600,7 +619,9 @@ def controller_read_inputs(owner, manifests, *, extra=()):
                 if directory == path.parent and path.suffix == ".csproj":
                     names.extend(("packages.lock.json", "PackageAcceptance/packages.lock.json",
                                   "obj/F07.preparation.packages.lock.json",
-                                  "obj/F07.preparation.acceptance.packages.lock.json"))
+                                  "obj/F07.preparation.acceptance.packages.lock.json",
+                                  "obj/project.assets.json", f"obj/{path.name}.nuget.g.props",
+                                  f"obj/{path.name}.nuget.g.targets"))
                 for name in names:
                     context = directory / name
                     legacy.no_symlinks(context)
@@ -624,14 +645,6 @@ def controller_read_inputs(owner, manifests, *, extra=()):
                 raise ConformanceError("OwnershipInvalid")
             if path.is_file():
                 bind(path)
-                if path.name == "project.assets.json":
-                    assets = load_json(read_bounded(path, 16 * 1024**2))
-                    for identity, entry in assets["libraries"].items():
-                        if identity.startswith("Hoard.") and entry["type"] == "package":
-                            for cache in assets["packageFolders"]:
-                                for item in (Path(cache) / entry["path"]).glob("*"):
-                                    if item.is_file():
-                                        bind(item)
             elif path.is_dir():
                 for item in path.rglob("*"):
                     if (item.is_file() and item.suffix in (".cs", ".csproj")

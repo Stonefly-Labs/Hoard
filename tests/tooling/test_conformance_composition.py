@@ -13,6 +13,102 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_prepared_formatting_requires_exact_native_receipts_and_unchanged_closure(self):
+        import hashlib
+        import time
+        import conformance_composition_checks as checks
+        import conformance_evidence as evidence
+        for mutation in ("none", "foreign-root", "argv", "cwd", "inputs", "sequence", "hash",
+                         "retained", "live-child", "failed", "changed-source", "changed-closure",
+                         "duplicate", "missing-phase", "missing-assets"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                projects, files = {}, {}
+                for phase in ("foundation", "lifecycle", "configuration", "discovery"):
+                    directory = root / "stores" / ("inherited-controller-" + phase)
+                    (directory / "obj").mkdir(parents=True)
+                    project = directory / "Example.csproj"
+                    project.write_bytes(b"<Project/>")
+                    assets = directory / "obj/project.assets.json"
+                    assets.write_bytes(b"{}")
+                    projects[phase] = [project.relative_to(root).as_posix()]
+                    files.update({path.relative_to(root).as_posix(): evidence.file_sha256(path)
+                                  for path in (project, assets)})
+                source = root / "independent.cs"
+                source.write_bytes(b"class Original {}")
+                files[source.name] = evidence.file_sha256(source)
+                if mutation == "duplicate":
+                    projects["foundation"] *= 2
+                elif mutation == "missing-phase":
+                    del projects["foundation"]
+                elif mutation == "missing-assets":
+                    del files["stores/inherited-controller-foundation/obj/project.assets.json"]
+                descriptor = root / "proofs/format-projects.json"
+                descriptor.write_bytes(evidence.canonical_bytes(projects))
+                closure = root / "proofs/closure.json"
+                closure.write_bytes(evidence.canonical_bytes(files))
+                controllers = {"formatting": {"path": descriptor.relative_to(root).as_posix(),
+                                             "sha256": evidence.file_sha256(descriptor)}}
+                run = SimpleNamespace(root=root, run_id="run", root_id="root", command_sequence=0)
+                record = {}
+
+                def command(arguments, **kwargs):
+                    self.assertTrue(kwargs["record_execution"])
+                    self.assertEqual("build", kwargs["kind"])
+                    self.assertEqual(["dotnet", "format"], arguments[:2])
+                    self.assertEqual(["--verify-no-changes", "--no-restore", "-v", "quiet"], arguments[3:])
+                    self.assertEqual(Path(arguments[2]).parent, kwargs["cwd"])
+                    self.assertEqual(4, len(kwargs["execution_inputs"]))
+                    run.command_sequence += 1
+                    now = time.monotonic() * 1000
+                    record.update(
+                        sequence=run.command_sequence, runId="run", rootId="root", scope="ordinary",
+                        argvSha256=evidence.digest(arguments),
+                        cwdSha256=hashlib.sha256(str(kwargs["cwd"]).encode()).hexdigest(),
+                        inputFiles={path: evidence.file_sha256(root / path) for path in kwargs["execution_inputs"]},
+                        groupState="Exited", exitCode=0, diagnosticCode="None", startedMs=now, endedMs=now)
+                    if mutation in ("foreign-root", "argv", "cwd", "inputs", "sequence", "retained"):
+                        field, value = {
+                            "foreign-root": ("rootId", "foreign"), "argv": ("argvSha256", "0" * 64),
+                            "cwd": ("cwdSha256", "0" * 64), "inputs": ("inputFiles", {}),
+                            "sequence": ("sequence", 99), "retained": ("groupState", "Retained"),
+                        }[mutation]
+                        record[field] = value
+                    if mutation in ("changed-source", "changed-closure"):
+                        changed = source if mutation == "changed-source" else closure
+                        changed.chmod(0o600)
+                        changed.write_bytes(b"changed")
+                    return SimpleNamespace(
+                        exit_code=1 if mutation == "failed" else 0, events=(),
+                        execution_record_sha256="0" * 64 if mutation == "hash" else evidence.digest(record))
+
+                run.command = mock.Mock(side_effect=command)
+                run.read_execution_record = mock.Mock(side_effect=lambda sequence: evidence.canonical_bytes(record))
+                run.live_children = mock.Mock(return_value=[1] if mutation == "live-child" else [])
+                if mutation == "none":
+                    output = io.StringIO()
+                    with contextlib.redirect_stdout(output):
+                        observed = checks._format_prepared_controllers(run, controllers, files, closure)
+                    self.assertFalse(observed["qualification"])
+                    self.assertFalse(observed["solutionFormatting"])
+                    self.assertEqual(list(projects), [row["controller"] for row in observed["commands"]])
+                    self.assertEqual(4, run.command.call_count)
+                    self.assertEqual([
+                        {"qualification": False, "phase": "inherited-prepared-formatting",
+                         "controller": phase, "command": number}
+                        for number, phase in enumerate(projects, 1)
+                    ], [evidence.load_json(line.encode()) for line in output.getvalue().splitlines()])
+                else:
+                    code = ("InputChanged" if mutation.startswith("changed-") else
+                            "CommandFailed" if mutation == "failed" else
+                            "EvidenceSchemaInvalid" if mutation == "missing-phase" else "ProofMismatch")
+                    with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(
+                            evidence.ConformanceError, code):
+                        checks._format_prepared_controllers(run, controllers, files, closure)
+                    if mutation in ("duplicate", "missing-phase", "missing-assets"):
+                        run.command.assert_not_called()
+
     def test_controller_failure_exposes_only_revalidated_closed_progress(self):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence

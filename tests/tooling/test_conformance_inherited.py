@@ -397,6 +397,36 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 inherited.controller_read_inputs(owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)})
             self.assertEqual(b"{}", foreign.read_bytes())
 
+    def test_project_only_input_binds_formatter_imports_assets_and_actual_archive_cache(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            project = owner / "Example.csproj"
+            project.write_bytes(b"<Project/>")
+            (owner / "obj").mkdir()
+            imports = [owner / "obj" / ("Example.csproj.nuget.g." + suffix) for suffix in ("props", "targets")]
+            for path in imports:
+                path.write_bytes(b"<Project/>")
+            cache = owner / "cache/hoard.example/0.1.0"
+            cache.mkdir(parents=True)
+            archive = cache / "hoard.example.0.1.0.nupkg"
+            archive.write_bytes(b"actual archive")
+            assets = owner / "obj/project.assets.json"
+            assets.write_bytes(canonical_bytes({
+                "libraries": {"Hoard.Example/0.1.0": {"type": "package", "path": "hoard.example/0.1.0"}},
+                "packageFolders": {str(owner / "cache"): {}},
+            }))
+            manifest = owner / "manifest.json"
+            manifest.write_bytes(canonical_bytes({"project": str(project)}))
+            observed = inherited.controller_read_inputs(owner, {"evidence": str(manifest)})
+            self.assertEqual({path.relative_to(owner).as_posix(): file_sha256(path)
+                              for path in (project, manifest, assets, archive, *imports)}, observed)
+            for path in (archive, *imports):
+                with self.subTest(path=path.name):
+                    original = path.read_bytes()
+                    path.write_bytes(b"changed")
+                    self.assertNotEqual(observed, inherited.controller_read_inputs(owner, {"evidence": str(manifest)}))
+                    path.write_bytes(original)
+
     def test_controller_preparation_rejects_foreign_source_before_running_borrowed_code(self):
         import foundation_evidence as foundation
         with tempfile.TemporaryDirectory() as temporary, patch.object(foundation, "packages") as prepare:

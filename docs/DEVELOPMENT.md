@@ -5250,6 +5250,15 @@ unknown output. The three inherited inspector checks also confirm opaque
 coverage remains accepted by both original CFG and D case verifiers.
 Fresh Linux wrapper confirmation remains pending.
 
+The enlarged inherited input closure now passes at exact `8f46a2c` in
+[run40465825066](https://github.com/Stonefly-Labs/Hoard/actions/runs/40465825066):
+CP36/110, inherited525/58, 2,124 unchanged bound inputs and actual release.
+The next prepared-project formatting increment binds generated NuGet imports,
+assets and archive caches and requires an individually re-admitted native
+command receipt for every selected project. Local receipt/input-drift controls
+pass; native confirmation is pending. This does not establish whole-solution
+native formatting, full controller/tooling/mutation acceptance or qualification.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

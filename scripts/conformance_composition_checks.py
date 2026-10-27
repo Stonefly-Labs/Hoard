@@ -114,6 +114,78 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
     return value["result"], result.execution_record_sha256
 
 
+def _format_prepared_controllers(run, controllers, files, closure_path):
+    descriptor = controllers["formatting"]
+    path = run.root / evidence.relative_path(descriptor["path"])
+    raw = read_bounded(path, 1024**2)
+    if hashlib.sha256(raw).hexdigest() != descriptor["sha256"]:
+        raise evidence.ConformanceError("InputChanged")
+    projects = evidence.load_json(raw)
+    phases = ("foundation", "lifecycle", "configuration", "discovery")
+    if (not isinstance(projects, dict) or set(projects) != set(phases)
+            or any(not isinstance(projects[phase], list) or not 1 <= len(projects[phase]) <= 200
+                   for phase in phases)):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    selected = []
+    for phase in phases:
+        seen = set()
+        for relative in projects[phase]:
+            project = run.root / evidence.relative_path(relative)
+            legacy.no_symlinks(project)
+            assets = project.parent / "obj/project.assets.json"
+            if (not project.is_relative_to(run.root / "stores" / ("inherited-controller-" + phase))
+                    or project.suffix != ".csproj" or relative in seen
+                    or relative not in files or assets.relative_to(run.root).as_posix() not in files):
+                raise evidence.ConformanceError("ProofMismatch")
+            seen.add(relative)
+            selected.append((phase, project, assets))
+    frozen = {**files, path.relative_to(run.root).as_posix(): descriptor["sha256"],
+              closure_path.relative_to(run.root).as_posix(): evidence.digest(files)}
+    if read_bounded(closure_path, 2 * 1024**2) != evidence.canonical_bytes(files):
+        raise evidence.ConformanceError("InputChanged")
+
+    def verify_inputs():
+        if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in frozen.items()):
+            raise evidence.ConformanceError("InputChanged")
+
+    verify_inputs()
+    for name in frozen:
+        (run.root / name).chmod(0o400)
+    commands = []
+    for phase, project, assets in selected:
+        verify_inputs()
+        print(json.dumps({"qualification": False, "phase": "inherited-prepared-formatting",
+                          "controller": phase, "command": len(commands) + 1}), flush=True)
+        bound = {item.relative_to(run.root).as_posix(): evidence.file_sha256(item)
+                 for item in (path, closure_path, project, assets)}
+        arguments = ["dotnet", "format", str(project), "--verify-no-changes", "--no-restore", "-v", "quiet"]
+        sequence = run.command_sequence + 1
+        started = time.monotonic() * 1000
+        result = run.command(
+            arguments, cwd=project.parent, kind="build", cache_id="inherited-format", timeout=180,
+            record_execution=True, execution_inputs=tuple(bound))
+        ended = time.monotonic() * 1000
+        verify_inputs()
+        if result.exit_code or any(event["code"] != "None" for event in result.events):
+            raise evidence.ConformanceError("CommandFailed")
+        record_raw = run.read_execution_record(run.command_sequence)
+        record = evidence.load_json(record_raw)
+        if (result.execution_record_sha256 != hashlib.sha256(record_raw).hexdigest()
+                or run.command_sequence != sequence or record["sequence"] != sequence
+                or record["runId"] != run.run_id or record["rootId"] != run.root_id
+                or record["scope"] != "ordinary" or record["groupState"] != "Exited"
+                or record["exitCode"] != 0 or record["diagnosticCode"] != "None"
+                or record["argvSha256"] != evidence.digest(arguments)
+                or record["cwdSha256"] != hashlib.sha256(str(project.parent).encode("utf-8")).hexdigest()
+                or record.get("inputFiles") != bound
+                or not started <= record["startedMs"] <= record["endedMs"] <= ended
+                or run.live_children()):
+            raise evidence.ConformanceError("ProofMismatch")
+        commands.append({"controller": phase, "projectSha256": files[project.relative_to(run.root).as_posix()],
+                         "parentSha256": result.execution_record_sha256})
+    return {"qualification": False, "solutionFormatting": False, "commands": commands}
+
+
 def expected_rows():
     rows = [{
         "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
@@ -228,10 +300,11 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     legacy._copy_runtime((source / DISCOVERY_PROJECT).parent / "bin/Release/net10.0", driver)
     files = controller_read_inputs(
         run.root, controllers["manifests"],
-        extra=(normative, run.root / baseline_seal["path"],
+        extra=(normative, run.root / controllers["formatting"]["path"], run.root / baseline_seal["path"],
                *(run.root / name for name in historical["files"])))
     closure_path = run.root / "proofs/inherited-controller-read-inputs.json"
     write_new(closure_path, evidence.canonical_bytes(files))
+    formatting = _format_prepared_controllers(run, controllers, files, closure_path)
     prior = evidence.load_json(read_bounded(run.root / "proofs/composition-inputs.json", 2 * 1024**2))
     owner_raw = read_bounded(run.root / "runtime-owner.json", 65536)
     owner = evidence.load_json(owner_raw)
@@ -362,6 +435,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         "historicalBinariesPreparedBeforeCandidate": True,
         "controllerPreparationParentSha256": controller_parent,
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
+        "preparedFormatting": formatting,
     }
 
 

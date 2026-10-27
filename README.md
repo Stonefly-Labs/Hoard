@@ -202,6 +202,13 @@ and actual process release. The command still exits 2 as explicitly incomplete;
 full-controller, mutation and qualification gates remain open.
 The next closure repair also binds owned ancestor MSBuild/central-package/SDK
 files and project lockfiles; changed metadata and symlinked context reject.
+That enlarged closure passes at exact `8f46a2c` in
+[run40465825066](https://github.com/Stonefly-Labs/Hoard/actions/runs/40465825066):
+CP36/110, inherited525/58, all 2,124 unchanged bound inputs and actual release.
+Prepared-project formatter commands now require individual native receipts and
+unchanged generated NuGet imports/assets as well as the full private input map.
+Their native confirmation is pending; solution-wide formatting and the remaining
+full-controller obligations are not inferred from prepared-project formatting.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and
