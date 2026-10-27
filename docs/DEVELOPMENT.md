@@ -4724,6 +4724,21 @@ claims that ownership output is unstructured describe the preceding checkpoint.
 Native exact-child containment, CP-14/18 integration and full qualifying profiles
 remain unfinished; no task/checklist status is advanced.
 
+The dedicated native component entry is
+`python3 scripts/conformance_composition_checks.py --evidence /private/parent/run`.
+Its existing parent must be user-owned and mode 0700, outside the repository.
+Unsupported hosts reject before allocation. The diagnostic builds seventeen
+archives, prepares only a private consumer lock, locked-replays that consumer
+with a fresh cache, and binds the exact nine identities and safe context to an
+owned child command. Its immutable command record covers the input/owner/test
+manifests, settings, configuration, consumer, packaged Host, SDK, logger and
+runtime configuration; manifests additionally bind the remaining images,
+archives and locks. Independent ingestion checks actual snapshots before input
+recomputation and real process-resource release. Retained module roots remain
+incomplete even when process resources release. The added Linux workflow job
+has not yet executed; 493 local tooling tests pass with nineteen native skips.
+This is not a qualifying profile, final T044 closure or portable proof retention.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

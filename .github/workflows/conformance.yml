@@ -91,6 +91,30 @@ jobs:
             tests/fixtures/conformance/**/packages.lock.json
             tests/integration/Hoard.Composition.Tests/PackageAcceptance/packages.lock.json
 
+  composition-diagnostics:
+    name: Non-qualifying native packaged composition observations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Admit nine exact-child observations and release process resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/composition-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          python3 scripts/conformance_composition_checks.py \
+            --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run"
+
   category-extraction:
     name: Non-qualifying isolated ${{ matrix.category }} extraction and cleanup
     runs-on: ubuntu-24.04

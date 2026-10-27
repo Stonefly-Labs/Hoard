@@ -10,6 +10,29 @@ assertion extraction, five-profile workflow, custom checklist approval or qualif
 result is delivered. Public product contracts and required outcomes remain
 unchanged; necessary fixture-private controls are extended as recorded below.
 
+## Native composition diagnostic continuation
+
+A dedicated non-qualifying executor now builds the seventeen fixture/provider/
+SDK archives, prepares only a private consumer lock, and independently locked-
+replays the package-only consumer with a fresh cache. It uses actual `OwnedRun`
+execution, not a metadata-profile relabeling or simulated native environment.
+The exact nine baseline/ownership identities receive their safe original-owner
+context; an immutable command receipt binds their manifests, context/settings,
+configuration, consumer/Host/SDK/logger bytes and runtime configuration.
+Independent ingestion checks all nineteen snapshots and recomputes captured
+image/lock/input bytes before actual owned process-resource release. Process
+release is not interpreted as module-root release or cooperative settlement.
+
+Three focused tests first fail because the executor does not exist, then pass.
+The full tooling command passes 493 tests with nineteen explicit native skips;
+catalog/inherited-inventory checks and whitespace checks pass. The new Linux
+workflow job has not executed yet. Native results remain pending, CP-14/18 and
+other T044 obligations remain open, and task/checklist status stays 46/86.
+README, DEVELOPMENT, PROVIDERS and CustomHost guidance distinguish delivered
+code from pending native evidence. Production architecture/ADR diagrams,
+charter, product scope, governance, infrastructure and release behavior are
+unaffected by this test-only diagnostic.
+
 ## Foundation continuation
 
 The maintainer's subsequent instruction to make decisions and keep implementing
