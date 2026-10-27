@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="NuGetLockFilePath">
+  <PropertyGroup>
+    <AssemblyName>BinaryContract</AssemblyName>
+    <PackageId>Hoard.Fixtures.Conformance.Compatibility.Baseline</PackageId>
+    <IsPackable>false</IsPackable>
+    <NuGetLockFilePath>$(MSBuildProjectDirectory)/packages.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../compatibility/BinaryMemberRemoval/Old/Contract.cs" Link="Contract.cs" />
+    <AssemblyMetadata Include="ConformanceCompatibilityFixture" Value="baseline" />
+  </ItemGroup>
+</Project>

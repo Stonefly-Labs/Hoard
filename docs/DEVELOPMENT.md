@@ -5422,6 +5422,34 @@ Native admission of these new gates is pending; T046 remains unchecked.
 Public provider contracts, examples, diagrams, governance and infrastructure
 are unaffected.
 
+The partial T051 binary controls link the existing
+`compatibility/BinaryMemberRemoval` consumer and Old/New contract sources into
+four nonpackable test projects with distinct project/package identities.
+Contract assembly names/versions deliberately match; compiler-emitted fixture
+metadata makes the observed bytes distinct. The single unchanged compiled
+consumer throws an actual `MissingMethodException` against the broken candidate
+and succeeds against the compatible candidate. Explicit collectible fixture
+contexts resolve only the selected contract for that identity, and existing
+SDK capture corroborates actual loaded bytes/MVID rather than old DLLs or
+matching version labels. Atomic replacement of an already loaded baseline
+with actual candidate bytes is rejected as `InputChanged`.
+
+These are trusted compiled test fixtures, not provider/plugin discovery.
+Their project references are private/nonreferencing test build dependencies,
+and each fixture pins its own locked restore path. Actual package-mode replay
+first exposes inherited root-lock propagation (`NU1004`); fixture-local lock
+ownership fixes it without relaxing locked restore. Architecture review then
+finds hard-coded default output paths: a clean redirected replay first fails
+`MSB3030`. Copying MSBuild's evaluated `GetTargetPath` outputs fixes the replay
+and prevents stale default-output fixture selection. All three controls pass
+in the actual isolated package-mode build with
+`BaseOutputPath=bin/package-diagnostic/` and an independently reverified
+prepared root lock. Combined source-mode compatibility/binding controls pass
+23 tests; focused formatting passes. Historical source-consumer recipes,
+sealed predecessor replay and source-break controls remain unfinished; T051
+and T056 are not marked complete. Product/provider contracts, examples,
+diagrams, governance and infrastructure are unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

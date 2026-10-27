@@ -356,6 +356,34 @@ or unexpected diagnostic bytes, and twenty native skips: exit 2,
 `EvidenceIncomplete`, not acceptance. Native confirmation remains pending;
 T046 and full-controller/profile qualification remain open.
 
+### Compatibility binary provenance controls (partial T051)
+
+Four nonpackable test projects reuse the unchanged existing binary-member
+removal consumer and Old/New sources. Distinct project/package identities
+avoid restore ambiguity; the contract assembly identity/version deliberately
+matches, while compiler-generated fixture metadata distinguishes actual
+baseline/broken/compatible bytes. One retained compiled consumer fails with
+actual `MissingMethodException` against the broken candidate and succeeds
+against the compatible candidate, without a test-time consumer rebuild.
+An explicit collectible fixture context prevents accidental old-contract
+fallback, and existing `ConformanceLoadedAssembly` capture corroborates actual
+SHA-256/MVID. Atomic replacement of a loaded baseline by actual candidate bytes
+rejects `InputChanged`; this is not a claim about historical build chronology.
+
+Actual source-mode compatibility/binding execution passes 23 tests and focused
+formatting. Actual isolated package-mode execution passes all three new
+controls with root lock revalidation. Initial package replay exposes `NU1004`
+from inherited prepared-root lock propagation; making each BCL fixture's
+locked path local repairs it. Scoped required architecture review identifies
+hard-coded fixture output paths. The actual clean redirected replay first
+fails `MSB3030`, then passes with evaluated MSBuild `GetTargetPath` output
+copying and `BaseOutputPath=bin/package-diagnostic/`. The private fixture
+references never become SDK/product/provider dependencies or plugin loading.
+Full local tooling still observes 560 tests, no failures/errors/unexpected
+diagnostic bytes and twenty native skips. No old SDK release is invented;
+historical source recipes, sealed retained replay and source compiler-break
+controls remain open, so T051/T056 stay unchecked.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

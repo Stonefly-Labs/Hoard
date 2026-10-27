@@ -12,6 +12,36 @@
     <EmbeddedResource Include="../../fixtures/conformance/baselines/inventory.json"
                       LogicalName="Hoard.Conformance.FrozenInventory" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="../../fixtures/conformance/Compatibility/Broken/Broken.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="../../fixtures/conformance/Compatibility/Compatible/Compatible.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="CopyCompatibilityFixtures" AfterTargets="Build">
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Baseline/Baseline.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityBaselineImage" />
+    </MSBuild>
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Broken/Broken.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityBrokenImage" />
+    </MSBuild>
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Compatible/Compatible.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityCompatibleImage" />
+    </MSBuild>
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityConsumerImage" />
+    </MSBuild>
+    <Copy SourceFiles="@(CompatibilityBaselineImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/baseline" />
+    <Copy SourceFiles="@(CompatibilityBrokenImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/broken" />
+    <Copy SourceFiles="@(CompatibilityCompatibleImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/compatible" />
+    <Copy SourceFiles="@(CompatibilityConsumerImage)" DestinationFolder="$(TargetDir)compatibility-fixtures/consumer" />
+  </Target>
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
     <ProjectReference Include="../Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />
     <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />

@@ -282,6 +282,13 @@ scoped parameters; a separately built positive assembly corroborates their
 Full local tooling observes 560 tests without failures/errors or
 unexpected diagnostic bytes, but twenty native skips keep it incomplete.
 Native confirmation of these additional gates remains pending.
+Compatibility controls now invoke the unchanged existing binary consumer
+against explicitly built same-name/version broken and compatible contracts.
+Actual loaded SHA-256/MVID evidence prevents accidental old-DLL resolution,
+and replacing an already loaded baseline with actual candidate bytes rejects.
+The three controls pass in source mode and an isolated redirected package-mode
+build. These are controlled fixtures, not completed historical source/binary
+compatibility acceptance; T051 remains open.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.
