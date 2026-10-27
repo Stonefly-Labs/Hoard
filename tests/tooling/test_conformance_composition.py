@@ -38,7 +38,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
     def test_selected_manifest_keeps_every_ownership_parameter(self):
         import conformance_composition_checks as checks
         rows = checks.expected_rows()
-        self.assertEqual(len(rows), 13)
+        self.assertEqual(len(rows), 17)
+        self.assertEqual(sum(row["caseId"] == "CP-19" for row in rows), 2)
+        self.assertEqual(sum(row["caseId"] == "CP-20" for row in rows), 2)
         self.assertEqual(sum(row["caseId"] == "CP-14" for row in rows), 3)
         self.assertEqual(sum(row["caseId"] == "CP-18" for row in rows), 1)
         self.assertEqual(sum(row["caseId"] == "CP-16" for row in rows), 2)

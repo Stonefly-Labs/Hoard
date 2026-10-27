@@ -869,6 +869,39 @@ def independent_version_witnesses(name):
 
 
 def composition_snapshot_policy(identity):
+    for variant, stages in (
+            ("settled-restart", ("selection-fixed", "selection-stopped", "selection-restarted", "restart-stopped")),
+            ("active-config", ("configuration-active", "configuration-draining", "configuration-stopped",
+                               "configuration-restarted", "restart-draining", "restart-stopped"))):
+        if identity not in composition_witnesses("CP-20", variant):
+            continue
+        configuration = variant == "active-config"
+        rows = []
+        for index, stage in enumerate(stages):
+            restarted = index >= (3 if configuration else 2)
+            stopped = stage.endswith("-stopped")
+            ready = not stopped and not stage.endswith("-draining")
+            rows.append((stage, MappingProxyType({
+                "ready": int(ready), "admission": int(ready), "stopComplete": int(stopped),
+                "rootDisposal": 0 if stopped else 6, "unsafeActivities": 0,
+                "workers": 2 if configuration or not restarted else 3,
+                "inactiveEffects": 0, "requests": 1 if configuration or not restarted else 3,
+                "requestPending": int(configuration and not stopped),
+                "requestSettled": int(configuration and stopped),
+                "configurationFixed": 1, "identityChanged": int(restarted),
+            })))
+        return tuple(rows)
+    stores = (*composition_witnesses("CP-19", "authority-mismatch"),
+              *composition_witnesses("CP-19", "missing-guarantee"))
+    if identity in stores:
+        return tuple((stage, MappingProxyType({
+            "ready": int(index == 2), "admission": int(index == 2),
+            "phaseFailures": int(index < 2), "fallbackEffects": 0, "workers": 2 if index >= 2 else 0,
+            "stopComplete": int(index % 2 == 1), "rootDisposal": 0 if index % 2 == 1 else 6,
+            "unsafeActivities": 0, "storeBeforeRoot": int(index >= 2), "storeAdmitted": int(index >= 2),
+            "storeReady": int(index == 2),
+        })) for index, stage in enumerate(
+            ("store-denied", "store-denial-stopped", "store-repair-admitted", "store-repair-stopped")))
     admission = (*composition_witnesses("CP-14", "initializer-failed")[1:],
                  *composition_witnesses("CP-18", "recovery-failed"))
     if identity in admission:
@@ -934,7 +967,11 @@ def composition_snapshot_owner_indices(identity):
     policy = composition_snapshot_policy(identity)
     if policy is None:
         return None
-    return (0, 0, 1, 1) if policy[0][0] == "admission-denied" else (0,) * len(policy)
+    if policy[0][0] == "selection-fixed":
+        return 0, 0, 1, 1
+    if policy[0][0] == "configuration-active":
+        return 0, 0, 0, 1, 1, 1
+    return (0, 0, 1, 1) if policy[0][0] in ("admission-denied", "store-denied") else (0,) * len(policy)
 
 
 def composition_witnesses(case_id, variant):

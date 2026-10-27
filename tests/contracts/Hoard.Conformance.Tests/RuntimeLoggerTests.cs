@@ -12,10 +12,63 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("selection-fixed")]
+    [InlineData("selection-stopped")]
+    [InlineData("selection-restarted")]
+    [InlineData("configuration-active")]
+    [InlineData("configuration-draining")]
+    [InlineData("configuration-stopped")]
+    [InlineData("configuration-restarted")]
+    [InlineData("restart-draining")]
+    [InlineData("restart-stopped")]
+    public void Restart_snapshots_preserve_request_and_configuration_observations(string stage)
+    {
+        using var owned = new OwnedInput();
+        var owner = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-owner", [("owner", new OriginalProbe())]);
+        var counters = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["ready"] = 0,
+            ["admission"] = 0,
+            ["stopComplete"] = 0,
+            ["rootDisposal"] = 6,
+            ["unsafeActivities"] = 0,
+            ["workers"] = 2,
+            ["inactiveEffects"] = 0,
+            ["requests"] = 1,
+            ["requestPending"] = 1,
+            ["requestSettled"] = 0,
+            ["configurationFixed"] = 1,
+            ["identityChanged"] = 0
+        };
+        var lines = ConformanceOriginalObservationOutput.Render(owner).Concat(
+            ConformanceCompositionObservationOutput.Render(owner, stage, counters));
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        var snapshot = Assert.Single(proof.RootElement.GetProperty("compositionObservations").EnumerateArray());
+        Assert.Equal(stage, snapshot.GetProperty("stage").GetString());
+        Assert.Equal(1, snapshot.GetProperty("counters").GetProperty("requestPending").GetInt32());
+        Assert.Equal(1, snapshot.GetProperty("counters").GetProperty("configurationFixed").GetInt32());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData("admission-denied")]
     [InlineData("denial-stopped")]
     [InlineData("repair-admitted")]
     [InlineData("repair-stopped")]
+    [InlineData("store-denied")]
+    [InlineData("store-denial-stopped")]
+    [InlineData("store-repair-admitted")]
+    [InlineData("store-repair-stopped")]
     public void Admission_snapshots_preserve_bounded_failure_and_root_observations(string stage)
     {
         using var owned = new OwnedInput();
@@ -33,6 +86,14 @@ public sealed class RuntimeLoggerTests
             ["rootDisposal"] = 6,
             ["unsafeActivities"] = 0
         };
+        if (stage.StartsWith("store-", StringComparison.Ordinal))
+        {
+            counters.Remove("fallbackRoots");
+            counters.Add("fallbackEffects", 0);
+            counters.Add("storeBeforeRoot", 0);
+            counters.Add("storeAdmitted", 0);
+            counters.Add("storeReady", 0);
+        }
         var lines = ConformanceOriginalObservationOutput.Render(owner).Concat(
             ConformanceCompositionObservationOutput.Render(owner, stage, counters));
         var result = owned.Result(0);

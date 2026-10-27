@@ -4818,6 +4818,22 @@ format checks pass. T045 is checked, 48/86. These ordinary package assertions
 do not establish new safe CP-19/20 transport, native evidence or qualification;
 T046 continues the complete composition/inherited-profile integration.
 
+The first T046 transport increment extends the closed SDK/logger shapes and
+independent source policies to CP-19 store denial/repair and CP-20 selection/
+configuration/request drain. Each repair/restart has its distinct actual Host
+registry owner; terminal stages retain real store readiness, worker entry,
+request/task settlement and root outcomes. Four logger store-stage and nine
+restart-stage tests first fail; both independent positive controls first reject
+missing policy. Fresh seventeen-package construction/fresh-cache locked replay
+then independently admits seventeen proofs/fifty-one snapshots. Source CP-20
+passes both cases, the logger passes 108 cases, and tooling passes 498 tests with
+nineteen native skips. All focused format/catalog/inventory checks pass.
+The first source compile incorrectly referenced an inaccessible lifecycle
+composition member; the observation now reads the public enabled-module
+snapshot and compiles/passes. T046 remains unchecked, 48/86. Expanded Linux
+replay is pending; inherited inventories, all CP transport and full qualification
+remain unfinished.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

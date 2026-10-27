@@ -1215,6 +1215,132 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def restart_transport(self, variant):
+        import conformance_case_catalog as catalog
+        _, options = self.admission_transport()
+        old_identity = self.identity
+        self.identity = catalog.composition_witnesses("CP-20", variant)[0]
+        self.manifest["expected"][0].update(
+            testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0], caseId="CP-20")
+        for owner in self.proof["originalObservations"]:
+            owner.update(testIdentity=self.identity, caseId="CP-20")
+        configuration = variant == "active-config"
+        stages = (("configuration-active", "configuration-draining", "configuration-stopped",
+                   "configuration-restarted", "restart-draining", "restart-stopped") if configuration else
+                  ("selection-fixed", "selection-stopped", "selection-restarted", "restart-stopped"))
+        snapshots = []
+        for index, stage in enumerate(stages):
+            restarted = index >= (3 if configuration else 2)
+            stopped = stage.endswith("-stopped")
+            ready = not stopped and not stage.endswith("-draining")
+            snapshots.append({
+                "schemaVersion": 1, "observationId": str(uuid.uuid4()),
+                "sourceId": self.proof["originalObservations"][int(restarted)]["observationId"],
+                "stage": stage, "counters": {
+                    "ready": int(ready), "admission": int(ready), "stopComplete": int(stopped),
+                    "rootDisposal": 0 if stopped else 6, "unsafeActivities": 0,
+                    "workers": 2 if configuration or not restarted else 3,
+                    "inactiveEffects": 0, "requests": 1 if configuration or not restarted else 3,
+                    "requestPending": int(configuration and not stopped),
+                    "requestSettled": int(configuration and stopped),
+                    "configurationFixed": 1, "identityChanged": int(restarted)}})
+        self.proof.update(testIdentity=self.identity, caseId="CP-20", compositionObservations=snapshots,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+        self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        options["original_inputs"]["none"][self.identity] = options["original_inputs"]["none"].pop(old_identity)
+        options["expected_tests"] = {self.identity: ("none", "none")}
+        return snapshots, options
+
+    def test_explicit_restart_retains_fixed_active_state_and_drains_real_request(self):
+        for variant in ("settled-restart", "active-config"):
+            for mutation in (None, "hot-replacement", "same-identity", "same-owner", "inactive-effects",
+                             "lost-request", "false-stop", "missing-terminal",
+                             *(("false-pending", "false-settlement", "false-drain") if variant == "active-config" else ())):
+                with self.subTest(variant=variant, mutation=mutation):
+                    self.setUp()
+                    snapshots, options = self.restart_transport(variant)
+                    if mutation == "hot-replacement":
+                        snapshots[0]["counters"]["configurationFixed"] = 0
+                    elif mutation == "same-identity":
+                        snapshots[-1]["counters"]["identityChanged"] = 0
+                    elif mutation == "same-owner":
+                        snapshots[-1]["sourceId"] = snapshots[0]["sourceId"]
+                    elif mutation == "inactive-effects":
+                        snapshots[0]["counters"]["inactiveEffects"] = 1
+                    elif mutation == "lost-request":
+                        snapshots[0]["counters"]["requests"] = 0
+                    elif mutation == "false-stop":
+                        snapshots[0]["counters"]["stopComplete"] = 1
+                    elif mutation == "missing-terminal":
+                        snapshots.pop()
+                    elif mutation == "false-pending":
+                        snapshots[0]["counters"]["requestPending"] = 0
+                    elif mutation == "false-settlement":
+                        snapshots[1]["counters"]["requestSettled"] = 1
+                    elif mutation == "false-drain":
+                        snapshots[1]["counters"]["admission"] = 1
+                    self.witness["proofSha256"] = evidence.digest(self.proof)
+                    if mutation is None:
+                        self.assertEqual(self.ingest(**options)["witnesses"][0]["status"], "Passed")
+                    else:
+                        with self.assertRaises(evidence.ConformanceError):
+                            self.ingest(**options)
+
+    def store_admission_transport(self, variant):
+        import conformance_case_catalog as catalog
+        snapshots, options = self.admission_transport()
+        old_identity = self.identity
+        self.identity = catalog.composition_witnesses("CP-19", variant)[0]
+        self.manifest["expected"][0].update(
+            testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0], caseId="CP-19")
+        for owner in self.proof["originalObservations"]:
+            owner.update(testIdentity=self.identity, caseId="CP-19")
+        for index, snapshot in enumerate(snapshots):
+            snapshot["stage"] = ("store-denied", "store-denial-stopped",
+                                 "store-repair-admitted", "store-repair-stopped")[index]
+            counters = snapshot["counters"]
+            counters["fallbackEffects"] = counters.pop("fallbackRoots")
+            counters.update(storeBeforeRoot=int(index >= 2), storeAdmitted=int(index >= 2),
+                            storeReady=int(index == 2))
+        self.proof.update(testIdentity=self.identity, caseId="CP-19",
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+        self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        options["original_inputs"]["none"][self.identity] = options["original_inputs"]["none"].pop(old_identity)
+        options["expected_tests"] = {self.identity: ("none", "none")}
+        return snapshots, options
+
+    def test_store_admission_requires_actual_pre_io_denial_and_distinct_repair(self):
+        for variant in ("authority-mismatch", "missing-guarantee"):
+            for mutation in (None, "early-io", "false-admission", "fallback", "missing-repair-io",
+                             "missing-repair-admission", "stopped-ready", "reused-owner", "missing-stop"):
+                with self.subTest(variant=variant, mutation=mutation):
+                    self.setUp()
+                    snapshots, options = self.store_admission_transport(variant)
+                    if mutation == "early-io":
+                        snapshots[0]["counters"]["storeBeforeRoot"] = 1
+                    elif mutation == "false-admission":
+                        snapshots[0]["counters"]["storeReady"] = 1
+                    elif mutation == "fallback":
+                        snapshots[0]["counters"]["fallbackEffects"] = 1
+                    elif mutation == "missing-repair-io":
+                        snapshots[2]["counters"]["storeBeforeRoot"] = 0
+                    elif mutation == "missing-repair-admission":
+                        snapshots[2]["counters"]["storeAdmitted"] = 0
+                    elif mutation == "stopped-ready":
+                        snapshots[3]["counters"]["storeReady"] = 1
+                    elif mutation == "reused-owner":
+                        snapshots[2]["sourceId"] = snapshots[0]["sourceId"]
+                    elif mutation == "missing-stop":
+                        snapshots.pop()
+                    self.witness["proofSha256"] = evidence.digest(self.proof)
+                    if mutation is None:
+                        self.assertEqual(self.ingest(**options)["witnesses"][0]["status"], "Passed")
+                    else:
+                        with self.assertRaises(evidence.ConformanceError):
+                            self.ingest(**options)
+
     def admission_transport(self, case_id="CP-18", row=0):
         import conformance_case_catalog as catalog
         _, options = self.composition_transport()

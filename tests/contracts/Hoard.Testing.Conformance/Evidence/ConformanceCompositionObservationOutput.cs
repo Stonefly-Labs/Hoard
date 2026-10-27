@@ -16,6 +16,12 @@ public static class ConformanceCompositionObservationOutput
     private static readonly ImmutableHashSet<string> AdmissionNames =
         ["ready", "admission", "phaseFailures", "fallbackRoots", "workers",
          "stopComplete", "rootDisposal", "unsafeActivities"];
+    private static readonly ImmutableHashSet<string> StoreAdmissionNames =
+        ["ready", "admission", "phaseFailures", "fallbackEffects", "workers",
+         "stopComplete", "rootDisposal", "unsafeActivities", "storeBeforeRoot", "storeAdmitted", "storeReady"];
+    private static readonly ImmutableHashSet<string> RestartNames =
+        ["ready", "admission", "stopComplete", "rootDisposal", "unsafeActivities", "workers", "inactiveEffects",
+         "requests", "requestPending", "requestSettled", "configurationFixed", "identityChanged"];
 
     public static ImmutableArray<string> Render(ConformanceOriginalObservation source, string stage,
         IReadOnlyDictionary<string, int> counters)
@@ -28,6 +34,11 @@ public static class ConformanceCompositionObservationOutput
             "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped"
                 or "initialization-denied" => OwnershipNames,
             "admission-denied" or "denial-stopped" or "repair-admitted" or "repair-stopped" => AdmissionNames,
+            "store-denied" or "store-denial-stopped" or "store-repair-admitted" or "store-repair-stopped"
+                => StoreAdmissionNames,
+            "selection-fixed" or "selection-stopped" or "selection-restarted" or "configuration-active"
+                or "configuration-draining" or "configuration-stopped" or "configuration-restarted"
+                or "restart-draining" or "restart-stopped" => RestartNames,
             _ => throw new ArgumentException("ProofMismatch")
         };
         if (source.Kind != "original-owner")

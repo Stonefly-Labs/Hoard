@@ -38,6 +38,8 @@ def expected_rows():
         ("CP-15", "cancel-initialization"), ("CP-15", "cancel-readiness"),
         ("CP-16", "late-initialization"), ("CP-17", "stop-fault"), ("CP-17", "late-stop"),
         ("CP-18", "recovery-failed"),
+        ("CP-19", "authority-mismatch"), ("CP-19", "missing-guarantee"),
+        ("CP-20", "settled-restart"), ("CP-20", "active-config"),
     ) for identity in composition_witnesses(case, matrix)]
 
 

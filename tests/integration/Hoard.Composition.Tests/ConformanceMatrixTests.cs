@@ -85,6 +85,53 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         }
     }
 
+    private static int Effects(Probe probe) =>
+        probe.Constructors + probe.Services + probe.Maps + probe.Requests + probe.Connections
+        + probe.Initializations + probe.Assessments + probe.Workers + probe.Stops + probe.Disposals;
+
+    private sealed class RestartObservation
+    {
+        private readonly Action<string, HoardServiceComposition, bool, bool, Task?>? write;
+
+        public RestartObservation(ITestOutputHelper output, string identity, Registry registry, Probe[] inactive,
+            OwnershipFixtures.ControlledCallback? callback = null)
+        {
+#if CONFORMANCE_PROVIDER_PACKAGES
+            var owner = ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, "none", "original-owner", null, null, ("owner", registry));
+            if (owner is null) { return; }
+            write = (stage, lease, configurationFixed, identityChanged, request) =>
+                ConformanceCompositionObservationOutput.Write(output, owner, stage,
+                    new Dictionary<string, int>(StringComparer.Ordinal)
+                    {
+                        ["ready"] = lease.Lifecycle.Snapshot.Ready ? 1 : 0,
+                        ["admission"] = lease.Lifecycle.Snapshot.StartupAdmission ? 1 : 0,
+                        ["stopComplete"] = lease.StopResult?.Complete == true ? 1 : 0,
+                        ["rootDisposal"] = (int?)(lease.StopResult?.RootDisposal) ?? 6,
+                        ["unsafeActivities"] = lease.StopResult?.UnsafeActivities.Length ?? 0,
+                        ["workers"] = registry.Probes.Values.Sum(probe => probe.Workers),
+                        ["inactiveEffects"] = inactive.Sum(Effects),
+                        ["requests"] = registry.Probes.Values.Sum(probe => probe.Requests),
+                        ["requestPending"] = request is { IsCompleted: false } ? 1 : 0,
+                        ["requestSettled"] = request is { IsCompletedSuccessfully: true }
+                            && callback?.Work?.IsCompletedSuccessfully == true && callback.Settled.IsCompleted ? 1 : 0,
+                        ["configurationFixed"] = configurationFixed ? 1 : 0,
+                        ["identityChanged"] = identityChanged ? 1 : 0
+                    });
+#else
+            write = null;
+#endif
+        }
+
+        public bool Write(string stage, HoardServiceComposition lease, bool configurationFixed,
+            bool identityChanged, Task? request = null)
+        {
+            if (write is null) { return false; }
+            write(stage, lease, configurationFixed, identityChanged, request);
+            return true;
+        }
+    }
+
     private static void Inactive(Probe probe)
     {
         Assert.Equal(0, probe.Constructors);
@@ -777,11 +824,14 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     [Fact]
     public async Task CP20_active_selection_is_immutable_and_only_fresh_settled_restart_changes_owner()
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP20_active_selection_is_immutable_and_only_fresh_settled_restart_changes_owner)}";
         Guid previous;
         var first = new Registry();
         first.Protocol();
         first.Probes["metadata-other"] = Add<MetadataOther>(first.Builder, Declaration("metadata-other", ModuleCategory.Metadata));
         first.Probes["artifact-other"] = Add<ArtifactOther>(first.Builder, Declaration("artifact-other", ModuleCategory.Artifact));
+        var firstObservation = new RestartObservation(output, identity, first,
+            [first.Probes["protocol"], first.Probes["metadata-other"], first.Probes["artifact-other"]]);
         var selection = Selection();
         var composition = first.Validate(selection).Composition!;
         await using (var running = await first.BuildAsync(composition))
@@ -805,15 +855,23 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Inactive(first.Probes["metadata-other"]);
             Inactive(first.Probes["artifact-other"]);
             Assert.Equal(previous, running.Lease.Lifecycle.Snapshot.CompositionIdentity);
+            await LifecycleTestHarness.Until(() => first.Probes["metadata"].Workers == 1 && first.Probes["artifact"].Workers == 1);
+            firstObservation.Write("selection-fixed", running.Lease,
+                running.Lease.Lifecycle.Snapshot.Modules.Where(module => module.Enabled)
+                    .Select(module => module.ModuleId).Order().SequenceEqual(composition.EnabledModuleIds.Order()), false);
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
             Assert.False((await running.Lease.Lifecycle.StartAsync()).Ready);
-            Observe("CP-20/active-selection", first, running.Lease);
+            if (!firstObservation.Write("selection-stopped", running.Lease,
+                previous == running.Lease.Lifecycle.Snapshot.CompositionIdentity, false))
+            { Observe("CP-20/active-selection", first, running.Lease); }
         }
         var second = new Registry();
         second.Protocol();
         second.Probes["metadata-other"] = Add<MetadataOther>(second.Builder, Declaration("metadata-other", ModuleCategory.Metadata));
         second.Probes["artifact-other"] = Add<ArtifactOther>(second.Builder, Declaration("artifact-other", ModuleCategory.Artifact));
+        var secondObservation = new RestartObservation(output, identity, second,
+            [second.Probes["metadata"], second.Probes["artifact"]]);
         await using var restarted = await second.BuildAsync(second.Validate(selection).Composition!);
         await restarted.StartAsync();
         Assert.NotEqual(previous, restarted.Lease.Lifecycle.Snapshot.CompositionIdentity);
@@ -823,15 +881,27 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         Assert.Equal("conformance", await restartedClient.GetStringAsync("/artifact-other"));
         Inactive(second.Probes["metadata"]);
         Inactive(second.Probes["artifact"]);
+        await LifecycleTestHarness.Until(() => second.Probes["protocol"].Workers == 1
+            && second.Probes["metadata-other"].Workers == 1 && second.Probes["artifact-other"].Workers == 1);
+        secondObservation.Write("selection-restarted", restarted.Lease,
+            restarted.Lease.Lifecycle.Snapshot.Modules.Where(module => module.Enabled)
+                .Select(module => module.ModuleId).Order().SequenceEqual(selection.EnabledModuleIds.Order()),
+            previous != restarted.Lease.Lifecycle.Snapshot.CompositionIdentity);
         await restarted.DisposeAsync();
         Assert.True(restarted.Lease.StopResult!.Complete);
         Assert.Equal(1, second.Probes["protocol"].Disposals);
-        Observe("CP-20/explicit-restart", second, restarted.Lease);
+        if (!secondObservation.Write("restart-stopped", restarted.Lease,
+            restarted.Lease.Lifecycle.Snapshot.Modules.Where(module => module.Enabled)
+                .Select(module => module.ModuleId).Order().SequenceEqual(selection.EnabledModuleIds.Order()),
+            previous != restarted.Lease.Lifecycle.Snapshot.CompositionIdentity))
+        { Observe("CP-20/explicit-restart", second, restarted.Lease); }
     }
 
     [Fact]
     public async Task CP20_active_configuration_is_fixed_until_a_fresh_explicit_restart()
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP20_active_configuration_is_fixed_until_a_fresh_explicit_restart)}";
+        Guid? previousIdentity = null;
         static string Document(string value) => JsonSerializer.Serialize(new
         {
             configurationVersion = 1,
@@ -862,6 +932,10 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             var active = registry.Probes["metadata"].Options!;
             Assert.Equal(iteration == 0 ? "first" : "second", active.GetString("label"));
             var callback = new OwnershipFixtures.ControlledCallback(cooperative: false);
+            var observation = new RestartObservation(output, identity, registry, [], callback);
+            var identityChanged = previousIdentity is { } previous && previous != lease.Lifecycle.Snapshot.CompositionIdentity;
+            bool ConfigurationFixed() => ReferenceEquals(active, registry.Probes["metadata"].Options)
+                && active.GetString("label") == (iteration == 0 ? "first" : "second");
             registry.Probes["metadata"].Request = callback.RunAsync;
 #if CONFORMANCE_PROVIDER_PACKAGES
             Assert.Equal("Hoard.Fixtures.Conformance.Host",
@@ -873,12 +947,15 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             try
             {
                 await callback.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+                await LifecycleTestHarness.Until(() => registry.Probes.Values.All(probe => probe.Workers == 1));
                 await using var changed = await registry.Builder.EvaluateConfigurationAsync(new(Document("second")), Versions, new());
                 Assert.Equal(HoardConfigurationOutcome.Validated, changed.Outcome);
                 Assert.False(request.IsCompleted);
                 Assert.Same(active, registry.Probes["metadata"].Options);
                 Assert.Equal(iteration == 0 ? "first" : "second", active.GetString("label"));
                 Assert.True(lease.Lifecycle.Snapshot.Ready);
+                observation.Write(iteration == 0 ? "configuration-active" : "configuration-restarted",
+                    lease, ConfigurationFixed(), identityChanged, request);
                 stopping = app.StopHoardApplicationAsync(lease);
                 await LifecycleTestHarness.Until(() => lease.Lifecycle.Snapshot.Phase == HoardLifecyclePhase.Draining);
                 Assert.False(stopping.IsCompleted);
@@ -889,6 +966,8 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 using var denied = await client.GetAsync("/metadata").WaitAsync(TimeSpan.FromSeconds(5));
                 Assert.Equal(HttpStatusCode.ServiceUnavailable, denied.StatusCode);
                 Assert.Equal(1, registry.Probes["metadata"].Requests);
+                observation.Write(iteration == 0 ? "configuration-draining" : "restart-draining",
+                    lease, ConfigurationFixed(), identityChanged, request);
             }
             finally { callback.Release(); }
             Assert.Equal("conformance", await request.WaitAsync(TimeSpan.FromSeconds(5)));
@@ -896,7 +975,10 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(1, registry.Probes["metadata"].Constructors);
             await lease.DisposeAsync();
             Assert.True(lease.StopResult!.Complete);
-            Observe($"CP-20/configuration/restart-{iteration}", registry, lease);
+            if (!observation.Write(iteration == 0 ? "configuration-stopped" : "restart-stopped",
+                lease, ConfigurationFixed(), identityChanged, request))
+            { Observe($"CP-20/configuration/restart-{iteration}", registry, lease); }
+            previousIdentity = lease.Lifecycle.Snapshot.CompositionIdentity;
         }
     }
 
@@ -1113,12 +1195,14 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     [InlineData("mandatory-guarantee")]
     public async Task CP19_actual_store_admission_rejects_before_io_and_paired_repair_admits(string variant)
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP19_actual_store_admission_rejects_before_io_and_paired_repair_admits)}(variant: \"{variant}\")";
         foreach (var repaired in new[] { false, true })
         {
             await using var directory = new PackagedComposition();
             var registry = new Registry();
             registry.Probes["artifact-other"] = Add<ArtifactOther>(registry.Builder, Declaration("artifact-other", ModuleCategory.Artifact));
             var admission = new OwnershipFixtures.ControlledAdmission(directory.ArtifactRoot, variant, repaired);
+            var observation = new StoreAdmissionObservation(output, identity, registry, admission);
             var controls = admission.Controls;
             var store = admission.Store;
             registry.Probes["artifact"].Initialize = admission.InitializeAsync;
@@ -1151,12 +1235,48 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Safe(result.Diagnostics);
             }
             Inactive(registry.Probes["artifact-other"]);
+            if (repaired)
+            { await LifecycleTestHarness.Until(() => registry.Probes["metadata"].Workers == 1 && registry.Probes["artifact"].Workers == 1); }
+            observation.Write(repaired ? "store-repair-admitted" : "store-denied", running.Lease, result);
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
             Assert.Equal(ArtifactCleanupState.Released, Assert.IsType<ArtifactResult<ArtifactShutdown>.Success>(admission.Shutdown).Value.State);
-            Observe($"CP-19/{variant}/repaired-{repaired}", registry, running.Lease);
-            output.WriteLine($"CP-19/{variant}/repaired-{repaired}: store-before-root={controls.Observed.Count(point => point == "initialize.before-root")}; " +
-                $"store-admitted={controls.Observed.Count(point => point == "initialize.admitted")}; store-ready={(store.Ready ? 1 : 0)}; alternate-constructors=0");
+            if (!observation.Write(repaired ? "store-repair-stopped" : "store-denial-stopped", running.Lease, result))
+            {
+                Observe($"CP-19/{variant}/repaired-{repaired}", registry, running.Lease);
+                output.WriteLine($"CP-19/{variant}/repaired-{repaired}: store-before-root={controls.Observed.Count(point => point == "initialize.before-root")}; " +
+                    $"store-admitted={controls.Observed.Count(point => point == "initialize.admitted")}; store-ready={(store.Ready ? 1 : 0)}; alternate-constructors=0");
+            }
+        }
+    }
+
+    private sealed class StoreAdmissionObservation(ITestOutputHelper output, string identity, Registry registry,
+        OwnershipFixtures.ControlledAdmission admission)
+    {
+        private readonly ConformanceOriginalObservation? owner =
+            ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, "none", "original-owner", null, null, ("owner", registry));
+
+        public bool Write(string stage, HoardServiceComposition lease, HoardStartResult start)
+        {
+            if (owner is null) { return false; }
+            var fallback = registry.Probes["artifact-other"];
+            ConformanceCompositionObservationOutput.Write(output, owner, stage,
+                new Dictionary<string, int>(StringComparer.Ordinal)
+                {
+                    ["ready"] = lease.Lifecycle.Snapshot.Ready ? 1 : 0,
+                    ["admission"] = lease.Lifecycle.Snapshot.StartupAdmission ? 1 : 0,
+                    ["phaseFailures"] = start.Diagnostics.Count(item => item.RuleCode == "PhaseFailure"),
+                    ["fallbackEffects"] = Effects(fallback),
+                    ["workers"] = registry.Probes.Values.Sum(probe => probe.Workers),
+                    ["stopComplete"] = lease.StopResult?.Complete == true ? 1 : 0,
+                    ["rootDisposal"] = (int?)(lease.StopResult?.RootDisposal) ?? 6,
+                    ["unsafeActivities"] = lease.StopResult?.UnsafeActivities.Length ?? 0,
+                    ["storeBeforeRoot"] = admission.Controls.Observed.Count(point => point == "initialize.before-root"),
+                    ["storeAdmitted"] = admission.Controls.Observed.Count(point => point == "initialize.admitted"),
+                    ["storeReady"] = admission.Store.Ready ? 1 : 0
+                });
+            return true;
         }
     }
 #endif

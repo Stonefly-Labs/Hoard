@@ -39,6 +39,31 @@ unaffected by these test-only controls.
 
 ## Native composition diagnostic continuation
 
+### CP-19/20 safe transport continuation
+
+Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
+store readiness, inactive alternate effects and lifecycle outcomes. Restart
+snapshots preserve actual pending/settled request/task observations, enabled
+module/configuration identity, workers and distinct fresh owner identities.
+Independent source policies reject early I/O, hidden fallback, missing repair,
+hot replacement, false request settlement/drain and reused restart owners.
+Four store-stage and nine restart-stage logger controls first fail, as do the
+two independent policy positives. A source compile initially references an
+inaccessible lifecycle composition property; public enabled-module snapshots
+replace that reference without expanding product APIs.
+
+Fresh seventeen-archive construction/fresh-cache locked replay independently
+admits seventeen actual proofs/fifty-one snapshots at source digest
+`343827bee9cc1efc5480aa4d632267bea370b165e97c9aff6797291ff8cef2f4`,
+consumer `1cf27f7f9e526cb26fd9a3a436e668cea680068cac71840de1ab2400bed94dc5`.
+These hashes precede later challenge/docs edits, not exact-head qualification.
+Both source CP-20 cases, all 108 logger cases and 498 tooling tests pass
+(nineteen native skips), with focused formatting and frozen inventories intact.
+The diagnostic native selector includes all seventeen identities, but expanded
+Linux replay is pending. T046 remains unchecked; count stays 48/86 and the
+stage stays implement/running. All CP/inherited-profile integration, portable
+proof retention and independent profile evaluation remain required.
+
 A dedicated non-qualifying executor now builds the seventeen fixture/provider/
 SDK archives, prepares only a private consumer lock, and independently locked-
 replays the package-only consumer with a fresh cache. It uses actual `OwnedRun`

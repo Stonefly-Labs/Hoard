@@ -170,3 +170,7 @@ composition profile. Shared Host authority/guarantee admission and active-reques
 controls now pass all four CP-19/20 package cases, preserving denial before store
 I/O and settled explicit restart. Their safe transport/full-profile integration
 remains open; this compile-only custom-host example is unaffected.
+The selected CP-19/20 safe component now passes independent ingestion as part of
+seventeen proofs/fifty-one snapshots, retaining actual store I/O, request drain
+and distinct restart owners. Complete inherited/profile integration and native
+replay of the expanded scope remain open.

@@ -93,6 +93,12 @@ request controls now execute from the shared Host package, preserving real
 Local-store pre-I/O denial and explicit settled restart. All four package cases
 pass after three intended consumer-local ownership failures. Safe CP-19/20
 transport, inherited inventories and full profile integration remain unfinished.
+The subsequent safe transport increment independently admits all seventeen
+selected package proofs/fifty-one snapshots, including CP-19 pre-I/O denial/
+repair and CP-20 fixed configuration, request drain and distinct fresh restart.
+Independent challenges reject optimistic cleanup, hidden fallback, premature
+request settlement and hot replacement. This is diagnostic component evidence,
+not complete profile qualification; expanded native replay remains pending.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

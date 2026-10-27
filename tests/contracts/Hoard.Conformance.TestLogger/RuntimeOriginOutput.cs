@@ -100,6 +100,17 @@ internal static class RuntimeOriginOutput
                         Keys(counters, "ready", "admission", "phaseFailures", "fallbackRoots", "workers",
                             "stopComplete", "rootDisposal", "unsafeActivities");
                         break;
+                    case "store-denied" or "store-denial-stopped" or "store-repair-admitted" or "store-repair-stopped":
+                        Keys(counters, "ready", "admission", "phaseFailures", "fallbackEffects", "workers",
+                            "stopComplete", "rootDisposal", "unsafeActivities", "storeBeforeRoot", "storeAdmitted", "storeReady");
+                        break;
+                    case "selection-fixed" or "selection-stopped" or "selection-restarted" or "configuration-active"
+                        or "configuration-draining" or "configuration-stopped" or "configuration-restarted"
+                        or "restart-draining" or "restart-stopped":
+                        Keys(counters, "ready", "admission", "stopComplete", "rootDisposal", "unsafeActivities",
+                            "workers", "inactiveEffects", "requests", "requestPending", "requestSettled",
+                            "configurationFixed", "identityChanged");
+                        break;
                     default: throw RuntimeSafety.Error("ProofMismatch");
                 }
                 foreach (var counter in counters.EnumerateObject())
