@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+import re
 import shutil
 import sys
 import tempfile
@@ -31,8 +32,8 @@ class NuGetContentToolTests(unittest.TestCase):
         source = cls.owner.root / "source"
         project = Path("tests/fixtures/conformance/BuildInputs/BuildInputs.csproj")
         for relative in (Path("global.json"), Path("Directory.Build.props"),
-                         Path("Directory.Packages.props"), project, project.with_name("Program.cs"),
-                         project.with_name("packages.lock.json")):
+                         Path("Directory.Packages.props"), project, project.with_name("packages.lock.json"),
+                         *(path.relative_to(ROOT) for path in (ROOT / project.parent).glob("*.cs"))):
             target = source / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
@@ -229,6 +230,129 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
         self.assertEqual(evidence.file_sha256(outside), before)
         self.assertFalse(self.output_receipt.exists())
+
+    def evaluation_request(self):
+        source = self.case / "evaluation-source"
+        (source / "Adapter").mkdir(parents=True)
+        (source / "Shared").mkdir()
+        inputs = {
+            "Directory.Build.props": '<Project><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>'
+                '<Import Project="Release.props" Condition="\'$(Configuration)\' == \'Release\'" /></Project>',
+            "Release.props": '<Project><ItemGroup><Compile Include="$(MSBuildThisFileDirectory)Injected.cs" /></ItemGroup></Project>',
+            "Injected.cs": "public class Injected { }\n",
+            "Adapter/Adapter.csproj": '<Project Sdk="Microsoft.NET.Sdk"><ItemGroup>'
+                '<ProjectReference Include="../Shared/Shared.csproj" /></ItemGroup></Project>',
+            "Adapter/Binding.cs": "public class Binding { }\n",
+            "Adapter/Empty.txt": "",
+            "Shared/Shared.csproj": '<Project Sdk="Microsoft.NET.Sdk" />',
+            "Shared/Shared.cs": "public class Shared { }\n"}
+        for relative, text in inputs.items():
+            (source / relative).write_text(text)
+        code, raw = capture_control(["dotnet", "--version"], cwd=self.source,
+                                    env=self.environment, limit=128, timeout=30)
+        self.assertEqual(code, 0)
+        version = raw.decode("ascii").strip()
+        self.assertRegex(version, r"\A[0-9]+\.[0-9]+\.[0-9]+\Z")
+        code, raw = capture_control(["dotnet", "--list-sdks"], cwd=self.source,
+                                    env=self.environment, limit=4096, timeout=30)
+        self.assertEqual(code, 0)
+        matches = [re.fullmatch(re.escape(version) + r" \[([^\r\n]+)\]", line)
+                   for line in raw.decode("utf-8").splitlines()]
+        selected = [match[1] for match in matches if match is not None]
+        self.assertEqual(len(selected), 1)
+        toolchain = Path(selected[0]).resolve().parent
+        self.msbuild = Path(selected[0]).resolve() / version / "MSBuild.dll"
+        code, raw = capture_control(["dotnet", "--list-runtimes"], cwd=self.source,
+                                    env=self.environment, limit=4096, timeout=30)
+        self.assertEqual(code, 0)
+        runtimes = [re.fullmatch(r"Microsoft\.NETCore\.App (10\.0\.[0-9]+) \[[^\r\n]+\]", line)
+                    for line in raw.decode("utf-8").splitlines()]
+        installed = [match[1] for match in runtimes if match is not None]
+        self.assertTrue(installed)
+        self.runtime_version = max(installed, key=lambda version: tuple(map(int, version.split("."))))
+        receipt = self.case / "evaluation.json"
+        value = {"schemaVersion": 1, "qualification": False, "sourcePath": self.relative(source),
+                 "project": "Adapter/Adapter.csproj", "toolchainRoot": str(toolchain),
+                 "sources": dict(evidence.input_manifest(source, sorted(inputs))),
+                 "outputPath": self.relative(receipt)}
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        return value, source, receipt
+
+    def evaluate(self, *, digest=None):
+        driver = self.case / "evaluation.proj"
+        document = ET.Element("Project")
+        name = "Hoard.Fixtures.Conformance.BuildInputs.ReadBindingInputs"
+        ET.SubElement(document, "UsingTask", TaskName=name, AssemblyFile=str(self.tool))
+        target = ET.SubElement(document, "Target", Name="Capture")
+        ET.SubElement(target, name, OwnedRootBase64=base64.b64encode(str(self.owner.root).encode()).decode(),
+                      RequestPath=self.relative(self.request),
+                      RequestSha256=evidence.file_sha256(self.request) if digest is None else digest)
+        driver.write_bytes(ET.tostring(document, encoding="utf-8"))
+        code, raw = capture_control(
+            ["dotnet", "exec", "--fx-version", self.runtime_version, str(self.msbuild), str(driver),
+             "-target:Capture", "-noconsolelogger", "-nologo",
+             "-nodeReuse:false", "-verbosity:quiet"],
+            cwd=self.source, env={**self.environment, "DOTNET_ROLL_FORWARD": "Disable"}, limit=4096, timeout=60)
+        try:
+            event = evidence.load_json(raw)
+        except evidence.ConformanceError:
+            raise AssertionError("Managed evaluation task emitted no safe control event") from None
+        return code, event
+
+    def test_managed_evaluation_task_observes_conditional_imports_and_referenced_project_sources(self):
+        value, source, receipt = self.evaluation_request()
+        code, event = self.evaluate()
+        self.assertEqual(code, 0)
+        rows = evidence.load_json(receipt.read_bytes())["Items"]["_BindingInputs"]
+        self.assertEqual(event, {"event": "control", "code": "None", "value": len(rows)})
+        identities = {row["Identity"] for row in rows}
+        self.assertTrue({"source/Release.props", "source/Injected.cs", "source/Shared/Shared.csproj",
+                         "source/Shared/Shared.cs", "source/Adapter/Binding.cs", "source/Adapter/Empty.txt"} <= identities)
+        self.assertTrue(any(path.startswith("toolchain/") for path in identities))
+        self.assertTrue(all(set(row) == {"Identity", "Kind", "Sha256"} for row in rows))
+        binding = contributors.BindingProject(source, value["project"], {}, value["sources"])
+        admitted = contributors.binding_evaluation_inputs(binding, receipt.read_bytes(), Path(value["toolchainRoot"]))
+        self.assertIn("Adapter/Empty.txt", admitted["sources"])
+        rows[0]["Sha256"] = "a" * 64
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_evaluation_inputs(
+                binding, evidence.canonical_bytes({"Items": {"_BindingInputs": rows}}), Path(value["toolchainRoot"]))
+        self.assertEqual(self.evaluate()[1]["code"], "OwnershipInvalid")
+
+    def test_managed_evaluation_task_rejects_changed_requests_sources_and_undeclared_ambient_inputs(self):
+        value, source, receipt = self.evaluation_request()
+        self.assertEqual(self.evaluate(digest="a" * 64)[1]["code"], "InputChanged")
+        path = source / "Adapter/Binding.cs"
+        original = path.read_bytes()
+        path.write_bytes(original + b"\n")
+        self.assertEqual(self.evaluate()[1]["code"], "InputChanged")
+        path.write_bytes(original)
+        (source / "Adapter/Ambient.cs").write_text("public class Ambient { }\n")
+        self.assertEqual(self.evaluate()[1]["code"], "EvidenceIncomplete")
+        self.assertFalse(receipt.exists())
+
+    def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
+        value, source, receipt = self.evaluation_request()
+        toolchain = value["toolchainRoot"]
+        value["toolchainRoot"] = str(self.parent)
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        self.assertEqual(self.evaluate()[1]["code"], "OwnershipInvalid")
+        value["toolchainRoot"] = toolchain
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        outside = self.parent / "outside-evaluation-canary"
+        outside.write_bytes((source / "Adapter/Binding.cs").read_bytes())
+        path = source / "Adapter/Binding.cs"
+        path.unlink()
+        path.symlink_to(outside)
+        self.assertEqual(self.evaluate()[1]["code"], "OwnershipInvalid")
+        self.assertEqual(outside.read_bytes(), b"public class Binding { }\n")
+        path.unlink()
+        path.write_bytes(outside.read_bytes())
+        (source / "Adapter/Adapter.csproj").write_text("<Project>private-diagnostic-canary")
+        value["sources"]["Adapter/Adapter.csproj"] = evidence.file_sha256(source / "Adapter/Adapter.csproj")
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        self.assertEqual(self.evaluate()[1]["code"], "BindingInvalid")
+        self.assertFalse(receipt.exists())
 
 
 class ContributorAdmissionTests(unittest.TestCase):
@@ -884,6 +1008,94 @@ class ContributorAdmissionTests(unittest.TestCase):
                 with mock.patch.object(owner, "command", side_effect=capture), self.assertRaisesRegex(
                         evidence.ConformanceError, "^" + ("ProofMismatch" if defect == "control" else "InputChanged") + "$"):
                     contributors.capture_binding_restore_graphs(binding, owner, built, tool, "10.0.3", cache)
+
+    def evaluation_capture_fixture(self):
+        binding, owner, _ = self.build_fixture()
+        tool = owner.root / "evaluation-tool.dll"
+        tool.write_bytes(b"modeled evaluation tool")
+        toolchain = self.parent / "toolchain"
+        msbuild = toolchain / "sdk/10.0.203/MSBuild.dll"
+        props = toolchain / "sdk/10.0.203/Sdks/Fixture.props"
+        props.parent.mkdir(parents=True)
+        msbuild.write_bytes(b"modeled msbuild host")
+        props.write_bytes(b"<Project />")
+        rows = [{"Identity": "source/" + path, "Kind": "source", "Sha256": binding.sources[path]}
+                for path in (binding.project, "Binding.cs")]
+        rows.append({"Identity": "toolchain/" + props.relative_to(toolchain).as_posix(), "Kind": "toolchain",
+                     "Sha256": evidence.file_sha256(props)})
+        return binding, owner, tool, toolchain, msbuild, props, rows
+
+    def test_evaluation_capture_uses_safe_driver_hash_bound_inputs_and_explicit_sdk_runtime(self):
+        binding, owner, tool, toolchain, msbuild, _, rows = self.evaluation_capture_fixture()
+
+        def capture(arguments, **options):
+            self.assertEqual(arguments[:5], ["dotnet", "exec", "--fx-version", "10.0.3", str(msbuild)])
+            self.assertIn("-noconsolelogger", arguments)
+            self.assertEqual(options["env"], {"DOTNET_ROLL_FORWARD": "Disable"})
+            self.assertEqual(options["kind"], "events")
+            driver = Path(arguments[5])
+            self.assertEqual(driver.stat().st_mode & 0o777, 0o400)
+            task = ET.parse(driver).find("./Target/*")
+            self.assertEqual(base64.b64decode(task.get("OwnedRootBase64")).decode(), str(owner.root))
+            request = owner.root / task.get("RequestPath")
+            self.assertEqual(evidence.file_sha256(request), task.get("RequestSha256"))
+            self.assertEqual(request.stat().st_mode & 0o777, 0o400)
+            value = evidence.load_json(request.read_bytes())
+            self.assertEqual(value["sources"], binding.sources)
+            (owner.root / value["outputPath"]).write_bytes(evidence.canonical_bytes({"Items": {"_BindingInputs": rows}}))
+            return mock.Mock(exit_code=0, events=({"event": "control", "code": "None", "value": len(rows)},))
+
+        with mock.patch.object(owner, "command", side_effect=capture):
+            admitted = contributors.capture_binding_evaluation_inputs(
+                binding, owner, tool, toolchain, "10.0.203", "10.0.3")
+        self.assertIn("Binding.cs", admitted["sources"])
+        self.assertIn("sdk/10.0.203/Sdks/Fixture.props", admitted["toolchain"])
+
+    def test_evaluation_capture_rejects_missing_hashes_events_and_changed_inputs_after_failed_child(self):
+        for defect in ("hash", "control", "request", "driver", "tool", "host", "source", "mode", "import"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory(dir=self.parent) as nested:
+                original_parent = self.parent
+                self.parent = Path(nested)
+                try:
+                    binding, owner, tool, toolchain, msbuild, props, rows = self.evaluation_capture_fixture()
+                finally:
+                    self.parent = original_parent
+
+                def capture(arguments, **options):
+                    driver = Path(arguments[5])
+                    task = ET.parse(driver).find("./Target/*")
+                    request = owner.root / task.get("RequestPath")
+                    if defect in ("hash", "control", "import"):
+                        if defect == "hash":
+                            del rows[0]["Sha256"]
+                        if defect == "import":
+                            props.write_bytes(b"<Project changed='true' />")
+                        value = evidence.load_json(request.read_bytes())
+                        (owner.root / value["outputPath"]).write_bytes(
+                            evidence.canonical_bytes({"Items": {"_BindingInputs": rows}}))
+                        return mock.Mock(exit_code=0, events=() if defect == "control" else (
+                            {"event": "control", "code": "None", "value": len(rows)},))
+                    path = {"request": request, "driver": driver, "tool": tool, "host": msbuild,
+                            "source": binding.root / "Binding.cs", "mode": binding.root / "Binding.cs"}[defect]
+                    path.chmod(0o600)
+                    if defect != "mode":
+                        path.write_bytes(b"changed")
+                    raise evidence.ConformanceError("CommandFailed")
+
+                code = {"hash": "EvidenceIncomplete", "control": "ProofMismatch"}.get(defect, "InputChanged")
+                with mock.patch.object(owner, "command", side_effect=capture), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^" + code + "$"):
+                    contributors.capture_binding_evaluation_inputs(
+                        binding, owner, tool, toolchain, "10.0.203", "10.0.3")
+
+    def test_evaluation_capture_rejects_foreign_tool_and_overlapping_toolchain_before_execution(self):
+        binding, owner, tool, toolchain, _, _, _ = self.evaluation_capture_fixture()
+        for actual_tool, actual_toolchain in ((self.parent / "foreign.dll", toolchain), (tool, owner.root)):
+            with self.subTest(foreign=actual_tool != tool), mock.patch.object(owner, "command") as command, \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                contributors.capture_binding_evaluation_inputs(
+                    binding, owner, actual_tool, actual_toolchain, "10.0.203", "10.0.3")
+            command.assert_not_called()
 
     def documents_capture_fixture(self):
         binding, owner, _ = self.build_fixture()

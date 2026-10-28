@@ -2194,6 +2194,15 @@ duplicate/malformed rows and unknown metadata, recheck all declared source bytes
 and retain only relative source/toolchain hashes. Derived private MSBuild
 metadata paths are not retained. Evaluation is not complete dynamic/generated
 compiler input capture or evidence that arbitrary MSBuild projects are safe.
+Repository-owned evaluation capture uses the BuildInputs ReadBindingInputs task
+with a closed hash-bound request naming frozen source hashes and the actual
+selected SDK toolchain. Bound file/project/byte/time work and rehash captured
+inputs before emitting only relative Identity/Kind/Sha256 rows. Independently
+check claimed hashes; inventory-only receipts without hashes cannot satisfy
+owned producer capture. Select explicit SDK/runtime hosts without roll-forward,
+disable console logging and require exactly one successful row-count event.
+Recheck frozen sources/modes and read-only request/driver/tool/host inputs after
+the command, including failure. Never persist raw MSBuild project errors.
 Compiler-source admission is another non-qualifying input check. Require closed
 per-project receipts, successful build/compiler outcomes and the selected
 declared binding project. Reject duplicate or undeclared projects. Match every

@@ -6454,6 +6454,29 @@ The32 focused contributor/input cases pass. Frozen full safe tooling observes611
 tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
 macOS skips and expected incomplete exit2; catalog/SDK/diff checks pass. The
 complete scope also covers the new unqueried-declaration mutation.
+The promoted `Hoard.Fixtures.Conformance.BuildInputs.ReadBindingInputs` task now
+lives in the repository-owned non-packable BuildInputs tool, referencing only
+the selected SDK's MSBuild libraries for task hosting, not product modules or
+new NuGet dependencies. It evaluates Release/net10.0 through MSBuild's API and
+follows declared project references. A closed hash-bound request names the owned
+source root, complete source hashes, actual host toolchain and create-new output.
+The receipt contains only relative identities/kinds/SHA-256 hashes; current
+source/toolchain files are bounded and rechecked, including empty inputs.
+Malformed project errors and unknown failures produce fixed safe rejecting
+events, not raw messages or private paths. Derived MSBuild item metadata is not
+persisted.
+`capture_binding_evaluation_inputs` uses a read-only generated driver and request,
+the explicit SDK MSBuild image and exact runtime with roll-forward disabled,
+then admits the claimed hashes and exact count event. It rechecks source modes/
+bytes, request/driver/tool/host inputs after either success or failure.
+Three actual managed task controls and three modeled-command orchestration
+controls pass; all63 focused contributor cases pass. Frozen full safe tooling
+observes665 tests, zero failures/errors/unexpected diagnostic bytes, twenty
+explicit native macOS skips and expected non-qualifying exit2. The actual component
+selects installed runtime10.0.7 explicitly; no native guard is relaxed.
+This is evaluation-only tooling, not complete generated/compiler/package
+closure, a project sandbox or public contributor qualification. T064 stays open.
+
 The subsequent compiler-source reader checks bounded per-project receipts,
 requires successful declared projects including the selected binding project,
 matches frozen author hashes and independently rechecks a disjoint generated

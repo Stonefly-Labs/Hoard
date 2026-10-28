@@ -617,9 +617,14 @@ archives from a fresh cache. This does not yet build an arbitrary supplied
 binding or complete its contributor suite.
 A bounded evaluated-input reader now rejects undeclared sources, stale declared
 bytes and unknown metadata while recording path-free source/toolchain hashes.
-A trusted managed MSBuild component detects real conditional imports, project
-references and an omitted ambient source. This remains evaluation-only evidence,
-not complete compiler/import/lock closure or public contributor execution.
+The repository-owned MSBuild evaluation task detects real conditional imports,
+project references and omitted ambient sources. Its hash-bound request and
+relative hash-only receipt bind frozen source and selected toolchain inputs.
+Owned capture selects explicit SDK/runtime hosts without roll-forward and
+rechecks source, request, driver, tool and host bytes after failure as well as
+success. Actual managed task and modeled orchestration controls pass. This
+remains evaluation-only evidence, not complete compiler/import/lock closure or
+public contributor execution.
 A separate compiler-source reader now checks bounded per-project Csc receipts
 against all frozen source bytes and a disjoint generated-file root. A trusted
 managed logger component observes two real compiler tasks, including a file

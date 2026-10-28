@@ -395,11 +395,17 @@ requires the selected project and toolchain inputs, rejects undeclared source
 paths and rechecks every declared source byte (including unqueried declarations).
 It emits relative source/toolchain hashes without retaining derived private
 vendor paths. Duplicate/malformed rows and unknown metadata reject. A fixed
-trusted managed task uses MSBuild's actual evaluation API, detecting a
-conditional import, expanded source include, referenced project and ambient
-source; the reader rejects the unlisted ambient file. Seven source and110
-actual toolchain input hashes are observed, with the fixture author's bytes
-unchanged and an outside-root import rejected.
+repository-owned BuildInputs task uses MSBuild's actual evaluation API, detecting
+conditional imports, expanded source includes, referenced projects and ambient
+sources. Its closed hash-bound request names the frozen source manifest and
+actual SDK toolchain; its receipt contains only relative identities, kinds and
+SHA-256 hashes, never derived private MSBuild metadata paths. Every captured
+file is rehashed before output and claimed hashes are independently admitted.
+Changed or undeclared inputs, links, foreign toolchains, reused output and
+malformed projects reject with fixed safe events. Owned capture uses a read-only
+generated driver/request, explicit SDK/runtime hosts without roll-forward, exact
+count events and post-command source/request/driver/tool/host checks even after
+failure. Actual managed task and modeled orchestration controls pass.
 
 This is evaluation-only component evidence, not a generic source/build input
 tracer. Dynamic/generated compilation inputs, restored-package input ownership,

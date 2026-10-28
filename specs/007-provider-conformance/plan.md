@@ -664,6 +664,44 @@ explicit native macOS skips and expected incomplete exit2; catalog/SDK/diff
 checks pass. The newly added unqueried-declaration mutation also passes within
 that complete scope.
 
+The evaluation producer is now repository-owned as the SDK-hosted BuildInputs
+ReadBindingInputs task. Three actual managed controls were red for the missing
+task before implementation and now pass: conditional import/expanded source/
+referenced project observation (including an empty input), changed request and
+source/undeclared ambient rejection, and linked-source/foreign-toolchain/
+malformed-project sanitation. Its closed hash-bound request names the expected
+source hashes and actual host toolchain; its bounded create-new receipt includes
+only relative Identity/Kind/Sha256 rows. Every captured file is rehashed before
+output. Optional claimed hashes in the existing inventory reader are checked;
+owned capture requires them on every row.
+
+`capture_binding_evaluation_inputs` supplies the read-only generated driver/
+request, exact selected SDK MSBuild image and runtime without roll-forward,
+strict hash admission and one exact row-count event. Three modeled orchestration
+controls pass for request/host binding, omitted hashes/events, changed source/
+mode/request/driver/tool/host/import bytes and foreign/overlapping contexts.
+The actual managed component now invokes the explicit SDK MSBuild image with
+installed runtime10.0.7 and roll-forward disabled. Earlier runtime10.0.3
+observations remain historical, not claims about the current local installation.
+All63 focused contributor tests pass; this is actual managed evaluation and
+modeled owned orchestration, not native containment or full compiler/generator/
+tool-dependency closure. T064 remains unchecked and public dispatch closed.
+MSBuild references are SDK-provided build-tool dependencies with copy-local
+disabled, not product or distributable package dependencies. Product/provider
+APIs, module references, operator examples, architecture/ADR/diagrams, governance,
+predecessors, IaC, release and UI documents are unaffected by private evaluation
+tooling. README/provider/development/harness guidance is synchronized.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`
+passes63 tests. `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes665 tests, zero failures/errors/unexpected diagnostic bytes, twenty
+explicit native macOS skips and expected non-qualifying exit2.
+`dotnet format tests/fixtures/conformance/BuildInputs/BuildInputs.csproj
+--no-restore --verify-no-changes --include
+tests/fixtures/conformance/BuildInputs/Program.cs
+tests/fixtures/conformance/BuildInputs/ReadBindingInputs.cs --verbosity quiet`,
+`python3 scripts/conformance_case_catalog.py --check`,
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check` pass.
+
 The next partial T064 reader independently admits bounded compiler-source
 receipts: each declared project has one successful Csc row, the selected binding
 project is required, observed author hashes must match frozen bytes, and generated

@@ -9,9 +9,9 @@ namespace Hoard.Fixtures.Conformance.BuildInputs;
 
 internal static partial class Program
 {
-    private const int MaxManifestBytes = 2 * 1024 * 1024;
-    private const int MaxPackageBytes = 64 * 1024 * 1024;
-    private const int MaxArchiveBytes = 256 * 1024 * 1024;
+    internal const int MaxManifestBytes = 2 * 1024 * 1024;
+    internal const int MaxPackageBytes = 64 * 1024 * 1024;
+    internal const int MaxArchiveBytes = 256 * 1024 * 1024;
 
     private static int Main(string[] args)
     {
@@ -186,7 +186,8 @@ internal static partial class Program
             Require(reader.GetGuid(document.HashAlgorithm) == new Guid("8829d00f-11b8-4213-878b-770e8597ac16")
                 && hash.Length == 32 && documents.Count < 4096
                 && documents.TryAdd(identity, Convert.ToHexStringLower(hash)), "ProofMismatch");
-            var bytes = Read(OwnedPath(owner, relative), (int)Math.Min(MaxPackageBytes, MaxArchiveBytes - total));
+            var bytes = Read(OwnedPath(owner, relative), (int)Math.Min(MaxPackageBytes, MaxArchiveBytes - total),
+                allowEmpty: true);
             total += bytes.Length;
             Require(Hash(bytes) == documents[identity], "InputChanged");
         }
@@ -210,17 +211,17 @@ internal static partial class Program
         return documents.Count;
     }
 
-    private static byte[] Read(string path, int limit)
+    internal static byte[] Read(string path, int limit, bool allowEmpty = false)
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        Require(stream.Length is > 0 && stream.Length <= limit, "OutputLimitExceeded");
+        Require((allowEmpty || stream.Length > 0) && stream.Length <= limit, "OutputLimitExceeded");
         var bytes = new byte[(int)stream.Length];
         stream.ReadExactly(bytes);
         Require(stream.ReadByte() == -1, "InputChanged");
         return bytes;
     }
 
-    private static string OwnedPath(string root, string relative)
+    internal static string OwnedPath(string root, string relative)
     {
         Require(relative is { Length: > 0 and <= 512 } && relative.All(c => c is >= ' ' and <= '~')
             && !relative.Contains('\\') && !relative.Contains(':') && !Path.IsPathRooted(relative)
@@ -236,14 +237,14 @@ internal static partial class Program
         return path;
     }
 
-    private static string Text(JsonElement value, string name)
+    internal static string Text(JsonElement value, string name)
     {
         var result = value.GetProperty(name).GetString();
         Require(result is not null && result.Length <= 1024, "EvidenceSchemaInvalid");
         return result!;
     }
 
-    private static void Keys(JsonElement value, params string[] expected)
+    internal static void Keys(JsonElement value, params string[] expected)
     {
         Require(value.ValueKind == JsonValueKind.Object, "EvidenceSchemaInvalid");
         var keys = value.EnumerateObject().Select(property => property.Name).ToArray();
@@ -251,9 +252,9 @@ internal static partial class Program
             "EvidenceSchemaInvalid");
     }
 
-    private static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
+    internal static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 
-    private static void Require(bool condition, string code)
+    internal static void Require(bool condition, string code)
     {
         if (!condition)
         {
@@ -261,10 +262,10 @@ internal static partial class Program
         }
     }
 
-    private sealed class InputException(string code) : Exception(code);
+    internal sealed class InputException(string code) : Exception(code);
 
     [GeneratedRegex(@"\A[0-9a-f]{64}\z")]
-    private static partial Regex HashPattern();
+    internal static partial Regex HashPattern();
 
     [GeneratedRegex(@"\A[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}\z")]
     private static partial Regex PackagePartPattern();
