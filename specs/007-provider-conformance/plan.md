@@ -220,6 +220,23 @@ unexpected diagnostic bytes, twenty explicit native macOS skips and expected
 incomplete exit2. Catalog, SDK and diff checks pass. These skipped native cases
 and local component controls do not establish Linux profile acceptance.
 
+The next T064 increment reuses the existing descriptor-based source snapshot
+mechanism with an explicit validated manifest. Its default Git-discovered
+inventory remains unchanged. Contributor staging pins the public invocation's
+fingerprint before copying and rechecks original registration/source bytes
+afterward. The owned copy is exact and read-only; altered source/registration,
+copy races and overlapping author/output roots reject without building or
+modifying the author's project. All26 focused contributor/existing-input
+tests pass. This declared-source helper is not complete MSBuild closure or
+public custom dispatch: owned build/pack, type/package validation, independent
+catalog selection and actual contributor execution remain open.
+Frozen full safe tooling after that shared snapshot extension observes605
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2. Catalog, SDK and diff checks pass.
+The repaired native compatibility run40627874774 at exact
+`74c05878eb6884eabe9438bd2b8fc0824d098dec` has started job122619085176;
+it is not yet a passing receipt.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

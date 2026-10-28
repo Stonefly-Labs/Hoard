@@ -2145,7 +2145,10 @@ fabricated archive hash; actual capture still requires the actual package hash.
 The project and registration must appear in the unique bounded source inventory.
 Admission rejects unknown fields, exclusions, missing hooks, unsafe paths and
 symlinks, and fingerprints registration plus captured declared source hashes.
-This is not complete MSBuild closure, an owned snapshot/build, compiled type
+An owned declared-source staging helper rechecks the pinned admission
+fingerprint before/after copying read-only files, rejects copy races and
+overlapping author/output roots, and leaves original source bytes untouched.
+This is not complete MSBuild closure, an owned build, compiled type
 validation or executable contributor registration. The custom dispatch guard
 still returns `EvidenceIncomplete`; T064 remains open.
 

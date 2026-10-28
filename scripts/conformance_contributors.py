@@ -79,3 +79,18 @@ def admit_binding_project(project, category):
     if sources[registration_path] != hashlib.sha256(raw).hexdigest():
         raise evidence.ConformanceError("InputChanged")
     return BindingProject(root, relative.as_posix(), registration, MappingProxyType(sources))
+
+
+def snapshot_binding_project(project, category, expected_inputs_sha256, owned_run):
+    expected = evidence.sha256(expected_inputs_sha256)
+    admitted = admit_binding_project(project, category)
+    if admitted.inputs_sha256 != expected:
+        raise evidence.ConformanceError("InputChanged")
+    if (owned_run.root.is_relative_to(admitted.root)
+            or admitted.root.is_relative_to(owned_run.root)):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    snapshot, sources = evidence.snapshot_sources(
+        admitted.root, owned_run, name="binding-source", manifest=admitted.sources)
+    if admit_binding_project(project, category).inputs_sha256 != expected:
+        raise evidence.ConformanceError("InputChanged")
+    return BindingProject(snapshot, admitted.project, admitted.registration, sources)

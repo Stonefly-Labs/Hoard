@@ -214,7 +214,11 @@ declares the source-root-relative project, source-qualified factory type,
 adapter package, binding declaration, every category component's package/image
 identity and explicit source inventory. Unknown fields, provider-selected
 exclusions, missing hooks/components, unsafe paths and source symlinks reject.
-Bounded source hashing freezes a declared-input fingerprint.
+Bounded source hashing freezes a declared-input fingerprint. An owned staging
+helper rechecks that admission fingerprint, copies only its exact declared
+inventory with descriptor-based stable-file checks and read-only outputs, then
+revalidates original registration/source bytes. Changed inputs and overlapping
+author/output roots reject; the author's project is never built or modified.
 
 This does not prove complete MSBuild source/import/lock closure or compiled
 factory/category identity. No external project is built in place, no typed
@@ -222,7 +226,8 @@ factory bridge executes yet, and custom execution still returns
 `EvidenceIncomplete`. Adapter wrappers, underlying provider and shared
 authority/fault helpers remain separately declared; this forwarding example
 does not become an independent provider or inherit built-in runtime evidence.
-Owned snapshots, actual package/runtime attribution and separately packaged
+Integration of that declared snapshot with complete closure validation,
+owned build/pack, actual package/runtime attribution and separately packaged
 good/red/corrected complete-suite runs remain required by T064..T067.
 
 ### Earlier F-07 diagnostic checkpoints

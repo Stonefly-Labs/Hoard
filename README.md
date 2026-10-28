@@ -587,6 +587,10 @@ Contributor project admission also validates an explicit `.conformance.json`
 registration and fingerprints its declared source inventory. Complete source
 closure, owned build/pack, typed factory invocation and contributor execution
 remain unimplemented; T064 stays unchecked.
+A staging helper now revalidates that fingerprint before/after an owned
+read-only declared-source copy, rejecting source/registration changes and
+overlapping author/output roots. This is not complete build-closure admission
+or an executable contributor route.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

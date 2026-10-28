@@ -6216,6 +6216,17 @@ observes602 tests with zero failures/errors/unexpected diagnostic bytes, twenty
 explicit native macOS skips and expected incomplete exit2. Catalog/SDK/diff
 checks and focused C# formatting pass; native/profile acceptance stays open.
 
+The next partial T064 increment adds owned declared-source staging with
+fingerprint checks before/after copying, read-only exact inventory, copy-race
+rejection and author/output root separation. Existing Git snapshot callers
+retain their original inventory behavior. All26 focused contributor/input
+cases pass. This does not yet validate complete MSBuild closure, build/pack
+the adapter or execute a typed factory; the public custom route remains closed.
+Its frozen full tooling checkpoint observes605 tests with zero failures/errors/
+unexpected diagnostic bytes, twenty explicit native macOS skips and expected
+incomplete exit2; catalog/SDK/diff checks pass. Native compatibility
+run40627874774/job122619085176 at exact74c0587 is now in progress, not confirmed.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

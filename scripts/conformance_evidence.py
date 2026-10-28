@@ -1168,9 +1168,11 @@ def source_identity(root, *, ci_revision=None):
     return MappingProxyType({"sourceRevision": revision, "sourceState": state})
 
 
-def snapshot_sources(root, owned_run, *, name="snapshot"):
+def snapshot_sources(root, owned_run, *, name="snapshot", manifest=None):
     name = stable_id(name)
-    before = source_manifest(root)
+    before = source_manifest(root) if manifest is None else _hash_map(manifest)
+    if manifest is not None and dict(input_manifest(root, list(before))) != dict(before):
+        raise ConformanceError("InputChanged")
     owned_run._check_ledger()
     snapshot = owned_run.root / name
     owner = owned_run._root_descriptor()
@@ -1198,7 +1200,8 @@ def snapshot_sources(root, owned_run, *, name="snapshot"):
         os.close(owner)
     owned_run._check_ledger()
     verify_snapshot(snapshot, before)
-    if dict(source_manifest(root)) != dict(before):
+    after = source_manifest(root) if manifest is None else input_manifest(root, list(before))
+    if dict(after) != dict(before):
         raise ConformanceError("InputChanged")
     return snapshot, before
 

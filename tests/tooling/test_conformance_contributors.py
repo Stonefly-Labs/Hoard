@@ -6,10 +6,13 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_evidence as evidence
+import conformance_contributors as contributors
+from conformance_execution import OwnedRun
 
 
 class ContributorAdmissionTests(unittest.TestCase):
@@ -113,6 +116,67 @@ class ContributorAdmissionTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(),
                          hashlib.sha256(b"namespace Acme; public sealed class Binding { }\n").hexdigest())
         self.assertFalse((self.parent / "fresh").exists())
+
+    def test_owned_declared_snapshot_uses_admitted_bytes_without_building_or_modifying_author_sources(self):
+        invocation = self.admit()
+        original = {path.name: path.read_bytes() for path in self.source.iterdir()}
+        run = OwnedRun.allocate(self.parent / "fresh", ROOT, profile="harness")
+        captured = contributors.snapshot_binding_project(
+            self.project, "metadata", invocation.binding_inputs_sha256, run)
+        self.assertEqual(captured.root, run.root / "binding-source")
+        self.assertEqual(captured.project, "Adapter.csproj")
+        self.assertEqual(captured.inputs_sha256, invocation.binding_inputs_sha256)
+        self.assertEqual({path.name: path.read_bytes() for path in self.source.iterdir()}, original)
+        self.assertEqual({path.name: path.read_bytes() for path in captured.root.iterdir()}, original)
+        self.assertTrue(all(path.stat().st_mode & 0o777 == 0o400 for path in captured.root.iterdir()))
+        self.assertFalse((self.source / "obj").exists())
+        self.assertFalse((captured.root / "obj").exists())
+
+    def test_owned_snapshot_rejects_changes_after_admission_before_copy_and_during_copy(self):
+        invocation = self.admit()
+        source = self.source / "Binding.cs"
+        original = source.read_bytes()
+        run = OwnedRun.allocate(self.parent / "fresh", ROOT, profile="harness")
+        source.write_bytes(original + b"// changed after admission\n")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.snapshot_binding_project(
+                self.project, "metadata", invocation.binding_inputs_sha256, run)
+        self.assertFalse((run.root / "binding-source").exists())
+        source.write_bytes(original)
+        registration = self.sidecar.read_bytes()
+        changed = copy.deepcopy(self.registration)
+        changed["factoryType"] = "Acme.OtherBinding"
+        self.write(changed)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.snapshot_binding_project(
+                self.project, "metadata", invocation.binding_inputs_sha256, run)
+        self.assertFalse((run.root / "binding-source").exists())
+        self.sidecar.write_bytes(registration)
+        actual = evidence._source_file
+
+        def mutate_after_copy(directory, relative, **options):
+            result = actual(directory, relative, **options)
+            if relative == "Binding.cs" and options.get("target") is not None:
+                source.write_bytes(original + b"// changed during copy\n")
+            return result
+
+        with mock.patch.object(evidence, "_source_file", side_effect=mutate_after_copy):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                contributors.snapshot_binding_project(
+                    self.project, "metadata", invocation.binding_inputs_sha256, run)
+        self.assertEqual((run.root / "binding-source/Binding.cs").read_bytes(), original)
+        self.assertFalse((self.source / "obj").exists())
+
+    def test_owned_snapshot_rejects_output_inside_author_source_root(self):
+        invocation = self.admit()
+        original = (self.source / "Binding.cs").read_bytes()
+        self.source.chmod(0o700)
+        run = OwnedRun.allocate(self.source / "fresh", ROOT, profile="harness")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            contributors.snapshot_binding_project(
+                self.project, "metadata", invocation.binding_inputs_sha256, run)
+        self.assertEqual((self.source / "Binding.cs").read_bytes(), original)
+        self.assertFalse((run.root / "binding-source").exists())
 
 
 if __name__ == "__main__":
