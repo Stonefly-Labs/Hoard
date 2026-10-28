@@ -6335,6 +6335,18 @@ A separately SDK-packed adapter changes only its reported profile on reopen:
 the same named profile assertion rejects after the preceding 46 valid rows.
 The bounded interim reopen architecture review found no blocker; final T081 and
 real process-crash/native qualification remain open.
+The next nine contributor admission rows reuse the original complete-profile/
+missing-guarantee consumer with before/after profile checks. Every original
+unsupported/foreign-authority no-I/O, initialization, stop, origin and ownership
+assertion remains. Actual snapshot/incomplete adapters pass 55/56 rows with 56/57
+origins, exact discovery, eight-role attribution and fresh-cache locked replay;
+all 91 selected built-in regressions pass. Independently packed false profiles
+fail on the first admission row; changed-during-commit and changed-on-reopen
+variants fail at the named profile assertion after nine and 55 preceding rows.
+Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
+The51 contributor cases, catalog/SDK checks, focused two-file whitespace and
+diff checks pass. T064/public dispatch and native qualification remain open.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

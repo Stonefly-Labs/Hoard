@@ -459,6 +459,24 @@ Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
 The51 contributor cases, catalog/SDK checks, focused two-file Consumer whitespace
 verification and diff check pass for this shared reopen increment.
+The shared admission increment adds nine independently expanded contributor
+rows using the original complete-profile/missing-guarantee consumer. Existing
+unsupported/foreign-authority rejection, no-I/O, initialization, stop, origin
+and ownership assertions remain; only test-fixture profile callbacks surround
+the shared body. Actual snapshot/incomplete adapters pass 55/56 rows and 56/57
+origins, exact discovery, eight-role image attribution, fresh-cache locked replay,
+all 91 selected built-in regressions and all six input/category controls.
+Independently packed false-enumeration, changed-during-commit and changed-on-
+reopen variants reject at the actual named profile assertion after zero, nine
+and 55 preceding rows, respectively. Raw provider diagnostics remain unexposed.
+Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
+The51 contributor cases, catalog/SDK checks, focused two-file Consumer whitespace
+verification and diff check pass. README/provider/development/harness guidance
+records this internal component; public examples, diagrams, product/architecture/
+ADR/governance, predecessors, IaC, release and UI are unaffected because no
+public dispatch, production contract or deployment behavior changes.
+T064 remains unchecked; full catalog/native qualification is not established.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

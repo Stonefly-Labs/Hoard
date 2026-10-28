@@ -198,6 +198,30 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash, AssertProfile);
     }
 
+    [Theory]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Complete)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Version)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Publication)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Deletion)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Recovery)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Fencing)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Readers)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.Streaming)]
+    [ContributorArtifactData(ArtifactAdmissionProbe.ForeignAuthority)]
+    public async Task Observed_admission_preserves_actual_no_io_rejection(string provider, ArtifactAdmissionProbe probe)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var limits = probe == ArtifactAdmissionProbe.Complete
+            ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 2048, transferSlots: 1, waitingCalls: 0)
+            : new ArtifactLimits();
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(probe, limits, references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.AdmissionConsumerAsync(binding, context, resources, output, probe, AssertProfile);
+    }
+
     private static void AssertProfile(IArtifactConformanceSession session)
     {
         var actual = session.Store.Capabilities;

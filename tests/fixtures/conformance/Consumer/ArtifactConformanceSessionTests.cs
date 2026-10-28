@@ -955,10 +955,18 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var limits = probe == ArtifactAdmissionProbe.Complete
             ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 2048, transferSlots: 1, waitingCalls: 0)
             : new ArtifactLimits();
+        await AdmissionConsumerAsync(Binding(provider, limits, admissionProbe: probe), context, resources, output, probe);
+    }
+
+    internal static async Task AdmissionConsumerAsync(IArtifactConformanceBinding binding, ConformanceRunContext context,
+        RecordingDirectories resources, ITestOutputHelper output, ArtifactAdmissionProbe probe,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
         var session = await ConformanceObservedArtifactSession.OpenAsync(
-            Binding(provider, limits, admissionProbe: probe), context, default);
+            binding, context, default);
         try
         {
+            assertProfile?.Invoke(session);
             if (probe == ArtifactAdmissionProbe.Complete)
             {
                 await ArtifactCapabilityAssertions.CompleteProfileAsync(
@@ -974,6 +982,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     () => session.Faults.ObserveInitialization().RootExists,
                     () => session.Faults.ObserveInitialization().Ready, default);
             }
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { await session.DisposeAsync(); }

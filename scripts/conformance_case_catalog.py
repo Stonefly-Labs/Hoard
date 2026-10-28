@@ -246,6 +246,12 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
     reopen = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
               "Observed_reopen_preserves_actual_lineage_and_declared_state")
     identities[f'{reopen}(provider: "{binding}")'] = 2
+    admission = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+                 "Observed_admission_preserves_actual_no_io_rejection")
+    identities.update({
+        f'{admission}(provider: "{binding}", probe: {probe})': 1
+        for probe in ("Complete", "Version", "Publication", "Deletion", "Recovery", "Fencing",
+                      "Readers", "Streaming", "ForeignAuthority")})
     return identities
 
 
