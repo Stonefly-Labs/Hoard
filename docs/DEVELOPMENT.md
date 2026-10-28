@@ -5902,6 +5902,26 @@ confirmation remains pending; no full-profile/qualification flag changes and
 T047/T071 remain open. Provider contracts, examples, diagrams, infrastructure
 and governance remain unaffected.
 
+Exact `08fec30` run40604553886/job122540687673 fails with `ProofMismatch`
+after completion measurement, before the inherited continuation; it is retained
+as failed evidence. A full modeled report-link replay reproduces the defect:
+raw persisted JSON lists were compared with already-admitted immutable tuples.
+Both sides now pass through strict `RunInputs` admission before comparison;
+original bytes still have to match the native command/proof hashes. The model
+also executes all fourteen rejecting mutations after deleting stores/feed.
+Only transport ingestion is mocked: this is link-level regression coverage,
+not actual native-origin acceptance.
+
+The selected-input snapshot uses `configurationPolicy=synthetic-nuget-v1`.
+It verifies original configuration bytes before cleanup but does not retain
+their absolute scratch path. Replay reconstructs the exact generated local/
+public NuGet configuration in memory and checks its original digest.
+Matching hashes for an unsupported configuration still reject.
+Two focused replay/retention controls pass. Full safe tooling observes 581
+tests, zero failures/errors/unexpected diagnostic bytes, twenty native macOS
+skips and expected incomplete exit 2; catalog/diff checks pass. Fresh Linux
+confirmation remains pending, T047/T071 remain open, 53/86 implement/running.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

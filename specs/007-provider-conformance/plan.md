@@ -973,6 +973,27 @@ confirmation remains pending. T047/T071 stay unchecked; 53/86 implement/running.
 README/development are updated; product/provider contracts, examples, diagrams,
 infrastructure and governance are unaffected.
 
+The first genuine replay attempt, exact
+`08fec30ebe6b34bf8c88cf5a2b7aa1251ebbc7df`,
+run40604553886/job122540687673, fails `ProofMismatch` after completion
+measurement and before inherited execution. It does not qualify or close T047.
+A new full modeled link-level positive control reproduces the raw JSON lists
+versus admitted immutable tuples comparison. Re-admitting the persisted
+`RunInputs` repairs the comparison without bypassing any raw-byte hash check.
+The same model runs all fourteen rejecting mutations after actual temporary
+store/feed deletion; its transport ingestion is explicitly mocked and is not
+counted as native-origin evidence.
+
+The snapshot now has an explicit `synthetic-nuget-v1` configuration policy.
+Original generated configuration bytes are checked before cleanup; replay
+reconstructs those exact bytes in memory and verifies the native input digest,
+instead of retaining configuration containing an absolute scratch path.
+An unsupported configuration rejects even when its declared hash matches.
+Two focused controls pass; full safe tooling observes 581 tests, zero failures/
+errors/unexpected diagnostic bytes, twenty native macOS skips and expected
+incomplete exit 2. Catalog and diff checks pass. Fresh Linux replay confirmation
+is pending; no task/profile/qualification gate is promoted.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

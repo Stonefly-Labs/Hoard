@@ -786,6 +786,117 @@ class ConformanceAdmissionTests(unittest.TestCase):
                     SimpleNamespace(root=root), inputs, inputs, observed, runtime_directory="runtime-model",
                     started_ms=0, ended_ms=1)
 
+    def test_modeled_composition_report_links_replay_after_cleanup_without_claiming_runtime_origin(self):
+        import conformance_case_catalog as catalog
+        import conformance_composition_checks as composition
+        import conformance_sdk_checks as checks
+        from types import SimpleNamespace
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+
+            def write(path, data):
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                checks.write_new(target, data)
+                return hashlib.sha256(data).hexdigest()
+
+            prototype = self.composition_report()
+            inputs = prototype["inputs"]
+            inputs["mode"] = "diagnostic"
+            staged = root / "stores/composition-runtime"
+            images = {f"stores/composition-runtime/{name}": write(
+                f"stores/composition-runtime/{name}", name.encode()) for name in (
+                    "Hoard.Composition.Tests.dll", composition.HOST + ".dll",
+                    composition.SDK + ".dll", composition.LOGGER + ".dll")}
+            for name in ("Hoard.Composition.Tests.deps.json", "Hoard.Composition.Tests.runtimeconfig.json"):
+                write("stores/composition-runtime/" + name, b"{}")
+            inputs["runtimeAssemblies"] = images
+            inputs["locks"] = {"stores/packages.lock.json": write("stores/packages.lock.json", b"{}")}
+            config = "stores/candidate.NuGet.Config"
+            inputs["configurationSha256"] = write(
+                config, evidence.synthetic_nuget_configuration(root / "feed/candidate"))
+            package = inputs["packages"][0]
+            package.update(packageId=composition.SDK, version="0.1.0")
+            package["sha256"] = write("feed/candidate/" + composition.SDK + ".0.1.0.nupkg", b"modeled-package")
+            package["runtimeAssemblies"] = {
+                "lib/net10.0/" + composition.SDK + ".dll": images["stores/composition-runtime/" + composition.SDK + ".dll"]}
+            attempt = str(uuid.uuid4())
+            output = f"runtime-{attempt}"
+            manifest = {
+                "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+                "attemptId": attempt, "attemptSequence": 1, "purpose": "execution",
+                "inputSha256": evidence.digest(inputs), "runInputsPath": "proofs/composition-inputs.json",
+                "assemblies": [], "packages": [], "expected": composition.expected_rows()}
+            owner = {
+                "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+                "rootId": "modeled-root", "rootPathSha256": hashlib.sha256(str(root).encode()).hexdigest()}
+            manifest_path = f"runtime-input-{attempt}.json"
+            settings_path = f"proofs/settings-{attempt}.runsettings"
+            settings = composition._composition_settings(
+                root, staged / "Hoard.Composition.Tests.dll", attempt, manifest, owner)
+            for path, data in (
+                    (manifest_path, evidence.canonical_bytes(manifest)),
+                    (manifest["runInputsPath"], evidence.canonical_bytes(inputs)),
+                    ("runtime-owner.json", evidence.canonical_bytes(owner)), (settings_path, settings),
+                    ("proofs/environment-admission.json", b"{}"),
+                    ("proofs/composition-environment-admission.json", b"{}")):
+                write(path, data)
+            bound = (
+                manifest_path, manifest["runInputsPath"], "runtime-owner.json", settings_path,
+                "proofs/environment-admission.json", "proofs/composition-environment-admission.json",
+                config, *images, "stores/composition-runtime/Hoard.Composition.Tests.deps.json",
+                "stores/composition-runtime/Hoard.Composition.Tests.runtimeconfig.json")
+            arguments = composition.runtime_arguments(
+                staged / "Hoard.Composition.Tests.dll", root / settings_path,
+                [row["testIdentity"] for row in composition.expected_rows()])
+            record = {
+                "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
+                "startedMs": 0.25, "endedMs": 2, "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited",
+                "scope": "ordinary", "runId": inputs["runId"], "rootId": owner["rootId"],
+                "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(staged).encode()).hexdigest(),
+                "inputFiles": dict(evidence.input_manifest(root, list(bound)))}
+            record_data = evidence.canonical_bytes(record)
+            write("proofs/execution-command-0001.json", record_data)
+            run = SimpleNamespace(
+                root=root, run_id=inputs["runId"], root_id=owner["rootId"], command_sequence=1,
+                live_children=lambda: (), read_execution_record=lambda sequence: record_data)
+            with mock.patch.object(checks, "OwnedRun", SimpleNamespace):
+                checks.category_command_proof(
+                    run, SimpleNamespace(exit_code=0, execution_record_sha256=hashlib.sha256(record_data).hexdigest()),
+                    arguments=arguments, cwd=staged, manifest=manifest, settings_data=settings, started_ms=0, ended_ms=3)
+            witnesses, proofs = [], {}
+            for identity, (_, matrix) in catalog.composition_execution_cases().items():
+                execution = str(uuid.uuid4())
+                path = "proof-" + execution + ".json"
+                hashed = write(output + "/" + path, evidence.canonical_bytes({"model": identity}))
+                proofs[path] = hashed
+                witnesses.append({
+                    **prototype["witnesses"][0], "executionId": execution, "testIdentity": identity,
+                    "matrixId": matrix, "inputSha256": evidence.digest(inputs), "proofSha256": hashed,
+                    "assemblySha256": images["stores/composition-runtime/Hoard.Composition.Tests.dll"],
+                    "packageSha256": package["sha256"], "startedMs": 0.5, "endedMs": 1})
+            observed = {"witnesses": tuple(evidence.admit_entity("RuntimeWitness", row) for row in witnesses),
+                        "proofs": proofs, "diagnosticCode": "None"}
+            write(output + "/witnesses.jsonl", b"modeled-transport\n")
+            write(output + "/completion.json", b"{}")
+            retained = composition._retain_composition_inputs(run, inputs, record)
+            summary = composition._composition_case_report(
+                run, inputs, inputs, observed, runtime_directory=output, started_ms=0, ended_ms=3,
+                transport_paths=(
+                    *retained, *(path for path in bound if not path.startswith(("stores/", "feed/", "cache/"))),
+                    f"proofs/category-command-{attempt}-execution.json", "proofs/execution-command-0001.json",
+                    output + "/witnesses.jsonl", output + "/completion.json"))
+            shutil.rmtree(root / "stores")
+            shutil.rmtree(root / "feed")
+            with mock.patch.object(evidence, "ingest_runtime_attempt", return_value=observed) as ingestion:
+                self.assertEqual(composition.verify_composition_case_report(root, inputs, owner), summary)
+                composition.verify_composition_report_controls(root, inputs, owner, summary)
+                ingestion.assert_called()
+            self.assertFalse(summary["qualification"])
+
     def test_an_attempt_cannot_borrow_other_dimensions_or_outside_execution_times(self):
         for dimension, value in (("bindingId", "memory"), ("matrixId", "other")):
             report = self.report()

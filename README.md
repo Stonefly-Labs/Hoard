@@ -446,6 +446,14 @@ wired into the post-release Linux check. Local focused checks pass 184 tests;
 full safe tooling observes 580 tests, zero failures/errors/unexpected bytes and
 twenty explicit native macOS skips (expected incomplete exit 2). Linux
 confirmation of this replay increment remains pending; T047/T071 stay open.
+Exact `08fec30` reaches completion measurement but fails its new replay reader
+with `ProofMismatch`; it is not acceptance. A full modeled link-level replay
+reproduces the raw-JSON-list versus admitted-tuple comparison and verifies the
+repair: re-admit persisted inputs before comparison while retaining raw-byte
+hash checks. Synthetic NuGet configuration is now reproduced in memory under
+an explicit policy instead of copying its scratch path into retained inputs.
+Local safe tooling passes 581 tests with the same twenty explicit native skips;
+fresh Linux confirmation remains pending.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

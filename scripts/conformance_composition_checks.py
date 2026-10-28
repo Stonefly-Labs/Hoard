@@ -611,10 +611,14 @@ def _retain_composition_inputs(run, inputs, record):
     if dict(evidence.input_manifest(run.root, list(files))) != files:
         raise evidence.ConformanceError("InputChanged")
     selected = {path: hashed for path, hashed in files.items() if path.startswith(("stores/", "feed/", "cache/"))}
+    config = "stores/candidate.NuGet.Config"
+    configuration = evidence.synthetic_nuget_configuration(run.root / "feed/candidate")
+    if selected.get(config) != hashlib.sha256(configuration).hexdigest():
+        raise evidence.ConformanceError("ProofMismatch")
     directory = run.root / "proofs/composition-runtime-inputs"
     directory.mkdir(mode=0o700)
     paths = []
-    for hashed, path in {hashed: path for path, hashed in selected.items()}.items():
+    for hashed, path in {hashed: path for path, hashed in selected.items() if path != config}.items():
         target = directory / hashed
         data = read_bounded(run.root / path, 32 * 1024**2)
         if hashlib.sha256(data).hexdigest() != hashed:
@@ -624,6 +628,7 @@ def _retain_composition_inputs(run, inputs, record):
     snapshot = "proofs/composition-runtime-input-snapshot.json"
     write_new(run.root / snapshot, evidence.canonical_bytes({
         "schemaVersion": 1, "qualification": False, "scope": "composition-runtime-selected-inputs",
+        "configurationPolicy": "synthetic-nuget-v1",
         "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "inputSha256": evidence.digest(inputs), "files": selected}))
     return (snapshot, *paths)
@@ -690,7 +695,8 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
             staged / "Hoard.Composition.Tests.deps.json", staged / "Hoard.Composition.Tests.runtimeconfig.json")),
     }
     if (set(record["inputFiles"]) != bound_paths
-            or evidence.load_json(read_bounded(root / "proofs/composition-inputs.json", 2 * 1024**2)) != inputs):
+            or evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+                root / "proofs/composition-inputs.json", 2 * 1024**2))) != inputs):
         raise evidence.ConformanceError("ProofMismatch")
     files = _composition_input_files(inputs, record)
     selected = {path: hashed for path, hashed in files.items() if path.startswith(("stores/", "feed/", "cache/"))}
@@ -698,16 +704,20 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
     snapshot = evidence._runtime_json(read_bounded(root / snapshot_path, 2 * 1024**2), {
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
         "scope": evidence._constant("composition-runtime-selected-inputs"),
+        "configurationPolicy": evidence._constant("synthetic-nuget-v1"),
         "runId": evidence._constant(inputs["runId"]),
         "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
         "inputSha256": evidence._constant(evidence.digest(inputs)), "files": evidence._hash_map,
     }, limit=2 * 1024**2)
     retained = {path: hashed for path, hashed in files.items() if path not in selected}
-    retained.update({f"proofs/composition-runtime-inputs/{hashed}": hashed for hashed in selected.values()})
+    retained.update({f"proofs/composition-runtime-inputs/{hashed}": hashed
+                     for path, hashed in selected.items() if path != config})
     if (snapshot["files"] != selected or snapshot_path not in report["proofs"]
             or any(report["proofs"].get(path) != hashed for path, hashed in retained.items())
             or any((root / path).stat().st_mode & 0o777 != 0o400 for path in retained)
-            or selected.get(config) != inputs["configurationSha256"]):
+            or selected.get(config) != inputs["configurationSha256"]
+            or selected.get(config) != hashlib.sha256(
+                evidence.synthetic_nuget_configuration(root / "feed/candidate")).hexdigest()):
         raise evidence.ConformanceError("ProofMismatch")
     observed = evidence.ingest_runtime_attempt(
         inputs=inputs, manifest_data=manifest_data, owner_data=owner_data,

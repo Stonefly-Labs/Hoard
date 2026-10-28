@@ -21,13 +21,14 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
 
-        for defect in ("none", "changed", "conflict", "symlink"):
+        for defect in ("none", "changed", "conflict", "symlink", "configuration"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
                 contents = {
                     "stores/runtime.dll": b"modeled-image", "stores/duplicate.dll": b"modeled-image",
-                    "stores/packages.lock.json": b"{}", "stores/candidate.NuGet.Config": b"<configuration/>",
+                    "stores/packages.lock.json": b"{}", "stores/candidate.NuGet.Config":
+                    evidence.synthetic_nuget_configuration(root / "feed/candidate"),
                     "feed/candidate/Modeled.Package.0.1.0.nupkg": b"modeled-package",
                     "runtime-owner.json": b"modeled-owner"}
                 for path, data in contents.items():
@@ -51,6 +52,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 elif defect == "symlink":
                     image.unlink()
                     image.symlink_to(root / "runtime-owner.json")
+                elif defect == "configuration":
+                    path = root / "stores/candidate.NuGet.Config"
+                    path.write_bytes(b"<configuration/>")
+                    record["inputFiles"]["stores/candidate.NuGet.Config"] = evidence.file_sha256(path)
                 if defect != "none":
                     with self.assertRaises(evidence.ConformanceError):
                         checks._retain_composition_inputs(SimpleNamespace(root=root), inputs, record)
@@ -62,13 +67,18 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 self.assertEqual(snapshot["inputSha256"], evidence.digest(inputs))
                 self.assertEqual(snapshot["files"], {
                     path: hashed for path, hashed in hashes.items() if path != "runtime-owner.json"})
-                self.assertEqual(len(paths), 5)
+                self.assertEqual(len(paths), 4)
                 shutil.rmtree(root / "stores")
                 shutil.rmtree(root / "feed")
                 for path, hashed in snapshot["files"].items():
+                    if path == "stores/candidate.NuGet.Config":
+                        self.assertEqual(hashlib.sha256(evidence.synthetic_nuget_configuration(
+                            root / "feed/candidate")).hexdigest(), hashed)
+                        continue
                     retained = root / f"proofs/composition-runtime-inputs/{hashed}"
                     self.assertEqual(retained.read_bytes(), contents[path])
                     self.assertEqual(retained.stat().st_mode & 0o777, 0o400)
+                self.assertTrue(all(str(root).encode() not in (root / path).read_bytes() for path in paths))
 
     def test_prepared_formatting_requires_exact_native_receipts_and_unchanged_closure(self):
         import hashlib
