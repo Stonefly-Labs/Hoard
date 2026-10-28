@@ -484,6 +484,21 @@ the same failure using that real namespace. Retention now registers every
 surviving selected input alongside copied removable inputs, without weakening
 the reader. Sixteen focused tests and full safe tooling pass; genuine Linux
 confirmation remains pending and the implementation stage is still incomplete.
+The next exact `40a3d8c` Linux replay advances to the unchanged read-only input
+guard: surviving snapshot locks can have correct bytes but remain writable.
+Retention now seals those verified inputs and rejects hard-linked aliases before
+changing permissions. Generated-report challenges expand from fourteen to 28.
+The architecture diagnostic at `058fcfb` fails during preparation, before its
+88 runtime parameters. A local isolated same-version package experiment
+reproduces recursive locked-restore failure (`NU1004`): a parent's alternate
+lock is incorrectly reused for a child. Architecture preparation now admits the
+closed original 34-project graph and restores every project independently with
+its own locked inputs; foreign references or missing restores reject. Forty-four
+focused models pass. Full safe tooling observes 587 tests, zero failures/errors/
+unexpected bytes and twenty explicit native macOS skips. The local independent
+restore also builds and executes the changed package graph successfully.
+These changes still require genuine Linux confirmation;
+the local experiment and models are not native-origin qualification.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

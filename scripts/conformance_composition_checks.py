@@ -521,6 +521,12 @@ def _retain_composition_inputs(run, inputs, record):
     directory = run.root / "proofs/composition-runtime-inputs"
     directory.mkdir(mode=0o700)
     paths = [path for path in files if path not in selected]
+    for path in paths:
+        target = run.root / path
+        legacy.no_symlinks(target)
+        if target.stat().st_nlink != 1:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        target.chmod(0o400)
     for hashed, path in {hashed: path for path, hashed in selected.items() if path != config}.items():
         target = directory / hashed
         data = read_bounded(run.root / path, 32 * 1024**2)
@@ -709,13 +715,38 @@ def verify_composition_report_controls(root, inputs, owner, summary):
     changed["proofs"]["proofs/composition-runtime-report.json"] = evidence.file_sha256(
         root / "proofs/composition-runtime-report.json")
     mutations.append(changed)
+    for field in ("catalogSha256", "sdkSha256", "sourceManifestSha256", "configurationSha256",
+                  "capabilitySha256", "environmentSha256"):
+        changed = evidence.load_json(evidence.canonical_bytes(report))
+        changed["inputs"][field] = "0" * 64
+        mutations.append(changed)
+    for collection in ("sourceManifest", "locks", "runtimeAssemblies"):
+        changed = evidence.load_json(evidence.canonical_bytes(report))
+        path = next(iter(changed["inputs"][collection]))
+        changed["inputs"][collection][path] = "0" * 64
+        mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["inputs"]["packages"][0]["sha256"] = "0" * 64
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["inputs"]["environment"]["sdk"] = "10.0.999"
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["unknownSchemaField"] = False
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["results"].append(changed["results"][0])
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["results"][0]["attempts"][0]["endedMs"] = -1
+    mutations.append(changed)
     for changed in mutations:
         try:
             verify_composition_case_report(root, inputs, owner, report_data=evidence.canonical_bytes(changed))
         except evidence.ConformanceError:
             continue
         raise evidence.ConformanceError("ProofMismatch")
-    if len(mutations) != 14:
+    if len(mutations) != 28:
         raise evidence.ConformanceError("WitnessMissing")
 
 

@@ -5991,6 +5991,40 @@ zero failures/errors/unexpected bytes, twenty native macOS skips, expected
 incomplete exit 2. Catalog/diff checks pass; genuine repaired Linux replay
 remains pending. T047/T057/T071 and qualification remain incomplete.
 
+Exact `40a3d8c` run40610563622/job122560810060 advances to the unchanged
+retained-input permission guard (`:623`), not registration. The full modeled
+release-aware replay reproduces it with a writable surviving snapshot lock.
+Retention rehashes inputs, rejects symlinks/hard-linked aliases and seals
+surviving selected files to `0400`; it never chmods an unselected alias.
+Generated-report-only challenges now contain 28 rejecting mutations, including
+all six scalar input digests, source/lock/runtime maps, same-version package
+bytes, environment SDK, unknown fields, duplicates and negative durations.
+They still do not establish native transport origin or complete T068.
+
+The exact `058fcfb` compatibility job122557787912 fails architecture preparation
+at command64, the original TransitiveIdentityCore locked restore. An isolated
+local .NET experiment reproduces `NU1004` when a parent restore propagates its
+alternate lock into a referenced project; independently restoring the child and
+using `--no-dependencies` on the parent succeeds. This diagnostic is not native
+acceptance. Preparation now validates all original 34 project files and their
+eighteen project references as a closed graph. Only this finite copied project
+set gets independent locked restores, and every member must actually restore
+before the unchanged architecture factory output is admitted. Ordinary restores,
+original source/locks, recipes, assertions and runtime inventories are unchanged.
+Foreign references and a missing restored member have reproducing negative
+models. Focused composition/inherited modules pass 44 tests. Latest full safe
+tooling before this restore change passes 586 tests with twenty native macOS
+skips, zero failures/errors/unexpected bytes and expected incomplete exit2.
+Fresh `python3 scripts/conformance_unit_checks.py --all-tooling`: 587 tests,
+zero failures/errors/unexpected bytes, twenty native macOS skips and expected
+incomplete exit2. `python3 scripts/conformance_evidence.py --check-sdk` and
+`git diff --check`: passed. The independent local restore also builds and
+executes the changed package graph successfully; the recursive failure's
+errored assets are not reused for this positive branch. Linux replay remains
+required; no task is newly closed.
+Product/provider guidance, examples, architecture diagrams, governance,
+infrastructure and release behavior are unaffected by these harness-only fixes.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

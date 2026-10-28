@@ -14,6 +14,47 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_scoped_graph_restores_replay_each_project_without_reusing_a_parent_lock_for_children(self):
+        import subprocess
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+        import conformance_legacy as legacy
+        import foundation_evidence as foundation
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            feed = root / "feed"
+            feed.mkdir()
+            config = root / "NuGet.Config"
+            config.write_text('<configuration><packageSources><add key="local" value="'
+                              + str(feed) + '"/></packageSources></configuration>')
+            projects = []
+            for name in ("Parent", "Child", "Other"):
+                project = root / "stores" / name / (name + ".csproj")
+                project.parent.mkdir(parents=True)
+                project.write_text("<Project/>")
+                (project.parent / "packages.lock.json").write_text(
+                    '{"version":1,"dependencies":{"net10.0":{}}}')
+                projects.append(project)
+            calls = []
+
+            def replay(arguments, **kwargs):
+                calls.append(arguments)
+                return subprocess.CompletedProcess(arguments, 0, "")
+
+            with inherited.controller_transport(ROOT, root) as controls, \
+                    mock.patch.object(legacy, "composition_controller_command", side_effect=replay):
+                controls["independentRestores"] = frozenset(projects[:2])
+                for project in projects:
+                    foundation.run("dotnet", "restore", str(project), "--locked-mode",
+                                   "--configfile", str(config))
+                self.assertEqual(["--no-dependencies" in arguments for arguments in calls], [True, True, False])
+                self.assertEqual(controls["independentlyRestored"], set(projects[:2]))
+                with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                    foundation.run("dotnet", "restore", str(projects[0]), "--force-evaluate",
+                                   "--configfile", str(config))
+                self.assertEqual(len(calls), 3)
+
     def test_modeled_architecture_command_binds_original_graphs_and_rejects_context_substitution(self):
         import hashlib
         import uuid
@@ -110,7 +151,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_inherited as inherited
         import foundation_evidence as foundation
 
-        for defect in ("none", "missing-fixture", "missing-scan", "duplicate-scan", "changed-source"):
+        for defect in ("none", "missing-fixture", "missing-scan", "duplicate-scan", "changed-source",
+                       "missing-restored-project", "foreign-reference"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -119,6 +161,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 (fixture / "Cycles").mkdir(parents=True)
                 (fixture / "ownership.json").write_bytes(b"{}")
                 (fixture / "Cycles/graph.json").write_bytes(b"{}")
+                (fixture / "Helper.csproj").write_text("<Project/>")
+                (fixture / "Parent.csproj").write_text(
+                    '<Project><ItemGroup><ProjectReference Include="'
+                    + ("../Foreign.csproj" if defect == "foreign-reference" else "Helper.csproj")
+                    + '"/></ItemGroup></Project>')
                 graphs = {name: {"projects": []} for name in (
                     "permitted", "identity-hosting", *(name for rows in catalog.ARCHITECTURE_RUNTIME_ROWS.values()
                                                       for name in rows))}
@@ -134,13 +181,21 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     scans[-1] = scans[0]
                 target = root / "stores/compatibility-architecture"
                 state = {"lockDerivations": []}
+
+                def prepare_graphs(*args):
+                    restored = set(state.get("independentRestores", ()))
+                    if defect == "missing-restored-project" and restored:
+                        restored.pop()
+                    state["independentlyRestored"] = restored
+                    return graphs, {}
+
                 with mock.patch.object(inherited, "controller_transport", return_value=contextlib.nullcontext(state)), \
                         mock.patch.object(foundation, "source_hashes", side_effect=[
                             {"source": "a"}, {"source": "b" if defect == "changed-source" else "a"}]), \
                         mock.patch.object(foundation, "packages", return_value=(
                             {}, [], target / "NuGet.Config")), \
                         mock.patch.object(foundation, "hosts", return_value=[]), \
-                        mock.patch.object(foundation, "architecture", return_value=(graphs, {})) as architecture, \
+                        mock.patch.object(foundation, "architecture", side_effect=prepare_graphs) as architecture, \
                         mock.patch.object(foundation, "real_architecture", return_value=scans) as real_scans, \
                         contextlib.redirect_stdout(io.StringIO()):
                     if defect != "none":
@@ -254,7 +309,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
 
-        for defect in ("none", "changed", "conflict", "symlink", "configuration"):
+        for defect in ("none", "changed", "conflict", "symlink", "configuration", "hardlink"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -289,10 +344,18 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     path = root / "stores/candidate.NuGet.Config"
                     path.write_bytes(b"<configuration/>")
                     record["inputFiles"]["stores/candidate.NuGet.Config"] = evidence.file_sha256(path)
+                elif defect == "hardlink":
+                    alias = root / "unselected-owner"
+                    alias.write_bytes(contents["runtime-owner.json"])
+                    alias.chmod(0o644)
+                    (root / "runtime-owner.json").unlink()
+                    (root / "runtime-owner.json").hardlink_to(alias)
                 if defect != "none":
                     with self.assertRaises(evidence.ConformanceError):
                         checks._retain_composition_inputs(SimpleNamespace(root=root), inputs, record)
                     self.assertEqual((root / "runtime-owner.json").read_bytes(), b"modeled-owner")
+                    if defect == "hardlink":
+                        self.assertEqual(alias.stat().st_mode & 0o777, 0o644)
                     continue
                 paths = checks._retain_composition_inputs(SimpleNamespace(root=root), inputs, record)
                 snapshot = evidence.load_json((root / paths[0]).read_bytes())

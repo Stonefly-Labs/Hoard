@@ -886,6 +886,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
                         "proofs": proofs, "diagnosticCode": "None"}
             write(output + "/witnesses.jsonl", b"modeled-transport\n")
             write(output + "/completion.json", b"{}")
+            (root / "snapshot/tests/Example/packages.lock.json").chmod(0o644)
             retained = composition._retain_composition_inputs(run, inputs, record)
             summary = composition._composition_case_report(
                 run, inputs, inputs, observed, runtime_directory=output, started_ms=0, ended_ms=3,

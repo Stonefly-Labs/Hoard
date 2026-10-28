@@ -1085,6 +1085,41 @@ pending; 53/86 implement/running, no additional task closure or qualification.
 README/development updated; no product/provider contract, guide, example,
 diagram, infrastructure or governance change is required.
 
+### Read-only surviving inputs and independent architecture restores
+
+Exact40a3 run40610563622/job122560810060 passes the repaired registration
+check and rejects writable surviving snapshot locks at the unchanged permission
+guard (`:623`). The full modeled report replay now reproduces that defect.
+Retention verifies all bytes before sealing surviving files `0400`, rejects
+hard-linked aliases and preserves outside sentinel permissions. Its generated
+report controls expand fourteen to 28 rejecting mutations, adding every scalar
+input digest, source/lock/runtime maps, unchanged-version changed package bytes,
+environment SDK, unknown schema fields, duplicate results and negative duration.
+The modeled transport remains explicitly mocked; T068/T071 stay open.
+
+Exact058 compatibility run40609512547/job122557787912 fails before architecture
+runtime execution: command64 is the original TransitiveIdentityCore restore.
+A real local synthetic same-version package/parent-child experiment reproduces
+`NU1004` for recursive alternate locks and succeeds with independently prepared
+child plus parent `--no-dependencies`. This is a local diagnostic, not native
+acceptance. The original fixture source contains 34 projects/eighteen references,
+all within its closed graph. Preparation now admits exactly this copied set,
+uses each project's independent locked restore and requires all members restored.
+Missing restored projects and foreign references reject; other phase restores,
+original locks/recipes/C# assertions and the exact88 runtime scope are unchanged.
+
+Focused composition/inherited models pass 44 tests. The preceding full safe run
+passes 586 tests with zero failures/errors/unexpected bytes and twenty macOS
+native skips (expected incomplete exit2). Fresh full safe tooling passes 587
+tests with the same zero-error/twenty-skip result and expected incomplete exit2.
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check`
+pass. The local independent restore also builds/executes the changed graph;
+its positive branch independently regenerates assets after the recursive
+negative. Native confirmation remains pending. Implementation stays running,
+53/86; README/development updated,
+and product/provider guidance, examples, diagrams, governance, IaC and release
+behavior remain unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

@@ -159,7 +159,8 @@ def controller_transport(repository, owner, *, sdk_package=None, logger_path=Non
     environment = {key: value for key, value in os.environ.items()
                    if key.startswith("HOARD_") or key == "NUGET_PACKAGES"}
     preparations = {}
-    state = {"lockDerivations": [], "inputFiles": {}, "phase": "preparation", "commandSequence": 0}
+    state = {"lockDerivations": [], "inputFiles": {}, "phase": "preparation", "commandSequence": 0,
+             "independentRestores": frozenset(), "independentlyRestored": set()}
     runtime_inputs = {}
     if sdk_package is not None or logger_path is not None:
         if sdk_package is None or logger_path is None:
@@ -181,6 +182,7 @@ def controller_transport(repository, owner, *, sdk_package=None, logger_path=Non
         effective = dict(env or {})
         bound = {}
         runtime = {}
+        independent_project = None
         if arguments[:2] == ["dotnet", "test"] and runtime_inputs:
             bound.update(runtime_inputs)
             runtime = {"sdk_package": sdk_package, "logger_path": logger_path}
@@ -207,6 +209,11 @@ def controller_transport(repository, owner, *, sdk_package=None, logger_path=Non
             configuration_file = Path(arguments[arguments.index("--configfile") + 1]).resolve(strict=True)
             if not project.is_relative_to(owner) or not configuration_file.is_relative_to(owner):
                 raise ConformanceError("OwnershipInvalid")
+            if project in state["independentRestores"]:
+                if "--locked-mode" not in arguments or expected is not None:
+                    raise ConformanceError("InputChanged")
+                arguments.append("--no-dependencies")
+                independent_project = project
             feeds = ET.parse(configuration_file).findall("./packageSources/add[@key='local']")
             if len(feeds) != 1:
                 raise ConformanceError("InputChanged")
@@ -225,9 +232,12 @@ def controller_transport(repository, owner, *, sdk_package=None, logger_path=Non
                     verify_project_lock(record, owner, feed)
                     arguments.append("-p:NuGetLockFilePath=" + str(alternate))
         try:
-            return legacy.composition_controller_command(
+            result = legacy.composition_controller_command(
                 arguments, cwd=repository if arguments[0] == "git" else cwd,
                 env=effective, expected=expected, input=input, **runtime)
+            if independent_project is not None:
+                state["independentlyRestored"].add(independent_project)
+            return result
         except (RuntimeError, ConformanceError) as error:
             codes = ("CommandFailed", "UnknownDiagnostic", "PrerequisiteMissing", "OutputLimitExceeded")
             code = (str(error) if isinstance(error, ConformanceError) else
@@ -1085,6 +1095,7 @@ def prepare_architecture_evidence(repository, owner, source):
     import foundation_evidence as foundation
     import conformance_legacy as legacy
     from conformance_case_catalog import ARCHITECTURE_RUNTIME_ROWS
+    from conformance_sources import read_bounded
 
     owner, source = Path(owner), Path(source)
     for path in (owner, source):
@@ -1095,6 +1106,21 @@ def prepare_architecture_evidence(repository, owner, source):
     target = owner / "stores/compatibility-architecture"
     target.mkdir(mode=0o700)
     with controller_transport(repository, owner) as controls:
+        architecture_source = source / "tests/fixtures/architecture"
+        projects = frozenset(architecture_source.rglob("*.csproj"))
+        if not 1 <= len(projects) <= 128:
+            raise ConformanceError("WitnessMissing")
+        for project in projects:
+            try:
+                document = ET.fromstring(read_bounded(project, 65536))
+            except ET.ParseError:
+                raise ConformanceError("InputChanged") from None
+            for reference in document.findall(".//ProjectReference"):
+                include = reference.get("Include")
+                if not include or (project.parent / include).resolve() not in projects:
+                    raise ConformanceError("WitnessMissing")
+        controls["independentRestores"] = frozenset(
+            target / "architecture" / project.relative_to(architecture_source) for project in projects)
         controls["phase"] = "foundation"
         print(json.dumps({"qualification": False, "phase": "inherited-controller-preparation",
                           "controller": "foundation"}), flush=True)
@@ -1103,6 +1129,8 @@ def prepare_architecture_evidence(repository, owner, source):
         document = {"core": core, "providers": providers, "localFeed": str(target / "feed")}
         document["hosts"] = foundation.hosts(source, target, config, False)
         document["architecture"], document["cycles"] = foundation.architecture(source, target, config, False)
+        if controls["independentlyRestored"] != controls["independentRestores"]:
+            raise ConformanceError("WitnessMissing")
         document["realArchitecture"] = foundation.real_architecture(source, target, document)
         if foundation.source_hashes(source) != before:
             raise ConformanceError("InputChanged")
