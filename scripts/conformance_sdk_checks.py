@@ -650,7 +650,9 @@ def snapshot(repository, run):
 
 
 def build(run, project, config, cache_id, *, feed=None, lock=None, properties=(), package_id=None,
-          package_version="0.1.0"):
+          package_version="0.1.0", compile_action=None):
+    if compile_action is not None and not callable(compile_action):
+        raise evidence.ConformanceError("OwnershipInvalid")
     archive = None
     if feed is not None:
         identity = evidence.stable_id(project.stem if package_id is None else package_id)
@@ -659,11 +661,15 @@ def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()
     common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet", *properties]
     if lock is not None:
         common.append("-p:NuGetLockFilePath=" + str(lock))
-    for args in (
-        ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config), *common],
-        ["dotnet", "build", str(project), "-c", "Release", "--no-restore", *common],
-    ):
-        baselines._command(run, args, cwd=project.parent, cache_id=cache_id)
+    baselines._command(
+        run, ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config), *common],
+        cwd=project.parent, cache_id=cache_id)
+    if compile_action is None:
+        baselines._command(
+            run, ["dotnet", "build", str(project), "-c", "Release", "--no-restore", *common],
+            cwd=project.parent, cache_id=cache_id)
+    else:
+        compile_action()
     if feed is not None:
         baselines._command(
             run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",

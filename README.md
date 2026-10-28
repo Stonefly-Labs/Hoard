@@ -631,8 +631,11 @@ repository-owned BuildInputs compiler observer captures actual Csc contexts,
 physical inputs, command and item-metadata hashes, including target-generated
 sources. Actual two-project controls reject post-compile source changes,
 changed requests, missing typed-event prerequisites and output reuse. Native
-owned-build integration and source-generator/tool-dependency closure remain
-unfinished; these components do not qualify a contributor and T064 stays open.
+owned compile capture now binds all three receipts, exact declared project/source
+maps and immutable controls. A six-command managed bridge covers evaluation,
+locked restore, observed build, pack and PDB capture with archive/image equality.
+Native acceptance and source-generator/tool-dependency closure remain unfinished;
+these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

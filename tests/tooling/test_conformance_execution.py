@@ -1010,6 +1010,20 @@ print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
         run.transition("Settling")
         run.release()
 
+    def test_child_environment_admits_only_complete_fixed_typed_msbuild_observer_mode(self):
+        run = self.workspace()
+        flags = {"MSBUILDLOGTASKINPUTS": "1", "MSBUILDLOGIMPORTS": "1"}
+        environment = execution.command_environment(run.root, run.root / "cache", flags)
+        self.assertEqual({key: environment[key] for key in flags}, flags)
+        for supplied in ({"MSBUILDLOGTASKINPUTS": "1"}, {"MSBUILDLOGIMPORTS": "1"},
+                         {**flags, "MSBUILDLOGTASKINPUTS": "0"}, {**flags, "MSBUILDLOGIMPORTS": "true"},
+                         {**flags, "MSBUILDENABLEALLPROPERTYFUNCTIONS": "1"}):
+            with self.subTest(supplied=supplied), self.assertRaisesRegex(ConformanceError, "^OwnershipInvalid$"):
+                execution.command_environment(run.root, run.root / "cache", supplied)
+        self.assertNotIn("MSBUILDLOGTASKINPUTS", execution.command_environment(run.root, run.root / "cache", {}))
+        run.transition("Settling")
+        run.release()
+
     @unittest.skipUnless(NATIVE_CONTAINMENT, "requires native Linux containment")
     def test_actual_child_temporary_files_stay_beneath_its_private_owned_cache(self):
         run = self.workspace()

@@ -2221,6 +2221,16 @@ compiler/MSBuild messages. Managed controls explicitly enable SDK typed task/
 import collection with minimal CLI verbosity and no console logger; missing
 prerequisites reject. This does not yet deliver native owned-build integration,
 source-generator/tool-dependency closure or public contributor qualification.
+Owned compiler capture must use exact SDK/runtime hosts and require one complete
+count event before admitting all three receipts. Source/file receipts must name
+exactly the declared project set and have equal per-project Csc source maps.
+Recheck frozen sources, request, prepared build properties, tool and SDK-host
+bytes/modes after failure as well as success. The trusted compile action runs
+after locked restore and before pack, without an unobserved fallback build.
+Admit the typed-event environment pair only together at fixed value1; reject
+other MSBuild variables or values. Do not relax native containment, ownership,
+runtime or capacity requirements. Actual managed bridge evidence is not native
+qualification and cannot open public dispatch without the remaining closure.
 Compiled-document receipt admission must bind the successful compiler project,
 exact selected DLL/PDB paths and current output hashes. Every document hash must
 match an observed compiler source; unknown or mismatched documents reject.

@@ -6513,6 +6513,30 @@ The focused contributor suite passes66 tests. Frozen full safe tooling observes6
 tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
 macOS skips and expected non-qualifying exit2.
 
+Owned compile orchestration now selects the exact SDK/runtime, fixed typed-event
+mode and read-only hash-bound request, then independently admits source/file/
+parameter receipts. It requires the complete declared project set, equal Csc
+source maps and one exact count event. Frozen source/control/tool/host inputs
+are rechecked after success or failure. The contributor builder passes immutable
+prepared workspace/control hashes into the trusted compile action; the shared
+builder runs it between locked restore and pack, never a fallback compile.
+Failure prevents pack. This is repository-owned Python orchestration, not a
+provider callback or arbitrary project-loading extension.
+Native environment admission now permits only the complete fixed
+`MSBUILDLOGTASKINPUTS=1`/`MSBUILDLOGIMPORTS=1` pair, rejecting partial pairs,
+other values and other MSBuild variables. No inherited variables, native guard,
+runtime roll-forward, ownership or capacity checks are relaxed.
+A fresh private managed component executes all six real projected commands:
+evaluation, restore, restore-graph capture, observed compilation, pack and PDB
+capture. It admits four evaluated source inputs, one restore graph, one compiler
+row and three document hashes, and independently matches the packaged DLL hash
+to the actual compiled output. The forwarding command adapter does not prove
+native containment/settlement. Full compiler/generator/tool-dependency closure,
+complete common applicability, public dispatch and T064 remain unfinished.
+Focused execution/contributor checks pass132 tests with nineteen native skips.
+Frozen full safe tooling observes675 tests, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native macOS skips and expected incomplete exit2.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe

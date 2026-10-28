@@ -134,11 +134,16 @@ def scratch_filesystem(parent, profile):
 def command_environment(root, cache, supplied):
     if supplied is not None and (not isinstance(supplied, dict) or len(supplied) > 128):
         raise ConformanceError("OwnershipInvalid")
+    observer = {"MSBUILDLOGTASKINPUTS": "1", "MSBUILDLOGIMPORTS": "1"}
+    if supplied and any(key in supplied for key in observer) and any(
+            supplied.get(key) != value for key, value in observer.items()):
+        raise ConformanceError("OwnershipInvalid")
     environment = {key: os.environ[key] for key in
                    ("PATH", "LANG", "LC_ALL", "DOTNET_ROOT", "DOTNET_ROOT_X64", "DOTNET_ROOT_ARM64")
                    if key in os.environ}
     for key, value in (supplied or {}).items():
-        if (not isinstance(key, str) or not key.startswith(("HOARD_", "DOTNET_", "ASPNETCORE_", "COMPlus_"))
+        if (not isinstance(key, str) or not (
+                key.startswith(("HOARD_", "DOTNET_", "ASPNETCORE_", "COMPlus_")) or key in observer)
                 or re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]{0,127}", key) is None
                 or not isinstance(value, str) or "\x00" in value or len(value.encode("utf-8")) > 16384):
             raise ConformanceError("OwnershipInvalid")

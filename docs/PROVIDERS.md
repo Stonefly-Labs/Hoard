@@ -437,6 +437,23 @@ events. Native owned-build integration, source-generator/tool-dependency closure
 portable-PDB/loaded-image attribution and public contributor acceptance remain
 unfinished. The strict native environment and execution guard are unchanged.
 
+Owned compile capture now requires the exact declared project set, equal Csc
+source maps across source/file receipts, all three independently admitted
+receipts, and one exact completion event. Source, generated inputs and immutable
+request/properties/tool/SDK-host bytes are rechecked, including child failure.
+The build/pack helper can run this trusted repository-owned compile action after
+locked restore and before pack, without an unobserved fallback build; failures
+prevent packaging. Bindings cannot supply this action.
+The only new environment admission is the complete fixed pair
+`MSBUILDLOGTASKINPUTS=1` and `MSBUILDLOGIMPORTS=1`; partial pairs, other values and
+other MSBuild variables reject. Defaults, loader rejection, native containment,
+runtime roll-forward, ownership and capacity policies are unchanged.
+A private actual managed bridge completes evaluation, locked restore/graph
+capture, observed build, pack and PDB capture in six commands: one compiler row,
+three document hashes and exact archive/compiled DLL equality. Its forwarding
+command adapter is not native containment evidence. Source-generator/tool-
+dependency closure, full applicability and public dispatch remain unfinished.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

@@ -762,6 +762,42 @@ tests/fixtures/conformance/BuildInputs/CompilerInputsLogger.cs --verbosity quiet
 `python3 scripts/conformance_case_catalog.py --check`,
 `python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check` pass.
 
+Owned compiler capture now admits all three receipts after an exact completion
+event, requires the full declared project set and equal per-project Csc source
+maps, and rechecks source/generated/request/properties/tool/SDK-host inputs even
+after child failure. Three modeled capture tests cover successful fixed runtime/
+request/event binding, source-map disagreement, missing events, changed generated
+inputs and mutation of immutable source/mode/request/properties/tool/host controls.
+Two shared-build tests cover restore -> observed compile -> pack ordering and
+failure preventing pack without fallback; a contributor-builder test checks
+immutable prepared controls passed into that action. These seven new controls,
+including the fixed environment pair test, were red before implementation.
+Native environment admission adds only the complete fixed
+MSBUILDLOGTASKINPUTS=1/MSBUILDLOGIMPORTS=1 pair. Partial pairs, other values and
+other MSBuild variables reject; default environment, loader rejection, native
+containment, runtime roll-forward, ownership and capacity policies are unchanged.
+
+A fresh private managed `probe-owned-compiler-build.py` forwards actual commands
+through the unchanged bounded control capture and strict event/build projectors,
+not native containment. Six real projected commands complete evaluation, locked
+restore, restore-graph capture, observed compilation, pack and PDB capture.
+Observed: four evaluated source inputs, one restore graph, one compiler row,
+three PDB documents and exact archive/compiled DLL equality. The source remains
+read-only and control bytes unchanged; owned roots are settled/released after
+the probe. This proves the managed bridge, not typed provider runtime behavior,
+native settlement, generator/tool-dependency closure or full contributor
+qualification. T064 stays unchecked and public dispatch remains closed.
+README/provider/development/harness guidance is synchronized; product/provider/
+module APIs, operator examples, architecture/ADR/diagrams, governance,
+predecessors, IaC, release and UI are unaffected by private compiler orchestration.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_execution
+test_conformance_contributors -q` passes132 tests with nineteen explicit native
+skips. `python3 scripts/conformance_unit_checks.py --all-tooling` observes675
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected non-qualifying exit2.
+`python3 scripts/conformance_case_catalog.py --check`,
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check` pass.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

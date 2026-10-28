@@ -786,6 +786,66 @@ class ContributorAdmissionTests(unittest.TestCase):
         self.assertFalse((binding.root / "shared/obj").exists())
         self.assertEqual(evidence.input_manifest(binding.root, sorted(binding.sources)), binding.sources)
 
+    def test_shared_build_runs_observed_compile_between_restore_and_pack_without_a_fallback_build(self):
+        from conformance_sdk_checks import build
+
+        binding, owner, configuration = self.build_fixture()
+        events = []
+
+        def command(run, arguments, **options):
+            self.assertIs(run, owner)
+            events.append(arguments[1])
+
+        def compile_action():
+            events.append("observed-compile")
+
+        with mock.patch("conformance_sdk_checks.baselines._command", side_effect=command), \
+                mock.patch("conformance_sdk_checks.canonicalize_acceptance_archive"):
+            build(owner, binding.root / binding.project, configuration, "binding-build", feed=owner.root / "feed",
+                  compile_action=compile_action)
+        self.assertEqual(events, ["restore", "observed-compile", "pack"])
+
+    def test_shared_build_does_not_pack_or_fallback_after_observed_compile_failure(self):
+        from conformance_sdk_checks import build
+
+        binding, owner, configuration = self.build_fixture()
+        compile_action = mock.Mock(side_effect=evidence.ConformanceError("InputChanged"))
+        with mock.patch("conformance_sdk_checks.baselines._command") as command, \
+                mock.patch("conformance_sdk_checks.canonicalize_acceptance_archive") as canonicalize, \
+                self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            build(owner, binding.root / binding.project, configuration, "binding-build", feed=owner.root / "feed",
+                  compile_action=compile_action)
+        self.assertEqual(command.call_count, 1)
+        self.assertEqual(command.call_args.args[1][1], "restore")
+        compile_action.assert_called_once_with()
+        canonicalize.assert_not_called()
+
+    def test_registered_build_forwards_frozen_prepared_controls_to_its_observed_compile_stage(self):
+        binding, owner, configuration = self.build_fixture()
+        observed = []
+
+        def capture(prepared):
+            self.assertEqual(prepared["bindingInputsSha256"], binding.inputs_sha256)
+            self.assertEqual(prepared["propertiesSha256"],
+                             evidence.file_sha256(owner.root / "binding-build/binding.props"))
+            self.assertEqual(set(prepared["projects"]), {binding.project})
+            self.assertNotIn("package", prepared)
+            observed.append(prepared)
+
+        def execute(run, project, config, cache_id, **options):
+            options["compile_action"]()
+            with zipfile.ZipFile(options["feed"] / "Acme.Adapter.0.1.0.nupkg", "w") as archive:
+                archive.writestr("Acme.Adapter.nuspec",
+                                "<package><metadata><id>Acme.Adapter</id><version>0.1.0</version></metadata></package>")
+                archive.writestr("lib/net10.0/Acme.Adapter.dll", b"modeled observed compiler image")
+
+        with mock.patch("conformance_sdk_checks.build", side_effect=execute):
+            result = contributors.build_binding_project(
+                binding, owner, configuration, owner.root / "feed", compile_action=capture)
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(result["propertiesSha256"], observed[0]["propertiesSha256"])
+        self.assertEqual(result["package"]["packageId"], "Acme.Adapter")
+
     def test_registered_build_rejects_foreign_contexts_and_undeclared_locks_before_commands(self):
         binding, run, configuration = self.build_fixture()
         foreign = contributors.admit_binding_project(self.project, "metadata")
@@ -1299,6 +1359,117 @@ class ContributorAdmissionTests(unittest.TestCase):
                     contributors.capture_binding_compilation_documents(
                         binding, owner, built, tool, "10.0.3", evidence.canonical_bytes(compilation), assemblies)
                 command.assert_not_called()
+
+    def compilation_capture_fixture(self):
+        binding, owner, built, tool, compilation, _, generated = self.documents_capture_fixture()
+        properties = owner.root / "binding-build/binding.props"
+        properties.write_bytes(b"<Project />")
+        properties.chmod(0o400)
+        built["propertiesSha256"] = evidence.file_sha256(properties)
+        toolchain = self.parent / "compiler-toolchain"
+        host, reference = toolchain / "sdk/10.0.203/MSBuild.dll", toolchain / "packs/Reference.dll"
+        host.parent.mkdir(parents=True)
+        reference.parent.mkdir()
+        host.write_bytes(b"modeled compiler host")
+        reference.write_bytes(b"modeled reference")
+        packages = owner.root / "cache/binding-build"
+        packages.mkdir()
+        inputs = {"Sources": compilation["compilations"][0]["sources"],
+                  "References": {"toolchain/packs/Reference.dll": evidence.file_sha256(reference)}}
+        receipts = {
+            "sources": compilation,
+            "inputs": {"schemaVersion": 1, "qualification": False, "succeeded": True,
+                       "compilations": [{"project": binding.project, "succeeded": True, "inputs": inputs}],
+                       "imports": {"generated/binding.props": built["propertiesSha256"]},
+                       "diagnosticCodes": [], "observerErrors": []},
+            "parameters": {"schemaVersion": 1, "qualification": False, "compilations": [{
+                "project": binding.project, "commandLineSha256": "a" * 64,
+                "itemMetadata": {kind: {path: "b" * 64 for path in selected}
+                                 for kind, selected in inputs.items()}}]}}
+        return binding, owner, built, tool, toolchain, host, packages, generated, receipts
+
+    def test_compilation_capture_uses_owned_fixed_event_mode_and_admits_all_three_receipts(self):
+        binding, owner, built, tool, toolchain, host, packages, _, receipts = self.compilation_capture_fixture()
+
+        def capture(arguments, **options):
+            self.assertEqual(arguments[:5], ["dotnet", "exec", "--fx-version", "10.0.3", str(host)])
+            self.assertIn("-noconsolelogger", arguments)
+            self.assertIn("-verbosity:minimal", arguments)
+            self.assertEqual(options["kind"], "events")
+            self.assertEqual(options["env"], {
+                "DOTNET_ROLL_FORWARD": "Disable", "MSBUILDLOGTASKINPUTS": "1", "MSBUILDLOGIMPORTS": "1"})
+            logger = next(argument for argument in arguments if argument.startswith("-logger:"))
+            _, root, relative, hashed = logger.split(";")
+            self.assertEqual(base64.b64decode(root).decode(), str(owner.root))
+            request = owner.root / relative
+            self.assertEqual(evidence.file_sha256(request), hashed)
+            self.assertEqual(request.stat().st_mode & 0o777, 0o400)
+            value = evidence.load_json(request.read_bytes())
+            self.assertEqual(value["sourceHashes"], binding.sources)
+            for kind, path in value["outputs"].items():
+                (owner.root / path).write_bytes(evidence.canonical_bytes(receipts[kind]))
+            return mock.Mock(exit_code=0, events=({"event": "control", "code": "None", "value": 1},))
+
+        with mock.patch.object(owner, "command", side_effect=capture):
+            observed = contributors.capture_binding_compilation_inputs(
+                binding, owner, built, tool, toolchain, "10.0.203", "10.0.3", packages, {})
+        self.assertEqual(len(observed["sources"]["compilations"]), 1)
+        self.assertEqual(len(observed["parameters"]["compilations"]), 1)
+
+    def test_compilation_capture_rechecks_immutable_build_controls_even_after_child_failure(self):
+        for defect in ("request", "properties", "tool", "host", "source", "mode"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory(dir=self.parent) as nested:
+                original_parent = self.parent
+                self.parent = Path(nested)
+                try:
+                    binding, owner, built, tool, toolchain, host, packages, _, _ = self.compilation_capture_fixture()
+                finally:
+                    self.parent = original_parent
+
+                def capture(arguments, **options):
+                    logger = next(argument for argument in arguments if argument.startswith("-logger:"))
+                    path = {"request": owner.root / logger.split(";")[-2],
+                            "properties": owner.root / "binding-build/binding.props", "tool": tool, "host": host,
+                            "source": binding.root / "Binding.cs", "mode": binding.root / "Binding.cs"}[defect]
+                    path.chmod(0o600)
+                    if defect != "mode":
+                        path.write_bytes(b"changed")
+                    raise evidence.ConformanceError("CommandFailed")
+
+                with mock.patch.object(owner, "command", side_effect=capture), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^InputChanged$"):
+                    contributors.capture_binding_compilation_inputs(
+                        binding, owner, built, tool, toolchain, "10.0.203", "10.0.3", packages, {})
+
+    def test_compilation_capture_rejects_missing_completion_or_changed_generated_inputs(self):
+        for defect in ("control", "generated", "source-map"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory(dir=self.parent) as nested:
+                original_parent = self.parent
+                self.parent = Path(nested)
+                try:
+                    binding, owner, built, tool, toolchain, host, packages, generated, receipts = self.compilation_capture_fixture()
+                finally:
+                    self.parent = original_parent
+
+                def capture(arguments, **options):
+                    logger = next(argument for argument in arguments if argument.startswith("-logger:"))
+                    value = evidence.load_json((owner.root / logger.split(";")[-2]).read_bytes())
+                    if defect == "source-map":
+                        receipts["sources"] = copy.deepcopy(receipts["sources"])
+                        sources = receipts["sources"]["compilations"][0]["sources"]
+                        del sources[next(path for path in sources if path.startswith("generated/"))]
+                    for kind, path in value["outputs"].items():
+                        (owner.root / path).write_bytes(evidence.canonical_bytes(receipts[kind]))
+                    if defect == "generated":
+                        generated.write_bytes(b"changed")
+                    return mock.Mock(exit_code=0, events=() if defect == "control" else (
+                        {"event": "control", "code": "None", "value": 1},))
+
+                with mock.patch.object(owner, "command", side_effect=capture), self.assertRaisesRegex(
+                        evidence.ConformanceError,
+                        "^" + ("InputChanged" if defect == "generated" else "ProofMismatch") + "$"):
+                    contributors.capture_binding_compilation_inputs(
+                        binding, owner, built, tool, toolchain, "10.0.203", "10.0.3", packages, {})
 
     def test_registered_runtime_components_preserve_distinct_actual_archive_owners_and_image_names(self):
         feed, output = self.parent / "feed", self.parent / "consumer"

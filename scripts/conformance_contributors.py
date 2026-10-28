@@ -146,15 +146,17 @@ def _write_owned_input(owned_run, path, data):
 
 
 def _msbuild_literal(value):
-    return "".join(f"%{ord(character):02X}" if character in "%$@;?*()'" else character
+    return "".join(f"%{ord(character):02X}" if character in "%$@;,?*()'" else character
                    for character in str(value))
 
 
-def build_binding_project(binding, owned_run, configuration, feed, *, local_packages=()):
+def build_binding_project(binding, owned_run, configuration, feed, *, local_packages=(), compile_action=None):
     from conformance_execution import no_symlinks
     from conformance_lock_preparation import rebind_local_archives
     from conformance_sdk_checks import build
 
+    if compile_action is not None and not callable(compile_action):
+        raise evidence.ConformanceError("OwnershipInvalid")
     owned_run._check_ledger()
     if binding.root != owned_run.root / "binding-source":
         raise evidence.ConformanceError("OwnershipInvalid")
@@ -224,11 +226,16 @@ def build_binding_project(binding, owned_run, configuration, feed, *, local_pack
             "sourceLockSha256": hashed})
     properties = workspace / "binding.props"
     write(properties, ET.tostring(document, encoding="utf-8"))
+    prepared = MappingProxyType({
+        "qualification": False, "bindingInputsSha256": binding.inputs_sha256,
+        "projects": MappingProxyType(projects),
+        "propertiesSha256": frozen[properties.relative_to(owned_run.root).as_posix()]})
+    observation = {} if compile_action is None else {"compile_action": lambda: compile_action(prepared)}
     identity = binding.registration["adapterPackage"]
     try:
         build(owned_run, binding.root / binding.project, configuration, "binding-build", feed=feed,
               properties=("-p:CustomAfterDirectoryBuildProps=" + _msbuild_literal(properties),),
-              package_id=identity["packageId"], package_version=identity["version"])
+              package_id=identity["packageId"], package_version=identity["version"], **observation)
     finally:
         owned_run._check_ledger()
         if evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen:
@@ -239,10 +246,7 @@ def build_binding_project(binding, owned_run, configuration, feed, *, local_pack
         if _binding_writable(binding):
             raise evidence.ConformanceError("InputChanged")
     package = evidence.package_identity(feed, identity["packageId"], identity["version"])
-    return MappingProxyType({
-        "qualification": False, "bindingInputsSha256": binding.inputs_sha256, "package": package,
-        "projects": MappingProxyType(projects),
-        "propertiesSha256": frozen[properties.relative_to(owned_run.root).as_posix()]})
+    return MappingProxyType({**prepared, "package": package})
 
 
 def capture_binding_evaluation_inputs(binding, owned_run, tool, toolchain_root, sdk_version, runtime_version):
@@ -305,6 +309,90 @@ def capture_binding_evaluation_inputs(binding, owned_run, tool, toolchain_root, 
         if (evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen
                 or evidence.input_manifest(toolchain_root, [msbuild_relative]) != host
                 or request.stat().st_mode & 0o777 != 0o400 or driver.stat().st_mode & 0o777 != 0o400
+                or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+            raise evidence.ConformanceError("InputChanged")
+
+
+def capture_binding_compilation_inputs(binding, owned_run, built, tool, toolchain_root,
+                                       sdk_version, runtime_version, package_root, package_inputs):
+    from conformance_execution import no_symlinks
+    from conformance_sdk_checks import read_bounded
+
+    owned_run._check_ledger()
+    tool, toolchain_root, package_root = Path(tool), Path(toolchain_root), Path(package_root)
+    for path in (tool, toolchain_root, package_root):
+        if not path.is_absolute() or ".." in path.parts:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        no_symlinks(path)
+    if (binding.root != owned_run.root / "binding-source" or tool.suffix != ".dll"
+            or not tool.is_relative_to(owned_run.root) or not package_root.is_relative_to(owned_run.root)
+            or toolchain_root.is_relative_to(owned_run.root) or owned_run.root.is_relative_to(toolchain_root)):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    sdk_version, runtime_version = evidence.stable_id(sdk_version), evidence.stable_id(runtime_version)
+    if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", sdk_version, re.ASCII) is None:
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    projects = {path for path in binding.sources if path.endswith(".csproj")}
+    if (built["bindingInputsSha256"] != binding.inputs_sha256 or set(built["projects"]) != projects
+            or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+        raise evidence.ConformanceError("InputChanged")
+    workspace = owned_run.root / "binding-build"
+    for project in projects:
+        expected = workspace / hashlib.sha256(project.encode("utf-8")).hexdigest()
+        if built["projects"][project]["root"] != expected:
+            raise evidence.ConformanceError("OwnershipInvalid")
+    if (package_root.is_relative_to(workspace) or workspace.is_relative_to(package_root)
+            or package_root.is_relative_to(binding.root) or binding.root.is_relative_to(package_root)):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    properties = workspace / "binding.props"
+    frozen = dict(evidence.input_manifest(
+        owned_run.root, [path.relative_to(owned_run.root).as_posix() for path in (tool, properties)]))
+    if (frozen[properties.relative_to(owned_run.root).as_posix()] != built["propertiesSha256"]
+            or properties.stat().st_mode & 0o222):
+        raise evidence.ConformanceError("InputChanged")
+    output_paths = {kind: workspace / ("compiler-" + kind + ".json") for kind in ("sources", "inputs", "parameters")}
+    request = workspace / "compiler-request.json"
+    request_sha = _write_owned_input(owned_run, request, evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "sourcePath": "binding-source", "generatedPath": "binding-build",
+        "packagePath": package_root.relative_to(owned_run.root).as_posix(), "toolchainRoot": str(toolchain_root),
+        "sourceHashes": binding.sources,
+        "outputs": {kind: path.relative_to(owned_run.root).as_posix() for kind, path in output_paths.items()}}))
+    frozen[request.relative_to(owned_run.root).as_posix()] = request_sha
+    msbuild_relative = "sdk/" + sdk_version + "/MSBuild.dll"
+    host = evidence.input_manifest(toolchain_root, [msbuild_relative])
+    logger = ("-logger:Hoard.Fixtures.Conformance.BuildInputs.CompilerInputsLogger," + _msbuild_literal(tool)
+              + ";" + base64.b64encode(str(owned_run.root).encode("utf-8")).decode("ascii")
+              + ";" + request.relative_to(owned_run.root).as_posix() + ";" + request_sha)
+    try:
+        observed = owned_run.command(
+            ["dotnet", "exec", "--fx-version", runtime_version, str(toolchain_root / msbuild_relative),
+             str(binding.root / binding.project), "-target:Build", "-p:Configuration=Release",
+             "-p:UseSharedCompilation=false", "-p:CustomAfterDirectoryBuildProps=" + _msbuild_literal(properties),
+             "-nodeReuse:false", "-maxCpuCount:1", "-noconsolelogger", "-nologo", "-verbosity:minimal", logger],
+            cwd=tool.parent, kind="events", timeout=600, cache_id="binding-build",
+            env={"DOTNET_ROLL_FORWARD": "Disable", "MSBUILDLOGTASKINPUTS": "1", "MSBUILDLOGIMPORTS": "1"})
+        if observed.exit_code or any(event["code"] != "None" for event in observed.events):
+            raise evidence.ConformanceError("CommandFailed")
+        if tuple(observed.events) != ({"event": "control", "code": "None", "value": len(projects)},):
+            raise evidence.ConformanceError("ProofMismatch")
+        sources = binding_compilation_sources(
+            binding, read_bounded(output_paths["sources"], 2 * 1024 * 1024), workspace)
+        inputs = binding_build_file_inputs(
+            binding, read_bounded(output_paths["inputs"], 2 * 1024 * 1024),
+            workspace, toolchain_root, package_root, package_inputs)
+        parameters = binding_compiler_parameter_inputs(
+            inputs["compilations"], read_bounded(output_paths["parameters"], 2 * 1024 * 1024))
+        if ({row["project"] for row in sources["compilations"]} != projects
+                or {row["project"] for row in inputs["compilations"]} != projects
+                or any(row["sources"] != next(item["inputs"]["Sources"] for item in inputs["compilations"]
+                                              if item["project"] == row["project"])
+                       for row in sources["compilations"])):
+            raise evidence.ConformanceError("ProofMismatch")
+        return MappingProxyType({"qualification": False, "sources": sources, "inputs": inputs, "parameters": parameters})
+    finally:
+        owned_run._check_ledger()
+        if (evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen
+                or evidence.input_manifest(toolchain_root, [msbuild_relative]) != host
+                or request.stat().st_mode & 0o777 != 0o400 or properties.stat().st_mode & 0o222
                 or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
             raise evidence.ConformanceError("InputChanged")
 
