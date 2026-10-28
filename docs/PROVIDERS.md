@@ -274,6 +274,18 @@ wrong category, missing options constructor and wrong options type. This is only
 the typed factory seam, not an artifact common consumer, capability/applicability
 mapping, native containment or qualification.
 
+The package-only consumer additionally accepts artifact build inputs for an
+initial thirteen-row portable component, independently expanded with the actual
+registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
+budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
+adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
+registered role-image matches after fresh-cache locked replay. Missing/unsupported
+properties and mismatched category reject. No built-in applicability/exclusion
+map is borrowed; complete artifact catalog coverage and public dispatch remain
+unfinished. Locally produced archive canonicalization binds the exact admitted
+ID, including explicit non-Hoard IDs. The legacy no-selection policy and signed
+archive rejection are preserved; mismatched IDs reject without rewriting bytes.
+
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires
 the exact declared `lib/net10.0/<assemblyName>.dll`; package ID and assembly

@@ -692,6 +692,13 @@ declaration admission. Default hash-only construction and metadata generation ar
 preserved. An actual managed component verifies both paths and their rejection
 controls. Artifact common-consumer/applicability integration remains unfinished;
 this is not native containment or qualification.
+The package-only consumer now also has an artifact component mode with thirteen
+independently expanded portable rows using the registered binding ID and unchanged
+SDK helpers. An actual SDK-packed Acme adapter at2.4.0-preview.1 passes all thirteen
+rows, exact discovery and eight-role image attribution after fresh-cache locked
+replay. Its pack exposed a Hoard-only canonicalization assumption: explicit
+admitted IDs now work without relaxing legacy defaults or signed-package rejection.
+Complete artifact applicability/catalog coverage and public dispatch remain open.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

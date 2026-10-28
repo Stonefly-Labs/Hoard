@@ -669,7 +669,7 @@ def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()
             run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
                   "--no-restore", "-o", str(feed), *common],
             cwd=project.parent, cache_id=cache_id)
-        canonicalize_acceptance_archive(archive)
+        canonicalize_acceptance_archive(archive, expected_package_id=identity)
 
 
 def prepare_smoke_lock(project, candidate, feed):

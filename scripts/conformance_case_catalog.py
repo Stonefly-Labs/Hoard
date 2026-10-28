@@ -213,6 +213,18 @@ def full_artifact_binding_origin_counts():
 
 
 
+def contributor_artifact_component_origin_counts(binding_id):
+    binding = stable_id(binding_id)
+    method = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+              "Observed_portable_consumers_preserve_actual_guarantees")
+    return {
+        f'{method}(provider: "{binding}", consumer: "{consumer}")': 1
+        for consumer in (
+            "empty", "unknown-length", "expectations", "unsupported", "duplicates",
+            "destination-failure", "exact-retry", "staged-length", "recreation",
+            "reader-exclusion", "cap-crossing", "storage-failures", "live-references")}
+
+
 def metadata_common_consumer_origin_counts(*, binding_ids=("memory", "sqlite")):
     if not isinstance(binding_ids, (list, tuple)) or not 0 < len(binding_ids) <= 1024:
         raise ConformanceError("BindingInvalid")

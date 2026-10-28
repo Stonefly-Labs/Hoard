@@ -6281,6 +6281,19 @@ through both overloads. Missing/wrong options constructors and wrong category
 reject at CS1729/CS1503. The original managed metadata factory replay also passes.
 This is not artifact common-consumer/applicability integration, native containment
 or qualification; public dispatch and T064 remain open.
+The next artifact component enables exact-package/generated-factory build inputs
+for thirteen independently expanded portable rows. It calls unchanged SDK
+publication/read/reconciliation/deletion/budget/reference assertions, uses the
+registered ID and settles actual sessions without built-in aliases/exclusions.
+An actual owned Acme adapter build/SDK-pack at2.4.0-preview.1 passes all thirteen
+rows and origins, all eight independently selected role-image matches, exact
+discovery and fresh-cache locked consumer replay. Five incomplete/unsupported
+property controls and a mismatched supported category reject. The first actual
+external pack exposed a Hoard-only envelope canonicalizer assumption; the build
+now supplies the exact admitted package ID. Default legacy policy still rejects
+non-Hoard inputs, and explicit mismatches/signed archives reject unchanged.
+This component is not complete artifact catalog/applicability coverage, compiler/
+native provenance or public dispatch. T064 stays unchecked.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

@@ -364,6 +364,28 @@ optional configuration interface, reflection or provider-name-derived profile is
 introduced. Artifact common-consumer, independent applicability/origin mapping
 and native qualification remain unfinished; this is not final T081 approval.
 
+The next artifact consumer component adds thirteen independently expanded portable
+publication/read/reconciliation/deletion/budget/reference rows. Exact registered
+package/factory properties select the actual binding ID, never a built-in alias
+or inherited exclusion set; unchanged SDK helpers own semantic assertions.
+Actual owned Acme build/SDK-pack at2.4.0-preview.1 passes all thirteen rows/origins,
+all eight registered role-image matches, exact discovery and fresh-cache locked
+consumer replay. Five incomplete/unsupported property sets reject; a mismatched
+supported category is also required to reject at compilation. The first actual
+external pack found a Hoard-only canonicalization assumption: build now supplies
+the exact admitted package ID while legacy defaults and signed-archive rejection
+remain intact. This is only portable component coverage; full artifact catalog/
+applicability, native/compiler closure and public dispatch remain unfinished.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes652
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2. The actual metadata replay still
+passes77 rows/87 origins and exact discovery. Supported-category mismatch
+controls include actual CS0266 for artifacts and CS1501 for metadata, in addition
+to the five missing/unsupported property controls per consumer.
+`dotnet format whitespace tests/fixtures/conformance/Consumer/Consumer.csproj --no-restore --verify-no-changes --include tests/fixtures/conformance/Consumer/ContributorArtifactSessionTests.cs --verbosity quiet`,
+catalog, SDK and diff checks pass. No product/provider implementation, SDK
+assertion body, native guard/environment policy or tracked dependency lock changes.
+
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and
 assembly names different from package IDs. Thirty focused cases pass, using

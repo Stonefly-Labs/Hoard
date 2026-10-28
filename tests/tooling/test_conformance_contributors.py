@@ -367,6 +367,18 @@ class ContributorAdmissionTests(unittest.TestCase):
             with self.subTest(invalid=invalid), self.assertRaises(evidence.ConformanceError):
                 catalog.metadata_common_consumer_origin_counts(binding_ids=invalid)
 
+    def test_artifact_component_inventory_uses_registered_identity_without_builtin_applicability(self):
+        actual = catalog.contributor_artifact_component_origin_counts("acme.artifacts")
+        self.assertEqual(len(actual), 13)
+        self.assertEqual(set(actual.values()), {1})
+        self.assertTrue(all('(provider: "acme.artifacts"' in identity for identity in actual))
+        self.assertFalse(any('"local"' in identity or '"object"' in identity for identity in actual))
+        with mock.patch.object(catalog, "full_artifact_binding_scenarios", side_effect=AssertionError):
+            self.assertEqual(catalog.contributor_artifact_component_origin_counts("acme.artifacts"), actual)
+        for invalid in ("../foreign", "", None):
+            with self.assertRaises(evidence.ConformanceError):
+                catalog.contributor_artifact_component_origin_counts(invalid)
+
     def build_fixture(self, name="build"):
         (self.source / "packages.lock.json").write_text('{"version":2,"dependencies":{"net10.0":{}}}')
         self.write(self.registration)

@@ -69,17 +69,21 @@ def build(project):
     return project.parent / f"bin/Release/net10.0/{project.stem}.dll"
 
 
-def canonicalize_acceptance_archive(path):
+def canonicalize_acceptance_archive(path, *, expected_package_id=None):
     """Stabilize only the unsigned local SDK pack envelope, never package payloads."""
     with zipfile.ZipFile(path) as archive:
         entries = {name: archive.read(name) for name in archive.namelist()}
     nuspecs = [name for name in entries if name.endswith(".nuspec")]
     if len(nuspecs) != 1 or ".signature.p7s" in entries:
-        raise RuntimeError("Canonical packing requires an unsigned local Hoard acceptance archive.")
+        raise RuntimeError("Canonical packing requires an unsigned local acceptance archive.")
     package_id = next((node.text for node in ET.fromstring(entries[nuspecs[0]]).iter()
                        if node.tag.split("}")[-1] == "id"), "")
-    if not package_id.startswith("Hoard."):
-        raise RuntimeError("Canonical packing requires an unsigned local Hoard acceptance archive.")
+    if (not isinstance(package_id, str)
+            or (expected_package_id is None and not package_id.startswith("Hoard."))
+            or (expected_package_id is not None and (
+                not isinstance(expected_package_id, str)
+                or package_id.casefold() != expected_package_id.casefold()))):
+        raise RuntimeError("Canonical packing requires an unsigned local acceptance archive with the admitted identity.")
     metadata = [name for name in entries
                 if name.startswith("package/services/metadata/core-properties/") and name.endswith(".psmdcp")]
     if len(metadata) != 1 or "_rels/.rels" not in entries:

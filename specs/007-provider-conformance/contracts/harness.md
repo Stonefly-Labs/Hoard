@@ -2247,12 +2247,24 @@ provider-supplied case list, built-in alias or inherited built-in exclusion may
 select or shorten the contributor dataset. Category-inconsistent or incomplete
 contributor build properties must fail before compilation/package collection.
 This bridge alone does not establish full applicable catalog coverage, owned
-supplied-project build/pack or native provenance. Artifact-contributor support
-and public custom dispatch are not yet implemented.
+supplied-project build/pack or native provenance. The artifact component mode
+now compiles the same exact-package/generated-factory inputs and independently
+expands thirteen portable publication/read/reconciliation/deletion/budget/
+reference rows using the registered ID. It invokes unchanged SDK helpers and
+settles actual sessions; it does not select a built-in ID or inherit exclusions.
+An actual independently SDK-packed Acme adapter at2.4.0-preview.1 passes these
+thirteen rows and eight-role image attribution, exact discovery and fresh-cache
+locked replay. Five incomplete/unsupported property sets reject; a mismatched
+supported category rejects at compilation. This remains only component coverage,
+not the complete applicable artifact catalog or public custom dispatch.
 Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a
 fallback. Existing fixture calls retain the0.1.0 default.
+Canonicalization binds the exact admitted package ID for locally produced
+archives, including explicit non-Hoard IDs. The legacy helper's no-selection
+policy still rejects non-Hoard archives; selected identity mismatches and signed
+archives reject without rewriting bytes.
 The internal supplied-project build recipe allocates disjoint owned
 intermediate/output/extension and prepared-lock paths for every declared project,
 outside the read-only staged source tree. Require exact full source inventory;

@@ -5795,13 +5795,15 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_pack_uses_the_explicit_package_identity_not_the_fixture_project_filename(self):
         feed = self.directory / "feed"
-        for version in ("0.1.0", "2.4.0-preview.1"):
-            with self.subTest(version=version), patch.object(checks.baselines, "_command"), \
-                    patch.object(checks, "canonicalize_acceptance_archive") as canonicalize:
-                options = {} if version == "0.1.0" else {"package_version": version}
-                checks.build(object(), self.directory / "Memory.csproj", self.directory / "NuGet.Config",
-                             "memory-package", feed=feed, package_id="Hoard.Fixtures.Metadata.Memory", **options)
-            canonicalize.assert_called_once_with(feed / f"Hoard.Fixtures.Metadata.Memory.{version}.nupkg")
+        for identity in ("Hoard.Fixtures.Metadata.Memory", "Acme.Adapter"):
+            for version in ("0.1.0", "2.4.0-preview.1"):
+                with self.subTest(identity=identity, version=version), patch.object(checks.baselines, "_command"), \
+                        patch.object(checks, "canonicalize_acceptance_archive") as canonicalize:
+                    options = {} if version == "0.1.0" else {"package_version": version}
+                    checks.build(object(), self.directory / "Memory.csproj", self.directory / "NuGet.Config",
+                                 "memory-package", feed=feed, package_id=identity, **options)
+                canonicalize.assert_called_once_with(feed / f"{identity}.{version}.nupkg",
+                                                     expected_package_id=identity)
 
     def test_pack_rejects_escaping_registered_identity_before_starting_commands(self):
         for identity, version in (("../Adapter", "2.4.0"), ("Acme.Adapter", "../2.4.0"),
