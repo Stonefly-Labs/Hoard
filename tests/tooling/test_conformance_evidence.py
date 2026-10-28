@@ -1255,6 +1255,37 @@ class ConformanceInputTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
             evidence.verify_synthetic_source_mapping(self.parent, "NuGet.Config", feed.name)
 
+    def test_explicit_non_hoard_archives_have_exact_verified_local_source_mapping(self):
+        self.package()
+        feed = self.parent / "feed"
+        selected = ("Acme.Adapter", "Acme.Provider")
+        raw = evidence.synthetic_nuget_configuration(feed, local_package_ids=selected)
+        document = ET.fromstring(raw)
+        local = document.findall('./packageSourceMapping/packageSource[@key="local"]/package')
+        self.assertEqual([item.attrib["pattern"] for item in local],
+                         ["Hoard.*", "acme.adapter", "acme.provider"])
+        config = self.parent / "NuGet.Config"
+        config.write_bytes(raw)
+        policy = evidence.verify_synthetic_source_mapping(
+            self.parent, config.name, feed.name, local_package_ids=selected)
+        self.assertEqual(policy["packageSourceMapping"]["local"],
+                         ("Hoard.*", "acme.adapter", "acme.provider"))
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(policy))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            evidence.verify_synthetic_source_mapping(self.parent, config.name, feed.name)
+        for unexpected in ("*", "Acme.*", "Acme.Other"):
+            config.write_bytes(raw.replace(b'acme.adapter', unexpected.encode("ascii")))
+            with self.subTest(unexpected=unexpected), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^InputChanged$"):
+                evidence.verify_synthetic_source_mapping(
+                    self.parent, config.name, feed.name, local_package_ids=selected)
+        for invalid in (("Acme.*",), ("Acme.Adapter", "acme.adapter"), ("/private/provider",)):
+            with self.subTest(invalid=invalid), self.assertRaises(evidence.ConformanceError):
+                evidence.synthetic_nuget_configuration(feed, local_package_ids=invalid)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+            evidence.synthetic_nuget_configuration(
+                feed, local_package_ids=tuple(f"Acme.{index}." + "a" * 110 for index in range(1024)))
+
     def test_binding_capture_binds_actual_declarations_to_selected_package_bytes(self):
         path = self.package()
         package = evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")

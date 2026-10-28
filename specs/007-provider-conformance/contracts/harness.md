@@ -2151,6 +2151,11 @@ overlapping author/output roots, and leaves original source bytes untouched.
 This is not complete MSBuild closure, an owned build, compiled type
 validation or executable contributor registration. The custom dispatch guard
 still returns `EvidenceIncomplete`; T064 remains open.
+Synthetic configuration generation/verification can additionally bind exact
+local package IDs outside `Hoard.*`. Additional IDs are bounded, case-folded,
+unique and literal, never caller-selected glob patterns. The original default
+configuration bytes remain unchanged; a widened or unselected mapping rejects.
+Custom build/restore integration remains unfinished.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

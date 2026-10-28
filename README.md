@@ -576,10 +576,15 @@ version parameters/170 observations pass, followed by actual process release.
 The same run confirms24 unchanged-source recipes, nine retained scenarios/
 forty loaded assemblies and the intended compiler-break control. T057 is
 complete. T058 adds same-version package/baseline/import substitution challenges
-alongside the exact-axis/schema controls; progress is60/86, implement/running.
+alongside the exact-axis/schema controls.
 T059 now additionally selects seven existing PE/PDB-source and isolated
-binary-break/repair/substitution parameters; those new native controls remain
-unconfirmed and T059 stays unchecked. No qualification is claimed.
+binary-break/repair/substitution parameters. Exact `74c0587`,
+[run40627874774](https://github.com/Stonefly-Labs/Hoard/actions/runs/40627874774)
+job122619085176, confirms all seven,88 architecture/114 version parameters/
+170 observations,24 source recipes and nine retained scenarios/forty loaded
+assemblies, followed by actual process release. Compatibility guidance and
+immutable proof/assertion references are recorded; T059..T061 are complete.
+Progress is63/86, implement/running. No qualification is claimed.
 The `3ca391a` attempt rejected a frozen public source-path parameter at schema
 admission; it did not confirm the new binary scope. Python and the logger now
 admit only the four exact catalog-owned source identities, not arbitrary paths.
@@ -591,6 +596,9 @@ A staging helper now revalidates that fingerprint before/after an owned
 read-only declared-source copy, rejecting source/registration changes and
 overlapping author/output roots. This is not complete build-closure admission
 or an executable contributor route.
+Synthetic feed helpers can also generate and independently verify bounded
+exact-ID local mappings for non-Hoard archives; custom restore/execution is
+still not wired.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

@@ -6226,6 +6226,31 @@ Its frozen full tooling checkpoint observes605 tests with zero failures/errors/
 unexpected diagnostic bytes, twenty explicit native macOS skips and expected
 incomplete exit2; catalog/SDK/diff checks pass. Native compatibility
 run40627874774/job122619085176 at exact74c0587 is now in progress, not confirmed.
+The next T064 feed-helper increment generates/verifies exact additional local
+package-ID mappings without a `Hoard.*` namespace restriction or new wildcard.
+The original default policy remains unchanged; unselected/widened mappings,
+duplicate case-folded IDs and oversized output reject. All61 focused
+input/contributor/composition/CLI cases pass. This does not yet run a custom
+restore, owned build or contributor suite.
+
+Exact `74c05878eb6884eabe9438bd2b8fc0824d098dec`,
+[run40627874774](https://github.com/Stonefly-Labs/Hoard/actions/runs/40627874774)
+job122619085176 now confirms the actual public compatibility route and release:
+88 architecture parameters/22 graphs/eight scans,114 version parameters/
+170 observations, all seven binary controls,24 source recipes and nine genuine
+retained scenarios/forty loaded assemblies. Independent comparison confirms
+the three original compatibility/version/architecture assertion sources are
+byte-identical to the preceding accepted native checkpoint. The
+[plan records immutable receipts and red/green classifications](../specs/007-provider-conformance/plan.md#native-compatibility-confirmation-t059t061).
+T059..T061 are complete; progress is63/86, implement/running. Policy-only rows,
+finite support and expected diagnostic exit2 remain explicit; full qualification
+and contributor execution are not delivered.
+
+The adjacent exact-ID feed-helper checkpoint observes606 frozen tooling tests,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected incomplete exit2. All61 focused cases and catalog/SDK/diff
+checks pass. No C# assertions, executor limits, budgets or provider behavior
+change in that helper increment.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

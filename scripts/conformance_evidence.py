@@ -787,31 +787,45 @@ def input_manifest(root, paths):
     return MappingProxyType(result)
 
 
-def synthetic_nuget_configuration(feed):
+def _local_package_patterns(local_package_ids):
+    packages = _list(stable_id, 1024, minimum=0, unique=True)(local_package_ids)
+    folded = tuple(package.casefold() for package in packages)
+    if len(set(folded)) != len(folded):
+        _invalid()
+    return ("Hoard.*", *sorted(package for package in folded if not package.startswith("hoard.")))
+
+
+def synthetic_nuget_configuration(feed, *, local_package_ids=()):
     local = escape(str(feed), {'"': "&quot;"})
-    return (
+    patterns = "".join(f'<package pattern="{package}"/>' for package in _local_package_patterns(local_package_ids))
+    result = (
         '<configuration><packageSources><clear/>'
         f'<add key="local" value="{local}"/>'
         '<add key="nuget.org" value="https://api.nuget.org/v3/index.json"/>'
         '</packageSources><packageSourceMapping><packageSource key="local">'
-        '<package pattern="Hoard.*"/></packageSource><packageSource key="nuget.org">'
+        f'{patterns}</packageSource><packageSource key="nuget.org">'
         '<package pattern="*"/></packageSource></packageSourceMapping></configuration>'
     ).encode("utf-8")
+    if len(result) > 64 * 1024:
+        raise ConformanceError("OutputLimitExceeded")
+    return result
 
 
-def verify_synthetic_source_mapping(root, configuration, feed):
+def verify_synthetic_source_mapping(root, configuration, feed, *, local_package_ids=()):
     configuration, feed = relative_path(configuration), relative_path(feed)
     captured = io.BytesIO()
     with _input_root(root) as (root, descriptor):
         with _input_root(root / feed):
             _source_file(descriptor, configuration, remaining=64 * 1024,
                          deadline=time.monotonic() + 5, target=captured)
-            if captured.getvalue() != synthetic_nuget_configuration(root / feed):
+            if captured.getvalue() != synthetic_nuget_configuration(
+                    root / feed, local_package_ids=local_package_ids):
                 raise ConformanceError("InputChanged")
     return MappingProxyType({
         "packageSources": MappingProxyType({
             "local": "isolated-current-archives", "nuget.org": "https://api.nuget.org/v3/index.json"}),
-        "packageSourceMapping": MappingProxyType({"local": ("Hoard.*",), "nuget.org": ("*",)}),
+        "packageSourceMapping": MappingProxyType({
+            "local": _local_package_patterns(local_package_ids), "nuget.org": ("*",)}),
     })
 
 

@@ -199,8 +199,19 @@ The supplemental seven-parameter PE/PDB-source and isolated binary
 break/repair/substitution attempt at `3ca391a` failed schema admission before
 confirming its binary scope. The transport repair permits only the four exact
 frozen public source identities; arbitrary/private paths remain prohibited.
-A fresh native confirmation is still required.
-It supplements, never replaces, the nine genuine historical retained scenarios.
+Exact `74c05878eb6884eabe9438bd2b8fc0824d098dec`,
+[run40627874774](https://github.com/Stonefly-Labs/Hoard/actions/runs/40627874774),
+job122619085176 now confirms all seven through the public compatibility command,
+alongside88 architecture parameters/22 graphs/eight real scans and114 version
+parameters/170 observations. It reconfirms24 source recipes, nine retained
+scenarios/forty loaded assemblies, the intended compiler-break control and
+actual process release. Original compatibility/version/architecture assertion
+source bytes match the preceding accepted native checkpoint. The isolated
+binary break throws the intended `MissingMethodException`; the compatible
+candidate returns the original operation from the unchanged consumer. Matching
+assembly versions never substitute for matching loaded bytes. Immutable receipt
+and assertion hashes are in the [plan](../specs/007-provider-conformance/plan.md#native-compatibility-confirmation-t059t061).
+These seven controls supplement, never replace, the genuine retained scenarios.
 Overall compatibility qualification remains false. These test-only results
 authorize neither package publication, source release, deployment nor production,
 protocol/native-client, identity, external-service or HA support.
@@ -229,6 +240,12 @@ does not become an independent provider or inherit built-in runtime evidence.
 Integration of that declared snapshot with complete closure validation,
 owned build/pack, actual package/runtime attribution and separately packaged
 good/red/corrected complete-suite runs remain required by T064..T067.
+Synthetic feed helpers now accept an explicit bounded set of additional local
+package IDs, using exact case-insensitive IDs rather than author-namespace
+wildcards. The default `Hoard.*` policy is unchanged. Independent verification
+rejects unselected IDs, altered/widened mappings and case-folded duplicates;
+the serialized policy omits private feed paths. This supports future external
+adapter archives but does not yet execute a custom restore or contributor run.
 
 ### Earlier F-07 diagnostic checkpoints
 

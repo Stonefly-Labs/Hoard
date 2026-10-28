@@ -237,6 +237,82 @@ The repaired native compatibility run40627874774 at exact
 `74c05878eb6884eabe9438bd2b8fc0824d098dec` has started job122619085176;
 it is not yet a passing receipt.
 
+The next T064 feed-helper increment accepts explicitly selected non-Hoard
+archive IDs with exact local patterns. Generation and independent verification
+share the bounded literal-ID policy; case-folded duplicates, glob/path IDs,
+widened/foreign mappings and oversized configuration output reject. Default
+configuration bytes and path-free policy projection are preserved. All61
+focused input/contributor/composition/CLI cases pass. Custom restore, closure,
+build/pack and contributor execution are still not wired.
+
+### Native compatibility confirmation: T059..T061
+
+Exact `74c05878eb6884eabe9438bd2b8fc0824d098dec`,
+[run40627874774](https://github.com/Stonefly-Labs/Hoard/actions/runs/40627874774)
+job122619085176 succeeds through the actual public compatibility command,
+retained summary/controller checks and actual process release. Independent
+safe projection confirms88 architecture parameters/22 graphs/eight real scans,
+114 version parameters/170 observations and all seven PE/PDB-source and
+isolated retained-binary controls. It also confirms24 source recipes,
+nine genuine retained scenarios/forty loaded assemblies and the intended
+source-break control. T059 is complete; the finite provider guide satisfies
+T060, and these immutable references/classifications satisfy T061.
+Progress is63/86, implement/running. The earlier3ca schema failure remains a
+failed attempt, not a passing receipt or an erased retry.
+
+The source negative challenges the unchanged historical implementer at
+`RequiredContract.IProvider.Required()`; restoring only the compatible contract
+restores the original assembly bytes. The isolated retained consumer calls
+`BinaryContract.Api.Describe()`: the broken candidate produces the intended
+`MissingMethodException`, and the compatible candidate returns the original
+operation without rebuilding the consumer. Actual candidate-loaded bytes
+differ from the same-version baseline and remain bound to PE/PDB/frozen source.
+Same-version loaded-image substitution rejects. These controls do not replace
+the nine original retained scenarios or turn marker consumers into operational
+metadata/artifact conformance.
+
+ARCH-001..008 permitted/forbidden and inspection-failure counterparts remain
+in the actual88-parameter scope, including both Identity traversal orders.
+The114 version rows retain host/abstractions/required/enabled-optional axes,
+independent prerelease flags, malformed inputs and explicit repair. C-05/06/
+16/17 are release-policy-only classifications, not runtime compatibility claims.
+Only the six exact baseline revisions and finite declared/observed matrix are
+covered; no historical SDK release, untested Cartesian product, external/native
+service, protocol/identity, production/HA or publishing/deployment authority
+is inferred. `qualification` and `profileComplete` remain false; the public
+command still gives expected `Incomplete`/exit2.
+
+| Retained receipt field | Architecture | Version | Binary |
+| --- | --- | --- | --- |
+| Inputs SHA-256 | `7a41da8a87d439a32cf692b4e73fc07b3fa08b0f8e7d11adde0a8b9e9bbfeb51` | `f7dceccbf8b0a7aa88e62a03fc366af441e97386ee0437977753d24dc0ab4126` | `7f25c2e04b75e65e5f97b48ea803afa43c4feec0a946f1ebaa610a7970496089` |
+| Completion-input SHA-256 | `573f5387a203d94b35fce46b753b4871e954bcc9ef7b400f73f681b0d03f315e` | `3a81b31b2ca1c40b562bead9d66ee2b5c77e201ae0b11864be803acb4c136df6` | `1d54f42cf1b8b2008957c5f904ad4e8d209d2a72129a3b4e3cd69b0b3ba89dbc` |
+| Discovery SHA-256 | `5533a79787a33cf45aaebf6c2a19185bfb4693725413c0c2ecf8aae548333f65` | `bd2d429fc98532e2db5f1fd92a55bb0c437199ef6b95a725d638199baa1e31a3` | `bcafc9b17cc4ae9dec6ff6ff8aea8deff84776178caa505553e9425cef703b82` |
+| Completion SHA-256 | `ae3540338975dc829f2d97787baa9e5d718e2c66c957d8b8f30d7519df8cf706` | `60457e20f4e06919544cf53118f1672d34529cbe347bc33706e97e620c40ab8b` | `924a5ee2371eaec6c95e0a5558f8db863bf0da51cf9d8fbfb0af1a5b936dc09a` |
+| Runtime-proof-map SHA-256 | `1ad06115dbc82d393b25617d4f876a5c55c70b70ea8c535974434b0bbd8f6795` | `394b16010830c1f4c19f23574a04863f933e73770d6b091c77dda48980a62c79` | `1935302cc1a05833aacb463054a9f54905fff5338f9f4151deeb9e27ecb8218b` |
+| Native-parent SHA-256 | `05daaca3ea0daec94f9f77df4888a532466b6a4c06f42c994a707531fd39e821` | `9dc2a10a5e3b2034246f459b97dd665186ed33371c345d04f9b39aeb0d5aa08e` | `0eda2aa008c7924053d0db2fbb953930456482af1b0edefe2d1fdb56c7d6cba7` |
+
+Source-recipe, retained-binary, source-break and baseline-seal SHA-256:
+`80bf7f441f62e186b562d076b251668eda272f9f28889b195f189377f66a32cf`,
+`055dfd36bc90d3df9c31df2030307f859b905322cf266dac2f4ca83c0e50e170`,
+`b42b81b0fc37c6e7ef77c358f2d0326e762929e701f66c0ed922556d14088ae1`,
+`5e4b57e68fb578558f90b0c1ce49431ff84b5118b5ed832021476ffa92b5225f`.
+Native input capture and completion recomputation bind the exact source
+manifest. Independent Git-object byte comparison with accepted `c9a5990`
+additionally confirms these assertion files are unchanged at74c0587:
+
+| Assertion source | SHA-256 |
+| --- | --- |
+| `tests/contracts/Hoard.Conformance.Tests/CompatibilityBaselineTests.cs` | `9f8144517de0019bd5f06d826d3b5ba0300ad28993d7da66d1cf5efd8bc482d0` |
+| `tests/integration/Hoard.Composition.Tests/ConformanceVersionTests.cs` | `39d2af85dc65aebedbbf233584831b376fe7fec3be09b8dbf127f1dfe95fefed` |
+| `tests/architecture/Hoard.Architecture.Tests/ConformanceArchitectureTests.cs` | `8ff4f0d6d694a48c6d98cf99515ec1ba2aae0827c9b6b3799e19af4cbd8f374c` |
+
+The adjacent feed-helper checkpoint passes606 frozen safe tooling tests with
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected incomplete exit2; all61 focused cases and catalog/SDK/diff
+checks pass. This does not execute custom contributor restore/build or qualify
+the complete controller. T064 and all remaining quality/final acceptance work
+stay open.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact
