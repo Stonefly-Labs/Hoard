@@ -275,7 +275,7 @@ the typed factory seam, not an artifact common consumer, capability/applicabilit
 mapping, native containment or qualification.
 
 The package-only consumer additionally accepts artifact build inputs for an
-45-row snapshot / 46-row incomplete-enumeration component, independently expanded
+46-row snapshot / 47-row incomplete-enumeration component, independently expanded
 with the actual registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
 budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
 adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
@@ -288,7 +288,7 @@ archive rejection are preserved; mismatched IDs reject without rewriting bytes.
 The component now also covers common publication barriers, recovery/expiry,
 cancellation, reference checks, concurrent release and all ten fault controls.
 Existing shared boundary/clock/run-ID helpers are reused unchanged; only their
-test-fixture visibility widens. All 71 selected built-in Local/Object boundary,
+test-fixture visibility widens. All 73 selected built-in Local/Object boundary,
 budget, recovery, control and concurrent-release regressions pass. Complete
 durability/enumeration applicability, complete catalog coverage and native
 provenance remain unfinished; this is not native containment or qualification.
@@ -305,11 +305,17 @@ registration shape, SDK interfaces and default fixture declarations unchanged.
 The component now independently expands sequential recovery using the frozen
 enumeration expectation and includes the incomplete-only direct-availability
 case for that declared class. Both actual profiles match exact discovery and
-eight-role attribution with zero skips; the 71 selected built-in rows still pass.
+eight-role attribution with zero skips; the 73 selected built-in rows still pass.
 False snapshot claims and changed-during-work controls still reject at the named
 profile assertion, rather than borrowing a shorter dataset. This is only one
 input-bound component applicability distinction, not complete catalog coverage
 or qualification.
+The logical reopen row calls the same original shared consumer body, with
+test-only profile checks on original/reopened/final sessions. It checks retained
+or reset public state from declared durability, stale-control fencing, fresh
+store instances and two actual parent-linked origins. Actual profiles pass
+46/47 rows with 47/48 origins; a separately packaged profile-on-reopen mutation
+fails at the named assertion. This does not replace fresh-process/crash evidence.
 
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires

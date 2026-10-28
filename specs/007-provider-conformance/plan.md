@@ -442,6 +442,23 @@ Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
 The51 focused contributor cases, catalog/SDK checks, focused Consumer whitespace
 verification and diff check pass for this enumeration expansion.
+The next logical reopen row shares the original consumer body, preserving its
+publication/state/instance/fence/stale-disposal/cleanup assertions. Only an
+internal test-fixture profile callback is added for original/reopened/final
+sessions. The contributor uses declared durability, never a provider alias, and
+the independent inventory requires exactly two parent-linked actual origins.
+Actual snapshot/incomplete profiles pass 46/47 rows and 47/48 origins, exact
+discovery, eight-role image attribution, fresh-cache locked replay and all 73
+selected built-in regressions. A separately SDK-packed profile-on-reopen mutation
+rejects at the actual named profile assertion after the preceding 46 valid rows.
+The bounded artifact-reopen-review interim review found no blocker. A direct
+diff verifies every old assertion remains; the helper adds only the profile
+observations and wrapper delegation. This is logical in-process reopen, not a
+fresh-process/crash-durability proof, completed applicability or final T081.
+Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
+The51 contributor cases, catalog/SDK checks, focused two-file Consumer whitespace
+verification and diff check pass for this shared reopen increment.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

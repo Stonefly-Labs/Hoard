@@ -692,8 +692,8 @@ declaration admission. Default hash-only construction and metadata generation ar
 preserved. An actual managed component verifies both paths and their rejection
 controls. Artifact common-consumer/applicability integration remains unfinished;
 this is not native containment or qualification.
-The package-only consumer now also has an artifact component mode with 45 snapshot
-or 46 incomplete-enumeration
+The package-only consumer now also has an artifact component mode with 46 snapshot
+or 47 incomplete-enumeration
 independently expanded portable rows using the registered binding ID and unchanged
 SDK helpers. An actual SDK-packed Acme adapter at2.4.0-preview.1 passes its applicable
 rows, exact discovery and eight-role image attribution after fresh-cache locked
@@ -702,7 +702,7 @@ admitted IDs now work without relaxing legacy defaults or signed-package rejecti
 Complete artifact applicability/catalog coverage and public dispatch remain open.
 The component includes publication barriers, recovery/expiry, cancellation,
 reference checks and all ten fault controls, reusing unchanged shared setup
-helpers. All 71 selected built-in Local/Object boundary, budget, recovery, control
+helpers. All 73 selected built-in Local/Object boundary, budget, recovery, control
 and concurrent-release regressions also pass; no native qualification is implied.
 Artifact contributor registrations must now include exactly one durability marker
 and one enumeration-snapshot/enumeration-incomplete marker. Generated enum
@@ -713,6 +713,11 @@ reject at the named profile assertion. Sequential recovery uses the frozen
 enumeration expectation for both variants; the incomplete-only direct-availability
 case is independently expanded from that same input, never a provider alias.
 Complete applicability/catalog coverage and native qualification remain unfinished.
+The logical reopen row shares the original consumer body, requires two actual
+lineage origins, fences stale controls and checks retention from the admitted
+durability class. Actual runs pass 46/47 rows with 47/48 origins; a separately
+packed adapter that changes profile on reopen fails at the named assertion.
+This is in-process logical reopen, not fresh-process/crash-durability evidence.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

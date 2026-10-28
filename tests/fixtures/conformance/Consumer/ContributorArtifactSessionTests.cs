@@ -184,6 +184,20 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
         Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
+    [Theory]
+    [ContributorArtifactData]
+    public async Task Observed_reopen_preserves_actual_lineage_and_declared_state(string provider)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.ReopenConsumerAsync(binding, context, resources, output,
+            ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash, AssertProfile);
+    }
+
     private static void AssertProfile(IArtifactConformanceSession session)
     {
         var actual = session.Store.Capabilities;

@@ -6325,6 +6325,16 @@ all 71 selected built-in rows still pass. False snapshot claims and profile
 changes during work continue to fail at the named assertion, not silently select
 a shorter successful run. This remains partial component applicability, not full
 catalog/native acceptance.
+The subsequent logical reopen row reuses the original shared consumer body and
+adds only a test-fixture profile callback on original/reopened/final sessions.
+Original publication, parent lineage, fresh instance, retention/reset, stale
+control, stale-disposal and settlement assertions are preserved. Actual snapshot/
+incomplete profiles pass 46/47 rows and 47/48 origins, exact discovery, eight-role
+attribution and fresh-cache locked replay; all 73 selected built-in rows pass.
+A separately SDK-packed adapter changes only its reported profile on reopen:
+the same named profile assertion rejects after the preceding 46 valid rows.
+The bounded interim reopen architecture review found no blocker; final T081 and
+real process-crash/native qualification remain open.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

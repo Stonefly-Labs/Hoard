@@ -243,6 +243,9 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
             "PublicationBoundary", "DirectVisibility", "PayloadDamage", "Capacity",
             "NativeNonCooperation", "CleanupFailure", "GenerationBoundary", "ReceiptBoundary",
             "SourceNonCooperation", "SinkNonCooperation")})
+    reopen = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+              "Observed_reopen_preserves_actual_lineage_and_declared_state")
+    identities[f'{reopen}(provider: "{binding}")'] = 2
     return identities
 
 

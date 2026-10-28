@@ -2249,7 +2249,7 @@ contributor build properties must fail before compilation/package collection.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. The artifact component mode
 now compiles the same exact-package/generated-factory inputs and independently
-expands 45 snapshot / 46 incomplete-enumeration publication/read/reconciliation/
+expands 46 snapshot / 47 incomplete-enumeration publication/read/reconciliation/
 deletion/budget/reference rows using the registered ID. It invokes unchanged SDK helpers and
 settles actual sessions; it does not select a built-in ID or inherit exclusions.
 An actual independently SDK-packed Acme adapter at2.4.0-preview.1 passes these
@@ -2277,9 +2277,15 @@ unchanged. The component now uses the frozen enumeration expectation for
 sequential recovery and independently includes direct-availability only for the
 Incomplete class. It requires the complete closed profile as an expansion input;
 unknown/missing/extra fields reject. Actual snapshot/incomplete runs match their
-45/46-row discovery/origin inventories with zero skips. False snapshot claims and
+46/47-row discovery inventories with 47/48 origins and zero skips. False snapshot claims and
 changed-during-work variants reject at the named profile assertion. This does not
 establish complete applicability/catalog or native qualification.
+The logical reopen row reuses the original shared consumer body, retaining all
+publication/state/fence/instance/cleanup assertions. A test-only profile callback
+checks original/reopened/final sessions; require exactly two parent-linked origins.
+Actual durable/simulated profiles and all 73 selected built-in rows pass. A
+separately packaged profile change on reopen rejects at the named assertion.
+Logical in-process reopen is not real process-crash durability proof.
 Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a

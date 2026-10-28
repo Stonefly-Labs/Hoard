@@ -2057,13 +2057,22 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
         var binding = Binding(provider);
+        await ReopenConsumerAsync(binding, context, resources, output, retainsPublication);
+    }
+
+    internal static async Task ReopenConsumerAsync(IArtifactConformanceBinding binding, ConformanceRunContext context,
+        RecordingDirectories resources, ITestOutputHelper output, bool retainsPublication,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
         var original = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var current = original;
         try
         {
+            assertProfile?.Invoke(original);
             var receipt = await ArtifactCompositionAssertions.ConfiguredPublicationAsync(original.Store, default);
             var origin = original.CaptureOrigin();
             current = Assert.IsType<ConformanceObservedArtifactSession>(await original.ReopenAsync(default));
+            assertProfile?.Invoke(current);
             var reopened = current.CaptureOrigin();
             Assert.Equal(origin.SessionId, reopened.ParentSessionId);
             Assert.NotEqual(origin.Components["store"].InstanceId, reopened.Components["store"].InstanceId);
@@ -2081,6 +2090,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             else { Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(result); }
             await original.DisposeAsync();
             await ArtifactCompositionAssertions.ConfiguredPublicationAsync(current.Store, default);
+            assertProfile?.Invoke(current);
             ConformanceSessionOriginOutput.Write(output, origin);
             ConformanceSessionOriginOutput.Write(output, reopened);
         }

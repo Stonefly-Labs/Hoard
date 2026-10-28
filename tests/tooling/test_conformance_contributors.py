@@ -370,15 +370,15 @@ class ContributorAdmissionTests(unittest.TestCase):
     def test_artifact_component_inventory_uses_registered_identity_without_builtin_applicability(self):
         profile = {"durability": "SimulationOnly", "enumeration": "Incomplete"}
         actual = catalog.contributor_artifact_component_origin_counts("acme.artifacts", profile=profile)
-        self.assertEqual(len(actual), 46)
-        self.assertEqual(set(actual.values()), {1})
+        self.assertEqual(len(actual), 47)
+        self.assertEqual(set(actual.values()), {1, 2})
         self.assertTrue(all('(provider: "acme.artifacts"' in identity for identity in actual))
         self.assertFalse(any('"local"' in identity or '"object"' in identity for identity in actual))
         with mock.patch.object(catalog, "full_artifact_binding_scenarios", side_effect=AssertionError):
             self.assertEqual(catalog.contributor_artifact_component_origin_counts("acme.artifacts", profile=profile), actual)
         snapshot = catalog.contributor_artifact_component_origin_counts(
             "acme.artifacts", profile={"durability": "LocalProcessCrash", "enumeration": "Snapshot"})
-        self.assertEqual(len(snapshot), 45)
+        self.assertEqual(len(snapshot), 46)
         self.assertEqual(set(actual) - set(snapshot), {
             'Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests.'
             'Observed_portable_consumers_preserve_actual_guarantees(provider: "acme.artifacts", consumer: "direct-availability")'})
