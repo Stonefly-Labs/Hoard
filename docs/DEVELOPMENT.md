@@ -5951,6 +5951,31 @@ macOS skips, expected incomplete exit 2. Catalog and diff checks pass.
 Linux confirmation remains pending; product/provider contracts and their
 guides/examples/diagrams, infrastructure and governance are unaffected.
 
+Exact `861a28a` run40608278877/job122553169898 fails `ProofMismatch`
+at retained-input admission (`conformance_composition_checks.py:624`), before
+re-ingestion. The compound guard is split into individually located, unchanged
+rejecting conditions; this is diagnostic localization, not a repair or pass.
+
+The compatibility-only path now wires 88 exact architecture parameters through
+the existing safe logger discovery/execution/native-parent transport: 22
+original ARCH witnesses, 19 original Identity/inspection witnesses and 47
+test-SDK boundary/actual declared-and-compiled graph/Identity-order controls.
+It supplies the original foundation manifest only to this explicit scope,
+binds all selected original graph inputs and runtime images into the native
+command, rejects context substitution or changed bytes, and recomputes full
+profile inputs before release. Missing parameters and foreign case/binding
+assignments reject. The inventory and transport-context tests are modeled,
+not native-origin proof. Full version/compatibility/report qualification and
+T057/T059/T071 remain open pending genuine Linux results.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_composition -q`:
+passed, 15 tests. `python3 scripts/conformance_unit_checks.py --all-tooling`:
+586 tests, zero failures/errors/unexpected diagnostic bytes, twenty native
+macOS skips, expected incomplete exit 2. Catalog and diff checks pass.
+The older exact `456f818` foundations run40601395871 independently passes
+lock replay, both category extraction jobs, native ownership and retained
+compatibility replay; its SDK/logger job fails. It is not an all-green run.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

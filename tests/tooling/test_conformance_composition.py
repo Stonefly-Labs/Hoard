@@ -14,6 +14,96 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_modeled_architecture_command_binds_original_graphs_and_rejects_context_substitution(self):
+        import hashlib
+        import uuid
+        import conformance_case_catalog as catalog
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+        import xml.etree.ElementTree as ET
+
+        for defect in ("none", "missing-context", "foreign-scope", "changed-input"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                manifest_path = "stores/compatibility-architecture/manifest.json"
+                files = {}
+                for path, data in ((manifest_path, b"{}"), ("stores/graph.input", b"original")):
+                    target = root / path
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    sdk.write_new(target, data)
+                    files[path] = hashlib.sha256(data).hexdigest()
+                map_path = "proofs/compatibility-architecture-inputs.json"
+                map_raw = evidence.canonical_bytes(files)
+                sdk.write_new(root / map_path, map_raw)
+                prepared = {
+                    "qualification": False, "profileComplete": False, "fixtureGraphs": 22, "requiredRealScans": 8,
+                    "manifestPath": manifest_path, "manifestSha256": files[manifest_path],
+                    "inputMapPath": map_path, "inputMapSha256": hashlib.sha256(map_raw).hexdigest(),
+                    "inputCount": len(files), "lockDerivationsSha256": "a" * 64}
+                assembly = root / "stores/runtime/Hoard.Architecture.Tests.dll"
+                assembly.parent.mkdir()
+                sdk.write_new(assembly, b"modeled-image")
+                sdk.write_new(root / "runtime-owner.json", b"{}")
+                manifest = {
+                    "attemptId": str(uuid.uuid4()), "purpose": "execution",
+                    "runInputsPath": "proofs/modeled-inputs.json",
+                    "assemblies": [{"path": assembly.relative_to(root).as_posix()}],
+                    "expected": [
+                        {"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                         "bindingId": binding, "caseId": case}
+                        for identity, (binding, case) in catalog.architecture_runtime_tests().items()]}
+                if defect == "changed-input":
+                    (root / "stores/graph.input").chmod(0o600)
+                    (root / "stores/graph.input").write_bytes(b"changed")
+                command = mock.Mock(return_value=SimpleNamespace(exit_code=0))
+                run = SimpleNamespace(root=root, command=command)
+                scope = None if defect == "foreign-scope" else ("compatibility", "architecture")
+                with mock.patch.object(sdk, "category_command_proof"):
+                    if defect != "none":
+                        with self.assertRaisesRegex(evidence.ConformanceError,
+                                                    "InputChanged" if defect == "changed-input" else "WitnessMissing"):
+                            sdk.runtime_command(
+                                run, assembly, manifest, category_scope=scope,
+                                architecture_preparation=None if defect == "missing-context" else prepared)
+                        command.assert_not_called()
+                        continue
+                    sdk.runtime_command(run, assembly, manifest, category_scope=scope, architecture_preparation=prepared)
+                selected = command.call_args.kwargs["execution_inputs"]
+                self.assertTrue(set(files) | {map_path} <= set(selected))
+                self.assertEqual(len(selected), len(set(selected)))
+                settings = ET.fromstring((root / f'proofs/settings-{manifest["attemptId"]}.runsettings').read_bytes())
+                self.assertEqual(settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_FOUNDATION_EVIDENCE"),
+                                 str(root / manifest_path))
+
+    def test_architecture_runtime_manifest_rejects_missing_parameters_and_foreign_tests(self):
+        import conformance_case_catalog as catalog
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+
+        tests = catalog.architecture_runtime_tests()
+        self.assertTrue(all(binding == "none" for binding, _ in tests.values()))
+        required = {identity for case in catalog.expected_cases("compatibility")
+                    for identity in case.witnesses if identity.startswith("Hoard.Architecture.Tests.")}
+        self.assertTrue(required <= tests.keys())
+        manifest = {"expected": [
+            {"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+             "bindingId": binding, "caseId": case}
+            for identity, (binding, case) in tests.items()]}
+        self.assertEqual(sdk._category_manifest_tests(("compatibility", "architecture"), manifest), tests)
+        for defect in ("omitted-parameter", "foreign", "binding", "case"):
+            changed = evidence.load_json(evidence.canonical_bytes(manifest))
+            if defect == "omitted-parameter":
+                index = next(index for index, row in enumerate(changed["expected"])
+                             if "Every_production_owner_rejects_actual" in row["testIdentity"])
+                changed["expected"].pop(index)
+            elif defect == "foreign":
+                changed["expected"][0]["testIdentity"] = "Hoard.Architecture.Tests.Foreign"
+            else:
+                changed["expected"][0]["bindingId" if defect == "binding" else "caseId"] = "foreign"
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                sdk._category_manifest_tests(("compatibility", "architecture"), changed)
+
     def test_modeled_architecture_preparation_requires_every_paired_fixture_and_real_scan(self):
         import conformance_case_catalog as catalog
         import conformance_evidence as evidence
@@ -66,6 +156,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 selected = evidence.load_json((root / result["inputMapPath"]).read_bytes())
                 self.assertEqual(len(selected), result["inputCount"])
                 self.assertEqual(dict(evidence.input_manifest(root, list(selected))), selected)
+                self.assertEqual(inherited.admit_architecture_preparation(root, result)[1], selected)
                 self.assertEqual(selected[result["manifestPath"]], result["manifestSha256"])
                 document = evidence.load_json((root / result["manifestPath"]).read_bytes())
                 self.assertEqual(document["architecture"], graphs)

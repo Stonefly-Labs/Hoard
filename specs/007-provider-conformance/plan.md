@@ -1034,6 +1034,36 @@ Fresh Linux replay/preparation confirmation remains pending. Progress remains
 contracts, provider guides/examples/diagrams, infrastructure and governance
 are unaffected.
 
+### Exact architecture runtime scope, pending native confirmation
+
+Exact `861a28a650624a3528a0e6318bc5a6456116efa3`,
+run40608278877/job122553169898, localizes the remaining replay `ProofMismatch`
+to retained-input admission at `conformance_composition_checks.py:624`.
+The original compound check is separated into independently located guards
+without changing any rejection. The replay bug remains unresolved.
+
+The compatibility-only diagnostic now wires original architecture runtime
+discovery and execution, with 88 exact parameters: 22 ARCH witnesses, 19
+Identity/inspection controls and all 47 current test-SDK boundary controls.
+The latter cover every production/test owner, direct/transitive declared/
+compiled paths, all required-scan defects and both Identity edge orders.
+The closed scope rejects omitted parameters or foreign test/case/binding
+assignments. Only that scope receives the original foundation manifest; its
+safe selected-input map and all runtime images are bound to the native parent.
+Selected graph inputs are rehashed before and after commands, and full source,
+package, lock, runtime, configuration and environment inputs are recomputed
+before release. Original factories and C# assertions are unchanged.
+
+Modeled admission/context tests pass, not genuine Linux execution. Full
+compatibility/version/report/evaluator work remains and T057/T059/T071 stay
+unchecked. `PYTHONPATH=tests/tooling python3 -m unittest
+test_conformance_composition -q`: passed, 15 tests.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 586 tests,
+zero failures/errors/unexpected bytes, twenty native macOS skips, expected
+incomplete exit 2. Catalog/diff checks pass; progress remains 53/86.
+The older exact456 foundations run40601395871 has five passing jobs and one
+failed SDK/logger diagnostic, not full acceptance.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

@@ -1060,6 +1060,27 @@ def replay_controller_baseline(owner, baseline, phase, target):
     return retained
 
 
+def admit_architecture_preparation(root, prepared):
+    from conformance_evidence import _constant, _hash_map, _integer, _record, input_manifest, sha256
+    from conformance_sources import read_bounded
+
+    prepared = _record({
+        "qualification": _constant(False), "profileComplete": _constant(False),
+        "manifestPath": _constant("stores/compatibility-architecture/manifest.json"),
+        "manifestSha256": sha256, "inputMapPath": _constant("proofs/compatibility-architecture-inputs.json"),
+        "inputMapSha256": sha256, "inputCount": _integer,
+        "fixtureGraphs": _constant(22), "requiredRealScans": _constant(8), "lockDerivationsSha256": sha256,
+    })(prepared)
+    raw = read_bounded(root / prepared["inputMapPath"], 2 * 1024**2)
+    selected = _hash_map(load_json(raw))
+    if (hashlib.sha256(raw).hexdigest() != prepared["inputMapSha256"]
+            or len(selected) != prepared["inputCount"]
+            or selected.get(prepared["manifestPath"]) != prepared["manifestSha256"]
+            or dict(input_manifest(root, list(selected))) != selected):
+        raise ConformanceError("InputChanged")
+    return prepared, selected
+
+
 def prepare_architecture_evidence(repository, owner, source):
     import foundation_evidence as foundation
     import conformance_legacy as legacy

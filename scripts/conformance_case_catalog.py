@@ -1213,6 +1213,48 @@ def compatibility_witnesses(proof):
     return ()
 
 
+def architecture_runtime_tests():
+    tests = {
+        identity: ("none", case.case_id)
+        for case in expected_cases("compatibility") for identity in case.witnesses
+        if identity.startswith("Hoard.Architecture.Tests.")
+    }
+    prefix = "Hoard.Architecture.Tests.ConformanceArchitectureTests."
+    owners = (
+        ("Abstractions", "ARCH-001", "ARCH-001"), ("Core", "ARCH-002", "ARCH-003"),
+        *((owner, "ARCH-008", "ARCH-008")
+          for owner in ("Hosting", "Application", "Protocol", "Metadata", "Artifact", "Identity", "Host")),
+    )
+    extensions = (
+        *(prefix + "Actual_declared_and_compiled_graph_paths_reject_test_sdk_but_permit_driver_sdk"
+          + f"(transitive: {transitive}, compiled: {compiled})"
+          for transitive in (False, True) for compiled in (False, True)),
+        *(prefix + "Test_sdk_is_not_a_production_driver_sdk"
+          + f'(source: "{source}", rule: "{direct}")' for source, direct, _ in owners),
+        *(prefix + "Driver_sdk_permission_is_preserved_without_allowing_the_test_suite" + f'(source: "{source}")'
+          for source in ("Metadata", "Artifact", "Identity")),
+        *(prefix + "Explicit_test_owners_can_consume_the_test_suite" + f'(source: "{source}")'
+          for source in ("Sdk", "Helper")),
+        *(prefix + "Test_sdk_cannot_be_reclassified_to_bypass_the_boundary" + f'(ownership: "{ownership}")'
+          for ownership in ("Bcl", "Abstractions", "Helper")),
+        *(prefix + "Every_production_owner_rejects_actual_declared_and_compiled_test_sdk_paths"
+          + f'(ownership: "{owner}", directRule: "{direct}", transitiveRule: "{transitive}")'
+          for owner, direct, transitive in owners),
+        *(prefix + "Explicit_test_owners_preserve_actual_test_sdk_graphs" + f'(ownership: "{owner}")'
+          for owner in ("Sdk", "Helper")),
+        *(prefix + "Permitted_hosting_never_hides_actual_direct_or_helper_core_paths"
+          + f'(fixture: "{fixture}", identity: "{identity}", reverse: {reverse})'
+          for fixture, identity in (("identity-direct-core", "DirectIdentityCore"),
+                                    ("identity-transitive-core", "TransitiveIdentityCore"))
+          for reverse in (False, True)),
+        *(prefix + "Complete_scan_control_rejects_missing_foreign_and_uninspectable_graphs" + f'(defect: "{defect}")'
+          for defect in ("missing", "duplicate", "foreign", "unidentified", "null", "array", "string", "number",
+                         "missing-assembly", "missing-assets", "ambiguous-owner")),
+    )
+    tests.update({identity: ("none", "ARCH-BOUNDARY") for identity in extensions})
+    return tests
+
+
 QC_CONTROLS = {
     1: ("immutable-expansion", "fixed-category-keys", "unknown-revision-rejected", "altered-catalog-rejected"),
     2: ("sqlite-binding", "memory-binding", "unchanged-assertions", "exact-metadata-parameters"),

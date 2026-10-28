@@ -466,6 +466,17 @@ input-map agreement and original post-release parent/journal admission.
 This prepares real inputs; it does not yet execute the complete compatibility
 architecture/version profile. Local safe tooling passes 584 tests with twenty
 explicit native skips; Linux confirmation is pending and T057 stays unchecked.
+Exact `861a28a` replay still fails, now localized to retained-input admission
+before transport replay. Its individual rejecting checks are separated for
+precise safe source-line diagnostics; no check is relaxed.
+The compatibility-only diagnostic now wires 88 exact architecture parameters:
+the original paired ARCH/cycle/real-scan and inspection controls, plus all 47
+test-SDK boundary, actual graph-path and Identity-order controls. Discovery and
+execution bind the original selected graph bytes, runtime images and native
+parent; pre/post inputs must agree. This wiring has modeled coverage, not fresh
+Linux acceptance or completed version/compatibility qualification.
+Focused controls pass 15 tests; full safe tooling observes 586 tests with
+zero failures/errors/unexpected bytes and twenty native macOS skips.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

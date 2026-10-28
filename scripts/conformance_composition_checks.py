@@ -615,12 +615,16 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
     retained = {path: hashed for path, hashed in files.items() if path not in selected}
     retained.update({f"proofs/composition-runtime-inputs/{hashed}": hashed
                      for path, hashed in selected.items() if path != config})
-    if (snapshot["files"] != selected or snapshot_path not in report["proofs"]
-            or any(report["proofs"].get(path) != hashed for path, hashed in retained.items())
-            or any((root / path).stat().st_mode & 0o777 != 0o400 for path in retained)
-            or selected.get(config) != inputs["configurationSha256"]
-            or selected.get(config) != hashlib.sha256(
-                evidence.synthetic_nuget_configuration(root / "feed/candidate")).hexdigest()):
+    if snapshot["files"] != selected or snapshot_path not in report["proofs"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    if any(report["proofs"].get(path) != hashed for path, hashed in retained.items()):
+        raise evidence.ConformanceError("ProofMismatch")
+    if any((root / path).stat().st_mode & 0o777 != 0o400 for path in retained):
+        raise evidence.ConformanceError("ProofMismatch")
+    if selected.get(config) != inputs["configurationSha256"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    if selected.get(config) != hashlib.sha256(
+            evidence.synthetic_nuget_configuration(root / "feed/candidate")).hexdigest():
         raise evidence.ConformanceError("ProofMismatch")
     observed = evidence.ingest_runtime_attempt(
         inputs=inputs, manifest_data=manifest_data, owner_data=owner_data,
