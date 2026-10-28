@@ -362,6 +362,7 @@ class NuGetContentToolTests(unittest.TestCase):
                 "BaseOutputPath": str(generated) + "/$(MSBuildProjectName)/bin/",
                 "EmitCompilerGeneratedFiles": "true",
                 "CompilerGeneratedFilesOutputPath": str(generated) + "/$(MSBuildProjectName)/compiler-generated",
+                "CscToolPath": "", "CscToolExe": "",
                 "RestorePackagesPath": str(packages), "UseSharedCompilation": "false"}.items():
             ET.SubElement(group, name).text = text
         ET.ElementTree(props).write(properties)
@@ -413,6 +414,20 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertTrue(any("Dynamic.cs" in path for row in sources["compilations"] for path in row["sources"]))
         inputs = contributors.binding_build_file_inputs(
             binding, raw["inputs"], generated, Path(value["toolchainRoot"]), packages, {})
+        self.assertTrue(any(path.endswith("/Microsoft.Build.Tasks.CodeAnalysis.dll") for path in inputs["tools"]))
+        self.assertTrue(all(path.startswith("toolchain/") for path in inputs["tools"]))
+        self.assertTrue(any(path.endswith("/Roslyn/bincore/csc.deps.json") for path in inputs["supportFiles"]))
+        self.assertTrue(any(path.endswith("/System.Text.RegularExpressions.Generator.dll")
+                            for path in inputs["supportFiles"]))
+        self.assertTrue(any("/shared/Microsoft.NETCore.App/" in path and path.endswith("/System.Net.Http.dll")
+                            for path in inputs["supportFiles"]))
+        self.assertTrue(any("/host/fxr/" in path for path in inputs["supportFiles"]))
+        changed = evidence.load_json(raw["inputs"])
+        first = next(iter(changed["tools"]))
+        changed["tools"][first] = "a" * 64
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_build_file_inputs(
+                binding, evidence.canonical_bytes(changed), generated, Path(value["toolchainRoot"]), packages, {})
         self.assertTrue(any(row["inputs"].get("AdditionalFiles") for row in inputs["compilations"]))
         self.assertTrue(any(row["inputs"].get("Resources") for row in inputs["compilations"]))
         parameters = contributors.binding_compiler_parameter_inputs(inputs["compilations"], raw["parameters"])
@@ -497,6 +512,40 @@ class NuGetContentToolTests(unittest.TestCase):
         self.request.write_bytes(evidence.canonical_bytes(value))
         _, event = self.compile()
         self.assertEqual(event["code"], "InputChanged")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
+    def test_managed_compiler_observer_rejects_changed_analyzer_support_files(self):
+        value, binding, generated, _ = self.compiler_request()
+        directory = generated / "analyzer-inputs"
+        directory.mkdir()
+        candidates = sorted((Path(value["toolchainRoot"]) / "packs").glob(
+            "Microsoft.NETCore.App.Ref/*/analyzers/dotnet/cs/System.Text.RegularExpressions.Generator.dll"))
+        self.assertTrue(candidates)
+        analyzer = directory / "Acme.SupportProbe.dll"
+        shutil.copyfile(candidates[-1], analyzer)
+        dependency = directory / "dependency.json"
+        dependency.write_text('{"value":"original"}')
+        project = ET.parse(self.compiler_project)
+        ET.SubElement(ET.SubElement(project.getroot(), "ItemGroup"), "Analyzer", Include=str(analyzer))
+        project.write(self.compiler_project)
+        targets = ET.parse(binding.root / "Directory.Build.targets")
+        target = ET.SubElement(targets.getroot(), "Target", Name="ChangeAnalyzerSupport", AfterTargets="CoreCompile",
+                               Condition="'$(MSBuildProjectName)' == 'Adapter'")
+        ET.SubElement(target, "WriteLinesToFile", File=str(dependency), Lines="private-changed-support", Overwrite="true")
+        targets.write(binding.root / "Directory.Build.targets")
+        value["sourceHashes"] = evidence.proof_manifest(binding.root)
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        _, event = self.compile()
+        self.assertEqual(event["code"], "InputChanged")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
+    def test_managed_compiler_observer_rejects_custom_compiler_selection(self):
+        value, _, _, _ = self.compiler_request()
+        properties = ET.parse(self.compiler_properties)
+        properties.find(".//CscToolExe").text = "private-custom-compiler-canary"
+        properties.write(self.compiler_properties)
+        _, event = self.compile()
+        self.assertEqual(event["code"], "OwnershipInvalid")
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
 
     def test_managed_compiler_observer_rejects_changed_request_without_success_receipts(self):
@@ -2005,13 +2054,29 @@ class ContributorAdmissionTests(unittest.TestCase):
 
     def test_build_file_receipts_rehash_imports_compiler_inputs_and_frozen_package_policy(self):
         value = self.build_files()
+        value["tools"] = {"toolchain/Analyzer.dll": evidence.file_sha256(self.toolchain / "Analyzer.dll")}
+        value["supportFiles"] = {"toolchain/Reference.dll": evidence.file_sha256(self.toolchain / "Reference.dll")}
         result = self.build_file_inputs(value)
+        self.assertEqual(result["tools"], value["tools"])
+        self.assertEqual(result["supportFiles"], value["supportFiles"])
         self.assertEqual(result["imports"], value["imports"])
         self.assertEqual(result["compilations"], tuple(value["compilations"]))
         self.assertEqual(result["bindingInputsSha256"], self.binding.inputs_sha256)
         self.assertEqual(result["packageInputsSha256"], evidence.digest(self.package_inputs))
         self.assertFalse(result["qualification"])
         self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(result))
+
+    def test_build_file_receipts_apply_closed_namespace_and_archive_policy_to_tool_support(self):
+        value = self.build_files()
+        for field in ("tools", "supportFiles"):
+            for path, code in (("external/Library.dll", "EvidenceSchemaInvalid"),
+                               ("packages/foreign/1.0.0/Library.dll", "EvidenceIncomplete"),
+                               ("source/Ambient.cs", "EvidenceIncomplete")):
+                changed = copy.deepcopy(value)
+                changed[field] = {path: "a" * 64}
+                with self.subTest(field=field, path=path), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^" + code + "$"):
+                    self.build_file_inputs(changed)
 
     def test_build_file_receipts_reject_missing_closure_failed_observation_and_unknown_parameters(self):
         value = self.build_files()

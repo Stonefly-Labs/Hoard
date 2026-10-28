@@ -368,6 +368,8 @@ def capture_binding_compilation_inputs(binding, owned_run, built, tool, toolchai
         observed = owned_run.command(
             ["dotnet", "exec", "--fx-version", runtime_version, str(toolchain_root / msbuild_relative),
              str(binding.root / binding.project), "-target:Build", "-p:Configuration=Release",
+             "-p:CscToolPath=",
+             "-p:CscToolExe=",
              "-p:UseSharedCompilation=false", "-p:CustomAfterDirectoryBuildProps=" + _msbuild_literal(properties),
              "-nodeReuse:false", "-maxCpuCount:1", "-noconsolelogger", "-nologo", "-verbosity:minimal", logger],
             cwd=tool.parent, kind="events", timeout=600, cache_id="binding-build",
@@ -947,11 +949,17 @@ def binding_build_file_inputs(binding, data, generated_root, toolchain_root, pac
     row = evidence._record({
         "project": evidence.relative_path, "succeeded": evidence._boolean, "inputs": _compiler_file_parameters})
     errors = evidence._list(evidence.stable_id, 1024, minimum=0, unique=True)
-    value = evidence._record({
+    fields = {
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
         "succeeded": evidence._boolean, "compilations": evidence._list(row, 1024),
         "imports": evidence._hash_map, "diagnosticCodes": errors, "observerErrors": errors,
-    })(evidence.load_json(data))
+    }
+    document = evidence.load_json(data)
+    if isinstance(document, dict) and "tools" in document:
+        fields["tools"] = evidence._hash_map
+    if isinstance(document, dict) and "supportFiles" in document:
+        fields["supportFiles"] = evidence._hash_map
+    value = evidence._record(fields)(document)
     policy = evidence._record({})(package_inputs) if package_inputs == {} else evidence._hash_map(package_inputs)
     roots = {"source": binding.root, "generated": Path(generated_root).absolute(),
              "toolchain": Path(toolchain_root).absolute(), "packages": Path(package_root).absolute()}
@@ -978,6 +986,8 @@ def binding_build_file_inputs(binding, data, generated_root, toolchain_root, pac
                     raise evidence.ConformanceError("InputChanged")
 
     observe(value["imports"])
+    observe(value.get("tools", {}))
+    observe(value.get("supportFiles", {}))
     for compilation in value["compilations"]:
         project = compilation["project"]
         if (not compilation["succeeded"] or project in projects or project not in binding.sources

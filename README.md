@@ -638,6 +638,10 @@ Typed Csc generated-output paths now bind isolated, create-new Roslyn output
 trees. Generated sources have separate hashes, not fictitious Csc input entries;
 an actual GeneratedRegex build matches these hashes to portable-PDB documents.
 Reused/foreign directories and post-compile tree changes reject.
+The observer now verifies MVIDs and hashes for actual loaded MSBuild modules,
+plus bounded runtime/host, manifest-selected compiler and co-located analyzer
+support files. Independent admission applies the same source/package ownership
+and rehash rules to these inputs; custom compiler selection rejects.
 Native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the

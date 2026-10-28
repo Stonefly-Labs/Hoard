@@ -2239,6 +2239,17 @@ Record generatedOutputs separately from input Sources; reject cross-project
 reuse or input/output ambiguity. PDB documents may match only that union, with
 separate input/output manifest digests. Emitted-source correspondence does not
 prove complete generator/tool dependency closure or native origin.
+Bind actual loaded MSBuild host/task modules by loaded MVID and current PE
+metadata/hash; do not load assemblies for discovery. The observer image is
+separately frozen by owned orchestration. Distinguish loaded modules from support
+files: actual runtime/hostfxr, muxer/MSBuild configuration, manifest-selected csc
+runtime/resources/apphost/configuration and complete co-located analyzer trees.
+Reject non-default compiler selection and undeclared compiler probing config.
+Recheck analyzer directory membership and all frozen bytes. Capture and
+independent revalidation each have a 256 MiB aggregate cap; retain all other
+bounds. Independent reader admission retains the unchanged combined unique
+proof-byte cap and frozen source/package-member policy for both manifests.
+This is finite supported-tool provenance, not universal generator I/O tracing.
 Compiled-document receipt admission must bind the successful compiler project,
 exact selected DLL/PDB paths and current output hashes. Every document hash must
 match an observed compiler source; unknown or mismatched documents reject.

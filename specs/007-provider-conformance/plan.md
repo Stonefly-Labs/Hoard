@@ -825,6 +825,45 @@ macOS skips and expected non-qualifying exit2.
 tests/fixtures/conformance/BuildInputs/CompilerInputsLogger.cs --verbosity quiet`
 and `git diff --check` pass.
 
+The next T064 tool-support increment records actual loaded MSBuild host/task
+modules from typed load events and snapshots of already-loaded assemblies, not
+assembly loading/discovery. Loaded MVIDs must match actual PE metadata; captured
+hashes are rechecked before publication. The observer image remains separately
+frozen by owned orchestration. Separate support manifests capture the actual
+host runtime, installed hostfxr files, muxer/MSBuild configuration, csc runtime/
+resource assets selected by its dependency manifest, apphost/configuration and
+complete co-located analyzer trees. Directory membership and bytes are rechecked;
+fresh compiler probing configuration and custom compiler selection reject.
+Independent receipt admission applies the unchanged combined unique proof-byte
+limit and frozen source/package-member policy to both new manifests.
+
+Development exposed two real constraints instead of hiding them: forcing
+csc.dll as a custom executable failed MSB3883 because this SDK uses an apphost;
+the final implementation preserves built-in resolution and clears custom
+selection. Capturing unrelated VB/compiler-server files also exceeded the
+aggregate read bound; the compiler support set now follows actual csc manifest
+assets instead. Capture and independent revalidation each have a separate
+256 MiB read cap, preserving per-file/file-count/deadline limits. This permits
+the complete finite inventory without raising the independent unique proof cap.
+Actual tool-hash changes, changed selected-analyzer support files and custom
+compiler controls reject; the source-generator/PDB controls continue passing.
+A fresh six-command managed owned-build replay still passes evaluation, restore,
+graph capture, observed compile, pack and PDB admission with exact archive/image
+equality. This is not native containment, universal generator filesystem-I/O
+tracing, complete contributor applicability or public qualification. T064 stays
+unchecked and implementation continues. README/provider/development/harness
+guidance is synchronized; product/module/provider APIs, operator examples,
+architecture/ADR/diagrams, governance, predecessors, IaC, release and UI documents
+are unaffected by private compiler evidence tooling.
+`python3 scripts/conformance_unit_checks.py --all-tooling` observes682 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected non-qualifying exit2.
+`dotnet format tests/fixtures/conformance/BuildInputs/BuildInputs.csproj
+--no-restore --verify-no-changes --include
+tests/fixtures/conformance/BuildInputs/CompilerInputsLogger.cs --verbosity quiet`,
+`python3 scripts/conformance_case_catalog.py --check`,
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check` pass.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

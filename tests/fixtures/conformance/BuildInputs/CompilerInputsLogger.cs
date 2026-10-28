@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Diagnostics;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -41,6 +43,10 @@ public sealed class CompilerInputsLogger : ILogger
     private readonly Dictionary<(int, int, int), Compilation> active = [];
     private readonly List<Compilation> compilations = [];
     private readonly SortedDictionary<string, string> imports = new(StringComparer.Ordinal);
+    private readonly SortedDictionary<string, string> tools = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Guid> toolModules = new(StringComparer.Ordinal);
+    private readonly SortedDictionary<string, string> supportFiles = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string[]> supportDirectories = new(StringComparer.Ordinal);
     private readonly SortedDictionary<string, string> frozen = new(StringComparer.Ordinal);
     private readonly SortedSet<string> diagnostics = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> roots = new(StringComparer.Ordinal);
@@ -51,6 +57,8 @@ public sealed class CompilerInputsLogger : ILogger
     private string requestHash = "";
     private string? failure;
     private bool finished;
+    private bool compilerSupportCaptured;
+    private string? compilerDirectory;
     private long bytesRead;
 
     public void Initialize(IEventSource eventSource)
@@ -122,6 +130,8 @@ public sealed class CompilerInputsLogger : ILogger
                 }
 
                 var context = Context(data.BuildEventContext);
+                CaptureHostAssemblies();
+                CaptureCompilerSupport();
                 var (identity, _) = FileInput(data.ProjectFile);
                 Require(identity.StartsWith("source/", StringComparison.Ordinal)
                     && identity.EndsWith(".csproj", StringComparison.Ordinal)
@@ -159,7 +169,7 @@ public sealed class CompilerInputsLogger : ILogger
         return (context!.NodeId, context.ProjectContextId, context.TaskId);
     }
 
-    private (string Identity, string Hash) FileInput(string name)
+    private (string Identity, string Hash) FileInput(string name, Guid? moduleId = null)
     {
         var path = Path.GetFullPath(name);
         var owner = roots.SingleOrDefault(item =>
@@ -171,6 +181,15 @@ public sealed class CompilerInputsLogger : ILogger
         var bytes = Read(OwnedPath(owner.Value, relative),
             (int)Math.Min(MaxPackageBytes, MaxArchiveBytes - bytesRead), allowEmpty: true);
         bytesRead += bytes.Length;
+        if (moduleId is not null)
+        {
+            using var stream = new MemoryStream(bytes, writable: false);
+            using var image = new PEReader(stream);
+            Require(image.HasMetadata, "ProofMismatch");
+            var metadata = image.GetMetadataReader();
+            Require(moduleId != Guid.Empty
+                && metadata.GetGuid(metadata.GetModuleDefinition().Mvid) == moduleId, "ProofMismatch");
+        }
         var hash = Hash(bytes);
         Require(owner.Key != "source" || expectedSources[relative] == hash, "InputChanged");
         if (frozen.TryGetValue(identity, out var previous))
@@ -206,6 +225,12 @@ public sealed class CompilerInputsLogger : ILogger
 
     private void Capture(BuildEventArgs data)
     {
+        if (data is AssemblyLoadBuildEventArgs assembly)
+        {
+            Require(assembly.AssemblyPath is not null && Path.IsPathFullyQualified(assembly.AssemblyPath),
+                "EvidenceIncomplete");
+            CaptureTool(assembly.AssemblyPath!, assembly.MVID);
+        }
         if (data is ProjectImportedEventArgs import && import.ImportedProjectFile is not null)
         {
             Require(Path.IsPathFullyQualified(import.ImportedProjectFile), "EvidenceIncomplete");
@@ -245,6 +270,20 @@ public sealed class CompilerInputsLogger : ILogger
             compilation.GeneratedDirectory = path;
             return;
         }
+        if (parameter.ItemType is "ToolPath" or "ToolExe")
+        {
+            Require(parameter.Items.Count == 1 && parameter.Items[0] is string, "EvidenceIncomplete");
+            var value = (string)parameter.Items[0]!;
+            if (parameter.ItemType == "ToolPath")
+            {
+                Require(value.Length == 0, "OwnershipInvalid");
+            }
+            else
+            {
+                Require(value.Length == 0, "OwnershipInvalid");
+            }
+            return;
+        }
         if (!FileParameters.Contains(parameter.ItemType))
         {
             return;
@@ -267,6 +306,151 @@ public sealed class CompilerInputsLogger : ILogger
             {
                 compilation.Sources.Add(identity, hash);
             }
+            if (parameter.ItemType == "Analyzers")
+            {
+                CaptureSupportDirectory(Path.GetDirectoryName(item.GetMetadata("FullPath"))!);
+            }
+        }
+    }
+
+    private void CaptureCompilerSupport()
+    {
+        var sdk = Path.GetDirectoryName(typeof(ILogger).Assembly.Location)!;
+        Require(toolModules.ContainsKey(Path.Combine(sdk, "Roslyn", "Microsoft.Build.Tasks.CodeAnalysis.dll")),
+            "EvidenceIncomplete");
+        if (compilerSupportCaptured)
+        {
+            return;
+        }
+        var directory = Path.Combine(sdk, "Roslyn", "bincore");
+        compilerDirectory = directory;
+        Require(!File.Exists(Path.Combine(directory, "csc.runtimeconfig.dev.json")), "OwnershipInvalid");
+        CaptureSupportDirectory(Path.GetDirectoryName(typeof(object).Assembly.Location)!);
+        CaptureSupportDirectory(Path.Combine(roots["toolchain"], "host", "fxr"));
+        foreach (var path in new[]
+        {
+            Path.Combine(roots["toolchain"], OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet"),
+            Path.Combine(sdk, "MSBuild.deps.json"), Path.Combine(sdk, "MSBuild.runtimeconfig.json")
+        })
+        {
+            var (identity, hash) = FileInput(path);
+            supportFiles[identity] = hash;
+        }
+        var names = new SortedSet<string>(StringComparer.Ordinal) { "csc.deps.json", "csc.runtimeconfig.json" };
+        var executable = OperatingSystem.IsWindows() ? "csc.exe" : "csc";
+        if (File.Exists(Path.Combine(directory, executable)))
+        {
+            names.Add(executable);
+        }
+        var manifestBytes = Read(Path.Combine(directory, "csc.deps.json"), MaxManifestBytes);
+        using var manifest = JsonDocument.Parse(manifestBytes,
+            new JsonDocumentOptions { MaxDepth = 32 });
+        var value = manifest.RootElement;
+        Keys(value, "runtimeTarget", "compilationOptions", "targets", "libraries");
+        var target = value.GetProperty("targets").GetProperty(Text(value.GetProperty("runtimeTarget"), "name"));
+        Require(target.ValueKind == JsonValueKind.Object, "EvidenceSchemaInvalid");
+        foreach (var library in target.EnumerateObject())
+        {
+            Require(library.Value.ValueKind == JsonValueKind.Object, "EvidenceSchemaInvalid");
+            foreach (var assets in library.Value.EnumerateObject())
+            {
+                Require(assets.Name is "dependencies" or "runtime" or "resources", "EvidenceSchemaInvalid");
+                if (assets.Name == "dependencies")
+                {
+                    continue;
+                }
+                Require(assets.Value.ValueKind == JsonValueKind.Object, "EvidenceSchemaInvalid");
+                foreach (var asset in assets.Value.EnumerateObject())
+                {
+                    Require(names.Count < 4096, "OutputLimitExceeded");
+                    _ = OwnedPath(directory, asset.Name);
+                    names.Add(asset.Name);
+                }
+            }
+        }
+        Require(names.Contains("csc.dll") && names.Contains("Microsoft.CodeAnalysis.CSharp.dll")
+            && names.Contains("Microsoft.CodeAnalysis.dll"), "EvidenceIncomplete");
+        foreach (var name in names)
+        {
+            var (identity, hash) = FileInput(OwnedPath(directory, name));
+            Require(name != "csc.deps.json" || hash == Hash(manifestBytes), "InputChanged");
+            supportFiles[identity] = hash;
+        }
+        compilerSupportCaptured = true;
+    }
+
+    private string[] SupportDirectoryFiles(string directory)
+    {
+        var owner = roots.SingleOrDefault(item =>
+            directory.StartsWith(item.Value + Path.DirectorySeparatorChar, StringComparison.Ordinal));
+        Require(owner.Key is not null, "OwnershipInvalid");
+        _ = OwnedPath(owner.Value!, directory[(owner.Value!.Length + 1)..].Replace(Path.DirectorySeparatorChar, '/'));
+        var pending = new Stack<string>();
+        pending.Push(directory);
+        var files = new List<string>();
+        var entries = 0;
+        while (pending.TryPop(out var current))
+        {
+            foreach (var path in Directory.EnumerateFileSystemEntries(current))
+            {
+                Require(++entries <= 4096 && Stopwatch.GetElapsedTime(started) < TimeSpan.FromMinutes(10),
+                    "OutputLimitExceeded");
+                _ = OwnedPath(owner.Value!, path[(owner.Value!.Length + 1)..].Replace(Path.DirectorySeparatorChar, '/'));
+                if (Directory.Exists(path))
+                {
+                    pending.Push(path);
+                }
+                else
+                {
+                    files.Add(path);
+                }
+            }
+        }
+        Require(files.Count > 0, "EvidenceIncomplete");
+        files.Sort(StringComparer.Ordinal);
+        return files.ToArray();
+    }
+
+    private void CaptureSupportDirectory(string directory)
+    {
+        directory = Path.GetFullPath(directory);
+        if (supportDirectories.ContainsKey(directory))
+        {
+            return;
+        }
+        var files = SupportDirectoryFiles(directory);
+        Require(supportDirectories.Count < 128, "OutputLimitExceeded");
+        supportDirectories.Add(directory, files);
+        foreach (var path in files)
+        {
+            var (identity, hash) = FileInput(path);
+            supportFiles[identity] = hash;
+        }
+    }
+
+    private void CaptureTool(string path, Guid moduleId)
+    {
+        path = Path.GetFullPath(path);
+        if (toolModules.TryGetValue(path, out var previous))
+        {
+            Require(previous == moduleId, "InputChanged");
+            return;
+        }
+        var (identity, hash) = FileInput(path, moduleId);
+        toolModules.Add(path, moduleId);
+        tools[identity] = hash;
+    }
+
+    private void CaptureHostAssemblies()
+    {
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (assembly == typeof(CompilerInputsLogger).Assembly)
+            {
+                continue;
+            }
+            Require(!assembly.IsDynamic && Path.IsPathFullyQualified(assembly.Location), "EvidenceIncomplete");
+            CaptureTool(assembly.Location, assembly.ManifestModule.ModuleVersionId);
         }
     }
 
@@ -338,8 +522,9 @@ public sealed class CompilerInputsLogger : ILogger
             finished = true;
             Observe(() =>
             {
+                CaptureHostAssemblies();
                 Require(succeeded && diagnostics.Count == 0 && active.Count == 0 && compilations.Count > 0
-                    && imports.Count > 0
+                    && imports.Count > 0 && tools.Count > 0
                     && compilations.All(row => row.Succeeded && row.CommandHash is not null
                         && row.Sources.Count > 0 && row.Inputs.TryGetValue("References", out var references)
                         && references.Count > 0), "EvidenceIncomplete");
@@ -347,6 +532,14 @@ public sealed class CompilerInputsLogger : ILogger
                 {
                     Require(CaptureGeneratedOutputs(row).SequenceEqual(row.GeneratedOutputs), "InputChanged");
                 }
+                foreach (var (directory, files) in supportDirectories)
+                {
+                    Require(SupportDirectoryFiles(directory).SequenceEqual(files), "InputChanged");
+                }
+                Require(compilerDirectory is not null
+                    && !File.Exists(Path.Combine(compilerDirectory, "csc.runtimeconfig.dev.json")), "OwnershipInvalid");
+                // Capture and independent revalidation each have the same aggregate byte cap.
+                bytesRead = 0;
                 foreach (var (identity, expected) in frozen.ToArray())
                 {
                     var separator = identity.IndexOf('/');
@@ -385,6 +578,8 @@ public sealed class CompilerInputsLogger : ILogger
                             inputs = row.Inputs
                         }).ToArray(),
                         imports,
+                        tools,
+                        supportFiles,
                         diagnosticCodes = diagnostics,
                         observerErrors = Array.Empty<string>()
                     }),

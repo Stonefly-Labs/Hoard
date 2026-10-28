@@ -466,6 +466,22 @@ changes and missing generator provenance reject. This closes emitted-source
 correspondence, not the remaining generator/tool dependency closure or native
 qualification requirements.
 
+Tool provenance now also records actual loaded MSBuild host/task modules,
+matching their loaded MVIDs to actual PE metadata without loading new assemblies.
+The observer itself remains separately frozen by owned orchestration. Support
+files are a distinct manifest: actual host runtime and installed hostfxr files,
+the muxer/MSBuild configuration, csc dependency-manifest runtime/resources and
+its selected apphost/configuration, and complete co-located analyzer trees.
+Fresh compiler-directory probing configuration and non-default compiler
+selection reject. Analyzer tree membership and all captured bytes are checked
+again before output. Capture and independent revalidation each have a separate
+256 MiB aggregate read cap; per-file, file-count and deadline bounds remain.
+Independent receipt admission rehashes the combined unique inventory under its
+unchanged aggregate proof limit, including frozen package-file ownership.
+Actual controls cover changed tool hashes, changed analyzer support and custom
+compiler rejection. This finite support set is not universal filesystem-I/O
+tracing, arbitrary compiler support or native contributor qualification.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

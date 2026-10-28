@@ -6546,6 +6546,20 @@ portable-PDB documents; missing provenance, altered bytes, reused/foreign paths
 and post-compile additions reject. These managed checks do not establish native
 containment, complete generator/tool dependency closure or public qualification.
 
+The tool-support increment additionally binds actual loaded MSBuild module
+MVIDs/bytes and distinct runtime/host/compiler/analyzer support manifests.
+Compiler runtime/resources come from the selected csc dependency manifest, not
+unrelated VB/compiler-server files. Analyzer support trees are frozen in full.
+Owned capture forces built-in compiler selection; non-default typed tool
+parameters reject. Setting a DLL as a custom executable correctly failed
+MSB3883 during development: the actual SDK uses a csc apphost, so the final path
+preserves built-in resolution instead of guessing its invocation.
+Each capture/revalidation pass has its own 256 MiB aggregate cap, retaining the
+per-file/file-count/deadline limits. Independent admission retains the unchanged
+unique proof-byte limit and source/package policy. Actual module/support and
+six-command managed owned-build controls pass. This does not claim arbitrary
+external generator I/O tracking, native containment or public acceptance.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe
