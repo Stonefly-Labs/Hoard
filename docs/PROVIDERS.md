@@ -455,6 +455,17 @@ CustomAfterDirectoryBuildProps hook and requires owned configuration/feed paths
 without semicolons. Hook conflict/evaluation and complete compiler/asset/native
 provenance remain unfinished; it is not the public contributor entry point.
 
+Finite restore-graph admission now matches the exact net10.0 assets/lock package
+and dependency-endpoint inventories, versions, content hashes, cache ownership
+and declared project paths, anchored to the prepared-lock hash. Cached archives
+are independently rehashed and their package metadata checked. A closed separate
+receipt binds NuGet logical content hashes to those exact archive bytes; raw
+archive SHA-512 is not substituted for signed-package content hashes.
+Actual single/two-project probes admit eleven package nodes and one project node;
+NuGet's bundled API computes seven content hashes distinct from raw archive hashes.
+The producer remains private. This is not signature trust, complete dependency
+range/evaluated compiler provenance, RID/multi-target support or public dispatch.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

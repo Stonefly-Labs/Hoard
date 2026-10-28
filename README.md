@@ -672,6 +672,12 @@ disjoint outputs outside read-only binding sources, including referenced project
 Actual single/two-project SDK builds pass; configuration, generated controls and
 the entire staged source inventory are rechecked on failure as well as success.
 This remains a managed component, not public dispatch or native qualification.
+Restore-graph admission now aligns the finite net10.0 SDK graph with its frozen
+prepared lock, exact package/cache owners and declared project references.
+Actual probes cover eleven package nodes and one project node. NuGet's own API
+supplies logical content hashes: seven signed-package hashes differ from raw
+archive SHA-512. Archive bytes are independently rehashed; the content producer
+is still private, and complete native input provenance remains unfinished.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

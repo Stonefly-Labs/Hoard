@@ -2252,6 +2252,15 @@ after command failure. The current recipe uses CustomAfterDirectoryBuildProps
 and rejects semicolon configuration/feed paths. It does not yet resolve author
 hook conflicts or establish complete evaluated compiler/asset/native provenance,
 and is not connected to public contributor dispatch.
+Finite restore-graph admission currently supports exactly net10.0 without RID
+targets. Bind the prepared-lock hash, exact package/dependency-endpoint sets,
+resolved versions and logical content hashes, one expected cache and declared
+project paths. Independently rehash cached archive bytes and check package
+metadata. Require a closed per-package receipt linking raw archive SHA-256 and
+NuGet logical content SHA-512; signed-package logical hashes are not raw archive
+hashes. The actual producer uses NuGet's own API but remains private.
+This is cross-artifact admission, not signature trust, dependency-range
+interpretation, native producer origin or complete evaluated input provenance.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

@@ -316,6 +316,220 @@ class ContributorAdmissionTests(unittest.TestCase):
                     self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
                 contributors.build_binding_project(binding, run, configuration, run.root / "feed")
 
+    def restore_graph_fixture(self):
+        binding = contributors.admit_binding_project(self.project, "metadata")
+        packages = self.parent / "packages"
+        cache = packages / "acme.dependency/2.4.0-preview.1"
+        cache.mkdir(parents=True)
+        archive = cache / "acme.dependency.2.4.0-preview.1.nupkg"
+        with zipfile.ZipFile(archive, "w") as packed:
+            packed.writestr("Acme.Dependency.nuspec", (
+                "<package><metadata><id>Acme.Dependency</id><version>2.4.0-preview.1</version></metadata></package>"))
+            packed.writestr("build/Acme.Dependency.props", "<Project />")
+        hashed = base64.b64encode(hashlib.sha512(archive.read_bytes()).digest()).decode("ascii")
+        self.content_receipt = {"schemaVersion": 1, "qualification": False, "packages": [{
+            "cachePath": "acme.dependency/2.4.0-preview.1",
+            "archiveSha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+            "contentSha512": hashlib.sha512(archive.read_bytes()).hexdigest()}]}
+        assets = {
+            "version": 3, "targets": {"net10.0": {
+                "Acme.Dependency/2.4.0-preview.1": {"type": "package"}}},
+            "libraries": {"Acme.Dependency/2.4.0-preview.1": {
+                "type": "package", "path": "acme.dependency/2.4.0-preview.1", "sha512": hashed}},
+            "packageFolders": {str(packages) + "/": {}},
+            "project": {"restore": {
+                "projectPath": str(self.project), "projectUniqueName": str(self.project),
+                "packagesPath": str(packages)}}}
+        lock = {"version": 2, "dependencies": {"net10.0": {
+            "acme.dependency": {"type": "Direct", "resolved": "2.4.0-preview.1", "contentHash": hashed}}}}
+        return binding, assets, lock, packages
+
+    def test_restore_graph_binds_exact_package_versions_hashes_and_declared_project_references(self):
+        shared = self.source / "shared"
+        shared.mkdir()
+        (shared / "Shared.csproj").write_text('<Project Sdk="Microsoft.NET.Sdk" />')
+        self.registration["sourceFiles"].append("shared/Shared.csproj")
+        self.write(self.registration)
+        binding, assets, lock, packages = self.restore_graph_fixture()
+        key = "Acme.Shared/1.0.0"
+        assets["libraries"][key] = {"type": "project", "msbuildProject": "shared/Shared.csproj"}
+        assets["targets"]["net10.0"][key] = {"type": "project"}
+        assets["targets"]["net10.0"]["Acme.Dependency/2.4.0-preview.1"]["dependencies"] = {"Acme.Shared": "1.0.0"}
+        lock["dependencies"]["net10.0"]["acme.shared"] = {"type": "Project"}
+        lock["dependencies"]["net10.0"]["acme.dependency"]["dependencies"] = {"Acme.Shared": "[1.0.0]"}
+        raw = evidence.canonical_bytes(assets)
+        result = contributors.binding_restore_graph(
+            binding, raw, evidence.canonical_bytes(lock), binding.project, packages,
+            expected_lock_sha256=evidence.digest(lock), content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+        archive = packages / "acme.dependency/2.4.0-preview.1/acme.dependency.2.4.0-preview.1.nupkg"
+        self.assertEqual(result["packages"], {"acme.dependency/2.4.0-preview.1": {
+            "packageId": "Acme.Dependency", "version": "2.4.0-preview.1",
+            "nugetContentSha512": hashlib.sha512(archive.read_bytes()).hexdigest(),
+            "archiveSha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+            "archiveSha512": hashlib.sha512(archive.read_bytes()).hexdigest()}})
+        self.assertEqual(result["projects"], {key: "shared/Shared.csproj"})
+        self.assertEqual(result["assetsSha256"], hashlib.sha256(raw).hexdigest())
+        self.assertFalse(result["qualification"])
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(result))
+        assets["packageFolders"] = {str(packages): {}}
+        self.assertEqual(contributors.binding_restore_graph(
+            binding, evidence.canonical_bytes(assets), evidence.canonical_bytes(lock),
+            binding.project, packages, expected_lock_sha256=evidence.digest(lock),
+            content_hashes_data=evidence.canonical_bytes(self.content_receipt))["packages"], result["packages"])
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_restore_graph(binding, raw, evidence.canonical_bytes(lock),
+                                               binding.project, packages, expected_lock_sha256="a" * 64,
+                                               content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+        (self.source / "Binding.cs").write_bytes(b"changed")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_restore_graph(binding, raw, evidence.canonical_bytes(lock),
+                                               binding.project, packages, expected_lock_sha256=evidence.digest(lock),
+                                               content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+
+    def test_restore_graph_rejects_missing_foreign_duplicate_or_changed_package_and_edge_rows(self):
+        binding, original, original_lock, packages = self.restore_graph_fixture()
+        for defect in ("missing-library", "missing-lock", "foreign-target", "duplicate-id", "version",
+                       "hash", "cache-owner", "edge", "type", "missing-type", "diagnostic", "framework"):
+            assets, lock = copy.deepcopy(original), copy.deepcopy(original_lock)
+            library = assets["libraries"]["Acme.Dependency/2.4.0-preview.1"]
+            expected = "EvidenceIncomplete"
+            if defect == "missing-library":
+                assets["libraries"].clear()
+            elif defect == "missing-lock":
+                lock["dependencies"]["net10.0"].clear()
+            elif defect == "foreign-target":
+                assets["targets"]["net10.0"]["Foreign/1.0.0"] = {"type": "package"}
+            elif defect == "duplicate-id":
+                lock["dependencies"]["net10.0"]["Acme.Dependency"] = copy.deepcopy(
+                    lock["dependencies"]["net10.0"]["acme.dependency"])
+                expected = "EvidenceSchemaInvalid"
+            elif defect == "version":
+                lock["dependencies"]["net10.0"]["acme.dependency"]["resolved"] = "2.4.0"
+                expected = "ProofMismatch"
+            elif defect == "hash":
+                library["sha512"] = base64.b64encode(b"q" * 64).decode("ascii")
+                expected = "ProofMismatch"
+            elif defect == "cache-owner":
+                library["path"] = "foreign/2.4.0-preview.1"
+                expected = "ProofMismatch"
+            elif defect == "edge":
+                assets["targets"]["net10.0"]["Acme.Dependency/2.4.0-preview.1"]["dependencies"] = {"Foreign": "1.0.0"}
+            elif defect == "type":
+                library["type"] = "project"
+            elif defect == "missing-type":
+                del library["type"]
+                del assets["targets"]["net10.0"]["Acme.Dependency/2.4.0-preview.1"]["type"]
+            elif defect == "diagnostic":
+                assets["logs"] = [{"message": "private canary"}]
+            else:
+                assets["targets"]["net10.0/linux-x64"] = assets["targets"]["net10.0"]
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^" + expected + "$"):
+                contributors.binding_restore_graph(binding, evidence.canonical_bytes(assets),
+                                                   evidence.canonical_bytes(lock), binding.project, packages,
+                                                   expected_lock_sha256=evidence.digest(lock),
+                                                   content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+
+    def test_restore_graph_rejects_foreign_cache_project_paths_and_undeclared_project_references(self):
+        binding, original, original_lock, packages = self.restore_graph_fixture()
+        for defect in ("project", "unique-project", "cache", "fallback-cache", "outside-reference", "undeclared-reference"):
+            assets, lock = copy.deepcopy(original), copy.deepcopy(original_lock)
+            restore = assets["project"]["restore"]
+            expected = "OwnershipInvalid"
+            if defect == "project":
+                restore["projectPath"] = str(self.parent / "foreign.csproj")
+            elif defect == "unique-project":
+                restore["projectUniqueName"] = str(self.parent / "foreign.csproj")
+            elif defect == "cache":
+                restore["packagesPath"] = str(self.parent)
+            elif defect == "fallback-cache":
+                assets["packageFolders"][str(self.parent) + "/"] = {}
+            else:
+                key = "Acme.Shared/1.0.0"
+                assets["libraries"][key] = {
+                    "type": "project", "msbuildProject": "../Outside.csproj" if defect == "outside-reference" else "Absent.csproj"}
+                assets["targets"]["net10.0"][key] = {"type": "project"}
+                lock["dependencies"]["net10.0"]["Acme.Shared"] = {"type": "Project"}
+                if defect == "undeclared-reference":
+                    expected = "EvidenceIncomplete"
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^" + expected + "$"):
+                contributors.binding_restore_graph(binding, evidence.canonical_bytes(assets),
+                                                   evidence.canonical_bytes(lock), binding.project, packages,
+                                                   expected_lock_sha256=evidence.digest(lock),
+                                                   content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+
+    def test_restore_graph_rejects_malformed_hashes_and_oversized_input(self):
+        binding, assets, lock, packages = self.restore_graph_fixture()
+        for hashed in ("not-base64", "!" * 88, base64.b64encode(b"x" * 63).decode("ascii")):
+            assets["libraries"]["Acme.Dependency/2.4.0-preview.1"]["sha512"] = hashed
+            with self.subTest(hashed=hashed), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                contributors.binding_restore_graph(binding, evidence.canonical_bytes(assets),
+                                                   evidence.canonical_bytes(lock), binding.project, packages,
+                                                   expected_lock_sha256=evidence.digest(lock),
+                                                   content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+            contributors.binding_restore_graph(binding, b"x" * (2 * 1024 * 1024 + 1), b"{}", binding.project, packages,
+                                               expected_lock_sha256="a" * 64, content_hashes_data=b"{}")
+
+    def test_restore_graph_checks_actual_cached_archives_and_aggregate_read_budget(self):
+        binding, assets, lock, packages = self.restore_graph_fixture()
+        archive = packages / "acme.dependency/2.4.0-preview.1/acme.dependency.2.4.0-preview.1.nupkg"
+        original = archive.read_bytes()
+        archive.write_bytes(original + b"changed")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_restore_graph(
+                binding, evidence.canonical_bytes(assets), evidence.canonical_bytes(lock),
+                binding.project, packages, expected_lock_sha256=evidence.digest(lock),
+                content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+        archive.write_bytes(original)
+        with mock.patch.object(evidence, "MAX_PROOF_BYTES", len(original) - 1), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+            contributors.binding_restore_graph(
+                binding, evidence.canonical_bytes(assets), evidence.canonical_bytes(lock),
+                binding.project, packages, expected_lock_sha256=evidence.digest(lock),
+                content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+        with zipfile.ZipFile(archive, "w") as packed:
+            packed.writestr("Foreign.nuspec", (
+                "<package><metadata><id>Foreign</id><version>2.4.0-preview.1</version></metadata></package>"))
+            packed.writestr("build/Foreign.props", "<Project />")
+        hashed = base64.b64encode(hashlib.sha512(archive.read_bytes()).digest()).decode("ascii")
+        assets["libraries"]["Acme.Dependency/2.4.0-preview.1"]["sha512"] = hashed
+        lock["dependencies"]["net10.0"]["acme.dependency"]["contentHash"] = hashed
+        with self.assertRaises(evidence.ConformanceError):
+            contributors.binding_restore_graph(
+                binding, evidence.canonical_bytes(assets), evidence.canonical_bytes(lock),
+                binding.project, packages, expected_lock_sha256=evidence.digest(lock),
+                content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+
+    def test_restore_graph_requires_exact_closed_nuget_content_hash_receipt(self):
+        binding, assets, lock, packages = self.restore_graph_fixture()
+        for defect in ("missing", "foreign", "duplicate", "content", "archive", "unknown", "malformed"):
+            receipt = copy.deepcopy(self.content_receipt)
+            expected = "EvidenceSchemaInvalid"
+            if defect == "missing":
+                receipt["packages"].clear()
+                expected = "ProofMismatch"
+            elif defect == "foreign":
+                receipt["packages"].append({**receipt["packages"][0], "cachePath": "foreign/1.0.0"})
+                expected = "EvidenceIncomplete"
+            elif defect == "duplicate":
+                receipt["packages"].append(copy.deepcopy(receipt["packages"][0]))
+            elif defect == "content":
+                receipt["packages"][0]["contentSha512"] = "a" * 128
+                expected = "ProofMismatch"
+            elif defect == "archive":
+                receipt["packages"][0]["archiveSha256"] = "a" * 64
+                expected = "InputChanged"
+            elif defect == "unknown":
+                receipt["message"] = "private canary"
+            else:
+                receipt["packages"][0]["contentSha512"] = "not-a-hash"
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^" + expected + "$"):
+                contributors.binding_restore_graph(
+                    binding, evidence.canonical_bytes(assets), evidence.canonical_bytes(lock),
+                    binding.project, packages, expected_lock_sha256=evidence.digest(lock),
+                    content_hashes_data=evidence.canonical_bytes(receipt))
+
     def test_registered_runtime_components_preserve_distinct_actual_archive_owners_and_image_names(self):
         feed, output = self.parent / "feed", self.parent / "consumer"
         feed.mkdir()

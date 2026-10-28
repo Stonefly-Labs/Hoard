@@ -2,6 +2,8 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+import base64
+import binascii
 import hashlib
 import io
 import os
@@ -348,6 +350,149 @@ def binding_evaluation_inputs(binding, data, toolchain_root):
         "project": binding.project,
         "sources": MappingProxyType({path: sources[path] for path in sorted(paths["source"])}),
         "toolchain": toolchain})
+
+
+def binding_restore_graph(binding, assets_data, lock_data, project, package_root, *,
+                          expected_lock_sha256, content_hashes_data):
+    if any(not isinstance(data, bytes) for data in (assets_data, lock_data, content_hashes_data)):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if max(map(len, (assets_data, lock_data, content_hashes_data))) > 2 * 1024 * 1024:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    if hashlib.sha256(lock_data).hexdigest() != evidence.sha256(expected_lock_sha256):
+        raise evidence.ConformanceError("InputChanged")
+    content_row = evidence._record({
+        "cachePath": evidence.relative_path, "archiveSha256": evidence.sha256,
+        "contentSha512": evidence._sha512})
+    content = evidence._record({
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "packages": evidence._list(content_row, 1024, minimum=0),
+    })(evidence.load_json(content_hashes_data))
+    content_rows = {row["cachePath"]: row for row in content["packages"]}
+    if len(content_rows) != len(content["packages"]):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    project = evidence.relative_path(project)
+    if project not in binding.sources or not project.endswith(".csproj"):
+        raise evidence.ConformanceError("BindingInvalid")
+    assets, lock = evidence.load_json(assets_data), evidence.load_json(lock_data)
+    if (not isinstance(assets, dict) or type(assets.get("version")) is not int or assets["version"] != 3
+            or not isinstance(lock, dict) or type(lock.get("version")) is not int or lock["version"] not in (1, 2)
+            or not isinstance(assets.get("targets"), dict) or set(assets["targets"]) != {"net10.0"}
+            or not isinstance(lock.get("dependencies"), dict) or set(lock["dependencies"]) != {"net10.0"}
+            or not isinstance(assets.get("libraries"), dict)
+            or not isinstance(assets.get("project"), dict) or assets.get("logs")):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    restore = assets["project"].get("restore")
+    folders = assets.get("packageFolders")
+    package_root = Path(package_root).absolute()
+    if (not isinstance(restore, dict) or restore.get("projectPath") != str(binding.root / project)
+            or restore.get("projectUniqueName") != str(binding.root / project)
+            or restore.get("packagesPath") != str(package_root)
+            or not isinstance(folders, dict) or len(folders) != 1
+            or next(iter(folders)) not in (str(package_root), str(package_root) + os.sep)):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    target, dependencies = assets["targets"]["net10.0"], lock["dependencies"]["net10.0"]
+    libraries = assets["libraries"]
+    if (not isinstance(target, dict) or not isinstance(dependencies, dict)
+            or len(libraries) > 1024 or len(dependencies) > 1024 or set(target) != set(libraries)):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+
+    def named(rows):
+        if not isinstance(rows, dict) or len(rows) > 1024:
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        result = {}
+        for name, value in rows.items():
+            name = evidence.stable_id(name).casefold()
+            if name in result:
+                raise evidence.ConformanceError("EvidenceSchemaInvalid")
+            result[name] = value
+        return result
+
+    def content_hash(value):
+        if not isinstance(value, str) or len(value) != 88:
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        try:
+            raw = base64.b64decode(value, validate=True)
+        except (ValueError, binascii.Error):
+            raise evidence.ConformanceError("EvidenceSchemaInvalid") from None
+        if len(raw) != 64 or base64.b64encode(raw).decode("ascii") != value:
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        return raw.hex()
+
+    locked = named(dependencies)
+    observed, packages, projects = set(), {}, {}
+    total, deadline = 0, time.monotonic() + 5
+    for key, library in libraries.items():
+        if not isinstance(key, str) or key.count("/") != 1:
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        package_id, version = (evidence.stable_id(part) for part in key.split("/"))
+        name = package_id.casefold()
+        dependency, resolved = locked.get(name), target[key]
+        if (name in observed or not isinstance(dependency, dict) or not isinstance(library, dict)
+                or not isinstance(resolved, dict) or library.get("type") != resolved.get("type")):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        lock_edges = named(dependency.get("dependencies", {}))
+        target_edges = named(resolved.get("dependencies", {}))
+        if any(not isinstance(value, str) or not 0 < len(value) <= 1024
+               for edges in (lock_edges, target_edges) for value in edges.values()):
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        if lock_edges.keys() != target_edges.keys() or not target_edges.keys() <= locked.keys():
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        observed.add(name)
+        if library.get("type") == "package":
+            prefix = evidence.relative_path(library.get("path"))
+            if (dependency.get("type") not in ("Direct", "Transitive", "CentralTransitive")
+                    or not isinstance(dependency.get("resolved"), str)
+                    or dependency["resolved"].casefold() != version.casefold()
+                    or prefix != name + "/" + version.lower()):
+                raise evidence.ConformanceError("ProofMismatch")
+            hashed = content_hash(library.get("sha512"))
+            if hashed != content_hash(dependency.get("contentHash")):
+                raise evidence.ConformanceError("ProofMismatch")
+            receipt = content_rows.get(prefix)
+            if receipt is None or receipt["contentSha512"] != hashed:
+                raise evidence.ConformanceError("ProofMismatch")
+            captured = io.BytesIO()
+            filename = prefix + "/" + name + "." + version.lower() + ".nupkg"
+            with evidence._input_root(package_root) as (_, directory):
+                archive_hash, size = evidence._source_file(
+                    directory, filename, remaining=min(evidence.MAX_PACKAGE_BYTES, evidence.MAX_PROOF_BYTES - total),
+                    deadline=deadline, target=captured)
+            total += size
+            actual = evidence.package_archive_identity(package_root / prefix, name, version.lower())
+            if (receipt["archiveSha256"] != archive_hash or actual["sha256"] != archive_hash
+                    or actual["nugetSha512"] != hashlib.sha512(captured.getvalue()).hexdigest()):
+                raise evidence.ConformanceError("InputChanged")
+            packages[prefix] = MappingProxyType({
+                "packageId": package_id, "version": version, "nugetContentSha512": hashed,
+                "archiveSha256": archive_hash, "archiveSha512": actual["nugetSha512"]})
+        elif library.get("type") == "project":
+            path = library.get("msbuildProject")
+            if (dependency.get("type") != "Project" or not isinstance(path, str) or len(path) > 512
+                    or Path(path).is_absolute() or "\\" in path or "\x00" in path):
+                raise evidence.ConformanceError("EvidenceIncomplete")
+            path = Path(os.path.normpath(binding.root / Path(project).parent / path))
+            if not path.is_relative_to(binding.root):
+                raise evidence.ConformanceError("OwnershipInvalid")
+            relative = evidence.relative_path(path.relative_to(binding.root).as_posix())
+            if relative not in binding.sources or not relative.endswith(".csproj"):
+                raise evidence.ConformanceError("EvidenceIncomplete")
+            projects[key] = relative
+        else:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+    if observed != locked.keys():
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    if set(packages) != set(content_rows):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    if evidence.input_manifest(binding.root, sorted(binding.sources)) != binding.sources:
+        raise evidence.ConformanceError("InputChanged")
+    if time.monotonic() >= deadline:
+        raise evidence.ConformanceError("DeadlineExceeded")
+    return MappingProxyType({
+        "schemaVersion": 1, "qualification": False, "bindingInputsSha256": binding.inputs_sha256,
+        "project": project, "assetsSha256": hashlib.sha256(assets_data).hexdigest(),
+        "lockSha256": hashlib.sha256(lock_data).hexdigest(),
+        "contentHashesSha256": hashlib.sha256(content_hashes_data).hexdigest(),
+        "packages": MappingProxyType(packages), "projects": MappingProxyType(projects)})
 
 
 def binding_compilation_sources(binding, data, generated_root):

@@ -6513,6 +6513,34 @@ Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:637 observed,
 zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
 skips and expected incomplete exit2. Catalog, SDK and diff checks pass.
 
+The next partial T064 admission aligns actual net10.0 assets with the immutable
+prepared lock: exact node/dependency-endpoint sets, resolved versions, content
+hashes, one expected cache and declared ProjectReference paths. Cached archives
+are independently rehashed, package metadata checked and source inputs rechecked
+under finite read limits. Closed content-hash receipts require exactly one row
+per package, matching its raw archive SHA-256 and NuGet logical content SHA-512.
+Missing/foreign/duplicate rows, altered owners/versions/hashes/edges, stale locks,
+changed cache/source bytes, unknown fields and oversized inputs reject.
+
+An actual probe initially rejects signed xUnit archives because their logical
+NuGet content hashes differ from raw archive SHA-512. The correction uses the
+bundled NuGet.Packaging PackageArchiveReader.GetContentHash API in a private
+bounded producer, not cache sidecars, raw-hash substitution or a hand-written
+signing algorithm. Actual single/two-project probes admit eleven package nodes
+and one declared project node; seven logical hashes differ from raw hashes.
+The single-project archive again passes77 actual common/hook rows, exact
+discovery,87 session origins and five invalid-property controls.
+
+This is finite cross-artifact admission, not signature trust or native producer
+origin. The producer remains private; dependency-range semantics, RID/multi-target
+graphs, evaluated compiler/generator closure and public dispatch remain open.
+Existing runtime/archive identity schemas and executor guards are unchanged.
+T064 remains unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+42 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+643 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

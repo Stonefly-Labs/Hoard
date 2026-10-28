@@ -647,6 +647,25 @@ Frozen full safe tooling observes637 tests, zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native macOS skips and expected incomplete
 exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 change admits finite net10.0 assets/lock graph alignment
+against the immutable prepared-lock hash, exact package/dependency-endpoint sets,
+resolved versions/content hashes, one cache and declared ProjectReference paths.
+All cached archives are independently rehashed and package metadata checked.
+Closed per-package NuGet-content receipts bind exact raw archive hashes; source
+inputs are also rechecked. The private producer uses the bundled NuGet.Packaging
+PackageArchiveReader.GetContentHash API after an actual raw-SHA512 comparison
+correctly exposed signed-package hash differences.
+Actual single/two-project probes admit eleven package nodes/one project node,
+with seven logical content hashes distinct from raw archive hashes. The
+single-project archive still passes77 actual shared rows, exact discovery,
+87 role observations and five invalid-property controls.
+This is not signature trust, native producer origin, dependency-range semantics,
+RID/multi-target support or complete evaluated compiler/generator closure.
+Producer/public dispatch remain unfinished and T064 stays unchecked.
+All42 contributor tooling cases pass; frozen full safe tooling observes643 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected incomplete exit2. Catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact
