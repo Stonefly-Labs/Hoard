@@ -130,6 +130,78 @@ command retains expected exit2. The compile-only
 [CustomHost](../examples/CustomHost/README.md#f-07-finite-packaged-composition-and-recovery-limits)
 still never calls application `Build`, `Run` or `Start`.
 
+## Finite compatibility evidence and author obligations
+
+The public compatibility diagnostic is available on the supported Linux
+confinement hosts with the repository's pinned .NET SDK, Git history and locked
+package prerequisites. Use a fresh child of an owned, mode0700 private parent,
+outside the checkout:
+
+```bash
+bash scripts/validate-conformance.sh --profile compatibility \
+  --evidence "$HOARD_PRIVATE_PARENT/compatibility"
+```
+
+Its expected result is still `Incomplete`/exit2, even after successful execution
+and process release. It does not run the unfinished independent qualification
+evaluator, and `--verify`/five-profile `--aggregate` remain unfinished. Never
+interpret a diagnostic's component success or workflow conclusion as provider
+qualification. A repeated run needs a different fresh evidence child; do not
+edit or reuse a retained baseline or repair a report in place.
+
+The immutable
+[baseline inventory](../tests/fixtures/conformance/baselines/inventory.json)
+pins these source revisions, not a range of allegedly supported releases:
+
+| Baseline purpose | Exact revision |
+| --- | --- |
+| F-07 pre-extraction F-06 source | `9389016c0285c79f6f515f59805a5a41c69b0767` |
+| Lifecycle predecessor | `837fdf3edf51c3df34710184d018479683c194c2` |
+| Configuration predecessor | `b80c69fc386541be4f56f6ef2edeca40f43a0e1c` |
+| Discovery predecessor | `7fd73267a5154583363c94e9e85b9bac7d4a16b3` |
+| Metadata predecessor | `10ce78851b97b02bd83a8ef7da7ffdc2381d6519` |
+| Artifacts predecessor | `830972f24795ffaaaa18cb35138db7da59022313` |
+
+Historical sources, recipes, locks, dependencies and binaries are sealed before
+candidate compilation. Current local acceptance packages retain version
+`0.1.0`; equal version labels never establish equal bytes. Actual archive
+SHA-256/SHA-512, assembly hashes and source/lock identity must agree before and
+after execution. The tested packages include `Hoard.Abstractions`, `Hoard.Core`,
+`Hoard.Hosting`, inherited fixture modules/providers and the four
+`Hoard.Fixtures.Conformance.Bindings.{Sqlite,Memory,Local,ObjectSemantics}`
+adapters. `Hoard.Testing.Conformance` is new in F-07: its current-source adapters
+are not evidence of a historical SDK release.
+
+Exact `c9a5990462be78df7220469b88342b662ac19edc`,
+[run40621394269](https://github.com/Stonefly-Labs/Hoard/actions/runs/40621394269),
+job122600307923 confirms 24 source recipes: twenty unchanged historical F-06
+consumer/provider sources and four current-source SDK adapters. Nine separately
+retained scenarios observe forty actually loaded assemblies without rebuilding
+the old consumers against the candidate. Old marker consumers establish only
+their consumed API/invocation compatibility, not operational metadata/artifact
+conformance. An intended missing-member source break must fail compilation at
+the named member; compatible sources must compile unchanged. Candidate-rebuilt
+old consumers, accidental resolution to old platform DLLs, altered dependencies
+or substituted same-version baselines do not satisfy these obligations.
+
+That same native receipt confirms all88 architecture parameters over22 graphs
+and eight required real scans, plus114 version parameters/170 observations.
+Declared host/abstractions/required/enabled-optional ranges are tested against
+the finite [version matrix](../specs/007-provider-conformance/contracts/matrix.md),
+including independent prerelease flags and explicit rejection/repair. Invalid,
+out-of-range or unsupported versions reject; disabled/absent optional targets
+do not become active edges or grant capabilities. C-05/06/16/17 remain
+release-policy classifications, not runtime compatibility claims. Source,
+retained-binary, graph and runtime-version checks establish different facts;
+none replaces another or grants untested Cartesian-product support.
+
+The supplemental seven-parameter PE/PDB-source and isolated binary
+break/repair/substitution scope at `3ca391a` still awaits native confirmation.
+It supplements, never replaces, the nine genuine historical retained scenarios.
+Overall compatibility qualification remains false. These test-only results
+authorize neither package publication, source release, deployment nor production,
+protocol/native-client, identity, external-service or HA support.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

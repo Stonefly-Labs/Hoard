@@ -174,6 +174,29 @@ diagnostic bytes, twenty explicit Linux-only macOS skips and expected
 incomplete exit2. Catalog, SDK and diff checks pass. No C# assertions, compiler
 recipes, package dependencies, executor limits or timeouts change.
 
+The supplemental scope is committed and pushed at exact
+`3ca391aaae70a80015d687b51158e013a34d99f2`. Its native compatibility job
+122608489234 in run40624928955 was observed starting, but the observer then
+failed `NativeObservationUnavailable`. Both a direct GitHub API retry and an
+HTTP/1.1 retry fail; an unauthenticated HTTPS check reports that
+`api.github.com` cannot be resolved. This is an observation/connectivity blocker,
+not evidence that the native tests passed or failed. T059 remains unchecked.
+The provider guide now documents the six exact baseline revisions, the
+twenty-historical/four-current source distinction, retained-byte obligations
+and finite declared-versus-observed version/architecture scope. Its supplemental
+seven-case confirmation is explicitly pending, so T060 also stays unchecked.
+
+A preliminary `hoard-architecture-review` of T064 identifies the existing
+extension boundary, not final T081 acceptance. A direct typed registration
+bridge must invoke the supplied adapter, preserve the complete independent
+agreement and separately bind adapter, provider and each actual component
+image. Aliasing a new adapter to Memory must not execute built-in witnesses or
+inherit exclusions. Outside-repository projects require an explicit bounded
+source/import/lock closure copied into owned scratch, never an untracked
+in-place build. The current constructor-flag component journey cannot replace
+separately packed good/red/corrected runs. No contributor execution or
+qualification is implemented or claimed by this review.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact
