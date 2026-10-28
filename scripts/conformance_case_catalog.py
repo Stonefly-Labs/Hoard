@@ -8,7 +8,7 @@ from types import MappingProxyType
 
 from conformance_evidence import (
     CATALOG_REVISION, ConformanceError, MAX_RESULTS, MAX_WITNESSES, PROFILES,
-    canonical_bytes, load_json, stable_id,
+    canonical_bytes, load_json, stable_id, _one_of, _record,
 )
 
 
@@ -213,8 +213,12 @@ def full_artifact_binding_origin_counts():
 
 
 
-def contributor_artifact_component_origin_counts(binding_id):
+def contributor_artifact_component_origin_counts(binding_id, *, profile):
     binding = stable_id(binding_id)
+    profile = _record({
+        "durability": _one_of("LocalProcessCrash", "SimulationOnly"),
+        "enumeration": _one_of("Snapshot", "Incomplete"),
+    })(profile)
     method = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
               "Observed_portable_consumers_preserve_actual_guarantees")
     identities = {
@@ -228,7 +232,9 @@ def contributor_artifact_component_origin_counts(binding_id):
             "finalized-noncommit", "finalized-mutations", "idle-read", "cooperative-inactivity",
             "noncooperative-source", "noncooperative-destination", "authority-deadline",
             "cancel-before", "cancel-waiting", "cooperative-cancel", "reclaimed-identities",
-            "concurrent-release")}
+            "concurrent-release", "sequential-recovery")}
+    if profile["enumeration"] == "Incomplete":
+        identities[f'{method}(provider: "{binding}", consumer: "direct-availability")'] = 1
     control = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
                "Observed_controls_reach_actual_work")
     identities.update({

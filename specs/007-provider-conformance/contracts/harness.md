@@ -2249,11 +2249,11 @@ contributor build properties must fail before compilation/package collection.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. The artifact component mode
 now compiles the same exact-package/generated-factory inputs and independently
-expands 44 portable publication/read/reconciliation/deletion/budget/
-reference rows using the registered ID. It invokes unchanged SDK helpers and
+expands 45 snapshot / 46 incomplete-enumeration publication/read/reconciliation/
+deletion/budget/reference rows using the registered ID. It invokes unchanged SDK helpers and
 settles actual sessions; it does not select a built-in ID or inherit exclusions.
 An actual independently SDK-packed Acme adapter at2.4.0-preview.1 passes these
-44 rows and eight-role image attribution, exact discovery and fresh-cache
+applicable rows and eight-role image attribution, exact discovery and fresh-cache
 locked replay. Five incomplete/unsupported property sets reject; a mismatched
 supported category rejects at compilation. This remains only component coverage,
 not the complete applicable artifact catalog or public custom dispatch.
@@ -2273,7 +2273,13 @@ before and after each assertion/control; false claims and changes must reject.
 Actual durable/snapshot and simulated/incomplete adapters pass; false durability,
 false enumeration and changed-during-work controls fail at the named profile
 assertion. Registration shape, SDK/default fixture contracts and metadata are
-unchanged. This does not yet introduce conditional omissions or full applicability.
+unchanged. The component now uses the frozen enumeration expectation for
+sequential recovery and independently includes direct-availability only for the
+Incomplete class. It requires the complete closed profile as an expansion input;
+unknown/missing/extra fields reject. Actual snapshot/incomplete runs match their
+45/46-row discovery/origin inventories with zero skips. False snapshot claims and
+changed-during-work variants reject at the named profile assertion. This does not
+establish complete applicability/catalog or native qualification.
 Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a

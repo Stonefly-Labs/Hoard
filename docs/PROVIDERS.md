@@ -275,8 +275,8 @@ the typed factory seam, not an artifact common consumer, capability/applicabilit
 mapping, native containment or qualification.
 
 The package-only consumer additionally accepts artifact build inputs for an
-initial 44-row portable component, independently expanded with the actual
-registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
+45-row snapshot / 46-row incomplete-enumeration component, independently expanded
+with the actual registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
 budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
 adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
 registered role-image matches after fresh-cache locked replay. Missing/unsupported
@@ -289,7 +289,7 @@ The component now also covers common publication barriers, recovery/expiry,
 cancellation, reference checks, concurrent release and all ten fault controls.
 Existing shared boundary/clock/run-ID helpers are reused unchanged; only their
 test-fixture visibility widens. All 71 selected built-in Local/Object boundary,
-budget, recovery, control and concurrent-release regressions pass. Conditional
+budget, recovery, control and concurrent-release regressions pass. Complete
 durability/enumeration applicability, complete catalog coverage and native
 provenance remain unfinished; this is not native containment or qualification.
 Artifact contributor registrations additionally require exactly one of
@@ -302,8 +302,14 @@ Both actual durable/snapshot and simulated/incomplete adapters pass. False
 durability/enumeration claims and a profile changed during actual work reject at
 the named profile assertion. This contributor-only convention leaves the
 registration shape, SDK interfaces and default fixture declarations unchanged.
-It is a basis for later independent applicability, not current omission authority
-or completed qualification.
+The component now independently expands sequential recovery using the frozen
+enumeration expectation and includes the incomplete-only direct-availability
+case for that declared class. Both actual profiles match exact discovery and
+eight-role attribution with zero skips; the 71 selected built-in rows still pass.
+False snapshot claims and changed-during-work controls still reject at the named
+profile assertion, rather than borrowing a shorter dataset. This is only one
+input-bound component applicability distinction, not complete catalog coverage
+or qualification.
 
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires

@@ -6316,6 +6316,15 @@ factory/declaration/compiler controls also pass with these profile constants.
 A bounded interim architecture review found an outdated positive fixture, now
 corrected; it is not final T081 approval. No registration field/SDK interface,
 default fixture declaration or conditional case omission is introduced.
+The subsequent enumeration component independently expands a closed frozen
+profile into 45 snapshot or 46 incomplete-enumeration rows. Sequential recovery
+uses the admitted expectation; direct-availability is included only for
+Incomplete, with no built-in aliases/exclusion map. Both actual SDK-packed
+profiles match exact discovery, eight-role origins and fresh-cache locked replay;
+all 71 selected built-in rows still pass. False snapshot claims and profile
+changes during work continue to fail at the named assertion, not silently select
+a shorter successful run. This remains partial component applicability, not full
+catalog/native acceptance.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

@@ -692,9 +692,10 @@ declaration admission. Default hash-only construction and metadata generation ar
 preserved. An actual managed component verifies both paths and their rejection
 controls. Artifact common-consumer/applicability integration remains unfinished;
 this is not native containment or qualification.
-The package-only consumer now also has an artifact component mode with 44
+The package-only consumer now also has an artifact component mode with 45 snapshot
+or 46 incomplete-enumeration
 independently expanded portable rows using the registered binding ID and unchanged
-SDK helpers. An actual SDK-packed Acme adapter at2.4.0-preview.1 passes all 44
+SDK helpers. An actual SDK-packed Acme adapter at2.4.0-preview.1 passes its applicable
 rows, exact discovery and eight-role image attribution after fresh-cache locked
 replay. Its pack exposed a Hoard-only canonicalization assumption: explicit
 admitted IDs now work without relaxing legacy defaults or signed-package rejection.
@@ -706,10 +707,12 @@ and concurrent-release regressions also pass; no native qualification is implied
 Artifact contributor registrations must now include exactly one durability marker
 and one enumeration-snapshot/enumeration-incomplete marker. Generated enum
 constants are checked against actual capabilities before and after each row.
-Both durable/snapshot and simulated/incomplete adapters pass the 44-row component;
+Both durable/snapshot and simulated/incomplete adapters pass their exact component;
 actual false durability/enumeration claims and a mid-assertion profile change
-reject at the named profile assertion. No conditional case omissions or completed
-applicability/native qualification are introduced by this profile check.
+reject at the named profile assertion. Sequential recovery uses the frozen
+enumeration expectation for both variants; the incomplete-only direct-availability
+case is independently expanded from that same input, never a provider alias.
+Complete applicability/catalog coverage and native qualification remain unfinished.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

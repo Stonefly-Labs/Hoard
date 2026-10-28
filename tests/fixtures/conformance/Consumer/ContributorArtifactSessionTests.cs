@@ -15,6 +15,9 @@ internal sealed class ContributorArtifactDataAttribute(params object[] arguments
 {
     public override IEnumerable<object[]> GetData(MethodInfo testMethod)
     {
+        if (arguments is ["direct-availability"]
+            && ContributorBindingFactory.ExpectedEnumeration != ArtifactEnumerationConsistency.Incomplete)
+        { yield break; }
         yield return [ContributorBindingFactory.BindingId, .. arguments];
     }
 }
@@ -56,6 +59,8 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     [ContributorArtifactData("cooperative-cancel")]
     [ContributorArtifactData("reclaimed-identities")]
     [ContributorArtifactData("concurrent-release")]
+    [ContributorArtifactData("sequential-recovery")]
+    [ContributorArtifactData("direct-availability")]
     public async Task Observed_portable_consumers_preserve_actual_guarantees(string provider, string consumer)
     {
         Assert.Equal(ContributorBindingFactory.BindingId, provider);
@@ -100,7 +105,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "storage-failures" => ArtifactFailureAssertions.StorageFailuresAsync(session.Store, default),
                 "live-references" => ArtifactDeletionAssertions.LiveReferencesAsync(
                     session.Store, count => liveReferences = count, available => referencesAvailable = available, default),
-                "private-staging" or "concurrent-writers" or "lost-acknowledgment" or "visible-before-ack" =>
+                "private-staging" or "concurrent-writers" or "lost-acknowledgment" or "visible-before-ack" or "direct-availability" =>
                     ArtifactConformanceSessionTests.BoundaryConsumerAsync(session, consumer),
                 "receipts" => ArtifactEvidenceAssertions.ExactCurrentReceiptsAsync(
                     session.Store, session.Validator, session.Authority, session.Identity, default),
@@ -128,6 +133,9 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "reclaimed-identities" => ArtifactHistoryAssertions.ReclaimedIdentityExpiryAsync(
                     session.Store, session.Maintenance, session.Identity, AdvanceTo, default),
                 "concurrent-release" => ArtifactBindingAssertions.ConcurrentReleaseAsync(session, default),
+                "sequential-recovery" => ArtifactRecoveryAssertions.SequentialRecoveryAsync(
+                    session.Store, session.Maintenance, session.Identity, clock.Advance,
+                    ContributorBindingFactory.ExpectedEnumeration, default),
                 _ => throw new ArgumentException("BindingInvalid")
             });
             AssertProfile(session);

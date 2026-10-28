@@ -427,6 +427,21 @@ tests with zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native skips and expected incomplete exit2. The51 focused contributor cases pass;
 catalog, SDK, focused Consumer whitespace and diff checks pass. Unknown markers
 in the reserved classification namespaces reject even alongside a valid marker.
+The subsequent enumeration component adds sequential recovery with the frozen
+expectation for every profile, plus the incomplete-only direct-availability
+variant. Independent catalog expansion requires the complete closed profile and
+rejects unknown/missing/extra fields; it does not read provider-selected cases or
+borrow built-in applicability. Actual SDK-packed snapshot/incomplete adapters
+match exact 45/46-row discovery/origin inventories, all eight role images and
+fresh-cache locked replay, with zero skips. Both also pass the 71 independently
+discovered built-in regressions. Independently packed false snapshot and
+changed-during-work variants still fail at the actual named profile assertion,
+not select a shorter successful dataset. Complete applicability/catalog coverage,
+native/compiler closure and public dispatch remain unfinished.
+Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
+The51 focused contributor cases, catalog/SDK checks, focused Consumer whitespace
+verification and diff check pass for this enumeration expansion.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and
