@@ -6560,6 +6560,20 @@ unique proof-byte limit and source/package policy. Actual module/support and
 six-command managed owned-build controls pass. This does not claim arbitrary
 external generator I/O tracking, native containment or public acceptance.
 
+The internal captured-build bridge now runs evaluation, locked restore,
+archive-content capture, observed Csc build, portable-PDB inspection and pack as
+one joined pipeline. Csc output DLL/PDB hashes are captured at task completion,
+rechecked before publication and matched against the actual packed adapter.
+The observed image name may differ from the package ID. Consumed package
+members are derived from the typed compiler/import/tool/support receipts and
+checked against exact graph-admitted archives, including build-only packages.
+Post-pack revalidation covers sources, compiler files/parameters, DLL/PDBs,
+documents, assets, locks and restored archives. Actual six-command managed
+tests cover a build-only props/additional-file dependency and a post-pack image
+substitution; post-Csc image changes also reject. These controls explicitly use
+the installed managed runtime and do not claim native containment or open
+public contributor dispatch. T064 remains unchecked.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe

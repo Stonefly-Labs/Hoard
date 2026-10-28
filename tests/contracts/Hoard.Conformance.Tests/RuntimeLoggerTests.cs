@@ -1169,7 +1169,8 @@ public sealed class RuntimeLoggerTests
         owned.Input.Expected[0] = owned.Input.Expected[0] with
         {
             TestIdentity = method + $"(variant: \"baseline\", name: \"BinaryContract.dll\", relative: \"{source}\")",
-            FullyQualifiedName = method, AssertionSymbol = null
+            FullyQualifiedName = method,
+            AssertionSymbol = null
         };
         owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
         Assert.Equal("EvidenceSchemaInvalid", Assert.Throws<InvalidDataException>(() => owned.Open()).Message);

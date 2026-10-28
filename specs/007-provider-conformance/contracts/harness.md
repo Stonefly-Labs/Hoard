@@ -2250,6 +2250,18 @@ independent revalidation each have a 256 MiB aggregate cap; retain all other
 bounds. Independent reader admission retains the unchanged combined unique
 proof-byte cap and frozen source/package-member policy for both manifests.
 This is finite supported-tool provenance, not universal generator I/O tracing.
+Capture actual Csc OutputAssembly/PdbFile identities and hash both files at task
+completion, then recheck them before publishing the compiler receipt. Keep
+compiledOutputs distinct from author inputs and generated source outputs.
+Portable-PDB admission and the packed adapter must match these exact emitted
+hashes. Observe assembly names rather than deriving them from project/package
+names. Derive consumed package-member policy from typed import/compiler/tool/
+support receipts and exact previously admitted restore graphs, then check those
+members against the original cached archives with the existing combined limits.
+The internal captured-build pipeline revalidates compiler inputs/outputs/
+parameters, document receipts, assets, locks and cached archives after pack.
+It remains non-qualifying; managed bridge tests are not native containment or
+complete public contributor execution.
 Compiled-document receipt admission must bind the successful compiler project,
 exact selected DLL/PDB paths and current output hashes. Every document hash must
 match an observed compiler source; unknown or mismatched documents reject.

@@ -864,6 +864,67 @@ tests/fixtures/conformance/BuildInputs/CompilerInputsLogger.cs --verbosity quiet
 `python3 scripts/conformance_case_catalog.py --check`,
 `python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check` pass.
 
+### Joined contributor build and actual emitted-image identity
+
+The resumed T064 implementation joins the repository-owned evaluation,
+locked restore, content-hash capture, observed compilation, portable-PDB
+inspection and pack stages. The new actual managed test observes all six
+commands, a build-only Acme.BuildInputs dependency with imported props and
+additional-file bytes, and Acme.Emitted.dll inside the differently named
+Acme.Adapter package. Original author bytes remain unchanged. The production
+executor and runtime/confinement requirements are not relaxed; the managed
+component explicitly measures its installed runtime.
+
+The initial red controls expose missing restored-file policy and missing Csc
+output provenance. Csc now captures actual OutputAssembly/PdbFile identities
+and hashes at task completion, separately from inputs/generated sources, and
+revalidates their bytes before publication. Independent admission rejects
+cross-project output reuse and binds document/packed-image hashes to those
+exact compiler outputs. An actual AfterTargets mutation of the emitted image
+rejects before successful receipt publication; an actual post-pack image
+substitution rejects at ProofMismatch rather than qualifying different bytes.
+
+Observed package members are joined to exact restored graph owners and original
+cached archives. Foreign/missing graph owners, archive/member/hash changes,
+conflicting owners and over-budget inputs reject. Post-pack replay revalidates
+compiler sources/files/parameters, DLL/PDB documents, assets, locks and all
+restored archives using the original content-hash receipts.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`
+passes85 tests with one explicit Linux-only skip on macOS. A separate native
+bridge test uses the real OwnedRun executor on supported Linux rather than
+the managed command adapter; its execution remains pending.
+Full BuildInputs `dotnet format
+tests/fixtures/conformance/BuildInputs/BuildInputs.csproj --no-restore
+--verify-no-changes --verbosity quiet` passes. These are bounded managed and
+modeled controls, not native contributor containment, complete artifact
+applicability or public CLI acceptance. T064 remains unchecked and implement
+remains running. README/provider/development/harness guidance is synchronized.
+Product/module/provider APIs, public examples, architecture/ADR/diagrams,
+governance, predecessors, IaC, release and UI documents are unaffected by
+internal test-build provenance.
+
+Native run40779449535 at ae85961 fails after prepared-controller formatter41
+(the full candidate solution), with closed UnknownDiagnostic and no completed
+composition summary. Its follow-on summary read also fails; neither is admitted
+acceptance. The exact local `dotnet format Hoard.slnx --verify-no-changes
+--no-restore --verbosity quiet` reproduces a WHITESPACE error at
+RuntimeLoggerTests.cs:1172. The standard whitespace formatter splits that
+initializer's two properties without changing assertions, and the full local
+solution formatting check then passes. Fresh Linux replay is still required.
+Before the added Linux-only bridge test and formatting correction, frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` observed687 tests
+with zero failures/errors/unexpected diagnostic bytes, twenty explicit macOS
+native skips and expected non-qualifying exit2. Catalog/SDK/diff checks pass.
+The final frozen replay observes688 tests, zero failures/errors/unexpected
+diagnostic bytes, 21 explicit native skips on macOS and expected incomplete
+exit2. The exact focused `dotnet test
+tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore -c Release --filter
+FullyQualifiedName~Source_parameters_reject_absolute_escaping_and_noncanonical_paths
+--verbosity quiet` passes all eight unchanged assertions without skips.
+Full-solution formatting, catalog/SDK and diff checks pass.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

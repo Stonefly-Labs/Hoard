@@ -316,11 +316,13 @@ def capture_binding_evaluation_inputs(binding, owned_run, tool, toolchain_root, 
 
 
 def capture_binding_compilation_inputs(binding, owned_run, built, tool, toolchain_root,
-                                       sdk_version, runtime_version, package_root, package_inputs):
+                                       sdk_version, runtime_version, package_root, package_inputs, *, restore_graphs=None):
     from conformance_execution import no_symlinks
     from conformance_sdk_checks import read_bounded
 
     owned_run._check_ledger()
+    if (package_inputs is None) != (restore_graphs is not None):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
     tool, toolchain_root, package_root = Path(tool), Path(toolchain_root), Path(package_root)
     for path in (tool, toolchain_root, package_root):
         if not path.is_absolute() or ".." in path.parts:
@@ -380,8 +382,11 @@ def capture_binding_compilation_inputs(binding, owned_run, built, tool, toolchai
             raise evidence.ConformanceError("ProofMismatch")
         sources = binding_compilation_sources(
             binding, read_bounded(output_paths["sources"], 2 * 1024 * 1024), workspace)
+        file_data = read_bounded(output_paths["inputs"], 2 * 1024 * 1024)
+        if restore_graphs is not None:
+            package_inputs = binding_restored_file_policy(binding, restore_graphs, file_data, package_root)
         inputs = binding_build_file_inputs(
-            binding, read_bounded(output_paths["inputs"], 2 * 1024 * 1024),
+            binding, file_data,
             workspace, toolchain_root, package_root, package_inputs)
         parameters = binding_compiler_parameter_inputs(
             inputs["compilations"], read_bounded(output_paths["parameters"], 2 * 1024 * 1024))
@@ -399,6 +404,71 @@ def capture_binding_compilation_inputs(binding, owned_run, built, tool, toolchai
                 or request.stat().st_mode & 0o777 != 0o400 or properties.stat().st_mode & 0o222
                 or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
             raise evidence.ConformanceError("InputChanged")
+
+
+def build_captured_binding_project(binding, owned_run, configuration, feed, tool, toolchain_root,
+                                   sdk_version, runtime_version, *, local_packages=()):
+    from conformance_sdk_checks import read_bounded
+
+    evaluation = capture_binding_evaluation_inputs(
+        binding, owned_run, tool, toolchain_root, sdk_version, runtime_version)
+    package_root = owned_run.root / "cache/binding-build"
+    captured = {}
+
+    def compile_action(prepared):
+        graphs = capture_binding_restore_graphs(
+            binding, owned_run, prepared, tool, runtime_version, package_root)
+        compilation = capture_binding_compilation_inputs(
+            binding, owned_run, prepared, tool, toolchain_root, sdk_version, runtime_version,
+            package_root, None, restore_graphs=graphs)
+        assemblies = {}
+        for row in compilation["sources"]["compilations"]:
+            if "compiledOutputs" not in row:
+                raise evidence.ConformanceError("EvidenceIncomplete")
+            assemblies[row["project"]] = Path(row["compiledOutputs"]["assembly"]["path"]).name
+        raw = read_bounded(owned_run.root / "binding-build/compiler-sources.json", 2 * 1024 * 1024)
+        documents = capture_binding_compilation_documents(
+            binding, owned_run, prepared, tool, runtime_version, raw, assemblies)
+        captured.update(graphs=graphs, compilation=compilation, documents=documents)
+
+    built = build_binding_project(
+        binding, owned_run, configuration, feed, local_packages=local_packages, compile_action=compile_action)
+    if set(captured) != {"graphs", "compilation", "documents"}:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    registered = binding.registration["adapterPackage"]
+    documents = captured["documents"][binding.project]
+    member = "lib/net10.0/" + registered["assemblyName"] + ".dll"
+    if (documents["assembly"]["path"] != registered["assemblyName"] + ".dll"
+            or built["package"]["runtimeAssemblies"].get(member) != documents["assembly"]["sha256"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    workspace = owned_run.root / "binding-build"
+    sources_data = read_bounded(workspace / "compiler-sources.json", 2 * 1024 * 1024)
+    if binding_compilation_sources(binding, sources_data, workspace) != captured["compilation"]["sources"]:
+        raise evidence.ConformanceError("InputChanged")
+    file_data = read_bounded(workspace / "compiler-inputs.json", 2 * 1024 * 1024)
+    policy = binding_restored_file_policy(binding, captured["graphs"], file_data, package_root)
+    files = binding_build_file_inputs(binding, file_data, workspace, toolchain_root, package_root, policy)
+    parameters = binding_compiler_parameter_inputs(
+        files["compilations"], read_bounded(workspace / "compiler-parameters.json", 2 * 1024 * 1024))
+    if files != captured["compilation"]["inputs"] or parameters != captured["compilation"]["parameters"]:
+        raise evidence.ConformanceError("InputChanged")
+    for project, receipt in captured["documents"].items():
+        root = built["projects"][project]["root"]
+        row = next(item for item in captured["compilation"]["sources"]["compilations"] if item["project"] == project)
+        if binding_compilation_documents(
+                row, read_bounded(root / "pdb-documents.json", 2 * 1024 * 1024),
+                root / "bin/Release/net10.0", receipt["assembly"]["path"]) != receipt:
+            raise evidence.ConformanceError("InputChanged")
+        graph = binding_restore_graph(
+            binding, read_bounded(root / "obj/project.assets.json", 2 * 1024 * 1024),
+            read_bounded(root / "packages.lock.json", 2 * 1024 * 1024), project, package_root,
+            expected_lock_sha256=built["projects"][project]["preparedLockSha256"],
+            content_hashes_data=read_bounded(root / "nuget-content.json", 2 * 1024 * 1024))
+        if graph != captured["graphs"][project]:
+            raise evidence.ConformanceError("InputChanged")
+    if evaluation["toolchain"] != evidence.input_manifest(toolchain_root, sorted(evaluation["toolchain"])):
+        raise evidence.ConformanceError("InputChanged")
+    return MappingProxyType({**built, "evaluation": evaluation, **captured})
 
 
 def capture_binding_restore_graphs(binding, owned_run, built, tool, runtime_version, package_root):
@@ -842,6 +912,9 @@ def _compilation_sources(value):
     if isinstance(value, (dict, MappingProxyType)) and "generatedOutputs" in value:
         fields["generatedOutputs"] = lambda items: (
             evidence._record({})(items) if items == {} else evidence._hash_map(items))
+    if isinstance(value, Mapping) and "compiledOutputs" in value:
+        artifact = evidence._record({"path": evidence.relative_path, "sha256": evidence.sha256})
+        fields["compiledOutputs"] = evidence._record({"assembly": artifact, "pdb": artifact})
     return evidence._record(fields)(value)
 
 
@@ -858,7 +931,7 @@ def binding_compilation_sources(binding, data, generated_root):
     generated_root = Path(generated_root).absolute()
     if (generated_root.is_relative_to(binding.root) or binding.root.is_relative_to(generated_root)):
         raise evidence.ConformanceError("OwnershipInvalid")
-    projects, generated, generator_outputs, compiler_sources = set(), {}, set(), set()
+    projects, generated, generator_outputs, compiler_sources, compiled_outputs = set(), {}, set(), set(), set()
     source_inputs = 0
     for row in value["compilations"]:
         project = row["project"]
@@ -867,13 +940,24 @@ def binding_compilation_sources(binding, data, generated_root):
             raise evidence.ConformanceError("EvidenceIncomplete")
         projects.add(project)
         outputs = row.get("generatedOutputs", {})
+        compiled = row.get("compiledOutputs", {})
+        for kind, artifact in compiled.items():
+            path = artifact["path"]
+            if not path.startswith("generated/") or not path.endswith(".dll" if kind == "assembly" else ".pdb"):
+                raise evidence.ConformanceError("EvidenceSchemaInvalid")
+            if path in compiled_outputs:
+                raise evidence.ConformanceError("EvidenceIncomplete")
+            compiled_outputs.add(path)
+            relative = path[len("generated/"):]
+            if generated.setdefault(relative, artifact["sha256"]) != artifact["sha256"]:
+                raise evidence.ConformanceError("InputChanged")
         if (any(not path.startswith("generated/") or path in compiler_sources or path in generator_outputs
                 or path in row["sources"] for path in outputs)
                 or generator_outputs & row["sources"].keys()):
             raise evidence.ConformanceError("EvidenceIncomplete")
         generator_outputs.update(outputs)
         compiler_sources.update(row["sources"])
-        source_inputs += len(row["sources"]) + len(outputs)
+        source_inputs += len(row["sources"]) + len(outputs) + len(compiled)
         if source_inputs > evidence.MAX_PROOF_FILES:
             raise evidence.ConformanceError("OutputLimitExceeded")
         for path, hashed in {**row["sources"], **outputs}.items():
@@ -919,6 +1003,9 @@ def binding_compilation_documents(compilation, data, output_root, assembly_path)
             or any({**compilation["sources"], **compilation.get("generatedOutputs", {})}.get(path) != hashed
                    for path, hashed in value["documents"].items())):
         raise evidence.ConformanceError("ProofMismatch")
+    if "compiledOutputs" in compilation and any(
+            value[kind]["sha256"] != compilation["compiledOutputs"][kind]["sha256"] for kind in ("assembly", "pdb")):
+        raise evidence.ConformanceError("ProofMismatch")
     outputs = {value[kind]["path"]: value[kind]["sha256"] for kind in ("assembly", "pdb")}
     if evidence.input_manifest(output_root, sorted(outputs)) != outputs:
         raise evidence.ConformanceError("InputChanged")
@@ -941,7 +1028,7 @@ def _compiler_file_parameters(value):
         for kind, items in value.items()})
 
 
-def binding_build_file_inputs(binding, data, generated_root, toolchain_root, package_root, package_inputs):
+def _binding_build_file_document(data):
     if not isinstance(data, bytes):
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
     if len(data) > 2 * 1024 * 1024:
@@ -959,7 +1046,11 @@ def binding_build_file_inputs(binding, data, generated_root, toolchain_root, pac
         fields["tools"] = evidence._hash_map
     if isinstance(document, dict) and "supportFiles" in document:
         fields["supportFiles"] = evidence._hash_map
-    value = evidence._record(fields)(document)
+    return evidence._record(fields)(document)
+
+
+def binding_build_file_inputs(binding, data, generated_root, toolchain_root, package_root, package_inputs):
+    value = _binding_build_file_document(data)
     policy = evidence._record({})(package_inputs) if package_inputs == {} else evidence._hash_map(package_inputs)
     roots = {"source": binding.root, "generated": Path(generated_root).absolute(),
              "toolchain": Path(toolchain_root).absolute(), "packages": Path(package_root).absolute()}
@@ -1017,6 +1108,81 @@ def binding_build_file_inputs(binding, data, generated_root, toolchain_root, pac
         raise evidence.ConformanceError("DeadlineExceeded")
     return MappingProxyType({
         **value, "bindingInputsSha256": binding.inputs_sha256, "packageInputsSha256": evidence.digest(policy)})
+
+
+def binding_restored_file_policy(binding, graphs, data, package_root):
+    value = _binding_build_file_document(data)
+    projects = {path for path in binding.sources if path.endswith(".csproj")}
+    if not isinstance(graphs, Mapping) or set(graphs) != projects:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    package_row = evidence._record({
+        "packageId": evidence.stable_id, "version": evidence.stable_id,
+        "nugetContentSha512": evidence._sha512, "archiveSha256": evidence.sha256,
+        "archiveSha512": evidence._sha512})
+    packages = {}
+    for project, graph in graphs.items():
+        if (not isinstance(graph, Mapping) or graph.get("project") != project
+                or graph.get("bindingInputsSha256") != binding.inputs_sha256
+                or not isinstance(graph.get("packages"), Mapping) or len(graph["packages"]) > 1024):
+            raise evidence.ConformanceError("ProofMismatch")
+        for prefix, row in graph["packages"].items():
+            prefix, row = evidence.relative_path(prefix), package_row(row)
+            if prefix != row["packageId"].lower() + "/" + row["version"].lower():
+                raise evidence.ConformanceError("ProofMismatch")
+            if prefix in packages and packages[prefix] != row:
+                raise evidence.ConformanceError("InputChanged")
+            packages[prefix] = row
+            if len(packages) > 1024:
+                raise evidence.ConformanceError("OutputLimitExceeded")
+    observed = {}
+    groups = [value["imports"], value.get("tools", {}), value.get("supportFiles", {})]
+    groups.extend(items for row in value["compilations"] for items in row["inputs"].values())
+    for items in groups:
+        for path, hashed in items.items():
+            if path.startswith("packages/"):
+                relative = path[len("packages/"):]
+                if observed.setdefault(relative, hashed) != hashed:
+                    raise evidence.ConformanceError("InputChanged")
+                if len(observed) > evidence.MAX_PROOF_FILES:
+                    raise evidence.ConformanceError("OutputLimitExceeded")
+    selections = {}
+    for relative in observed:
+        parts = relative.split("/", 2)
+        if len(parts) != 3 or "/".join(parts[:2]) not in packages:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        selections.setdefault("/".join(parts[:2]), []).append(parts[2])
+    total, deadline, policy = 0, time.monotonic() + 5, {}
+    for prefix, members in sorted(selections.items()):
+        row = packages[prefix]
+        name, version = prefix.split("/")
+        archive = prefix + "/" + name + "." + version + ".nupkg"
+        captured = io.BytesIO()
+        with evidence._input_root(package_root) as (_, directory):
+            hashed, size = evidence._source_file(
+                directory, archive, remaining=min(evidence.MAX_PACKAGE_BYTES, evidence.MAX_PROOF_BYTES - total),
+                deadline=deadline, target=captured)
+        total += size
+        if hashed != row["archiveSha256"] or hashlib.sha512(captured.getvalue()).hexdigest() != row["archiveSha512"]:
+            raise evidence.ConformanceError("InputChanged")
+        try:
+            with zipfile.ZipFile(captured) as packed:
+                for member in members:
+                    total += packed.getinfo(member).file_size
+                    if total > evidence.MAX_PROOF_BYTES:
+                        raise evidence.ConformanceError("OutputLimitExceeded")
+        except (KeyError, zipfile.BadZipFile):
+            raise evidence.ConformanceError("InputChanged") from None
+        identity = {
+            "packageId": name, "version": version, "sha256": row["archiveSha256"],
+            "nugetSha512": row["archiveSha512"], "sourceMapping": "local"}
+        policy.update(binding_package_file_policy(
+            Path(package_root) / prefix, [identity],
+            [{"packageId": name, "version": version, "cachePath": prefix, "members": sorted(members)}]))
+        if time.monotonic() >= deadline:
+            raise evidence.ConformanceError("DeadlineExceeded")
+    if policy != observed:
+        raise evidence.ConformanceError("InputChanged")
+    return MappingProxyType(policy)
 
 
 def binding_package_file_policy(feed, packages, selections):

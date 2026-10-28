@@ -26,6 +26,9 @@ public sealed class CompilerInputsLogger : ILogger
         internal bool Succeeded { get; set; }
         internal string? CommandHash { get; set; }
         internal string? GeneratedDirectory { get; set; }
+        internal string? OutputAssembly { get; set; }
+        internal string? PdbFile { get; set; }
+        internal SortedDictionary<string, object> CompiledOutputs { get; } = new(StringComparer.Ordinal);
         internal SortedDictionary<string, string> GeneratedOutputs { get; } = new(StringComparer.Ordinal);
         internal SortedDictionary<string, string> Sources { get; } = new(StringComparer.Ordinal);
         internal SortedDictionary<string, SortedDictionary<string, string>> Inputs { get; } = new(StringComparer.Ordinal);
@@ -148,6 +151,19 @@ public sealed class CompilerInputsLogger : ILogger
                     compilation!.Succeeded = data.Succeeded;
                     if (data.Succeeded)
                     {
+                        Require(compilation.OutputAssembly is not null, "EvidenceIncomplete");
+                        foreach (var (kind, path) in new[]
+                        {
+                            ("assembly", compilation.OutputAssembly!),
+                            ("pdb", compilation.PdbFile ?? Path.ChangeExtension(compilation.OutputAssembly!, ".pdb"))
+                        })
+                        {
+                            var (identity, hash) = FileInput(path);
+                            Require(identity.StartsWith("generated/", StringComparison.Ordinal)
+                                && identity.EndsWith(kind == "assembly" ? ".dll" : ".pdb", StringComparison.Ordinal),
+                                "OwnershipInvalid");
+                            compilation.CompiledOutputs.Add(kind, new { path = identity, sha256 = hash });
+                        }
                         foreach (var (identity, hash) in CaptureGeneratedOutputs(compilation))
                         {
                             compilation.GeneratedOutputs.Add(identity, hash);
@@ -268,6 +284,28 @@ public sealed class CompilerInputsLogger : ILogger
                 "OwnershipInvalid");
             Require(!Directory.Exists(path) || !Directory.EnumerateFileSystemEntries(path).Any(), "OwnershipInvalid");
             compilation.GeneratedDirectory = path;
+            return;
+        }
+        if (parameter.ItemType is "OutputAssembly" or "PdbFile")
+        {
+            Require(parameter.Items.Count == 1, "EvidenceIncomplete");
+            var value = parameter.Items[0] switch
+            {
+                ITaskItem item => item.GetMetadata("FullPath"),
+                string text when Path.IsPathFullyQualified(text) => text,
+                _ => throw new InputException("EvidenceSchemaInvalid")
+            };
+            Require(Path.IsPathFullyQualified(value), "OwnershipInvalid");
+            if (parameter.ItemType == "OutputAssembly")
+            {
+                Require(compilation.OutputAssembly is null, "EvidenceIncomplete");
+                compilation.OutputAssembly = value;
+            }
+            else
+            {
+                Require(compilation.PdbFile is null, "EvidenceIncomplete");
+                compilation.PdbFile = value;
+            }
             return;
         }
         if (parameter.ItemType is "ToolPath" or "ToolExe")
@@ -563,7 +601,8 @@ public sealed class CompilerInputsLogger : ILogger
                             project = row.Project,
                             succeeded = row.Succeeded,
                             sources = row.Sources,
-                            generatedOutputs = row.GeneratedOutputs
+                            generatedOutputs = row.GeneratedOutputs,
+                            compiledOutputs = row.CompiledOutputs
                         }).ToArray()
                     }),
                     ["inputs"] = JsonSerializer.SerializeToUtf8Bytes(new

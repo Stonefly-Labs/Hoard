@@ -482,6 +482,19 @@ Actual controls cover changed tool hashes, changed analyzer support and custom
 compiler rejection. This finite support set is not universal filesystem-I/O
 tracing, arbitrary compiler support or native contributor qualification.
 
+The internal captured-build bridge joins evaluation, locked restore, observed
+compilation, portable-PDB inspection and pack without an unobserved fallback
+build. Actual Csc DLL/PDB outputs are hashed at task completion and rechecked
+before publication. PDB admission and the packed adapter must match those exact
+hashes; neither a different same-source image nor package naming conventions
+can substitute. Actual assembly names are observed, not inferred from package
+IDs. Consumed package members across imports, task modules, support files and
+compiler inputs must match the exact graph-admitted cached archives, including
+build-only dependencies. Archive/member/file/deadline limits remain unchanged.
+After pack, the bridge revalidates compiler inputs/outputs/parameters, documents,
+assets, locks and restored archives. Managed positive and substituted-image
+controls are not native confinement or full contributor acceptance.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

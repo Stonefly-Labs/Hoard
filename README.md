@@ -642,6 +642,11 @@ The observer now verifies MVIDs and hashes for actual loaded MSBuild modules,
 plus bounded runtime/host, manifest-selected compiler and co-located analyzer
 support files. Independent admission applies the same source/package ownership
 and rehash rules to these inputs; custom compiler selection rejects.
+The captured contributor-build bridge now joins evaluated inputs, locked restore,
+actual Csc output DLL/PDB hashes and the packed adapter image. Consumed package
+members are checked against the exact restored archives; post-compile and
+post-pack image substitutions reject. Actual managed tests cover a build-only
+dependency and an assembly name different from its package ID.
 Native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the

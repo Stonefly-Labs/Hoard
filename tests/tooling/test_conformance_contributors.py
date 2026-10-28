@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_evidence as evidence
 import conformance_contributors as contributors
 import conformance_case_catalog as catalog
-from conformance_execution import OwnedRun, capture_control, command_environment
+from conformance_execution import OwnedRun, capture_control, command_environment, native_execution_supported
 
 
 class NuGetContentToolTests(unittest.TestCase):
@@ -411,6 +411,13 @@ class NuGetContentToolTests(unittest.TestCase):
         raw = {kind: (self.owner.root / path).read_bytes() for kind, path in value["outputs"].items()}
         sources = contributors.binding_compilation_sources(binding, raw["sources"], generated)
         self.assertEqual(len(sources["compilations"]), 2)
+        for row in sources["compilations"]:
+            compiled = row["compiledOutputs"]
+            self.assertEqual(set(compiled), {"assembly", "pdb"})
+            for kind, suffix in (("assembly", ".dll"), ("pdb", ".pdb")):
+                self.assertTrue(compiled[kind]["path"].endswith(suffix))
+                self.assertEqual(compiled[kind]["sha256"], evidence.file_sha256(
+                    generated / compiled[kind]["path"].removeprefix("generated/")))
         self.assertTrue(any("Dynamic.cs" in path for row in sources["compilations"] for path in row["sources"]))
         inputs = contributors.binding_build_file_inputs(
             binding, raw["inputs"], generated, Path(value["toolchainRoot"]), packages, {})
@@ -437,6 +444,21 @@ class NuGetContentToolTests(unittest.TestCase):
 
     def test_managed_compiler_observer_rejects_postcompile_generated_source_changes(self):
         value, _, _, _ = self.compiler_request(change_after_compile=True)
+        _, event = self.compile()
+        self.assertEqual(event["code"], "InputChanged")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
+    def test_managed_compiler_observer_rejects_output_image_changes_after_csc_completion(self):
+        value, binding, _, _ = self.compiler_request()
+        targets = ET.parse(binding.root / "Directory.Build.targets")
+        target = ET.SubElement(targets.getroot(), "Target", Name="ChangeCompiledImage", AfterTargets="CoreCompile",
+                               Condition="'$(MSBuildProjectName)' == 'Adapter'")
+        ET.SubElement(target, "WriteLinesToFile",
+                      File="$(IntermediateOutputPath)$(TargetName)$(TargetExt)",
+                      Lines="private-changed-compiled-image", Overwrite="true")
+        targets.write(binding.root / "Directory.Build.targets")
+        value["sourceHashes"] = evidence.proof_manifest(binding.root)
+        self.request.write_bytes(evidence.canonical_bytes(value))
         _, event = self.compile()
         self.assertEqual(event["code"], "InputChanged")
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
@@ -475,6 +497,8 @@ class NuGetContentToolTests(unittest.TestCase):
             row, self.output_receipt.read_bytes(), image_directory, image.name)
         self.assertIn(path, receipt["documents"])
         self.assertEqual(receipt["generatedOutputsSha256"], evidence.digest(row["generatedOutputs"]))
+        self.assertEqual(receipt["assembly"]["sha256"], row["compiledOutputs"]["assembly"]["sha256"])
+        self.assertEqual(receipt["pdb"]["sha256"], row["compiledOutputs"]["pdb"]["sha256"])
         changed = dict(row)
         changed["generatedOutputs"] = {}
         with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
@@ -555,6 +579,128 @@ class NuGetContentToolTests(unittest.TestCase):
         _, event = self.compile(typed_inputs=False)
         self.assertEqual(event["code"], "PrerequisiteMissing")
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
+    def captured_build(self, *, change_after_pack=False, native=False):
+        measured, _, _ = self.evaluation_request()
+        source = self.case / "build-author"
+        source.mkdir()
+        (source / "Adapter.csproj").write_text(
+            '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>'
+            '<TargetFramework>net10.0</TargetFramework><PackageId>Acme.Adapter</PackageId>'
+            '<AssemblyName>Acme.Emitted</AssemblyName><Version>2.4.0-preview.1</Version>'
+            '</PropertyGroup><ItemGroup>'
+            '<PackageReference Include="Acme.BuildInputs" Version="3.2.1" PrivateAssets="all" />'
+            '</ItemGroup></Project>')
+        (source / "Binding.cs").write_text("public class Binding { public int Value => 7; }\n")
+        dependency = self.case / "Acme.BuildInputs.3.2.1.nupkg"
+        package_members = {
+            "build/Acme.BuildInputs.props": (
+                b'<Project><ItemGroup><AdditionalFiles Include="$(MSBuildThisFileDirectory)info.txt" />'
+                b'</ItemGroup></Project>'),
+            "build/info.txt": b"private-compiler-input"}
+        with zipfile.ZipFile(dependency, "w") as archive:
+            archive.writestr("Acme.BuildInputs.nuspec", (
+                '<package><metadata><id>Acme.BuildInputs</id><version>3.2.1</version>'
+                '<authors>Hoard fixture</authors><description>Build-only fixture</description></metadata></package>'))
+            for name, data in package_members.items():
+                archive.writestr(name, data)
+        (source / "packages.lock.json").write_bytes(evidence.canonical_bytes({
+            "version": 2, "dependencies": {"net10.0": {"Acme.BuildInputs": {
+                "type": "Direct", "requested": "[3.2.1, )", "resolved": "3.2.1",
+                "contentHash": base64.b64encode(hashlib.sha512(dependency.read_bytes()).digest()).decode()}}}}))
+        adapter = {"packageId": "Acme.Adapter", "version": "2.4.0-preview.1", "assemblyName": "Acme.Emitted"}
+        registration = {
+            "schemaVersion": 1, "project": "Adapter.csproj", "factoryType": "Acme.Binding",
+            "adapterPackage": adapter,
+            "declaration": {
+                "schemaVersion": 1, "bindingId": "acme.metadata", "category": "metadata",
+                "packageId": "Acme.Provider", "packageVersion": "0.1.0",
+                "capabilities": ["metadata", "non-durable"],
+                "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["metadata"])},
+            "components": {role: dict(adapter) for role in evidence._SESSION_ROLES["metadata"]},
+            "sourceFiles": ["Adapter.csproj", "Adapter.conformance.json", "Binding.cs", "packages.lock.json"]}
+        (source / "Adapter.conformance.json").write_bytes(evidence.canonical_bytes(registration))
+        admitted = contributors.admit_binding_project(source / "Adapter.csproj", "metadata")
+        owner = OwnedRun.allocate(self.case / "captured-run", ROOT, profile="harness")
+        binding = contributors.snapshot_binding_project(
+            source / "Adapter.csproj", "metadata", admitted.inputs_sha256, owner)
+        config, feed, tools = owner.root / "NuGet.Config", owner.root / "feed", owner.root / "tools"
+        configuration = ET.Element("configuration")
+        sources = ET.SubElement(configuration, "packageSources")
+        ET.SubElement(sources, "clear")
+        ET.SubElement(sources, "add", key="fixture", value=str(feed))
+        config.write_bytes(ET.tostring(configuration, encoding="utf-8"))
+        config.chmod(0o400)
+        shutil.copyfile(dependency, feed / dependency.name)
+        shutil.copytree(self.tool.parent, tools)
+        tool = tools / self.tool.name
+        commands = []
+        native_command = owner.command
+
+        def execute(arguments, *, cwd, cache_id, kind, timeout=600, env=None):
+            if native:
+                result = native_command(
+                    arguments, cwd=cwd, cache_id=cache_id, kind=kind, timeout=timeout, env=env)
+                code = result.exit_code
+            else:
+                cache = owner.root / "cache" / cache_id
+                (cache / "tmp").mkdir(parents=True, exist_ok=True)
+                environment = command_environment(owner.root, cache, env)
+                if kind == "build":
+                    # This managed component measures the installed runtime, not native confinement.
+                    environment["DOTNET_ROLL_FORWARD"] = "LatestPatch"
+                code, raw = capture_control(
+                    arguments, cwd=cwd, env=environment, limit=65536, timeout=min(timeout, 120))
+                if kind == "events":
+                    events = (evidence.load_json(raw),)
+                else:
+                    from conformance_execution import project_build_line
+                    events = tuple(project_build_line(line) for line in raw.splitlines() if line.strip())
+                result = mock.Mock(exit_code=code, events=events)
+            commands.append(tuple(arguments))
+            if arguments[1] == "pack" and code == 0 and change_after_pack:
+                path = feed / "Acme.Adapter.2.4.0-preview.1.nupkg"
+                with zipfile.ZipFile(path) as archive:
+                    members = {member: archive.read(member) for member in archive.namelist()}
+                members["lib/net10.0/Acme.Emitted.dll"] += b"changed-after-compile"
+                with zipfile.ZipFile(path, "w") as archive:
+                    for member, data in members.items():
+                        archive.writestr(member, data)
+            return result
+
+        try:
+            with mock.patch.object(owner, "command", side_effect=execute):
+                result = contributors.build_captured_binding_project(
+                    binding, owner, config, feed, tool, Path(measured["toolchainRoot"]),
+                    self.msbuild.parent.name, self.runtime_version)
+            self.assertEqual(len(commands), 6)
+            self.assertEqual(result["package"]["packageId"], "Acme.Adapter")
+            self.assertFalse(result["qualification"])
+            self.assertEqual(set(result["graphs"]), {binding.project})
+            self.assertEqual(result["compilation"]["inputs"]["packageInputsSha256"], evidence.digest({
+                "acme.buildinputs/3.2.1/" + path: hashlib.sha256(data).hexdigest()
+                for path, data in package_members.items()}))
+            receipt = result["documents"][binding.project]
+            self.assertEqual(receipt["assembly"]["path"], "Acme.Emitted.dll")
+            self.assertEqual(receipt["assembly"]["sha256"],
+                             result["package"]["runtimeAssemblies"]["lib/net10.0/Acme.Emitted.dll"])
+            self.assertEqual(evidence.proof_manifest(source), admitted.sources)
+        finally:
+            if owner.state == "Allocated":
+                owner.transition("Active")
+            owner.transition("Settling")
+            owner.release()
+
+    def test_managed_captured_build_joins_evaluation_restore_csc_pdb_and_packed_image(self):
+        self.captured_build()
+
+    def test_managed_captured_build_rejects_packaged_image_not_emitted_by_observed_csc(self):
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            self.captured_build(change_after_pack=True)
+
+    @unittest.skipUnless(native_execution_supported(), "Native captured build requires supported Linux containment")
+    def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):
+        self.captured_build(native=True)
 
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()
@@ -1041,6 +1187,56 @@ class ContributorAdmissionTests(unittest.TestCase):
         lock = {"version": 2, "dependencies": {"net10.0": {
             "acme.dependency": {"type": "Direct", "resolved": "2.4.0-preview.1", "contentHash": hashed}}}}
         return binding, assets, lock, packages
+
+    def restored_file_policy_fixture(self):
+        binding, assets, lock, packages = self.restore_graph_fixture()
+        graph = contributors.binding_restore_graph(
+            binding, evidence.canonical_bytes(assets), evidence.canonical_bytes(lock), binding.project, packages,
+            expected_lock_sha256=evidence.digest(lock),
+            content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+        member = "acme.dependency/2.4.0-preview.1/build/Acme.Dependency.props"
+        data = {
+            "schemaVersion": 1, "qualification": False, "succeeded": True,
+            "diagnosticCodes": [], "observerErrors": [],
+            "imports": {"packages/" + member: hashlib.sha256(b"<Project />").hexdigest()},
+            "compilations": [{
+                "project": binding.project, "succeeded": True, "inputs": {
+                    "Sources": {"source/Binding.cs": binding.sources["Binding.cs"]},
+                    "References": {"toolchain/reference.dll": "a" * 64}}}]}
+        return binding, {binding.project: graph}, data, packages, member
+
+    def test_restored_file_policy_joins_observed_package_members_to_exact_restored_archives(self):
+        binding, graphs, data, packages, member = self.restored_file_policy_fixture()
+        policy = contributors.binding_restored_file_policy(
+            binding, graphs, evidence.canonical_bytes(data), packages)
+        self.assertEqual(policy, {member: hashlib.sha256(b"<Project />").hexdigest()})
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(policy))
+
+    def test_restored_file_policy_rejects_foreign_or_conflicting_graphs_and_changed_archive_members(self):
+        binding, graphs, data, packages, member = self.restored_file_policy_fixture()
+        for defect in ("binding", "project", "missing", "foreign", "member", "hash", "archive"):
+            changed, selected = copy.deepcopy(data), evidence.load_json(evidence.canonical_bytes(graphs))
+            if defect == "binding":
+                selected[binding.project]["bindingInputsSha256"] = "a" * 64
+            elif defect == "project":
+                selected["foreign.csproj"] = selected.pop(binding.project)
+            elif defect == "missing":
+                selected = {}
+            elif defect == "foreign":
+                changed["imports"] = {"packages/foreign/1.0.0/build/Acme.Dependency.props": "a" * 64}
+            elif defect == "member":
+                changed["imports"] = {"packages/" + member + ".absent": "a" * 64}
+            elif defect == "hash":
+                changed["imports"]["packages/" + member] = "a" * 64
+            else:
+                selected[binding.project]["packages"]["acme.dependency/2.4.0-preview.1"]["archiveSha256"] = "a" * 64
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                contributors.binding_restored_file_policy(
+                    binding, selected, evidence.canonical_bytes(changed), packages)
+        archive = packages / "acme.dependency/2.4.0-preview.1/acme.dependency.2.4.0-preview.1.nupkg"
+        archive.write_bytes(archive.read_bytes() + b"changed")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_restored_file_policy(binding, graphs, evidence.canonical_bytes(data), packages)
 
     def test_restore_graph_binds_exact_package_versions_hashes_and_declared_project_references(self):
         shared = self.source / "shared"
