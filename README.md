@@ -549,6 +549,12 @@ and a locked package-only consumer. The new native version execution is not yet
 confirmed. CI requires matching retained runtime receipts for 88 architecture
 parameters and 114 version parameters/170 observations; the public command
 still returns non-qualifying `Incomplete` (exit2), not feature certification.
+The next `bbe70e6` architecture replay fails `InputChanged` inside the command
+input guard. Compiler outputs had not been sealed for its existing0400
+requirement; an actual executor-capture regression reproduces that rejection.
+Both native compatibility scopes now seal runtime inputs before capture, and
+version environment probes use separate immutable receipts rather than
+overwriting architecture observations. Native confirmation remains pending.
 The next T048 increment requires 29 generated-report mutations (including
 duplicate runtime witnesses) plus two counter-semantic controls from the actual
 verified proofs: premature readiness and completed stop while owned work is

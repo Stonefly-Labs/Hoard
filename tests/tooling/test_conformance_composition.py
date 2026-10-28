@@ -1,10 +1,12 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
 import textwrap
+import time
 from types import MappingProxyType, SimpleNamespace
 import unittest
 from unittest import mock
@@ -14,6 +16,54 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_compatibility_runtime_seals_compiler_outputs_for_the_real_executor_input_guard(self):
+        import conformance_execution as execution
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            runtime = root / "stores/runtime"
+            runtime.mkdir(parents=True)
+            for name in ("Hoard.Architecture.Tests.dll", "Hoard.Testing.Conformance.dll",
+                         "Hoard.Architecture.Tests.deps.json", "Hoard.Architecture.Tests.runtimeconfig.json"):
+                image = runtime / name
+                image.write_bytes(b"compiled-original")
+                image.chmod(0o644)
+            run = SimpleNamespace(
+                root=root, _root_descriptor=lambda: os.open(root, os.O_RDONLY | os.O_DIRECTORY))
+            assembly = (runtime / "Hoard.Architecture.Tests.dll").relative_to(root).as_posix()
+            with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                execution.OwnedRun._capture_execution_inputs(run, (assembly,), time.monotonic() + 5)
+            paths = sdk.compatibility_runtime_paths(run, runtime)
+            captured = execution.OwnedRun._capture_execution_inputs(run, paths, time.monotonic() + 5)
+            self.assertEqual(set(captured), set(paths))
+            for path in paths:
+                self.assertEqual((root / path).read_bytes(), b"compiled-original")
+                self.assertEqual((root / path).stat().st_mode & 0o777, 0o400)
+
+    def test_version_environment_probes_never_overwrite_an_architecture_observation(self):
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            paths = []
+            def probe(arguments, **kwargs):
+                path = Path(arguments[-1])
+                sdk.write_new(path, b'{"probe":true}')
+                paths.append(path.name)
+                return SimpleNamespace(exit_code=0, events=())
+
+            run = SimpleNamespace(root=root, command=probe)
+            with mock.patch.object(evidence, "admit_entity", side_effect=lambda _, value: value):
+                for phase in ("admission", "completion"):
+                    sdk.environment(run, phase=phase)
+                    sdk.environment(run, phase=phase, scope="compatibility-version")
+            self.assertEqual(len(set(paths)), 4)
+            self.assertTrue(all((root / "proofs" / path).read_bytes() == b'{"probe":true}' for path in paths))
+
     def test_version_runtime_scope_preserves_all_axes_and_rejects_reduced_or_relabelled_manifests(self):
         import conformance_case_catalog as catalog
         import conformance_evidence as evidence

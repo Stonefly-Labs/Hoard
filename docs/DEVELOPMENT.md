@@ -6140,6 +6140,20 @@ expected incomplete exit2; T057/T059 and qualification remain open. No product
 contracts, provider behavior, examples, diagrams, infrastructure or governance
 change.
 
+Exact `bbe70e6cf13e869a34e771c976ba49e8fd95dedc` subsequently fails architecture
+launch in run40618776034/job122588964516 with safe `InputChanged`, inside
+`OwnedRun.command`, rather than the earlier sixteen-input cap. The two
+compatibility scopes omitted runtime-output sealing: freshly compiled assemblies
+remain writable, while the actual executor requires0400. A regression invokes
+that real input-capture guard, reproduces rejection before sealing and verifies
+unchanged bytes admitted after sealing. Both scopes now seal before capture.
+The new version scope also uses distinct immutable environment receipts, avoiding
+an exclusive-create collision with architecture admission/completion probes.
+Closed failure projection includes execution/controller source roles, never
+raw paths or exception text. Native confirmation remains pending. The queued
+0310b2b composition run40619582068 was automatically cancelled before receiving
+a job; it supplies no T048 evidence and was not manually cancelled.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

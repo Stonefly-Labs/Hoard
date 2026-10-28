@@ -2441,12 +2441,13 @@ def inspection_file_inputs(root, configuration, identity, *, reference_roots):
     return MappingProxyType(files)
 
 
-def environment(run, *, phase="admission", candidate=None):
+def environment(run, *, phase="admission", candidate=None, scope=None):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
     if phase not in ("admission", "completion"):
         raise evidence.ConformanceError()
-    path = run.root / f"proofs/environment-{phase}.json"
+    suffix = "" if scope is None else "-" + evidence.stable_id(scope)
+    path = run.root / f"proofs/environment-{phase}{suffix}.json"
     image_os = os.environ.get("ImageOS", "")
     image_version = os.environ.get("ImageVersion", "")
     image = (f"{image_os}.{image_version}"
@@ -3006,7 +3007,8 @@ def _category_failure_locations(error):
     folder = Path(__file__).resolve().parent
     sources = {str(folder / name): "scripts/" + name for name in (
         "conformance_sdk_checks.py", "conformance_evidence.py",
-        "conformance_sources.py", "conformance_case_catalog.py")}
+        "conformance_sources.py", "conformance_case_catalog.py",
+        "conformance_execution.py", "conformance_inherited.py")}
     trace, locations, count = error.__traceback__, [], 0
     while trace is not None and count < 1024:
         source = sources.get(trace.tb_frame.f_code.co_filename)
@@ -3894,6 +3896,17 @@ def validate_observation(ingested, result, identities, code, status, exit_code, 
         raise _RuntimeObservationError(ingested, result, status)
 
 
+def compatibility_runtime_paths(run, runtime):
+    paths = sorted(path.relative_to(run.root).as_posix() for path in runtime.rglob("*")
+                   if path.is_file() and (path.suffix in (".dll", ".so", ".dylib")
+                                         or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
+    for path in paths:
+        image = run.root / path
+        no_symlinks(image)
+        image.chmod(0o400)
+    return paths
+
+
 def execute_version_runtime(run, repository, candidate, sources, config, feed, seal_sha, *, ci_revision=None):
     from conformance_case_catalog import version_runtime_tests
     from conformance_prepare import Project, build_project
@@ -3913,9 +3926,7 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, s
     _original_wrapper_runtime(candidate, feed, VERSION_TESTS, PACKAGE_TEST_OUTPUT, VERSION_PACKAGES)
     runtime = candidate / VERSION_TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
     assembly = runtime / "Hoard.Composition.Tests.dll"
-    paths = sorted(path.relative_to(run.root).as_posix() for path in runtime.rglob("*")
-                   if path.is_file() and (path.suffix in (".dll", ".so", ".dylib")
-                                         or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
+    paths = compatibility_runtime_paths(run, runtime)
     owner = evidence.load_json(read_bounded(run.root / "runtime-owner.json", 64 * 1024))
     group, attempt = evidence._uuid(owner["invocationGroupId"]), str(uuid.uuid4())
     arguments = dict(
@@ -3929,7 +3940,7 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, s
         invocation=["component", "compatibility", "version-runtime"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     inputs = evidence.capture_profile_inputs(
-        run, repository, candidate, observed_environment=environment(run), **arguments)
+        run, repository, candidate, observed_environment=environment(run, scope="compatibility-version"), **arguments)
     inputs_path = "proofs/compatibility-version-runtime-inputs.json"
     write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
     tests = version_runtime_tests()
@@ -3957,7 +3968,8 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, s
         {"category_scope": ("compatibility", "version")})
     validate_observation(observed, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
     post_inputs = evidence.capture_profile_inputs(
-        run, repository, candidate, observed_environment=environment(run, phase="completion"), **arguments)
+        run, repository, candidate, observed_environment=environment(
+            run, phase="completion", scope="compatibility-version"), **arguments)
     evidence.verify_input_recomputation(inputs, post_inputs)
     verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
     if record is not None:
@@ -3989,9 +4001,7 @@ def execute_architecture_runtime(run, repository, candidate, sources, config, fe
     verify_runtime_packages(runtime, feed,
                             ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions"))
     assembly = runtime / "Hoard.Architecture.Tests.dll"
-    paths = sorted(path.relative_to(run.root).as_posix() for path in runtime.rglob("*")
-                   if path.is_file() and (path.suffix in (".dll", ".so", ".dylib")
-                                         or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
+    paths = compatibility_runtime_paths(run, runtime)
     group, attempt = str(uuid.uuid4()), str(uuid.uuid4())
     base = evidence.capture_profile_inputs(
         run, repository, candidate, profile_id="compatibility", mode="diagnostic", invocation_group_id=group,
@@ -4640,11 +4650,18 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         # Settled stores and caches remain private, separate from safe diagnostics.
         print(json.dumps(summary, sort_keys=True))
         return 0
-    except (evidence.ConformanceError, OSError, RuntimeError, ValueError, zipfile.BadZipFile):
+    except (evidence.ConformanceError, OSError, RuntimeError, ValueError, zipfile.BadZipFile) as error:
         if run.state in ("Active", "Allocated"):
             run.transition("Settling")
         if run.state == "Settling" and run.live_children():
             run.transition("Retained")
+        if compatibility_only:
+            print(json.dumps({
+                "qualification": False, "phase": "compatibility-replay-incomplete",
+                "code": (str(error) if isinstance(error, evidence.ConformanceError)
+                         else "EvidenceIncomplete" if isinstance(error, RuntimeError) else "PrerequisiteMissing"),
+                "locations": _category_failure_locations(error),
+                **(error.runtime_diagnostic if isinstance(error, _RuntimeObservationError) else {})}), flush=True)
         raise
 
 

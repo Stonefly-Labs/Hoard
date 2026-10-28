@@ -508,6 +508,12 @@ class SdkDiagnosticTests(unittest.TestCase):
             {"source": "scripts/conformance_evidence.py", "line": 2},
             {"source": "scripts/conformance_sdk_checks.py", "line": 1}])
         self.assertEqual(checks._category_failure_locations(SimpleNamespace(__traceback__=None)), [])
+        for source in ("conformance_execution.py", "conformance_inherited.py"):
+            trace = SimpleNamespace(
+                tb_frame=SimpleNamespace(f_code=SimpleNamespace(co_filename=str(ROOT / "scripts" / source))),
+                tb_lineno=467, tb_next=None)
+            self.assertEqual(checks._category_failure_locations(SimpleNamespace(__traceback__=trace)), [
+                {"source": "scripts/" + source, "line": 467}])
 
     def test_qualification_selects_independent_metadata_recovery_and_inventory_source_scopes(self):
         import conformance_case_catalog as catalog

@@ -127,6 +127,28 @@ local package set exactly matches the new version runtime's declared closure.
 
 ### Generated report and semantic counter controls: T048 continuation
 
+The subsequent architecture attempt at exact
+`bbe70e6cf13e869a34e771c976ba49e8fd95dedc`,
+run40618776034/job122588964516, fails `InputChanged` inside the executor command,
+not the earlier input-count guard. Native compatibility setup had omitted the
+runtime sealing used by other profiles: compiler outputs remain writable and
+the executor requires0400. A regression reproduces rejection with the actual
+input-capture implementation and admission of unchanged bytes after sealing.
+Both compatibility scopes now seal all selected runtime inputs before capture.
+Version probes additionally use distinct immutable environment receipts;
+architecture's earlier receipts are never overwritten. Safe diagnostic
+projection includes only vetted execution/controller roles and line numbers.
+Fresh native acceptance is still required. Queued composition
+run40619582068 at0310b2b was automatically cancelled without a job, so it
+cannot close T048; no manual cancellation was performed.
+
+The sealing/probe repair passes all595 frozen safe tooling tests with zero
+failures/errors/unexpected diagnostic bytes, twenty explicit Linux-only macOS
+skips and expected incomplete exit2. The actual input-guard sealing regression,
+probe-isolation control and prepared-image control also pass individually.
+Catalog, SDK and diff checks pass. No task is closed from modeled/native-skipped
+execution.
+
 The independent post-release control function now rejects 29 report mutations,
 adding an explicit duplicate runtime witness to the existing missing CP result/
 witness and duplicate result challenges. From the already verified real runtime
