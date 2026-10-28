@@ -497,6 +497,36 @@ Twenty-four focused contributor cases pass. Frozen full safe tooling observes624
 tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
 macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 registered-package file-policy helper revalidates exact
+actual frozen package identity/SHA-256/SHA-512 and hashes selected archive members
+without extraction. Runtime/reference/analyzer/build/content paths are supported.
+It rejects unknown owners/versions, duplicate/ambiguous cache prefixes, missing
+or unsafe members, selected non-DLL CRC defects, changed hashes/bytes and aggregate
+read limits. Cache prefixes are explicit from an independently checked asset
+graph; no NuGet version-normalization parser or dependency resolution is added.
+
+The private component now actually SDK-packs `Acme.Dependency` `2.4.0-preview.1`
+with a runtime image, auto-imported props and packaged additional data. Actual
+restore assets supply the cache prefix and SHA-512 correspondence, while actual
+import/Csc observations select its three consumed members. Archive-member hashes
+match all three fresh-cache files; changing the actual cache reference image
+rejects independent build-file admission. The complete component now observes117
+imports/308 distinct file hashes/336 reference observations;16 analyzers/nine
+source observations/five actual PDB document hashes remain unchanged. Other
+source/reference/PDB mutation controls still pass and managed exit/root-owner
+release is observed, not native containment.
+
+Current PackageIdentity requires a runtime image, so analyzer-only/tool-only
+packages and general full evaluated package-graph/lock admission are unfinished.
+This finite actual archive/cache correspondence does not complete the public
+supplied-project build/pack, compiler-option/item-metadata/source-generator trace,
+native origin or common-suite journey. The producer remains private and T064
+stays unchecked.
+
+Twenty-eight focused contributor cases pass. Frozen full safe tooling observes628
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

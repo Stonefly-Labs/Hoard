@@ -742,6 +742,96 @@ class ContributorAdmissionTests(unittest.TestCase):
             with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
                 self.build_file_inputs(value)
 
+    def package_file_selection(self):
+        self.feed = self.parent / "feed"
+        self.feed.mkdir()
+        self.archive = self.feed / "Acme.Dependency.2.4.0-preview.1.nupkg"
+        self.package_files = {
+            "lib/net10.0/Acme.Dependency.dll": b"fixed runtime image",
+            "ref/net10.0/Acme.Dependency.dll": b"fixed reference image",
+            "build/Acme.Dependency.props": b"<Project />",
+            "analyzers/dotnet/cs/Generator.dll": b"fixed analyzer image",
+            "contentFiles/any/any/Additional.txt": b"private-resource-canary"}
+        with zipfile.ZipFile(self.archive, "w") as archive:
+            archive.writestr("Acme.Dependency.nuspec", (
+                "<package><metadata><id>Acme.Dependency</id><version>2.4.0-preview.1</version></metadata></package>"))
+            for name, data in self.package_files.items():
+                archive.writestr(name, data)
+        package = evidence.package_identity(self.feed, "Acme.Dependency", "2.4.0-preview.1")
+        selection = {
+            "packageId": "acme.dependency", "version": "2.4.0-preview.1",
+            "cachePath": "acme.dependency/2.4.0-preview.1",
+            "members": sorted(self.package_files)}
+        return package, selection
+
+    def test_registered_package_file_policy_binds_exact_nonruntime_archive_members_without_extracting(self):
+        package, selection = self.package_file_selection()
+        policy = contributors.binding_package_file_policy(self.feed, [package], [selection])
+        self.assertEqual(policy, {
+            selection["cachePath"] + "/" + name: hashlib.sha256(data).hexdigest()
+            for name, data in self.package_files.items()})
+        self.assertNotIn(b"private-resource-canary", evidence.canonical_bytes(policy))
+        self.assertEqual(set(self.feed.iterdir()), {self.archive})
+        self.assertEqual(contributors.binding_package_file_policy(self.feed, [], []), {})
+
+    def test_registered_package_file_policy_rejects_missing_foreign_duplicate_or_ambiguous_selections(self):
+        package, selection = self.package_file_selection()
+        for defect in ("package", "version", "cache-owner", "cache-path", "cache-escape", "missing-member",
+                       "member-escape", "duplicate-member", "duplicate-cache", "duplicate-package"):
+            changed, packages = copy.deepcopy(selection), [package]
+            expected = "BindingInvalid"
+            if defect == "package":
+                changed["packageId"] = "Foreign.Dependency"
+            elif defect == "version":
+                changed["version"] = "2.4.1"
+            elif defect == "cache-owner":
+                changed["cachePath"] = "other.dependency/2.4.0-preview.1"
+            elif defect == "cache-path":
+                changed["cachePath"] += "/nested"
+            elif defect == "cache-escape":
+                changed["cachePath"] = "../outside"
+                expected = "EvidenceSchemaInvalid"
+            elif defect == "missing-member":
+                changed["members"].append("build/Absent.props")
+                expected = "InputChanged"
+            elif defect == "member-escape":
+                changed["members"].append("../outside.props")
+                expected = "EvidenceSchemaInvalid"
+            elif defect == "duplicate-member":
+                changed["members"].append(changed["members"][0])
+                expected = "EvidenceSchemaInvalid"
+            elif defect == "duplicate-package":
+                packages.append({**package, "packageId": "acme.dependency"})
+            selected = [changed, copy.deepcopy(changed)] if defect == "duplicate-cache" else [changed]
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^" + expected + "$"):
+                contributors.binding_package_file_policy(self.feed, packages, selected)
+
+    def test_registered_package_file_policy_rejects_changed_archive_bytes_and_hashes(self):
+        package, selection = self.package_file_selection()
+        for field in ("sha256", "nugetSha512"):
+            changed = {**package, field: "a" * (64 if field == "sha256" else 128)}
+            with self.subTest(field=field), self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                contributors.binding_package_file_policy(self.feed, [changed], [selection])
+        self.archive.write_bytes(self.archive.read_bytes() + b"changed")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_package_file_policy(self.feed, [package], [selection])
+
+    def test_registered_package_file_policy_checks_selected_nondll_crc_and_aggregate_byte_budget(self):
+        package, selection = self.package_file_selection()
+        with mock.patch.object(evidence, "MAX_PROOF_BYTES", self.archive.stat().st_size):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+                contributors.binding_package_file_policy(self.feed, [package], [selection])
+        with zipfile.ZipFile(self.archive) as archive:
+            info = archive.getinfo("build/Acme.Dependency.props")
+            offset = info.header_offset + 30 + len(info.filename.encode()) + len(info.extra)
+        raw = bytearray(self.archive.read_bytes())
+        raw[offset] ^= 1
+        self.archive.write_bytes(raw)
+        corrupted = evidence.package_identity(self.feed, "Acme.Dependency", "2.4.0-preview.1")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_package_file_policy(self.feed, [corrupted], [selection])
+
 
 if __name__ == "__main__":
     unittest.main()

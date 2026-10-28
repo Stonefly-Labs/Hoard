@@ -2210,6 +2210,13 @@ Reject unknown fields/parameters/namespaces, undeclared inputs, conflicting
 hashes, overlapping roots, links and changes. Bound aggregate reads across all
 roots. A supplied hash policy alone does not establish archive/member/cache
 ownership, complete compiler-option/item-metadata closure or native provenance.
+For registered packages with captured identities, a selected-member file policy
+may be derived only after actual archive identity and SHA-256/SHA-512 revalidation.
+Hash exact selected members without extraction; reject missing/unsafe members,
+CRC errors, changed archives, unknown owners/versions, duplicate/ambiguous cache
+prefixes and aggregate read-limit violations. Cache prefixes must come from an
+independently checked asset graph; this helper does not resolve or validate that
+graph, handle all non-runtime package identities or establish native origin.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

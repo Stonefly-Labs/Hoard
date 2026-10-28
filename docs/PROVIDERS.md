@@ -363,6 +363,27 @@ actual archive/member/cache attribution and owned public build integration are
 still unfinished. The fixed component uses only SDK/project-reference inputs,
 not an independently packaged arbitrary contributor.
 
+Registered-package file-policy generation now rechecks actual frozen package
+identity and SHA-256/SHA-512 bytes, then hashes exact explicitly selected archive
+members without extraction. It covers reference/analyzer/build/content members,
+not only runtime DLLs. Missing members, unknown owners/versions, duplicate or
+ambiguous cache prefixes, unsafe paths, changed bytes/hashes and selected-member
+CRC errors reject; archive/member reads share finite aggregate budgets.
+Cache prefixes must come from an independently checked asset graph, not guesses
+about NuGet version normalization. This helper does not resolve that graph.
+
+A private managed component SDK-packs `Acme.Dependency` `2.4.0-preview.1` with
+runtime image, imported props and additional data. Actual restore assets supply
+the cache prefix and SHA-512 correspondence; actual Csc/import observations
+select all three consumed members. Their archive hashes match the fresh NuGet
+cache, and changing its reference image rejects. The complete finite component
+now observes117 imports,308 distinct input files and336 reference observations;
+the16 analyzer/nine compiler-source/five PDB-document observations are unchanged.
+This is not locked full-graph replay, a public build route, native containment or
+complete contributor acceptance. The helper uses current `PackageIdentity`
+records, which require a runtime image; analyzer-only/tool-only package identity
+and general evaluated asset-graph admission remain unfinished.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

@@ -638,6 +638,12 @@ read budget and frozen package-file policy. A private managed component admits
 305 distinct hashes, including116 imported files,335 reference observations and
 16 analyzer observations, plus additional/resource files. These remain bounded
 input checks, not complete compiler-option/package provenance or public execution.
+Selected registered-package file policies can now be derived from exact archive
+members after frozen archive identity/hash checks. A private SDK-packed package
+actually supplies a compiler reference, imported props and additional data through
+a fresh NuGet cache; all three bytes match their archive members and a changed
+cache image rejects. General package-graph/lock and public build integration are
+still unfinished.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

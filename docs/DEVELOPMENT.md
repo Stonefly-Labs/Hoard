@@ -6373,6 +6373,27 @@ unchecked.
 624 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
 pass.
+The next registered-package file-policy helper revalidates frozen actual archive
+identity/SHA-256/SHA-512 and hashes exact selected runtime/reference/analyzer/
+build/content members without extraction. Unknown owners/versions, duplicate/
+ambiguous cache prefixes, unsafe/missing members, changed bytes/hashes, selected
+non-DLL CRC errors and aggregate read limits reject. Cache prefixes come from an
+independently checked asset graph; the helper does not resolve that graph.
+A private actual SDK-packed `Acme.Dependency` `2.4.0-preview.1` supplies runtime
+image, imported props and additional data to a fresh NuGet cache. Actual assets
+provide prefix/SHA-512 correspondence; actual Csc/import observations select all
+three consumed members. Archive/cache hashes match and changing the cache
+reference rejects. The component now observes117 imports/308 distinct inputs/
+336 references;16 analyzers/nine source observations/five PDB document hashes
+and prior mutation controls remain unchanged. No raw diagnostics are retained.
+Current PackageIdentity still requires a runtime image; non-runtime packages,
+full evaluated package/lock admission, native provenance and the public owned
+build/common-suite pipeline remain open. T064 stays unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+28 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+628 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
+pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

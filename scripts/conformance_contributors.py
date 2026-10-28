@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import time
 from types import MappingProxyType
+import zipfile
+import zlib
 
 import conformance_evidence as evidence
 
@@ -384,3 +386,66 @@ def binding_build_file_inputs(binding, data, generated_root, toolchain_root, pac
         raise evidence.ConformanceError("DeadlineExceeded")
     return MappingProxyType({
         **value, "bindingInputsSha256": binding.inputs_sha256, "packageInputsSha256": evidence.digest(policy)})
+
+
+def binding_package_file_policy(feed, packages, selections):
+    packages = evidence._list(evidence._entity("PackageIdentity"), 1024, minimum=0)(packages)
+    selected = evidence._record({
+        "packageId": evidence.stable_id, "version": evidence.stable_id, "cachePath": evidence.relative_path,
+        "members": evidence._list(evidence.relative_path, evidence.MAX_PROOF_FILES, unique=True)})
+    selections = evidence._list(selected, 1024, minimum=0)(selections)
+    indexed, owners = {}, set()
+    for package in packages:
+        key = (package["packageId"].casefold(), package["version"].casefold())
+        if key in indexed:
+            raise evidence.ConformanceError("BindingInvalid")
+        indexed[key] = package
+    result, total, deadline = {}, 0, time.monotonic() + 5
+    for selection in selections:
+        key = (selection["packageId"].casefold(), selection["version"].casefold())
+        package = indexed.get(key)
+        prefix = selection["cachePath"]
+        if (package is None or len(prefix.split("/")) != 2 or prefix.split("/")[0].casefold() != key[0]
+                or prefix.casefold() in owners):
+            raise evidence.ConformanceError("BindingInvalid")
+        owners.add(prefix.casefold())
+        captured = io.BytesIO()
+        filename = evidence.relative_path(f'{package["packageId"]}.{package["version"]}.nupkg')
+        with evidence._input_root(feed) as (_, descriptor):
+            hashed, size = evidence._source_file(
+                descriptor, filename, remaining=min(evidence.MAX_PACKAGE_BYTES, evidence.MAX_PROOF_BYTES - total),
+                deadline=deadline, target=captured)
+        raw = captured.getvalue()
+        total += size
+        if (hashed != package["sha256"] or hashlib.sha512(raw).hexdigest() != package["nugetSha512"]
+                or evidence.package_identity(feed, package["packageId"], package["version"]) != package):
+            raise evidence.ConformanceError("InputChanged")
+        try:
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                for member in selection["members"]:
+                    if len(result) >= evidence.MAX_PROOF_FILES:
+                        raise evidence.ConformanceError("OutputLimitExceeded")
+                    try:
+                        info = archive.getinfo(member)
+                    except KeyError:
+                        raise evidence.ConformanceError("InputChanged") from None
+                    if info.is_dir():
+                        raise evidence.ConformanceError("InputChanged")
+                    digest, observed = hashlib.sha256(), 0
+                    with archive.open(info) as source:
+                        while block := source.read(64 * 1024):
+                            observed += len(block)
+                            total += len(block)
+                            if observed > info.file_size or total > evidence.MAX_PROOF_BYTES:
+                                raise evidence.ConformanceError("OutputLimitExceeded")
+                            if time.monotonic() >= deadline:
+                                raise evidence.ConformanceError("DeadlineExceeded")
+                            digest.update(block)
+                    if observed != info.file_size:
+                        raise evidence.ConformanceError("InputChanged")
+                    result[evidence.relative_path(prefix + "/" + member)] = digest.hexdigest()
+        except (zipfile.BadZipFile, EOFError, RuntimeError, zlib.error):
+            raise evidence.ConformanceError("InputChanged") from None
+    if time.monotonic() >= deadline:
+        raise evidence.ConformanceError("DeadlineExceeded")
+    return MappingProxyType(result)
