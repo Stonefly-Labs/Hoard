@@ -856,6 +856,69 @@ class ContributorAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             contributors.binding_package_file_policy(feed, [{**captured, "sha256": "a" * 64}], [selection])
 
+    def compiler_parameters(self):
+        files = self.build_file_inputs(self.build_files())["compilations"]
+        return files, {
+            "schemaVersion": 1, "qualification": False, "compilations": [{
+                "project": row["project"], "commandLineSha256": "a" * 64,
+                "itemMetadata": {kind: {path: "b" * 64 for path in items}
+                                 for kind, items in row["inputs"].items()}}
+                for row in files]}
+
+    def test_compiler_parameters_bind_each_project_and_metadata_key_to_actual_file_receipt(self):
+        files, value = self.compiler_parameters()
+        result = contributors.binding_compiler_parameter_inputs(files, evidence.canonical_bytes(value))
+        self.assertEqual(result["compilations"], tuple(value["compilations"]))
+        self.assertEqual(result["fileInputsSha256"], evidence.digest(files))
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(result))
+        self.assertFalse(result["qualification"])
+
+    def test_compiler_parameters_reject_missing_duplicate_foreign_or_mismatched_metadata_keys(self):
+        files, value = self.compiler_parameters()
+        for defect in ("project", "duplicate-project", "missing-kind", "unknown-input", "missing-input"):
+            changed = copy.deepcopy(value)
+            row = changed["compilations"][0]
+            if defect == "project":
+                row["project"] = "Other.csproj"
+            elif defect == "duplicate-project":
+                changed["compilations"].append(copy.deepcopy(row))
+            elif defect == "missing-kind":
+                del row["itemMetadata"]["Analyzers"]
+            elif defect == "unknown-input":
+                row["itemMetadata"]["References"]["source/Other.dll"] = "c" * 64
+            else:
+                del row["itemMetadata"]["References"]["toolchain/Reference.dll"]
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                contributors.binding_compiler_parameter_inputs(files, evidence.canonical_bytes(changed))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            contributors.binding_compiler_parameter_inputs(
+                [{**files[0], "succeeded": False}], evidence.canonical_bytes(value))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            contributors.binding_compiler_parameter_inputs([files[0], files[0]], evidence.canonical_bytes(value))
+
+    def test_compiler_parameters_reject_open_schemas_malformed_hashes_and_unbounded_receipts(self):
+        files, value = self.compiler_parameters()
+        for defect in ("field", "row-field", "command-hash", "metadata-hash", "path", "unknown-parameter"):
+            changed = copy.deepcopy(value)
+            row = changed["compilations"][0]
+            if defect == "field":
+                changed["rawCommandLine"] = "must not disappear"
+            elif defect == "row-field":
+                row["message"] = "must not disappear"
+            elif defect == "command-hash":
+                row["commandLineSha256"] = ""
+            elif defect == "metadata-hash":
+                row["itemMetadata"]["Sources"]["source/Binding.cs"] = "invalid"
+            elif defect == "path":
+                row["project"] = "../Other.csproj"
+            else:
+                row["itemMetadata"]["UnknownParameter"] = {}
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                contributors.binding_compiler_parameter_inputs(files, evidence.canonical_bytes(changed))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+            contributors.binding_compiler_parameter_inputs(files, b"x" * (2 * 1024 * 1024 + 1))
+
 
 if __name__ == "__main__":
     unittest.main()

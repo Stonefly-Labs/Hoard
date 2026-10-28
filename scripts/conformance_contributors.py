@@ -305,26 +305,27 @@ def binding_compilation_documents(compilation, data, output_root, assembly_path)
     return MappingProxyType({**value, "compilerSourcesSha256": evidence.digest(compilation["sources"])})
 
 
-def binding_build_file_inputs(binding, data, generated_root, toolchain_root, package_root, package_inputs):
-    if not isinstance(data, bytes):
-        raise evidence.ConformanceError("EvidenceSchemaInvalid")
-    if len(data) > 2 * 1024 * 1024:
-        raise evidence.ConformanceError("OutputLimitExceeded")
+def _compiler_file_parameters(value):
     kinds = {
         "Sources", "References", "Analyzers", "AdditionalFiles", "AnalyzerConfigFiles",
         "EmbeddedFiles", "Resources", "LinkResources", "ResponseFiles", "Win32Resource",
         "Win32Manifest", "ApplicationConfiguration", "KeyFile", "SourceLink"}
 
-    def parameters(value):
-        if (not isinstance(value, (dict, MappingProxyType)) or not {"Sources", "References"} <= value.keys()
-                or not value.keys() <= kinds):
-            raise evidence.ConformanceError("EvidenceSchemaInvalid")
-        return MappingProxyType({
-            kind: evidence._record({})(items) if items == {} else evidence._hash_map(items)
-            for kind, items in value.items()})
+    if (not isinstance(value, (dict, MappingProxyType)) or not {"Sources", "References"} <= value.keys()
+            or not value.keys() <= kinds):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    return MappingProxyType({
+        kind: evidence._record({})(items) if items == {} else evidence._hash_map(items)
+        for kind, items in value.items()})
 
+
+def binding_build_file_inputs(binding, data, generated_root, toolchain_root, package_root, package_inputs):
+    if not isinstance(data, bytes):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if len(data) > 2 * 1024 * 1024:
+        raise evidence.ConformanceError("OutputLimitExceeded")
     row = evidence._record({
-        "project": evidence.relative_path, "succeeded": evidence._boolean, "inputs": parameters})
+        "project": evidence.relative_path, "succeeded": evidence._boolean, "inputs": _compiler_file_parameters})
     errors = evidence._list(evidence.stable_id, 1024, minimum=0, unique=True)
     value = evidence._record({
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
@@ -459,3 +460,37 @@ def binding_package_file_policy(feed, packages, selections):
     if time.monotonic() >= deadline:
         raise evidence.ConformanceError("DeadlineExceeded")
     return MappingProxyType(result)
+
+
+def binding_compiler_parameter_inputs(file_compilations, data):
+    if not isinstance(data, bytes):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if len(data) > 2 * 1024 * 1024:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    files = evidence._list(evidence._record({
+        "project": evidence.relative_path, "succeeded": evidence._boolean,
+        "inputs": _compiler_file_parameters}), 1024)(file_compilations)
+    row = evidence._record({
+        "project": evidence.relative_path, "commandLineSha256": evidence.sha256,
+        "itemMetadata": _compiler_file_parameters})
+    value = evidence._record({
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "compilations": evidence._list(row, 1024),
+    })(evidence.load_json(data))
+    expected = {}
+    for compilation in files:
+        project = compilation["project"]
+        if (not compilation["succeeded"] or project in expected or not project.endswith(".csproj")
+                or not compilation["inputs"]["Sources"] or not compilation["inputs"]["References"]):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        expected[project] = compilation["inputs"]
+    seen = set()
+    for compilation in value["compilations"]:
+        project, metadata = compilation["project"], compilation["itemMetadata"]
+        if (project not in expected or project in seen or set(metadata) != set(expected[project])
+                or any(set(metadata[kind]) != set(items) for kind, items in expected[project].items())):
+            raise evidence.ConformanceError("ProofMismatch")
+        seen.add(project)
+    if seen != set(expected):
+        raise evidence.ConformanceError("ProofMismatch")
+    return MappingProxyType({**value, "fileInputsSha256": evidence.digest(files)})

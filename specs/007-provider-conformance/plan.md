@@ -550,6 +550,26 @@ Fifty focused contributor/input cases pass. Frozen full safe tooling observes629
 tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
 macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 compiler-parameter reader requires one command hash and
+exact item-metadata parameter/file keys per successful observed compiler project.
+It binds the admitted file-compilation row digest and rejects missing/duplicate/
+foreign rows/keys, malformed hashes, unknown fields and oversize receipts.
+Raw commands, metadata values and private paths are not retained.
+
+A private actual logger captures two Csc command hashes and369 bounded custom
+item-metadata hashes. A second actual rebuild uses exactly the same frozen author
+source/resource bytes and changes only the resource logical-name global property.
+The actual compiler command hash, resource metadata hash and emitted DLL bytes
+change; source/resource hashes remain identical. Both actual file/parameter
+inventories independently admit, and all prior archive/cache/source/PDB mutation
+controls still pass. This finite control demonstrates that file hashes alone
+are not complete compilation identity; it is not complete argument interpretation,
+source-generator closure, native producer provenance or public build/common-suite
+acceptance. The producer remains private and T064 stays unchecked.
+All32 focused contributor cases pass. Frozen full safe tooling observes632 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

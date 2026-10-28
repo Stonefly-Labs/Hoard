@@ -6414,6 +6414,22 @@ unfinished; T064 stays unchecked.
 629 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
 pass.
+The next compiler-parameter reader requires one command hash and exact metadata
+parameter/file keys per successful observed compiler project and binds the
+admitted file-row digest. Missing/duplicate/foreign rows or keys, malformed
+hashes, unknown fields and oversized receipts reject; only hashes are retained.
+A private actual logger records two Csc command hashes and369 bounded custom
+item-metadata hashes. Rebuilding identical frozen source/resource bytes with
+only a different resource logical-name global property changes the actual
+command/resource-metadata hashes and DLL bytes. Both exact file/parameter
+inventories admit and prior archive/cache/source/PDB mutation controls still pass.
+This is not complete compiler-argument interpretation, source-generator closure,
+native origin or public build/common-suite acceptance. T064 stays unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+32 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+632 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
+pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

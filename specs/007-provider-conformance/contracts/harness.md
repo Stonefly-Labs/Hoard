@@ -2223,6 +2223,12 @@ runtime admission must still reject an archive without runtime images.
 Selected-member policies may use either closed captured identity shape and must
 revalidate the corresponding actual archive. Neither shape resolves the asset
 graph, changes locked dependencies or establishes native producer origin.
+Compiler-parameter admission must additionally bind one command hash and exact
+item-metadata parameter/file keys to every successful file-compilation row.
+Reject missing, duplicate or foreign rows/keys, malformed hashes, unknown fields
+and oversize receipts. Bind the admitted file-row digest and retain hashes only,
+not raw commands/metadata/private paths. Hash-only receipts do not independently
+interpret compiler arguments or establish native producer origin.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

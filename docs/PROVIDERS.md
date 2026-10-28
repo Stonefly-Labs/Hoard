@@ -399,6 +399,22 @@ references,16 analyzers, nine source observations and five PDB documents remain
 unchanged. General asset-graph/lock admission, full compiler-option/item-metadata/
 source-generator closure, native origin and the public pipeline remain open.
 
+Compiler-parameter receipt admission now requires one command hash and exact
+item-metadata keys for every successful observed compiler project/file. Missing,
+duplicate or foreign projects/parameters/files, malformed hashes, unknown fields
+and oversize receipts reject. Parameter receipts bind the digest of the admitted
+file-compilation rows; no raw commands, metadata values or private paths are
+retained.
+
+A private actual logger hashes two Csc command lines and369 bounded custom
+item-metadata observations. Rebuilding the same frozen source with only a
+different resource logical-name property changes the actual command hash,
+resource metadata hash and emitted DLL, while source/resource bytes remain
+identical. Both exact file/parameter inventories admit independently. This
+demonstrates why physical file hashes alone are insufficient, not complete
+compiler-option interpretation, source-generator closure or native producer
+origin. The producer remains private and public contributor integration is open.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

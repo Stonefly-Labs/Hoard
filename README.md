@@ -649,6 +649,11 @@ existing runtime package admission remains unchanged. A private SDK-packed
 build-only package actually supplies imported props/additional data; all five
 consumed files from both archives match their fresh-cache bytes. This does not
 complete evaluated graph/lock admission or public contributor execution.
+Compiler-parameter admission now ties command and item-metadata hashes to every
+observed compiler project/file key. A private actual rebuild changes only a
+resource logical-name property: captured command/metadata and DLL bytes change
+while frozen source/resource bytes stay identical. Hash-only component receipts
+do not establish native producer origin or complete argument interpretation.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
