@@ -275,7 +275,7 @@ the typed factory seam, not an artifact common consumer, capability/applicabilit
 mapping, native containment or qualification.
 
 The package-only consumer additionally accepts artifact build inputs for an
-initial thirteen-row portable component, independently expanded with the actual
+initial 44-row portable component, independently expanded with the actual
 registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
 budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
 adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
@@ -285,6 +285,13 @@ map is borrowed; complete artifact catalog coverage and public dispatch remain
 unfinished. Locally produced archive canonicalization binds the exact admitted
 ID, including explicit non-Hoard IDs. The legacy no-selection policy and signed
 archive rejection are preserved; mismatched IDs reject without rewriting bytes.
+The component now also covers common publication barriers, recovery/expiry,
+cancellation, reference checks, concurrent release and all ten fault controls.
+Existing shared boundary/clock/run-ID helpers are reused unchanged; only their
+test-fixture visibility widens. All 71 selected built-in Local/Object boundary,
+budget, recovery, control and concurrent-release regressions pass. Conditional
+durability/enumeration applicability, complete catalog coverage and native
+provenance remain unfinished; this is not native containment or qualification.
 
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires

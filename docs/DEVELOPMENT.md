@@ -6294,6 +6294,15 @@ now supplies the exact admitted package ID. Default legacy policy still rejects
 non-Hoard inputs, and explicit mismatches/signed archives reject unchanged.
 This component is not complete artifact catalog/applicability coverage, compiler/
 native provenance or public dispatch. T064 stays unchecked.
+The subsequent portable expansion passes 44 rows/origins, including publication
+barriers, recovery/expiry, cancellation, references, concurrent release and all
+ten fault controls. It reuses existing boundary, controlled-clock and run-ID
+helpers with unchanged bodies; only test-fixture visibility changes. Exact
+discovery, eight-role archive/image matching, fresh-cache locked replay and all
+six property/category controls still pass. All 71 selected built-in Local/Object
+boundary/budget/recovery/control/concurrent-release regressions also pass.
+Durability/enumeration applicability, complete catalog coverage and native
+producer/toolchain closure remain unfinished; this is managed component evidence.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

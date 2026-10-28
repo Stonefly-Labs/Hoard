@@ -369,7 +369,7 @@ class ContributorAdmissionTests(unittest.TestCase):
 
     def test_artifact_component_inventory_uses_registered_identity_without_builtin_applicability(self):
         actual = catalog.contributor_artifact_component_origin_counts("acme.artifacts")
-        self.assertEqual(len(actual), 13)
+        self.assertEqual(len(actual), 44)
         self.assertEqual(set(actual.values()), {1})
         self.assertTrue(all('(provider: "acme.artifacts"' in identity for identity in actual))
         self.assertFalse(any('"local"' in identity or '"object"' in identity for identity in actual))

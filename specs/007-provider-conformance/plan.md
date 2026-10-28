@@ -385,6 +385,21 @@ to the five missing/unsupported property controls per consumer.
 `dotnet format whitespace tests/fixtures/conformance/Consumer/Consumer.csproj --no-restore --verify-no-changes --include tests/fixtures/conformance/Consumer/ContributorArtifactSessionTests.cs --verbosity quiet`,
 catalog, SDK and diff checks pass. No product/provider implementation, SDK
 assertion body, native guard/environment policy or tracked dependency lock changes.
+The following portable expansion passes 44 rows/origins, adding publication
+barriers, recovery/expiry, cancellation, references, concurrent release and all ten
+fault controls. Boundary/run-ID/controlled-clock setup helpers are reused with
+unchanged bodies, widening only their test-fixture visibility. The actual
+SDK-packed Acme adapter still passes exact discovery, eight-role image matching,
+fresh-cache locked replay and all six input/category controls. All 71 selected
+built-in Local/Object boundary/budget/recovery/control/concurrent-release rows
+pass with zero skips. Fifty focused contributor cases, catalog/SDK checks and
+focused Consumer whitespace verification pass. Complete durability/enumeration
+applicability, catalog coverage, native/compiler provenance and public dispatch
+remain open. Neither native containment nor full-profile qualification is claimed.
+Frozen full safe tooling remains652 observed with zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
+Both the44 contributor rows and71 selected built-in rows match independently
+expanded exact discovery sets before their zero-skip VSTest execution.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

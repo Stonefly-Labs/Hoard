@@ -217,12 +217,27 @@ def contributor_artifact_component_origin_counts(binding_id):
     binding = stable_id(binding_id)
     method = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
               "Observed_portable_consumers_preserve_actual_guarantees")
-    return {
+    identities = {
         f'{method}(provider: "{binding}", consumer: "{consumer}")': 1
         for consumer in (
             "empty", "unknown-length", "expectations", "unsupported", "duplicates",
             "destination-failure", "exact-retry", "staged-length", "recreation",
-            "reader-exclusion", "cap-crossing", "storage-failures", "live-references")}
+            "reader-exclusion", "cap-crossing", "storage-failures", "live-references",
+            "private-staging", "concurrent-writers", "lost-acknowledgment", "visible-before-ack",
+            "receipts", "recovery-pages", "changed-inventory", "expiry-generation", "ownerless-expiry",
+            "finalized-noncommit", "finalized-mutations", "idle-read", "cooperative-inactivity",
+            "noncooperative-source", "noncooperative-destination", "authority-deadline",
+            "cancel-before", "cancel-waiting", "cooperative-cancel", "reclaimed-identities",
+            "concurrent-release")}
+    control = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+               "Observed_controls_reach_actual_work")
+    identities.update({
+        f'{control}(provider: "{binding}", fault: {fault})': 1
+        for fault in (
+            "PublicationBoundary", "DirectVisibility", "PayloadDamage", "Capacity",
+            "NativeNonCooperation", "CleanupFailure", "GenerationBoundary", "ReceiptBoundary",
+            "SourceNonCooperation", "SinkNonCooperation")})
+    return identities
 
 
 def metadata_common_consumer_origin_counts(*, binding_ids=("memory", "sqlite")):

@@ -1843,7 +1843,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
-    private static async Task BoundaryConsumerAsync(IArtifactConformanceSession session, string consumer)
+    internal static async Task BoundaryConsumerAsync(IArtifactConformanceSession session, string consumer)
     {
         if (consumer == "concurrent-writers")
         {
@@ -2103,7 +2103,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         return stamp;
     }
 
-    private static Guid RunId()
+    internal static Guid RunId()
     {
         if (!Guid.TryParseExact(Environment.GetEnvironmentVariable("HOARD_ORIGIN_RUN_ID"), "D", out var runId)
             || runId == Guid.Empty)
@@ -2129,7 +2129,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             : new ObjectSemanticsBinding(sha256, options: options);
     }
 
-    private sealed class ControlledClock : TimeProvider
+    internal sealed class ControlledClock : TimeProvider
     {
         private long ticks = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
         private long elapsedTicks;
