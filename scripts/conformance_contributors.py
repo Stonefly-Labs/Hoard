@@ -4,12 +4,14 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 import hashlib
 import io
+import os
 from pathlib import Path
 import re
 import time
 from types import MappingProxyType
 import zipfile
 import zlib
+import xml.etree.ElementTree as ET
 
 import conformance_evidence as evidence
 
@@ -96,6 +98,125 @@ def snapshot_binding_project(project, category, expected_inputs_sha256, owned_ru
     if admit_binding_project(project, category).inputs_sha256 != expected:
         raise evidence.ConformanceError("InputChanged")
     return BindingProject(snapshot, admitted.project, admitted.registration, sources)
+
+
+def build_binding_project(binding, owned_run, configuration, feed, *, local_packages=()):
+    from conformance_execution import no_symlinks
+    from conformance_lock_preparation import rebind_local_archives
+    from conformance_sdk_checks import build
+
+    owned_run._check_ledger()
+    if binding.root != owned_run.root / "binding-source":
+        raise evidence.ConformanceError("OwnershipInvalid")
+    category = binding.registration["declaration"]["category"]
+    if (admit_binding_project(binding.root / binding.project, category).inputs_sha256 != binding.inputs_sha256
+            or evidence.proof_manifest(binding.root) != binding.sources):
+        raise evidence.ConformanceError("InputChanged")
+    try:
+        writable = any((binding.root / path).stat(follow_symlinks=False).st_mode & 0o222 for path in binding.sources)
+    except OSError:
+        raise evidence.ConformanceError("InputChanged") from None
+    if writable:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    for path in (configuration, feed):
+        if (".." in Path(path).parts or ";" in str(path)
+                or not Path(path).is_absolute() or not Path(path).is_relative_to(owned_run.root)):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        no_symlinks(path)
+    workspace = owned_run.root / "binding-build"
+    owner = owned_run._root_descriptor()
+    try:
+        os.mkdir("binding-build", mode=0o700, dir_fd=owner)
+    except OSError:
+        raise evidence.ConformanceError("OwnershipInvalid") from None
+    finally:
+        os.close(owner)
+
+    configuration_relative = Path(configuration).relative_to(owned_run.root).as_posix()
+    frozen = dict(evidence.input_manifest(owned_run.root, [configuration_relative]))
+
+    def msbuild_literal(value):
+        return "".join(f"%{ord(character):02X}" if character in "%$@;?*()'" else character
+                       for character in str(value))
+
+    def write(path, data):
+        relative = path.relative_to(owned_run.root).as_posix()
+        owner = owned_run._root_descriptor()
+        try:
+            with evidence._input_parent(owner, relative, create=True) as (directory, filename):
+                descriptor = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                     0o400, dir_fd=directory)
+                with os.fdopen(descriptor, "wb") as output:
+                    output.write(data)
+        except OSError:
+            raise evidence.ConformanceError("OwnershipInvalid") from None
+        finally:
+            os.close(owner)
+        frozen[relative] = hashlib.sha256(data).hexdigest()
+
+    document = ET.Element("Project")
+    choices = ET.SubElement(document, "Choose")
+    projects = {}
+    deadline = time.monotonic() + 5
+    total = 0
+    for project in sorted(path for path in binding.sources if path.endswith(".csproj")):
+        lock_path = (Path(project).parent / "packages.lock.json").as_posix()
+        if lock_path not in binding.sources:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        captured = io.BytesIO()
+        with evidence._input_root(binding.root) as (_, directory):
+            hashed, size = evidence._source_file(
+                directory, lock_path, remaining=min(2 * 1024 * 1024, evidence.MAX_PROOF_BYTES - total),
+                deadline=deadline, target=captured)
+        if hashed != binding.sources[lock_path]:
+            raise evidence.ConformanceError("InputChanged")
+        total += size
+        prepared, _, _ = rebind_local_archives(captured.getvalue(), feed, local_packages=local_packages)
+        if time.monotonic() >= deadline:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        target = workspace / hashlib.sha256(project.encode("utf-8")).hexdigest()
+        lock = target / "packages.lock.json"
+        write(lock, prepared)
+        group = ET.SubElement(ET.SubElement(
+            choices, "When", Condition=f"'$(MSBuildProjectFullPath)' == '{msbuild_literal(binding.root / project)}'"),
+            "PropertyGroup")
+        values = {
+            "BaseIntermediateOutputPath": str(target / "obj") + "/",
+            "MSBuildProjectExtensionsPath": str(target / "obj") + "/",
+            "BaseOutputPath": str(target / "bin") + "/",
+            "NuGetLockFilePath": str(lock),
+        }
+        for name, value in values.items():
+            ET.SubElement(group, name).text = msbuild_literal(value)
+        projects[project] = MappingProxyType({
+            "root": target, "preparedLockSha256": hashlib.sha256(prepared).hexdigest(),
+            "sourceLockSha256": hashed})
+    properties = workspace / "binding.props"
+    write(properties, ET.tostring(document, encoding="utf-8"))
+    identity = binding.registration["adapterPackage"]
+    try:
+        build(owned_run, binding.root / binding.project, configuration, "binding-build", feed=feed,
+              properties=("-p:CustomAfterDirectoryBuildProps=" + msbuild_literal(properties),),
+              package_id=identity["packageId"], package_version=identity["version"])
+    finally:
+        owned_run._check_ledger()
+        if evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen:
+            raise evidence.ConformanceError("InputChanged")
+        if (admit_binding_project(binding.root / binding.project, category).inputs_sha256 != binding.inputs_sha256
+                or evidence.proof_manifest(binding.root) != binding.sources):
+            raise evidence.ConformanceError("InputChanged")
+        try:
+            writable = any((binding.root / path).stat(follow_symlinks=False).st_mode & 0o222
+                           for path in binding.sources)
+        except OSError:
+            raise evidence.ConformanceError("InputChanged") from None
+        if writable:
+            raise evidence.ConformanceError("InputChanged")
+    package = evidence.package_identity(feed, identity["packageId"], identity["version"])
+    return MappingProxyType({
+        "qualification": False, "bindingInputsSha256": binding.inputs_sha256, "package": package,
+        "projects": MappingProxyType(projects),
+        "propertiesSha256": frozen[properties.relative_to(owned_run.root).as_posix()]})
 
 
 def binding_factory_source(binding, adapter_package, provider_package):

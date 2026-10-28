@@ -6485,6 +6485,34 @@ Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:634 observed,
 zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
 skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 change adds an internal isolated supplied-project builder.
+It requires the owned read-only binding snapshot and its exact full inventory,
+prepares each declared project's lock outside source, and generates distinct
+intermediate/output/extension paths keyed by relative project path. Generated
+controls use descriptor-anchored exclusive writes. Configuration, generated
+controls and complete staged source bytes/inventory/read-only modes are rechecked
+even after a failed command; undeclared files also reject.
+
+Actual managed probes build/pack the2.4.0-preview.1 adapter both alone and with a
+declared ProjectReference, preserving author/staged input inventories and using
+one/two isolated project workspaces respectively. The single-project archive
+again passes77 actual common/hook rows, exact discovery,87 session origins and
+five invalid-property controls. An owned path containing spaces/apostrophes also
+builds. CustomBeforeMicrosoftCommonProps proved too late (MSB3540); the recipe
+uses CustomAfterDirectoryBuildProps before extension paths are established.
+Semicolon configuration/feed paths reject before commands after actual MSBuild/
+NuGet failures demonstrated that unsupported path case.
+
+This helper is internal and does not resolve author hook conflicts or complete
+evaluated graph/compiler/generator/native provenance. Public dispatch remains
+closed and T064 unchecked. The actual probe uses the private managed command
+adapter, not native OwnedRun.command; executor guards/environment are unchanged.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors test_conformance_sdk_checks -q`:
+187 passed, including failure-time source/mode/configuration/control tampering.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:637 observed,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected incomplete exit2. Catalog, SDK and diff checks pass.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

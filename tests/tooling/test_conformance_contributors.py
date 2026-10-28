@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from unittest import mock
 import zipfile
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -218,6 +219,102 @@ class ContributorAdmissionTests(unittest.TestCase):
         for invalid in ((), ("acme.metadata",) * 2, "acme.metadata", None, ("../foreign",)):
             with self.subTest(invalid=invalid), self.assertRaises(evidence.ConformanceError):
                 catalog.metadata_common_consumer_origin_counts(binding_ids=invalid)
+
+    def build_fixture(self, name="build"):
+        (self.source / "packages.lock.json").write_text('{"version":2,"dependencies":{"net10.0":{}}}')
+        self.write(self.registration)
+        invocation = self.admit()
+        run = OwnedRun.allocate(self.parent / name, ROOT, profile="harness")
+        binding = contributors.snapshot_binding_project(
+            self.project, "metadata", invocation.binding_inputs_sha256, run)
+        configuration = run.root / "NuGet.Config"
+        configuration.write_bytes(evidence.synthetic_nuget_configuration(run.root / "feed"))
+        return binding, run, configuration
+
+    def test_registered_build_isolates_each_declared_project_and_uses_exact_adapter_identity(self):
+        nested = self.source / "shared"
+        nested.mkdir()
+        (nested / "Shared.csproj").write_text('<Project Sdk="Microsoft.NET.Sdk" />')
+        (nested / "packages.lock.json").write_text('{"version":2,"dependencies":{"net10.0":{}}}')
+        self.registration["sourceFiles"].extend(["shared/Shared.csproj", "shared/packages.lock.json"])
+        self.registration["adapterPackage"]["version"] = "2.4.0-preview.1"
+        for component in self.registration["components"].values():
+            component["version"] = "2.4.0-preview.1"
+        binding, run, configuration = self.build_fixture()
+
+        def pack(owner, project, config, cache, **options):
+            self.assertIs(owner, run)
+            self.assertEqual(project, binding.root / binding.project)
+            self.assertEqual(config, configuration)
+            self.assertEqual(options["package_id"], "Acme.Adapter")
+            self.assertEqual(options["package_version"], "2.4.0-preview.1")
+            properties = run.root / "binding-build/binding.props"
+            self.assertEqual(options["properties"], ("-p:CustomAfterDirectoryBuildProps=" + str(properties),))
+            groups = ET.parse(properties).findall("./Choose/When/PropertyGroup")
+            self.assertEqual(len(groups), 2)
+            self.assertEqual(len({group.findtext("BaseIntermediateOutputPath") for group in groups}), 2)
+            for group in groups:
+                output = Path(group.findtext("BaseOutputPath"))
+                self.assertTrue(output.is_relative_to(run.root / "binding-build"))
+                self.assertFalse(output.is_relative_to(binding.root))
+            with zipfile.ZipFile(options["feed"] / "Acme.Adapter.2.4.0-preview.1.nupkg", "w") as archive:
+                archive.writestr("Acme.Adapter.nuspec",
+                                "<package><metadata><id>Acme.Adapter</id>"
+                                "<version>2.4.0-preview.1</version></metadata></package>")
+                archive.writestr("lib/net10.0/Acme.Adapter.dll", b"fixture image")
+
+        with mock.patch("conformance_sdk_checks.build", side_effect=pack):
+            result = contributors.build_binding_project(binding, run, configuration, run.root / "feed")
+        self.assertEqual(result["package"]["version"], "2.4.0-preview.1")
+        self.assertEqual(set(result["projects"]), {"Adapter.csproj", "shared/Shared.csproj"})
+        self.assertFalse(result["qualification"])
+        self.assertFalse((binding.root / "obj").exists())
+        self.assertFalse((binding.root / "shared/obj").exists())
+        self.assertEqual(evidence.input_manifest(binding.root, sorted(binding.sources)), binding.sources)
+
+    def test_registered_build_rejects_foreign_contexts_and_undeclared_locks_before_commands(self):
+        binding, run, configuration = self.build_fixture()
+        foreign = contributors.admit_binding_project(self.project, "metadata")
+        with mock.patch("conformance_sdk_checks.build") as build:
+            for selected, config in ((foreign, configuration), (binding, self.parent / "foreign.config"),
+                                      (binding, run.root / ".." / "foreign.config"),
+                                      (binding, run.root / "unsupported;config")):
+                with self.subTest(root=selected.root, config=config), \
+                        self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    contributors.build_binding_project(selected, run, config, run.root / "feed")
+            build.assert_not_called()
+        self.registration["sourceFiles"].remove("packages.lock.json")
+        self.write(self.registration)
+        binding, run, configuration = self.build_fixture("missing-lock")
+        with mock.patch("conformance_sdk_checks.build") as build, \
+                self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            contributors.build_binding_project(binding, run, configuration, run.root / "feed")
+        build.assert_not_called()
+
+    def test_registered_build_rechecks_frozen_source_and_generated_controls_even_after_failure(self):
+        for index, defect in enumerate(("source", "mode", "properties", "lock", "configuration", "extra")):
+            binding, run, configuration = self.build_fixture("changed-" + str(index))
+
+            def mutate(*args, **kwargs):
+                if defect in ("source", "mode"):
+                    path = binding.root / "Binding.cs"
+                elif defect == "properties":
+                    path = run.root / "binding-build/binding.props"
+                elif defect == "configuration":
+                    path = configuration
+                elif defect == "extra":
+                    path = binding.root / "undeclared.cs"
+                    path.touch()
+                else:
+                    path = next((run.root / "binding-build").glob("*/packages.lock.json"))
+                path.chmod(0o600)
+                if defect != "mode":
+                    path.write_bytes(b"changed")
+                raise evidence.ConformanceError("CommandFailed")
+
+            with self.subTest(defect=defect), mock.patch("conformance_sdk_checks.build", side_effect=mutate), \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                contributors.build_binding_project(binding, run, configuration, run.root / "feed")
 
     def test_registered_runtime_components_preserve_distinct_actual_archive_owners_and_image_names(self):
         feed, output = self.parent / "feed", self.parent / "consumer"

@@ -2244,6 +2244,14 @@ Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a
 fallback. Existing fixture calls retain the0.1.0 default.
+The internal supplied-project build recipe allocates disjoint owned
+intermediate/output/extension and prepared-lock paths for every declared project,
+outside the read-only staged source tree. Require exact full source inventory;
+recheck source bytes/read-only modes, configuration and generated controls even
+after command failure. The current recipe uses CustomAfterDirectoryBuildProps
+and rejects semicolon configuration/feed paths. It does not yet resolve author
+hook conflicts or establish complete evaluated compiler/asset/native provenance,
+and is not connected to public contributor dispatch.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

@@ -667,6 +667,11 @@ of assuming0.1.0. A further managed component builds/packs a read-only staged
 adapter at2.4.0-preview.1 with separate outputs, then passes the same77 rows
 against that actual archive after a fresh-cache locked consumer restore. This
 does not complete the public owned build/provenance pipeline.
+An internal supplied-project builder now stages per-project prepared locks and
+disjoint outputs outside read-only binding sources, including referenced projects.
+Actual single/two-project SDK builds pass; configuration, generated controls and
+the entire staged source inventory are rechecked on failure as well as success.
+This remains a managed component, not public dispatch or native qualification.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

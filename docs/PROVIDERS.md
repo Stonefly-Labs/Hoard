@@ -445,6 +445,16 @@ staged source bytes remain unchanged. Five actual missing/category-inconsistent
 Consumer builds reject with BindingInvalid. This is not a native public run,
 full input provenance or completion of the three good/red/corrected journeys.
 
+The internal supplied-project builder now allocates disjoint owned output and
+prepared-lock paths for every declared project, leaving author/staged sources
+unchanged. Actual SDK probes pass both a single-project adapter and an adapter
+with a ProjectReference; the single-project archive also passes the77-row
+consumer. Source inventories/read-only modes, configuration and generated controls
+are rechecked even after command failure. This internal recipe uses the
+CustomAfterDirectoryBuildProps hook and requires owned configuration/feed paths
+without semicolons. Hook conflict/evaluation and complete compiler/asset/native
+provenance remain unfinished; it is not the public contributor entry point.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

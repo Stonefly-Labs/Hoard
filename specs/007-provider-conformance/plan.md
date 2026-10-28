@@ -630,6 +630,23 @@ Frozen full safe tooling observes634 tests, zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native macOS skips and expected incomplete
 exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 implementation adds an internal supplied-project build
+recipe with owned per-project locks and disjoint intermediate/output/extension
+paths. It checks the complete staged source inventory and read-only modes,
+and rechecks sources/configuration/generated controls even after command failure.
+Actual managed SDK probes pass single-project and ProjectReference builds of the
+2.4.0-preview.1 adapter without changing author/staged inputs; the single-project
+archive passes77 consumer rows, exact discovery,87 role observations and five
+invalid-property controls. A spaces/apostrophe workspace also builds.
+The early CustomAfterDirectoryBuildProps hook avoids the observed MSB3540 from
+the later CommonProps hook. Semicolon configuration/feed paths are unsupported
+and reject before commands. Author hook conflicts, complete evaluated input
+provenance, public dispatch and native containment remain unresolved; this does
+not complete T064. All187 focused contributor/SDK tooling cases pass.
+Frozen full safe tooling observes637 tests, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native macOS skips and expected incomplete
+exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact
