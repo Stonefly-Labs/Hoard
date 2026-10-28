@@ -138,6 +138,45 @@ release tags, or deployments here. Roll back source and matching locks together
 through a reviewed change; the script's feeds, caches, binaries, and manifests
 are temporary and must not be committed.
 
+## F-07 finite packaged composition and recovery limits
+
+This project remains registration-only. The separate package-only conformance
+consumer selects SQLite/Local as its baseline and Memory/ObjectSemantics as its
+replacement through the same fixture Host and unchanged consumer image.
+The host and bindings are independently packed local `[0.1.0]` packages, not
+published providers or a deployable cache. TestServer invokes protocol/identity
+probes in process; those probes supply lifecycle observations, not NuGet/native
+client compatibility or authentication/authorization implementations.
+
+The fixture explicitly enables its selected metadata/artifact and protocol/
+identity modules. Merely referencing or registering a package does not enable
+it. Disabled modules must have no routes, workers, connections or store effects.
+Invalid cardinality/declarations, incompatible enabled dependencies, authority
+identity or required guarantees reject; no fallback selects another provider
+or silently disables the incompatible target.
+
+Changing the active selection requires settled stop and an explicit fresh
+restart. An active request continues using its admitted configuration; this is
+not runtime installation, hot replacement or arbitrary assembly loading.
+Finite cancellation/stop return is not proof of cleanup. If initialization,
+requests or shutdown callbacks remain owned, the root remains retained and
+unsafe disposal/restart is refused. Observe actual settlement and the existing
+lifecycle ownership result before attempting a fresh run; deleting an evidence
+directory, losing a callback reference or terminating a child does not prove a
+cooperatively released module root. Native process containment is a separate
+diagnostic and is not equivalent to provider cleanup or durable-store recovery.
+
+At exact `0e49db1`, [run40620701197](https://github.com/Stonefly-Labs/Hoard/actions/runs/40620701197)
+job122595970901 confirms all36 CP parameters/110 ordered snapshots, independent
+post-release replay,29 generated-report rejection controls and two semantic
+readiness/retained-stop controls. Successful host labels cannot override those
+observations. The public composition command still returns non-qualifying
+`Incomplete`/exit2: nine quality-source rows and full-controller/profile
+qualification remain open. No command in this example starts an operational
+host. See [current evidence and limits](../../docs/PROVIDERS.md#finite-packaged-composition-and-ownership-limits).
+
+### Earlier F-07 diagnostic checkpoints
+
 F-07's separate test-only conformance Host is not this compile-only example.
 Its package-mode consumer explicitly references the packed
 `Hoard.Fixtures.Conformance.Host` and exercises both SQLite/Local and

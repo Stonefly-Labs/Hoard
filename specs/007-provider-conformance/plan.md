@@ -163,9 +163,34 @@ The workflow requires the exact 29-report/two-semantic control receipt; models
 reject either omitted count. The release-aware modeled report now includes
 protocol-shaped snapshot/owner records rather than opaque dummy proof payloads,
 without claiming runtime origin. Focused snapshot/report/workflow checks pass.
-The new controls still require native generated-proof execution after push.
-T048 remains unchecked and progress remains56/86; earlier successful28-control
-native receipts do not certify these newly added controls.
+Earlier successful28-control native receipts do not certify these newly added
+controls. Fresh native confirmation now closes T048 at exact
+`0e49db127ee1a38b49dd157adc7eba1a02a99b11`,
+[run40620701197](https://github.com/Stonefly-Labs/Hoard/actions/runs/40620701197)
+job122595970901. The public composition command, independent post-release report
+replay, all29 generated-report mutations and both semantic controls succeed.
+The immutable workflow requires exactly29/two before its successful exit;
+host labels alone cannot supply that result. Inputs:
+`2a4abf126a05c50309a242ea2b61f4b20b034a7e0fa68b183165ef5e3186baa1`;
+report:
+`f9b195db5de53b7eaad99a5a3e9489098edc20b7277ada9fd155ce11f840bf70`.
+
+All36 physical CP parameters/110 snapshots support41 logical passing subvariants.
+Inherited525 parameters/58 scopes,3,273 controller read inputs,41 formatting
+commands, mutation pairs/reference consumer and actual process release verify.
+The native tooling supervisor observes593 tests at this exact head.
+Nine quality-source rows remain incomplete; qualification/profileComplete/
+fullControllerAcceptance remain false and borrowed-controller closure limits
+remain explicit. This closes a finite T048 control obligation, not certification.
+
+T049 updates the provider guide and compile-only CustomHost example with the
+finite packaged SQLite/Local baseline and Memory/ObjectSemantics replacement,
+explicit enablement/restart/no fallback, lifecycle-only protocol/identity probes,
+and retained ownership/unsafe recovery limits. Historical example checkpoints
+are labeled separately from current behavior. No code, provider contract or
+diagram changes are required: module dependencies and runtime architecture are
+unaffected. Current progress is58/86, implement/running. T057/T059 still require
+the separate native compatibility gate; no stage completion is recorded.
 
 `python3 scripts/conformance_unit_checks.py --all-tooling`: 591 tests,
 zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS

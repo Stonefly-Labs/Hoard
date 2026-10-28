@@ -561,7 +561,14 @@ verified proofs: premature readiness and completed stop while owned work is
 still retained. It first admits each unmodified control and leaves original
 proof files and successful host labels unchanged. Missing controls or an
 evaluator that accepts a poisoned snapshot fail explicitly. Focused models pass;
-the additional native controls remain pending and T048 stays unchecked.
+exact `0e49db1`, [run40620701197](https://github.com/Stonefly-Labs/Hoard/actions/runs/40620701197)
+job122595970901, now confirms all29 report mutations and both semantic controls
+through independent post-release replay. T048 and the finite
+[composition/recovery guidance](docs/PROVIDERS.md#finite-packaged-composition-and-ownership-limits)
+in T049 are complete; progress is58/86, still implement/running. All36 CP
+parameters/110 snapshots and inherited525/58 verify with actual process release;
+nine quality-source rows and full-controller/profile qualification remain
+incomplete. The custom-host example remains compile-only.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

@@ -85,6 +85,53 @@ incomplete. The version logger's local 114-parameter/170-observation protocol
 replay likewise does not establish historical SDK or untested version support;
 the release-classifier rows remain policy-only, never runtime claims.
 
+## Finite packaged composition and ownership limits
+
+The test-only packaged Host selects SQLite/Local for its baseline and
+Memory/ObjectSemantics for its replacement, using one unchanged package-only
+consumer. Host/binding images must match their independently packed local
+`[0.1.0]` archives. SQLite/Local exercise file-backed stores; Memory and
+ObjectSemantics do not acquire durable restart guarantees from composition.
+Protocol and identity modules here are declaration/lifecycle probes invoked
+through TestServer, not package-protocol clients, an authentication system or
+a production service. This does not broaden the category scopes above.
+
+Selection and enablement are explicit: installation/registration is not
+activation. Disabled modules expose no routes/workers/connections/store
+effects. Missing or incompatible required modules, invalid cardinality,
+incompatible enabled optional targets and mismatched authority/guarantees
+reject rather than falling back or silently changing the selected providers.
+The fixture initializes selected stores before readiness and request admission.
+Configuration remains fixed for an active request; changing selection requires
+settled stop and explicit fresh restart, not hot replacement.
+
+Cancellation or a finite stop response can leave initialization/request/stop
+work retained. In that state, refuse unsafe root disposal and restart; retain
+ownership until the actual callbacks settle and inspect the existing lifecycle
+result. Do not equate loss of a reference, removal of scratch evidence, eventual
+callback settlement alone, or forced child termination with a cooperatively
+released module root or recovered store. Native exact-child containment and
+process-resource release are separate evidence from module-root cleanup.
+There is no new force-recovery or production host API.
+
+Exact `0e49db127ee1a38b49dd157adc7eba1a02a99b11`,
+[run40620701197](https://github.com/Stonefly-Labs/Hoard/actions/runs/40620701197)
+job122595970901, now confirms all36 CP parameters/110 ordered snapshots,
+41 logical passing subvariants and independent post-release report replay.
+All29 generated-report mutations and both original-proof semantic challenges
+reject despite successful host labels: readiness before initialization and
+completed stop while ownership is retained. The workflow requires the exact
+29/two receipt before success. Inherited525 parameters/58 scopes,3,273 bound
+controller inputs,41 formatting commands, mutation pairs/reference consumer
+and actual process release also verify. T048/T049 are finite control/documentation
+checkpoints, not qualification: nine quality-source rows remain `Incomplete`,
+all qualification/full-controller flags remain false and the public composition
+command retains expected exit2. The compile-only
+[CustomHost](../examples/CustomHost/README.md#f-07-finite-packaged-composition-and-recovery-limits)
+still never calls application `Build`, `Run` or `Start`.
+
+### Earlier F-07 diagnostic checkpoints
+
 The test-only package-mode composition consumer now explicitly references
 `Hoard.Fixtures.Conformance.Host` at `[0.1.0]`; Host source links remain only in
 source mode. Both real SQLite/Local and Memory/ObjectSemantics rows run from the

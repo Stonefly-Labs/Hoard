@@ -6154,6 +6154,22 @@ raw paths or exception text. Native confirmation remains pending. The queued
 0310b2b composition run40619582068 was automatically cancelled before receiving
 a job; it supplies no T048 evidence and was not manually cancelled.
 
+The next actual composition execution at exact
+`0e49db127ee1a38b49dd157adc7eba1a02a99b11`,
+[run40620701197](https://github.com/Stonefly-Labs/Hoard/actions/runs/40620701197)
+job122595970901, succeeds through independent post-release replay and the
+mandatory29-report/two-semantic control receipt. All36 CP parameters/110
+snapshots,41 logical subvariants and inherited525/58 verify with3,273 bound
+controller inputs,41 formatting commands, mutation pairs/reference consumer
+and actual process release. T048 is now complete. T049's provider/CustomHost
+guidance states the finite package baseline/replacement, explicit enablement/
+restart/no fallback, lifecycle-only protocol/identity and retained ownership
+limits without making the example operational. Progress is58/86, still
+implement/running: nine quality-source rows and full-controller/profile
+qualification remain incomplete. The separate c9a5990 native compatibility
+gate is still pending. This checkpoint changes documentation/task status only;
+the last local frozen595-test result remains recorded above.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).
