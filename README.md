@@ -662,6 +662,11 @@ registered archive owners, and checks exact xUnit discovery. The default
 Memory/SQLite path still passes154 rows. This is not the complete applicable
 profile: artifact-contributor integration, owned supplied-project build/pack,
 input provenance and the public entry point remain unfinished.
+The existing build/pack helper now selects the registered package version instead
+of assuming0.1.0. A further managed component builds/packs a read-only staged
+adapter at2.4.0-preview.1 with separate outputs, then passes the same77 rows
+against that actual archive after a fresh-cache locked consumer restore. This
+does not complete the public owned build/provenance pipeline.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

@@ -2240,6 +2240,10 @@ contributor build properties must fail before compilation/package collection.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. Artifact-contributor support
 and public custom dispatch are not yet implemented.
+Build/pack archive selection accepts an explicit registered version rather than
+assuming0.1.0. Validate package identity/version before starting commands and
+canonicalize only that exact produced archive; a different version is not a
+fallback. Existing fixture calls retain the0.1.0 default.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

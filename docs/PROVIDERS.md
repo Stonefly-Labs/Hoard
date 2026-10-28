@@ -434,6 +434,17 @@ applicable-profile evidence, native containment or supplied-project build/pack
 acceptance. Artifact-contributor integration, complete input provenance and
 public dispatch remain unfinished; T064 stays open.
 
+The build/pack helper now accepts the registered version for archive selection,
+preserving0.1.0 defaults for existing fixtures and rejecting escaping identities
+before commands start. A further managed component actually builds and SDK-packs
+the declared read-only staged forwarding adapter at2.4.0-preview.1, with separate
+intermediate/output roots and an explicitly prepared producer lock. A deliberately
+prepared consumer lock is replayed in a second fresh cache before the actual
+77-row run and87 role-image observations against that new archive. Author and
+staged source bytes remain unchanged. Five actual missing/category-inconsistent
+Consumer builds reject with BindingInvalid. This is not a native public run,
+full input provenance or completion of the three good/red/corrected journeys.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

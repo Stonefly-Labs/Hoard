@@ -6463,6 +6463,28 @@ supplied-project build/pack, complete compiler/asset/native provenance or the
 three independently packaged contributor journeys. Public dispatch remains
 closed, qualification/profileComplete remain false and T064 remains unchecked.
 
+The next partial T064 build helper selects an explicitly registered archive
+version instead of assuming0.1.0, validating identity/version before commands.
+Existing fixture defaults are preserved. A further managed component actually
+builds/SDK-packs the declared read-only staged forwarding adapter at
+2.4.0-preview.1 with separate intermediate/output roots. Original producer-lock
+local hashes first fail NU1403; explicit non-qualifying local-hash preparation
+fixes that without changing the source lock. The fresh package feeds deliberate
+consumer-lock preparation and a second fresh-cache locked replay.
+All77 common/hook rows pass, exact discovery matches and87 session origins match
+registered archive-role hashes. Author, staged and frozen common source bytes
+remain unchanged. Five actual missing/category-inconsistent Consumer builds
+reject with BindingInvalid.
+The private managed command adapter exercises the existing helper's actual
+restore/build/pack recipe, not native OwnedRun.command. Full input/native
+provenance, artifact support, public dispatch and the three independently packaged
+good/red/corrected journeys remain open; T064 remains unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_sdk_checks test_conformance_contributors -q`:
+184 passed.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:634 observed,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

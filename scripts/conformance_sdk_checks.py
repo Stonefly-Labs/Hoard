@@ -649,7 +649,13 @@ def snapshot(repository, run):
     return target, hashes
 
 
-def build(run, project, config, cache_id, *, feed=None, lock=None, properties=(), package_id=None):
+def build(run, project, config, cache_id, *, feed=None, lock=None, properties=(), package_id=None,
+          package_version="0.1.0"):
+    archive = None
+    if feed is not None:
+        identity = evidence.stable_id(project.stem if package_id is None else package_id)
+        version = evidence.stable_id(package_version)
+        archive = feed / f"{identity}.{version}.nupkg"
     common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet", *properties]
     if lock is not None:
         common.append("-p:NuGetLockFilePath=" + str(lock))
@@ -663,7 +669,7 @@ def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()
             run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
                   "--no-restore", "-o", str(feed), *common],
             cwd=project.parent, cache_id=cache_id)
-        canonicalize_acceptance_archive(feed / f"{project.stem if package_id is None else package_id}.0.1.0.nupkg")
+        canonicalize_acceptance_archive(archive)
 
 
 def prepare_smoke_lock(project, candidate, feed):

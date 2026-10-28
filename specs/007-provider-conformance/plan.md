@@ -603,6 +603,33 @@ applicable profile, artifact-contributor support, owned supplied-project
 build/pack, complete input provenance or native containment. The public route
 stays closed, qualification/profileComplete remain false and T064 stays unchecked.
 
+The next partial T064 build-helper change removes its fixed0.1.0 archive
+selection when an explicit registered version is supplied. Validate identity
+and version before any command; existing fixture calls keep their default.
+Regression coverage rejects escaping identities without launching commands and
+selects2.4.0-preview.1 rather than a0.1.0 archive.
+
+A further finite managed component actually SDK-builds/packs the declared
+forwarding adapter at2.4.0-preview.1 from a read-only owned source snapshot with
+separate intermediate/output roots. An initial NU1403 exposes the original
+producer lock's stale local archive hashes; explicit non-qualifying lock
+preparation rebinds those exact archives without changing the source lock.
+The fresh adapter then feeds deliberate consumer-lock preparation and locked
+replay in a separate fresh cache. All77 common/hook rows pass against that
+actual new archive, exact discovery matches, and87 session origins match its
+registered image owners. Author/staged/frozen common source bytes remain
+unchanged. Five actual missing/category-inconsistent Consumer builds fail
+BindingInvalid rather than falling back.
+
+The private managed command adapter exercises the existing build helper's actual
+restore/build/pack commands; it is not OwnedRun.command or native containment.
+Public dispatch, complete input provenance, artifact-contributor support and
+the three independently packaged good/red/corrected journeys remain unfinished.
+T064 stays unchecked. All184 focused contributor/SDK tooling cases pass.
+Frozen full safe tooling observes634 tests, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native macOS skips and expected incomplete
+exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact
