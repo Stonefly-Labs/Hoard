@@ -610,6 +610,11 @@ Captured component-image selection now preserves separately declared adapter,
 provider and helper package owners, including assembly names different from
 package IDs. These component checks do not complete source closure or public
 execution; T064 remains open.
+Local archive lock preparation now also accepts explicitly captured non-Hoard
+IDs/versions, preserving the locked graph and verifying actual SHA-256/SHA-512
+bytes. A trusted managed component replays two real SDK-packed custom-version
+archives from a fresh cache. This does not yet build an arbitrary supplied
+binding or complete its contributor suite.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

@@ -363,6 +363,30 @@ exclusions are used. Public dispatch and T064 remain incomplete.
 Frozen full safe tooling observes609 tests, zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native macOS skips and expected incomplete
 exit2. Catalog, SDK and diff checks pass.
+The following partial T064 lock preparation increment accepts an explicit
+captured-package policy beyond `Hoard.*`/`0.1.0`, preserving the original graph
+and source lock while checking actual SHA-256/SHA-512 archive bytes. It rejects
+case-folded duplicate IDs/nodes, changed locked versions, absent selected
+direct/transitive hashes and changed archive bytes. Verification requires the
+same frozen policy; default callers and record format remain unchanged.
+
+A trusted managed component actually SDK-packs `Acme.Adapter`
+`1.2.3-preview.1` and `Acme.Provider` `4.2.1`, derives an alternate lock without
+changing original source bytes/graph, restores/builds from a second fresh cache
+in locked mode and invokes the package-only consumer. Both actual loaded image
+bytes match their captured archives; managed exits and temporary owner release
+are observed. Archive hashes:
+`334045ec4080f70c5580a043674baf017c8a24c3961ac39fcc6b07ee5a2d0eed` /
+`24f3085cc932e9be9d9e60935cadc2777c7fdb3dfbca4beaf5f91372e07d29f2`;
+prepared lock:
+`8a3878149ad3c9856d70327dc41f67614f0dde12a3f8e465818409455e8ce1e7`.
+This is not native containment, arbitrary supplied-project closure/build or
+contributor full-suite acceptance. T064 stays unchecked. The contributor/SDK
+scope passes160 tests; contributor/existing baseline lock checks subsequently
+pass27 with the additional malformed-node challenges.
+Frozen full safe tooling observes610 tests with zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native macOS skips and expected incomplete
+exit2. Catalog, SDK and diff checks pass.
 
 ### Generated report and semantic counter controls: T048 continuation
 

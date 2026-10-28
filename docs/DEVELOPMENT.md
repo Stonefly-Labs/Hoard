@@ -6279,6 +6279,22 @@ evidence, not source/import/lock closure or public/full-suite acceptance.
 Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes609
 tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
 macOS skips and expected incomplete exit2. Catalog, SDK and diff checks pass.
+The next partial T064 lock increment admits an explicit captured-package policy
+for additional IDs/versions, checking actual archive SHA-256/SHA-512 before
+changing only selected content hashes. Requested/resolved versions, dependency
+edges, unselected nodes and source locks remain unchanged. Actual SDK-packed
+`Acme.Adapter` `1.2.3-preview.1` and `Acme.Provider` `4.2.1` restore/build a
+package-only consumer from a second fresh locked cache; invocation and both
+archive/image matches succeed. This fixed trusted managed component is not
+native containment, arbitrary supplied-project closure/build or contributor
+common-suite acceptance. Existing default lock behavior is unchanged.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors test_conformance_sdk_checks -q`:
+160 passed. After additional duplicate-node/missing-hash/version challenges,
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors test_conformance_evidence.ConformanceBaselineTests -q`:
+27 passed.
+Frozen full safe tooling observes610 tests with zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native macOS skips and expected incomplete
+exit2. Catalog, SDK and diff checks pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

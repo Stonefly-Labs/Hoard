@@ -273,6 +273,19 @@ remain provider-owned while authority/fault helpers belong to another package.
 These are input-byte checks, not observations of loaded session components or
 an integrated contributor run. The existing runtime origin reader still needs
 to consume these independently selected mappings in the eventual public route.
+The existing non-qualifying lock preparation helpers also accept an explicit
+captured-package policy for non-Hoard IDs and versions other than `0.1.0`.
+They change only selected local content hashes, preserve requested/resolved
+versions and dependency edges, verify actual archive SHA-256/SHA-512 bytes and
+leave unselected dependencies unchanged. Verification requires the same frozen
+policy; duplicate case-folded IDs/nodes, changed versions or archive bytes and
+missing selected direct/transitive hashes reject. Existing callers retain the
+original `Hoard.*`/`0.1.0` behavior. A trusted managed component packs two actual
+custom-version archives, restores/builds a package-only consumer from a second
+fresh cache in locked mode, invokes it and matches both runtime images to their
+archives. The author's original lock remains unchanged. This finite component
+does not validate arbitrary project closure, native containment or the public
+contributor build/full-suite route.
 
 ### Earlier F-07 diagnostic checkpoints
 

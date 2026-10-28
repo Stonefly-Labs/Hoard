@@ -2173,6 +2173,12 @@ package IDs. Missing/mismatched owners or images, duplicate case-folded package
 IDs and conflicting runtime asset owners reject rather than falling back to a
 built-in map. This input selection is not proof that the eventual session
 actually returns those component instances.
+Non-qualifying local lock preparation may also receive an explicit frozen
+captured-package policy for registered IDs/versions. Only selected content
+hashes are rebound after actual archive SHA-256/SHA-512 comparison; requested/
+resolved versions, dependency edges and unselected nodes are unchanged. Replay
+verification must receive the same policy and reject changed archive bytes or
+graphs. This does not resolve dependencies or change default built-in policy.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

@@ -1,3 +1,4 @@
+import base64
 import copy
 import hashlib
 import json
@@ -288,6 +289,79 @@ class ContributorAdmissionTests(unittest.TestCase):
         images = {"consumer/Acme.Adapter.dll": hashlib.sha256(b"identical but ambiguously owned").hexdigest()}
         with self.assertRaisesRegex(evidence.ConformanceError, "^BindingInvalid$"):
             contributors.binding_runtime_components(project, packages, images, "consumer")
+
+    def test_explicit_archive_lock_policy_preserves_versions_graph_and_unselected_dependencies(self):
+        import conformance_lock_preparation as preparation
+        feed = self.parent / "feed"
+        feed.mkdir()
+        packages = []
+        for name, version in (("Acme.Adapter", "1.2.3-preview.1"), ("Acme.Provider", "4.2.1")):
+            with zipfile.ZipFile(feed / f"{name}.{version}.nupkg", "w") as archive:
+                archive.writestr(f"{name}.nuspec",
+                                f"<package><metadata><id>{name}</id><version>{version}</version></metadata></package>")
+                archive.writestr(f"lib/net10.0/{name}.dll", (name + version).encode("ascii"))
+            packages.append(evidence.package_identity(feed, name, version))
+        dependencies = {
+            "acme.adapter": {
+                "type": "Direct", "requested": "[1.2.3-preview.1, 1.2.3-preview.1]",
+                "resolved": "1.2.3-preview.1", "contentHash": "old-adapter",
+                "dependencies": {"Acme.Provider": "4.2.1", "External.Other": "7.0.0"}},
+            "Acme.Provider": {"type": "Transitive", "resolved": "4.2.1", "contentHash": "old-provider"},
+            "External.Other": {"type": "Transitive", "resolved": "7.0.0", "contentHash": "unselected"}}
+        original = {"version": 2, "dependencies": {
+            "net10.0": dependencies, "net10.0/linux-x64": copy.deepcopy(dependencies)}}
+        before = evidence.canonical_bytes(original)
+        source = self.parent / "candidate"
+        source.mkdir()
+        project = source / "Consumer.csproj"
+        project.write_text('<Project Sdk="Microsoft.NET.Sdk" />\n')
+        lock = source / "packages.lock.json"
+        lock.write_bytes(before)
+        alternate, record = preparation.prepare_project_lock(
+            project, source, feed, "candidate", local_packages=packages)
+        self.assertEqual(lock.read_bytes(), before)
+        prepared = evidence.load_json(alternate.read_bytes())
+        expected = copy.deepcopy(original)
+        for framework in expected["dependencies"].values():
+            for package in packages:
+                name = "acme.adapter" if package["packageId"] == "Acme.Adapter" else "Acme.Provider"
+                framework[name]["contentHash"] = base64.b64encode(
+                    bytes.fromhex(package["nugetSha512"])).decode("ascii")
+        self.assertEqual(prepared, expected)
+        self.assertFalse(record["qualification"])
+        preparation.verify_project_lock(record, source, feed, local_packages=packages)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            preparation.verify_project_lock(record, source, feed)
+        for defect in ("duplicate", "version", "archive-hash", "nuget-hash"):
+            changed = list(packages)
+            if defect == "duplicate":
+                changed.append({**packages[0], "packageId": "acme.adapter"})
+            else:
+                field, value = {
+                    "version": ("version", "1.2.4"),
+                    "archive-hash": ("sha256", "a" * 64),
+                    "nuget-hash": ("nugetSha512", "b" * 128)}[defect]
+                changed[0] = {**packages[0], field: value}
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^InputChanged$"):
+                preparation.rebind_local_archives(before, feed, local_packages=changed)
+        for defect in ("duplicate-node", "missing-hash", "resolved-version"):
+            changed = copy.deepcopy(original)
+            framework = changed["dependencies"]["net10.0"]
+            if defect == "duplicate-node":
+                framework["Acme.Adapter"] = copy.deepcopy(framework["acme.adapter"])
+            elif defect == "missing-hash":
+                del framework["acme.adapter"]["contentHash"]
+            else:
+                framework["acme.adapter"]["resolved"] = "1.2.4"
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^InputChanged$"):
+                preparation.rebind_local_archives(
+                    evidence.canonical_bytes(changed), feed, local_packages=packages)
+        archive = feed / "Acme.Provider.4.2.1.nupkg"
+        archive.write_bytes(archive.read_bytes() + b"changed after capture")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            preparation.verify_project_lock(record, source, feed, local_packages=packages)
 
 
 if __name__ == "__main__":
