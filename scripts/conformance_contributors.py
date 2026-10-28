@@ -1,4 +1,4 @@
-"""Explicit contributor registration/staging and typed source, never qualification."""
+"""Explicit contributor inputs, typed factories and captured images, never qualification."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -98,7 +98,8 @@ def snapshot_binding_project(project, category, expected_inputs_sha256, owned_ru
 
 def binding_factory_source(binding, adapter_package, provider_package):
     registration = binding.registration
-    declaration = registration["declaration"]
+    declaration = evidence.admit_binding_declaration(
+        registration["declaration"], require_archive_hash=False)
     adapter = evidence.admit_entity("PackageIdentity", adapter_package)
     provider = evidence.admit_entity("PackageIdentity", provider_package)
     for package, package_id, version in (
@@ -113,11 +114,68 @@ def binding_factory_source(binding, adapter_package, provider_package):
     category = evidence._one_of("metadata", "artifacts")(declaration["category"])
     interface = "IMetadataConformanceBinding" if category == "metadata" else "IArtifactConformanceBinding"
     factory = _factory_type(registration["factoryType"])
+    bindings = "global::Hoard.Testing.Conformance.Bindings"
+    expected_category = "Metadata" if category == "metadata" else "Artifacts"
+    capabilities = ", ".join(f'"{item}"' for item in declaration["capabilities"])
+    faults = ", ".join(f"{bindings}.ConformanceFault.{item}" for item in declaration["faults"])
     return (
         "namespace Hoard.Fixtures.Conformance.Consumer;\n\n"
         "internal static class ContributorBindingFactory\n"
         "{\n"
-        f"    internal static global::Hoard.Testing.Conformance.Bindings.{interface} Create() =>\n"
-        f'        new global::{factory}("{provider["sha256"]}");\n'
+        f"    internal static {bindings}.{interface} Create()\n"
+        "    {\n"
+        f'        {bindings}.{interface} binding = new global::{factory}("{provider["sha256"]}");\n'
+        "        var actual = binding.Declaration;\n"
+        f"        {bindings}.ConformanceBindingAdmission.Validate(actual, "
+        f"{bindings}.ConformanceCategory.{expected_category});\n"
+        f'        if (actual.BindingId != "{declaration["bindingId"]}"\n'
+        f'            || !global::System.StringComparer.OrdinalIgnoreCase.Equals(actual.PackageId, "{declaration["packageId"]}")\n'
+        f'            || !global::System.StringComparer.OrdinalIgnoreCase.Equals(actual.PackageVersion, "{declaration["packageVersion"]}")\n'
+        f'            || actual.PackageSha256 != "{provider["sha256"]}"\n'
+        "            || !new global::System.Collections.Generic.HashSet<string>(actual.Capabilities, "
+        f"global::System.StringComparer.Ordinal).SetEquals([{capabilities}])\n"
+        f"            || !new global::System.Collections.Generic.HashSet<{bindings}.ConformanceFault>"
+        f"(actual.Faults).SetEquals([{faults}]))\n"
+        '        { throw new global::System.InvalidOperationException("BindingInvalid"); }\n'
+        "        return binding;\n"
+        "    }\n"
         "}\n"
     ).encode("ascii")
+
+
+def binding_runtime_components(binding, packages, runtime_assemblies, consumer_directory):
+    packages = evidence._list(evidence._entity("PackageIdentity"), 1024)(packages)
+    images = evidence._hash_map(runtime_assemblies)
+    directory = evidence.relative_path(consumer_directory)
+    indexed = {}
+    for package in packages:
+        key = package["packageId"].casefold()
+        if key in indexed:
+            raise evidence.ConformanceError("BindingInvalid")
+        indexed[key] = package
+
+    def selected(identity):
+        package = indexed.get(identity["packageId"].casefold())
+        if package is None or package["version"].casefold() != identity["version"].casefold():
+            raise evidence.ConformanceError("BindingInvalid")
+        return package
+
+    registration = binding.registration
+    selected(registration["adapterPackage"])
+    declaration = registration["declaration"]
+    selected({"packageId": declaration["packageId"], "version": declaration["packageVersion"]})
+    components, owners = {}, {}
+    for role, identity in registration["components"].items():
+        package = selected(identity)
+        member = f'lib/net10.0/{identity["assemblyName"]}.dll'
+        hashed = package["runtimeAssemblies"].get(member)
+        if hashed is None:
+            raise evidence.ConformanceError("BindingInvalid")
+        path = f'{directory}/{identity["assemblyName"]}.dll'
+        owner = (package["packageId"].casefold(), package["version"].casefold(), hashed)
+        if owners.setdefault(path.casefold(), owner) != owner:
+            raise evidence.ConformanceError("BindingInvalid")
+        if images.get(path) != hashed:
+            raise evidence.ConformanceError("InputChanged")
+        components[role] = (path, package["packageId"])
+    return MappingProxyType(components)

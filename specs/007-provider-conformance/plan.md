@@ -341,6 +341,28 @@ explicit native macOS skips and expected incomplete exit2. The28 focused cases,
 catalog, SDK and diff checks pass. The malformed source-policy packet correctly
 fails shared entity admission with `EvidenceSchemaInvalid`, not a later
 `BindingInvalid`; no schema relaxation or broad error remapping is added.
+The next partial T064 increment checks the generated factory's actual
+declaration against the registration: binding/category, provider ID/version/hash,
+and exact capability/fault sets independent of order. Four actual managed
+negative components reject a foreign binding ID, wrong archive hash, omitted
+capability and extra fault with the intended `BindingInvalid`; positive
+construction/image matching and `CS0029`/`CS1503` controls remain successful.
+This managed positive archive/image pair is
+`b1a3eed903620925205dd618014b6d8c4f6b026bde28243cd5fdbd0dd9f32f0b` /
+`3ef65dc07d176e4f63d142d8c1e5acaadaa4dce0834f3cbc5b462c90119c0e6d`.
+It does not replace the independently packaged full-suite journey.
+
+Captured role selection now derives exact image/package pairs from every
+registered component, preserving distinct adapter/provider/helper owners and
+assembly names different from package IDs. Thirty focused cases pass, using
+actual small archives/copied input bytes for both metadata and artifact roles;
+these are not actual loaded-session observations. Wrong/missing owners,
+versions/members, duplicate case-folded IDs, ambiguous identical runtime asset
+owners and altered image bytes reject. No built-in role aliases or inherited
+exclusions are used. Public dispatch and T064 remain incomplete.
+Frozen full safe tooling observes609 tests, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native macOS skips and expected incomplete
+exit2. Catalog, SDK and diff checks pass.
 
 ### Generated report and semantic counter controls: T048 continuation
 

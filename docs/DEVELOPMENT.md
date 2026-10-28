@@ -6265,6 +6265,20 @@ Frozen full safe tooling observes607 tests with zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native macOS skips and expected incomplete
 exit2. The28 focused cases and catalog/SDK/diff checks pass; malformed non-local
 package policy fails the existing strict entity schema without remapping.
+The following partial T064 increment validates actual generated-factory
+declarations, with exact capability/fault sets independent of order. Four
+managed negative components reject foreign binding ID, wrong hash, omitted
+capability and extra fault with the intended `BindingInvalid`; compile-time
+category/constructor rejection and positive archive/image matching still pass.
+Captured component selection additionally checks distinct adapter/provider/
+helper owners against exact local archive members and captured runtime bytes,
+without assuming assembly name equals package ID. Thirty focused cases pass,
+covering both category role layouts, altered images, missing/wrong owners and
+ambiguous identical runtime assets. This remains partial input/component
+evidence, not source/import/lock closure or public/full-suite acceptance.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes609
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2. Catalog, SDK and diff checks pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

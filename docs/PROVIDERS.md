@@ -257,6 +257,22 @@ Acme component compiles/invokes this path with matching actual archive/image
 bytes and rejects wrong category/constructor types at compilation. This is not
 Linux containment, complete MSBuild closure, generic supplied-project type
 validation or separately packaged good/red/corrected common-suite acceptance.
+The generated factory now validates its returned declaration's binding/category,
+provider identity/version/hash and exact capability/fault sets. Set order does
+not affect admission. Four real managed negative components reject a foreign
+binding ID, wrong archive hash, omitted capability or extra fault with the
+intended `BindingInvalid`, rather than merely observing a failed process.
+
+The captured-image helper independently selects every registered role from
+actual local package records and the captured consumer image map. It requires
+the exact declared `lib/net10.0/<assemblyName>.dll`; package ID and assembly
+name need not match. Missing owners, wrong versions/members, case-folded
+duplicate package IDs, ambiguous runtime asset ownership and altered image
+bytes reject. Metadata schema and artifact validator/maintenance/lifetime can
+remain provider-owned while authority/fault helpers belong to another package.
+These are input-byte checks, not observations of loaded session components or
+an integrated contributor run. The existing runtime origin reader still needs
+to consume these independently selected mappings in the eventual public route.
 
 ### Earlier F-07 diagnostic checkpoints
 

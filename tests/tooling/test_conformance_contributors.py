@@ -205,6 +205,90 @@ class ContributorAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
             contributors.binding_factory_source(project, {**adapter, "sourceMapping": "nuget.org"}, provider)
 
+    def test_registered_runtime_components_preserve_distinct_actual_archive_owners_and_image_names(self):
+        feed, output = self.parent / "feed", self.parent / "consumer"
+        feed.mkdir()
+        output.mkdir()
+
+        def package(name, assembly):
+            image = (name + ":" + assembly).encode("ascii")
+            with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
+                archive.writestr(f"{name}.nuspec",
+                                f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")
+                archive.writestr(f"lib/net10.0/{assembly}.dll", image)
+            (output / f"{assembly}.dll").write_bytes(image)
+            return evidence.package_identity(feed, name, "0.1.0")
+
+        adapter = package("Acme.Adapter", "Acme.Adapter")
+        provider = package("Acme.Provider", "Acme.Engine")
+        controls = package("Acme.Helpers", "Acme.Control")
+        packages = [adapter, provider, controls]
+        self.registration["components"]["schema"] = {
+            "packageId": "acme.provider", "version": "0.1.0", "assemblyName": "Acme.Engine"}
+        for role in ("authority", "faults"):
+            self.registration["components"][role] = {
+                "packageId": "Acme.Helpers", "version": "0.1.0", "assemblyName": "Acme.Control"}
+        self.write(self.registration)
+        project = contributors.admit_binding_project(self.project, "metadata")
+
+        def images():
+            return evidence.input_manifest(self.parent, [
+                f"consumer/{name}.dll" for name in ("Acme.Adapter", "Acme.Engine", "Acme.Control")])
+
+        components = contributors.binding_runtime_components(project, packages, images(), "consumer")
+        self.assertEqual(components["factory"], ("consumer/Acme.Adapter.dll", "Acme.Adapter"))
+        self.assertEqual(components["store"], components["factory"])
+        self.assertEqual(components["schema"], ("consumer/Acme.Engine.dll", "Acme.Provider"))
+        self.assertEqual(components["faults"], ("consumer/Acme.Control.dll", "Acme.Helpers"))
+        self.assertEqual(components["authority"], components["faults"])
+        for defect, changed in (
+                ("missing-provider", [adapter, controls]),
+                ("missing-helper", [adapter, provider]),
+                ("wrong-helper-version", [adapter, provider, {**controls, "version": "0.2.0"}]),
+                ("wrong-helper-member", [adapter, provider, {
+                    **controls, "runtimeAssemblies": {"lib/net10.0/Other.dll": next(iter(
+                        controls["runtimeAssemblies"].values()))}}]),
+                ("duplicate-casefolded-owner", [*packages, {**controls, "packageId": "acme.helpers"}])):
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^BindingInvalid$"):
+                contributors.binding_runtime_components(project, changed, images(), "consumer")
+        (output / "Acme.Control.dll").write_bytes(b"changed runtime image")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_runtime_components(project, packages, images(), "consumer")
+
+        self.registration["declaration"].update({
+            "category": "artifacts", "capabilities": ["artifacts", "non-durable"],
+            "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["artifacts"])})
+        del self.registration["components"]["schema"]
+        for role in ("validator", "maintenance", "lifetime"):
+            self.registration["components"][role] = {
+                "packageId": "Acme.Provider", "version": "0.1.0", "assemblyName": "Acme.Engine"}
+        self.write(self.registration)
+        artifact = contributors.admit_binding_project(self.project, "artifacts")
+        (output / "Acme.Control.dll").write_bytes(b"Acme.Helpers:Acme.Control")
+        components = contributors.binding_runtime_components(artifact, packages, images(), "consumer")
+        self.assertEqual(components["validator"], ("consumer/Acme.Engine.dll", "Acme.Provider"))
+        self.assertEqual(components["maintenance"], components["validator"])
+        self.assertEqual(components["lifetime"], components["validator"])
+        self.assertEqual(components["faults"], ("consumer/Acme.Control.dll", "Acme.Helpers"))
+
+    def test_registered_components_reject_conflicting_runtime_asset_owners_even_with_identical_bytes(self):
+        feed = self.parent / "feed"
+        feed.mkdir()
+        packages = []
+        for name in ("Acme.Adapter", "Acme.Provider"):
+            with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
+                archive.writestr(f"{name}.nuspec",
+                                f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")
+                archive.writestr("lib/net10.0/Acme.Adapter.dll", b"identical but ambiguously owned")
+            packages.append(evidence.package_identity(feed, name, "0.1.0"))
+        self.registration["components"]["schema"]["packageId"] = "Acme.Provider"
+        self.write(self.registration)
+        project = contributors.admit_binding_project(self.project, "metadata")
+        images = {"consumer/Acme.Adapter.dll": hashlib.sha256(b"identical but ambiguously owned").hexdigest()}
+        with self.assertRaisesRegex(evidence.ConformanceError, "^BindingInvalid$"):
+            contributors.binding_runtime_components(project, packages, images, "consumer")
+
 
 if __name__ == "__main__":
     unittest.main()

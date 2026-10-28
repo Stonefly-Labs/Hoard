@@ -604,6 +604,12 @@ identities and the adapter image, then directly constructs the declared type
 with the actual provider archive hash. A managed metadata component compiles
 and invokes an external Acme type and rejects wrong category/constructor
 signatures. This is not the public contributor route or a complete-suite run.
+Generated factories also check the actual declaration against the registration,
+including the provider archive hash and exact capability/fault sets.
+Captured component-image selection now preserves separately declared adapter,
+provider and helper package owners, including assembly names different from
+package IDs. These component checks do not complete source closure or public
+execution; T064 remains open.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

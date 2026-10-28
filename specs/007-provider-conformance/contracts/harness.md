@@ -2164,6 +2164,15 @@ implement the category's binding interface; no reflection/directory loading
 is used. A managed metadata-only component verifies compilation/invocation and
 intended wrong-category/wrong-constructor compiler rejection. This does not yet
 wire or validate arbitrary supplied projects through the public runner.
+The generated factory validates the returned declaration against registration:
+category, binding ID, provider ID/version, actual provider archive hash and exact
+capability/fault sets, independent of set order. Captured role inputs select the
+exact declared net10.0 member and consumer image bytes from each actual package
+record. Roles may have different owners, and assembly names need not equal
+package IDs. Missing/mismatched owners or images, duplicate case-folded package
+IDs and conflicting runtime asset owners reject rather than falling back to a
+built-in map. This input selection is not proof that the eventual session
+actually returns those component instances.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers
