@@ -300,6 +300,14 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
     identities.update({
         f'{access}(provider: "{binding}", consumer: "{consumer}", unavailable: {unavailable})': 1
         for consumer in ("scope", "validation") for unavailable in ("False", "True")})
+    application = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+                   "Observed_payload_application_shutdown_preserves_actual_resource_ownership")
+    identities.update({
+        f'{application}(provider: "{binding}", unavailable: {unavailable})': 1
+        for unavailable in ("False", "True")})
+    admitted = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+                "Observed_payload_admission_rechecks_actual_quarantine_before_handoff")
+    identities[f'{admitted}(provider: "{binding}")'] = 1
     return identities
 
 

@@ -370,8 +370,8 @@ class ContributorAdmissionTests(unittest.TestCase):
     def test_artifact_component_inventory_uses_registered_identity_without_builtin_applicability(self):
         profile = {"durability": "SimulationOnly", "enumeration": "Incomplete"}
         actual = catalog.contributor_artifact_component_origin_counts("acme.artifacts", profile=profile)
-        self.assertEqual(len(actual), 107)
-        self.assertEqual(sum(actual.values()), 108)
+        self.assertEqual(len(actual), 110)
+        self.assertEqual(sum(actual.values()), 111)
         self.assertEqual(set(actual.values()), {1, 2})
         self.assertTrue(all('(provider: "acme.artifacts"' in identity for identity in actual))
         self.assertFalse(any('"local"' in identity or '"object"' in identity for identity in actual))
@@ -379,13 +379,13 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertEqual(catalog.contributor_artifact_component_origin_counts("acme.artifacts", profile=profile), actual)
         snapshot = catalog.contributor_artifact_component_origin_counts(
             "acme.artifacts", profile={"durability": "LocalProcessCrash", "enumeration": "Snapshot"})
-        self.assertEqual(len(snapshot), 106)
-        self.assertEqual(sum(snapshot.values()), 114)
+        self.assertEqual(len(snapshot), 109)
+        self.assertEqual(sum(snapshot.values()), 117)
         self.assertEqual(set(actual) - set(snapshot), {
             'Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests.'
             'Observed_portable_consumers_preserve_actual_guarantees(provider: "acme.artifacts", consumer: "direct-availability")'})
         for durability, enumeration, rows, origins in (
-                ("LocalProcessCrash", "Incomplete", 107, 115), ("SimulationOnly", "Snapshot", 106, 107)):
+                ("LocalProcessCrash", "Incomplete", 110, 118), ("SimulationOnly", "Snapshot", 109, 110)):
             crossed = catalog.contributor_artifact_component_origin_counts(
                 "acme.artifacts", profile={"durability": durability, "enumeration": enumeration})
             self.assertEqual(len(crossed), rows)

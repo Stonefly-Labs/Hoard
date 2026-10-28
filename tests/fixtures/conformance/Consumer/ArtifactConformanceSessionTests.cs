@@ -601,12 +601,20 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await AccessApplicationShutdownConsumerAsync(Binding(provider), context, resources, output, unavailable, recordWrites);
+    }
+
+    internal static async Task AccessApplicationShutdownConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        bool unavailable, bool recordWrites = false, Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         IAsyncDisposable? observation = null;
         try
         {
+            assertProfile?.Invoke(session);
             using var source = new ArtifactPublicationAssertions.ShortSource("access scope remains genuine owned work"u8.ToArray());
             var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
             var origin = session.CaptureOrigin();
@@ -630,6 +638,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             finally { released.TrySetResult(); }
             Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(() => applying)).Message);
             await disposing;
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, origin);
         }
         finally
@@ -1116,14 +1125,22 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await AdmittedOpenQuarantineConsumerAsync(Binding(provider), context, resources, output);
+    }
+
+    internal static async Task AdmittedOpenQuarantineConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         IAsyncDisposable? observation = null;
         try
         {
+            assertProfile?.Invoke(session);
             async ValueTask Observe() => observation = await session.Faults.ObserveBoundaryAsync(
-                provider == "local" ? ArtifactObservationPoint.ReadOpened : ArtifactObservationPoint.DirectVerification,
+                ArtifactObservationPoint.ReadOpened,
                 () =>
                 {
                     entered.TrySetResult();
@@ -1134,6 +1151,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 session.Store, session.Validator, session.Authority, session.Identity,
                 Observe, token => entered.Task.WaitAsync(context.ControlBudget, token), Remove,
                 session.Faults.ReplacePayloadAsync, () => released.TrySetResult(), default);
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally

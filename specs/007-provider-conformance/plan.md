@@ -583,6 +583,26 @@ Affected README/provider/development/harness guidance is updated; public example
 diagrams, production/governance/IaC/release/UI documents are unaffected by
 internal consumer reuse. This bounded design review is not final T081 acceptance;
 T064 and complete common/native/compiler/public dispatch closure remain open.
+The subsequent three rows share access-application shutdown and admitted-open
+quarantine consumers. ObjectReadSession.cs:24-53 and LocalReadSession.cs:24-61
+already expose ReadOpened with read protection and a physical stream held,
+before the final incarnation/quarantine recheck and result handoff. Thus the
+admitted-open consumer can also remove its provider-name branch and use the
+same existing point for both. Original corruption/restoration, blocked shutdown,
+incomplete settlement, applying-operation rejection and cleanup assertions remain;
+test-only profile checks surround work. No SDK/binding/provider change is needed.
+Actual SDK-packed snapshot/incomplete adapters pass109/110 rows with117/111
+origins, exact discovery, eight-role attribution, fresh-cache locked replay,
+all201 independently discovered built-in regressions (including the original
+record-permission application caller) and all six input/category controls.
+Crossed inventory-only controls require110/118 or109/110 rows/origins, not claimed
+runtime support. The51 contributor cases, catalog/SDK, focused two-file whitespace
+and diff checks pass. Frozen full safe tooling remains653 observed, zero
+failures/errors/unexpected diagnostic bytes, twenty native skips and expected
+incomplete exit2. README/provider/development/harness guidance is updated; public
+examples/diagrams and production/governance/IaC/release/UI documents are unaffected
+by internal consumer reuse. Complete common/native/compiler/public closure
+remains unfinished; T064 stays unchecked.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

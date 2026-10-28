@@ -2249,7 +2249,7 @@ contributor build properties must fail before compilation/package collection.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. The artifact component mode
 now compiles the same exact-package/generated-factory inputs and independently
-expands 106 snapshot / 107 incomplete-enumeration publication/read/reconciliation/
+expands 109 snapshot / 110 incomplete-enumeration publication/read/reconciliation/
 deletion/budget/reference rows using the registered ID. It invokes unchanged SDK helpers and
 settles actual sessions; it does not select a built-in ID or inherit exclusions.
 An actual independently SDK-packed Acme adapter at2.4.0-preview.1 passes these
@@ -2328,6 +2328,12 @@ The point need not fire for already-settled/pending/noncommitted outcomes.
 Late cleanup uses CleanupCandidate. No new SDK enum or binding change is needed.
 Actual snapshot/incomplete profiles pass106/107 rows with114/108 origins and194
 selected built-in regressions; complete common/native/public closure stays open.
+Admitted-open quarantine uses ReadOpened for both bindings, with read protection
+and stream held before the final incarnation/quarantine check and result handoff.
+Share the original access-application shutdown consumer too; no provider-name
+branch or new SDK seam is needed. Actual snapshot/incomplete profiles pass109/110
+rows with117/111 origins and201 selected built-in regressions. This is still
+partial common-catalog coverage, not native/compiler/public closure.
 Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a

@@ -307,6 +307,35 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
+    [ContributorArtifactData(false)]
+    [ContributorArtifactData(true)]
+    public async Task Observed_payload_application_shutdown_preserves_actual_resource_ownership(string provider, bool unavailable)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.AccessApplicationShutdownConsumerAsync(binding, context, resources, output,
+            unavailable, assertProfile: AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData]
+    public async Task Observed_payload_admission_rechecks_actual_quarantine_before_handoff(string provider)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.AdmittedOpenQuarantineConsumerAsync(
+            binding, context, resources, output, AssertProfile);
+    }
+
+    [Theory]
     [ContributorArtifactData(ConformanceFault.PublicationBoundary)]
     [ContributorArtifactData(ConformanceFault.DirectVisibility)]
     [ContributorArtifactData(ConformanceFault.PayloadDamage)]

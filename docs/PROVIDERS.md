@@ -275,7 +275,7 @@ the typed factory seam, not an artifact common consumer, capability/applicabilit
 mapping, native containment or qualification.
 
 The package-only consumer additionally accepts artifact build inputs for an
-106-row snapshot / 107-row incomplete-enumeration component, independently expanded
+109-row snapshot / 110-row incomplete-enumeration component, independently expanded
 with the actual registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
 budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
 adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
@@ -360,6 +360,12 @@ observe every admitted reconciliation. Cleanup retains CleanupCandidate.
 No provider-name/profile inference or new SDK enum is required. Actual snapshot/
 incomplete profiles pass106/107 rows with114/108 origins and194 selected built-in
 regressions; complete common/native closure remains unfinished.
+Admitted-open quarantine uses the existing ReadOpened point for both bindings:
+the read protection and physical stream are held, before the final incarnation/
+quarantine recheck and result handoff. Access-application shutdown also shares
+the original ownership/settlement consumer. Actual snapshot/incomplete profiles
+pass109/110 rows with117/111 origins and201 selected built-in regressions.
+No SDK/binding/provider changes or full native qualification are implied.
 
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires

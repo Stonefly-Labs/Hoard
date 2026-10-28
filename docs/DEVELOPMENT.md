@@ -6404,6 +6404,16 @@ built-in regressions and all six input/category controls. The51 contributor case
 catalog/SDK, whitespace and diff checks pass. Frozen safe tooling remains653
 observed, zero failures/errors/unexpected diagnostic bytes, twenty native skips
 and expected incomplete exit2. This interim review is not final T081 acceptance.
+The next three rows share access-application shutdown and admitted-open
+quarantine consumers. Both read implementations already expose ReadOpened after
+the read guard and stream are held, before final incarnation/quarantine recheck
+and handoff. Remove that original provider-name branch too; no new SDK seam is
+needed. Actual snapshot/incomplete profiles pass109/110 rows with117/111 origins,
+exact discovery, eight-role attribution, fresh-cache locked replay, all201
+selected built-in regressions and all six input/category controls. The51
+contributor cases, catalog/SDK, whitespace and diff checks pass. Frozen safe
+tooling remains653 observed, zero failures/errors/unexpected diagnostic bytes,
+twenty native skips and expected incomplete exit2. T064/public closure stay open.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,
