@@ -6108,6 +6108,20 @@ policy/schema controls pass. Actual 88-parameter native confirmation and public
 compatibility dispatch remain open. Provider behavior, source assertions,
 examples, diagrams, governance and infrastructure are unaffected.
 
+The T048 continuation extends the actual generated-report checks to 29 rejecting
+mutations, explicitly including duplicate runtime witnesses. It also reads the
+already verified original runtime proofs, admits each unmodified snapshot set
+and challenges premature readiness/completed stop while ownership is retained.
+These two controls invoke independent counter policy in memory, so digest
+mismatch or changed host exit/status labels are not their rejection reason;
+the original proof files remain unchanged. Missing target stages, optimistic
+semantics, or missing workflow control receipts fail explicitly. Focused model
+and workflow tests pass. Native 29-plus-two confirmation is pending; T048,
+qualification and the remaining task gates are not declared complete.
+Full safe tooling subsequently observes 591 tests, zero failures/errors/
+unexpected diagnostic bytes, twenty explicit native macOS skips and expected
+incomplete exit2. Catalog and diff checks pass. No C# source changes.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

@@ -909,7 +909,15 @@ class ConformanceAdmissionTests(unittest.TestCase):
             for identity, (_, matrix) in catalog.composition_execution_cases().items():
                 execution = str(uuid.uuid4())
                 path = "proof-" + execution + ".json"
-                hashed = write(output + "/" + path, evidence.canonical_bytes({"model": identity}))
+                policy = catalog.composition_snapshot_policy(identity)
+                owners = [{"observationId": str(uuid.uuid4()), "kind": "original-owner"}
+                          for _ in range(max(catalog.composition_snapshot_owner_indices(identity)) + 1)]
+                snapshots = [
+                    {"schemaVersion": 1, "observationId": str(uuid.uuid4()),
+                     "sourceId": owners[owner]["observationId"], "stage": stage, "counters": dict(counters)}
+                    for owner, (stage, counters) in zip(catalog.composition_snapshot_owner_indices(identity), policy)]
+                hashed = write(output + "/" + path, evidence.canonical_bytes({
+                    "testIdentity": identity, "originalObservations": owners, "compositionObservations": snapshots}))
                 proofs[path] = hashed
                 witnesses.append({
                     **prototype["witnesses"][0], "executionId": execution, "testIdentity": identity,
@@ -932,7 +940,8 @@ class ConformanceAdmissionTests(unittest.TestCase):
             shutil.rmtree(root / "feed")
             with mock.patch.object(evidence, "ingest_runtime_attempt", return_value=observed) as ingestion:
                 self.assertEqual(composition.verify_composition_case_report(root, inputs, owner), summary)
-                composition.verify_composition_report_controls(root, inputs, owner, summary)
+                self.assertEqual(composition.verify_composition_report_controls(root, inputs, owner, summary), {
+                    "qualification": False, "reportMutations": 29, "semanticMutations": 2})
                 ingestion.assert_called()
             self.assertFalse(summary["qualification"])
 
@@ -1631,6 +1640,23 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def test_generated_composition_observation_controls_reject_false_readiness_and_optimistic_cleanup(self):
+        import conformance_composition_checks as composition
+        self.composition_transport()
+        baseline = copy.deepcopy(self.proof)
+        self.setUp()
+        self.ownership_transport()
+        retained = copy.deepcopy(self.proof)
+        self.assertEqual(composition._verify_composition_observation_controls((baseline, retained)), 2)
+        with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+            composition._verify_composition_observation_controls((baseline,))
+        with mock.patch.object(evidence, "_ingest_composition_observations", return_value=()):
+            with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                composition._verify_composition_observation_controls((baseline, retained))
+        retained["compositionObservations"][0]["counters"]["stopComplete"] = 1
+        with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            composition._verify_composition_observation_controls((baseline, retained))
+
     def test_version_proofs_are_checked_independently_and_cannot_downgrade_to_schema_one(self):
         import conformance_case_catalog as catalog
         self.inputs["profileId"] = "compatibility"

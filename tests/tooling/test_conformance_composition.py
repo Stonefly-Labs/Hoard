@@ -736,7 +736,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                          "reference-child-start", "reference-child-live", "reference-child-input",
                          "native-invocation-omitted", "native-invocation-output",
                          "native-invocation-count", "native-invocation-closure", "native-input-digest",
-                         "native-input-closure", "native-input-path"):
+                         "native-input-closure", "native-input-path",
+                         "missing-report-control", "missing-semantic-control"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -916,7 +917,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 output = io.StringIO()
                 with mock.patch.object(sys, "argv", ["workflow", str(root), "a" * 40]), mock.patch.object(
                         evidence, "admit_entity", side_effect=lambda kind, value: value), \
-                        mock.patch.object(composition, "verify_composition_report_controls") as report_controls, \
+                        mock.patch.object(composition, "verify_composition_report_controls", return_value={
+                            "qualification": False,
+                            "reportMutations": 28 if mutation == "missing-report-control" else 29,
+                            "semanticMutations": 1 if mutation == "missing-semantic-control" else 2}) as report_controls, \
                         contextlib.redirect_stdout(output):
                     if mutation == "none":
                         exec(code, {"__name__": "__main__"})

@@ -681,6 +681,39 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
     }
 
 
+def _verify_composition_observation_controls(proofs):
+    targets = {"false-readiness": ("before-initialization", "ready"),
+               "optimistic-cleanup": ("ownership-retained", "stopComplete")}
+    rejected = set()
+    for proof in proofs:
+        rows = proof["compositionObservations"]
+        originals = proof["originalObservations"]
+        options = {"require_success": True, "test_identity": proof["testIdentity"]}
+        evidence._ingest_composition_observations(rows, originals, set(), **options)
+        for name, (stage, counter) in targets.items():
+            if name in rejected:
+                continue
+            matches = [index for index, row in enumerate(rows) if row["stage"] == stage]
+            if not matches:
+                continue
+            index = matches[0]
+            if rows[index]["counters"][counter] != 0:
+                raise evidence.ConformanceError("ProofMismatch")
+            changed = evidence.load_json(evidence.canonical_bytes(rows))
+            changed[index]["counters"][counter] = 1
+            try:
+                evidence._ingest_composition_observations(changed, originals, set(), **options)
+            except evidence.ConformanceError as error:
+                if str(error) != "ProofMismatch":
+                    raise
+            else:
+                raise evidence.ConformanceError("ProofMismatch")
+            rejected.add(name)
+    if rejected != targets.keys():
+        raise evidence.ConformanceError("WitnessMissing")
+    return len(rejected)
+
+
 def verify_composition_report_controls(root, inputs, owner, summary):
     if verify_composition_case_report(root, inputs, owner) != summary:
         raise evidence.ConformanceError("ProofMismatch")
@@ -738,6 +771,9 @@ def verify_composition_report_controls(root, inputs, owner, summary):
     changed["results"].append(changed["results"][0])
     mutations.append(changed)
     changed = evidence.load_json(evidence.canonical_bytes(report))
+    changed["witnesses"].append(changed["witnesses"][0])
+    mutations.append(changed)
+    changed = evidence.load_json(evidence.canonical_bytes(report))
     changed["results"][0]["attempts"][0]["endedMs"] = -1
     mutations.append(changed)
     for changed in mutations:
@@ -746,8 +782,20 @@ def verify_composition_report_controls(root, inputs, owner, summary):
         except evidence.ConformanceError:
             continue
         raise evidence.ConformanceError("ProofMismatch")
-    if len(mutations) != 28:
+    if len(mutations) != 29:
         raise evidence.ConformanceError("WitnessMissing")
+    manifest_path, = (path for path in report["proofs"]
+                      if re.fullmatch(r"runtime-input-[0-9a-f-]{36}\.json", path))
+    attempt = manifest_path.removeprefix("runtime-input-").removesuffix(".json")
+    proofs = []
+    for witness in report["witnesses"]:
+        path = f'runtime-{attempt}/proof-{witness["executionId"]}.json'
+        raw = read_bounded(root / path, 64 * 1024)
+        if hashlib.sha256(raw).hexdigest() != witness["proofSha256"]:
+            raise evidence.ConformanceError("ProofMismatch")
+        proofs.append(evidence.load_json(raw))
+    return {"qualification": False, "reportMutations": len(mutations),
+            "semanticMutations": _verify_composition_observation_controls(proofs)}
 
 
 def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_directory, started_ms, ended_ms,

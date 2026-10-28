@@ -97,6 +97,33 @@ files. The actual original version replay again passes114/114 and170 independent
 observations under synthetic local admission. No local skip or modeled input is
 promoted to native evidence. Progress is56/86, implement/running.
 
+### Generated report and semantic counter controls: T048 continuation
+
+The independent post-release control function now rejects 29 report mutations,
+adding an explicit duplicate runtime witness to the existing missing CP result/
+witness and duplicate result challenges. From the already verified real runtime
+proofs it additionally admits every original snapshot set, then changes one
+counter at a time: `before-initialization.ready=1` or
+`ownership-retained.stopComplete=1`. Independent semantic admission must reject
+each with `ProofMismatch`, not just a digest mismatch. Original files, host exit
+and passing status labels remain unchanged. Missing target stages or a reader
+that accepts the poisoned control raise an explicit failure.
+
+The workflow requires the exact 29-report/two-semantic control receipt; models
+reject either omitted count. The release-aware modeled report now includes
+protocol-shaped snapshot/owner records rather than opaque dummy proof payloads,
+without claiming runtime origin. Focused snapshot/report/workflow checks pass.
+The new controls still require native generated-proof execution after push.
+T048 remains unchecked and progress remains56/86; earlier successful28-control
+native receipts do not certify these newly added controls.
+
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 591 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips, expected incomplete exit2. `python3 scripts/conformance_evidence.py --check-sdk`
+and `git diff --check`: passed. No C# source/project changes in this increment;
+the previous actual logger/version and focused formatter receipts remain scoped
+to that source. All tracked inputs stayed frozen during the safe tooling run.
+
 The composition continuation prepares one F-01 registration consumer, two F-02
 configuration binaries and three F-03 discovery binaries from the pinned F-06
 recipes before candidate feed creation or any candidate command. Its private

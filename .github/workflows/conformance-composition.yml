@@ -71,7 +71,9 @@ jobs:
           reference_observation = evidence.load_json(reference_output)
           reference_inputs = read_bounded(root / "proofs/inherited-reference-inputs.json", 2 * 1024**2)
           try:
-              verify_composition_report_controls(root, inputs, owner, summary["caseReport"])
+              controls = verify_composition_report_controls(root, inputs, owner, summary["caseReport"])
+              if controls != {"qualification": False, "reportMutations": 29, "semanticMutations": 2}:
+                  raise evidence.ConformanceError("WitnessMissing")
               verify_controller_tooling(root, inherited["tooling"], inputs, owner)
               for phase, observed in (
                       ("historical", summary["historicalNativeInvocations"]),

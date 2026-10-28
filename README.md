@@ -543,6 +543,13 @@ and runtime manifest rather than expanding thousands of files into that bounded
 list; all graph bytes still reverify before/after execution, and the guard stays
 unchanged. A larger-graph regression reproduces the failure first. Native
 architecture confirmation and public compatibility dispatch remain unfinished.
+The next T048 increment requires 29 generated-report mutations (including
+duplicate runtime witnesses) plus two counter-semantic controls from the actual
+verified proofs: premature readiness and completed stop while owned work is
+still retained. It first admits each unmodified control and leaves original
+proof files and successful host labels unchanged. Missing controls or an
+evaluator that accepts a poisoned snapshot fail explicitly. Focused models pass;
+the additional native controls remain pending and T048 stays unchecked.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.
