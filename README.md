@@ -692,8 +692,8 @@ declaration admission. Default hash-only construction and metadata generation ar
 preserved. An actual managed component verifies both paths and their rejection
 controls. Artifact common-consumer/applicability integration remains unfinished;
 this is not native containment or qualification.
-The package-only consumer now also has an artifact component mode with 96 snapshot
-or 97 incomplete-enumeration
+The package-only consumer now also has an artifact component mode with 103 snapshot
+or 104 incomplete-enumeration
 independently expanded portable rows using the registered binding ID and unchanged
 SDK helpers. An actual SDK-packed Acme adapter at2.4.0-preview.1 passes its applicable
 rows, exact discovery and eight-role image attribution after fresh-cache locked
@@ -738,6 +738,10 @@ Eight shared ordinary-error controls now verify faulted settlement retains the
 actual observer failure and never reports released ownership. Actual snapshot/
 incomplete runs pass 96/97 rows with 103/98 origins and 174 selected built-in
 regressions. Full common/native closure and public dispatch remain unfinished.
+Shared prefix-stop/residual cleanup and access/restoration consumers bring actual
+snapshot/incomplete components to103/104 rows with111/105 origins and188 selected
+built-in regressions. The Unix permission prerequisite remains explicit; logical
+reopen still does not establish process-crash/native qualification.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

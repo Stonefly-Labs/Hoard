@@ -6380,6 +6380,17 @@ category controls. Profile-on-reopen mutations fail at the named assertion after
 catalog/SDK, whitespace and diff checks pass; frozen full safe tooling remains653
 observed, zero failures/errors/unexpected diagnostic bytes, twenty native skips
 and expected incomplete exit2. T064 and native/common/public closure stay open.
+Seven additional cleanup/access rows share original prefix-stop, committed-
+residual, access-scope and validation-access consumers. Preserve explicit Unix
+permission rejection, actual-incarnation protection, conflicting-control
+rejection, restoration and settlement; frozen durability selects prefix-stop
+logical reopen and the additional origin. Actual snapshot/incomplete adapters
+pass103/104 rows with111/105 origins, exact discovery, eight-role attribution,
+fresh-cache locked replay, all188 selected built-in regressions and all six input/
+category controls. The51 contributor cases, catalog/SDK, whitespace and diff
+checks pass. Frozen full safe tooling remains653 observed, zero failures/errors/
+unexpected diagnostic bytes, twenty native skips and expected incomplete exit2.
+Complete common/native/compiler closure and public dispatch remain unfinished.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

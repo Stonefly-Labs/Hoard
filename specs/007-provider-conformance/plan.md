@@ -541,6 +541,24 @@ native skips and expected incomplete exit2. Affected README/provider/development
 harness guidance is updated; public examples, diagrams, production/governance/
 IaC/release/UI documents are unaffected by internal consumer extraction.
 T064 and complete common/native/compiler/public dispatch closure remain open.
+The next seven rows share original failed-prefix cleanup/stop, committed-
+residual cleanup, access-scope and validation-access consumers. All original
+receipt/capacity, current-incarnation protection, stale/overlapping-control
+rejection, restoration, settlement and explicit Unix permission assertions remain.
+Only frozen durability selects prefix-stop logical reopen and its extra origin.
+Actual SDK-packed snapshot/incomplete profiles pass103/104 rows with111/105
+origins, exact discovery, eight-role image attribution, fresh-cache locked replay,
+all188 independently discovered built-in regressions and all six input/category
+controls. Independently packed profile-on-reopen mutations reject at the actual
+named profile assertion after31 durable or103 simulated preceding rows.
+Crossed inventory-only controls require104/112 or103/104 rows/origins;
+these remain unexecuted runtime combinations. The51 contributor cases, catalog/
+SDK, focused two-file whitespace and diff checks pass. Frozen full safe tooling
+remains653 observed, zero failures/errors/unexpected diagnostic bytes, twenty
+explicit native skips and expected incomplete exit2. Affected README/provider/
+development/harness guidance is updated; public examples, diagrams, production/
+governance/IaC/release/UI documents are unaffected by internal consumer reuse.
+T064 and complete common/native/compiler/public dispatch closure remain open.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

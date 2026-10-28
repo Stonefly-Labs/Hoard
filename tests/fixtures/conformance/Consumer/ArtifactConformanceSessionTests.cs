@@ -85,12 +85,21 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
+        await PrefixCleanupConsumerAsync(Binding(provider, new(artifactBytes: 1024, stagingBytes: 1024)),
+            context, resources, output, stop, provider == "local");
+    }
+
+    internal static async Task PrefixCleanupConsumerAsync(IArtifactConformanceBinding binding, ConformanceRunContext context,
+        RecordingDirectories resources, ITestOutputHelper output, bool stop, bool durable,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
         var current = await ConformanceObservedArtifactSession.OpenAsync(
-            Binding(provider, new(artifactBytes: 1024, stagingBytes: 1024)), context, default);
+            binding, context, default);
         IAsyncDisposable? restriction = null;
         IAsyncDisposable? observation = null;
         try
         {
+            assertProfile?.Invoke(current);
             async ValueTask Arm() => observation = await current.Faults.InjectObservationFailureAsync(
                 ArtifactObservationPoint.StagePrefix, async () => restriction =
                     await current.Faults.RestrictStorageCleanupAsync(ArtifactStorageArea.Staging, default), default);
@@ -108,15 +117,17 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 await Arm();
                 await assertions.FailedPrefixStopAsync(ticket, source,
                     options => current.Lifetime.StopAsync(options, default), Restore, default);
-                if (provider == "local")
+                if (durable)
                 {
                     ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
                     current = Assert.IsType<ConformanceObservedArtifactSession>(await current.ReopenAsync(default));
+                    assertProfile?.Invoke(current);
                     await ArtifactCleanupAssertions.ReopenedAfterPrefixStopAsync(current.Store,
                         () => current.Faults.ObserveInitialization().Ready, ticket, default);
                 }
             }
             else { await assertions.FailedPrefixAsync(Arm, Restore, default); }
+            assertProfile?.Invoke(current);
             ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
         }
         finally
@@ -325,6 +336,18 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             resources, new ConformanceEvidenceBuffer());
         var session = await ConformanceObservedArtifactSession.OpenAsync(
             Binding(provider, new(artifactBytes: 1024, stagingBytes: 1024)), context, default);
+        try
+        {
+            await ResidualCleanupConsumerAsync(session);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    internal static async Task ResidualCleanupConsumerAsync(IArtifactConformanceSession session)
+    {
         IAsyncDisposable? restriction = null;
         try
         {
@@ -341,15 +364,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             ValueTask Restore() =>
                 (restriction ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
             await assertions.CommittedResidualAsync(Deny, Restore, default);
-            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally
         {
-            try { if (restriction is not null) { await restriction.DisposeAsync(); } }
-            finally { await session.DisposeAsync(); }
+            if (restriction is not null) { await restriction.DisposeAsync(); }
         }
-        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
-        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
     [Theory]
@@ -437,6 +456,19 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
         var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            await AccessScopeConsumerAsync(session, context, unavailable);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    internal static async Task AccessScopeConsumerAsync(IArtifactConformanceSession session,
+        ConformanceRunContext context, bool unavailable)
+    {
         IAsyncDisposable? access = null;
         try
         {
@@ -457,15 +489,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 await deleting).Value.Reclamation);
             Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
                 await session.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)).Code);
-            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally
         {
-            try { if (access is not null) { await access.DisposeAsync(); } }
-            finally { await session.DisposeAsync(); }
+            if (access is not null) { await access.DisposeAsync(); }
         }
-        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
-        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
     [Theory]
@@ -625,6 +653,18 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
         var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            await ValidationAccessConsumerAsync(session, unavailable);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    internal static async Task ValidationAccessConsumerAsync(IArtifactConformanceSession session, bool unavailable)
+    {
         IAsyncDisposable? access = null;
         try
         {
@@ -648,15 +688,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     if (OperatingSystem.IsWindows())
                     { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
                 }, Deny, Restore, default);
-            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally
         {
-            try { if (access is not null) { await access.DisposeAsync(); } }
-            finally { await session.DisposeAsync(); }
+            if (access is not null) { await access.DisposeAsync(); }
         }
-        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
-        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
     [Theory]

@@ -238,7 +238,7 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
             "descriptor-completion", "descriptor-handle", "descriptor-renewed",
             "candidate-tickets", "candidate-dependencies", "candidate-decisions", "candidate-resume",
             "receipt", "read-open", "verified-reconciliation", "pending-reclamation",
-            "delete-history", "transfer-queue", "released-shutdown")}
+            "delete-history", "transfer-queue", "released-shutdown", "committed-residual")}
     if profile["enumeration"] == "Incomplete":
         identities[f'{method}(provider: "{binding}", consumer: "direct-availability")'] = 1
     control = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
@@ -288,6 +288,17 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
     identities.update({
         f'{observer}(provider: "{binding}", consumer: "{consumer}")': 1
         for consumer in ("candidate", "acknowledgment")})
+    prefix = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+              "Observed_payload_prefix_cleanup_preserves_actual_ownership_and_declared_state")
+    identities.update({
+        f'{prefix}(provider: "{binding}", stop: {stop})':
+            2 if stop == "True" and profile["durability"] == "LocalProcessCrash" else 1
+        for stop in ("False", "True")})
+    access = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+              "Observed_payload_access_preserves_actual_ownership_and_intact_content")
+    identities.update({
+        f'{access}(provider: "{binding}", consumer: "{consumer}", unavailable: {unavailable})': 1
+        for consumer in ("scope", "validation") for unavailable in ("False", "True")})
     return identities
 
 

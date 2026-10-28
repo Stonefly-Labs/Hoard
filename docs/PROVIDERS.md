@@ -275,7 +275,7 @@ the typed factory seam, not an artifact common consumer, capability/applicabilit
 mapping, native containment or qualification.
 
 The package-only consumer additionally accepts artifact build inputs for an
-96-row snapshot / 97-row incomplete-enumeration component, independently expanded
+103-row snapshot / 104-row incomplete-enumeration component, independently expanded
 with the actual registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
 budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
 adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
@@ -345,6 +345,13 @@ disposal assertions do not mask an earlier profile failure. Actual snapshot/
 incomplete runs pass96/97 rows with103/98 origins and174 selected built-in
 regressions. These remain deliberate negative controls, not permission to
 qualify a run retaining live or unsettled resources.
+Prefix cleanup/stop, committed-residual cleanup, payload-access ownership and
+validation/restoration checks also share original consumers. Frozen durability
+alone selects logical prefix-stop reopen and its extra origin. Actual snapshot/
+incomplete profiles pass103/104 rows with111/105 origins and188 selected built-in
+regressions. Validation-access permission checks retain the explicit Unix
+prerequisite rather than silently omit unsupported environments. Full common
+applicability/native/compiler closure and public dispatch remain open.
 
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires

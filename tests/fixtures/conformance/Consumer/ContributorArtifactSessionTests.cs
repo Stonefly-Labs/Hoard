@@ -85,6 +85,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     [ContributorArtifactData("delete-history")]
     [ContributorArtifactData("transfer-queue")]
     [ContributorArtifactData("released-shutdown")]
+    [ContributorArtifactData("committed-residual")]
     public async Task Observed_portable_consumers_preserve_actual_guarantees(string provider, string consumer)
     {
         Assert.Equal(ContributorBindingFactory.BindingId, provider);
@@ -110,6 +111,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             "read-open" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, transferSlots: 1, waitingCalls: 0),
             "delete-history" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
             "transfer-queue" => new ArtifactLimits(artifactBytes: 1, stagingBytes: 3, transferSlots: 1, waitingCalls: 1),
+            "committed-residual" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024),
             _ => null
         };
         long liveReferences = consumer == "live-references" ? 1 : 0;
@@ -188,6 +190,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                     ArtifactConformanceSessionTests.ReceiptOwnershipConsumerAsync(session, consumer),
                 "delete-history" or "transfer-queue" or "released-shutdown" =>
                     ArtifactConformanceSessionTests.AdmittedOwnershipConsumerAsync(session, clock, consumer),
+                "committed-residual" => ArtifactConformanceSessionTests.ResidualCleanupConsumerAsync(session),
                 _ => throw new ArgumentException("BindingInvalid")
             });
             if (consumer is "rollback-history" or "rollback-write-capacity" or "rollback-delete-capacity")
@@ -247,6 +250,54 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
         await ArtifactConformanceSessionTests.ValidationQuarantineConsumerAsync(binding, context, resources, output,
             missing, ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(false)]
+    [ContributorArtifactData(true)]
+    public async Task Observed_payload_prefix_cleanup_preserves_actual_ownership_and_declared_state(string provider, bool stop)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(
+            limits: new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024), references: (_, _) =>
+                ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.PrefixCleanupConsumerAsync(binding, context, resources, output, stop,
+            ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData("scope", false)]
+    [ContributorArtifactData("scope", true)]
+    [ContributorArtifactData("validation", false)]
+    [ContributorArtifactData("validation", true)]
+    public async Task Observed_payload_access_preserves_actual_ownership_and_intact_content(
+        string provider, string consumer, bool unavailable)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
+        try
+        {
+            AssertProfile(session);
+            await (consumer switch
+            {
+                "scope" => ArtifactConformanceSessionTests.AccessScopeConsumerAsync(session, context, unavailable),
+                "validation" => ArtifactConformanceSessionTests.ValidationAccessConsumerAsync(session, unavailable),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            AssertProfile(session);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
     [Theory]
