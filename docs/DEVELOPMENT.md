@@ -6574,6 +6574,23 @@ substitution; post-Csc image changes also reject. These controls explicitly use
 the installed managed runtime and do not claim native containment or open
 public contributor dispatch. T064 remains unchecked.
 
+Actual multi-project bridge controls also join referenced-project restore
+graphs, compiler DLL/PDBs and document receipts, rejecting a dependency image
+changed after pack. The internal consumer-lock composer adds an explicitly
+selected adapter's archive dependency closure to a frozen package-only consumer
+lock. NuGet's own framework/range/content-hash APIs select compatible dependency
+groups and check the already frozen versions; no resolver or package source is
+invoked. Preserve all original consumer entries except the explicitly selected
+adapter's direct/exact declaration, and omit unrelated build-only archives.
+Missing/conflicting archives, cycles, changed hashes and malformed policies
+reject. Owned capture hashes the complete co-located tool support tree, rechecks
+requests/source locks/archives/support/receipts and creates a read-only derived
+lock. Independent admission rejects modified original rows, missing or extra
+closure rows and optimistic/unknown fields. The positive managed control uses
+the derived lock for an actual locked NuGet restore. These are private
+preparation/component helpers, not the public contributor runner or native
+acceptance. Separate real-owned-executor controls remain Linux-only.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe

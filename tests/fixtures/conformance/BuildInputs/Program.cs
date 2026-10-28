@@ -17,13 +17,21 @@ internal static partial class Program
     {
         try
         {
-            Require(args.Length == 4 && args[0] is "content-hashes" or "pdb-documents", "EvidenceSchemaInvalid");
+            Require(args.Length == 4 && args[0] is "content-hashes" or "pdb-documents" or "consumer-lock",
+                "EvidenceSchemaInvalid");
             var root = Path.GetFullPath(args[1]);
             Require(Path.IsPathFullyQualified(args[1]) && root == args[1], "OwnershipInvalid");
             var requestPath = OwnedPath(root, args[2]);
             var requestBytes = Read(requestPath, MaxManifestBytes);
             Require(HashPattern().IsMatch(args[3]) && Hash(requestBytes) == args[3], "InputChanged");
             using var request = JsonDocument.Parse(requestBytes, new JsonDocumentOptions { MaxDepth = 16 });
+            if (args[0] == "consumer-lock")
+            {
+                var count = ComposeConsumerLock(root, request.RootElement, requestPath, args[3]);
+                Console.WriteLine(JsonSerializer.Serialize(new { @event = "control", code = "None", value = count }));
+                return 0;
+            }
+
             if (args[0] == "pdb-documents")
             {
                 var count = CaptureDocuments(root, request.RootElement, requestPath, args[3]);

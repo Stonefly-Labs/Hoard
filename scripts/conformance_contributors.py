@@ -673,6 +673,149 @@ def binding_factory_source(binding, adapter_package, provider_package):
     ).encode("ascii")
 
 
+def capture_binding_consumer_lock(owned_run, tool, runtime_version, source_lock, adapter_package, archive_paths):
+    from conformance_execution import no_symlinks
+    from conformance_sdk_checks import read_bounded
+
+    owned_run._check_ledger()
+    adapter = evidence.admit_entity("PackageIdentity", adapter_package)
+    runtime_version = evidence.stable_id(runtime_version)
+    tool, source_lock = Path(tool), Path(source_lock)
+    if not isinstance(archive_paths, (list, tuple)) or not 0 < len(archive_paths) <= 1024:
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    paths = [tool, source_lock, *(Path(path) for path in archive_paths)]
+    if not 2 < len(paths) <= 1026 or tool.suffix != ".dll":
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    for path in paths:
+        if not path.is_absolute() or ".." in path.parts or not path.is_relative_to(owned_run.root):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        no_symlinks(path)
+    archives = [path.relative_to(owned_run.root).as_posix() for path in paths[2:]]
+    frozen = dict(evidence.input_manifest(
+        owned_run.root, [source_lock.relative_to(owned_run.root).as_posix(), *archives]))
+    support = evidence.proof_manifest(tool.parent)
+    frozen.update({
+        (tool.parent / path).relative_to(owned_run.root).as_posix(): hashed
+        for path, hashed in support.items()})
+    if tool.name not in support:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    expected_archive = f'{adapter["packageId"]}.{adapter["version"]}.nupkg'.casefold()
+    selected = [path for path in archives if Path(path).name.casefold() == expected_archive]
+    if len(selected) != 1 or frozen[selected[0]] != adapter["sha256"]:
+        raise evidence.ConformanceError("InputChanged")
+    source_hash = frozen[source_lock.relative_to(owned_run.root).as_posix()]
+    source = evidence.load_json(read_bounded(source_lock, 2 * 1024 * 1024))
+    workspace = owned_run.root / "binding-consumer"
+    request, output, lock = (workspace / name for name in ("lock-request.json", "lock-receipt.json", "packages.lock.json"))
+    request_hash = _write_owned_input(owned_run, request, evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False,
+        "sourceLock": {"path": source_lock.relative_to(owned_run.root).as_posix(), "sha256": source_hash},
+        "adapter": {"packageId": adapter["packageId"], "version": adapter["version"]},
+        "archives": [{"path": path, "sha256": frozen[path]} for path in sorted(archives)],
+        "outputPath": output.relative_to(owned_run.root).as_posix()}))
+    frozen[request.relative_to(owned_run.root).as_posix()] = request_hash
+    try:
+        observed = owned_run.command(
+            ["dotnet", "exec", "--fx-version", runtime_version, str(tool), "consumer-lock",
+             str(owned_run.root), request.relative_to(owned_run.root).as_posix(), request_hash],
+            cwd=tool.parent, kind="events", timeout=60, cache_id="binding-consumer",
+            env={"DOTNET_ROLL_FORWARD": "Disable"})
+        if observed.exit_code or any(event["code"] != "None" for event in observed.events):
+            raise evidence.ConformanceError("CommandFailed")
+        row = evidence._record({
+            "packageId": evidence.stable_id, "version": evidence.stable_id,
+            "archiveSha256": evidence.sha256, "nugetContentSha512": evidence._sha512})
+        raw = read_bounded(output, 2 * 1024 * 1024)
+        receipt_hash = hashlib.sha256(raw).hexdigest()
+        frozen[output.relative_to(owned_run.root).as_posix()] = receipt_hash
+        receipt = evidence._record({
+            "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+            "sourceLockSha256": evidence._constant(source_hash),
+            "packages": evidence._list(row, 1024), "lock": lambda value: value,
+        })(evidence.load_json(raw))
+        if tuple(observed.events) != ({
+                "event": "control", "code": "None", "value": len(receipt["packages"])},):
+            raise evidence.ConformanceError("ProofMismatch")
+        packages = {}
+        for package in receipt["packages"]:
+            key = package["packageId"].casefold()
+            name = f'{package["packageId"]}.{package["version"]}.nupkg'.casefold()
+            selected = [path for path in archives if Path(path).name.casefold() == name]
+            if (key in packages or len(selected) != 1
+                    or frozen[selected[0]] != package["archiveSha256"]):
+                raise evidence.ConformanceError("ProofMismatch")
+            packages[key] = package
+        derived = receipt["lock"]
+        if (not isinstance(source, dict) or set(source) != {"version", "dependencies"}
+                or not isinstance(derived, dict) or set(derived) != set(source)
+                or type(derived["version"]) is not int or derived["version"] not in (1, 2)
+                or derived["version"] != source["version"]
+                or not isinstance(source["dependencies"], dict) or set(source["dependencies"]) != {"net10.0"}
+                or not isinstance(derived["dependencies"], dict) or set(derived["dependencies"]) != {"net10.0"}):
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        original, entries = source["dependencies"]["net10.0"], derived["dependencies"]["net10.0"]
+        if not isinstance(original, dict) or not isinstance(entries, dict) or len(entries) > 1024:
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        indexed = {}
+        for name, entry in entries.items():
+            key = evidence.stable_id(name).casefold()
+            package = packages.get(key)
+            if (key in indexed or package is None or not isinstance(entry, dict)
+                    or not {"type", "resolved", "contentHash"} <= set(entry)
+                    or not set(entry) <= {"type", "resolved", "contentHash", "requested", "dependencies"}
+                    or entry["type"] not in ("Direct", "Transitive", "CentralTransitive")
+                    or entry["resolved"] != package["version"]
+                    or entry["contentHash"] != base64.b64encode(
+                        bytes.fromhex(package["nugetContentSha512"])).decode("ascii")):
+                raise evidence.ConformanceError("ProofMismatch")
+            edges = entry.get("dependencies", {})
+            if (not isinstance(edges, dict) or len(edges) > 1024
+                    or len({evidence.stable_id(edge).casefold() for edge in edges}) != len(edges)
+                    or any(not isinstance(value, str) or not 0 < len(value) <= 1024
+                           or not value.isascii() for value in edges.values())):
+                raise evidence.ConformanceError("EvidenceSchemaInvalid")
+            indexed[key] = entry
+        adapter_id = adapter["packageId"].casefold()
+        if (set(indexed) != set(packages) or adapter_id not in indexed
+                or indexed[adapter_id]["type"] != "Direct"
+                or indexed[adapter_id]["resolved"].casefold() != adapter["version"].casefold()
+                or indexed[adapter_id].get("requested") != f'[{adapter["version"]}, {adapter["version"]}]'):
+            raise evidence.ConformanceError("ProofMismatch")
+        roots, original_ids = {adapter_id}, set()
+        for name, entry in original.items():
+            key = evidence.stable_id(name).casefold()
+            expected = ({**entry, "type": "Direct",
+                         "requested": f'[{adapter["version"]}, {adapter["version"]}]'}
+                        if key == adapter_id and isinstance(entry, dict) else entry)
+            if key in original_ids or indexed.get(key) != expected:
+                raise evidence.ConformanceError("ProofMismatch")
+            original_ids.add(key)
+            roots.add(key)
+        if any(entry["type"] != "Transitive" or "requested" in entry
+               for key, entry in indexed.items() if key not in roots):
+            raise evidence.ConformanceError("ProofMismatch")
+        reached, pending = set(), list(roots)
+        while pending:
+            key = pending.pop()
+            if key in reached:
+                continue
+            if key not in indexed:
+                raise evidence.ConformanceError("ProofMismatch")
+            reached.add(key)
+            pending.extend(name.casefold() for name in indexed[key].get("dependencies", {}))
+        if reached != set(indexed):
+            raise evidence.ConformanceError("ProofMismatch")
+        lock_hash = _write_owned_input(owned_run, lock, evidence.canonical_bytes(derived))
+        return MappingProxyType({**receipt, "lockPath": lock, "lockSha256": lock_hash,
+                                 "receiptSha256": receipt_hash})
+    finally:
+        owned_run._check_ledger()
+        if (evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen
+                or evidence.proof_manifest(tool.parent) != support
+                or request.stat().st_mode & 0o777 != 0o400):
+            raise evidence.ConformanceError("InputChanged")
+
+
 def binding_runtime_components(binding, packages, runtime_assemblies, consumer_directory):
     packages = evidence._list(evidence._entity("PackageIdentity"), 1024)(packages)
     images = evidence._hash_map(runtime_assemblies)

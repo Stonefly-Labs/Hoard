@@ -925,6 +925,53 @@ FullyQualifiedName~Source_parameters_reject_absolute_escaping_and_noncanonical_p
 --verbosity quiet` passes all eight unchanged assertions without skips.
 Full-solution formatting, catalog/SDK and diff checks pass.
 
+### Referenced images and resolution-free consumer lock composition
+
+The next T064 component exercises two actual projects with different emitted
+assembly names, two restore/content receipts, one observed multi-project Csc
+build and two portable-PDB inspections. Both graph/document sets must equal the
+complete declared project set. An actual referenced DLL mutation after pack
+rejects with InputChanged rather than admitting only the adapter image.
+
+The initial consumer-lock red controls fail with EvidenceSchemaInvalid because
+the operation is not implemented. The repository-owned BuildInputs tool now
+composes a frozen consumer lock with an explicit adapter archive and an exact
+frozen archive universe, without invoking restore, a resolver or any package
+source. NuGet's own framework reducer, version ranges and content-hash API
+select dependency groups and validate already selected versions. Existing
+consumer entries are preserved except the selected adapter's direct/exact
+reference; only its required closure is added. Unrelated build-only archives
+remain absent. Missing/conflicting versions, cycles, changed input hashes,
+duplicate/unknown fields and foreign paths reject with safe codes.
+
+The positive managed control then uses the composed lock with a real
+`dotnet restore --locked-mode` against the explicit local fixture feed; restore
+passes without changing lock bytes. Negative controls cover unsatisfied exact
+versions, malformed policies, original-row mutation and missing/extra closure
+rows. The owned capture helper freezes the entire co-located tool support
+tree, request, source lock and explicit archives; independently admits closed
+receipts; rechecks bytes including the receipt; and writes a read-only derived
+lock. Actual late source/support changes and optimistic/forged receipt mutations
+reject. Separate supported-Linux tests use the real owned executor for both
+captured builds and consumer-lock capture; their native replay is pending.
+
+This is internal component/preparation work, not an open custom-binding runner,
+complete artifact applicability, native compiler/tool closure or qualification.
+T064 remains unchecked and implement remains running. README, PROVIDERS,
+DEVELOPMENT and the harness contract document the delivered scope. Product APIs,
+architecture/ADR/diagrams, public examples, governance, predecessors, IaC,
+release and UI documents are unaffected by private test-build/lock composition.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`
+passes94 tests with two explicit Linux-only skips on macOS.
+`python3 scripts/conformance_unit_checks.py --all-tooling` observes697 tests,
+zero failures/errors/unexpected diagnostic bytes,22 explicit native skips
+and expected non-qualifying exit2. `dotnet format
+tests/fixtures/conformance/BuildInputs/BuildInputs.csproj --no-restore
+--verify-no-changes --verbosity quiet`,
+`python3 scripts/conformance_case_catalog.py --check`,
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check`
+pass. No task/checklist markers or flow checkpoint are advanced.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

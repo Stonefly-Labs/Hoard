@@ -113,6 +113,241 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual((code, event["code"]), (2, "OwnershipInvalid"))
         self.assertEqual(self.output.read_bytes(), original)
 
+    def consumer_lock_request(self, *, dependency_version="3.2.1", cycle=False):
+        archives = []
+
+        def package(name, version, dependencies=""):
+            path = self.case / f"{name}.{version}.nupkg"
+            with zipfile.ZipFile(path, "w") as archive:
+                archive.writestr(f"{name}.nuspec", (
+                    f"<package><metadata><id>{name}</id><version>{version}</version>"
+                    "<authors>Hoard fixture</authors><description>Consumer lock fixture</description>"
+                    f"{dependencies}</metadata></package>"))
+                if name == "Acme.Adapter":
+                    archive.writestr("lib/net10.0/Acme.Adapter.dll", b"fixture adapter image")
+            archives.append({"path": self.relative(path), "sha256": evidence.file_sha256(path)})
+            return path
+
+        baseline = package("Acme.Base", "0.1.0")
+        package("Acme.Dependency", dependency_version, (
+            '<dependencies><group targetFramework="net10.0">'
+            '<dependency id="Acme.Adapter" version="[2.4.0-preview.1]" />'
+            '</group></dependencies>' if cycle else ""))
+        package("Acme.BuildOnly", "4.5.6")
+        package("Acme.Adapter", "2.4.0-preview.1", (
+            '<dependencies><group targetFramework="net10.0">'
+            '<dependency id="Acme.Base" version="[0.1.0]" />'
+            '<dependency id="Acme.Dependency" version="[3.2.1]" />'
+            '</group></dependencies>'))
+        self.lock = self.case / "consumer-source.lock.json"
+        self.lock_value = {"version": 2, "dependencies": {"net10.0": {
+            "Acme.Base": {
+                "type": "Direct", "requested": "[0.1.0, 0.1.0]", "resolved": "0.1.0",
+                "contentHash": base64.b64encode(hashlib.sha512(baseline.read_bytes()).digest()).decode()}}}}
+        self.lock.write_bytes(evidence.canonical_bytes(self.lock_value))
+        value = {
+            "schemaVersion": 1, "qualification": False,
+            "sourceLock": {"path": self.relative(self.lock), "sha256": evidence.file_sha256(self.lock)},
+            "adapter": {"packageId": "Acme.Adapter", "version": "2.4.0-preview.1"},
+            "archives": archives, "outputPath": self.relative(self.output)}
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        return value
+
+    def test_managed_consumer_lock_composition_uses_exact_archive_closure_without_resolving(self):
+        self.consumer_lock_request()
+        code, event = self.invoke(operation="consumer-lock")
+        self.assertEqual((code, event), (0, {"event": "control", "code": "None", "value": 3}))
+        receipt = evidence.load_json(self.output.read_bytes())
+        self.assertEqual(set(receipt), {
+            "schemaVersion", "qualification", "sourceLockSha256", "packages", "lock"})
+        self.assertFalse(receipt["qualification"])
+        self.assertEqual(receipt["sourceLockSha256"], evidence.file_sha256(self.lock))
+        rows = receipt["lock"]["dependencies"]["net10.0"]
+        self.assertEqual(set(rows), {"Acme.Base", "Acme.Adapter", "Acme.Dependency"})
+        self.assertEqual(rows["Acme.Base"], self.lock_value["dependencies"]["net10.0"]["Acme.Base"])
+        self.assertEqual(rows["Acme.Adapter"]["type"], "Direct")
+        self.assertEqual(rows["Acme.Adapter"]["requested"], "[2.4.0-preview.1, 2.4.0-preview.1]")
+        self.assertEqual(rows["Acme.Dependency"]["type"], "Transitive")
+        self.assertEqual(rows["Acme.Dependency"]["resolved"], "3.2.1")
+        self.assertEqual({row["packageId"] for row in receipt["packages"]}, set(rows))
+        for row in receipt["packages"]:
+            archive = self.case / f'{row["packageId"]}.{row["version"]}.nupkg'
+            self.assertEqual(row["archiveSha256"], evidence.file_sha256(archive))
+            self.assertEqual(row["nugetContentSha512"], hashlib.sha512(archive.read_bytes()).hexdigest())
+            self.assertEqual(rows[row["packageId"]]["contentHash"],
+                             base64.b64encode(bytes.fromhex(row["nugetContentSha512"])).decode())
+        consumer = self.case / "consumer"
+        consumer.mkdir()
+        project = consumer / "Consumer.csproj"
+        project.write_text(
+            '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>'
+            '<TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup>'
+            '<PackageReference Include="Acme.Base" Version="[0.1.0]" />'
+            '<PackageReference Include="Acme.Adapter" Version="[2.4.0-preview.1]" />'
+            '</ItemGroup></Project>')
+        lock = consumer / "packages.lock.json"
+        lock_bytes = evidence.canonical_bytes(receipt["lock"])
+        lock.write_bytes(lock_bytes)
+        config = consumer / "NuGet.Config"
+        configuration = ET.Element("configuration")
+        sources = ET.SubElement(configuration, "packageSources")
+        ET.SubElement(sources, "clear")
+        ET.SubElement(sources, "add", key="fixture", value=str(self.case))
+        config.write_bytes(ET.tostring(configuration, encoding="utf-8"))
+        code, raw = capture_control(
+            ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config),
+             "-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"],
+            cwd=consumer, env=self.environment, limit=65536, timeout=120)
+        self.assertEqual(code, 0, "Composed lock did not support actual locked NuGet restore")
+        self.assertEqual(raw, b"")
+        self.assertEqual(lock.read_bytes(), lock_bytes)
+        original = self.output.read_bytes()
+        self.assertEqual(self.invoke(operation="consumer-lock")[1]["code"], "OwnershipInvalid")
+        self.assertEqual(self.output.read_bytes(), original)
+
+    def test_managed_consumer_lock_composition_rejects_unsatisfied_exact_archive_versions(self):
+        self.consumer_lock_request(dependency_version="3.2.2")
+        self.assertEqual(self.invoke(operation="consumer-lock"), (
+            2, {"event": "control", "code": "ProofMismatch", "value": 0}))
+        self.assertFalse(self.output.exists())
+
+    def captured_consumer_lock(self, *, mutation=None, native=False):
+        value = self.consumer_lock_request()
+        owner = OwnedRun.allocate(self.case / ("consumer-lock-" + (mutation or "good")), ROOT, profile="harness")
+        tools = owner.root / "tools"
+        shutil.copytree(self.tool.parent, tools)
+        source = owner.root / "source.lock.json"
+        shutil.copyfile(self.lock, source)
+        archives = []
+        for row in value["archives"]:
+            original = self.owner.root / row["path"]
+            path = owner.root / "feed" / original.name
+            shutil.copyfile(original, path)
+            archives.append(path)
+        adapter = evidence.package_identity(owner.root / "feed", "Acme.Adapter", "2.4.0-preview.1")
+        commands = []
+        native_command = owner.command
+
+        def execute(arguments, *, cwd, cache_id, kind, timeout, env):
+            if native:
+                result = native_command(
+                    arguments, cwd=cwd, cache_id=cache_id, kind=kind, timeout=timeout, env=env)
+            else:
+                cache = owner.root / "cache" / cache_id
+                (cache / "tmp").mkdir(parents=True, exist_ok=True)
+                environment = command_environment(owner.root, cache, env)
+                code, raw = capture_control(
+                    arguments, cwd=cwd, env=environment, limit=65536, timeout=timeout)
+                result = mock.Mock(exit_code=code, events=(evidence.load_json(raw),))
+            commands.append(tuple(arguments))
+            receipt = owner.root / "binding-consumer/lock-receipt.json"
+            if mutation in ("unused", "baseline", "missing", "extra"):
+                document = evidence.load_json(receipt.read_bytes())
+                if mutation == "extra":
+                    document["optimistic"] = True
+                elif mutation == "baseline":
+                    document["lock"]["dependencies"]["net10.0"]["Acme.Base"]["requested"] = "[0.1.0, )"
+                elif mutation == "missing":
+                    del document["lock"]["dependencies"]["net10.0"]["Acme.Dependency"]
+                else:
+                    path = owner.root / "feed/Acme.BuildOnly.4.5.6.nupkg"
+                    content = hashlib.sha512(path.read_bytes()).digest()
+                    document["packages"].append({
+                        "packageId": "Acme.BuildOnly", "version": "4.5.6",
+                        "archiveSha256": evidence.file_sha256(path), "nugetContentSha512": content.hex()})
+                    document["lock"]["dependencies"]["net10.0"]["Acme.BuildOnly"] = {
+                        "type": "Transitive", "resolved": "4.5.6",
+                        "contentHash": base64.b64encode(content).decode()}
+                    result.events = ({"event": "control", "code": "None", "value": len(document["packages"])},)
+                receipt.write_bytes(evidence.canonical_bytes(document))
+            elif mutation == "source":
+                source.write_bytes(source.read_bytes() + b" ")
+            elif mutation == "support":
+                path = tools / "NuGet.Packaging.dll"
+                path.write_bytes(path.read_bytes() + b"changed")
+            return result
+
+        try:
+            with mock.patch.object(owner, "command", side_effect=execute):
+                result = contributors.capture_binding_consumer_lock(
+                    owner, tools / self.tool.name, self.runtime_version, source, adapter, archives)
+            self.assertEqual(len(commands), 1)
+            self.assertEqual(commands[0][5], "consumer-lock")
+            self.assertFalse(result["qualification"])
+            self.assertEqual(result["lockSha256"], evidence.file_sha256(result["lockPath"]))
+            self.assertEqual(result["lockPath"].stat().st_mode & 0o777, 0o400)
+            self.assertEqual(evidence.load_json(result["lockPath"].read_bytes()), result["lock"])
+            self.assertEqual(source.read_bytes(), self.lock.read_bytes())
+        finally:
+            if owner.state == "Allocated":
+                owner.transition("Active")
+            owner.transition("Settling")
+            owner.release()
+
+    def test_managed_owned_consumer_lock_capture_freezes_inputs_and_publishes_readonly_derived_lock(self):
+        self.evaluation_request()
+        self.captured_consumer_lock()
+
+    def test_managed_owned_consumer_lock_capture_rejects_receipt_forgery_and_late_input_changes(self):
+        self.evaluation_request()
+        for mutation, code in (
+                ("unused", "ProofMismatch"), ("baseline", "ProofMismatch"), ("missing", "ProofMismatch"),
+                ("extra", "EvidenceSchemaInvalid"), ("source", "InputChanged"), ("support", "InputChanged")):
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$"):
+                self.captured_consumer_lock(mutation=mutation)
+
+    @unittest.skipUnless(native_execution_supported(), "Native consumer lock capture requires supported Linux containment")
+    def test_native_owned_consumer_lock_capture_uses_actual_executor_and_settles_resources(self):
+        self.evaluation_request()
+        self.captured_consumer_lock(native=True)
+
+    def test_managed_consumer_lock_composition_rejects_changed_lock_or_archive_bytes(self):
+        value = self.consumer_lock_request()
+        self.lock.write_bytes(self.lock.read_bytes() + b" ")
+        self.assertEqual(self.invoke(operation="consumer-lock")[1]["code"], "InputChanged")
+        self.assertFalse(self.output.exists())
+        self.lock.write_bytes(evidence.canonical_bytes(self.lock_value))
+        archive = self.owner.root / value["archives"][0]["path"]
+        archive.write_bytes(archive.read_bytes() + b"changed")
+        self.assertEqual(self.invoke(operation="consumer-lock")[1]["code"], "InputChanged")
+        self.assertFalse(self.output.exists())
+
+    def test_managed_consumer_lock_composition_rejects_incomplete_conflicting_and_foreign_policies(self):
+        for defect, code in (
+                ("unknown-field", "EvidenceSchemaInvalid"), ("archive-field", "EvidenceSchemaInvalid"),
+                ("duplicate-archive", "ProofMismatch"), ("missing-dependency", "ProofMismatch"),
+                ("adapter-version", "ProofMismatch"), ("baseline-hash", "ProofMismatch"),
+                ("baseline-version", "ProofMismatch"), ("baseline-edges", "ProofMismatch"),
+                ("cycle", "ProofMismatch"), ("foreign-archive", "OwnershipInvalid")):
+            with self.subTest(defect=defect):
+                value = self.consumer_lock_request(cycle=defect == "cycle")
+                if defect == "unknown-field":
+                    value["resolve"] = True
+                elif defect == "archive-field":
+                    value["archives"][0]["packageId"] = "Acme.Other"
+                elif defect == "duplicate-archive":
+                    value["archives"].append(dict(value["archives"][0]))
+                elif defect == "missing-dependency":
+                    del value["archives"][1]
+                elif defect == "adapter-version":
+                    value["adapter"]["version"] = "2.4.1"
+                elif defect == "foreign-archive":
+                    value["archives"][0]["path"] = "../outside.nupkg"
+                elif defect.startswith("baseline-"):
+                    row = self.lock_value["dependencies"]["net10.0"]["Acme.Base"]
+                    if defect == "baseline-hash":
+                        row["contentHash"] = base64.b64encode(b"\x00" * 64).decode()
+                    elif defect == "baseline-version":
+                        row["resolved"] = "0.2.0"
+                    else:
+                        row["dependencies"] = {"Acme.Dependency": "[3.2.1]"}
+                    self.lock.write_bytes(evidence.canonical_bytes(self.lock_value))
+                    value["sourceLock"]["sha256"] = evidence.file_sha256(self.lock)
+                self.request.write_bytes(evidence.canonical_bytes(value))
+                self.assertEqual(self.invoke(operation="consumer-lock"), (
+                    2, {"event": "control", "code": code, "value": 0}))
+                self.assertFalse(self.output.exists())
+
     def test_managed_content_tool_rejects_changed_request_and_asset_hashes(self):
         code, event = self.invoke(digest="a" * 64)
         self.assertEqual((code, event["code"]), (2, "InputChanged"))
@@ -580,7 +815,7 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual(event["code"], "PrerequisiteMissing")
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
 
-    def captured_build(self, *, change_after_pack=False, native=False):
+    def captured_build(self, *, change_after_pack=False, shared=False, change_dependency_after_pack=False, native=False):
         measured, _, _ = self.evaluation_request()
         source = self.case / "build-author"
         source.mkdir()
@@ -590,8 +825,21 @@ class NuGetContentToolTests(unittest.TestCase):
             '<AssemblyName>Acme.Emitted</AssemblyName><Version>2.4.0-preview.1</Version>'
             '</PropertyGroup><ItemGroup>'
             '<PackageReference Include="Acme.BuildInputs" Version="3.2.1" PrivateAssets="all" />'
-            '</ItemGroup></Project>')
-        (source / "Binding.cs").write_text("public class Binding { public int Value => 7; }\n")
+            + ('<Compile Remove="Shared/**/*.cs" /><ProjectReference Include="Shared/Shared.csproj" />' if shared else '')
+            + '</ItemGroup></Project>')
+        (source / "Binding.cs").write_text(
+            "public class Binding { public int Value => "
+            + ("new Shared.Dependency().Value" if shared else "7") + "; }\n")
+        if shared:
+            (source / "Shared").mkdir()
+            (source / "Shared/Shared.csproj").write_text(
+                '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>'
+                '<TargetFramework>net10.0</TargetFramework><AssemblyName>Acme.Shared.Emitted</AssemblyName>'
+                '</PropertyGroup></Project>')
+            (source / "Shared/Dependency.cs").write_text(
+                "namespace Shared; public class Dependency { public int Value => 7; }\n")
+            (source / "Shared/packages.lock.json").write_bytes(evidence.canonical_bytes({
+                "version": 2, "dependencies": {"net10.0": {}}}))
         dependency = self.case / "Acme.BuildInputs.3.2.1.nupkg"
         package_members = {
             "build/Acme.BuildInputs.props": (
@@ -604,10 +852,13 @@ class NuGetContentToolTests(unittest.TestCase):
                 '<authors>Hoard fixture</authors><description>Build-only fixture</description></metadata></package>'))
             for name, data in package_members.items():
                 archive.writestr(name, data)
-        (source / "packages.lock.json").write_bytes(evidence.canonical_bytes({
-            "version": 2, "dependencies": {"net10.0": {"Acme.BuildInputs": {
+        dependencies = {"Acme.BuildInputs": {
                 "type": "Direct", "requested": "[3.2.1, )", "resolved": "3.2.1",
-                "contentHash": base64.b64encode(hashlib.sha512(dependency.read_bytes()).digest()).decode()}}}}))
+                "contentHash": base64.b64encode(hashlib.sha512(dependency.read_bytes()).digest()).decode()}}
+        if shared:
+            dependencies["Acme.Shared.Emitted"] = {"type": "Project"}
+        (source / "packages.lock.json").write_bytes(evidence.canonical_bytes({
+            "version": 2, "dependencies": {"net10.0": dependencies}}))
         adapter = {"packageId": "Acme.Adapter", "version": "2.4.0-preview.1", "assemblyName": "Acme.Emitted"}
         registration = {
             "schemaVersion": 1, "project": "Adapter.csproj", "factoryType": "Acme.Binding",
@@ -619,6 +870,9 @@ class NuGetContentToolTests(unittest.TestCase):
                 "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["metadata"])},
             "components": {role: dict(adapter) for role in evidence._SESSION_ROLES["metadata"]},
             "sourceFiles": ["Adapter.csproj", "Adapter.conformance.json", "Binding.cs", "packages.lock.json"]}
+        if shared:
+            registration["sourceFiles"].extend(
+                ["Shared/Shared.csproj", "Shared/Dependency.cs", "Shared/packages.lock.json"])
         (source / "Adapter.conformance.json").write_bytes(evidence.canonical_bytes(registration))
         admitted = contributors.admit_binding_project(source / "Adapter.csproj", "metadata")
         owner = OwnedRun.allocate(self.case / "captured-run", ROOT, profile="harness")
@@ -666,6 +920,11 @@ class NuGetContentToolTests(unittest.TestCase):
                 with zipfile.ZipFile(path, "w") as archive:
                     for member, data in members.items():
                         archive.writestr(member, data)
+            if arguments[1] == "pack" and code == 0 and change_dependency_after_pack:
+                project_hash = hashlib.sha256(b"Shared/Shared.csproj").hexdigest()
+                path = (owner.root / "binding-build" / project_hash
+                        / "obj/Release/net10.0/Acme.Shared.Emitted.dll")
+                path.write_bytes(path.read_bytes() + b"changed-dependency-after-pack")
             return result
 
         try:
@@ -673,10 +932,13 @@ class NuGetContentToolTests(unittest.TestCase):
                 result = contributors.build_captured_binding_project(
                     binding, owner, config, feed, tool, Path(measured["toolchainRoot"]),
                     self.msbuild.parent.name, self.runtime_version)
-            self.assertEqual(len(commands), 6)
+            self.assertEqual(len(commands), 8 if shared else 6)
             self.assertEqual(result["package"]["packageId"], "Acme.Adapter")
             self.assertFalse(result["qualification"])
-            self.assertEqual(set(result["graphs"]), {binding.project})
+            projects = {binding.project, "Shared/Shared.csproj"} if shared else {binding.project}
+            self.assertEqual(set(result["graphs"]), projects)
+            self.assertEqual(set(result["documents"]), projects)
+            self.assertEqual({row["project"] for row in result["compilation"]["sources"]["compilations"]}, projects)
             self.assertEqual(result["compilation"]["inputs"]["packageInputsSha256"], evidence.digest({
                 "acme.buildinputs/3.2.1/" + path: hashlib.sha256(data).hexdigest()
                 for path, data in package_members.items()}))
@@ -684,6 +946,10 @@ class NuGetContentToolTests(unittest.TestCase):
             self.assertEqual(receipt["assembly"]["path"], "Acme.Emitted.dll")
             self.assertEqual(receipt["assembly"]["sha256"],
                              result["package"]["runtimeAssemblies"]["lib/net10.0/Acme.Emitted.dll"])
+            if shared:
+                dependency_receipt = result["documents"]["Shared/Shared.csproj"]
+                self.assertEqual(dependency_receipt["assembly"]["path"], "Acme.Shared.Emitted.dll")
+                self.assertNotEqual(dependency_receipt["assembly"]["sha256"], receipt["assembly"]["sha256"])
             self.assertEqual(evidence.proof_manifest(source), admitted.sources)
         finally:
             if owner.state == "Allocated":
@@ -697,6 +963,13 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_managed_captured_build_rejects_packaged_image_not_emitted_by_observed_csc(self):
         with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
             self.captured_build(change_after_pack=True)
+
+    def test_managed_captured_build_joins_referenced_project_graphs_and_actual_images(self):
+        self.captured_build(shared=True)
+
+    def test_managed_captured_build_rechecks_referenced_project_image_after_pack(self):
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.captured_build(shared=True, change_dependency_after_pack=True)
 
     @unittest.skipUnless(native_execution_supported(), "Native captured build requires supported Linux containment")
     def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):

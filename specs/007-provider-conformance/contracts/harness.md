@@ -2262,6 +2262,19 @@ The internal captured-build pipeline revalidates compiler inputs/outputs/
 parameters, document receipts, assets, locks and cached archives after pack.
 It remains non-qualifying; managed bridge tests are not native containment or
 complete public contributor execution.
+Join every declared referenced project's restore graph, actual compiler DLL/PDB
+and portable documents; revalidate those images after pack too. Internal
+consumer-lock composition may only combine an existing frozen consumer graph
+with an explicit adapter archive and frozen archive dependency closure. Use
+NuGet's own framework/range/content-hash APIs; never resolve or widen versions.
+Preserve original entries except the selected adapter's direct/exact reference,
+and exclude unreferenced build-only inputs. Reject missing/conflicting versions,
+cycles, altered hashes and unknown policy/receipt fields. Bind owned capture to
+the full co-located tool support tree and rehash source locks, archives,
+requests and receipts before admitting a read-only derived lock. Independently
+reject omitted/extra closure entries or changes to original consumer entries.
+An actual locked restore of a managed fixture validates the derived format,
+not native containment, complete applicability or public qualification.
 Compiled-document receipt admission must bind the successful compiler project,
 exact selected DLL/PDB paths and current output hashes. Every document hash must
 match an observed compiler source; unknown or mismatched documents reject.

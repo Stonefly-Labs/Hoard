@@ -647,6 +647,11 @@ actual Csc output DLL/PDB hashes and the packed adapter image. Consumed package
 members are checked against the exact restored archives; post-compile and
 post-pack image substitutions reject. Actual managed tests cover a build-only
 dependency and an assembly name different from its package ID.
+Referenced projects' graphs and DLL/PDBs are also joined and rechecked after pack.
+An internal consumer-lock composer uses NuGet's framework/range/content-hash APIs
+over explicit frozen archives, preserving the original consumer graph and adding
+only the adapter's required closure without dependency resolution. Its output
+passes a real locked NuGet restore; it is not public contributor execution.
 Native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the
