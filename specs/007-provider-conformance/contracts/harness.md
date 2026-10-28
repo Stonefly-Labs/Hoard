@@ -2211,6 +2211,16 @@ observed `source/` hash to frozen author inputs and independently rehash every
 including unqueried ones. Reject changed/conflicting hashes, links, unknown
 namespaces/fields and unsafe paths. These receipts do not by themselves prove
 complete compiler/reference/analyzer/package closure or compiled/loaded origin.
+The repository-owned BuildInputs CompilerInputsLogger captures actual typed Csc
+contexts, source/file input hashes, command hashes and per-file item metadata
+hashes. Its closed hash-bound request names frozen sources, four disjoint roots
+and create-new receipt paths. Rehash captured and declared source inputs after
+compilation and reject any build/observer error, missing command/input/import
+evidence or output reuse. Emit only one fixed completion event, never raw
+compiler/MSBuild messages. Managed controls explicitly enable SDK typed task/
+import collection with minimal CLI verbosity and no console logger; missing
+prerequisites reject. This does not yet deliver native owned-build integration,
+source-generator/tool-dependency closure or public contributor qualification.
 Compiled-document receipt admission must bind the successful compiler project,
 exact selected DLL/PDB paths and current output hashes. Every document hash must
 match an observed compiler source; unknown or mismatched documents reject.

@@ -331,6 +331,107 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual(self.evaluate()[1]["code"], "EvidenceIncomplete")
         self.assertFalse(receipt.exists())
 
+    def compiler_request(self, *, change_after_compile=False):
+        value, source, _ = self.evaluation_request()
+        generated, packages = self.case / "compiler-build", self.case / "compiler-packages"
+        generated.mkdir()
+        packages.mkdir()
+        (source / "Adapter/extra.txt").write_text("private-additional-file-canary")
+        (source / "Adapter/resource.txt").write_text("private-resource-canary")
+        project = source / "Adapter/Adapter.csproj"
+        document = ET.parse(project)
+        group = ET.SubElement(document.getroot(), "ItemGroup")
+        ET.SubElement(group, "AdditionalFiles", Include="extra.txt")
+        ET.SubElement(group, "EmbeddedResource", Include="resource.txt", LogicalName="Acme.Resource")
+        document.write(project)
+        targets = ET.Element("Project")
+        target = ET.SubElement(targets, "Target", Name="GenerateInput", BeforeTargets="CoreCompile")
+        ET.SubElement(target, "WriteLinesToFile", File="$(IntermediateOutputPath)Dynamic.cs",
+                      Lines="public class Dynamic { }", Overwrite="true")
+        ET.SubElement(ET.SubElement(target, "ItemGroup"), "Compile", Include="$(IntermediateOutputPath)Dynamic.cs")
+        if change_after_compile:
+            target = ET.SubElement(targets, "Target", Name="ChangeInput", AfterTargets="CoreCompile")
+            ET.SubElement(target, "WriteLinesToFile", File="$(IntermediateOutputPath)Dynamic.cs",
+                          Lines="private-postcompile-canary", Overwrite="true")
+        ET.ElementTree(targets).write(source / "Directory.Build.targets")
+        properties = generated / "compiler.props"
+        props = ET.Element("Project")
+        group = ET.SubElement(props, "PropertyGroup")
+        for name, text in {
+                "BaseIntermediateOutputPath": str(generated) + "/$(MSBuildProjectName)/obj/",
+                "BaseOutputPath": str(generated) + "/$(MSBuildProjectName)/bin/",
+                "RestorePackagesPath": str(packages), "UseSharedCompilation": "false"}.items():
+            ET.SubElement(group, name).text = text
+        ET.ElementTree(props).write(properties)
+        sources = evidence.proof_manifest(source)
+        outputs = {kind: self.relative(self.case / (kind + ".json"))
+                   for kind in ("sources", "inputs", "parameters")}
+        request = {
+            "schemaVersion": 1, "qualification": False, "sourcePath": self.relative(source),
+            "generatedPath": self.relative(generated), "packagePath": self.relative(packages),
+            "toolchainRoot": value["toolchainRoot"], "sourceHashes": sources, "outputs": outputs}
+        self.request.write_bytes(evidence.canonical_bytes(request))
+        code, _ = capture_control(
+            ["dotnet", "restore", str(project), "--configfile", str(self.owner.root / "NuGet.Config"),
+             "-p:CustomAfterDirectoryBuildProps=" + str(properties), "-p:UseSharedCompilation=false",
+             "-nodeReuse:false", "-verbosity:quiet"],
+            cwd=self.source, env=self.environment, limit=65536, timeout=60)
+        self.assertEqual(code, 0)
+        self.compiler_project, self.compiler_properties = project, properties
+        return request, contributors.BindingProject(source, "Adapter/Adapter.csproj", {}, sources), generated, packages
+
+    def compile(self, *, digest=None, typed_inputs=True):
+        parameters = ";".join((
+            base64.b64encode(str(self.owner.root).encode()).decode(), self.relative(self.request),
+            evidence.file_sha256(self.request) if digest is None else digest))
+        logger = ("-logger:Hoard.Fixtures.Conformance.BuildInputs.CompilerInputsLogger,"
+                  + str(self.tool) + ";" + parameters)
+        code, raw = capture_control(
+            ["dotnet", "exec", "--fx-version", self.runtime_version, str(self.msbuild), str(self.compiler_project),
+             "-target:Build", "-p:Configuration=Release", "-p:UseSharedCompilation=false",
+             "-p:CustomAfterDirectoryBuildProps=" + str(self.compiler_properties),
+             "-nodeReuse:false", "-maxCpuCount:1", "-noconsolelogger", "-nologo", "-verbosity:minimal", logger],
+            cwd=self.source, env={**self.environment, "DOTNET_ROLL_FORWARD": "Disable",
+                                  **({"MSBUILDLOGTASKINPUTS": "1", "MSBUILDLOGIMPORTS": "1"} if typed_inputs else {})},
+            limit=4096, timeout=60)
+        try:
+            event = evidence.load_json(raw)
+        except evidence.ConformanceError:
+            raise AssertionError("Managed compiler observer emitted no safe control event") from None
+        return code, event
+
+    def test_managed_compiler_observer_captures_actual_sources_inputs_command_and_item_metadata(self):
+        value, binding, generated, packages = self.compiler_request()
+        code, event = self.compile()
+        self.assertEqual(code, 0)
+        self.assertEqual(event, {"event": "control", "code": "None", "value": 2})
+        raw = {kind: (self.owner.root / path).read_bytes() for kind, path in value["outputs"].items()}
+        sources = contributors.binding_compilation_sources(binding, raw["sources"], generated)
+        self.assertEqual(len(sources["compilations"]), 2)
+        self.assertTrue(any("Dynamic.cs" in path for row in sources["compilations"] for path in row["sources"]))
+        inputs = contributors.binding_build_file_inputs(
+            binding, raw["inputs"], generated, Path(value["toolchainRoot"]), packages, {})
+        self.assertTrue(any(row["inputs"].get("AdditionalFiles") for row in inputs["compilations"]))
+        self.assertTrue(any(row["inputs"].get("Resources") for row in inputs["compilations"]))
+        parameters = contributors.binding_compiler_parameter_inputs(inputs["compilations"], raw["parameters"])
+        self.assertEqual(len(parameters["compilations"]), 2)
+        self.assertEqual(self.compile()[1]["code"], "OwnershipInvalid")
+        self.assertEqual({kind: (self.owner.root / path).read_bytes() for kind, path in value["outputs"].items()}, raw)
+
+    def test_managed_compiler_observer_rejects_postcompile_generated_source_changes(self):
+        value, _, _, _ = self.compiler_request(change_after_compile=True)
+        _, event = self.compile()
+        self.assertEqual(event["code"], "InputChanged")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
+    def test_managed_compiler_observer_rejects_changed_request_without_success_receipts(self):
+        value, _, _, _ = self.compiler_request()
+        _, event = self.compile(digest="a" * 64)
+        self.assertEqual(event["code"], "InputChanged")
+        _, event = self.compile(typed_inputs=False)
+        self.assertEqual(event["code"], "PrerequisiteMissing")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()
         toolchain = value["toolchainRoot"]

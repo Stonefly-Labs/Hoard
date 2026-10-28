@@ -421,15 +421,21 @@ independently rechecked beneath a disjoint root. All declared author bytes are
 rechecked, even if not selected by Csc. Unknown fields/namespaces, path escapes,
 links, changed bytes and conflicting generated hashes reject.
 
-A private trusted MSBuild logger calls `IEventSource3.IncludeTaskInputs()` and
-correlates actual Csc task contexts. With diagnostic event delivery enabled and
-console logging disabled, two genuine compiler tasks produce nine source-hash
-observations, including a target-generated file absent from evaluation. The
-reader admits those observations and rejects a subsequent generated-file change.
-This is managed compiler-source component evidence, not a complete compiler
-input tracer, portable-PDB correspondence, actual loaded-image attribution,
-native containment or the public contributor build/pack route. References,
-analyzers, package inputs and the full supplied-project pipeline remain open.
+The repository-owned BuildInputs compiler observer calls
+`IEventSource3.IncludeTaskInputs()` and correlates actual Csc task contexts. Its
+closed hash-bound request names frozen source hashes, disjoint owned generated/
+package roots, the actual SDK toolchain and create-new outputs. Bounded receipts
+capture physical sources/references/analyzers/additional files/resources/imports
+and actual command/item-metadata hashes. Files are rechecked after compilation;
+changed inputs, observer/build errors and output reuse cannot produce a
+successful completion event. Actual two-project managed controls pass, including
+target-generated input, additional-file/resource capture and a post-compile
+generated-file mutation that rejects before receipts are written.
+The managed component explicitly enables SDK typed task/import event collection,
+keeps CLI verbosity minimal and console logging disabled, and emits only fixed
+events. Native owned-build integration, source-generator/tool-dependency closure,
+portable-PDB/loaded-image attribution and public contributor acceptance remain
+unfinished. The strict native environment and execution guard are unchanged.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with

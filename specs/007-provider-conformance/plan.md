@@ -728,6 +728,40 @@ All sixteen contributor cases pass. Frozen full safe tooling observes616 tests,
 zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
 skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The compiler observer is now repository-owned as BuildInputs
+CompilerInputsLogger. Three actual managed controls were red for the missing
+logger and now pass: two-project source/file/parameter admission (including
+target-generated source, additional files and resources), post-compile generated
+source mutation rejection before receipt publication, and changed request/
+missing typed-event prerequisites with no success receipts. Output reuse also
+rejects without changing existing receipt bytes. Closed hash-bound requests,
+disjoint source/generated/toolchain/package roots, finite file/byte/metadata/
+command/time limits, actual Csc contexts and final input rechecks preserve the
+evidence boundary. Build/observer errors never yield a successful event.
+
+An actual diagnostic-verbosity CLI run exposed one extra startup line before
+the otherwise valid safe event; only counts/codes were inspected, never raw
+diagnostics persisted. Quiet/minimal alone then correctly rejected missing
+typed task inputs/imports. Public SDK Traits documentation confirmed
+MSBUILDLOGTASKINPUTS=1 and MSBUILDLOGIMPORTS=1. The managed component now sets
+those explicit prerequisites, fixes observer verbosity to Diagnostic and uses
+minimal CLI verbosity with no console logger/banner. It admits exactly one safe
+completion event and all three receipts. Missing prerequisites reject explicitly.
+This changes no strict native environment/guard and is not owned native build
+acceptance, source-generator/tool-dependency closure or public dispatch. T064
+remains open. All66 focused contributor tests pass. Product/module/provider APIs,
+operator examples, architecture/ADR/diagrams, governance, predecessors, IaC,
+release and UI documents are unaffected; private build-tool internals only.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`
+passes66 tests. `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes668 tests, zero failures/errors/unexpected diagnostic bytes, twenty
+explicit native macOS skips and expected non-qualifying exit2.
+`dotnet format tests/fixtures/conformance/BuildInputs/BuildInputs.csproj
+--no-restore --verify-no-changes --include
+tests/fixtures/conformance/BuildInputs/CompilerInputsLogger.cs --verbosity quiet`,
+`python3 scripts/conformance_case_catalog.py --check`,
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check` pass.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

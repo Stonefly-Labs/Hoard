@@ -6495,6 +6495,24 @@ contributor build/pack/full-suite acceptance. T064 stays open.
 616 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2. Catalog, SDK and diff checks
 pass.
+
+The promoted BuildInputs CompilerInputsLogger now owns this bounded typed
+capture. Actual two-project controls independently admit source/file/parameter
+receipts, including target-generated source, resources and additional files.
+Changed requests, missing typed-event prerequisites, reused outputs and a
+post-compile generated-file mutation reject without successful receipts.
+The initial diagnostic CLI transport exposed an extra SDK startup line; no raw
+line was retained or accepted. Fixed diagnostic observer verbosity, minimal CLI
+verbosity and `-noconsolelogger`/`-nologo` retain typed command events without that
+text. Explicit managed-component `MSBUILDLOGTASKINPUTS=1` and
+`MSBUILDLOGIMPORTS=1` enable the remaining typed events; missing flags reject
+with PrerequisiteMissing rather than silently produce partial receipts.
+Native environment admission/guards are unchanged; owned build integration and
+source-generator/tool-dependency closure remain unfinished. T064 stays open.
+The focused contributor suite passes66 tests. Frozen full safe tooling observes668
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected non-qualifying exit2.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe
