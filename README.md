@@ -686,6 +686,12 @@ invokes that tool through OwnedRun's event path with an exact runtime and unchan
 strict environment, and admits every declared project graph. It requires the
 exact success event and rechecks inputs even after failure. Managed probes
 exercise that real recipe; native producer/toolchain closure remains open.
+Generated artifact factories also accept the existing typed ArtifactAssertionOptions
+through a fixed hash/options constructor, with unchanged options and shared
+declaration admission. Default hash-only construction and metadata generation are
+preserved. An actual managed component verifies both paths and their rejection
+controls. Artifact common-consumer/applicability integration remains unfinished;
+this is not native containment or qualification.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

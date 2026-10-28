@@ -6270,6 +6270,17 @@ declarations, with exact capability/fault sets independent of order. Four
 managed negative components reject foreign binding ID, wrong hash, omitted
 capability and extra fault with the intended `BindingInvalid`; compile-time
 category/constructor rejection and positive archive/image matching still pass.
+The artifact typed-factory increment adds Create(ArtifactAssertionOptions options)
+through a fixed public hash/options constructor, without a new SDK interface or
+reflection. It forwards the exact options object, rejects null before provider
+construction and shares declaration admission with default Create(). Default
+hash-only construction and metadata source generation are preserved. An actual
+managed artifact component compiles/invokes both overloads, matches its loaded
+adapter image to the captured archive, and rejects each of four wrong declarations
+through both overloads. Missing/wrong options constructors and wrong category
+reject at CS1729/CS1503. The original managed metadata factory replay also passes.
+This is not artifact common-consumer/applicability integration, native containment
+or qualification; public dispatch and T064 remain open.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

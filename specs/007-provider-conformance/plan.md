@@ -352,6 +352,18 @@ This managed positive archive/image pair is
 `3ef65dc07d176e4f63d142d8c1e5acaadaa4dce0834f3cbc5b462c90119c0e6d`.
 It does not replace the independently packaged full-suite journey.
 
+The artifact factory seam additionally exposes Create(ArtifactAssertionOptions
+options) using the existing SDK options type and a fixed public hash/options
+constructor. It forwards the exact object, rejects null before construction and
+shares declaration admission with default Create(); default hash-only
+construction and metadata generation remain unchanged. Actual managed component
+execution verifies both overloads, archive/image matching and eight declaration
+rejections. Wrong category, missing options constructor and wrong options type
+reject at CS1503/CS1729. The original metadata component still passes. No new
+optional configuration interface, reflection or provider-name-derived profile is
+introduced. Artifact common-consumer, independent applicability/origin mapping
+and native qualification remain unfinished; this is not final T081 approval.
+
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and
 assembly names different from package IDs. Thirty focused cases pass, using

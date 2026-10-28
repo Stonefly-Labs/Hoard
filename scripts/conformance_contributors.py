@@ -311,14 +311,27 @@ def binding_factory_source(binding, adapter_package, provider_package):
     expected_category = "Metadata" if category == "metadata" else "Artifacts"
     capabilities = ", ".join(f'"{item}"' for item in declaration["capabilities"])
     faults = ", ".join(f"{bindings}.ConformanceFault.{item}" for item in declaration["faults"])
+    construction = (
+        f"    internal static {bindings}.{interface} Create()\n"
+        "    {\n"
+        f'        {bindings}.{interface} binding = new global::{factory}("{provider["sha256"]}");\n')
+    if category == "artifacts":
+        construction = (
+            f"    internal static {bindings}.{interface} Create() => "
+            f'Validate(new global::{factory}("{provider["sha256"]}"));\n\n'
+            f"    internal static {bindings}.{interface} Create({bindings}.ArtifactAssertionOptions options)\n"
+            "    {\n"
+            "        global::System.ArgumentNullException.ThrowIfNull(options);\n"
+            f'        return Validate(new global::{factory}("{provider["sha256"]}", options));\n'
+            "    }\n\n"
+            f"    private static {bindings}.{interface} Validate({bindings}.{interface} binding)\n"
+            "    {\n")
     return (
         "namespace Hoard.Fixtures.Conformance.Consumer;\n\n"
         "internal static class ContributorBindingFactory\n"
         "{\n"
         f'    internal const string BindingId = "{declaration["bindingId"]}";\n\n'
-        f"    internal static {bindings}.{interface} Create()\n"
-        "    {\n"
-        f'        {bindings}.{interface} binding = new global::{factory}("{provider["sha256"]}");\n'
+        + construction +
         "        var actual = binding.Declaration;\n"
         f"        {bindings}.ConformanceBindingAdmission.Validate(actual, "
         f"{bindings}.ConformanceCategory.{expected_category});\n"

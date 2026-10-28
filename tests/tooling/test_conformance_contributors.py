@@ -311,7 +311,6 @@ class ContributorAdmissionTests(unittest.TestCase):
         self.assertFalse((run.root / "binding-source").exists())
 
     def test_typed_factory_source_requires_selected_actual_adapter_image_and_provider_package(self):
-        project = contributors.admit_binding_project(self.project, "metadata")
         feed = self.parent / "feed"
         feed.mkdir()
 
@@ -323,18 +322,38 @@ class ContributorAdmissionTests(unittest.TestCase):
             return evidence.package_identity(feed, name, "0.1.0")
 
         adapter, provider = package("Acme.Adapter"), package("Acme.Provider")
-        source = contributors.binding_factory_source(project, adapter, provider)
-        self.assertIn(b"new global::Acme.Binding(", source)
-        self.assertIn(provider["sha256"].encode("ascii"), source)
-        for selected_adapter, selected_provider in (
-                (provider, provider), (adapter, adapter),
-                ({**adapter, "runtimeAssemblies": {"lib/net10.0/Other.dll": "a" * 64}}, provider),
-                ({**adapter, "version": "0.2.0"}, provider),
-                (adapter, {**provider, "version": "0.2.0"})):
-            with self.assertRaisesRegex(evidence.ConformanceError, "^BindingInvalid$"):
-                contributors.binding_factory_source(project, selected_adapter, selected_provider)
-        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
-            contributors.binding_factory_source(project, {**adapter, "sourceMapping": "nuget.org"}, provider)
+        for category in ("metadata", "artifacts"):
+            with self.subTest(category=category):
+                registration = copy.deepcopy(self.registration)
+                registration["declaration"].update(
+                    category=category, bindingId=f"acme.{category}",
+                    capabilities=([category, "non-durable"] if category == "metadata"
+                                  else [category, "non-durable-simulation"]),
+                    faults=sorted(evidence._BINDING_REQUIRED_FAULTS[category]))
+                registration["components"] = {
+                    role: dict(registration["adapterPackage"]) for role in evidence._SESSION_ROLES[category]}
+                self.write(registration)
+                project = contributors.admit_binding_project(self.project, category)
+                source = contributors.binding_factory_source(project, adapter, provider)
+                self.assertIn(b"new global::Acme.Binding(", source)
+                self.assertIn(provider["sha256"].encode("ascii"), source)
+                if category == "artifacts":
+                    self.assertIn(b"ArtifactAssertionOptions options)", source)
+                    self.assertIn(b"ArgumentNullException.ThrowIfNull(options)", source)
+                    self.assertEqual(source.count(b"return Validate(new global::Acme.Binding("), 1)
+                    self.assertEqual(source.count(b"Validate(new global::Acme.Binding("), 2)
+                    self.assertEqual(source.count(b"ConformanceBindingAdmission.Validate(actual,"), 1)
+                else:
+                    self.assertNotIn(b"ArtifactAssertionOptions", source)
+                for selected_adapter, selected_provider in (
+                        (provider, provider), (adapter, adapter),
+                        ({**adapter, "runtimeAssemblies": {"lib/net10.0/Other.dll": "a" * 64}}, provider),
+                        ({**adapter, "version": "0.2.0"}, provider),
+                        (adapter, {**provider, "version": "0.2.0"})):
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^BindingInvalid$"):
+                        contributors.binding_factory_source(project, selected_adapter, selected_provider)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                    contributors.binding_factory_source(project, {**adapter, "sourceMapping": "nuget.org"}, provider)
 
     def test_registered_metadata_common_parameters_use_the_actual_binding_id_without_builtin_aliases(self):
         counts = catalog.metadata_common_consumer_origin_counts(binding_ids=("acme.metadata",))

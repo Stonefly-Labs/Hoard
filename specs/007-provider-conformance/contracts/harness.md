@@ -2164,6 +2164,15 @@ implement the category's binding interface; no reflection/directory loading
 is used. A managed metadata-only component verifies compilation/invocation and
 intended wrong-category/wrong-constructor compiler rejection. This does not yet
 wire or validate arbitrary supplied projects through the public runner.
+Artifact factories additionally expose Create(ArtifactAssertionOptions options)
+using a public constructor with the archive hash followed by that exact existing
+SDK type. Forward the options object unchanged and reject null before provider
+construction. Both artifact overloads use identical declaration admission;
+default Create() still uses hash-only construction. Metadata source is unchanged.
+Actual managed component controls verify both paths, eight declaration rejections
+and compile-time rejection of wrong category, missing options constructor and
+wrong options type. This does not implement the artifact common consumer,
+independent applicability/origin mapping or native qualification.
 The generated factory validates the returned declaration against registration:
 category, binding ID, provider ID/version, actual provider archive hash and exact
 capability/fault sets, independent of set order. Captured role inputs select the

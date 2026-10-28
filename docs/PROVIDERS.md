@@ -263,6 +263,17 @@ not affect admission. Four real managed negative components reject a foreign
 binding ID, wrong archive hash, omitted capability or extra fault with the
 intended `BindingInvalid`, rather than merely observing a failed process.
 
+For artifacts, generated `Create(ArtifactAssertionOptions options)` additionally
+requires the registered type's public constructor accepting the archive hash
+followed by that existing SDK options type. It forwards the exact options object;
+null rejects before provider construction. Both overloads share the same
+declaration admission, while `Create()` retains hash-only construction and
+metadata generation is unchanged. An actual managed artifact component verifies
+both paths, eight declaration-rejection observations, and compiler rejection of
+wrong category, missing options constructor and wrong options type. This is only
+the typed factory seam, not an artifact common consumer, capability/applicability
+mapping, native containment or qualification.
+
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires
 the exact declared `lib/net10.0/<assemblyName>.dll`; package ID and assembly
