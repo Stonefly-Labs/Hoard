@@ -6025,6 +6025,56 @@ required; no task is newly closed.
 Product/provider guidance, examples, architecture diagrams, governance,
 infrastructure and release behavior are unaffected by these harness-only fixes.
 
+Exact `44fd370` run40612965869/job122569229533 passes original architecture
+preparation, descriptor admission and native invocation verification. It next
+fails `PrerequisiteMissing` along SDK4168/3894/726/635: execution invokes
+`build_inspection_runtime` a second time and its immutable image writer rejects
+already installed files. The initial SDK preparation already built this runtime.
+Execution now reuses and independently verifies its three exact package images;
+it never overwrites an existing image or makes the exclusive writer permissive.
+The new regression first fails at the duplicate build and passes after repair,
+including unchanged bytes/`0400` permissions and changed-package rejection.
+Focused composition controls pass seventeen tests. The exact88 architecture
+parameters still need native execution; no compatibility task is newly closed.
+
+A separate bounded local diagnostic compiles the unchanged original artifact
+wrappers and current shared SDK, uses 84 verified unchanged fixture source files
+with their existing local runtime images/native SQLite dependency, and selects
+the catalog's exact183 original parameters. All183 pass, zero failed/skipped.
+The sixteen integration wrappers and all four direct lost-ack authority pairs
+also pass locally. Earlier setup failures from a noncanonical temporary path
+and missing native-library probe path were diagnostic prerequisites, not
+conformance failures. This is macOS/local diagnosis, not native-origin evidence
+or a fix for the exact058 local/SQLite and older456 local/memory Linux failures.
+No deadline, assertion, provider implementation or frozen inventory is relaxed.
+
+Fresh `python3 scripts/conformance_unit_checks.py --all-tooling`:588 tests,
+zero failures/errors/unexpected bytes, twenty explicit native macOS skips and
+expected incomplete exit2. `python3 scripts/conformance_evidence.py --check-sdk`
+and `git diff --check`: passed. All183 original artifact cases also pass locally
+with their actual original-observation context enabled; this remains a local
+diagnostic, not native acceptance.
+
+The two complete native category jobs at exact feature head44fd370 now both
+succeed: run40612965869 metadata122569229740/artifacts122569229921. Independent
+bounded summary projection checks the qualification-mode catalog and partitions,
+not observed count proxies: metadata93 passes/nine exclusions,10 scopes/141
+parameters; artifacts99 passes/four exclusions,9 scopes/263 parameters. Native
+source parent counts are10/9, with1/2 additional quality-source proofs. The final
+CLI step independently verifies exact result keys, proof hashes, recomputed
+completion inputs and all resources released after cleanup. All required
+recovery/transfers/common-consumer/mutation sources remain admitted, and full
+tooling covers frozen-wrapper parity plus missing/renamed parameter rejection.
+This closes T037/T038 and updates provider guidance/plan;55/86 tasks are done.
+The192 inherited entries still contain179 applicable passes and thirteen
+authorized exclusions; extra catalog quality rows do not replace them.
+Report state remains `Incomplete`, qualification false and CLI exit2 because
+independent full-profile evaluation/aggregation is unfinished. The separate
+SDK diagnostic remains running, the architecture image repair still needs
+Linux confirmation, and no all-green workflow or certification is claimed.
+Examples/diagrams/product behavior and governance are unaffected by this
+category scope documentation and harness-only repair.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

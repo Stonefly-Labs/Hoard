@@ -35,6 +35,39 @@ Package-only consumer/source controls use identical consumer/SDK images across
 the respective bindings and independently checked package resolution. Reports
 still do not qualify providers. Protocol/identity fixtures remain declaration/
 lifecycle checks, not native-client or production support.
+
+The complete category runtime acceptance is independently confirmed again at
+feature head `44fd370b221aaf247eee52b1fad28a647370d772`,
+[run40612965869](https://github.com/Stonefly-Labs/Hoard/actions/runs/40612965869):
+metadata job122569229740 and artifacts job122569229921 both succeed through the
+public profile commands and post-release report/proof/completion checks.
+
+| Category | Passed catalog results | Authorized exclusions | Runtime scopes / parameters |
+| --- | --- | --- | --- |
+| Metadata: SQLite and Memory | 93 | 9 Memory durability cases | 10 / 141 |
+| Artifacts: Local and ObjectSemantics | 99 | 4 ObjectSemantics restart cases | 9 / 263 |
+
+These totals include thirteen additional category quality results; the frozen
+inherited inventory is still exactly192 entries,179 applicable passes and13
+exclusions, not a smaller replacement inventory. Native recovery, paced real
+256MiB/4GiB transfers, authority integration, package-only common consumers and
+intended-failure/corrected mutation sources remain independently bound to the
+current attempt. Frozen-wrapper parity and omitted/renamed-parameter controls
+pass in the full tooling suite. The [implementation evidence](../specs/007-provider-conformance/plan.md#complete-category-runtime-acceptance-t037t038)
+records input/result/report hashes and the exact checks.
+
+SQLite exercises actual file-backed transactions, schemas, backup/recovery and
+abrupt-process cases; Local exercises actual files and recovery. These fixtures
+are not production persistence/storage modules. Memory has no crash-durability
+claim; ObjectSemantics is an independent logical simulation, not an object-service
+client, durable remote restart, HA or distributed consistency claim. No protocol
+native-client, authentication/identity, upstream cache or untested cross-product
+support is implied. Source wrapper assertions remain shared with the test SDK;
+concrete setup/fault/cleanup belongs to bindings, not provider-selected expected
+outcomes. T037/T038 are complete execution/documentation tasks, not provider
+qualification: reports remain `Incomplete`, exit2, and independent full-profile
+evaluation, compatibility, contributor and five-profile aggregation remain open.
+
 Architecture checks additionally keep the test SDK outside all nine production
 owner classes, permit explicit test owners, require complete scan inventories,
 and reject malformed entries through the inspection-error boundary. Actual

@@ -14,6 +14,33 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_architecture_execution_admits_existing_prepared_images_without_reinstalling_them(self):
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+        import conformance_sdk_checks as sdk
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            candidate, feed = root / "stores/candidate", root / "feed/candidate"
+            runtime = candidate / sdk.ARCHITECTURE_TESTS / "bin/Release/net10.0"
+            runtime.mkdir(parents=True)
+            installed = runtime / "Hoard.Conformance.TestLogger.dll"
+            installed.write_bytes(b"already-prepared-image")
+            installed.chmod(0o400)
+            with contextlib.redirect_stdout(io.StringIO()), \
+                    mock.patch.object(inherited, "admit_architecture_preparation", return_value=({}, {})), \
+                    mock.patch.object(sdk, "build_inspection_runtime",
+                                      side_effect=AssertionError("Prepared images must not be reinstalled")), \
+                    mock.patch.object(sdk, "verify_runtime_packages",
+                                      side_effect=evidence.ConformanceError("InputChanged")) as verify:
+                with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                    sdk.execute_architecture_runtime(
+                        SimpleNamespace(root=root), ROOT, candidate, {}, root / "NuGet.Config", feed, {}, "a" * 64)
+            verify.assert_called_once_with(
+                runtime, feed, ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions"))
+            self.assertEqual(installed.read_bytes(), b"already-prepared-image")
+            self.assertEqual(installed.stat().st_mode & 0o777, 0o400)
+
     def test_scoped_graph_restores_replay_each_project_without_reusing_a_parent_lock_for_children(self):
         import subprocess
         import conformance_evidence as evidence

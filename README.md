@@ -499,6 +499,27 @@ unexpected bytes and twenty explicit native macOS skips. The local independent
 restore also builds and executes the changed package graph successfully.
 These changes still require genuine Linux confirmation;
 the local experiment and models are not native-origin qualification.
+Exact `44fd370` Linux compatibility replay now admits the complete original
+architecture preparation and native invocation chain, then exposes a redundant
+runtime-image installation before test execution. Those images were already
+built and installed earlier in the same run. Architecture execution now verifies
+the existing exact package images instead of rebuilding and overwriting them.
+The new regression reproduces that second-write failure and passes after repair;
+all seventeen composition controls pass. Separately, a local test host passes
+the exact 183 original artifact parameters with fresh current shared assertions
+and 84 unchanged fixture sources. That is not native-origin proof and does not
+resolve the older Linux lost-metadata-acknowledgment failures.
+Both complete native category jobs now pass at that same feature head:
+metadata122569229740 and artifacts122569229921 in run40612965869. Independently
+checked summaries match every catalog key:93/99 passes, nine/four authorized
+exclusions, and141/263 runtime parameters across ten/nine scopes. The jobs also
+verify safe proof hashes, completion inputs and actual release. Frozen-wrapper
+parity passes in the full safe tooling suite. This closes T037/T038, with finite
+fixture-only claims documented in the provider guide; progress is55/86.
+All588 tooling tests have zero failures/errors/unexpected bytes, with twenty
+explicit native macOS skips. Category reports remain non-qualifying `Incomplete`
+and the implementation stage continues; the separate SDK diagnostic and complete
+compatibility/composition/evaluator/CI gates are not declared passed.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

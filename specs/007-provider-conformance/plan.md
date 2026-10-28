@@ -1120,6 +1120,78 @@ negative. Native confirmation remains pending. Implementation stays running,
 and product/provider guidance, examples, diagrams, governance, IaC and release
 behavior remain unaffected.
 
+### Native architecture preparation admitted; reuse existing inspection images
+
+Exact44fd370 run40612965869/job122569229533 passes the original graph
+preparation and subsequent descriptor/native invocation admission. Runtime
+execution then fails `PrerequisiteMissing` at SDK4168/3894/726/635: its second
+inspection build tries to exclusively create images installed by initial SDK
+preparation. Execution now verifies those existing three exact package images
+instead of rebuilding/reinstalling them. A reproducing regression rejects the
+old duplicate build and confirms preserved image bytes/permissions plus
+changed-package rejection. All seventeen focused composition controls pass.
+The original22 fixtures/eight scans are prepared, not yet88 passed runtime
+parameters; T057/T059/T071 remain open.
+
+The prior058 artifacts diagnostic's single failed parameter is the frozen
+local/SQLite lost-metadata-acknowledgment witness (182 other original parameters
+passed); the older456 SDK failure is local/memory in that same method. A bounded
+local test host with newly compiled current shared SDK and84 unchanged fixture
+sources passes all exact183 original parameters, zero failed/skipped. Separate
+local16 integration wrappers and all four direct lost-ack pairs pass too.
+These are local diagnostics, not native-origin acceptance or a root-cause claim
+for Linux. Assertions,150ms/30ms budgets, source recipes, provider behavior and
+the frozen catalog remain unchanged. Implementation remains53/86/running.
+
+### Complete category runtime acceptance: T037/T038
+
+Feature head `44fd370b221aaf247eee52b1fad28a647370d772`,
+[run40612965869](https://github.com/Stonefly-Labs/Hoard/actions/runs/40612965869),
+passes both public native category jobs. Bounded independent projection checks
+the complete independently expanded qualification-mode catalogs/partitions
+against each actual final summary and requires the separate successful CLI
+post-release verification, not just a successful host exit.
+
+| Profile / job | Passed / excluded results | Scopes / runtime parameters | Native source parents / quality sources |
+| --- | --- | --- | --- |
+| metadata /122569229740 |93 /9 |10 /141 |10 /1 |
+| artifacts /122569229921 |99 /4 |9 /263 |9 /2 |
+
+Both have zero failed/incomplete catalog results. Their205 results include
+thirteen additional category quality rows; the frozen inherited matrix remains
+exactly192 entries,179 applicable passes and13 authorized durability exclusions.
+Admission retains all native recovery, real paced256MiB/4GiB transfers, four
+authority pairings, common package consumers and intended-negative/corrected
+mutations. The final CLI step checks exact keys, immutable proof bytes,
+recomputed completion inputs and every resource released after cleanup.
+
+| Profile | Immutable digest | SHA-256 |
+| --- | --- | --- |
+| metadata | inputs | `7ba4e99734b851abdb7e11f744d6b2e33ceddf76a46cfadbab2c0ff0b6a63204` |
+| metadata | results | `9e1e6fbd8f8987ab6a60599b4b4538d826a0cabc57141093f4353ff045d7fd1a` |
+| metadata | report | `58f1f323d755100998db99af059a7f50e38731f8c4a620e4db235acb8f22b248` |
+| artifacts | inputs | `79a6d85524ba65a0e91bbffa75e9440df2e21284ae2a14de5ab900ece1f966ee` |
+| artifacts | results | `61ffd968b94e029f94f38a1bcc0eb1c73e7ea71a9b4c00878a5515fd0679c347` |
+| artifacts | report | `1a8c216bc1458c756519adffef805eb3bb51e8a9c9c80e984fbbad2bca1d042d` |
+
+`python3 scripts/conformance_unit_checks.py --all-tooling`:588 tests, zero
+failures/errors/unexpected bytes, twenty explicit native macOS skips, expected
+incomplete exit2. This includes exact frozen inventory/exclusions, original
+metadata/artifact wrapper parameter parity, actual archive correspondence and
+missing/renamed scope rejection controls. Seventeen focused composition models,
+catalog `--check-sdk` and `git diff --check` pass. Local exact183 original cases
+also pass with fresh current shared assertions and original-observation context.
+
+T037/T038 are complete; progress is55/86, implement/running. Provider guidance
+documents real SQLite/Local fixture durability versus Memory's logical-only and
+ObjectSemantics' independent non-durable simulation, and preserves declaration/
+lifecycle-only protocol/identity scope. Reports remain non-qualifying
+`Incomplete` with exit2; no provider certification, production/native-client
+support, complete compatibility/evaluator/five-profile CI or release is claimed.
+The separate SDK job remains unconfirmed and the architecture image reuse
+repair still needs Linux execution. Prior failed Linux lost-ack attempts are
+not erased or declared fixed by this later successful category run.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

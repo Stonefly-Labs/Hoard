@@ -1,6 +1,6 @@
 # F-07 Finite Qualification Matrix
 
-**Status**: Required future test inventory, not tested support. Catalog revision
+**Status**: Required finite test inventory, not provider certification. Catalog revision
 `f07-v1` owns expansion; results cannot define or shrink it. Each listed
 subvariant is an explicit expected key, not a single aggregate pass.
 
@@ -338,6 +338,19 @@ Exact `f4e53b4`/run40297863544 now independently admits artifact166 and metadata
 QC-02 pairing: three Linux jobs/343 foundations pass without skips; metadata
 93 Passed/0 Incomplete/9 NotApplicable/0 Failed. The overall report remains
 `Incomplete`, qualification false. Artifact190/full QC-03 remain unfinished.
+
+The latest complete category execution supersedes those incremental pending
+notes: feature head `44fd370`, run40612965869, passes metadata job122569229740
+and artifacts job122569229921. Independent catalog/partition comparison checks
+102 metadata results (93 passed,9 authorized exclusions;10 scopes/141 parameters)
+and103 artifact results (99 passed,4 authorized exclusions;9 scopes/263 parameters),
+including current QC-02/QC-03 source obligations. Post-release CLI verification
+checks exact keys, immutable proofs, completion inputs and resource release.
+The192 inherited entries and13 exclusions are unchanged. T037/T038 execution
+and scope documentation are complete; the [plan](../plan.md#complete-category-runtime-acceptance-t037t038)
+records hashes/checks. Reports still remain non-qualifying `Incomplete` with
+exit2 while the independent full-profile evaluator and remaining feature gates
+are unfinished. Historical failed attempts are not erased by this later run.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

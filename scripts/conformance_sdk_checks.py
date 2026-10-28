@@ -3890,9 +3890,10 @@ def execute_architecture_runtime(run, repository, candidate, sources, config, fe
     from conformance_inherited import admit_architecture_preparation
 
     prepared, selected = admit_architecture_preparation(run.root, prepared)
-    print(json.dumps({"qualification": False, "phase": "architecture-runtime-build"}), flush=True)
-    build_inspection_runtime(run, candidate, config, feed)
+    print(json.dumps({"qualification": False, "phase": "architecture-runtime-inputs"}), flush=True)
     runtime = candidate / ARCHITECTURE_TESTS / "bin/Release/net10.0"
+    verify_runtime_packages(runtime, feed,
+                            ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions"))
     assembly = runtime / "Hoard.Architecture.Tests.dll"
     paths = sorted(path.relative_to(run.root).as_posix() for path in runtime.rglob("*")
                    if path.is_file() and (path.suffix in (".dll", ".so", ".dylib")
