@@ -415,6 +415,25 @@ demonstrates why physical file hashes alone are insufficient, not complete
 compiler-option interpretation, source-generator closure or native producer
 origin. The producer remains private and public contributor integration is open.
 
+The package-only Consumer now supports an explicit metadata-contributor build
+mode with a directly compiled generated factory and an exact adapter package
+reference. Missing/category-inconsistent build inputs reject rather than fall
+back. Common test data expands using the actual registered binding ID; the
+shared assertion bodies are unchanged and providers cannot choose a row subset.
+The independently expanded common parameter inventory accepts that binding ID
+without borrowing a built-in provider's applicability or exclusions.
+
+A finite managed component uses actual retained SDK-packed archives and a fresh
+cache. All77 metadata common/hook rows pass; exact xUnit discovery matches the
+independent expected identities. The same shared bodies emit87 session origins,
+whose six role-image hashes match the registration's independently selected
+archive members. With no contributor properties, all154 Memory/SQLite rows still
+pass. The frozen source snapshot remains unchanged after both paths. This is
+consumer-bridge component evidence, not a new independent provider, full
+applicable-profile evidence, native containment or supplied-project build/pack
+acceptance. Artifact-contributor integration, complete input provenance and
+public dispatch remain unfinished; T064 stays open.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

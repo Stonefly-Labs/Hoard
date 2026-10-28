@@ -12,18 +12,12 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
-    [InlineData("memory", false, "capture")]
-    [InlineData("memory", true, "capture")]
-    [InlineData("memory", false, "cancel")]
-    [InlineData("memory", true, "cancel")]
-    [InlineData("memory", false, "restore")]
-    [InlineData("memory", true, "restore")]
-    [InlineData("sqlite", false, "capture")]
-    [InlineData("sqlite", true, "capture")]
-    [InlineData("sqlite", false, "cancel")]
-    [InlineData("sqlite", true, "cancel")]
-    [InlineData("sqlite", false, "restore")]
-    [InlineData("sqlite", true, "restore")]
+    [MetadataBindingData(false, "capture")]
+    [MetadataBindingData(true, "capture")]
+    [MetadataBindingData(false, "cancel")]
+    [MetadataBindingData(true, "cancel")]
+    [MetadataBindingData(false, "restore")]
+    [MetadataBindingData(true, "restore")]
     public async Task Observed_corruption_application_preserves_actual_commits_and_recoverable_ownership(
         string provider, bool operation, string consumer)
     {
@@ -49,10 +43,8 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory", false)]
-    [InlineData("memory", true)]
-    [InlineData("sqlite", false)]
-    [InlineData("sqlite", true)]
+    [MetadataBindingData(false)]
+    [MetadataBindingData(true)]
     public async Task Observed_corruption_closure_fences_later_scopes_while_actual_work_is_held(
         string provider, bool reopen)
     {
@@ -85,10 +77,8 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory", false)]
-    [InlineData("memory", true)]
-    [InlineData("sqlite", false)]
-    [InlineData("sqlite", true)]
+    [MetadataBindingData(false)]
+    [MetadataBindingData(true)]
     public async Task Observed_corruption_scopes_preserve_actual_target_and_closure_ownership(
         string provider, bool operation)
     {
@@ -105,18 +95,12 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory", MetadataContinuationCorruption.Null)]
-    [InlineData("memory", MetadataContinuationCorruption.Omitted)]
-    [InlineData("memory", MetadataContinuationCorruption.WrongType)]
-    [InlineData("memory", MetadataContinuationCorruption.Empty)]
-    [InlineData("memory", MetadataContinuationCorruption.OddHex)]
-    [InlineData("memory", MetadataContinuationCorruption.InvalidHex)]
-    [InlineData("sqlite", MetadataContinuationCorruption.Null)]
-    [InlineData("sqlite", MetadataContinuationCorruption.Omitted)]
-    [InlineData("sqlite", MetadataContinuationCorruption.WrongType)]
-    [InlineData("sqlite", MetadataContinuationCorruption.Empty)]
-    [InlineData("sqlite", MetadataContinuationCorruption.OddHex)]
-    [InlineData("sqlite", MetadataContinuationCorruption.InvalidHex)]
+    [MetadataBindingData(MetadataContinuationCorruption.Null)]
+    [MetadataBindingData(MetadataContinuationCorruption.Omitted)]
+    [MetadataBindingData(MetadataContinuationCorruption.WrongType)]
+    [MetadataBindingData(MetadataContinuationCorruption.Empty)]
+    [MetadataBindingData(MetadataContinuationCorruption.OddHex)]
+    [MetadataBindingData(MetadataContinuationCorruption.InvalidHex)]
     public async Task Observed_continuation_corruption_preserves_actual_pages(
         string provider, MetadataContinuationCorruption corruption)
     {
@@ -133,16 +117,11 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory", MetadataRecordCorruption.CacheAuthorization)]
-    [InlineData("memory", MetadataRecordCorruption.AggregateAuthorization)]
-    [InlineData("memory", MetadataRecordCorruption.AggregateStart)]
-    [InlineData("memory", MetadataRecordCorruption.AggregateEnd)]
-    [InlineData("memory", MetadataRecordCorruption.LeaseResource)]
-    [InlineData("sqlite", MetadataRecordCorruption.CacheAuthorization)]
-    [InlineData("sqlite", MetadataRecordCorruption.AggregateAuthorization)]
-    [InlineData("sqlite", MetadataRecordCorruption.AggregateStart)]
-    [InlineData("sqlite", MetadataRecordCorruption.AggregateEnd)]
-    [InlineData("sqlite", MetadataRecordCorruption.LeaseResource)]
+    [MetadataBindingData(MetadataRecordCorruption.CacheAuthorization)]
+    [MetadataBindingData(MetadataRecordCorruption.AggregateAuthorization)]
+    [MetadataBindingData(MetadataRecordCorruption.AggregateStart)]
+    [MetadataBindingData(MetadataRecordCorruption.AggregateEnd)]
+    [MetadataBindingData(MetadataRecordCorruption.LeaseResource)]
     public async Task Observed_query_corruption_preserves_actual_dimensions(
         string provider, MetadataRecordCorruption corruption)
     {
@@ -159,8 +138,7 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory")]
-    [InlineData("sqlite")]
+    [MetadataBindingData]
     public async Task Observed_continuations_reject_foreign_actual_store_epochs(string provider)
     {
         await using var resources = new SqliteBindingTests.RecordingDirectories();
@@ -181,14 +159,10 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory", "upgrade")]
-    [InlineData("memory", "upgrade-invalid")]
-    [InlineData("memory", "upgrade-exclusive")]
-    [InlineData("memory", "future-corrupt")]
-    [InlineData("sqlite", "upgrade")]
-    [InlineData("sqlite", "upgrade-invalid")]
-    [InlineData("sqlite", "upgrade-exclusive")]
-    [InlineData("sqlite", "future-corrupt")]
+    [MetadataBindingData("upgrade")]
+    [MetadataBindingData("upgrade-invalid")]
+    [MetadataBindingData("upgrade-exclusive")]
+    [MetadataBindingData("future-corrupt")]
     public async Task Observed_schema_consumers_preserve_actual_reopen_lineage(string provider, string consumer)
     {
         await using var resources = new SqliteBindingTests.RecordingDirectories();
@@ -221,8 +195,7 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory")]
-    [InlineData("sqlite")]
+    [MetadataBindingData]
     public async Task Observed_reopen_preserves_public_state_and_fences_stale_controls(string provider)
     {
         await using var resources = new SqliteBindingTests.RecordingDirectories();
@@ -245,111 +218,61 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     }
 
     [Theory]
-    [InlineData("memory", "capacity")]
-    [InlineData("memory", "writer")]
-    [InlineData("memory", "publication")]
-    [InlineData("memory", "entities")]
-    [InlineData("memory", "graph")]
-    [InlineData("memory", "independent")]
-    [InlineData("memory", "atomic")]
-    [InlineData("memory", "grouped")]
-    [InlineData("memory", "lease-generation")]
-    [InlineData("memory", "lease-fences")]
-    [InlineData("memory", "lease-renew")]
-    [InlineData("memory", "lease-release")]
-    [InlineData("memory", "lease-guard")]
-    [InlineData("memory", "text")]
-    [InlineData("memory", "registry")]
-    [InlineData("memory", "authorization")]
-    [InlineData("memory", "references")]
-    [InlineData("memory", "reference-aba")]
-    [InlineData("memory", "telemetry")]
-    [InlineData("memory", "create-race")]
-    [InlineData("memory", "revision-race")]
-    [InlineData("memory", "reconcile-writer")]
-    [InlineData("memory", "reconcile-io")]
-    [InlineData("memory", "reconcile-ack")]
-    [InlineData("memory", "contributions")]
-    [InlineData("memory", "receipts")]
-    [InlineData("memory", "layout-empty")]
-    [InlineData("memory", "layout-partial")]
-    [InlineData("memory", "bounds")]
-    [InlineData("memory", "scopes")]
-    [InlineData("memory", "page-kinds")]
-    [InlineData("memory", "page-size")]
-    [InlineData("memory", "page-datasets")]
-    [InlineData("memory", "time-ticket")]
-    [InlineData("memory", "time-lease")]
-    [InlineData("memory", "cancel")]
-    [InlineData("memory", "queue")]
-    [InlineData("memory", "exceptions")]
-    [InlineData("memory", "ledger")]
-    [InlineData("memory", "diagnostics")]
-    [InlineData("memory", "evidence")]
-    [InlineData("memory", "publication-replay")]
-    [InlineData("memory", "publication-orphan")]
-    [InlineData("memory", "corrupt-groups")]
-    [InlineData("memory", "corrupt-pages")]
-    [InlineData("memory", "admission")]
-    [InlineData("memory", "invalid-budget")]
-    [InlineData("memory", "incomplete-cleanup")]
-    [InlineData("memory", "disposal")]
-    [InlineData("sqlite", "capacity")]
-    [InlineData("sqlite", "writer")]
-    [InlineData("sqlite", "publication")]
-    [InlineData("sqlite", "entities")]
-    [InlineData("sqlite", "graph")]
-    [InlineData("sqlite", "independent")]
-    [InlineData("sqlite", "atomic")]
-    [InlineData("sqlite", "grouped")]
-    [InlineData("sqlite", "lease-generation")]
-    [InlineData("sqlite", "lease-fences")]
-    [InlineData("sqlite", "lease-renew")]
-    [InlineData("sqlite", "lease-release")]
-    [InlineData("sqlite", "lease-guard")]
-    [InlineData("sqlite", "text")]
-    [InlineData("sqlite", "registry")]
-    [InlineData("sqlite", "authorization")]
-    [InlineData("sqlite", "references")]
-    [InlineData("sqlite", "reference-aba")]
-    [InlineData("sqlite", "telemetry")]
-    [InlineData("sqlite", "create-race")]
-    [InlineData("sqlite", "revision-race")]
-    [InlineData("sqlite", "reconcile-writer")]
-    [InlineData("sqlite", "reconcile-io")]
-    [InlineData("sqlite", "reconcile-ack")]
-    [InlineData("sqlite", "contributions")]
-    [InlineData("sqlite", "receipts")]
-    [InlineData("sqlite", "layout-empty")]
-    [InlineData("sqlite", "layout-partial")]
-    [InlineData("sqlite", "bounds")]
-    [InlineData("sqlite", "scopes")]
-    [InlineData("sqlite", "page-kinds")]
-    [InlineData("sqlite", "page-size")]
-    [InlineData("sqlite", "page-datasets")]
-    [InlineData("sqlite", "time-ticket")]
-    [InlineData("sqlite", "time-lease")]
-    [InlineData("sqlite", "cancel")]
-    [InlineData("sqlite", "queue")]
-    [InlineData("sqlite", "exceptions")]
-    [InlineData("sqlite", "ledger")]
-    [InlineData("sqlite", "diagnostics")]
-    [InlineData("sqlite", "evidence")]
-    [InlineData("sqlite", "publication-replay")]
-    [InlineData("sqlite", "publication-orphan")]
-    [InlineData("sqlite", "corrupt-groups")]
-    [InlineData("sqlite", "corrupt-pages")]
-    [InlineData("sqlite", "admission")]
-    [InlineData("sqlite", "invalid-budget")]
-    [InlineData("sqlite", "incomplete-cleanup")]
-    [InlineData("sqlite", "disposal")]
+    [MetadataBindingData("capacity")]
+    [MetadataBindingData("writer")]
+    [MetadataBindingData("publication")]
+    [MetadataBindingData("entities")]
+    [MetadataBindingData("graph")]
+    [MetadataBindingData("independent")]
+    [MetadataBindingData("atomic")]
+    [MetadataBindingData("grouped")]
+    [MetadataBindingData("lease-generation")]
+    [MetadataBindingData("lease-fences")]
+    [MetadataBindingData("lease-renew")]
+    [MetadataBindingData("lease-release")]
+    [MetadataBindingData("lease-guard")]
+    [MetadataBindingData("text")]
+    [MetadataBindingData("registry")]
+    [MetadataBindingData("authorization")]
+    [MetadataBindingData("references")]
+    [MetadataBindingData("reference-aba")]
+    [MetadataBindingData("telemetry")]
+    [MetadataBindingData("create-race")]
+    [MetadataBindingData("revision-race")]
+    [MetadataBindingData("reconcile-writer")]
+    [MetadataBindingData("reconcile-io")]
+    [MetadataBindingData("reconcile-ack")]
+    [MetadataBindingData("contributions")]
+    [MetadataBindingData("receipts")]
+    [MetadataBindingData("layout-empty")]
+    [MetadataBindingData("layout-partial")]
+    [MetadataBindingData("bounds")]
+    [MetadataBindingData("scopes")]
+    [MetadataBindingData("page-kinds")]
+    [MetadataBindingData("page-size")]
+    [MetadataBindingData("page-datasets")]
+    [MetadataBindingData("time-ticket")]
+    [MetadataBindingData("time-lease")]
+    [MetadataBindingData("cancel")]
+    [MetadataBindingData("queue")]
+    [MetadataBindingData("exceptions")]
+    [MetadataBindingData("ledger")]
+    [MetadataBindingData("diagnostics")]
+    [MetadataBindingData("evidence")]
+    [MetadataBindingData("publication-replay")]
+    [MetadataBindingData("publication-orphan")]
+    [MetadataBindingData("corrupt-groups")]
+    [MetadataBindingData("corrupt-pages")]
+    [MetadataBindingData("admission")]
+    [MetadataBindingData("invalid-budget")]
+    [MetadataBindingData("incomplete-cleanup")]
+    [MetadataBindingData("disposal")]
     public async Task Observed_factories_execute_unchanged_common_consumers_with_actual_origins(
         string provider, string consumer) =>
         await RunCommonConsumerAsync(provider, consumer, "full-metadata-binding");
 
     [Theory]
-    [InlineData("memory")]
-    [InlineData("sqlite")]
+    [MetadataBindingData]
     public async Task Missing_hooks_reject_before_dispatch_and_actual_binding_passes(string provider) =>
         await RunCommonConsumerAsync(provider, "admission", "QC-05");
 
@@ -501,6 +424,10 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
 
     private static IMetadataConformanceBinding Binding(string provider)
     {
+#if HOARD_METADATA_CONTRIBUTOR
+        if (provider != ContributorBindingFactory.BindingId) { throw new ArgumentException("BindingInvalid"); }
+        return ContributorBindingFactory.Create();
+#else
         var variable = provider switch
         {
             "memory" => "HOARD_METADATA_MEMORY_PACKAGE_SHA256",
@@ -510,5 +437,6 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
         var sha256 = Environment.GetEnvironmentVariable(variable)
             ?? throw new InvalidOperationException("PrerequisiteMissing");
         return provider == "memory" ? new MemoryBinding(sha256) : new SqliteBinding(sha256);
+#endif
     }
 }

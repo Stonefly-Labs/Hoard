@@ -6431,6 +6431,38 @@ native origin or public build/common-suite acceptance. T064 stays unchecked.
 native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
 pass.
 
+The next partial T064 change connects an explicit metadata-contributor build mode
+to the actual package-only Consumer. A generated typed factory and exact adapter
+version are compiled directly; missing/category-inconsistent properties fail.
+Shared test data expands with the actual registered binding ID and every common
+variant, without a Memory alias, provider-selected omission or borrowed built-in
+exclusion. Shared assertion bodies remain unchanged. The independent common
+metadata inventory can expand that registered ID.
+
+A finite managed component restores actual retained SDK-packed archives into a
+fresh cache, builds Consumer and passes all77 common/hook rows. Exact xUnit
+discovery equals all77 independently expected identities. Direct invocation of
+the same compiled bodies verifies87 session-origin packets, their exact per-row
+counts and six registered role-image hashes against independent archive members.
+Without contributor properties, all154 default Memory/SQLite rows pass. Frozen
+source bytes and inventory remain unchanged after both builds/runs.
+The private executable's initial CS8892 was resolved by disabling only its
+Test SDK-generated entry point. Its initial absent-lock stringification created
+an unexpected None file and failed snapshot verification; omitting that absent
+override resolves the mismatch. Neither failed observation counted as acceptance.
+The private driver is not the native public executor.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors test_conformance_sdk_checks -q`:
+183 passed. Focused Consumer whitespace verification passes.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes633
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+This does not
+complete artifact-contributor support, the full applicable profile, owned
+supplied-project build/pack, complete compiler/asset/native provenance or the
+three independently packaged contributor journeys. Public dispatch remains
+closed, qualification/profileComplete remain false and T064 remains unchecked.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

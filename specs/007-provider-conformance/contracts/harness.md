@@ -2230,6 +2230,17 @@ and oversize receipts. Bind the admitted file-row digest and retain hashes only,
 not raw commands/metadata/private paths. Hash-only receipts do not independently
 interpret compiler arguments or establish native producer origin.
 
+The implemented metadata consumer bridge compiles a generated typed factory
+alongside the package-only consumer and references the exact registered adapter
+version. Its shared data attribute expands every common row with the actual
+registered binding ID; default builds still expand Memory and SQLite. No
+provider-supplied case list, built-in alias or inherited built-in exclusion may
+select or shorten the contributor dataset. Category-inconsistent or incomplete
+contributor build properties must fail before compilation/package collection.
+This bridge alone does not establish full applicable catalog coverage, owned
+supplied-project build/pack or native provenance. Artifact-contributor support
+and public custom dispatch are not yet implemented.
+
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers
 the above binding contracts and changes only composition/setup code. Its good

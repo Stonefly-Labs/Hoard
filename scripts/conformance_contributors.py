@@ -124,6 +124,7 @@ def binding_factory_source(binding, adapter_package, provider_package):
         "namespace Hoard.Fixtures.Conformance.Consumer;\n\n"
         "internal static class ContributorBindingFactory\n"
         "{\n"
+        f'    internal const string BindingId = "{declaration["bindingId"]}";\n\n'
         f"    internal static {bindings}.{interface} Create()\n"
         "    {\n"
         f'        {bindings}.{interface} binding = new global::{factory}("{provider["sha256"]}");\n'

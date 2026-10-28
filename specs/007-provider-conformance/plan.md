@@ -570,6 +570,39 @@ All32 focused contributor cases pass. Frozen full safe tooling observes632 tests
 zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
 skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 change reaches the actual package-only Consumer. An
+explicit metadata-contributor build mode compiles the generated typed factory
+and references the exact adapter version. Missing/category-inconsistent inputs
+reject. The shared data attribute expands the registered binding ID directly;
+shared assertion bodies remain unchanged, no Memory alias is used and no
+provider-selected case subset or inherited built-in exclusion is introduced.
+The independent common metadata inventory now supports that binding ID.
+
+A finite managed component restores actual retained SDK-packed archives into
+a fresh cache, builds the actual Consumer and passes all77 common/hook rows.
+Actual xUnit discovery exactly equals the independently expanded77 identities.
+An additional direct invocation of those same compiled bodies checks87 emitted
+session-origin packets against their expected per-row counts and all six
+registered role-image hashes from independent archive members. The default build
+without contributor properties passes all154 Memory/SQLite rows. The frozen
+source snapshot is unchanged after both builds/runs. The initial private driver
+hit CS8892 because the Test SDK also generated an entry point; disabling generated
+Program only in that private executable resolves it. An incorrectly stringified
+absent private lock override initially created a file named None and failed
+snapshot verification; omitting the absent override restores exact immutability.
+Neither failure was treated as successful acceptance.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors test_conformance_sdk_checks -q`:
+183 passed. Focused Consumer whitespace verification passes.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes633
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+This is finite consumer-bridge component evidence, not a separately built fresh
+SDK, three independently packaged good/red/corrected journeys, the full
+applicable profile, artifact-contributor support, owned supplied-project
+build/pack, complete input provenance or native containment. The public route
+stays closed, qualification/profileComplete remain false and T064 stays unchecked.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

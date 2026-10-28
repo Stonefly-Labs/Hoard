@@ -3,6 +3,7 @@
     <AssemblyName>Hoard.Fixtures.Conformance.Consumer</AssemblyName>
     <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
+    <DefineConstants Condition="'$(ConformanceContributorCategory)' == 'metadata'">$(DefineConstants);HOARD_METADATA_CONTRIBUTOR</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="SqliteEnvironmentProbe.cs;SqliteNativeOwnershipProbe.cs" />
@@ -23,4 +24,16 @@
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <Using Include="Xunit" />
   </ItemGroup>
+  <ItemGroup Condition="'$(ConformanceContributorCategory)' == 'metadata' And '$(ConformanceContributorFactory)' != '' And '$(ConformanceContributorPackageId)' != '' And '$(ConformanceContributorPackageVersion)' != ''">
+    <Compile Include="$(ConformanceContributorFactory)" Link="ContributorBindingFactory.cs" />
+    <PackageReference Remove="$(ConformanceContributorPackageId)" />
+    <PackageReference Include="$(ConformanceContributorPackageId)" VersionOverride="[$(ConformanceContributorPackageVersion)]" />
+  </ItemGroup>
+  <Target Name="ValidateContributorInputs" BeforeTargets="CollectPackageReferences;CoreCompile"
+          Condition="'$(ConformanceContributorCategory)' != '' Or '$(ConformanceContributorFactory)' != '' Or '$(ConformanceContributorPackageId)' != '' Or '$(ConformanceContributorPackageVersion)' != ''">
+    <Error Condition="'$(ConformanceContributorCategory)' != 'metadata'"
+           Text="BindingInvalid" />
+    <Error Condition="'$(ConformanceContributorFactory)' == '' Or !Exists('$(ConformanceContributorFactory)') Or '$(ConformanceContributorPackageId)' == '' Or '$(ConformanceContributorPackageVersion)' == ''"
+           Text="BindingInvalid" />
+  </Target>
 </Project>

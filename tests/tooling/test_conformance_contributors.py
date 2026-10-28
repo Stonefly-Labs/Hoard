@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_evidence as evidence
 import conformance_contributors as contributors
+import conformance_case_catalog as catalog
 from conformance_execution import OwnedRun
 
 
@@ -205,6 +206,18 @@ class ContributorAdmissionTests(unittest.TestCase):
                 contributors.binding_factory_source(project, selected_adapter, selected_provider)
         with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
             contributors.binding_factory_source(project, {**adapter, "sourceMapping": "nuget.org"}, provider)
+
+    def test_registered_metadata_common_parameters_use_the_actual_binding_id_without_builtin_aliases(self):
+        counts = catalog.metadata_common_consumer_origin_counts(binding_ids=("acme.metadata",))
+        default = catalog.metadata_common_consumer_origin_counts()
+        self.assertEqual(len(counts) * 2, len(default))
+        self.assertEqual({identity.split("(provider:")[0] for identity in counts},
+                         {identity.split("(provider:")[0] for identity in default})
+        self.assertTrue(all('(provider: "acme.metadata"' in identity for identity in counts))
+        self.assertFalse(any('"memory"' in identity or '"sqlite"' in identity for identity in counts))
+        for invalid in ((), ("acme.metadata",) * 2, "acme.metadata", None, ("../foreign",)):
+            with self.subTest(invalid=invalid), self.assertRaises(evidence.ConformanceError):
+                catalog.metadata_common_consumer_origin_counts(binding_ids=invalid)
 
     def test_registered_runtime_components_preserve_distinct_actual_archive_owners_and_image_names(self):
         feed, output = self.parent / "feed", self.parent / "consumer"

@@ -213,12 +213,17 @@ def full_artifact_binding_origin_counts():
 
 
 
-def metadata_common_consumer_origin_counts():
+def metadata_common_consumer_origin_counts(*, binding_ids=("memory", "sqlite")):
+    if not isinstance(binding_ids, (list, tuple)) or not 0 < len(binding_ids) <= 1024:
+        raise ConformanceError("BindingInvalid")
+    bindings = tuple(stable_id(value) for value in binding_ids)
+    if len(set(bindings)) != len(bindings):
+        raise ConformanceError("BindingInvalid")
     prefix = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
     method = prefix + "Observed_factories_execute_unchanged_common_consumers_with_actual_origins"
     identities = {
         f'{method}(provider: "{provider}", consumer: "{consumer}")': 1
-        for provider in ("memory", "sqlite") for consumer in (
+        for provider in bindings for consumer in (
             "capacity", "writer", "publication", "entities", "graph", "independent",
             "atomic", "grouped", "lease-generation", "lease-fences",
             "lease-renew", "lease-release", "lease-guard",
@@ -230,37 +235,37 @@ def metadata_common_consumer_origin_counts():
             "evidence", "publication-replay", "publication-orphan", "corrupt-groups", "corrupt-pages",
             "admission", "invalid-budget", "incomplete-cleanup", "disposal")}
     reopen = prefix + "Observed_reopen_preserves_public_state_and_fences_stale_controls"
-    identities.update({f'{reopen}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
+    identities.update({f'{reopen}(provider: "{provider}")': 2 for provider in bindings})
     schema = prefix + "Observed_schema_consumers_preserve_actual_reopen_lineage"
     identities.update({
         f'{schema}(provider: "{provider}", consumer: "{consumer}")': count
-        for provider in ("memory", "sqlite") for consumer, count in (
+        for provider in bindings for consumer, count in (
             ("upgrade", 3), ("upgrade-invalid", 2), ("upgrade-exclusive", 2), ("future-corrupt", 4))})
     cursor = prefix + "Observed_continuation_corruption_preserves_actual_pages"
     identities.update({
         f'{cursor}(provider: "{provider}", corruption: {corruption})': 1
-        for provider in ("memory", "sqlite") for corruption in (
+        for provider in bindings for corruption in (
             "Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex")})
     dimensions = prefix + "Observed_query_corruption_preserves_actual_dimensions"
     identities.update({
         f'{dimensions}(provider: "{provider}", corruption: {corruption})': 1
-        for provider in ("memory", "sqlite") for corruption in (
+        for provider in bindings for corruption in (
             "CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource")})
     epoch = prefix + "Observed_continuations_reject_foreign_actual_store_epochs"
-    identities.update({f'{epoch}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
+    identities.update({f'{epoch}(provider: "{provider}")': 2 for provider in bindings})
     ownership = prefix + "Observed_corruption_scopes_preserve_actual_target_and_closure_ownership"
     identities.update({
         f'{ownership}(provider: "{provider}", operation: {operation})': 1
-        for provider in ("memory", "sqlite") for operation in ("False", "True")})
+        for provider in bindings for operation in ("False", "True")})
     application = prefix + "Observed_corruption_application_preserves_actual_commits_and_recoverable_ownership"
     identities.update({
         f'{application}(provider: "{provider}", operation: {operation}, consumer: "{consumer}")': 1
-        for provider in ("memory", "sqlite") for operation in ("False", "True")
+        for provider in bindings for operation in ("False", "True")
         for consumer in ("capture", "cancel", "restore")})
     closure = prefix + "Observed_corruption_closure_fences_later_scopes_while_actual_work_is_held"
     identities.update({
         f'{closure}(provider: "{provider}", reopen: {reopen})': 2 if reopen == "True" else 1
-        for provider in ("memory", "sqlite") for reopen in ("False", "True")})
+        for provider in bindings for reopen in ("False", "True")})
     return MappingProxyType(identities)
 
 

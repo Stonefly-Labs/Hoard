@@ -654,6 +654,14 @@ observed compiler project/file key. A private actual rebuild changes only a
 resource logical-name property: captured command/metadata and DLL bytes change
 while frozen source/resource bytes stay identical. Hash-only component receipts
 do not establish native producer origin or complete argument interpretation.
+The package-only consumer now has an explicit metadata-contributor build mode:
+shared data rows use the registered binding ID and a directly compiled typed
+factory, without Memory aliasing or provider-selected omissions. A finite managed
+component passes all77 shared metadata rows, matches87 actual session origins to
+registered archive owners, and checks exact xUnit discovery. The default
+Memory/SQLite path still passes154 rows. This is not the complete applicable
+profile: artifact-contributor integration, owned supplied-project build/pack,
+input provenance and the public entry point remain unfinished.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
