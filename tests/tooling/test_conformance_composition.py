@@ -300,7 +300,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 self.assertEqual(snapshot["inputSha256"], evidence.digest(inputs))
                 self.assertEqual(snapshot["files"], {
                     path: hashed for path, hashed in hashes.items() if path != "runtime-owner.json"})
-                self.assertEqual(len(paths), 4)
+                self.assertEqual(len(paths), 5)
+                self.assertIn("runtime-owner.json", paths)
                 shutil.rmtree(root / "stores")
                 shutil.rmtree(root / "feed")
                 for path, hashed in snapshot["files"].items():

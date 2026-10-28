@@ -520,7 +520,7 @@ def _retain_composition_inputs(run, inputs, record):
         raise evidence.ConformanceError("ProofMismatch")
     directory = run.root / "proofs/composition-runtime-inputs"
     directory.mkdir(mode=0o700)
-    paths = []
+    paths = [path for path in files if path not in selected]
     for hashed, path in {hashed: path for path, hashed in selected.items() if path != config}.items():
         target = directory / hashed
         data = read_bounded(run.root / path, 32 * 1024**2)
@@ -918,8 +918,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
             run, inputs, post_inputs, admitted, runtime_directory=output.relative_to(run.root).as_posix(),
             started_ms=started, ended_ms=ended, resources=run.resource_projection(),
             transport_paths=(
-                *retained_inputs, *(path for path in command_inputs
-                                    if not path.startswith(("stores/", "feed/", "cache/"))),
+                *retained_inputs,
                 f"proofs/category-command-{attempt}-execution.json",
                 f"proofs/execution-command-{record['sequence']:04}.json",
                 output.relative_to(run.root).as_posix() + "/witnesses.jsonl",

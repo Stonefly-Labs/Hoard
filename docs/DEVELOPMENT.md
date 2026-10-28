@@ -5976,6 +5976,21 @@ The older exact `456f818` foundations run40601395871 independently passes
 lock replay, both category extraction jobs, native ownership and retained
 compatibility replay; its SDK/logger job fails. It is not an all-green run.
 
+Exact `058fcfb` run40609512858/job122557327114 further localizes replay
+failure to the retained-proof registration guard (`:621`). Actual source
+snapshots live under `snapshot/`, not removable `stores/`; their selected
+original/prepared lock files survived cleanup but were absent from the report's
+proof registry. Adding a surviving snapshot lock to the modeled report-link
+replay reproduces this exact failure. Retention now returns every surviving
+selected input and every retained copy for registration, and the caller no
+longer separately registers a duplicate subset of command inputs. Raw hashes,
+permissions, namespace/configuration policy and all transport checks remain.
+The model passes after store/feed deletion and all fourteen report mutations
+still reject. Sixteen focused tests pass; full safe tooling observes 586 tests,
+zero failures/errors/unexpected bytes, twenty native macOS skips, expected
+incomplete exit 2. Catalog/diff checks pass; genuine repaired Linux replay
+remains pending. T047/T057/T071 and qualification remain incomplete.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

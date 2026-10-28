@@ -813,7 +813,11 @@ class ConformanceAdmissionTests(unittest.TestCase):
             for name in ("Hoard.Composition.Tests.deps.json", "Hoard.Composition.Tests.runtimeconfig.json"):
                 write("stores/composition-runtime/" + name, b"{}")
             inputs["runtimeAssemblies"] = images
-            inputs["locks"] = {"stores/packages.lock.json": write("stores/packages.lock.json", b"{}")}
+            inputs["locks"] = {
+                "stores/packages.lock.json": write("stores/packages.lock.json", b"{}"),
+                "snapshot/tests/Example/packages.lock.json": write(
+                    "snapshot/tests/Example/packages.lock.json", b'{"version":1}'),
+            }
             config = "stores/candidate.NuGet.Config"
             inputs["configurationSha256"] = write(
                 config, evidence.synthetic_nuget_configuration(root / "feed/candidate"))
@@ -886,7 +890,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
             summary = composition._composition_case_report(
                 run, inputs, inputs, observed, runtime_directory=output, started_ms=0, ended_ms=3,
                 transport_paths=(
-                    *retained, *(path for path in bound if not path.startswith(("stores/", "feed/", "cache/"))),
+                    *retained,
                     f"proofs/category-command-{attempt}-execution.json", "proofs/execution-command-0001.json",
                     output + "/witnesses.jsonl", output + "/completion.json"))
             shutil.rmtree(root / "stores")

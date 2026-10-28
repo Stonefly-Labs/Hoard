@@ -477,6 +477,13 @@ parent; pre/post inputs must agree. This wiring has modeled coverage, not fresh
 Linux acceptance or completed version/compatibility qualification.
 Focused controls pass 15 tests; full safe tooling observes 586 tests with
 zero failures/errors/unexpected bytes and twenty native macOS skips.
+Exact `058fcfb` localizes replay rejection to missing retained-proof
+registration. Source-snapshot locks survive release outside `stores/` but were
+omitted from the writer's registry. A modeled release-aware replay reproduces
+the same failure using that real namespace. Retention now registers every
+surviving selected input alongside copied removable inputs, without weakening
+the reader. Sixteen focused tests and full safe tooling pass; genuine Linux
+confirmation remains pending and the implementation stage is still incomplete.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

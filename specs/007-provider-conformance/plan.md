@@ -1064,6 +1064,27 @@ incomplete exit 2. Catalog/diff checks pass; progress remains 53/86.
 The older exact456 foundations run40601395871 has five passing jobs and one
 failed SDK/logger diagnostic, not full acceptance.
 
+### Surviving source-snapshot input registration repair
+
+Exact `058fcfb5be3c71dd74480bae9621138a1402a6c2`,
+run40609512858/job122557327114, fails the individual retained-proof registration
+guard at `conformance_composition_checks.py:621`. The prior modeled replay used
+only locks under removable stores. Actual original/prepared source locks also
+live under surviving `snapshot/`; they were retained but not registered.
+Adding a snapshot lock to the full release-aware model reproduces the same
+guard failure. Retention now returns all surviving selected inputs alongside
+copied removable inputs. The caller registers that complete set without its
+previous duplicate command-only subset. No reader check or policy is relaxed.
+
+The repaired model passes after actual store/feed deletion, with all fourteen
+existing report mutations still rejecting. Sixteen focused tests pass.
+`python3 scripts/conformance_unit_checks.py --all-tooling`: 586 tests,
+zero failures/errors/unexpected bytes, twenty native macOS skips, expected
+incomplete exit 2. Catalog/diff checks pass. Native confirmation remains
+pending; 53/86 implement/running, no additional task closure or qualification.
+README/development updated; no product/provider contract, guide, example,
+diagram, infrastructure or governance change is required.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
