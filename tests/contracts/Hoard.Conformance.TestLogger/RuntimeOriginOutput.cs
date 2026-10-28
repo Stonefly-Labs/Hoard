@@ -12,12 +12,13 @@ internal static class RuntimeOriginOutput
     internal readonly record struct ComponentIdentity(string Assembly, Guid Module, string Type);
 
     internal static (JsonElement[] Origins, JsonElement[] OriginalObservations, JsonElement[] MetadataArguments,
-        JsonElement[] CompositionObservations, bool Unknown,
+        JsonElement[] CompositionObservations, JsonElement[] VersionObservations, bool Unknown,
         Dictionary<Guid, ComponentIdentity> Instances) Read(
         TestResult result, RuntimeInput input, RuntimeExpectedTest expected, HashSet<Guid> priorSessions,
         IReadOnlyDictionary<Guid, ComponentIdentity> priorInstances)
     {
         var pending = new Dictionary<Guid, Pending>();
+        var versions = new List<JsonElement>();
         var unknown = false;
         var total = 0;
         RuntimeSafety.Require(result.Messages.Count <= 4096, "OutputLimitExceeded");
@@ -32,6 +33,12 @@ internal static class RuntimeOriginOutput
                 if (span.IsEmpty) { continue; }
                 RuntimeSafety.Require(span.Length <= 1024, "OutputLimitExceeded");
                 var line = span.ToString();
+                if (RuntimeVersionOutput.TryRead(line, expected, out var version))
+                {
+                    RuntimeSafety.Require(versions.Count < 2, "OutputLimitExceeded");
+                    versions.Add(version);
+                    continue;
+                }
                 if (!line.StartsWith(ConformanceSessionOriginOutput.Prefix + ":", StringComparison.Ordinal)
                     && !line.StartsWith(ConformanceOriginalObservationOutput.Prefix + ":", StringComparison.Ordinal)
                     && !line.StartsWith(ConformanceMetadataArgumentOutput.Prefix + ":", StringComparison.Ordinal)
@@ -247,7 +254,11 @@ internal static class RuntimeOriginOutput
                 && stages.Add((source, composition.GetProperty("stage").GetString()!)), "ProofMismatch");
         }
         RuntimeSafety.Require(compositions.Count == 0 || arguments.Count == 0, "ProofMismatch");
-        return (origins.ToArray(), originals.ToArray(), arguments.ToArray(), compositions.ToArray(), unknown, instances);
+        RuntimeVersionOutput.Validate(versions, expected, result.Outcome == TestOutcome.Passed);
+        RuntimeSafety.Require(versions.Count == 0
+            || origins.Count + originals.Count + arguments.Count + compositions.Count == 0, "ProofMismatch");
+        return (origins.ToArray(), originals.ToArray(), arguments.ToArray(), compositions.ToArray(),
+            versions.ToArray(), unknown, instances);
     }
 
     private static void Keys(JsonElement value, params string[] expected)

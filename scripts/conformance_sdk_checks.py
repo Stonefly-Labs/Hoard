@@ -3803,9 +3803,11 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             settings.relative_to(run.root).as_posix(), assembly.relative_to(run.root).as_posix()]
         if architecture_preparation is not None:
             execution_inputs.extend((
-                prepared["inputMapPath"], *architecture_inputs,
-                *(row["path"] for row in manifest["assemblies"] if row["path"] not in architecture_inputs
-                  and row["path"] != assembly.relative_to(run.root).as_posix())))
+                prepared["inputMapPath"], prepared["manifestPath"],
+                *(row["path"] for row in manifest["assemblies"]
+                  if Path(row["path"]).name in (
+                      "Hoard.Conformance.TestLogger.dll", "Hoard.Testing.Conformance.dll",
+                      "Hoard.Abstractions.dll"))))
         if category_scope == ("artifacts", "original-integration") or category_scope[1] in (
                 "mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission") or category_scope in (
                     ("metadata", "original-memory"), ("metadata", "original-sqlite"),

@@ -359,6 +359,14 @@ invocation, never an automatic simulation selection.
 
 ## Fixture-Host Compositions
 
+Exact `44fd370`, run40612965874/job122568697750, completes actual composition
+execution and independent post-release replay: 36 physical parameters,
+110 snapshots, 41 logical CP subvariants and all 28 generated-report controls.
+T047 is complete for this finite runtime scope; the nine quality-source rows,
+full-controller acceptance and profile qualification remain explicitly
+incomplete. The [plan](../plan.md#complete-native-composition-execution-t047)
+records immutable inputs/report references and the remaining gates.
+
 All packages use their actual local versions (initial repository baseline
 `0.1.0`) and exact content hashes. Normal platform host/abstractions versions
 are `0.1.0`; illustrative version-policy cases below are distinct.

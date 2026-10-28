@@ -225,7 +225,8 @@ public sealed class RuntimeResultRecorder : IDisposable
                 var kind = FailureKind(result, entry);
                 if (result.Outcome == TestOutcome.Failed) { CorrelateFailureMessages(result); }
                 RuntimeSafety.Require(diagnostic == ConformanceDiagnosticCode.None, diagnostic.ToString());
-                var (sessionOrigins, originalObservations, metadataArguments, compositionObservations, unknownOutput, instances) =
+                var (sessionOrigins, originalObservations, metadataArguments, compositionObservations,
+                    versionObservations, unknownOutput, instances) =
                     RuntimeOriginOutput.Read(result, input, entry, seenSessions, seenInstances);
                 if (unknownOutput || (result.Outcome == TestOutcome.Passed
                     && (!string.IsNullOrEmpty(result.ErrorMessage) || !string.IsNullOrEmpty(result.ErrorStackTrace))))
@@ -269,6 +270,13 @@ public sealed class RuntimeResultRecorder : IDisposable
                     { extended["metadataArguments"] = JsonSerializer.SerializeToNode(metadataArguments); }
                     if (compositionObservations.Length > 0)
                     { extended["compositionObservations"] = JsonSerializer.SerializeToNode(compositionObservations); }
+                    proof = JsonSerializer.SerializeToUtf8Bytes(extended, RuntimeSafety.Json);
+                }
+                if (versionObservations.Length > 0)
+                {
+                    var extended = JsonNode.Parse(proof)!.AsObject();
+                    extended["schemaVersion"] = 5;
+                    extended["versionObservations"] = JsonSerializer.SerializeToNode(versionObservations);
                     proof = JsonSerializer.SerializeToUtf8Bytes(extended, RuntimeSafety.Json);
                 }
                 RuntimeSafety.Require(proof.Length <= 64 * 1024, "OutputLimitExceeded");

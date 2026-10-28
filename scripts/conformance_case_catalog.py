@@ -879,6 +879,45 @@ def independent_version_witnesses(name):
     }[name]
 
 
+def version_observation_policy(identity):
+    prefix = "Hoard.Composition.Tests.ConformanceVersionTests."
+    if not identity.startswith(prefix):
+        return None
+    for axis in ("host", "abstractions", "required", "optional"):
+        for name, _, _, _, accepted in VERSION_ROWS:
+            if identity != prefix + f'Runtime_matrix(axis: "{axis}", row: "{VERSION_RUNTIME_ROWS[name]}")':
+                continue
+            primary = ("runtime", {"accepted": int(accepted), "constructors": 0,
+                                   "diagnostics": 0 if accepted else (1, 128)})
+            return (primary,) if accepted else (
+                ("repair", {"accepted": 1, "constructors": 0, "diagnostics": 0,
+                            "activeEdges": int(axis in ("required", "optional"))}), primary)
+    for host in (False, True):
+        for abstractions in (False, True):
+            if identity == prefix + (
+                    f"Platform_prerelease_flags_are_independent(host: {host}, abstractions: {abstractions})"):
+                return (("platform-flags", {"accepted": int(host and abstractions), "constructors": 0}),)
+    for selection in ("absent", "registered-disabled"):
+        if identity == prefix + (
+                f'Incompatible_optional_target_is_unavailable_not_an_active_edge_or_capability(selection: "{selection}")'):
+            return (("optional", {"activeEdges": 0, "capabilities": 0, "capabilityRejections": 1}),)
+    for case_id in dict.fromkeys("C-14" if row[0] == "C-14-outside" else row[0]
+                                for row in CLASSIFICATION_RUNTIME_ROWS):
+        if identity in classification_witnesses(case_id):
+            matching = next(item for item in CLASSIFICATION_RUNTIME_ROWS
+                            if f'(id: "{item[0]}",' in identity)
+            accepted = matching[-1]
+            return (("classification", {"accepted": int(accepted),
+                                        "diagnostics": 0 if accepted else (1, 128)}),)
+    for case_id in ("C-11", "C-18"):
+        if identity in classification_witnesses(case_id):
+            return (("platform-classification", {"accepted": 0, "unsupportedPlatform": (1, 128)}),)
+    for case_id in ("C-05", "C-06", "C-16", "C-17"):
+        if identity in classification_witnesses(case_id):
+            return (("policy", {"policyInvalid": 1, "policyRepaired": 1, "runtimeClaims": 0}),)
+    return None
+
+
 def composition_snapshot_policy(identity):
     def matrix(stage, modules, *, ready=False, stopped=False, requests=0, edges=0, capabilities=0,
                rule_count=0, initialized=True, routes=None):

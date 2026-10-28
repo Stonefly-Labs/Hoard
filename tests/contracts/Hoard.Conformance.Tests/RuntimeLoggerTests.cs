@@ -12,6 +12,79 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("Runtime_matrix(axis: \"host\", row: \"inclusive-lower\")",
+        "version/host/inclusive-lower: accepted=1; constructors=0; diagnostics=0")]
+    [InlineData("Runtime_matrix(axis: \"required\", row: \"exclusive-upper\")",
+        "version/required/exclusive-upper/repair: accepted=1; constructors=0; diagnostics=0; active-edges=1\n"
+        + "version/required/exclusive-upper: accepted=0; constructors=0; diagnostics=1")]
+    [InlineData("Platform_prerelease_flags_are_independent(host: True, abstractions: False)",
+        "version/platform-flags/True/False: accepted=0; constructors=0")]
+    [InlineData("Incompatible_optional_target_is_unavailable_not_an_active_edge_or_capability(selection: \"absent\")",
+        "version/optional/absent: active-edges=0; capabilities=0; demanded-capability-rejections=1")]
+    [InlineData("Inherited_runtime_classification(id: \"C-01\", axis: \"host\", range: \"[1.2.0,2.0.0)\", candidate: \"1.4.0\", prerelease: False, selection: \"enabled\", accepted: True)",
+        "classification/C-01: accepted=1; diagnostics=0")]
+    [InlineData("Inherited_platform_flags_do_not_derive_from_module_version(id: \"C-11\", host: True, abstractions: False)",
+        "classification/C-11: accepted=0; unsupported-platform=1")]
+    [InlineData("Inherited_release_classifier_is_policy_not_runtime_evidence(id: \"C-05\", transition: \"stable-major\", repairedVersion: \"2.0.0\")",
+        "classification/C-05: policy-invalid=1; repaired-policy-valid=1; runtime-claims=0")]
+    public void Version_output_is_bound_to_the_actual_parameter_and_retained_as_numeric_observations(
+        string parameter, string text)
+    {
+        using var owned = new OwnedInput();
+        const string prefix = "Hoard.Composition.Tests.ConformanceVersionTests.";
+        owned.Input.Expected[0] = owned.Input.Expected[0] with
+        { TestIdentity = prefix + parameter, FullyQualifiedName = prefix + parameter.Split('(')[0] };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, text));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        Assert.Equal(5, proof.RootElement.GetProperty("schemaVersion").GetInt32());
+        var rows = proof.RootElement.GetProperty("versionObservations").EnumerateArray().ToArray();
+        Assert.Equal(text.Split('\n').Length, rows.Length);
+        Assert.All(rows, row => Assert.All(row.GetProperty("counters").EnumerateObject(),
+            counter => Assert.Equal(JsonValueKind.Number, counter.Value.ValueKind)));
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("duplicate")]
+    [InlineData("foreign-axis")]
+    [InlineData("missing-repair")]
+    [InlineData("private-output")]
+    public void Version_output_never_swallows_missing_foreign_duplicate_or_unsafe_diagnostics(string mutation)
+    {
+        using var owned = new OwnedInput();
+        const string method = "Hoard.Composition.Tests.ConformanceVersionTests.Runtime_matrix";
+        owned.Input.Expected[0] = owned.Input.Expected[0] with
+        { TestIdentity = method + "(axis: \"host\", row: \"exclusive-upper\")", FullyQualifiedName = method };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        const string primary = "version/host/exclusive-upper: accepted=0; constructors=0; diagnostics=1";
+        const string repaired = "version/host/exclusive-upper/repair: accepted=1; constructors=0; diagnostics=0; active-edges=0";
+        var text = mutation switch
+        {
+            "missing" => "",
+            "duplicate" => primary + "\n" + primary,
+            "foreign-axis" => repaired + "\n" + primary.Replace("/host/", "/required/", StringComparison.Ordinal),
+            "missing-repair" => primary,
+            _ => repaired + "\n" + primary + "\ncredential=seeded-canary"
+        };
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, text));
+        using var recorder = owned.Open();
+        recorder.Observe(result);
+        recorder.Complete();
+        Assert.NotEqual(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData("execution")]
     [InlineData("discovery")]
     public void Literal_and_opaque_aliases_cannot_count_the_same_actual_parameter_twice(string purpose)

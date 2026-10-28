@@ -520,6 +520,29 @@ All588 tooling tests have zero failures/errors/unexpected bytes, with twenty
 explicit native macOS skips. Category reports remain non-qualifying `Incomplete`
 and the implementation stage continues; the separate SDK diagnostic and complete
 compatibility/composition/evaluator/CI gates are not declared passed.
+The exact `44fd370` composition run40612965874 now succeeds through actual
+post-release independent replay and all 28 generated-report controls: all 36
+physical CP parameters/110 snapshots support 41 passing logical subvariants.
+The 525 inherited parameters/58 scopes, 3,272 controller inputs, 41 formatting
+commands and actual process release also verify. This closes T047's finite
+composition execution, bringing progress to 56/86, not the nine unfinished
+quality-source rows or full-controller/profile qualification. Its separate
+SDK job122569229836 also succeeds: 113 scopes/1,578 observed parameters including
+intentional negatives; earlier failures remain historical failures.
+
+The version logger now projects only exact method/parameter-bound original
+diagnostic forms into numeric observations; unknown output still fails.
+Independent Python policy checks all 114 physical version parameters, ordered
+rejection/repair and policy-only classifications; old-schema omissions cannot
+bypass it. All 157 actual logger controls pass. A local test host passes all 114
+unchanged original version parameters and independently admits 170 observations;
+its synthetic admission is a protocol test, not native/package qualification.
+The `4822d3` native architecture run reaches launch but hits the executor's
+sixteen-input guard. The repair binds the already verified complete graph map
+and runtime manifest rather than expanding thousands of files into that bounded
+list; all graph bytes still reverify before/after execution, and the guard stays
+unchanged. A larger-graph regression reproduces the failure first. Native
+architecture confirmation and public compatibility dispatch remain unfinished.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

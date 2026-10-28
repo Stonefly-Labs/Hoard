@@ -1936,6 +1936,31 @@ def _ingest_composition_observations(raw, originals, prior_ids, *, require_succe
     return tuple(admitted)
 
 
+def _ingest_version_observations(raw, *, profile, require_success, test_identity):
+    from conformance_case_catalog import version_observation_policy
+    policy = version_observation_policy(test_identity)
+    if raw and (profile != "compatibility" or policy is None):
+        raise ConformanceError("ProofMismatch")
+    if policy is None:
+        return ()
+    if require_success and (profile != "compatibility" or len(raw) != len(policy)):
+        raise ConformanceError("WitnessMissing")
+    if len(raw) > len(policy):
+        raise ConformanceError("ProofMismatch")
+    result = []
+    for value, (kind, counters) in zip(raw, policy):
+        row = _record({"kind": _constant(kind),
+                       "counters": _record({name: _integer for name in counters})})(value)
+        if any(value > 1_000_000 for value in row["counters"].values()):
+            raise ConformanceError("OutputLimitExceeded")
+        if require_success and any(
+                not expected[0] <= row["counters"][name] <= expected[1] if isinstance(expected, tuple)
+                else row["counters"][name] != expected for name, expected in counters.items()):
+            raise ConformanceError("ProofMismatch")
+        result.append(row)
+    return tuple(result)
+
+
 def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
                           completion_data, expected_tests, manifest_sha256, owner_sha256,
                           started_ms, ended_ms, origin_inputs=None, original_inputs=None):
@@ -1978,6 +2003,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
     original_observations = {}
     metadata_arguments = {}
     composition_observations = {}
+    version_observations = {}
     prior_arguments = set()
     prior_compositions = set()
     prior_sessions = {}
@@ -2003,6 +2029,9 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
                 fields["metadataArguments"] = _list(lambda value: value, 128, minimum=1)
             elif version == 4:
                 fields["compositionObservations"] = _list(lambda value: value, 128, minimum=1)
+        elif version == 5:
+            fields = {**proof_fields, "schemaVersion": _constant(5),
+                      "versionObservations": _list(lambda value: value, 2, minimum=1)}
         proof = _record(fields)(raw)
         proof_hashes[path] = hashlib.sha256(proof_data).hexdigest()
         if (proof_hashes[path] != witness["proofSha256"]
@@ -2038,6 +2067,9 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         compositions = _ingest_composition_observations(
             proof.get("compositionObservations", ()), originals, prior_compositions,
             require_success=witness["status"] == "Passed", test_identity=entry["testIdentity"])
+        versions = _ingest_version_observations(
+            proof.get("versionObservations", ()), profile=inputs["profileId"],
+            require_success=witness["status"] == "Passed", test_identity=entry["testIdentity"])
         if compositions and inputs["profileId"] != "composition":
             raise ConformanceError("ProofMismatch")
         if inputs["profileId"] == "composition":
@@ -2056,6 +2088,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         original_observations[witness["executionId"]] = originals
         metadata_arguments[witness["executionId"]] = arguments
         composition_observations[witness["executionId"]] = compositions
+        version_observations[witness["executionId"]] = versions
         if ((witness["status"] == "Passed" and (proof["failureKind"] != "None" or proof["assertionSymbol"] is not None))
                 or (witness["status"] == "Incomplete"
                     and (proof["failureKind"] != "SkippedOrUnknown" or proof["assertionSymbol"] is not None))
@@ -2092,6 +2125,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         "originalObservations": MappingProxyType(original_observations),
         "metadataArguments": MappingProxyType(metadata_arguments),
         "compositionObservations": MappingProxyType(composition_observations),
+        "versionObservations": MappingProxyType(version_observations),
         "caseIds": tuple(sorted({entry["caseId"] for entry in expected.values()})),
     })
 

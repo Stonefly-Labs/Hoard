@@ -21,6 +21,40 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_version_observations_require_every_exact_runtime_repair_and_policy_parameter(self):
+        import conformance_case_catalog as catalog
+        identities = {identity for case in catalog.expected_cases("compatibility")
+                      for identity in case.witnesses
+                      if identity.startswith("Hoard.Composition.Tests.ConformanceVersionTests.")}
+        self.assertEqual(len(identities), 114)
+        for identity in sorted(identities):
+            policy = catalog.version_observation_policy(identity)
+            self.assertIsNotNone(policy)
+            rows = [{"kind": kind, "counters": {
+                name: value[0] if isinstance(value, tuple) else value for name, value in counters.items()}}
+                    for kind, counters in policy]
+            admitted = evidence._ingest_version_observations(
+                rows, profile="compatibility", require_success=True, test_identity=identity)
+            self.assertEqual(admitted, tuple(rows))
+            for changed in (rows[:-1], [*rows, rows[0]], [{**rows[0], "unknown": 1}, *rows[1:]]):
+                with self.subTest(identity=identity), self.assertRaises(evidence.ConformanceError):
+                    evidence._ingest_version_observations(
+                        changed, profile="compatibility", require_success=True, test_identity=identity)
+            altered = copy.deepcopy(rows)
+            counter = next(iter(altered[0]["counters"]))
+            altered[0]["counters"][counter] += 1
+            with self.assertRaises(evidence.ConformanceError):
+                evidence._ingest_version_observations(
+                    altered, profile="compatibility", require_success=True, test_identity=identity)
+            with self.assertRaises(evidence.ConformanceError):
+                evidence._ingest_version_observations(
+                    rows, profile="composition", require_success=True, test_identity=identity)
+        policy_identity = catalog.classification_witnesses("C-05")[0]
+        with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            evidence._ingest_version_observations(
+                [{"kind": "policy", "counters": {"policyInvalid": 1, "policyRepaired": 1, "runtimeClaims": 1}}],
+                profile="compatibility", require_success=True, test_identity=policy_identity)
+
     def test_hook_quality_requires_both_exact_native_binding_rows(self):
         import conformance_case_catalog as catalog
         for profile in ("metadata", "artifacts"):
@@ -1597,6 +1631,48 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def test_version_proofs_are_checked_independently_and_cannot_downgrade_to_schema_one(self):
+        import conformance_case_catalog as catalog
+        self.inputs["profileId"] = "compatibility"
+        self.inputs["budgets"]["profileSeconds"] = 3600
+        self.identity = catalog.classification_witnesses("C-05")[0]
+        self.manifest["inputSha256"] = evidence.digest(self.inputs)
+        self.manifest["expected"][0].update(
+            testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0], caseId="C-05",
+            assertionSymbol=self.identity.split("(")[0])
+        rows = [{"kind": "policy", "counters": {"policyInvalid": 1, "policyRepaired": 1, "runtimeClaims": 0}}]
+        self.proof.update(schemaVersion=5, inputSha256=evidence.digest(self.inputs),
+                          manifestSha256=evidence.digest(self.manifest), testIdentity=self.identity,
+                          caseId="C-05", versionObservations=rows)
+        self.witness.update(testIdentity=self.identity, inputSha256=evidence.digest(self.inputs),
+                            proofSha256=evidence.digest(self.proof))
+        self.completion.update(inputSha256=evidence.digest(self.inputs),
+                               manifestSha256=evidence.digest(self.manifest))
+        observed = self.ingest()
+        self.assertEqual(observed["versionObservations"][self.execution][0]["counters"]["runtimeClaims"], 0)
+        with self.assertRaises(TypeError):
+            observed["versionObservations"][self.execution][0]["counters"]["runtimeClaims"] = 1
+        self.assertEqual(observed["versionObservations"][self.execution][0]["counters"]["runtimeClaims"], 0)
+        before = copy.deepcopy(self.proof)
+        for mutation in ("omit", "downgrade", "duplicate", "runtime-claim", "foreign", "mixed"):
+            self.proof = copy.deepcopy(before)
+            if mutation == "omit":
+                del self.proof["versionObservations"]
+            elif mutation == "downgrade":
+                self.proof["schemaVersion"] = 1
+                del self.proof["versionObservations"]
+            elif mutation == "duplicate":
+                self.proof["versionObservations"] *= 2
+            elif mutation == "runtime-claim":
+                self.proof["versionObservations"][0]["counters"]["runtimeClaims"] = 1
+            elif mutation == "foreign":
+                self.proof["versionObservations"][0]["kind"] = "runtime"
+            else:
+                self.proof["originalObservations"] = []
+            self.witness["proofSha256"] = evidence.digest(self.proof)
+            with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                self.ingest()
+
     def test_route_mapping_requires_observed_rollback_without_inventing_disposal(self):
         import conformance_case_catalog as catalog
         for mutation in (None, "erased-rollback", "invented-disposal", "published-denial", "early-initialization"):

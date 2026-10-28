@@ -6075,6 +6075,47 @@ Linux confirmation, and no all-green workflow or certification is claimed.
 Examples/diagrams/product behavior and governance are unaffected by this
 category scope documentation and harness-only repair.
 
+The exact `44fd370` composition run40612965874/job122568697750 subsequently
+passes the public composition command (expected exit2), independent post-release
+replay and all 28 generated-report controls. All 36 physical CP parameters,
+110 snapshots and 41 logical CP subvariants verify, alongside inherited525/58,
+3,272 controller inputs, 41 formatter commands and actual process release.
+T047's execution is complete, progress56/86; nine quality-source rows and
+full-controller/profile qualification remain incomplete. The actual tests reuse
+`ConformanceMatrixTests.cs` and packaged `OwnershipFixtures.cs`, not duplicate
+files named in the original task draft. The same head's SDK job122569229836 also
+passes 113 scopes/1,578 parameters including intended negatives, not a blanket
+passing-case or qualification claim.
+
+The version-output protocol now retains bounded numeric observations from only
+the exact original method/parameter forms. Independent catalog policy checks
+114 parameters, ordered rejected-row repairs, platform flags and policy-only
+classifications. Missing/foreign/duplicate/mixed observations and old-schema
+omissions reject; arbitrary diagnostics still fail safely. All 157 actual
+logger cases and a private actual 114-parameter/170-observation protocol replay
+pass. The latter uses synthetic admission and is not native package evidence.
+Its initial incomplete attempts omitted the existing fixture-host reload-watcher
+setting; reusing the normal execution environment fixes the private diagnostic
+without changing assertions or budgets.
+
+Native `4822d3` architecture execution advances past image verification but
+violates the unchanged sixteen-file command-input ceiling before discovery.
+The bounded repair captures its already verified sealed graph map and runtime
+manifest, not thousands of separate input arguments; graph bytes still rehash
+before/after execution and changed post-child input rejects. A larger-graph
+model fails first, then all seventeen composition models and both new version
+policy/schema controls pass. Actual 88-parameter native confirmation and public
+compatibility dispatch remain open. Provider behavior, source assertions,
+examples, diagrams, governance and infrastructure are unaffected.
+
+Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
+twenty explicit native macOS skips (expected incomplete exit2).
+`python3 scripts/conformance_evidence.py --check-sdk`, `git diff --check` and
+focused C# `dotnet format --verify-no-changes --no-restore` pass.
+The actual current logger suite and local version protocol again pass157/114
+tests respectively, with170 independently admitted version observations.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

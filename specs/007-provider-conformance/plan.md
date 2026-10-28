@@ -12,6 +12,91 @@ unchanged; necessary fixture-private controls are extended as recorded below.
 
 ## Pre-candidate inherited historical preparation
 
+### Complete native composition execution: T047
+
+At exact `44fd370b221aaf247eee52b1fad28a647370d772`, Linux
+run40612965874/job122568697750 succeeds through the actual
+`bash scripts/validate-conformance.sh --profile composition --evidence <fresh-private-path>`
+command (expected non-qualifying exit2), independent post-release report replay
+and all 28 generated-report rejection controls. All 36 physical CP parameters
+and 110 ordered snapshots support 41 passing logical CP subvariants; the nine
+quality-source rows remain explicitly `Incomplete`. Disabled effects,
+rejection/repair, actual readiness/admission, retained ownership and eventual
+settlement are verified against the original logger proofs, not host exit labels.
+Inputs:
+`5dce2d174759364788f9c9537544a597ff70b0a6d38bcdff024cf4159185b4b1`;
+report:
+`7ac8401afae19ae4936f3885a6e064a07890fe8e4017a922a665714145a27b5a`.
+
+The same native run admits 525 inherited parameters in 58 exact scopes,
+3,272 controller read inputs, 41 formatting commands, 12 discovery mutations
+with 29 negative/29 repaired parameters, and a six-module/eighteen-input reference
+consumer. Actual process resources are Released. This completes T047's finite
+composition execution, not independent full-profile qualification: all
+`qualification`, `profileComplete` and `fullControllerAcceptance` flags stay
+false; borrowed controller/historical input-closure limitations remain recorded.
+T048's additional semantic report controls and final T071/T078 gates remain open.
+T047 now names the actual reused `ConformanceMatrixTests.cs` and packaged
+`OwnershipFixtures.cs`, rather than the two originally planned nonexistent
+test files; no duplicate test classes or altered assertions are introduced.
+
+The same source head's full native SDK diagnostic also succeeds in
+run40612965869/job122569229836: 113 diagnostic scopes and 1,578 observed parameters.
+This includes intended-negative experiments, not 1,578 claimed passing cases.
+Baseline seal:
+`5e4b57e68fb578558f90b0c1ce49431ff84b5118b5ed832021476ffa92b5225f`;
+inputs:
+`7bdf0722adcda4686880f2a9fd6337ceefbb95095e8ea5a37b5dc029470ac385`;
+original-wrapper inputs:
+`934d01ea6dc80ad62b7e1d65836fcda340d264e6ba4b0be71b064cffd2ae66e3`.
+This later green receipt does not erase the earlier lost-ack failures or qualify
+the feature.
+
+### Bound version output and finite architecture command inputs
+
+The original six version methods retain every assertion and output line.
+The logger recognizes only exact method/parameter-bound forms and records bounded
+numeric `versionObservations` in proof schema5. Unknown text remains an error;
+version packets cannot mix with other observation protocols. Independent Python
+policy derives all 114 physical parameters from the frozen range/classification
+catalog, requires ordered rejected-row repair before the primary result, and
+keeps C-05/06/16/17 explicitly policy-only. Missing observations cannot evade
+validation through schema1; foreign profiles, duplicates and runtime claims
+on a passing policy-only case reject.
+
+All 157 actual logger controls pass, including the twelve new positive/negative
+projections. A local host also executes all 114 unchanged original parameters
+and independently admits their 170 numeric observations. That private protocol
+test uses synthetic admission, not native/package provenance. Its first two
+attempts are incomplete after 10/24 passed witnesses: the private diagnostic
+omitted the repository's existing fixture-host environment and accumulated
+configuration reload watchers. Reusing the existing
+`DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false` setting fixes the diagnostic;
+no test, provider, assertion or observation budget changes.
+
+Native compatibility run40615449994/job122580377214 at `4822d3` now passes
+image verification but fails `OwnershipInvalid` before discovery: expanding the
+complete architecture graph into command inputs violates the executor's existing
+sixteen-file limit. A 34-file modeled graph reproduces it. The command now binds
+the exact sealed graph-input map, preparation manifest, runtime manifest and
+three trusted inspection images instead. Every selected graph byte is still
+hashed before and after the child, and the runtime manifest binds all its images.
+Changed prelaunch or post-child graph bytes reject. The executor limit is
+unchanged; fresh native architecture replay and public compatibility wiring
+remain pending. No production/provider contracts, original fixture assertions,
+diagrams, governance, infrastructure or publishing behavior change.
+
+Checkpoint validation: `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes 590 tests, zero failures/errors/unexpected diagnostic bytes, twenty
+explicit Linux-only skips on macOS, and expected incomplete exit2.
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check`
+pass. The freshly compiled private SDK/logger contract projects pass all
+157 actual tests with zero failures/skips; focused
+`dotnet format --verify-no-changes --no-restore` passes for the four changed C#
+files. The actual original version replay again passes114/114 and170 independent
+observations under synthetic local admission. No local skip or modeled input is
+promoted to native evidence. Progress is56/86, implement/running.
+
 The composition continuation prepares one F-01 registration consumer, two F-02
 configuration binaries and three F-03 discovery binaries from the pinned F-06
 recipes before candidate feed creation or any candidate command. Its private

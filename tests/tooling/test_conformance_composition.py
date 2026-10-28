@@ -90,13 +90,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_sdk_checks as sdk
         import xml.etree.ElementTree as ET
 
-        for defect in ("none", "missing-context", "foreign-scope", "changed-input"):
+        for defect in ("none", "missing-context", "foreign-scope", "changed-input", "changed-after"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
                 manifest_path = "stores/compatibility-architecture/manifest.json"
                 files = {}
-                for path, data in ((manifest_path, b"{}"), ("stores/graph.input", b"original")):
+                for path, data in (
+                        (manifest_path, b"{}"), ("stores/graph.input", b"original"),
+                        *((f"stores/graph-{index}.input", b"original") for index in range(32))):
                     target = root / path
                     target.parent.mkdir(parents=True, exist_ok=True)
                     sdk.write_new(target, data)
@@ -124,11 +126,19 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 if defect == "changed-input":
                     (root / "stores/graph.input").chmod(0o600)
                     (root / "stores/graph.input").write_bytes(b"changed")
-                command = mock.Mock(return_value=SimpleNamespace(exit_code=0))
+                def execute(*args, **kwargs):
+                    self.assertLessEqual(len(kwargs["execution_inputs"]), 16)
+                    if defect == "changed-after":
+                        changed = root / "stores/graph.input"
+                        changed.chmod(0o600)
+                        changed.write_bytes(b"changed")
+                    return SimpleNamespace(exit_code=0)
+
+                command = mock.Mock(side_effect=execute)
                 run = SimpleNamespace(root=root, command=command)
                 scope = None if defect == "foreign-scope" else ("compatibility", "architecture")
                 with mock.patch.object(sdk, "category_command_proof"):
-                    if defect != "none":
+                    if defect not in ("none", "changed-after"):
                         with self.assertRaisesRegex(evidence.ConformanceError,
                                                     "InputChanged" if defect == "changed-input" else "WitnessMissing"):
                             sdk.runtime_command(
@@ -136,9 +146,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
                                 architecture_preparation=None if defect == "missing-context" else prepared)
                         command.assert_not_called()
                         continue
+                    if defect == "changed-after":
+                        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                            sdk.runtime_command(
+                                run, assembly, manifest, category_scope=scope, architecture_preparation=prepared)
+                        self.assertEqual(1, command.call_count)
+                        continue
                     sdk.runtime_command(run, assembly, manifest, category_scope=scope, architecture_preparation=prepared)
                 selected = command.call_args.kwargs["execution_inputs"]
-                self.assertTrue(set(files) | {map_path} <= set(selected))
+                self.assertTrue({manifest_path, map_path} <= set(selected))
                 self.assertEqual(len(selected), len(set(selected)))
                 settings = ET.fromstring((root / f'proofs/settings-{manifest["attemptId"]}.runsettings').read_bytes())
                 self.assertEqual(settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_FOUNDATION_EVIDENCE"),

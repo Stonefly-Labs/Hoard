@@ -74,6 +74,17 @@ and reject malformed entries through the inspection-error boundary. Actual
 direct/helper Identity-to-Core paths remain forbidden in either traversal order
 even with the permitted Identity-to-Hosting-to-Core route present.
 
+Finite composition execution is now confirmed at exact `44fd370`,
+run40612965874/job122568697750: all 36 physical CP parameters and 110 snapshots
+support 41 logical passing subvariants after independent post-release replay.
+This includes explicit baseline/replacement, disabled-effect counters,
+rejection/repair, actual readiness/admission and retained/eventually settled
+ownership. T047 is an execution checkpoint, not a new qualified provider scope:
+nine quality-source rows, full-controller acceptance and qualification remain
+incomplete. The version logger's local 114-parameter/170-observation protocol
+replay likewise does not establish historical SDK or untested version support;
+the release-classifier rows remain policy-only, never runtime claims.
+
 The test-only package-mode composition consumer now explicitly references
 `Hoard.Fixtures.Conformance.Host` at `[0.1.0]`; Host source links remain only in
 source mode. Both real SQLite/Local and Memory/ObjectSemantics rows run from the
