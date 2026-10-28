@@ -527,6 +527,29 @@ Twenty-eight focused contributor cases pass. Frozen full safe tooling observes62
 tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
 macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The subsequent partial T064 archive identity separates compiler/build inputs
+from runtime provider identity. It reuses the existing bounded archive/metadata
+capture without requiring a runtime image. Existing runtime PackageIdentity
+admission still requires runtime assets and returns EvidenceIncomplete for a
+build-only archive; no runtime entity schema, provider fallback or fake image
+is introduced. Selected-member policy accepts either closed identity and
+revalidates the matching actual archive.
+
+The private component additionally SDK-packs `Acme.BuildInputs` `3.2.1` with
+no runtime image. Actual assets supply its prefix/SHA-512 and actual import/Csc
+observations select its props/additional-data members. All five consumed members
+across both actual archives match their fresh-cache bytes; runtime package
+admission independently rejects the build-only archive. The complete finite
+component now observes118 imports/310 distinct files with336 references/
+16 analyzers/nine source observations/five actual PDB document hashes and all
+prior mutation controls unchanged. This is still managed component evidence,
+not full evaluated asset-graph/lock admission, compiler-option/item-metadata/
+source-generator closure, native provenance or public build/common-suite
+acceptance. T064 stays unchecked.
+Fifty focused contributor/input cases pass. Frozen full safe tooling observes629
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

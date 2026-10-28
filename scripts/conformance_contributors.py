@@ -389,7 +389,15 @@ def binding_build_file_inputs(binding, data, generated_root, toolchain_root, pac
 
 
 def binding_package_file_policy(feed, packages, selections):
-    packages = evidence._list(evidence._entity("PackageIdentity"), 1024, minimum=0)(packages)
+    def archive_identity(value):
+        if isinstance(value, (dict, MappingProxyType)) and "runtimeAssemblies" in value:
+            return evidence.admit_entity("PackageIdentity", value)
+        return evidence._record({
+            "packageId": evidence.stable_id, "version": evidence.stable_id,
+            "sha256": evidence.sha256, "nugetSha512": evidence._sha512,
+            "sourceMapping": evidence._constant("local")})(value)
+
+    packages = evidence._list(archive_identity, 1024, minimum=0)(packages)
     selected = evidence._record({
         "packageId": evidence.stable_id, "version": evidence.stable_id, "cachePath": evidence.relative_path,
         "members": evidence._list(evidence.relative_path, evidence.MAX_PROOF_FILES, unique=True)})
@@ -417,8 +425,10 @@ def binding_package_file_policy(feed, packages, selections):
                 deadline=deadline, target=captured)
         raw = captured.getvalue()
         total += size
+        actual = (evidence.package_identity if "runtimeAssemblies" in package
+                  else evidence.package_archive_identity)(feed, package["packageId"], package["version"])
         if (hashed != package["sha256"] or hashlib.sha512(raw).hexdigest() != package["nugetSha512"]
-                or evidence.package_identity(feed, package["packageId"], package["version"]) != package):
+                or actual != package):
             raise evidence.ConformanceError("InputChanged")
         try:
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:

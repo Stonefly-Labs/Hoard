@@ -384,6 +384,21 @@ complete contributor acceptance. The helper uses current `PackageIdentity`
 records, which require a runtime image; analyzer-only/tool-only package identity
 and general evaluated asset-graph admission remain unfinished.
 
+A separate archive identity now shares the existing bounded archive/metadata
+capture but does not require runtime assets. Runtime `PackageIdentity` still
+requires actual runtime images and rejects build-only archives; it is not
+relaxed or populated with a fake DLL. Selected-member file-policy generation
+accepts either closed identity shape and revalidates the matching actual archive.
+
+The private component now also SDK-packs `Acme.BuildInputs` `3.2.1` with no
+runtime image. Actual imported props/additional data are matched to this archive
+using its actual asset prefix and SHA-512. All five consumed members from both
+archives match the fresh cache; runtime admission still rejects the build-only
+archive. The component now observes118 imports and310 distinct files;336
+references,16 analyzers, nine source observations and five PDB documents remain
+unchanged. General asset-graph/lock admission, full compiler-option/item-metadata/
+source-generator closure, native origin and the public pipeline remain open.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

@@ -6394,6 +6394,26 @@ build/common-suite pipeline remain open. T064 stays unchecked.
 628 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
 pass.
+The next separate archive identity reuses existing bounded archive/metadata
+capture but permits build-only inputs without runtime images. Runtime package
+identity remains strict and still returns EvidenceIncomplete for such an
+archive. Selected-member policy accepts either closed identity and rechecks the
+matching actual archive; no runtime schema or provider fallback changes.
+A private actual SDK-packed `Acme.BuildInputs` `3.2.1` supplies imported props/
+additional data without a runtime image. Actual assets provide prefix/SHA-512
+and actual import/Csc observations select its consumed members. All five selected
+members from both archives match their fresh cache. Runtime package admission
+independently rejects the build-only archive. The complete finite component
+observes118 imports/310 distinct files;336 references/16 analyzers/nine source
+observations/five PDB hashes and all prior mutation controls remain unchanged.
+Full evaluated asset/lock admission, compiler options/item metadata/source
+generators, native origin and the public build/common-suite pipeline remain
+unfinished; T064 stays unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors test_conformance_evidence.ConformanceInputTests -q`:
+50 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+629 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
+pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

@@ -832,6 +832,30 @@ class ContributorAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             contributors.binding_package_file_policy(self.feed, [corrupted], [selection])
 
+    def test_build_only_archive_identity_does_not_weaken_runtime_package_admission(self):
+        feed = self.parent / "feed"
+        feed.mkdir()
+        archive = feed / "Acme.BuildInputs.3.2.1.nupkg"
+        with zipfile.ZipFile(archive, "w") as packed:
+            packed.writestr("Acme.BuildInputs.nuspec",
+                            "<package><metadata><id>Acme.BuildInputs</id><version>3.2.1</version></metadata></package>")
+            packed.writestr("build/Acme.BuildInputs.props", "<Project />")
+        captured = evidence.package_archive_identity(feed, "Acme.BuildInputs", "3.2.1")
+        self.assertEqual(set(captured), {"packageId", "version", "sha256", "nugetSha512", "sourceMapping"})
+        self.assertEqual(captured["sha256"], evidence.file_sha256(archive))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            evidence.package_identity(feed, "Acme.BuildInputs", "3.2.1")
+        selection = {
+            "packageId": "Acme.BuildInputs", "version": "3.2.1", "cachePath": "acme.buildinputs/3.2.1",
+            "members": ["build/Acme.BuildInputs.props"]}
+        policy = contributors.binding_package_file_policy(feed, [captured], [selection])
+        self.assertEqual(policy, {
+            "acme.buildinputs/3.2.1/build/Acme.BuildInputs.props": hashlib.sha256(b"<Project />").hexdigest()})
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+            contributors.binding_package_file_policy(feed, [{**captured, "message": "must not disappear"}], [selection])
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_package_file_policy(feed, [{**captured, "sha256": "a" * 64}], [selection])
+
 
 if __name__ == "__main__":
     unittest.main()

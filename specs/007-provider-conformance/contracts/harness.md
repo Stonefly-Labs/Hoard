@@ -2217,6 +2217,12 @@ CRC errors, changed archives, unknown owners/versions, duplicate/ambiguous cache
 prefixes and aggregate read-limit violations. Cache prefixes must come from an
 independently checked asset graph; this helper does not resolve or validate that
 graph, handle all non-runtime package identities or establish native origin.
+Separate bounded archive identity now permits packages without runtime images,
+using the same archive/metadata capture. It is not a runtime PackageIdentity:
+runtime admission must still reject an archive without runtime images.
+Selected-member policies may use either closed captured identity shape and must
+revalidate the corresponding actual archive. Neither shape resolves the asset
+graph, changes locked dependencies or establishes native producer origin.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

@@ -1043,7 +1043,7 @@ def _git_control(root, arguments, deadline):
     return output
 
 
-def package_identity(feed, package_id, version):
+def _package_identity_data(feed, package_id, version):
     package_id, version = stable_id(package_id), stable_id(version)
     filename = relative_path(f"{package_id}.{version}.nupkg")
     deadline = time.monotonic() + 5
@@ -1115,16 +1115,26 @@ def package_identity(feed, package_id, version):
                 assemblies[item.filename] = hashed.hexdigest()
     except (zipfile.BadZipFile, ET.ParseError, UnicodeError, EOFError, RuntimeError, zlib.error):
         raise ConformanceError("InputChanged") from None
-    if not assemblies:
-        raise ConformanceError("EvidenceIncomplete")
-    admitted = admit_entity("PackageIdentity", {
+    admitted = MappingProxyType({
         "packageId": package_id, "version": version, "sha256": sha256,
         "nugetSha512": hashlib.sha512(raw).hexdigest(),
-        "sourceMapping": "local", "runtimeAssemblies": assemblies,
+        "sourceMapping": "local", "runtimeAssemblies": MappingProxyType(assemblies),
     })
     if time.monotonic() >= deadline:
         raise ConformanceError("DeadlineExceeded")
     return admitted
+
+
+def package_identity(feed, package_id, version):
+    value = _package_identity_data(feed, package_id, version)
+    if not value["runtimeAssemblies"]:
+        raise ConformanceError("EvidenceIncomplete")
+    return admit_entity("PackageIdentity", value)
+
+
+def package_archive_identity(feed, package_id, version):
+    value = _package_identity_data(feed, package_id, version)
+    return MappingProxyType({key: item for key, item in value.items() if key != "runtimeAssemblies"})
 
 
 def source_manifest(root):

@@ -644,6 +644,11 @@ actually supplies a compiler reference, imported props and additional data throu
 a fresh NuGet cache; all three bytes match their archive members and a changed
 cache image rejects. General package-graph/lock and public build integration are
 still unfinished.
+A separate archive identity now supports packages without runtime images, while
+existing runtime package admission remains unchanged. A private SDK-packed
+build-only package actually supplies imported props/additional data; all five
+consumed files from both archives match their fresh-cache bytes. This does not
+complete evaluated graph/lock admission or public contributor execution.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
