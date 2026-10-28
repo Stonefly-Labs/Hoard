@@ -2249,7 +2249,7 @@ contributor build properties must fail before compilation/package collection.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. The artifact component mode
 now compiles the same exact-package/generated-factory inputs and independently
-expands 76 snapshot / 77 incomplete-enumeration publication/read/reconciliation/
+expands 88 snapshot / 89 incomplete-enumeration publication/read/reconciliation/
 deletion/budget/reference rows using the registered ID. It invokes unchanged SDK helpers and
 settles actual sessions; it does not select a built-in ID or inherit exclusions.
 An actual independently SDK-packed Acme adapter at2.4.0-preview.1 passes these
@@ -2302,6 +2302,12 @@ profiles pass 76/77 rows and 79/78 origins plus all134 selected built-in
 regressions. A changed profile during durable damaged-read reopen rejects at the
 named assertion. Crossed inventory expansion is not crossed runtime support;
 none of these logical journeys replaces native/process-crash proof.
+Share original committed-detection and validation-first quarantine consumers,
+requiring extra reopen origins only for the frozen durable profile and the
+applicable detection paths. Also share receipt/callback ownership, admitted
+deletion history, transfer-queue and released-shutdown consumers. Actual
+snapshot/incomplete profiles pass88/89 rows with95/90 origins and all158 selected
+built-in regressions; complete common/native closure remains unfinished.
 Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a

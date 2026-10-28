@@ -871,8 +871,16 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
+        await DetectionQuarantineConsumerAsync(Binding(provider), context, resources, output, detection,
+            provider == "local" ? ArtifactDurability.LocalProcessCrash : ArtifactDurability.SimulationOnly);
+    }
+
+    internal static async Task DetectionQuarantineConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output, string detection,
+        ArtifactDurability durability, Action<IArtifactConformanceSession>? assertProfile = null)
+    {
         IArtifactConformanceSession current = await ConformanceObservedArtifactSession.OpenAsync(
-            Binding(provider), context, default);
+            binding, context, default);
         var origins = new List<ConformanceSessionOrigin>
         {
             Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin()
@@ -881,6 +889,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         ArtifactStamp? stamp = null;
         try
         {
+            assertProfile?.Invoke(current);
             async ValueTask Damage(ArtifactStagedWrite staged, bool truncate, CancellationToken token)
             {
                 stamp = await ObservePublicationStampAsync(current, staged, token);
@@ -904,14 +913,16 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             async ValueTask<IArtifactStore> Reopen(CancellationToken token)
             {
                 current = await current.ReopenAsync(token);
+                assertProfile?.Invoke(current);
                 origins.Add(Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin());
                 return current.Store;
             }
             await ArtifactReadAssertions.CommittedDetectionQuarantineAsync(current.Store, detection,
-                provider == "local" ? ArtifactDurability.LocalProcessCrash : ArtifactDurability.SimulationOnly,
+                durability,
                 current.Faults.RemovePayloadAsync, current.Faults.ReplacePayloadAsync,
                 ObservePublication, RemovePublication, (staged, token) => Damage(staged, truncate: false, token),
-                Restore, default, null, provider == "local" ? Reopen : null);
+                Restore, default, null, durability == ArtifactDurability.LocalProcessCrash ? Reopen : null);
+            assertProfile?.Invoke(current);
             foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
         }
         finally
@@ -1001,14 +1012,22 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
+        await ValidationQuarantineConsumerAsync(Binding(provider), context, resources, output, missing, provider == "local");
+    }
+
+    internal static async Task ValidationQuarantineConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output, bool missing,
+        bool durable, Action<IArtifactConformanceSession>? assertProfile = null)
+    {
         IArtifactConformanceSession current = await ConformanceObservedArtifactSession.OpenAsync(
-            Binding(provider), context, default);
+            binding, context, default);
         var origins = new List<ConformanceSessionOrigin>
         {
             Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin()
         };
         try
         {
+            assertProfile?.Invoke(current);
             async ValueTask Damage(ArtifactStamp stamp, CancellationToken token)
             {
                 if (missing) { await current.Faults.RemovePayloadAsync(stamp, token); }
@@ -1026,15 +1045,17 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             await ArtifactEvidenceAssertions.ValidationFirstCorruptionAsync(
                 current.Store, current.Validator, current.Authority, current.Identity,
                 Damage, current.Faults.ReplacePayloadAsync, default, null,
-                provider == "local" ? async token =>
+                durable ? async token =>
                 {
                     current = await current.ReopenAsync(token);
+                    assertProfile?.Invoke(current);
                     var reopened = Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin();
                     Assert.Equal(origins[0].SessionId, reopened.ParentSessionId);
                     origins.Add(reopened);
                     return current.Store;
                 }
             : null);
+            assertProfile?.Invoke(current);
             foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
         }
         finally { await current.DisposeAsync(); }
@@ -1102,6 +1123,18 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var limits = consumer == "read-open"
             ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, transferSlots: 1, waitingCalls: 0) : null;
         var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        try
+        {
+            await ReceiptOwnershipConsumerAsync(session, consumer);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    internal static async Task ReceiptOwnershipConsumerAsync(IArtifactConformanceSession session, string consumer)
+    {
         var registrations = new Dictionary<ArtifactObservationPoint, IAsyncDisposable>();
         try
         {
@@ -1137,15 +1170,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     session.Store, session.Maintenance, session.Identity, LoseDeletionAcknowledgment, default),
                 _ => throw new ArgumentException("BindingInvalid")
             });
-            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally
         {
-            try { foreach (var registration in registrations.Values) { await registration.DisposeAsync(); } }
-            finally { await session.DisposeAsync(); }
+            foreach (var registration in registrations.Values) { await registration.DisposeAsync(); }
         }
-        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
-        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
     [Theory]
@@ -1415,29 +1444,35 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
         try
         {
-            Task WhenIdle() => session.Faults.AwaitSettlementAsync(default).AsTask();
-            var point = consumer switch
-            {
-                "delete-history" => ArtifactObservationPoint.DeleteRemoved,
-                "transfer-queue" => ArtifactObservationPoint.TransferQueued,
-                "released-shutdown" => ArtifactObservationPoint.OperationReleased,
-                _ => throw new ArgumentException("BindingInvalid")
-            };
-            await ObserveAsync(session, point, observe => consumer switch
-            {
-                "delete-history" => ArtifactRecoveryAssertions.AdmittedDeleteHistoryAsync(
-                    session.Store, session.Maintenance, session.Identity, clock.SetUtc, observe, default),
-                "transfer-queue" => ArtifactBudgetAssertions.TransferQueueAsync(session.Store, observe, default),
-                "released-shutdown" => ArtifactLifecycleAssertions.ReleasedBoundaryOwnershipAsync(
-                    session.Store, observe, WhenIdle, () => session.Lifetime.StopAsync(new(TimeSpan.FromSeconds(5)), default),
-                    default),
-                _ => throw new ArgumentException("BindingInvalid")
-            });
+            await AdmittedOwnershipConsumerAsync(session, clock, consumer);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { await session.DisposeAsync(); }
         Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
         Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    internal static async Task AdmittedOwnershipConsumerAsync(IArtifactConformanceSession session, ControlledClock clock,
+        string consumer)
+    {
+        Task WhenIdle() => session.Faults.AwaitSettlementAsync(default).AsTask();
+        var point = consumer switch
+        {
+            "delete-history" => ArtifactObservationPoint.DeleteRemoved,
+            "transfer-queue" => ArtifactObservationPoint.TransferQueued,
+            "released-shutdown" => ArtifactObservationPoint.OperationReleased,
+            _ => throw new ArgumentException("BindingInvalid")
+        };
+        await ObserveAsync(session, point, observe => consumer switch
+        {
+            "delete-history" => ArtifactRecoveryAssertions.AdmittedDeleteHistoryAsync(
+                session.Store, session.Maintenance, session.Identity, clock.SetUtc, observe, default),
+            "transfer-queue" => ArtifactBudgetAssertions.TransferQueueAsync(session.Store, observe, default),
+            "released-shutdown" => ArtifactLifecycleAssertions.ReleasedBoundaryOwnershipAsync(
+                session.Store, observe, WhenIdle, () => session.Lifetime.StopAsync(new(TimeSpan.FromSeconds(5)), default),
+                default),
+            _ => throw new ArgumentException("BindingInvalid")
+        });
     }
 
     [Theory]

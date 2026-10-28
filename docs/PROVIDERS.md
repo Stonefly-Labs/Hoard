@@ -275,7 +275,7 @@ the typed factory seam, not an artifact common consumer, capability/applicabilit
 mapping, native containment or qualification.
 
 The package-only consumer additionally accepts artifact build inputs for an
-76-row snapshot / 77-row incomplete-enumeration component, independently expanded
+88-row snapshot / 89-row incomplete-enumeration component, independently expanded
 with the actual registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
 budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
 adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
@@ -332,6 +332,12 @@ incomplete profiles pass 76/77 rows with 79/78 origins and all 134 selected
 built-in regressions. A separately packaged durable adapter changing its profile
 during damaged-read reopen fails at the named assertion. Mixed profile inventory
 expansion is unit-checked, not claimed as actual runtime support.
+Committed-detection and validation-first quarantine now share original consumers
+as well, with durability-bound reopen/origin obligations. Receipt/callback
+ownership, admitted deletion history, transfer queues and released-shutdown work
+also reuse original bodies. Actual snapshot/incomplete profiles pass 88/89 rows
+with 95/90 origins and all158 selected built-in regressions. This is still
+partial common-catalog coverage and logical, not native/crash qualification.
 
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires

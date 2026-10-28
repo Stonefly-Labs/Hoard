@@ -78,6 +78,13 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     [ContributorArtifactData("candidate-dependencies")]
     [ContributorArtifactData("candidate-decisions")]
     [ContributorArtifactData("candidate-resume")]
+    [ContributorArtifactData("receipt")]
+    [ContributorArtifactData("read-open")]
+    [ContributorArtifactData("verified-reconciliation")]
+    [ContributorArtifactData("pending-reclamation")]
+    [ContributorArtifactData("delete-history")]
+    [ContributorArtifactData("transfer-queue")]
+    [ContributorArtifactData("released-shutdown")]
     public async Task Observed_portable_consumers_preserve_actual_guarantees(string provider, string consumer)
     {
         Assert.Equal(ContributorBindingFactory.BindingId, provider);
@@ -100,6 +107,9 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, liveTickets: 4),
             "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" =>
                 new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1048576, committedIdentities: 128),
+            "read-open" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, transferSlots: 1, waitingCalls: 0),
+            "delete-history" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
+            "transfer-queue" => new ArtifactLimits(artifactBytes: 1, stagingBytes: 3, transferSlots: 1, waitingCalls: 1),
             _ => null
         };
         long liveReferences = consumer == "live-references" ? 1 : 0;
@@ -174,6 +184,10 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" =>
                     ArtifactConformanceSessionTests.CandidateBoundsConsumerAsync(session, consumer["candidate-".Length..]),
                 "candidate-resume" => ArtifactConformanceSessionTests.CandidateResumeConsumerAsync(session),
+                "receipt" or "read-open" or "verified-reconciliation" or "pending-reclamation" =>
+                    ArtifactConformanceSessionTests.ReceiptOwnershipConsumerAsync(session, consumer),
+                "delete-history" or "transfer-queue" or "released-shutdown" =>
+                    ArtifactConformanceSessionTests.AdmittedOwnershipConsumerAsync(session, clock, consumer),
                 _ => throw new ArgumentException("BindingInvalid")
             });
             if (consumer is "rollback-history" or "rollback-write-capacity" or "rollback-delete-capacity")
@@ -202,6 +216,37 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
         await ArtifactConformanceSessionTests.PayloadConsumerAsync(binding, context, resources, output, clock, consumer,
             ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData("open")]
+    [ContributorArtifactData("publication")]
+    [ContributorArtifactData("reconciliation")]
+    public async Task Observed_payload_detection_preserves_actual_quarantine_and_declared_state(string provider, string detection)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.DetectionQuarantineConsumerAsync(binding, context, resources, output,
+            detection, ContributorBindingFactory.ExpectedDurability, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(false)]
+    [ContributorArtifactData(true)]
+    public async Task Observed_quarantine_validation_preserves_actual_restoration_and_declared_state(string provider, bool missing)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.ValidationQuarantineConsumerAsync(binding, context, resources, output,
+            missing, ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash, AssertProfile);
     }
 
     [Theory]

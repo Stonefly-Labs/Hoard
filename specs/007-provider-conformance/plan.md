@@ -500,6 +500,27 @@ checks pass. README/provider/development/harness guidance is updated; public
 examples/diagrams and production/governance/IaC/release/UI documents are unaffected
 by internal consumer extraction. T064, native/compiler closure and public
 dispatch remain unfinished; logical reopen is not real process-crash evidence.
+The subsequent12-row increment shares original committed-detection and
+validation-first quarantine consumers, preserving damage/restoration, retained
+quarantine, authority, settlement and cleanup assertions. Test-only profile
+checks surround work and reopened sessions. Frozen durability independently
+determines extra origins for open/publication detection and missing/damaged
+validation; simulation cannot inherit those retention claims. Original receipt/
+callback ownership and admitted delete-history/transfer-queue/released-shutdown
+consumers are also shared without changing SDK/provider bodies.
+Actual SDK-packed snapshot/incomplete profiles pass88/89 rows and95/90 origins,
+exact discovery, all eight role images, fresh-cache locked replay, all158
+independently discovered built-in regressions and all six property/category
+controls. Crossed inventory-only controls require89/96 and88/89 rows/origins
+for durable-incomplete and simulated-snapshot, respectively; neither combination
+is claimed as executed runtime support. The51 focused contributor cases pass.
+Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
+Catalog/SDK, focused two-file Consumer whitespace and diff checks pass.
+README/provider/development/harness guidance is updated; public examples,
+diagrams, product/architecture/ADR/governance, predecessors, IaC, release and UI
+are unaffected by internal consumer extraction. T064, complete catalog/native/
+compiler input closure and public dispatch remain open.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

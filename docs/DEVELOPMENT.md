@@ -6359,6 +6359,16 @@ still rejects after nine. Full safe tooling remains653 observed, zero failures/
 errors/unexpected diagnostic bytes, twenty native skips and expected incomplete
 exit2; the51 contributor cases, catalog/SDK, whitespace and diff checks pass.
 These are component/logical journeys, not process-crash/native qualification.
+The next12 rows share committed-detection/validation-first quarantine and
+receipt/callback/admitted-delete/queue/shutdown ownership consumers. Actual
+snapshot/incomplete profiles pass88/89 rows with95/90 origins, exact discovery,
+eight-role attribution, fresh-cache locked replay, all158 selected built-in
+regressions and all six input/category controls. Independent inventory requires
+durable quarantine's additional reopen origins without borrowing them for
+simulation. The51 contributor cases, catalog/SDK, whitespace and diff checks
+pass; frozen safe tooling remains653 observed, zero failures/errors/unexpected
+diagnostic bytes, twenty native skips and expected incomplete exit2. T064 and
+native/compiler/public dispatch closure remain unfinished.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

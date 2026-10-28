@@ -236,7 +236,9 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
             "successful-read", "unclaimed-ticket", "unclaimed-read", "expired-staging", "progress-cancellation",
             "rollback-history", "rollback-write-capacity", "rollback-delete-capacity",
             "descriptor-completion", "descriptor-handle", "descriptor-renewed",
-            "candidate-tickets", "candidate-dependencies", "candidate-decisions", "candidate-resume")}
+            "candidate-tickets", "candidate-dependencies", "candidate-decisions", "candidate-resume",
+            "receipt", "read-open", "verified-reconciliation", "pending-reclamation",
+            "delete-history", "transfer-queue", "released-shutdown")}
     if profile["enumeration"] == "Incomplete":
         identities[f'{method}(provider: "{binding}", consumer: "direct-availability")'] = 1
     control = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
@@ -262,6 +264,18 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
         f'{payload}(provider: "{binding}", consumer: "{consumer}")':
             2 if profile["durability"] == "LocalProcessCrash" and consumer in ("read-bitflip", "read-truncate") else 1
         for consumer in ("read-bitflip", "read-truncate", "commit-progress", "exact-payload")})
+    detection = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+                 "Observed_payload_detection_preserves_actual_quarantine_and_declared_state")
+    identities.update({
+        f'{detection}(provider: "{binding}", detection: "{value}")':
+            2 if profile["durability"] == "LocalProcessCrash" and value in ("open", "publication") else 1
+        for value in ("open", "publication", "reconciliation")})
+    validation = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+                  "Observed_quarantine_validation_preserves_actual_restoration_and_declared_state")
+    identities.update({
+        f'{validation}(provider: "{binding}", missing: {missing})':
+            2 if profile["durability"] == "LocalProcessCrash" else 1
+        for missing in ("False", "True")})
     return identities
 
 
