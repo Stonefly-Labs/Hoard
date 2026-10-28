@@ -92,6 +92,7 @@ METADATA_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARTIFACT_TESTS = f"{CONTRACTS}/Hoard.Artifacts.Tests"
 ARTIFACT_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARCHITECTURE_TESTS = "tests/architecture/Hoard.Architecture.Tests"
+VERSION_TESTS = "tests/integration/Hoard.Composition.Tests"
 ARTIFACT_CONSUMER = "tests/fixtures/conformance/Consumer"
 ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.LocalArtifactSessionTests."
 OBJECT_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ObjectArtifactSessionTests."
@@ -128,6 +129,10 @@ ARTIFACT_PACKAGES = (*METADATA_PACKAGES, "Hoard.Fixtures.Artifacts.Local",
 ARTIFACT_RECOVERY_PACKAGES = tuple(name for name in ARTIFACT_PACKAGES if name != "Hoard.Testing.Conformance")
 INPUT_PACKAGES = tuple(dict.fromkeys((
     *LOCAL_PACKAGES, *METADATA_PACKAGES, *ARTIFACT_PACKAGES, *ARTIFACT_CONSUMER_PACKAGES)))
+VERSION_PACKAGES = (
+    *(name for name in ARTIFACT_CONSUMER_PACKAGES if name != "Hoard.Fixtures.Conformance.Contributor"),
+    "Hoard.Fixtures.Conformance.Host",
+)
 BINDING_TEST_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingTests."
 BINDING_OWNERSHIP_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingOwnershipTests."
 SQLITE_BINDING_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteBindingTests."
@@ -3280,6 +3285,9 @@ def _category_scope_tests(category_scope):
     if (profile, scope_id) == ("compatibility", "architecture"):
         from conformance_case_catalog import architecture_runtime_tests
         return architecture_runtime_tests()
+    if (profile, scope_id) == ("compatibility", "version"):
+        from conformance_case_catalog import version_runtime_tests
+        return version_runtime_tests()
     if scope_id == "hook-admission":
         return dict(hook_admission_tests(profile))
     if scope_id == "shared-consumer":
@@ -3886,6 +3894,90 @@ def validate_observation(ingested, result, identities, code, status, exit_code, 
         raise _RuntimeObservationError(ingested, result, status)
 
 
+def execute_version_runtime(run, repository, candidate, sources, config, feed, seal_sha, *, ci_revision=None):
+    from conformance_case_catalog import version_runtime_tests
+    from conformance_prepare import Project, build_project
+
+    record = build_project(
+        run, candidate, Project("tests/fixtures/conformance/Host/Host.csproj", "Hoard.Fixtures.Conformance.Host"),
+        config, feed, update=False, historical_lock=True)
+    if record is not None:
+        write_new(run.root / "proofs/version-host-lock-derivation.json", evidence.canonical_bytes(record))
+    lock, receipt = prepare_package_consumer_lock(candidate, feed, project=VERSION_TESTS,
+                                                  local_packages=VERSION_PACKAGES)
+    write_new(run.root / "proofs/version-consumer-lock-derivation.json", evidence.canonical_bytes(receipt))
+    build(run, candidate / VERSION_TESTS / "Hoard.Composition.Tests.csproj", config,
+          "version-consumer-locked-replay", lock=lock, properties=(
+              "-p:ConformancePackageAcceptance=true", "-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/"))
+    verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
+    _original_wrapper_runtime(candidate, feed, VERSION_TESTS, PACKAGE_TEST_OUTPUT, VERSION_PACKAGES)
+    runtime = candidate / VERSION_TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
+    assembly = runtime / "Hoard.Composition.Tests.dll"
+    paths = sorted(path.relative_to(run.root).as_posix() for path in runtime.rglob("*")
+                   if path.is_file() and (path.suffix in (".dll", ".so", ".dylib")
+                                         or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
+    owner = evidence.load_json(read_bounded(run.root / "runtime-owner.json", 64 * 1024))
+    group, attempt = evidence._uuid(owner["invocationGroupId"]), str(uuid.uuid4())
+    arguments = dict(
+        profile_id="compatibility", mode="diagnostic", invocation_group_id=group,
+        package_versions=[{"packageId": name, "version": "0.1.0"}
+                          for name in (*VERSION_PACKAGES, "Hoard.Conformance.TestLogger")],
+        feed="feed/candidate", configuration=config.relative_to(run.root).as_posix(),
+        lock_paths=sorted({lock.relative_to(run.root).as_posix(),
+                           *(path.relative_to(run.root).as_posix() for path in candidate.rglob("packages.lock.json"))}),
+        runtime_paths=paths, binding_sources=[], budgets=BUDGETS,
+        invocation=["component", "compatibility", "version-runtime"],
+        baseline_sha256=seal_sha, ci_revision=ci_revision)
+    inputs = evidence.capture_profile_inputs(
+        run, repository, candidate, observed_environment=environment(run), **arguments)
+    inputs_path = "proofs/compatibility-version-runtime-inputs.json"
+    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+    tests = version_runtime_tests()
+    assembly_path = assembly.relative_to(run.root).as_posix()
+    manifest = {
+        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group, "attemptId": attempt,
+        "attemptSequence": 1, "purpose": "execution", "inputSha256": evidence.digest(inputs),
+        "runInputsPath": inputs_path,
+        "assemblies": [{
+            "id": "test-assembly" if path == assembly_path else f"version-image-{index}",
+            "path": path, "sha256": inputs["runtimeAssemblies"][path],
+        } for index, path in enumerate(paths)],
+        "packages": [{"id": package["packageId"],
+                      "path": f'feed/candidate/{package["packageId"]}.0.1.0.nupkg',
+                      "sha256": package["sha256"]} for package in inputs["packages"]],
+        "expected": [{
+            "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+            "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
+            "bindingId": binding, "matrixId": "version-runtime", "caseId": case, "assertionSymbol": None,
+        } for identity, (binding, case) in tests.items()],
+    }
+    print(json.dumps({"qualification": False, "phase": "version-runtime"}), flush=True)
+    result, observed, transport, discovery_sha = _execute_runtime_transport(
+        run, inputs, assembly, manifest, {identity: ("none", "version-runtime") for identity in tests},
+        {"category_scope": ("compatibility", "version")})
+    validate_observation(observed, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
+    post_inputs = evidence.capture_profile_inputs(
+        run, repository, candidate, observed_environment=environment(run, phase="completion"), **arguments)
+    evidence.verify_input_recomputation(inputs, post_inputs)
+    verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
+    if record is not None:
+        verify_project_lock(record, candidate, feed)
+    if inputs["sourceManifest"] != sources:
+        raise evidence.ConformanceError("InputChanged")
+    summary = {
+        "qualification": False, "profileComplete": False, "scope": "version-runtime-diagnostic",
+        "passedParameters": len(tests), "admittedObservations": sum(
+            map(len, observed["versionObservations"].values())),
+        "inputsSha256": evidence.digest(inputs), "postInputsSha256": evidence.digest(post_inputs),
+        "discoverySha256": discovery_sha,
+        "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
+        "runtimeProofsSha256": evidence.digest(dict(observed["proofs"])),
+        "nativeParentSha256": result.execution_record_sha256,
+    }
+    write_new(run.root / "proofs/compatibility-version-runtime-summary.json", evidence.canonical_bytes(summary))
+    return summary
+
+
 def execute_architecture_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha,
                                  *, ci_revision=None):
     from conformance_case_catalog import architecture_runtime_tests
@@ -4171,6 +4263,9 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 compatibility_summary["architectureRuntime"] = execute_architecture_runtime(
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
                     ci_revision=ci_revision)
+                compatibility_summary["versionRuntime"] = execute_version_runtime(
+                    run, repository, candidate, sources, config, feed, seal_sha, ci_revision=ci_revision)
+                admit_architecture_preparation(run.root, prepared)
                 if (dict(evidence.source_manifest(repository)) != dict(sources)
                         or evidence.source_identity(repository, ci_revision=ci_revision) != identity):
                     raise evidence.ConformanceError("InputChanged")
@@ -4545,7 +4640,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         # Settled stores and caches remain private, separate from safe diagnostics.
         print(json.dumps(summary, sort_keys=True))
         return 0
-    except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile):
+    except (evidence.ConformanceError, OSError, RuntimeError, ValueError, zipfile.BadZipFile):
         if run.state in ("Active", "Allocated"):
             run.transition("Settling")
         if run.state == "Settling" and run.live_children():

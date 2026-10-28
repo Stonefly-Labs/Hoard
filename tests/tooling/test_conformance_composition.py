@@ -14,6 +14,37 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_version_runtime_scope_preserves_all_axes_and_rejects_reduced_or_relabelled_manifests(self):
+        import conformance_case_catalog as catalog
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+
+        tests = catalog.version_runtime_tests()
+        manifest = {"expected": [
+            {"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+             "bindingId": binding, "caseId": case}
+            for identity, (binding, case) in tests.items()]}
+        self.assertEqual(sdk._category_manifest_tests(("compatibility", "version"), manifest), tests)
+        for selector in ('axis: "host"', 'axis: "abstractions"', 'axis: "required"', 'axis: "optional"',
+                         "Platform_prerelease_flags_are_independent",
+                         "Inherited_release_classifier_is_policy_not_runtime_evidence"):
+            changed = evidence.load_json(evidence.canonical_bytes(manifest))
+            matching = next(index for index, row in enumerate(changed["expected"])
+                            if selector in row["testIdentity"])
+            changed["expected"].pop(matching)
+            with self.subTest(selector=selector), self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                sdk._category_manifest_tests(("compatibility", "version"), changed)
+        for defect in ("duplicate", "foreign", "binding", "case"):
+            changed = evidence.load_json(evidence.canonical_bytes(manifest))
+            if defect == "duplicate":
+                changed["expected"].append(changed["expected"][0])
+            elif defect == "foreign":
+                changed["expected"][0]["testIdentity"] = "Hoard.Composition.Tests.Foreign"
+            else:
+                changed["expected"][0]["bindingId" if defect == "binding" else "caseId"] = "foreign"
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                sdk._category_manifest_tests(("compatibility", "version"), changed)
+
     def test_architecture_execution_admits_existing_prepared_images_without_reinstalling_them(self):
         import conformance_evidence as evidence
         import conformance_inherited as inherited
@@ -306,9 +337,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_inherited as inherited
 
         workflow = (ROOT / ".github/workflows/conformance.yml").read_text()
-        script = workflow.split("--compatibility-only\n", 1)[1].split("<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
+        script = workflow.split('--profile compatibility --evidence "$private_parent/run"', 1)[1].split(
+            "<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
         code = compile(textwrap.dedent(script), "<architecture-workflow>", "exec")
-        for defect in ("none", "live", "profile", "path", "manifest", "inputs", "qualification"):
+        for defect in ("none", "live", "profile", "path", "manifest", "inputs", "qualification",
+                       "missing-version", "missing-axis", "missing-observation", "runtime-receipt"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -323,6 +356,24 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 summary = {
                     "qualification": defect == "qualification", "profileComplete": False,
                     "processResourcesReleased": True, "architecturePreparation": architecture}
+                for key, scope, count in (("architectureRuntime", "architecture", 88),
+                                          ("versionRuntime", "version", 114)):
+                    observed = {
+                        "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
+                        "passedParameters": count, **{field: "d" * 64 for field in (
+                            "inputsSha256", "postInputsSha256", "discoverySha256", "completionSha256",
+                            "runtimeProofsSha256", "nativeParentSha256")}}
+                    if scope == "version":
+                        observed["admittedObservations"] = 169 if defect == "missing-observation" else 170
+                        if defect == "missing-axis":
+                            observed["passedParameters"] -= 1
+                    (root / f"proofs/compatibility-{scope}-runtime-summary.json").write_bytes(
+                        evidence.canonical_bytes(observed))
+                    summary[key] = dict(observed)
+                if defect == "missing-version":
+                    del summary["versionRuntime"]
+                if defect == "runtime-receipt":
+                    summary["versionRuntime"]["nativeParentSha256"] = "e" * 64
                 owner = {"state": "Active" if defect == "live" else "Released", "runId": "modeled", "rootId": "modeled"}
                 preflight = {"profileId": "baseline" if defect == "profile" else "compatibility"}
                 for path, data in (

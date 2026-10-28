@@ -542,7 +542,13 @@ sixteen-input guard. The repair binds the already verified complete graph map
 and runtime manifest rather than expanding thousands of files into that bounded
 list; all graph bytes still reverify before/after execution, and the guard stays
 unchanged. A larger-graph regression reproduces the failure first. Native
-architecture confirmation and public compatibility dispatch remain unfinished.
+architecture confirmation remains pending. Public compatibility dispatch now
+selects the complete source/retained-binary/architecture diagnostic, and adds
+the exact 114-parameter version scope using the independently packaged host
+and a locked package-only consumer. The new native version execution is not yet
+confirmed. CI requires matching retained runtime receipts for 88 architecture
+parameters and 114 version parameters/170 observations; the public command
+still returns non-qualifying `Incomplete` (exit2), not feature certification.
 The next T048 increment requires 29 generated-report mutations (including
 duplicate runtime witnesses) plus two counter-semantic controls from the actual
 verified proofs: premature readiness and completed stop while owned work is

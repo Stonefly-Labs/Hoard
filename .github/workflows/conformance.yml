@@ -76,8 +76,10 @@ jobs:
           set -euo pipefail
           private_parent="$(dirname "$GITHUB_WORKSPACE")/compatibility-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -m 700 "$private_parent"
-          python3 scripts/conformance_sdk_checks.py \
-            --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run" --compatibility-only
+          status=0
+          bash scripts/validate-conformance.sh \
+            --profile compatibility --evidence "$private_parent/run" || status=$?
+          test "$status" -eq 2
           python3 - "$private_parent/run" <<'PY'
           import hashlib
           import sys
@@ -93,6 +95,20 @@ jobs:
               owner = evidence.load_json(read_bounded(root / "ownership.json", 65536))
               preflight = evidence.load_json(read_bounded(root / "proofs/preflight.json", 65536))
               architecture = summary["architecturePreparation"]
+              for key, scope, count in (("architectureRuntime", "architecture", 88),
+                                        ("versionRuntime", "version", 114)):
+                  observed = summary[key]
+                  retained = evidence.load_json(read_bounded(
+                      root / f"proofs/compatibility-{scope}-runtime-summary.json", 65536))
+                  if (observed != retained or observed["qualification"] is not False
+                          or observed["profileComplete"] is not False
+                          or observed["scope"] != f"{scope}-runtime-diagnostic"
+                          or observed["passedParameters"] != count
+                          or scope == "version" and observed["admittedObservations"] != 170):
+                      raise evidence.ConformanceError("ProofMismatch")
+                  for field in ("inputsSha256", "postInputsSha256", "discoverySha256",
+                                "completionSha256", "runtimeProofsSha256", "nativeParentSha256"):
+                      evidence.sha256(observed[field])
               if (architecture["inputMapPath"] != "proofs/compatibility-architecture-inputs.json"
                       or architecture["manifestPath"] != "stores/compatibility-architecture/manifest.json"):
                   raise evidence.ConformanceError("ProofMismatch")

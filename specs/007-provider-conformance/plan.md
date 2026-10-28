@@ -97,6 +97,34 @@ files. The actual original version replay again passes114/114 and170 independent
 observations under synthetic local admission. No local skip or modeled input is
 promoted to native evidence. Progress is56/86, implement/running.
 
+### Public compatibility diagnostic and packaged version scope
+
+The public compatibility profile now invokes the existing source/retained-binary
+and architecture diagnostic, with complete-agreement admission and explicit
+non-qualifying exit2. Its new version scope packs the fixture host against
+candidate packages, independently rebinds the frozen package-only consumer lock,
+builds without product project references and verifies every local runtime image
+against its exact package. The frozen catalog selects all 114 physical version
+parameters, including every range axis, independent flags and inherited
+classifications. Existing discovery/native-command/schema5 ingestion verifies
+their original output; source/package/lock/runtime input recomputation follows,
+and the architecture graph map is rechecked again before actual release.
+
+CI now uses this public entry point and requires matching retained receipts for
+88 architecture parameters and114 version parameters/170 observations. Reduced
+or duplicated invocation agreements, missing axes/classifications, forged
+receipt summaries, missing version observations and optimistic qualification
+reject. The new native version scope has not yet executed successfully on Linux;
+T057/T059 remain unchecked and no profile qualification is claimed. Provider
+contracts, original assertions, executor limits and timeouts are unchanged.
+
+Validation: the focused compatibility CLI, version-manifest, workflow-receipt
+and version-policy selection passes all16 tests. Frozen full safe tooling
+observes593 tests with zero failures/errors/unexpected diagnostic bytes,
+twenty explicit Linux-only skips on macOS and expected incomplete exit2.
+Catalog, SDK and diff checks pass. The original package-only consumer lock's
+local package set exactly matches the new version runtime's declared closure.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The independent post-release control function now rejects 29 report mutations,

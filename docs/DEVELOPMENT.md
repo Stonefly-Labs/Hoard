@@ -6122,6 +6122,24 @@ Full safe tooling subsequently observes 591 tests, zero failures/errors/
 unexpected diagnostic bytes, twenty explicit native macOS skips and expected
 incomplete exit2. Catalog and diff checks pass. No C# source changes.
 
+The public `bash scripts/validate-conformance.sh --profile compatibility
+--evidence <fresh-private-path>` entry point now wires the existing bounded
+source/retained-binary/graph replay and a new package-only version scope.
+It independently packs the fixture host, rebinds the frozen consumer lock to
+that exact local package closure, and uses the existing runtime discovery,
+native command parent and schema5 admission for all 114 physical parameters.
+All rejected-row repairs, platform flags and policy-only classifications remain
+separate observations; no assertions, timeouts or executor limits change.
+Input/package/lock/source bytes reverify after execution; graph inputs reverify
+again before release. CI requires matching retained receipts for 88 architecture
+parameters and 114 version parameters/170 observations, then actual resource
+release. Borrowed-controller errors remain safe explicit incomplete results.
+This wiring is not native execution evidence: the new package-only version
+scope and public invocation still need Linux confirmation. The command retains
+expected incomplete exit2; T057/T059 and qualification remain open. No product
+contracts, provider behavior, examples, diagrams, infrastructure or governance
+change.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

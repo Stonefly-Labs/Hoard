@@ -1252,6 +1252,15 @@ def compatibility_witnesses(proof):
     return ()
 
 
+def version_runtime_tests():
+    tests = {}
+    for case in expected_cases("compatibility"):
+        for identity in case.witnesses:
+            if identity.startswith("Hoard.Composition.Tests.ConformanceVersionTests."):
+                tests.setdefault(identity, ("none", case.case_id))
+    return tests
+
+
 def architecture_runtime_tests():
     tests = {
         identity: ("none", case.case_id)

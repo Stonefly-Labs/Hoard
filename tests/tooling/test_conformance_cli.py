@@ -114,6 +114,35 @@ class ConformanceCliTests(unittest.TestCase):
             execute.assert_called_once_with(ROOT, self.destination)
         self.assertFalse(self.destination.exists())
 
+    def test_compatibility_dispatch_requires_the_complete_agreement_and_never_qualifies_diagnostics(self):
+        invocation = evidence.admit_invocation(ROOT, [
+            "--profile", "compatibility", "--evidence", str(self.destination)])
+        with patch("conformance_sdk_checks.execute", return_value=0) as execute:
+            with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                evidence.dispatch_invocation(invocation)
+            execute.assert_called_once_with(ROOT, self.destination, compatibility_only=True)
+        unsupported = (
+            replace(invocation, case_keys=invocation.case_keys[:-1]),
+            replace(invocation, case_keys=(*invocation.case_keys, invocation.case_keys[0])),
+            replace(invocation, mode="diagnostic"),
+            replace(invocation, profiles=("compatibility", "composition")),
+            replace(invocation, binding_project=ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"))
+        with patch("conformance_sdk_checks.execute") as execute:
+            for changed in unsupported:
+                with self.subTest(invocation=changed), self.assertRaises(evidence.ConformanceError):
+                    evidence.dispatch_invocation(changed)
+            execute.assert_not_called()
+        for error, code in (
+                (evidence.ConformanceError("CleanupIncomplete"), "CleanupIncomplete"),
+                (RuntimeError("private-canary"), "EvidenceIncomplete")):
+            with patch("conformance_sdk_checks.execute", side_effect=error):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$"):
+                    evidence.dispatch_invocation(invocation)
+        for result in (1, 2, None, False):
+            with patch("conformance_sdk_checks.execute", return_value=result):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^CommandFailed$"):
+                    evidence.dispatch_invocation(invocation)
+
     def test_composition_dispatch_rejects_reduced_focused_and_mixed_agreements_before_execution(self):
         invocation = evidence.admit_invocation(ROOT, [
             "--profile", "composition", "--evidence", str(self.destination)])

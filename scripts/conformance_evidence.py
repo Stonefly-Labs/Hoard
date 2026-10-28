@@ -183,7 +183,8 @@ def dispatch_invocation(invocation):
     if invocation.action == "preparation":
         from conformance_prepare import execute
         return execute(invocation.repository, invocation.evidence)
-    if (invocation.action == "run" and invocation.profiles in (("metadata",), ("artifacts",), ("composition",))
+    if (invocation.action == "run" and invocation.profiles in (
+            ("metadata",), ("artifacts",), ("composition",), ("compatibility",))
             and invocation.mode == "qualification" and invocation.binding_project is None):
         from conformance_case_catalog import expected_cases
         profile = invocation.profiles[0]
@@ -193,6 +194,12 @@ def dispatch_invocation(invocation):
             from conformance_composition_checks import execute
             try:
                 result = execute(invocation.repository, invocation.evidence)
+            except RuntimeError:
+                raise ConformanceError("EvidenceIncomplete") from None
+        elif profile == "compatibility":
+            from conformance_sdk_checks import execute
+            try:
+                result = execute(invocation.repository, invocation.evidence, compatibility_only=True)
             except RuntimeError:
                 raise ConformanceError("EvidenceIncomplete") from None
         else:
