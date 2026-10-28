@@ -471,6 +471,12 @@ Actual single/two-project probes use this repository source, and managed tool
 controls cover unsigned hashes, stale inputs, links, metadata and bounds.
 This is not signature trust, complete dependency-range/evaluated compiler
 provenance, native producer origin, RID/multi-target support or public dispatch.
+The internal owned capture flow now connects build workspaces to the tool and
+graph reader. Requests use descriptor-anchored read-only writes; the command uses
+an explicit runtime with DOTNET_ROLL_FORWARD=Disable and the existing event path.
+Require the exact package-count success event and recheck request/assets/lock/
+tool/source bytes and source modes even after failure. Actual one/two-project
+managed probes exercise this recipe, not native OwnedRun.command containment.
 
 ### Earlier F-07 diagnostic checkpoints
 

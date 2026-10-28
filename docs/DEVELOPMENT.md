@@ -6570,6 +6570,29 @@ passes. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
 648 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 change connects supplied build workspaces to an internal
+owned graph-capture flow. It checks declared project/workspace ownership, creates
+read-only requests through a shared descriptor-anchored writer, and invokes the
+repository tool through OwnedRun.command(kind=events) with explicit
+dotnet exec --fx-version and unchanged DOTNET_ROLL_FORWARD=Disable. Require one
+exact successful package-count event; independently admit all graph receipts.
+Recheck request/assets/lock/tool/source bytes, full source inventory and source
+modes even after command failure. Tests reject omitted events and failure-time
+input/mode tampering.
+
+Actual frozen single/two-project probes use this real recipe through an explicit
+private managed command adapter. Exact runtime selection works with the strict
+environment; eleven package nodes/one project node and seven distinct logical
+content hashes admit. The fresh single-project archive retains77 shared rows,
+exact discovery,87 session origins and five invalid-property controls.
+No native guard or environment allowlist changes. This does not yet bind complete
+tool dependency/toolchain/compiler closure or establish native producer origin;
+public dispatch stays closed and T064 unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+49 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+650 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

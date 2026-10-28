@@ -658,6 +658,72 @@ class ContributorAdmissionTests(unittest.TestCase):
                     binding.project, packages, expected_lock_sha256=evidence.digest(lock),
                     content_hashes_data=evidence.canonical_bytes(receipt))
 
+    def restore_capture_fixture(self):
+        _, assets, lock, original_cache = self.restore_graph_fixture()
+        binding, owner, _ = self.build_fixture()
+        cache = owner.root / "cache/binding-build"
+        shutil.copytree(original_cache, cache)
+        assets["project"]["restore"].update({
+            "projectPath": str(binding.root / binding.project),
+            "projectUniqueName": str(binding.root / binding.project), "packagesPath": str(cache)})
+        assets["packageFolders"] = {str(cache): {}}
+        workspace = owner.root / "binding-build" / hashlib.sha256(binding.project.encode()).hexdigest()
+        (workspace / "obj").mkdir(parents=True)
+        (workspace / "obj/project.assets.json").write_bytes(evidence.canonical_bytes(assets))
+        (workspace / "packages.lock.json").write_bytes(evidence.canonical_bytes(lock))
+        tool = owner.root / "content-tool.dll"
+        tool.write_bytes(b"fixture tool image")
+        built = {"bindingInputsSha256": binding.inputs_sha256, "projects": {
+            binding.project: {"root": workspace, "preparedLockSha256": evidence.digest(lock)}}}
+        return binding, owner, built, tool, cache, workspace
+
+    def test_restore_capture_uses_owned_hash_bound_request_and_exact_runtime_without_relaxing_native_environment(self):
+        binding, owner, built, tool, cache, workspace = self.restore_capture_fixture()
+
+        def capture(arguments, **options):
+            self.assertEqual(arguments[:5], ["dotnet", "exec", "--fx-version", "10.0.3", str(tool)])
+            self.assertEqual(options["kind"], "events")
+            self.assertEqual(options["env"], {"DOTNET_ROLL_FORWARD": "Disable"})
+            request = owner.root / arguments[-2]
+            self.assertEqual(evidence.file_sha256(request), arguments[-1])
+            self.assertEqual(request.stat().st_mode & 0o777, 0o400)
+            value = evidence.load_json(request.read_bytes())
+            self.assertEqual(value["cachePath"], cache.relative_to(owner.root).as_posix())
+            (owner.root / value["outputPath"]).write_bytes(evidence.canonical_bytes(self.content_receipt))
+            return mock.Mock(exit_code=0, events=({"event": "control", "code": "None", "value": 1},))
+
+        with mock.patch.object(owner, "command", side_effect=capture):
+            graphs = contributors.capture_binding_restore_graphs(binding, owner, built, tool, "10.0.3", cache)
+        self.assertEqual(set(graphs), {binding.project})
+        self.assertEqual(len(graphs[binding.project]["packages"]), 1)
+
+    def test_restore_capture_rechecks_inputs_after_failed_child_and_does_not_accept_missing_control_events(self):
+        for defect in ("control", "request", "assets", "tool", "source", "mode"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory(dir=self.parent) as nested:
+                original_parent = self.parent
+                self.parent = Path(nested)
+                try:
+                    binding, owner, built, tool, cache, workspace = self.restore_capture_fixture()
+                finally:
+                    self.parent = original_parent
+
+                def capture(arguments, **options):
+                    if defect == "control":
+                        (workspace / "nuget-content.json").write_bytes(evidence.canonical_bytes(self.content_receipt))
+                        return mock.Mock(exit_code=0, events=())
+                    path = {"request": workspace / "nuget-content-request.json",
+                            "assets": workspace / "obj/project.assets.json",
+                            "tool": tool, "source": binding.root / "Binding.cs",
+                            "mode": binding.root / "Binding.cs"}[defect]
+                    path.chmod(0o600)
+                    if defect != "mode":
+                        path.write_bytes(b"changed")
+                    raise evidence.ConformanceError("CommandFailed")
+
+                with mock.patch.object(owner, "command", side_effect=capture), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^" + ("ProofMismatch" if defect == "control" else "InputChanged") + "$"):
+                    contributors.capture_binding_restore_graphs(binding, owner, built, tool, "10.0.3", cache)
+
     def test_registered_runtime_components_preserve_distinct_actual_archive_owners_and_image_names(self):
         feed, output = self.parent / "feed", self.parent / "consumer"
         feed.mkdir()

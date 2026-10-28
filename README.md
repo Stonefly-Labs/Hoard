@@ -681,6 +681,11 @@ now lives in repository-owned, non-packable BuildInputs tooling with closed
 hash-bound requests, bounded owned-path reads and native-event-compatible output.
 It uses the pinned SDK's NuGet assemblies, not new product/package dependencies.
 Complete native input provenance and public contributor dispatch remain unfinished.
+An internal capture flow now creates descriptor-anchored read-only requests,
+invokes that tool through OwnedRun's event path with an exact runtime and unchanged
+strict environment, and admits every declared project graph. It requires the
+exact success event and rechecks inputs even after failure. Managed probes
+exercise that real recipe; native producer/toolchain closure remains open.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

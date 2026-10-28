@@ -684,6 +684,21 @@ verification passes. Frozen full safe tooling observes648 tests, zero failures/
 errors/unexpected diagnostic bytes, twenty explicit native macOS skips and
 expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 increment connects actual build workspaces to the owned
+content tool and graph reader. Descriptor-anchored read-only requests, declared
+project/workspace checks, explicit runtime selection under the unchanged strict
+environment, exact package-count events and failure-time input/source/mode
+rechecks protect this internal flow. Actual frozen one/two-project managed probes
+exercise the recipe: eleven package nodes/one project node/seven distinct logical
+content hashes; the fresh single-project consumer retains77 rows, exact discovery,
+87 role observations and five invalid-property controls.
+The private managed adapter is not OwnedRun.command/native containment. Complete
+tool dependency/toolchain/compiler closure and public dispatch remain open;
+T064 stays unchecked.
+All49 contributor/actual-tool cases pass. Frozen full safe tooling observes650
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

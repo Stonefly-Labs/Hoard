@@ -2263,6 +2263,12 @@ from the pinned SDK. Require a closed hash-bound request with owned-relative
 assets/cache/output paths, bounded/link-checked reads, unchanged request/assets
 hashes, create-new receipts and finite native-event output. It does not itself
 establish native producer/toolchain origin.
+The internal owned capture flow creates descriptor-anchored read-only requests,
+uses the existing event executor with explicit runtime selection and unchanged
+strict environment, and requires the exact successful package-count event.
+Recheck request/assets/lock/tool/source bytes, full source inventory and source
+modes even after command failure. This does not replace complete native tool
+dependency/toolchain/compiler input closure.
 This is cross-artifact admission, not signature trust, dependency-range
 interpretation, native producer origin or complete evaluated input provenance.
 

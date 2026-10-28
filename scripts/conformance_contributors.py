@@ -102,6 +102,29 @@ def snapshot_binding_project(project, category, expected_inputs_sha256, owned_ru
     return BindingProject(snapshot, admitted.project, admitted.registration, sources)
 
 
+def _binding_writable(binding):
+    try:
+        return any((binding.root / path).stat(follow_symlinks=False).st_mode & 0o222 for path in binding.sources)
+    except OSError:
+        raise evidence.ConformanceError("InputChanged") from None
+
+
+def _write_owned_input(owned_run, path, data):
+    relative = path.relative_to(owned_run.root).as_posix()
+    owner = owned_run._root_descriptor()
+    try:
+        with evidence._input_parent(owner, relative, create=True) as (directory, filename):
+            descriptor = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                 0o400, dir_fd=directory)
+            with os.fdopen(descriptor, "wb") as output:
+                output.write(data)
+    except OSError:
+        raise evidence.ConformanceError("OwnershipInvalid") from None
+    finally:
+        os.close(owner)
+    return hashlib.sha256(data).hexdigest()
+
+
 def build_binding_project(binding, owned_run, configuration, feed, *, local_packages=()):
     from conformance_execution import no_symlinks
     from conformance_lock_preparation import rebind_local_archives
@@ -114,11 +137,7 @@ def build_binding_project(binding, owned_run, configuration, feed, *, local_pack
     if (admit_binding_project(binding.root / binding.project, category).inputs_sha256 != binding.inputs_sha256
             or evidence.proof_manifest(binding.root) != binding.sources):
         raise evidence.ConformanceError("InputChanged")
-    try:
-        writable = any((binding.root / path).stat(follow_symlinks=False).st_mode & 0o222 for path in binding.sources)
-    except OSError:
-        raise evidence.ConformanceError("InputChanged") from None
-    if writable:
+    if _binding_writable(binding):
         raise evidence.ConformanceError("OwnershipInvalid")
     for path in (configuration, feed):
         if (".." in Path(path).parts or ";" in str(path)
@@ -143,18 +162,7 @@ def build_binding_project(binding, owned_run, configuration, feed, *, local_pack
 
     def write(path, data):
         relative = path.relative_to(owned_run.root).as_posix()
-        owner = owned_run._root_descriptor()
-        try:
-            with evidence._input_parent(owner, relative, create=True) as (directory, filename):
-                descriptor = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
-                                     0o400, dir_fd=directory)
-                with os.fdopen(descriptor, "wb") as output:
-                    output.write(data)
-        except OSError:
-            raise evidence.ConformanceError("OwnershipInvalid") from None
-        finally:
-            os.close(owner)
-        frozen[relative] = hashlib.sha256(data).hexdigest()
+        frozen[relative] = _write_owned_input(owned_run, path, data)
 
     document = ET.Element("Project")
     choices = ET.SubElement(document, "Choose")
@@ -207,18 +215,78 @@ def build_binding_project(binding, owned_run, configuration, feed, *, local_pack
         if (admit_binding_project(binding.root / binding.project, category).inputs_sha256 != binding.inputs_sha256
                 or evidence.proof_manifest(binding.root) != binding.sources):
             raise evidence.ConformanceError("InputChanged")
-        try:
-            writable = any((binding.root / path).stat(follow_symlinks=False).st_mode & 0o222
-                           for path in binding.sources)
-        except OSError:
-            raise evidence.ConformanceError("InputChanged") from None
-        if writable:
+        if _binding_writable(binding):
             raise evidence.ConformanceError("InputChanged")
     package = evidence.package_identity(feed, identity["packageId"], identity["version"])
     return MappingProxyType({
         "qualification": False, "bindingInputsSha256": binding.inputs_sha256, "package": package,
         "projects": MappingProxyType(projects),
         "propertiesSha256": frozen[properties.relative_to(owned_run.root).as_posix()]})
+
+
+def capture_binding_restore_graphs(binding, owned_run, built, tool, runtime_version, package_root):
+    from conformance_execution import no_symlinks
+    from conformance_sdk_checks import read_bounded
+
+    owned_run._check_ledger()
+    for path in (tool, package_root):
+        if (".." in Path(path).parts or not Path(path).is_absolute()
+                or not Path(path).is_relative_to(owned_run.root)):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        no_symlinks(path)
+    tool, package_root = Path(tool), Path(package_root)
+    runtime_version = evidence.stable_id(runtime_version)
+    projects = {path for path in binding.sources if path.endswith(".csproj")}
+    if (binding.root != owned_run.root / "binding-source" or tool.suffix != ".dll"
+            or built["bindingInputsSha256"] != binding.inputs_sha256 or set(built["projects"]) != projects):
+        raise evidence.ConformanceError("InputChanged")
+    graphs = {}
+    for project in sorted(projects):
+        workspace = owned_run.root / "binding-build" / hashlib.sha256(project.encode("utf-8")).hexdigest()
+        record = built["projects"][project]
+        if record["root"] != workspace:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        assets, lock = workspace / "obj/project.assets.json", workspace / "packages.lock.json"
+        request, output = workspace / "nuget-content-request.json", workspace / "nuget-content.json"
+        assets_data = read_bounded(assets, 2 * 1024 * 1024)
+        lock_data = read_bounded(lock, 2 * 1024 * 1024)
+        if hashlib.sha256(lock_data).hexdigest() != record["preparedLockSha256"]:
+            raise evidence.ConformanceError("InputChanged")
+        payload = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False,
+            "assets": {"path": assets.relative_to(owned_run.root).as_posix(),
+                       "sha256": hashlib.sha256(assets_data).hexdigest()},
+            "cachePath": package_root.relative_to(owned_run.root).as_posix(),
+            "outputPath": output.relative_to(owned_run.root).as_posix()})
+        request_sha = _write_owned_input(owned_run, request, payload)
+        frozen = {request.relative_to(owned_run.root).as_posix(): request_sha,
+                  assets.relative_to(owned_run.root).as_posix(): hashlib.sha256(assets_data).hexdigest(),
+                  lock.relative_to(owned_run.root).as_posix(): record["preparedLockSha256"]}
+        frozen.update(evidence.input_manifest(
+            owned_run.root, [tool.relative_to(owned_run.root).as_posix()]))
+        try:
+            observed = owned_run.command(
+                ["dotnet", "exec", "--fx-version", runtime_version, str(tool), "content-hashes",
+                 str(owned_run.root), request.relative_to(owned_run.root).as_posix(), request_sha],
+                cwd=tool.parent, kind="events", timeout=60, cache_id="binding-build",
+                env={"DOTNET_ROLL_FORWARD": "Disable"})
+            if observed.exit_code or any(event["code"] != "None" for event in observed.events):
+                raise evidence.ConformanceError("CommandFailed")
+            graphs[project] = binding_restore_graph(
+                binding, assets_data, lock_data, project, package_root,
+                expected_lock_sha256=record["preparedLockSha256"],
+                content_hashes_data=read_bounded(output, 2 * 1024 * 1024))
+            if tuple(observed.events) != ({
+                    "event": "control", "code": "None", "value": len(graphs[project]["packages"])},):
+                raise evidence.ConformanceError("ProofMismatch")
+        finally:
+            owned_run._check_ledger()
+            if evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen:
+                raise evidence.ConformanceError("InputChanged")
+            if (evidence.input_manifest(binding.root, sorted(binding.sources)) != binding.sources
+                    or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+                raise evidence.ConformanceError("InputChanged")
+    return MappingProxyType(graphs)
 
 
 def binding_factory_source(binding, adapter_package, provider_package):
