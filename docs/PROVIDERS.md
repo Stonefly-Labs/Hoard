@@ -286,6 +286,22 @@ fresh cache in locked mode, invokes it and matches both runtime images to their
 archives. The author's original lock remains unchanged. This finite component
 does not validate arbitrary project closure, native containment or the public
 contributor build/full-suite route.
+An evaluated-input reader now admits only bounded known MSBuild item metadata,
+requires the selected project and toolchain inputs, rejects undeclared source
+paths and rechecks every declared source byte (including unqueried declarations).
+It emits relative source/toolchain hashes without retaining derived private
+vendor paths. Duplicate/malformed rows and unknown metadata reject. A fixed
+trusted managed task uses MSBuild's actual evaluation API, detecting a
+conditional import, expanded source include, referenced project and ambient
+source; the reader rejects the unlisted ambient file. Seven source and110
+actual toolchain input hashes are observed, with the fixture author's bytes
+unchanged and an outside-root import rejected.
+
+This is evaluation-only component evidence, not a generic source/build input
+tracer. Dynamic/generated compilation inputs, restored-package input ownership,
+full lock/import closure, native parent provenance and public supplied-project
+build/pack integration remain unfinished. MSBuild projects/providers remain
+trusted executable code; this component does not sandbox arbitrary projects.
 
 ### Earlier F-07 diagnostic checkpoints
 

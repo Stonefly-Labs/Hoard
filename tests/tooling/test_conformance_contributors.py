@@ -363,6 +363,51 @@ class ContributorAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             preparation.verify_project_lock(record, source, feed, local_packages=packages)
 
+    def test_evaluated_inputs_require_declared_source_closure_and_hash_actual_toolchain_bytes(self):
+        binding = contributors.admit_binding_project(self.project, "metadata")
+        toolchain = self.parent / "toolchain"
+        toolchain.mkdir()
+        (toolchain / "Sdk.props").write_text("<Project />\n")
+        rows = [{"Identity": "source/" + path, "Kind": "source"} for path in binding.sources]
+        rows.append({"Identity": "toolchain/Sdk.props", "Kind": "toolchain",
+                     "FullPath": str(self.parent / "discarded-private-vendor-metadata")})
+
+        def capture(items):
+            return contributors.binding_evaluation_inputs(
+                binding, evidence.canonical_bytes({"Items": {"_BindingInputs": items}}), toolchain)
+
+        captured = capture(rows)
+        self.assertFalse(captured["qualification"])
+        self.assertEqual(captured["sources"], binding.sources)
+        self.assertEqual(captured["toolchain"], {"Sdk.props": evidence.file_sha256(toolchain / "Sdk.props")})
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(captured))
+        missing_project = [row for row in rows if row["Identity"] != "source/Adapter.csproj"]
+        missing_toolchain = [row for row in rows if row["Kind"] != "toolchain"]
+        (self.source / "Ambient.cs").write_text("public class Ambient { }\n")
+        for defect, changed in (
+                ("undeclared-ambient-source", [*rows, {"Identity": "source/Ambient.cs", "Kind": "source"}]),
+                ("missing-project", missing_project), ("missing-toolchain", missing_toolchain)):
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceIncomplete$"):
+                capture(changed)
+        for defect, changed in (
+                ("duplicate", [*rows, rows[0]]),
+                ("unknown-metadata", [{**rows[0], "providerMessage": "must not disappear"}, *rows[1:]]),
+                ("wrong-kind", [{**rows[0], "Kind": "package"}, *rows[1:]]),
+                ("prefix-mismatch", [{**rows[0], "Kind": "toolchain"}, *rows[1:]]),
+                ("escaping-source", [{"Identity": "source/../outside", "Kind": "source"}, *rows[1:]])):
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                capture(changed)
+        original = (self.source / "Binding.cs").read_bytes()
+        (self.source / "Binding.cs").write_text("public class Changed { }\n")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            capture(rows)
+        (self.source / "Binding.cs").write_bytes(original)
+        self.sidecar.write_bytes(self.sidecar.read_bytes() + b"\n")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            capture([row for row in rows if row["Identity"] != "source/Adapter.conformance.json"])
+
 
 if __name__ == "__main__":
     unittest.main()

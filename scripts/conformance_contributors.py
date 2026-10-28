@@ -179,3 +179,48 @@ def binding_runtime_components(binding, packages, runtime_assemblies, consumer_d
             raise evidence.ConformanceError("InputChanged")
         components[role] = (path, package["packageId"])
     return MappingProxyType(components)
+
+
+def binding_evaluation_inputs(binding, data, toolchain_root):
+    if not isinstance(data, bytes):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if len(data) > 2 * 1024 * 1024:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    value = evidence.load_json(data)
+    if (not isinstance(value, dict) or set(value) != {"Items"}
+            or not isinstance(value["Items"], dict) or set(value["Items"]) != {"_BindingInputs"}):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    rows = value["Items"]["_BindingInputs"]
+    if not isinstance(rows, list) or not 0 < len(rows) <= evidence.MAX_PROOF_FILES:
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    metadata = {
+        "Identity", "Kind", "FullPath", "RootDir", "Filename", "Extension", "RelativeDir",
+        "Directory", "RecursiveDir", "ModifiedTime", "CreatedTime", "AccessedTime",
+        "DefiningProjectFullPath", "DefiningProjectDirectory", "DefiningProjectName", "DefiningProjectExtension"}
+    paths = {"source": set(), "toolchain": set()}
+    for row in rows:
+        if (not isinstance(row, dict) or not {"Identity", "Kind"} <= row.keys()
+                or not row.keys() <= metadata
+                or any(not isinstance(item, str) or len(item) > 4096 for item in row.values())):
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        kind = evidence._one_of("source", "toolchain")(row["Kind"])
+        identity = evidence.relative_path(row["Identity"])
+        prefix = kind + "/"
+        if not identity.startswith(prefix):
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        relative = evidence.relative_path(identity[len(prefix):])
+        if relative in paths[kind]:
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        paths[kind].add(relative)
+    if (binding.project not in paths["source"] or not paths["toolchain"]
+            or not paths["source"].issubset(binding.sources)):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    sources = evidence.input_manifest(binding.root, sorted(binding.sources))
+    if sources != binding.sources:
+        raise evidence.ConformanceError("InputChanged")
+    toolchain = evidence.input_manifest(toolchain_root, sorted(paths["toolchain"]))
+    return MappingProxyType({
+        "schemaVersion": 1, "qualification": False, "bindingInputsSha256": binding.inputs_sha256,
+        "project": binding.project,
+        "sources": MappingProxyType({path: sources[path] for path in sorted(paths["source"])}),
+        "toolchain": toolchain})

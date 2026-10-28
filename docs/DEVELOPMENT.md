@@ -6295,6 +6295,21 @@ common-suite acceptance. Existing default lock behavior is unchanged.
 Frozen full safe tooling observes610 tests with zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native macOS skips and expected incomplete
 exit2. Catalog, SDK and diff checks pass.
+The next partial T064 input reader admits bounded known MSBuild item metadata,
+rechecks all declared source bytes and captures relative source/toolchain hashes
+without retaining derived private vendor paths. A private fixed trusted .NET10
+MSBuild task observes actual conditional/expanded imports and project references,
+captures seven declared source/110 toolchain hashes, rejects an omitted ambient
+source and outside-root import, and leaves the fixture author bytes unchanged.
+The inline task-factory attempt genuinely failed SDK reference compatibility;
+the successful component instead compiles a proper net10.0 build-only task
+against the already installed SDK, with no new package dependency.
+This is not a permanent public task, complete dynamic/generated/restored build
+input closure, native containment or supplied-project build/pack acceptance.
+The32 focused contributor/input cases pass. Frozen full safe tooling observes611
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog/SDK/diff checks pass. The
+complete scope also covers the new unqueried-declaration mutation.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

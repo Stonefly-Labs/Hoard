@@ -2179,6 +2179,12 @@ hashes are rebound after actual archive SHA-256/SHA-512 comparison; requested/
 resolved versions, dependency edges and unselected nodes are unchanged. Replay
 verification must receive the same policy and reject changed archive bytes or
 graphs. This does not resolve dependencies or change default built-in policy.
+Evaluated item admission is a separate non-qualifying input check: require the
+selected declared project and toolchain inputs, reject undeclared source paths,
+duplicate/malformed rows and unknown metadata, recheck all declared source bytes
+and retain only relative source/toolchain hashes. Derived private MSBuild
+metadata paths are not retained. Evaluation is not complete dynamic/generated
+compiler input capture or evidence that arbitrary MSBuild projects are safe.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

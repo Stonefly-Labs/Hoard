@@ -388,6 +388,30 @@ Frozen full safe tooling observes610 tests with zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native macOS skips and expected incomplete
 exit2. Catalog, SDK and diff checks pass.
 
+The subsequent partial T064 evaluated-input reader admits bounded known
+MSBuild item metadata, rejects undeclared/malformed/duplicate paths and rechecks
+all declared source bytes, including declarations absent from evaluated rows.
+It captures relative source/toolchain hashes without retaining derived private
+vendor paths. A fixed trusted managed MSBuild API component observes actual
+conditional imports, property-expanded includes and referenced projects,
+admits seven source/110 toolchain hashes and rejects an unlisted ambient source
+and outside-root import. The fixture author's bytes remain unchanged; managed
+process exits and temporary owner release are observed. The failed inline task
+factory (`CS0012`/`CS1674`, then unavailable reference `MSB3755`) is not presented
+as success: the working prototype is a proper net10.0 build-only task compiled
+against the installed SDK, with no package dependency.
+
+This prototype stays private rather than adding an unwired public tool.
+Evaluation does not capture every dynamic/generated compiler input, restored
+package input or full lock/import closure. Native parent provenance and the
+public supplied-project build/pack pipeline remain unfinished; T064 stays open.
+Projects/providers are trusted executable code, not sandboxed by this probe.
+Thirty-two focused contributor/input cases pass. Frozen full safe tooling
+observes611 tests, zero failures/errors/unexpected diagnostic bytes, twenty
+explicit native macOS skips and expected incomplete exit2; catalog/SDK/diff
+checks pass. The newly added unqueried-declaration mutation also passes within
+that complete scope.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

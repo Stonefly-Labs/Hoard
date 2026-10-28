@@ -615,6 +615,11 @@ IDs/versions, preserving the locked graph and verifying actual SHA-256/SHA-512
 bytes. A trusted managed component replays two real SDK-packed custom-version
 archives from a fresh cache. This does not yet build an arbitrary supplied
 binding or complete its contributor suite.
+A bounded evaluated-input reader now rejects undeclared sources, stale declared
+bytes and unknown metadata while recording path-free source/toolchain hashes.
+A trusted managed MSBuild component detects real conditional imports, project
+references and an omitted ambient source. This remains evaluation-only evidence,
+not complete compiler/import/lock closure or public contributor execution.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
