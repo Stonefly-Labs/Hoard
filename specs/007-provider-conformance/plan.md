@@ -1025,6 +1025,25 @@ the harness contract are synchronized; product APIs, architecture/ADR/diagrams,
 public examples, governance, predecessors, IaC, release and UI remain unaffected
 by this internal execution correction.
 
+Native run40789296142 at eff2e3b still rejects content-hash capture with
+EvidenceSchemaInvalid:699 tests, two failures, four errors, no skips and no
+unexpected diagnostic bytes. The added ambient-SDK positive is the fourth
+error. The measured-SDK correction closes its separately reproduced gap but
+does not fix this native failure. The failed superseded6e7b651 run was
+requested cancelled to admit this changed-source replay; neither cancellation
+nor the remaining unfinished jobs qualifies evidence.
+
+The joined-build fixture now checks the finite request and restored-library
+schema immediately before content capture. Each assertion has a distinct
+repository-relative traceback location, allowing safe CI diagnostics to identify
+the rejected boundary without retaining graph fields, absolute paths or raw
+child output. This does not change producer admission or accept a failed child.
+`python3 -m unittest discover -s tests/tooling -p
+test_conformance_contributors.py -k captured_build -v` passes six selected
+controls with one explicit Linux-only skip on macOS; `git diff --check` passes.
+README/provider/development claims remain accurate: the native failure is still
+unresolved and public contributor execution remains incomplete.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

@@ -896,6 +896,23 @@ class NuGetContentToolTests(unittest.TestCase):
         native_command = owner.command
 
         def execute(arguments, *, cwd, cache_id, kind, timeout=600, env=None):
+            if len(arguments) == 9 and arguments[5] == "content-hashes":
+                request = evidence.load_json((owner.root / arguments[7]).read_bytes())
+                self.assertEqual(set(request), {"schemaVersion", "qualification", "assets", "cachePath", "outputPath"})
+                self.assertEqual((request["schemaVersion"], request["qualification"]), (1, False))
+                self.assertEqual(set(request["assets"]), {"path", "sha256"})
+                self.assertRegex(request["assets"]["sha256"], r"\A[0-9a-f]{64}\Z")
+                graph = evidence.load_json((owner.root / request["assets"]["path"]).read_bytes())
+                self.assertEqual(graph["version"], 3)
+                self.assertIsInstance(graph["libraries"], dict)
+                for library in graph["libraries"].values():
+                    self.assertIn(library["type"], ("package", "project"))
+                    if library["type"] == "package":
+                        self.assertLessEqual(len(library["path"]), 1024)
+                        parts = library["path"].split("/")
+                        self.assertEqual(len(parts), 2)
+                        for part in parts:
+                            self.assertRegex(part, r"\A[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}\Z")
             if native:
                 result = native_command(
                     arguments, cwd=cwd, cache_id=cache_id, kind=kind, timeout=timeout, env=env)
