@@ -6541,6 +6541,35 @@ T064 remains unchecked.
 643 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 change promotes the content producer into the repository's
+non-packable tests/fixtures/conformance/BuildInputs project, excluded from default
+solution builds like the other conformance tools. It references the pinned SDK's
+NuGet assemblies directly and has an empty replayed package lock, not new product
+or NuGet package dependencies. The implemented internal protocol is:
+`dotnet <BuildInputs.dll> content-hashes <owned-root> <request-relative> <sha256>`.
+Its closed request contains schemaVersion1, qualificationfalse, hash-bound
+relative assets, cachePath and outputPath. Reads are bounded/owned/link-checked;
+input changes, duplicate fields, foreign metadata and existing outputs reject.
+Outputs are create-new closed receipts and finite native-event-compatible
+control messages, never raw exception/provider diagnostics.
+
+Actual frozen single/two-project probes now compile this repository source with
+isolated outputs and a locked restore. They admit eleven package nodes/one
+project node and all seven distinct signed-package content hashes; the
+single-project archive again passes77 shared rows, exact discovery,87 session
+origins and five invalid-property controls. An earlier concurrent solution edit
+correctly triggered InputChanged and was discarded before frozen replay.
+Managed component tests use normal runtime patch selection; the native executor's
+guards/environment are unchanged. The tool does not itself establish native
+producer/SDK binary closure, signature trust, complete compiler inputs or public
+dispatch. T064 stays unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+47 passed, including five actual managed producer controls.
+Focused BuildInputs `dotnet format whitespace --verify-no-changes --no-restore`
+passes. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+648 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

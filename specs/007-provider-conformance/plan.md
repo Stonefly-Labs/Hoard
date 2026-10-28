@@ -666,6 +666,24 @@ All42 contributor tooling cases pass; frozen full safe tooling observes643 tests
 zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
 skips and expected incomplete exit2. Catalog, SDK and diff checks pass.
 
+The next partial T064 increment promotes NuGet content production into the
+non-packable BuildInputs fixture tool, with SDK-bundled NuGet references, empty
+locked package graph and no product dependency. Closed hash-bound owned-relative
+requests, bounded/link-checked reads, create-new receipts, input rechecks and
+finite native-event output replace the private producer source.
+Actual frozen one/two-project probes compile this repository source using isolated
+outputs and locked restore, admit eleven package nodes/one project node and seven
+distinct signed-package logical hashes. The fresh single-project archive retains
+77 shared rows, exact discovery,87 role observations and five invalid-property
+controls. A concurrent solution-edit snapshot failed InputChanged and was
+discarded before frozen replay.
+This remains a managed component, not native producer/toolchain closure,
+signature trust, complete compiler provenance or public dispatch; T064 stays open.
+All47 contributor/actual-tool cases pass. Focused BuildInputs whitespace
+verification passes. Frozen full safe tooling observes648 tests, zero failures/
+errors/unexpected diagnostic bytes, twenty explicit native macOS skips and
+expected incomplete exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

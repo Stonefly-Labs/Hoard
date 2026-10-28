@@ -2258,7 +2258,11 @@ resolved versions and logical content hashes, one expected cache and declared
 project paths. Independently rehash cached archive bytes and check package
 metadata. Require a closed per-package receipt linking raw archive SHA-256 and
 NuGet logical content SHA-512; signed-package logical hashes are not raw archive
-hashes. The actual producer uses NuGet's own API but remains private.
+hashes. The repository-owned, non-packable BuildInputs tool uses NuGet's own API
+from the pinned SDK. Require a closed hash-bound request with owned-relative
+assets/cache/output paths, bounded/link-checked reads, unchanged request/assets
+hashes, create-new receipts and finite native-event output. It does not itself
+establish native producer/toolchain origin.
 This is cross-artifact admission, not signature trust, dependency-range
 interpretation, native producer origin or complete evaluated input provenance.
 

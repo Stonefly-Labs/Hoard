@@ -676,8 +676,11 @@ Restore-graph admission now aligns the finite net10.0 SDK graph with its frozen
 prepared lock, exact package/cache owners and declared project references.
 Actual probes cover eleven package nodes and one project node. NuGet's own API
 supplies logical content hashes: seven signed-package hashes differ from raw
-archive SHA-512. Archive bytes are independently rehashed; the content producer
-is still private, and complete native input provenance remains unfinished.
+archive SHA-512. Archive bytes are independently rehashed. The content producer
+now lives in repository-owned, non-packable BuildInputs tooling with closed
+hash-bound requests, bounded owned-path reads and native-event-compatible output.
+It uses the pinned SDK's NuGet assemblies, not new product/package dependencies.
+Complete native input provenance and public contributor dispatch remain unfinished.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

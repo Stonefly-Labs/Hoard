@@ -463,8 +463,14 @@ receipt binds NuGet logical content hashes to those exact archive bytes; raw
 archive SHA-512 is not substituted for signed-package content hashes.
 Actual single/two-project probes admit eleven package nodes and one project node;
 NuGet's bundled API computes seven content hashes distinct from raw archive hashes.
-The producer remains private. This is not signature trust, complete dependency
-range/evaluated compiler provenance, RID/multi-target support or public dispatch.
+The producer now lives in the non-packable BuildInputs test tool. Its closed
+hash-bound request names owned relative assets/cache/output paths; changed inputs,
+linked/foreign paths, duplicate fields and existing outputs reject. SDK-bundled
+NuGet references are pinned through global.json, not product dependencies.
+Actual single/two-project probes use this repository source, and managed tool
+controls cover unsigned hashes, stale inputs, links, metadata and bounds.
+This is not signature trust, complete dependency-range/evaluated compiler
+provenance, native producer origin, RID/multi-target support or public dispatch.
 
 ### Earlier F-07 diagnostic checkpoints
 

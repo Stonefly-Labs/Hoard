@@ -16,7 +16,135 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_evidence as evidence
 import conformance_contributors as contributors
 import conformance_case_catalog as catalog
-from conformance_execution import OwnedRun
+from conformance_execution import OwnedRun, capture_control, command_environment
+
+
+class NuGetContentToolTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if shutil.which("dotnet") is None:
+            raise unittest.SkipTest("Managed NuGet content tool requires the pinned .NET SDK")
+        cls.temporary = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls.temporary.cleanup)
+        cls.parent = Path(cls.temporary.name).resolve()
+        cls.owner = OwnedRun.allocate(cls.parent / "run", ROOT, profile="harness")
+        source = cls.owner.root / "source"
+        project = Path("tests/fixtures/conformance/BuildInputs/BuildInputs.csproj")
+        for relative in (Path("global.json"), Path("Directory.Build.props"),
+                         Path("Directory.Packages.props"), project, project.with_name("Program.cs"),
+                         project.with_name("packages.lock.json")):
+            target = source / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        cache = cls.owner.root / "cache/content"
+        cache.mkdir()
+        (cache / "tmp").mkdir()
+        cls.environment = command_environment(cls.owner.root, cache, {"DOTNET_ROLL_FORWARD": "LatestPatch"})
+        config = cls.owner.root / "NuGet.Config"
+        config.write_bytes(b"<configuration><packageSources><clear /></packageSources></configuration>")
+        code, _ = capture_control(
+            ["dotnet", "build", str(source / project), "-c", "Release", "-p:RestoreLockedMode=true",
+             "-p:RestoreConfigFile=" + str(config), "-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"],
+            cwd=source, env=cls.environment, limit=65536, timeout=120)
+        if code:
+            raise AssertionError("Managed NuGet content tool build failed")
+        cls.tool = source / project.parent / "bin/Release/net10.0/Hoard.Fixtures.Conformance.BuildInputs.dll"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.owner.transition("Active")
+        cls.owner.transition("Settling")
+        cls.owner.release()
+
+    def setUp(self):
+        self.case = Path(tempfile.mkdtemp(dir=self.owner.root))
+        self.prefix = "acme.dependency/2.4.0-preview.1"
+        self.cache = self.case / "packages"
+        directory = self.cache / self.prefix
+        directory.mkdir(parents=True)
+        self.archive = directory / "acme.dependency.2.4.0-preview.1.nupkg"
+        with zipfile.ZipFile(self.archive, "w") as archive:
+            archive.writestr("Acme.Dependency.nuspec", (
+                "<package><metadata><id>Acme.Dependency</id><version>2.4.0-preview.1</version></metadata></package>"))
+            archive.writestr("build/Acme.Dependency.props", "<Project />")
+        self.assets = self.case / "assets.json"
+        self.graph = {"version": 3, "libraries": {"Acme.Dependency/2.4.0-preview.1": {
+            "type": "package", "path": self.prefix}}}
+        self.assets.write_bytes(evidence.canonical_bytes(self.graph))
+        self.output = self.case / "content.json"
+        self.request = self.case / "request.json"
+        self.value = {
+            "schemaVersion": 1, "qualification": False,
+            "assets": {"path": self.relative(self.assets), "sha256": evidence.file_sha256(self.assets)},
+            "cachePath": self.relative(self.cache), "outputPath": self.relative(self.output)}
+        self.request.write_bytes(evidence.canonical_bytes(self.value))
+
+    def relative(self, path):
+        return path.relative_to(self.owner.root).as_posix()
+
+    def invoke(self, *, digest=None):
+        code, raw = capture_control(
+            ["dotnet", str(self.tool), "content-hashes", str(self.owner.root), self.relative(self.request),
+             evidence.file_sha256(self.request) if digest is None else digest],
+            cwd=self.owner.root, env=self.environment, limit=65536, timeout=30)
+        try:
+            value = evidence.load_json(raw)
+        except evidence.ConformanceError:
+            raise AssertionError("Managed content tool emitted non-schema diagnostics") from None
+        return code, value
+
+    def test_managed_content_tool_computes_actual_unsigned_archive_receipt_and_refuses_output_reuse(self):
+        code, event = self.invoke()
+        self.assertEqual(code, 0)
+        self.assertEqual(event, {"event": "control", "code": "None", "value": 1})
+        receipt = evidence.load_json(self.output.read_bytes())
+        self.assertEqual(receipt, {"schemaVersion": 1, "qualification": False, "packages": [{
+            "cachePath": self.prefix, "archiveSha256": evidence.file_sha256(self.archive),
+            "contentSha512": hashlib.sha512(self.archive.read_bytes()).hexdigest()}]})
+        original = self.output.read_bytes()
+        code, event = self.invoke()
+        self.assertEqual((code, event["code"]), (2, "OwnershipInvalid"))
+        self.assertEqual(self.output.read_bytes(), original)
+
+    def test_managed_content_tool_rejects_changed_request_and_asset_hashes(self):
+        code, event = self.invoke(digest="a" * 64)
+        self.assertEqual((code, event["code"]), (2, "InputChanged"))
+        self.assets.write_bytes(self.assets.read_bytes() + b" ")
+        code, event = self.invoke()
+        self.assertEqual((code, event["code"]), (2, "InputChanged"))
+        self.assertFalse(self.output.exists())
+
+    def test_managed_content_tool_rejects_duplicate_request_fields_and_foreign_paths(self):
+        original = self.request.read_bytes()
+        self.request.write_bytes(original[:-1] + b',"schemaVersion":1}')
+        code, event = self.invoke()
+        self.assertEqual((code, event["code"]), (2, "EvidenceSchemaInvalid"))
+        self.value["assets"]["path"] = "../outside-canary"
+        self.request.write_bytes(evidence.canonical_bytes(self.value))
+        code, event = self.invoke()
+        self.assertEqual((code, event["code"]), (2, "OwnershipInvalid"))
+        self.assertFalse(self.output.exists())
+
+    def test_managed_content_tool_rejects_linked_archives_without_altering_outside_canary(self):
+        outside = self.parent / "outside-private-canary"
+        outside.write_bytes(b"private-canary")
+        self.archive.unlink()
+        self.archive.symlink_to(outside)
+        code, event = self.invoke()
+        self.assertEqual((code, event["code"]), (2, "OwnershipInvalid"))
+        self.assertEqual(outside.read_bytes(), b"private-canary")
+        self.assertFalse(self.output.exists())
+
+    def test_managed_content_tool_rejects_foreign_archive_metadata_and_oversized_assets(self):
+        with zipfile.ZipFile(self.archive, "w") as archive:
+            archive.writestr("Foreign.nuspec", (
+                "<package><metadata><id>Foreign</id><version>2.4.0-preview.1</version></metadata></package>"))
+        code, event = self.invoke()
+        self.assertEqual((code, event["code"]), (2, "InputChanged"))
+        self.assets.write_bytes(b"x" * (2 * 1024 * 1024 + 1))
+        code, event = self.invoke()
+        self.assertEqual((code, event["code"]), (2, "OutputLimitExceeded"))
+        self.assertFalse(self.output.exists())
 
 
 class ContributorAdmissionTests(unittest.TestCase):

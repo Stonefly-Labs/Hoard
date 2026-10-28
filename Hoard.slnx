@@ -30,6 +30,9 @@
     <Project Path="tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj">
       <Build Project="false" />
     </Project>
+    <Project Path="tests/fixtures/conformance/BuildInputs/BuildInputs.csproj">
+      <Build Project="false" />
+    </Project>
     <Project Path="tests/fixtures/conformance/Consumer/Consumer.csproj">
       <Build Project="false" />
     </Project>
