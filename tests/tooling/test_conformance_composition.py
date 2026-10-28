@@ -26,7 +26,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
             runtime = root / "stores/runtime"
             runtime.mkdir(parents=True)
             for name in ("Hoard.Architecture.Tests.dll", "Hoard.Testing.Conformance.dll",
-                         "Hoard.Architecture.Tests.deps.json", "Hoard.Architecture.Tests.runtimeconfig.json"):
+                         "Hoard.Architecture.Tests.deps.json", "Hoard.Architecture.Tests.runtimeconfig.json",
+                         "compatibility-fixture.pdb"):
                 image = runtime / name
                 image.write_bytes(b"compiled-original")
                 image.chmod(0o644)
@@ -94,6 +95,27 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 changed["expected"][0]["bindingId" if defect == "binding" else "caseId"] = "foreign"
             with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
                 sdk._category_manifest_tests(("compatibility", "version"), changed)
+
+    def test_binary_scope_requires_each_pdb_source_and_retained_break_repair_control(self):
+        import conformance_case_catalog as catalog
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+
+        tests = catalog.binary_runtime_tests()
+        manifest = {"expected": [
+            {"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+             "bindingId": binding, "caseId": case}
+            for identity, (binding, case) in tests.items()]}
+        self.assertEqual(sdk._category_manifest_tests(("compatibility", "binary"), manifest), tests)
+        for index in range(len(manifest["expected"])):
+            changed = evidence.load_json(evidence.canonical_bytes(manifest))
+            changed["expected"].pop(index)
+            with self.subTest(omitted=index), self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                sdk._category_manifest_tests(("compatibility", "binary"), changed)
+        changed = evidence.load_json(evidence.canonical_bytes(manifest))
+        changed["expected"][0]["testIdentity"] = "Hoard.Conformance.Tests.Foreign"
+        with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+            sdk._category_manifest_tests(("compatibility", "binary"), changed)
 
     def test_architecture_execution_admits_existing_prepared_images_without_reinstalling_them(self):
         import conformance_evidence as evidence
@@ -391,7 +413,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
             "<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
         code = compile(textwrap.dedent(script), "<architecture-workflow>", "exec")
         for defect in ("none", "live", "profile", "path", "manifest", "inputs", "qualification",
-                       "missing-version", "missing-axis", "missing-observation", "runtime-receipt"):
+                       "missing-version", "missing-axis", "missing-observation", "runtime-receipt", "missing-binary"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -407,7 +429,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     "qualification": defect == "qualification", "profileComplete": False,
                     "processResourcesReleased": True, "architecturePreparation": architecture}
                 for key, scope, count in (("architectureRuntime", "architecture", 88),
-                                          ("versionRuntime", "version", 114)):
+                                          ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 7)):
                     observed = {
                         "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
                         "passedParameters": count, **{field: "d" * 64 for field in (
@@ -424,6 +446,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     del summary["versionRuntime"]
                 if defect == "runtime-receipt":
                     summary["versionRuntime"]["nativeParentSha256"] = "e" * 64
+                if defect == "missing-binary":
+                    del summary["binaryRuntime"]
                 owner = {"state": "Active" if defect == "live" else "Released", "runId": "modeled", "rootId": "modeled"}
                 preflight = {"profileId": "baseline" if defect == "profile" else "compatibility"}
                 for path, data in (

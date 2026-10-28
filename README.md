@@ -569,6 +569,18 @@ in T049 are complete; progress is58/86, still implement/running. All36 CP
 parameters/110 snapshots and inherited525/58 verify with actual process release;
 nine quality-source rows and full-controller/profile qualification remain
 incomplete. The custom-host example remains compile-only.
+Exact `c9a5990`, [run40621394269](https://github.com/Stonefly-Labs/Hoard/actions/runs/40621394269)
+job122600307923, now confirms the public compatibility diagnostic: all88
+architecture parameters over22 graphs/eight required real scans and all114
+version parameters/170 observations pass, followed by actual process release.
+The same run confirms24 unchanged-source recipes, nine retained scenarios/
+forty loaded assemblies and the intended compiler-break control. T057 is
+complete. T058 adds same-version package/baseline/import substitution challenges
+alongside the exact-axis/schema controls; progress is60/86, implement/running.
+T059 now additionally selects seven existing PE/PDB-source and isolated
+binary-break/repair/substitution parameters; those new native controls remain
+unconfirmed and T059 stays unchecked. No qualification is claimed.
+
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

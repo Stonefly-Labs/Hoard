@@ -3290,6 +3290,9 @@ def _category_scope_tests(category_scope):
     if (profile, scope_id) == ("compatibility", "version"):
         from conformance_case_catalog import version_runtime_tests
         return version_runtime_tests()
+    if (profile, scope_id) == ("compatibility", "binary"):
+        from conformance_case_catalog import binary_runtime_tests
+        return binary_runtime_tests()
     if scope_id == "hook-admission":
         return dict(hook_admission_tests(profile))
     if scope_id == "shared-consumer":
@@ -3898,7 +3901,7 @@ def validate_observation(ingested, result, identities, code, status, exit_code, 
 
 def compatibility_runtime_paths(run, runtime):
     paths = sorted(path.relative_to(run.root).as_posix() for path in runtime.rglob("*")
-                   if path.is_file() and (path.suffix in (".dll", ".so", ".dylib")
+                   if path.is_file() and (path.suffix in (".dll", ".so", ".dylib", ".pdb")
                                          or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
     for path in paths:
         image = run.root / path
@@ -3926,31 +3929,56 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, s
     _original_wrapper_runtime(candidate, feed, VERSION_TESTS, PACKAGE_TEST_OUTPUT, VERSION_PACKAGES)
     runtime = candidate / VERSION_TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
     assembly = runtime / "Hoard.Composition.Tests.dll"
-    paths = compatibility_runtime_paths(run, runtime)
+    summary = _execute_compatibility_runtime_scope(
+        run, repository, candidate, sources, config, feed, seal_sha, assembly,
+        scope="version", tests=version_runtime_tests(), packages=(*VERSION_PACKAGES, "Hoard.Conformance.TestLogger"),
+        extra_locks=(lock.relative_to(run.root).as_posix(),), ci_revision=ci_revision)
+    verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
+    if record is not None:
+        verify_project_lock(record, candidate, feed)
+    write_new(run.root / "proofs/compatibility-version-runtime-summary.json", evidence.canonical_bytes(summary))
+    return summary
+
+
+def execute_binary_runtime(run, repository, candidate, sources, config, feed, seal_sha, *, ci_revision=None):
+    from conformance_case_catalog import binary_runtime_tests
+
+    runtime = candidate / TESTS / "bin/Release/net10.0"
+    packages = ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions")
+    verify_runtime_packages(runtime, feed, packages)
+    summary = _execute_compatibility_runtime_scope(
+        run, repository, candidate, sources, config, feed, seal_sha, runtime / "Hoard.Conformance.Tests.dll",
+        scope="binary", tests=binary_runtime_tests(), packages=packages, ci_revision=ci_revision)
+    write_new(run.root / "proofs/compatibility-binary-runtime-summary.json", evidence.canonical_bytes(summary))
+    return summary
+
+
+def _execute_compatibility_runtime_scope(run, repository, candidate, sources, config, feed, seal_sha, assembly,
+                                       *, scope, tests, packages, extra_locks=(), ci_revision=None):
+    paths = compatibility_runtime_paths(run, assembly.parent)
     owner = evidence.load_json(read_bounded(run.root / "runtime-owner.json", 64 * 1024))
     group, attempt = evidence._uuid(owner["invocationGroupId"]), str(uuid.uuid4())
     arguments = dict(
         profile_id="compatibility", mode="diagnostic", invocation_group_id=group,
         package_versions=[{"packageId": name, "version": "0.1.0"}
-                          for name in (*VERSION_PACKAGES, "Hoard.Conformance.TestLogger")],
+                          for name in packages],
         feed="feed/candidate", configuration=config.relative_to(run.root).as_posix(),
-        lock_paths=sorted({lock.relative_to(run.root).as_posix(),
+        lock_paths=sorted({*extra_locks,
                            *(path.relative_to(run.root).as_posix() for path in candidate.rglob("packages.lock.json"))}),
         runtime_paths=paths, binding_sources=[], budgets=BUDGETS,
-        invocation=["component", "compatibility", "version-runtime"],
+        invocation=["component", "compatibility", f"{scope}-runtime"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     inputs = evidence.capture_profile_inputs(
-        run, repository, candidate, observed_environment=environment(run, scope="compatibility-version"), **arguments)
-    inputs_path = "proofs/compatibility-version-runtime-inputs.json"
+        run, repository, candidate, observed_environment=environment(run, scope="compatibility-" + scope), **arguments)
+    inputs_path = f"proofs/compatibility-{scope}-runtime-inputs.json"
     write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
-    tests = version_runtime_tests()
     assembly_path = assembly.relative_to(run.root).as_posix()
     manifest = {
         "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group, "attemptId": attempt,
         "attemptSequence": 1, "purpose": "execution", "inputSha256": evidence.digest(inputs),
         "runInputsPath": inputs_path,
         "assemblies": [{
-            "id": "test-assembly" if path == assembly_path else f"version-image-{index}",
+            "id": "test-assembly" if path == assembly_path else f"{scope}-image-{index}",
             "path": path, "sha256": inputs["runtimeAssemblies"][path],
         } for index, path in enumerate(paths)],
         "packages": [{"id": package["packageId"],
@@ -3959,35 +3987,31 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, s
         "expected": [{
             "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
             "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
-            "bindingId": binding, "matrixId": "version-runtime", "caseId": case, "assertionSymbol": None,
+            "bindingId": binding, "matrixId": f"{scope}-runtime", "caseId": case, "assertionSymbol": None,
         } for identity, (binding, case) in tests.items()],
     }
-    print(json.dumps({"qualification": False, "phase": "version-runtime"}), flush=True)
+    print(json.dumps({"qualification": False, "phase": f"{scope}-runtime"}), flush=True)
     result, observed, transport, discovery_sha = _execute_runtime_transport(
-        run, inputs, assembly, manifest, {identity: ("none", "version-runtime") for identity in tests},
-        {"category_scope": ("compatibility", "version")})
+        run, inputs, assembly, manifest, {identity: ("none", f"{scope}-runtime") for identity in tests},
+        {"category_scope": ("compatibility", scope)})
     validate_observation(observed, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
     post_inputs = evidence.capture_profile_inputs(
         run, repository, candidate, observed_environment=environment(
-            run, phase="completion", scope="compatibility-version"), **arguments)
+            run, phase="completion", scope="compatibility-" + scope), **arguments)
     evidence.verify_input_recomputation(inputs, post_inputs)
-    verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
-    if record is not None:
-        verify_project_lock(record, candidate, feed)
     if inputs["sourceManifest"] != sources:
         raise evidence.ConformanceError("InputChanged")
-    summary = {
-        "qualification": False, "profileComplete": False, "scope": "version-runtime-diagnostic",
-        "passedParameters": len(tests), "admittedObservations": sum(
-            map(len, observed["versionObservations"].values())),
+    return {
+        "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
+        "passedParameters": len(tests),
+        **({"admittedObservations": sum(map(len, observed["versionObservations"].values()))}
+           if scope == "version" else {}),
         "inputsSha256": evidence.digest(inputs), "postInputsSha256": evidence.digest(post_inputs),
         "discoverySha256": discovery_sha,
         "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
         "runtimeProofsSha256": evidence.digest(dict(observed["proofs"])),
         "nativeParentSha256": result.execution_record_sha256,
     }
-    write_new(run.root / "proofs/compatibility-version-runtime-summary.json", evidence.canonical_bytes(summary))
-    return summary
 
 
 def execute_architecture_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha,
@@ -4274,6 +4298,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
                     ci_revision=ci_revision)
                 compatibility_summary["versionRuntime"] = execute_version_runtime(
+                    run, repository, candidate, sources, config, feed, seal_sha, ci_revision=ci_revision)
+                compatibility_summary["binaryRuntime"] = execute_binary_runtime(
                     run, repository, candidate, sources, config, feed, seal_sha, ci_revision=ci_revision)
                 admit_architecture_preparation(run.root, prepared)
                 if (dict(evidence.source_manifest(repository)) != dict(sources)

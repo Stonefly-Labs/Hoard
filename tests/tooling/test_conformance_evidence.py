@@ -21,6 +21,52 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_compatibility_recomputation_rejects_same_version_package_and_baseline_substitutions(self):
+        before = self.inputs()
+        before.update(profileId="compatibility", bindings=[], invocation=["profile", "compatibility"])
+        before["budgets"]["profileSeconds"] = 3600
+        dependencies = {"retained/Consumer.dll": "1" * 64, "retained/Hoard.Abstractions.dll": "2" * 64}
+        before["baselines"] = [{
+            "revision": "3" * 40, "sourceSha256": "4" * 64, "lockSha256": "5" * 64,
+            "recipeSha256": "6" * 64, "binarySha256": evidence.digest(dependencies),
+            "dependencySha256": dependencies, "apiScope": "registration",
+        }]
+        self.assertEqual(evidence.verify_input_recomputation(before, copy.deepcopy(before)), evidence.digest(before))
+        for role in ("archive", "nuget", "package-image", "runtime-image", "source", "lock",
+                     "baseline-consumer", "baseline-dependency", "baseline-source", "baseline-revision",
+                     "missing-baseline", "sdk"):
+            after = copy.deepcopy(before)
+            if role in ("archive", "nuget", "package-image"):
+                package = after["packages"][0]
+                if role == "archive":
+                    package["sha256"] = "7" * 64
+                elif role == "nuget":
+                    package["nugetSha512"] = "7" * 128
+                else:
+                    package["runtimeAssemblies"]["lib/net10.0/Hoard.Fixture.dll"] = "7" * 64
+            elif role == "runtime-image":
+                after["runtimeAssemblies"]["consumer/Hoard.Tests.dll"] = "7" * 64
+            elif role == "source":
+                after["sourceManifest"]["src/check.cs"] = "7" * 64
+                after["sourceManifestSha256"] = evidence.digest(after["sourceManifest"])
+            elif role == "lock":
+                after["locks"]["packages.lock.json"] = "7" * 64
+            elif role in ("baseline-consumer", "baseline-dependency"):
+                key = "retained/Consumer.dll" if role == "baseline-consumer" else "retained/Hoard.Abstractions.dll"
+                after["baselines"][0]["dependencySha256"][key] = "7" * 64
+                after["baselines"][0]["binarySha256"] = evidence.digest(after["baselines"][0]["dependencySha256"])
+            elif role == "baseline-source":
+                after["baselines"][0]["sourceSha256"] = "7" * 64
+            elif role == "baseline-revision":
+                after["baselines"][0]["revision"] = "7" * 40
+            elif role == "missing-baseline":
+                after["baselines"] = []
+            else:
+                after["sdkSha256"] = "7" * 64
+            self.assertEqual(after["packages"][0]["version"], before["packages"][0]["version"])
+            with self.subTest(role=role), self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                evidence.verify_input_recomputation(before, after)
+
     def test_version_observations_require_every_exact_runtime_repair_and_policy_parameter(self):
         import conformance_case_catalog as catalog
         identities = {identity for case in catalog.expected_cases("compatibility")
@@ -7555,6 +7601,33 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_compatibility_import_rejects_candidate_rebuilt_consumer_even_when_output_is_success(self):
+        request = {
+            "scenario": "registration", "required": ["Hoard.Abstractions", "RegistrationConsumer"],
+            "images": [{"path": "stores/runtime/Hoard.Abstractions.dll", "sha256": "a" * 64},
+                       {"path": "stores/runtime/RegistrationConsumer.dll", "sha256": "b" * 64}],
+        }
+        good = {
+            "schemaVersion": 1, "qualification": False, "scenario": "registration", "code": "None",
+            "loaded": [{"name": "Hoard.Abstractions", "sha256": "a" * 64, "moduleVersionId": str(uuid.uuid4())},
+                       {"name": "RegistrationConsumer", "sha256": "b" * 64, "moduleVersionId": str(uuid.uuid4())}],
+        }
+        raw = evidence.canonical_bytes(good)
+        self.baselines.verify_retained_observation(raw, request, hashlib.sha256(raw).hexdigest())
+        for mutation in ("candidate-consumer", "old-platform", "foreign-scenario", "missing-consumer"):
+            changed = copy.deepcopy(good)
+            if mutation == "candidate-consumer":
+                changed["loaded"][1]["sha256"] = "c" * 64
+            elif mutation == "old-platform":
+                changed["loaded"][0]["sha256"] = "c" * 64
+            elif mutation == "foreign-scenario":
+                changed["scenario"] = "configuration"
+            else:
+                changed["loaded"].pop()
+            altered = evidence.canonical_bytes(changed)
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                self.baselines.verify_retained_observation(altered, request, hashlib.sha256(altered).hexdigest())
+
     def test_source_break_rejects_success_unrelated_compiler_failures_and_missing_symbol_witness(self):
         from types import SimpleNamespace
         intended = {"event": "build", "code": "CommandFailed", "value": 535}

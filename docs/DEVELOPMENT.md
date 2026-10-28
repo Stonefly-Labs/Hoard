@@ -6170,6 +6170,31 @@ qualification remain incomplete. The separate c9a5990 native compatibility
 gate is still pending. This checkpoint changes documentation/task status only;
 the last local frozen595-test result remains recorded above.
 
+The separate gate subsequently succeeds at exact
+`c9a5990462be78df7220469b88342b662ac19edc`,
+[run40621394269](https://github.com/Stonefly-Labs/Hoard/actions/runs/40621394269)
+job122600307923: public compatibility execution admits88 architecture
+parameters from22 fixture graphs/eight real scans and114 version parameters/
+170 observations, then releases all actual process resources. The same run
+confirms24 source recipes, nine retained scenarios/forty loaded assemblies
+and the intended source compiler-break control. T057 is complete; neither
+the failed earlier launches nor the policy-only classifications become runtime
+or qualification claims.
+
+T058 now challenges unchanged version strings with altered archive/NuGet/
+runtime/SDK/source/lock bytes, self-consistent substituted baseline hashes or
+revision, and missing baselines. Imported success packets still reject a
+candidate-rebuilt consumer, old platform image, foreign scenario or omitted
+consumer. Existing exact-axis and schema5 controls remain mandatory. Focused
+compatibility/CLI/workflow tests pass; progress is60/86.
+T059 additionally wires all seven existing source-PE/PDB and isolated retained
+binary-break/repair/substitution parameters. Version/binary scopes reuse the
+same native discovery/admission/recomputation helper, with separate immutable
+probe receipts. Selected PDBs join the sealed runtime manifest so source-symbol
+provenance cannot float outside the input hash. CI requires its matching
+seven-parameter receipt as well as88/114/170. These supplemental native controls
+remain pending; T059 and full-profile qualification stay open.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

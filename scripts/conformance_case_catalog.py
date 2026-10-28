@@ -1261,6 +1261,24 @@ def version_runtime_tests():
     return tests
 
 
+def binary_runtime_tests():
+    prefix = "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+    return {
+        **{prefix + "Compiled_source_provenance_matches_actual_pe_pdb_and_frozen_historical_source"
+           + f'(variant: "{variant}", name: "{name}", relative: "{relative}")': ("none", "COMPATIBILITY")
+           for variant, name, relative in (
+               ("baseline", "BinaryContract.dll", "Old/Contract.cs"),
+               ("broken", "BinaryContract.dll", "New/Contract.cs"),
+               ("compatible", "BinaryContract.dll", "Old/Contract.cs"),
+               ("consumer", "RetainedConsumer.dll", "Consumer/Program.cs"))},
+        **{prefix + "Unchanged_retained_consumer_observes_actual_candidate_not_an_accidental_old_contract"
+           + f'(variant: "{variant}", compatible: {compatible})': ("none", "COMPATIBILITY")
+           for variant, compatible in (("broken", False), ("compatible", True))},
+        prefix + "Loaded_baseline_capture_rejects_replacement_with_actual_same_version_candidate_bytes":
+            ("none", "COMPATIBILITY"),
+    }
+
+
 def architecture_runtime_tests():
     tests = {
         identity: ("none", case.case_id)

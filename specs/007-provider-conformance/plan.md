@@ -125,6 +125,55 @@ twenty explicit Linux-only skips on macOS and expected incomplete exit2.
 Catalog, SDK and diff checks pass. The original package-only consumer lock's
 local package set exactly matches the new version runtime's declared closure.
 
+### Native architecture/version confirmation and compatibility controls
+
+Exact `c9a5990462be78df7220469b88342b662ac19edc`,
+[run40621394269](https://github.com/Stonefly-Labs/Hoard/actions/runs/40621394269)
+job122600307923 succeeds through the actual public compatibility command,
+retained receipt checks and process release. All88 architecture parameters
+cover22 graphs/eight real scans, including intended forbidden/permitted rules
+and inspection failures; all114 original version parameters/170 observations
+admit independently. T057 is now complete. Architecture input/proof/native-parent
+hashes:
+`b776a663290b575ee8b0da6d7173495b7d7b6738193138545cbd2eb1f2ec0974`,
+`c848d1dcb44c098502f7b4cad1ea328d74e1cf700252c074db7fe1be4f81816b`,
+`fe3bd42f7165a5f5398ece5aee79766474ca91f83df07b7bfd7a346ebbc1f926`.
+Version input/proof/native-parent hashes:
+`94a06bf9c74db90fa1ebbc3c691dd0c0b93422659d92d2f432814923ef80ef95`,
+`7d9dfbad42ec52c79181393f689aac7535db58a842212474a3cbe66e37cec924`,
+`da804000d7f8bbfa9f0a765ebe9253973d35ffc499c3bd75c81e326e9b74d0b2`.
+
+The same native run confirms24 unchanged-source recipes and nine genuine
+retained scenarios/forty loaded assemblies. Source, retained and intended
+source-break receipts:
+`f1371e9c25d6ab8631a20fe36b7a618b999ff07bf0f875ad65c41e688ce8e055`,
+`7a8591aca61847ab00a7497419d5035ffa1ffe548adaf3fb8737da89a0a573e2`,
+`e4eb308e6da29a48d020f30e330e108a1e87135952660bcf2218c2d98844cb52`;
+baseline seal:
+`5e4b57e68fb578558f90b0c1ce49431ff84b5118b5ed832021476ffa92b5225f`.
+Prior failed launches remain failures. Full-profile qualification stays false.
+
+T058's focused additions reject unchanged version labels with modified package,
+NuGet/runtime/source/lock/SDK bytes, self-consistent baseline consumer/dependency
+hash substitutions, forged historical source/revision and missing baselines.
+Import challenges also reject candidate-rebuilt consumer/old platform/foreign
+scenario/missing-consumer success packets. Existing114-parameter policy,
+schema5 downgrade and omitted-axis controls remain required.
+
+T059 additionally selects four existing PE/PDB/frozen-source checks and three
+isolated same-version binary-break/repair/substitution parameters. Their
+consumer is the isolated break fixture, not a substitute for the nine genuine
+retained scenarios. The version/binary scopes share native discovery/admission/
+recomputation; selected PDBs are sealed and input-bound, and CI requires matching
+retained seven-parameter receipts. Native execution of this supplemental scope
+is pending; T059 stays unchecked. Progress is60/86, implement/running.
+
+Validation: all36 focused compatibility/CLI/workflow/input-import tests pass.
+Frozen full safe tooling observes598 tests, zero failures/errors/unexpected
+diagnostic bytes, twenty explicit Linux-only macOS skips and expected
+incomplete exit2. Catalog, SDK and diff checks pass. No C# assertions, compiler
+recipes, package dependencies, executor limits or timeouts change.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact
