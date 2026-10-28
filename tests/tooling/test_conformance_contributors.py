@@ -815,8 +815,12 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual(event["code"], "PrerequisiteMissing")
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
 
-    def captured_build(self, *, change_after_pack=False, shared=False, change_dependency_after_pack=False, native=False):
+    def captured_build(self, *, change_after_pack=False, shared=False, change_dependency_after_pack=False,
+                       ambient_sdk=False, native=False):
         measured, _, _ = self.evaluation_request()
+        if ambient_sdk:
+            (self.case / "global.json").write_bytes(evidence.canonical_bytes({
+                "sdk": {"version": "99.0.999", "rollForward": "disable"}}))
         source = self.case / "build-author"
         source.mkdir()
         (source / "Adapter.csproj").write_text(
@@ -912,7 +916,8 @@ class NuGetContentToolTests(unittest.TestCase):
                     events = tuple(project_build_line(line) for line in raw.splitlines() if line.strip())
                 result = mock.Mock(exit_code=code, events=events)
             commands.append(tuple(arguments))
-            if arguments[1] == "pack" and code == 0 and change_after_pack:
+            packing = arguments[1] == "pack" or "-target:Pack" in arguments
+            if packing and code == 0 and change_after_pack:
                 path = feed / "Acme.Adapter.2.4.0-preview.1.nupkg"
                 with zipfile.ZipFile(path) as archive:
                     members = {member: archive.read(member) for member in archive.namelist()}
@@ -920,7 +925,7 @@ class NuGetContentToolTests(unittest.TestCase):
                 with zipfile.ZipFile(path, "w") as archive:
                     for member, data in members.items():
                         archive.writestr(member, data)
-            if arguments[1] == "pack" and code == 0 and change_dependency_after_pack:
+            if packing and code == 0 and change_dependency_after_pack:
                 project_hash = hashlib.sha256(b"Shared/Shared.csproj").hexdigest()
                 path = (owner.root / "binding-build" / project_hash
                         / "obj/Release/net10.0/Acme.Shared.Emitted.dll")
@@ -933,6 +938,12 @@ class NuGetContentToolTests(unittest.TestCase):
                     binding, owner, config, feed, tool, Path(measured["toolchainRoot"]),
                     self.msbuild.parent.name, self.runtime_version)
             self.assertEqual(len(commands), 8 if shared else 6)
+            if ambient_sdk:
+                for target in ("Restore", "Pack"):
+                    selected = [command for command in commands if "-target:" + target in command]
+                    self.assertEqual(len(selected), 1)
+                    self.assertEqual(selected[0][:5], (
+                        "dotnet", "exec", "--fx-version", self.runtime_version, str(self.msbuild)))
             self.assertEqual(result["package"]["packageId"], "Acme.Adapter")
             self.assertFalse(result["qualification"])
             projects = {binding.project, "Shared/Shared.csproj"} if shared else {binding.project}
@@ -970,6 +981,9 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_managed_captured_build_rechecks_referenced_project_image_after_pack(self):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             self.captured_build(shared=True, change_dependency_after_pack=True)
+
+    def test_managed_captured_build_uses_measured_sdk_for_restore_and_pack_not_ambient_sdk_selection(self):
+        self.captured_build(ambient_sdk=True)
 
     @unittest.skipUnless(native_execution_supported(), "Native captured build requires supported Linux containment")
     def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):

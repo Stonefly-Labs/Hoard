@@ -650,7 +650,7 @@ def snapshot(repository, run):
 
 
 def build(run, project, config, cache_id, *, feed=None, lock=None, properties=(), package_id=None,
-          package_version="0.1.0", compile_action=None):
+          package_version="0.1.0", compile_action=None, msbuild=None):
     if compile_action is not None and not callable(compile_action):
         raise evidence.ConformanceError("OwnershipInvalid")
     archive = None
@@ -661,19 +661,32 @@ def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()
     common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet", *properties]
     if lock is not None:
         common.append("-p:NuGetLockFilePath=" + str(lock))
+    if msbuild is None:
+        restore = ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config), *common]
+        compile_command = ["dotnet", "build", str(project), "-c", "Release", "--no-restore", *common]
+        pack = ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
+                "--no-restore", "-o", str(feed), *common]
+    else:
+        common = ["-nologo", "-p:UseSharedCompilation=false", "-nodeReuse:false", "-verbosity:quiet", *properties]
+        if lock is not None:
+            common.append("-p:NuGetLockFilePath=" + str(lock))
+        restore = [*msbuild, str(project), "-target:Restore", "-p:RestoreLockedMode=true",
+                   "-p:RestoreConfigFile=" + str(config), *common]
+        compile_command = [*msbuild, str(project), "-target:Build", "-p:Configuration=Release", *common]
+        pack = [*msbuild, str(project), "-target:Pack", "-p:Configuration=Release",
+                "-p:NoBuild=true", "-p:PackageOutputPath=" + str(feed), *common]
     baselines._command(
-        run, ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config), *common],
+        run, restore,
         cwd=project.parent, cache_id=cache_id)
     if compile_action is None:
         baselines._command(
-            run, ["dotnet", "build", str(project), "-c", "Release", "--no-restore", *common],
+            run, compile_command,
             cwd=project.parent, cache_id=cache_id)
     else:
         compile_action()
     if feed is not None:
         baselines._command(
-            run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
-                  "--no-restore", "-o", str(feed), *common],
+            run, pack,
             cwd=project.parent, cache_id=cache_id)
         canonicalize_acceptance_archive(archive, expected_package_id=identity)
 

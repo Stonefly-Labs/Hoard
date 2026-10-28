@@ -6595,6 +6595,15 @@ joined builds at content-hash capture; consumer-lock capture is not among the
 failed controls. Capture now preserves a single closed producer diagnostic
 instead of masking it as CommandFailed, without relaxing input revalidation.
 The Linux cause and complete native acceptance remain unresolved.
+Run40787411716 at6e7b651 confirms EvidenceSchemaInvalid from the content-hash
+producer, with698 tests, two failures, three errors and no skips or unexpected
+diagnostic bytes. A separate managed red control proves restore/pack could
+select an ambient SDK outside the frozen source, unlike measured evaluation/
+compilation. The captured path now executes Restore and Pack through that same
+explicit MSBuild DLL and exact runtime, not the SDK-selecting CLI. The control
+passes even with an enclosing unavailable SDK request. This closes the measured
+toolchain gap without accepting a different assets schema or weakening runtime
+selection; it is not yet proof that the Linux content-hash failure is resolved.
 
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed

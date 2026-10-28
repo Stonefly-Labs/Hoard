@@ -2262,6 +2262,11 @@ The internal captured-build pipeline revalidates compiler inputs/outputs/
 parameters, document receipts, assets, locks and cached archives after pack.
 It remains non-qualifying; managed bridge tests are not native containment or
 complete public contributor execution.
+Restore and pack in the captured path must use the exact measured MSBuild DLL
+and runtime already selected for evaluation/compilation. Do not select an
+ambient SDK through dotnet restore/pack, infer it from the caller's working
+directory, or repair a toolchain mismatch by accepting an unsupported graph
+schema. Preserve locked restore, no-build pack and all post-pack revalidation.
 Join every declared referenced project's restore graph, actual compiler DLL/PDB
 and portable documents; revalidate those images after pack too. Internal
 consumer-lock composition may only combine an existing frozen consumer graph

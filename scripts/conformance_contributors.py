@@ -156,7 +156,8 @@ def _require_successful_capture(observed):
         raise evidence.ConformanceError(next(iter(codes)) if len(codes) == 1 else "CommandFailed")
 
 
-def build_binding_project(binding, owned_run, configuration, feed, *, local_packages=(), compile_action=None):
+def build_binding_project(binding, owned_run, configuration, feed, *, local_packages=(), compile_action=None,
+                          msbuild=None):
     from conformance_execution import no_symlinks
     from conformance_lock_preparation import rebind_local_archives
     from conformance_sdk_checks import build
@@ -239,6 +240,8 @@ def build_binding_project(binding, owned_run, configuration, feed, *, local_pack
         "projects": MappingProxyType(projects),
         "propertiesSha256": frozen[properties.relative_to(owned_run.root).as_posix()]})
     observation = {} if compile_action is None else {"compile_action": lambda: compile_action(prepared)}
+    if msbuild is not None:
+        observation["msbuild"] = msbuild
     identity = binding.registration["adapterPackage"]
     try:
         build(owned_run, binding.root / binding.project, configuration, "binding-build", feed=feed,
@@ -436,7 +439,9 @@ def build_captured_binding_project(binding, owned_run, configuration, feed, tool
         captured.update(graphs=graphs, compilation=compilation, documents=documents)
 
     built = build_binding_project(
-        binding, owned_run, configuration, feed, local_packages=local_packages, compile_action=compile_action)
+        binding, owned_run, configuration, feed, local_packages=local_packages, compile_action=compile_action,
+        msbuild=("dotnet", "exec", "--fx-version", runtime_version,
+                 str(Path(toolchain_root) / "sdk" / sdk_version / "MSBuild.dll")))
     if set(captured) != {"graphs", "compilation", "documents"}:
         raise evidence.ConformanceError("EvidenceIncomplete")
     registered = binding.registration["adapterPackage"]

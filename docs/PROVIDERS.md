@@ -509,6 +509,11 @@ public dispatch, complete artifact applicability or qualification.
 The first Linux replay passes the consumer-lock component but fails the joined
 builds at content-hash capture. A single closed producer error is now preserved
 through capture orchestration; this is improved diagnosis, not native acceptance.
+The next managed regression exposes ambient SDK selection in restore/pack:
+an enclosing global.json requesting an unavailable SDK breaks the joined build.
+The captured path now invokes both targets through the exact measured
+MSBuild/runtime, retaining locked restore, no-build pack and input revalidation.
+The managed regression passes; Linux failure resolution remains unverified.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with

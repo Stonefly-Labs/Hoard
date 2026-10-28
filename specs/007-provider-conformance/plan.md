@@ -994,6 +994,37 @@ actual Linux gate, while tooling remains a blocker. Predecessor foundations
 run40779449532 atae85961 completes successfully; neither earlier success
 nor the new partial native controls admit the changed failing input set.
 
+### Measured restore and pack toolchain
+
+Native run40787411716 at6e7b651 executes698 tests without skips or unexpected
+diagnostic bytes, with two failures and three errors. The retained closed
+producer code is EvidenceSchemaInvalid from content-hash capture; the negative
+image tests still stop before their intended mutation boundaries. This does
+not identify the exact rejected graph field and is not accepted evidence.
+
+A separate managed regression reproduces an actual toolchain-selection gap:
+an enclosing global.json requests an unavailable SDK, causing the former
+dotnet restore command to fail even though evaluation selected a measured
+installed SDK explicitly. Captured restore and pack now invoke that same
+MSBuild DLL via dotnet exec with the measured exact runtime. Restore retains
+RestoreLockedMode and the private configuration; pack retains NoBuild and the
+private output feed. Shared callers without a measured command are unchanged.
+No assets schema, runtime roll-forward, confinement or revalidation is relaxed.
+The regression passes, including exact command-prefix checks. Existing joined
+builds and both intended late-image rejection controls pass locally.
+
+`python3 -m unittest discover -s tests/tooling -p
+test_conformance_contributors.py -v` passes96 tests with two explicit native
+macOS skips. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes699 tests, zero failures/errors/unexpected diagnostic bytes,22 explicit
+native skips and expected non-qualifying exit2. Fresh Linux replay must still
+establish whether the measured-toolchain correction resolves its content-hash
+failure; no claim of that root cause or native success is made yet. T064 stays
+unchecked and implement remains running. README, PROVIDERS, DEVELOPMENT and
+the harness contract are synchronized; product APIs, architecture/ADR/diagrams,
+public examples, governance, predecessors, IaC, release and UI remain unaffected
+by this internal execution correction.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current
