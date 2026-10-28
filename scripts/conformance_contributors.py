@@ -272,3 +272,32 @@ def binding_compilation_sources(binding, data, generated_root):
     if generated and evidence.input_manifest(generated_root, sorted(generated)) != generated:
         raise evidence.ConformanceError("InputChanged")
     return MappingProxyType({**value, "bindingInputsSha256": binding.inputs_sha256})
+
+
+def binding_compilation_documents(compilation, data, output_root, assembly_path):
+    if not isinstance(data, bytes):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if len(data) > 2 * 1024 * 1024:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    compilation = evidence._record({
+        "project": evidence.relative_path, "succeeded": evidence._boolean,
+        "sources": evidence._hash_map})(compilation)
+    artifact = evidence._record({"path": evidence.relative_path, "sha256": evidence.sha256})
+    value = evidence._record({
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "project": evidence.relative_path, "assembly": artifact, "pdb": artifact,
+        "documents": evidence._hash_map,
+    })(evidence.load_json(data))
+    assembly = evidence.relative_path(assembly_path)
+    if not assembly.endswith(".dll"):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if not compilation["succeeded"]:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    if (value["project"] != compilation["project"] or value["assembly"]["path"] != assembly
+            or value["pdb"]["path"] != assembly[:-4] + ".pdb"
+            or any(compilation["sources"].get(path) != hashed for path, hashed in value["documents"].items())):
+        raise evidence.ConformanceError("ProofMismatch")
+    outputs = {value[kind]["path"]: value[kind]["sha256"] for kind in ("assembly", "pdb")}
+    if evidence.input_manifest(output_root, sorted(outputs)) != outputs:
+        raise evidence.ConformanceError("InputChanged")
+    return MappingProxyType({**value, "compilerSourcesSha256": evidence.digest(compilation["sources"])})

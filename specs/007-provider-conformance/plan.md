@@ -438,6 +438,34 @@ All sixteen contributor cases pass. Frozen full safe tooling observes616 tests,
 zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
 skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 
+The next partial T064 compiled-document reader accepts only closed bounded
+receipts for the selected successful compiler project and exact DLL/PDB paths.
+Each document hash must equal a captured compiler source hash; the actual current
+DLL/PDB bytes are independently rehashed. Foreign/mismatched documents/projects,
+changed output bytes, unknown fields and unsafe paths/links reject. This reader
+does not itself parse PE/PDB bytes or establish native producer provenance.
+
+A private trusted managed BCL component actually opens the built image and
+portable PDB, matches CodeView GUID/stamp/age and verifies the PE PDB checksum.
+The first checksum attempt genuinely failed because it hashed the raw PDB; the
+authoritative runtime PE-COFF specification requires hashing with the20-byte PDB
+ID zeroed. The corrected inspector uses the metadata header's actual ID offset,
+not a byte-pattern guess, and matches five actual PDB document hashes to the
+frozen author and target-generated compiler sources. Appending bytes to the
+otherwise readable PDB rejects at checksum verification; substituting another
+project's valid PDB rejects at CodeView identity matching. The bounded reader
+also rejects both actual changed-output cases. No raw diagnostics are retained.
+
+This is finite private managed component evidence, not full source-document
+coverage, generator/reference/analyzer/package closure, native containment,
+loaded-session attribution or public supplied-project build/pack acceptance.
+The public route stays closed and T064 remains unchecked.
+Twenty focused contributor cases pass. Frozen full safe tooling observes620
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+The portable-PDB checksum rule is documented in the
+[runtime PE-COFF specification](https://github.com/dotnet/runtime/blob/main/docs/design/specs/PE-COFF.md#portable-pdb-checksum).
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

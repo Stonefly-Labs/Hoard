@@ -6328,6 +6328,26 @@ contributor build/pack/full-suite acceptance. T064 stays open.
 616 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2. Catalog, SDK and diff checks
 pass.
+The next compiled-document reader admits only closed bounded receipts matching
+the selected successful compiler project, expected DLL/PDB paths, observed
+compiler source hashes and independently rehashed current outputs. Unsafe
+paths/links, unknown fields, foreign/mismatched sources/projects and changed
+outputs reject. It does not itself parse PE/PDB bytes or prove producer origin.
+A private actual BCL inspector matches the built image's CodeView identity and
+specified portable-PDB checksum, then matches five document hashes to actual
+author/generated compiler sources. The initial raw-file checksum attempt failed;
+the corrected check uses the specified20-byte zeroed ID at the actual metadata
+header offset. Appended symbol bytes reject at checksum verification; a foreign
+valid PDB rejects at identity matching. Both also reject current-output admission.
+The BCL probe uses explicit `LatestPatch` runtime resolution; no native guard,
+SDK pin or product dependency changes. Full compiler/package closure, native
+provenance and the public build/common-suite pipeline remain open; T064 stays
+unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+20 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+620 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
+pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

@@ -321,6 +321,22 @@ input tracer, portable-PDB correspondence, actual loaded-image attribution,
 native containment or the public contributor build/pack route. References,
 analyzers, package inputs and the full supplied-project pipeline remain open.
 
+Compiled-document receipt admission now requires the selected successful
+compiler project, exact expected DLL/PDB paths, a source-document subset with
+matching captured source hashes, and independently rehashed current output
+bytes. Unknown fields, unsafe paths/links, foreign projects/documents and altered
+outputs reject. The reader does not parse PE/PDB bytes or establish producer
+origin by itself.
+
+A private trusted BCL inspector actually opens the emitted portable PDB and DLL,
+matches CodeView GUID/stamp/age, verifies the specified SHA-256 PDB checksum with
+its20-byte ID zeroed, and checks five document hashes against author/generated
+compiler inputs. Appending bytes to the PDB rejects at the checksum check;
+substituting another project's valid PDB rejects at identity matching. Current
+output-byte admission also rejects both substitutions. This finite managed
+component does not establish full source-document coverage, generator/reference/
+analyzer/package closure, native containment or an integrated public build.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

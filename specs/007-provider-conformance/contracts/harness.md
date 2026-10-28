@@ -2193,6 +2193,13 @@ observed `source/` hash to frozen author inputs and independently rehash every
 including unqueried ones. Reject changed/conflicting hashes, links, unknown
 namespaces/fields and unsafe paths. These receipts do not by themselves prove
 complete compiler/reference/analyzer/package closure or compiled/loaded origin.
+Compiled-document receipt admission must bind the successful compiler project,
+exact selected DLL/PDB paths and current output hashes. Every document hash must
+match an observed compiler source; unknown or mismatched documents reject.
+Unknown fields and unsafe paths/links reject. A receipt reader alone does not
+parse PE/PDB bytes or prove producer origin, full document coverage or complete
+compiler closure. The independent producer must verify actual PE/portable-PDB
+identity and checksum before such a receipt can contribute to runtime evidence.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

@@ -533,6 +533,91 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.compile_inputs(value)
         self.assertEqual(outside.read_text(), "public class Dynamic { }\n")
 
+    def documents(self):
+        compilation = self.compile_inputs(self.compilation())["compilations"][0]
+        self.output = self.parent / "output"
+        self.output.mkdir()
+        (self.output / "Adapter.dll").write_bytes(b"modeled compiler image")
+        (self.output / "Adapter.pdb").write_bytes(b"modeled portable symbols")
+        value = {
+            "schemaVersion": 1, "qualification": False, "project": "Adapter.csproj",
+            "assembly": {"path": "Adapter.dll", "sha256": evidence.file_sha256(self.output / "Adapter.dll")},
+            "pdb": {"path": "Adapter.pdb", "sha256": evidence.file_sha256(self.output / "Adapter.pdb")},
+            "documents": dict(compilation["sources"])}
+        return compilation, value
+
+    def document_inputs(self, compilation, value):
+        return contributors.binding_compilation_documents(
+            compilation, evidence.canonical_bytes(value), self.output, "Adapter.dll")
+
+    def test_compiler_document_receipts_match_observed_source_subset_and_current_output_bytes(self):
+        compilation, value = self.documents()
+        del value["documents"]["generated/Dynamic.cs"]
+        result = self.document_inputs(compilation, value)
+        self.assertEqual(result["documents"], value["documents"])
+        self.assertEqual(result["compilerSourcesSha256"], evidence.digest(compilation["sources"]))
+        self.assertEqual(result["assembly"], value["assembly"])
+        self.assertEqual(result["pdb"], value["pdb"])
+        self.assertFalse(result["qualification"])
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(result))
+
+    def test_compiler_documents_reject_foreign_project_source_hash_or_output_selection(self):
+        compilation, value = self.documents()
+        for defect in ("project", "document", "hash", "assembly", "pdb"):
+            changed = copy.deepcopy(value)
+            if defect == "project":
+                changed["project"] = "Other.csproj"
+            elif defect == "document":
+                changed["documents"]["generated/Unobserved.cs"] = "a" * 64
+            elif defect == "hash":
+                changed["documents"]["source/Binding.cs"] = "a" * 64
+            else:
+                changed[defect]["path"] = "Other." + ("dll" if defect == "assembly" else "pdb")
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^ProofMismatch$"):
+                self.document_inputs(compilation, changed)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            self.document_inputs({**compilation, "succeeded": False}, value)
+
+    def test_compiler_documents_reject_output_byte_changes_and_linked_symbols(self):
+        compilation, value = self.documents()
+        for name in ("Adapter.dll", "Adapter.pdb"):
+            path = self.output / name
+            original = path.read_bytes()
+            path.write_bytes(original + b"changed")
+            with self.subTest(name=name), self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                self.document_inputs(compilation, value)
+            path.write_bytes(original)
+        outside = self.parent / "outside.pdb"
+        original = (self.output / "Adapter.pdb").read_bytes()
+        outside.write_bytes(original)
+        (self.output / "Adapter.pdb").unlink()
+        (self.output / "Adapter.pdb").symlink_to(outside)
+        with self.assertRaises(evidence.ConformanceError):
+            self.document_inputs(compilation, value)
+        self.assertEqual(outside.read_bytes(), original)
+
+    def test_compiler_documents_reject_open_schemas_unsafe_paths_and_empty_document_sets(self):
+        compilation, value = self.documents()
+        for defect in ("field", "nested-field", "absolute", "escape", "qualification", "documents"):
+            changed = copy.deepcopy(value)
+            if defect == "field":
+                changed["message"] = "must not disappear"
+            elif defect == "nested-field":
+                changed["assembly"]["message"] = "must not disappear"
+            elif defect == "qualification":
+                changed["qualification"] = True
+            elif defect == "documents":
+                changed["documents"] = {}
+            else:
+                changed["pdb"]["path"] = "/private/Adapter.pdb" if defect == "absolute" else "../Adapter.pdb"
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                self.document_inputs(compilation, changed)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+            contributors.binding_compilation_documents(
+                compilation, b"x" * (2 * 1024 * 1024 + 1), self.output, "Adapter.dll")
+
 
 if __name__ == "__main__":
     unittest.main()
