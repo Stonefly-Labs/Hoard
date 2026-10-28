@@ -276,6 +276,18 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
         f'{validation}(provider: "{binding}", missing: {missing})':
             2 if profile["durability"] == "LocalProcessCrash" else 1
         for missing in ("False", "True")})
+    for method, points in (
+            ("Observed_ordinary_cleanup_errors_preserve_actual_faulted_ownership",
+             ("StagePrefix", "BeforePublicationDecision", "CommitProgress")),
+            ("Observed_ordinary_failure_callbacks_preserve_actual_faulted_ownership",
+             ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))):
+        prefix = f"Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests.{method}"
+        identities.update({f'{prefix}(provider: "{binding}", point: {point})': 1 for point in points})
+    observer = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+                "Observed_ordinary_observer_errors_preserve_actual_faulted_ownership")
+    identities.update({
+        f'{observer}(provider: "{binding}", consumer: "{consumer}")': 1
+        for consumer in ("candidate", "acknowledgment")})
     return identities
 
 

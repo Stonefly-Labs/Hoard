@@ -25,11 +25,19 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await OrdinaryCleanupFailureConsumerAsync(Binding(provider), context, resources, output, point);
+    }
+
+    internal static async Task OrdinaryCleanupFailureConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        ArtifactObservationPoint point, Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var failure = new IOException("InjectedCleanupFailure");
         Exception? disposalFailure = null;
         try
         {
+            assertProfile?.Invoke(session);
             var bytes = "ordinary cleanup callback remains an error"u8.ToArray();
             if (point == ArtifactObservationPoint.CommitProgress)
             {
@@ -56,6 +64,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     await session.Store.CommitAsync(staged, new(), default));
             }
             Assert.False(source.WasDisposed);
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask()); }
@@ -1190,13 +1199,21 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await OrdinaryCallbackFailureConsumerAsync(Binding(provider), context, resources, output, point);
+    }
+
+    internal static async Task OrdinaryCallbackFailureConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        ArtifactObservationPoint point, Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         Exception failure = point == ArtifactObservationPoint.DeleteRemoved
             ? new IOException("InjectedDeleteAcknowledgmentLoss")
             : new InvalidOperationException("InjectedObservationFailure");
         Exception? disposalFailure = null;
         try
         {
+            assertProfile?.Invoke(session);
             var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
                 await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Value;
             using var source = new ArtifactPublicationAssertions.ShortSource("ordinary callback ownership"u8.ToArray());
@@ -1242,6 +1259,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             }
             Assert.Equal(1, injection.ObservationCount);
             await session.Faults.AwaitSettlementAsync(default);
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask()); }
@@ -1345,10 +1363,19 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await OrdinaryCandidateFailureConsumerAsync(Binding(provider), context, resources, output);
+    }
+
+    internal static async Task OrdinaryCandidateFailureConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var failure = new InvalidOperationException("InjectedHistoryCandidateFailure");
+        Exception? disposalFailure = null;
         try
         {
+            assertProfile?.Invoke(session);
             Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
                 await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
             await using var injection = await session.Faults.InjectHistoryCandidateFailureAsync(default);
@@ -1357,9 +1384,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)).Code);
             Assert.Equal(0, injection.ObservationCount);
             await session.Faults.AwaitSettlementAsync(default);
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
-        finally { await Assert.ThrowsAsync<InvalidOperationException>(() => session.DisposeAsync().AsTask()); }
+        finally { disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask()); }
+        Assert.IsType<InvalidOperationException>(disposalFailure);
         var settlement = Assert.Single(resources.Settlements).Value;
         Assert.True(settlement.IsFaulted);
         Assert.Contains(failure, settlement.Exception!.InnerExceptions);
@@ -1868,10 +1897,19 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await OrdinaryAcknowledgmentFailureConsumerAsync(Binding(provider), context, resources, output);
+    }
+
+    internal static async Task OrdinaryAcknowledgmentFailureConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var failure = new IOException("InjectedPublicationAcknowledgmentLoss");
+        Exception? disposalFailure = null;
         try
         {
+            assertProfile?.Invoke(session);
             await using var observer = await session.Faults.ObserveBoundaryAsync(
                 ArtifactObservationPoint.PublicationSelected, () => ValueTask.FromException(failure), default);
             var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
@@ -1882,9 +1920,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
                 await session.Store.CommitAsync(staged, new(), default)).Code);
             await session.Faults.AwaitSettlementAsync(default);
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
-        finally { await Assert.ThrowsAsync<InvalidOperationException>(() => session.DisposeAsync().AsTask()); }
+        finally { disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask()); }
+        Assert.IsType<InvalidOperationException>(disposalFailure);
         var settlement = Assert.Single(resources.Settlements).Value;
         Assert.True(settlement.IsFaulted);
         Assert.Contains(failure, settlement.Exception!.InnerExceptions);

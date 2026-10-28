@@ -331,5 +331,60 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
         Assert.Equal(ContributorBindingFactory.ExpectedDurability, actual.Durability);
         Assert.Equal(ContributorBindingFactory.ExpectedEnumeration, actual.Enumeration);
     }
+
+    [Theory]
+    [ContributorArtifactData(ArtifactObservationPoint.StagePrefix)]
+    [ContributorArtifactData(ArtifactObservationPoint.BeforePublicationDecision)]
+    [ContributorArtifactData(ArtifactObservationPoint.CommitProgress)]
+    public async Task Observed_ordinary_cleanup_errors_preserve_actual_faulted_ownership(
+        string provider, ArtifactObservationPoint point)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.OrdinaryCleanupFailureConsumerAsync(binding, context, resources, output,
+            point, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(ArtifactObservationPoint.ReadOpened)]
+    [ContributorArtifactData(ArtifactObservationPoint.ReconciliationVerified)]
+    [ContributorArtifactData(ArtifactObservationPoint.DeleteRemoved)]
+    public async Task Observed_ordinary_failure_callbacks_preserve_actual_faulted_ownership(
+        string provider, ArtifactObservationPoint point)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.OrdinaryCallbackFailureConsumerAsync(binding, context, resources, output,
+            point, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData("candidate")]
+    [ContributorArtifactData("acknowledgment")]
+    public async Task Observed_ordinary_observer_errors_preserve_actual_faulted_ownership(string provider, string consumer)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await (consumer switch
+        {
+            "candidate" => ArtifactConformanceSessionTests.OrdinaryCandidateFailureConsumerAsync(
+                binding, context, resources, output, AssertProfile),
+            "acknowledgment" => ArtifactConformanceSessionTests.OrdinaryAcknowledgmentFailureConsumerAsync(
+                binding, context, resources, output, AssertProfile),
+            _ => throw new ArgumentException("BindingInvalid")
+        });
+    }
 }
 #endif

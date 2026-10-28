@@ -521,6 +521,26 @@ README/provider/development/harness guidance is updated; public examples,
 diagrams, product/architecture/ADR/governance, predecessors, IaC, release and UI
 are unaffected by internal consumer extraction. T064, complete catalog/native/
 compiler input closure and public dispatch remain open.
+The next eight controls share original ordinary cleanup-boundary, owned-failure
+callback, candidate-shaped and acknowledgment-shaped observer consumers. Each
+requires the actual exception in faulted settlement and forbids released-owner
+observations; deliberate negative controls do not authorize qualifying retained
+resources. Test-fixture profile checks surround work. Candidate/acknowledgment
+helpers capture disposal errors before asserting the same exact exception type,
+so cleanup cannot replace an earlier profile assertion failure.
+Actual SDK-packed snapshot/incomplete adapters pass96/97 rows with103/98 origins,
+exact discovery, eight-role attribution, fresh-cache locked replay, all174
+independently discovered built-in regressions and all six input/category
+controls. Independently packed profile-on-reopen mutations reject at the actual
+named profile assertion after27 preceding durable rows or96 simulated rows.
+Crossed inventory-only controls require97/104 or96/97 rows/origins; these are not
+crossed runtime-support claims. The51 contributor cases, catalog/SDK, focused
+two-file whitespace and diff checks pass. Frozen full safe tooling remains653
+observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native skips and expected incomplete exit2. Affected README/provider/development/
+harness guidance is updated; public examples, diagrams, production/governance/
+IaC/release/UI documents are unaffected by internal consumer extraction.
+T064 and complete common/native/compiler/public dispatch closure remain open.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

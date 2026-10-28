@@ -2249,7 +2249,7 @@ contributor build properties must fail before compilation/package collection.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. The artifact component mode
 now compiles the same exact-package/generated-factory inputs and independently
-expands 88 snapshot / 89 incomplete-enumeration publication/read/reconciliation/
+expands 96 snapshot / 97 incomplete-enumeration publication/read/reconciliation/
 deletion/budget/reference rows using the registered ID. It invokes unchanged SDK helpers and
 settles actual sessions; it does not select a built-in ID or inherit exclusions.
 An actual independently SDK-packed Acme adapter at2.4.0-preview.1 passes these
@@ -2308,6 +2308,12 @@ applicable detection paths. Also share receipt/callback ownership, admitted
 deletion history, transfer-queue and released-shutdown consumers. Actual
 snapshot/incomplete profiles pass88/89 rows with95/90 origins and all158 selected
 built-in regressions; complete common/native closure remains unfinished.
+Eight shared ordinary-error controls require exact exception identity in faulted
+settlement and prohibit released-ownership reports. Preserve the same exception-
+type assertions without masking earlier profile failures during disposal.
+Actual snapshot/incomplete profiles pass96/97 rows and103/98 origins plus174
+selected built-in regressions. Deliberate negative settlement controls do not
+authorize qualification with retained live/unsettled resources.
 Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a

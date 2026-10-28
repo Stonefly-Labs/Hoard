@@ -6369,6 +6369,17 @@ simulation. The51 contributor cases, catalog/SDK, whitespace and diff checks
 pass; frozen safe tooling remains653 observed, zero failures/errors/unexpected
 diagnostic bytes, twenty native skips and expected incomplete exit2. T064 and
 native/compiler/public dispatch closure remain unfinished.
+Eight further ordinary cleanup/callback/candidate/acknowledgment error controls
+reuse original consumers, retaining exact exception identity, faulted settlement
+and no released-ownership assertions. Disposal assertions execute after cleanup
+without masking an earlier profile failure. Actual snapshot/incomplete adapters
+pass96/97 rows with103/98 origins, exact discovery, eight-role attribution,
+fresh-cache locked replay, all174 selected built-in regressions and all six input/
+category controls. Profile-on-reopen mutations fail at the named assertion after
+27 preceding durable rows or96 simulated rows. The51 contributor cases,
+catalog/SDK, whitespace and diff checks pass; frozen full safe tooling remains653
+observed, zero failures/errors/unexpected diagnostic bytes, twenty native skips
+and expected incomplete exit2. T064 and native/common/public closure stay open.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,
