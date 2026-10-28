@@ -6310,6 +6310,24 @@ The32 focused contributor/input cases pass. Frozen full safe tooling observes611
 tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
 macOS skips and expected incomplete exit2; catalog/SDK/diff checks pass. The
 complete scope also covers the new unqueried-declaration mutation.
+The subsequent compiler-source reader checks bounded per-project receipts,
+requires successful declared projects including the selected binding project,
+matches frozen author hashes and independently rechecks a disjoint generated
+root. All frozen author inputs are rechecked; duplicate/foreign/failed rows,
+unknown fields/namespaces, unsafe paths/links and changed/conflicting bytes reject.
+A private actual MSBuild logger requests Csc task inputs. Quiet event delivery
+initially yielded no source rows and correctly failed the probe; diagnostic
+delivery with `-noconsolelogger` observes two genuine compiler tasks and nine
+source hashes without retaining raw diagnostics. A target-generated source
+absent from evaluation is admitted, then an actual generated-file mutation
+rejects. This is managed source-observation evidence only, not complete compiler
+closure, portable-PDB/loaded-image correspondence, native containment or public
+contributor build/pack/full-suite acceptance. T064 stays open.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+16 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+616 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2. Catalog, SDK and diff checks
+pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

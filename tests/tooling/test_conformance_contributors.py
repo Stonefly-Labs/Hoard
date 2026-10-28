@@ -408,6 +408,131 @@ class ContributorAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             capture([row for row in rows if row["Identity"] != "source/Adapter.conformance.json"])
 
+    def compilation(self):
+        self.generated = self.parent / "generated"
+        self.generated.mkdir()
+        (self.generated / "Dynamic.cs").write_text("public class Dynamic { }\n")
+        self.binding = contributors.admit_binding_project(self.project, "metadata")
+        return {
+            "schemaVersion": 1, "qualification": False, "succeeded": True,
+            "compilations": [{
+                "project": "Adapter.csproj", "succeeded": True,
+                "sources": {"source/Binding.cs": self.binding.sources["Binding.cs"],
+                            "generated/Dynamic.cs": evidence.file_sha256(self.generated / "Dynamic.cs")}}]}
+
+    def compile_inputs(self, value):
+        data = value if isinstance(value, bytes) else evidence.canonical_bytes(value)
+        return contributors.binding_compilation_sources(self.binding, data, self.generated)
+
+    def test_compiler_sources_bind_each_actual_project_to_frozen_and_generated_source_hashes(self):
+        value = self.compilation()
+        (self.source / "Helper.csproj").write_text('<Project Sdk="Microsoft.NET.Sdk" />\n')
+        self.registration["sourceFiles"].append("Helper.csproj")
+        self.write(self.registration)
+        self.binding = contributors.admit_binding_project(self.project, "metadata")
+        value["compilations"].append({
+            "project": "Helper.csproj", "succeeded": True,
+            "sources": {"source/Binding.cs": self.binding.sources["Binding.cs"]}})
+        result = self.compile_inputs(value)
+        self.assertEqual(result["compilations"], tuple(value["compilations"]))
+        self.assertEqual(result["bindingInputsSha256"], self.binding.inputs_sha256)
+        self.assertFalse(result["qualification"])
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(result))
+
+    def test_compiler_sources_reject_failed_missing_duplicate_or_undeclared_projects(self):
+        value = self.compilation()
+        (self.source / "Other.csproj").write_text('<Project Sdk="Microsoft.NET.Sdk" />\n')
+        self.registration["sourceFiles"].append("Other.csproj")
+        self.write(self.registration)
+        self.binding = contributors.admit_binding_project(self.project, "metadata")
+        for defect in ("build-failed", "compiler-failed", "missing-selected-project", "duplicate-project",
+                       "undeclared-project", "not-a-project", "undeclared-source"):
+            changed = copy.deepcopy(value)
+            row = changed["compilations"][0]
+            if defect == "build-failed":
+                changed["succeeded"] = False
+            elif defect == "compiler-failed":
+                row["succeeded"] = False
+            elif defect == "duplicate-project":
+                changed["compilations"].append(copy.deepcopy(row))
+            elif defect == "undeclared-source":
+                row["sources"]["source/Ambient.cs"] = "a" * 64
+            else:
+                row["project"] = {
+                    "missing-selected-project": "Other.csproj", "undeclared-project": "Unknown.csproj",
+                    "not-a-project": "Binding.cs"}[defect]
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceIncomplete$"):
+                self.compile_inputs(changed)
+
+    def test_compiler_sources_reject_changed_generated_queried_and_unqueried_frozen_bytes(self):
+        value = self.compilation()
+        for path in (self.generated / "Dynamic.cs", self.source / "Binding.cs", self.sidecar):
+            original = path.read_bytes()
+            path.write_bytes(original + b"\n")
+            with self.subTest(path=path.name), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^InputChanged$"):
+                self.compile_inputs(value)
+            path.write_bytes(original)
+        changed = copy.deepcopy(value)
+        changed["compilations"].append({
+            "project": "Helper.csproj", "succeeded": True,
+            "sources": {"generated/Dynamic.cs": "a" * 64}})
+        (self.source / "Helper.csproj").write_text('<Project Sdk="Microsoft.NET.Sdk" />\n')
+        self.registration["sourceFiles"].append("Helper.csproj")
+        self.write(self.registration)
+        self.binding = contributors.admit_binding_project(self.project, "metadata")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.compile_inputs(changed)
+
+    def test_compiler_sources_reject_open_schemas_unsafe_paths_and_unbounded_receipts(self):
+        value = self.compilation()
+        for defect in ("unknown-top", "unknown-row", "empty-rows", "empty-sources", "numeric-success",
+                       "qualification", "namespace", "escape", "absolute", "hash"):
+            changed = copy.deepcopy(value)
+            row = changed["compilations"][0]
+            if defect == "unknown-top":
+                changed["message"] = "must not disappear"
+            elif defect == "unknown-row":
+                row["commandLine"] = "must not persist"
+            elif defect == "empty-rows":
+                changed["compilations"] = []
+            elif defect == "empty-sources":
+                row["sources"] = {}
+            elif defect == "numeric-success":
+                row["succeeded"] = 1
+            elif defect == "qualification":
+                changed["qualification"] = True
+            elif defect == "hash":
+                row["sources"]["source/Binding.cs"] = "invalid"
+            else:
+                path = {"namespace": "package/Other.cs", "escape": "generated/../outside.cs",
+                        "absolute": "/private/outside.cs"}[defect]
+                row["sources"][path] = "a" * 64
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                self.compile_inputs(changed)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+            self.compile_inputs(b"x" * (2 * 1024 * 1024 + 1))
+        raw = evidence.canonical_bytes(value).replace(b'"schemaVersion":1', b'"schemaVersion":1,"schemaVersion":1')
+        with self.assertRaises(evidence.ConformanceError):
+            self.compile_inputs(raw)
+
+    def test_compiler_sources_reject_overlapping_generated_roots_and_linked_generated_inputs(self):
+        value = self.compilation()
+        for generated in (self.source, self.source / "obj", self.parent):
+            with self.subTest(root=generated.name), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^OwnershipInvalid$"):
+                contributors.binding_compilation_sources(
+                    self.binding, evidence.canonical_bytes(value), generated)
+        outside = self.parent / "outside.cs"
+        outside.write_bytes((self.generated / "Dynamic.cs").read_bytes())
+        (self.generated / "Dynamic.cs").unlink()
+        (self.generated / "Dynamic.cs").symlink_to(outside)
+        with self.assertRaises(evidence.ConformanceError):
+            self.compile_inputs(value)
+        self.assertEqual(outside.read_text(), "public class Dynamic { }\n")
+
 
 if __name__ == "__main__":
     unittest.main()

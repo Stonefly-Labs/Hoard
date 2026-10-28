@@ -224,3 +224,51 @@ def binding_evaluation_inputs(binding, data, toolchain_root):
         "project": binding.project,
         "sources": MappingProxyType({path: sources[path] for path in sorted(paths["source"])}),
         "toolchain": toolchain})
+
+
+def binding_compilation_sources(binding, data, generated_root):
+    if not isinstance(data, bytes):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if len(data) > 2 * 1024 * 1024:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    compilation = evidence._record({
+        "project": evidence.relative_path, "succeeded": evidence._boolean,
+        "sources": evidence._hash_map})
+    value = evidence._record({
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "succeeded": evidence._boolean,
+        "compilations": evidence._list(compilation, 1024),
+    })(evidence.load_json(data))
+    generated_root = Path(generated_root).absolute()
+    if (generated_root.is_relative_to(binding.root) or binding.root.is_relative_to(generated_root)):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    projects, generated = set(), {}
+    source_inputs = 0
+    for row in value["compilations"]:
+        project = row["project"]
+        if (not row["succeeded"] or project in projects or project not in binding.sources
+                or not project.endswith(".csproj")):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        projects.add(project)
+        source_inputs += len(row["sources"])
+        if source_inputs > evidence.MAX_PROOF_FILES:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        for path, hashed in row["sources"].items():
+            namespace, separator, relative = path.partition("/")
+            if not separator or namespace not in ("source", "generated"):
+                raise evidence.ConformanceError("EvidenceSchemaInvalid")
+            relative = evidence.relative_path(relative)
+            if namespace == "source":
+                if relative not in binding.sources:
+                    raise evidence.ConformanceError("EvidenceIncomplete")
+                if binding.sources[relative] != hashed:
+                    raise evidence.ConformanceError("InputChanged")
+            elif generated.setdefault(relative, hashed) != hashed:
+                raise evidence.ConformanceError("InputChanged")
+    if not value["succeeded"] or binding.project not in projects:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    if evidence.input_manifest(binding.root, sorted(binding.sources)) != binding.sources:
+        raise evidence.ConformanceError("InputChanged")
+    if generated and evidence.input_manifest(generated_root, sorted(generated)) != generated:
+        raise evidence.ConformanceError("InputChanged")
+    return MappingProxyType({**value, "bindingInputsSha256": binding.inputs_sha256})

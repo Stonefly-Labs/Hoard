@@ -412,6 +412,32 @@ explicit native macOS skips and expected incomplete exit2; catalog/SDK/diff
 checks pass. The newly added unqueried-declaration mutation also passes within
 that complete scope.
 
+The next partial T064 reader independently admits bounded compiler-source
+receipts: each declared project has one successful Csc row, the selected binding
+project is required, observed author hashes must match frozen bytes, and generated
+hashes are rechecked beneath a disjoint root. Every frozen author input is
+rechecked, including unqueried ones. Failed/duplicate/foreign projects, unknown
+fields/namespaces, path escapes, links, byte changes and conflicting generated
+hashes reject.
+
+A private trusted `ILogger` uses `IEventSource3.IncludeTaskInputs()` and actual
+Csc task contexts, rather than evaluated Compile items. The first quiet-verbosity
+probe genuinely received no task-input rows and was rejected; enabling diagnostic
+event delivery with `-noconsolelogger` provides the actual events without retaining
+raw diagnostic output. A real two-project build then produces two successful
+compiler rows and nine source-hash observations, including a file emitted by a
+`BeforeTargets="CoreCompile"` target. The reader admits those actual bytes and
+rejects changing the generated file afterwards. Compiler rows remain separate,
+so shared inputs cannot silently overwrite conflicting hashes.
+
+This remains a private managed component, not a permanent public logger, a
+complete reference/analyzer/package input trace, portable-PDB correspondence,
+native containment or public supplied-project build/pack/common-suite acceptance.
+The existing public route remains explicitly incomplete and T064 stays unchecked.
+All sixteen contributor cases pass. Frozen full safe tooling observes616 tests,
+zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
+skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

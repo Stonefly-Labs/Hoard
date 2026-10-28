@@ -303,6 +303,24 @@ full lock/import closure, native parent provenance and public supplied-project
 build/pack integration remain unfinished. MSBuild projects/providers remain
 trusted executable code; this component does not sandbox arbitrary projects.
 
+A separate compiler-source reader admits only closed, bounded per-project
+receipts. Every compiler project must be declared, the selected binding project
+must be observed, and failed/duplicate/foreign project rows reject. Observed
+`source/` hashes must match the frozen declaration; `generated/` hashes are
+independently rechecked beneath a disjoint root. All declared author bytes are
+rechecked, even if not selected by Csc. Unknown fields/namespaces, path escapes,
+links, changed bytes and conflicting generated hashes reject.
+
+A private trusted MSBuild logger calls `IEventSource3.IncludeTaskInputs()` and
+correlates actual Csc task contexts. With diagnostic event delivery enabled and
+console logging disabled, two genuine compiler tasks produce nine source-hash
+observations, including a target-generated file absent from evaluation. The
+reader admits those observations and rejects a subsequent generated-file change.
+This is managed compiler-source component evidence, not a complete compiler
+input tracer, portable-PDB correspondence, actual loaded-image attribution,
+native containment or the public contributor build/pack route. References,
+analyzers, package inputs and the full supplied-project pipeline remain open.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references
