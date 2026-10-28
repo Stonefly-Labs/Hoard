@@ -994,6 +994,46 @@ errors/unexpected diagnostic bytes, twenty native macOS skips and expected
 incomplete exit 2. Catalog and diff checks pass. Fresh Linux replay confirmation
 is pending; no task/profile/qualification gate is promoted.
 
+### Bounded original architecture input preparation
+
+Exact `4e29abe7303264fd0d9e05b4eb7fde38ae3dee10`,
+run40606038841/job122545642668, also fails `ProofMismatch` after completion
+measurement, before inherited execution. The modeled normalization repair is
+not native acceptance. Follow-on failure projection contains only a closed
+code and fixed-source filename/line locations; rejecting checks are unchanged.
+
+The compatibility-only diagnostic now allocates the compatibility profile.
+Its native architecture phase reuses the unchanged foundation package, host,
+architecture and real-architecture factories: 22 actual fixture graph recipes,
+eight required actual platform/provider/host scans and the original cycles.
+The shared native controller request/result/parent/journal/snapshot transport
+is moved to the inherited controller module without changing existing
+composition phase behavior. Architecture requests admit only the explicit
+compatibility preflight and no historical/runtime substitution parameters.
+Missing paired fixture names, missing/duplicate/foreign real scan identities
+or changed original source reject before acceptance.
+
+The private manifest stays in stores for later runtime consumption; cleanup
+still removes stores/feed/cache. A safe relative input map remains. The SDK
+recomputes its exact selected bytes before release; CI independently checks
+released ownership, selected manifest identity and original native parent/
+output/journal/snapshot agreement after release. Neither construction counts
+nor the diagnostic exit mean successful ARCH inspection. T057 still needs
+complete runtime wiring and proof attribution; T059/full compatibility and
+final qualification remain open.
+
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_composition -q`:
+passed, 13 tests, including architecture phase parent mutations, explicit
+profile admission, omitted/duplicate scan controls and post-release ownership/
+input-map rejection. Factory and workflow models are explicitly not native
+evidence. `python3 scripts/conformance_unit_checks.py --all-tooling`:
+584 tests, zero failures/errors/unexpected diagnostic bytes, twenty native
+macOS skips, expected incomplete exit 2. Catalog and diff checks pass.
+Fresh Linux replay/preparation confirmation remains pending. Progress remains
+53/86, implement/running. README/development updated; public product/provider
+contracts, provider guides/examples/diagrams, infrastructure and governance
+are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

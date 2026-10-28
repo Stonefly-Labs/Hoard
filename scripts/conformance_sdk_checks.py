@@ -3888,7 +3888,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         raise evidence.ConformanceError("UnsupportedProfile")
     if not native_execution_supported() or not callable(getattr(evidence, "ingest_runtime_attempt", None)):
         raise evidence.ConformanceError("PrerequisiteMissing")
-    run = OwnedRun.allocate(destination, repository, profile=category or "baseline")
+    run = OwnedRun.allocate(
+        destination, repository, profile="compatibility" if compatibility_only else category or "baseline")
     minutes = 30 if compatibility_only else 60 if category is not None else 100
     run.deadline = min(run.deadline, time.monotonic() + minutes * 60)
     try:
@@ -4052,6 +4053,28 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             }
             print(json.dumps(compatibility_summary), flush=True)
             if compatibility_only:
+                from conformance_inherited import controller_phase, verify_controller_invocations
+                prepared, parent_sha, invocations = controller_phase(
+                    run, repository, candidate, "architecture")
+                prepared = evidence._record({
+                    "qualification": evidence._constant(False), "profileComplete": evidence._constant(False),
+                    "manifestPath": evidence._constant("stores/compatibility-architecture/manifest.json"),
+                    "manifestSha256": evidence.sha256,
+                    "inputMapPath": evidence._constant("proofs/compatibility-architecture-inputs.json"),
+                    "inputMapSha256": evidence.sha256, "inputCount": evidence._integer,
+                    "fixtureGraphs": evidence._constant(22), "requiredRealScans": evidence._constant(8),
+                    "lockDerivationsSha256": evidence.sha256,
+                })(prepared)
+                map_data = read_bounded(run.root / prepared["inputMapPath"], 2 * 1024**2)
+                selected = evidence._hash_map(evidence.load_json(map_data))
+                if (hashlib.sha256(map_data).hexdigest() != prepared["inputMapSha256"]
+                        or len(selected) != prepared["inputCount"]
+                        or selected.get(prepared["manifestPath"]) != prepared["manifestSha256"]
+                        or dict(evidence.input_manifest(run.root, list(selected))) != selected):
+                    raise evidence.ConformanceError("InputChanged")
+                verify_controller_invocations(run.root, invocations, "architecture", run.run_id, run.root_id)
+                compatibility_summary["architecturePreparation"] = {
+                    **prepared, "parentSha256": parent_sha, "nativeInvocations": invocations}
                 if (dict(evidence.source_manifest(repository)) != dict(sources)
                         or evidence.source_identity(repository, ci_revision=ci_revision) != identity):
                     raise evidence.ConformanceError("InputChanged")

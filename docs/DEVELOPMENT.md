@@ -5922,6 +5922,35 @@ tests, zero failures/errors/unexpected diagnostic bytes, twenty native macOS
 skips and expected incomplete exit 2; catalog/diff checks pass. Fresh Linux
 confirmation remains pending, T047/T071 remain open, 53/86 implement/running.
 
+Exact `4e29abe` run40606038841/job122545642668 also fails `ProofMismatch`
+after completion measurement and before inherited execution. The normalization
+repair passes its modeled link control but does not prove native replay.
+The next native attempt retains all rejecting checks and adds closed failure
+codes plus allowlisted Python source filenames/line numbers only; no raw
+provider/compiler output or private paths are exposed.
+
+The existing `--compatibility-only` diagnostic now allocates the explicit
+compatibility profile and asks the original native worker to prepare its full
+architecture corpus. The unchanged foundation factories build/restore the 22
+paired fixture graphs, all eight required platform/provider/host scan graphs
+and original cycle inputs. Both declared inventories must match exactly;
+private graph manifests remain in stores and are removed by actual cleanup.
+A relative-path/hash input map remains as diagnostic evidence.
+Shared native controller transport preserves the original composition phases
+and additionally admits this explicit architecture phase. Foreign profiles,
+omitted/duplicate scans, missing paired inputs, changed source, parent/output
+substitution and incorrect selected-input snapshots reject. Before cleanup the
+SDK diagnostic recomputes every selected file; after cleanup CI independently
+admits the original parent/output/journal/snapshots and released owner.
+
+This is original input construction, not completed ARCH semantic runtime
+inspection or a complete compatibility/version profile. T057/T059/T071 remain
+open. Thirteen focused composition controls pass; full safe tooling observes
+584 tests, zero failures/errors/unexpected diagnostic bytes, twenty native
+macOS skips, expected incomplete exit 2. Catalog and diff checks pass.
+Linux confirmation remains pending; product/provider contracts and their
+guides/examples/diagrams, infrastructure and governance are unaffected.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

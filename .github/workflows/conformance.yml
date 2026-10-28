@@ -78,6 +78,42 @@ jobs:
           mkdir -m 700 "$private_parent"
           python3 scripts/conformance_sdk_checks.py \
             --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run" --compatibility-only
+          python3 - "$private_parent/run" <<'PY'
+          import hashlib
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          import conformance_evidence as evidence
+          from conformance_inherited import verify_controller_invocations
+          from conformance_sources import read_bounded
+          root = Path(sys.argv[1])
+          try:
+              summary = evidence.load_json(read_bounded(
+                  root / "proofs/compatibility-diagnostic-summary.json", 65536))
+              owner = evidence.load_json(read_bounded(root / "ownership.json", 65536))
+              preflight = evidence.load_json(read_bounded(root / "proofs/preflight.json", 65536))
+              architecture = summary["architecturePreparation"]
+              if (architecture["inputMapPath"] != "proofs/compatibility-architecture-inputs.json"
+                      or architecture["manifestPath"] != "stores/compatibility-architecture/manifest.json"):
+                  raise evidence.ConformanceError("ProofMismatch")
+              inputs = read_bounded(root / "proofs/compatibility-architecture-inputs.json", 2 * 1024**2)
+              selected = evidence._hash_map(evidence.load_json(inputs))
+              if (summary["qualification"] is not False or summary["profileComplete"] is not False
+                      or summary["processResourcesReleased"] is not True or owner["state"] != "Released"
+                      or preflight["profileId"] != "compatibility"
+                      or architecture["qualification"] is not False or architecture["profileComplete"] is not False
+                      or architecture["fixtureGraphs"] != 22 or architecture["requiredRealScans"] != 8
+                      or hashlib.sha256(inputs).hexdigest() != architecture["inputMapSha256"]
+                      or len(selected) != architecture["inputCount"]
+                      or selected.get(architecture["manifestPath"]) != evidence.sha256(architecture["manifestSha256"])
+                      or architecture["parentSha256"] != architecture["nativeInvocations"]["parentSha256"]):
+                  raise evidence.ConformanceError("ProofMismatch")
+              verify_controller_invocations(
+                  root, architecture["nativeInvocations"], "architecture", owner["runId"], owner["rootId"])
+          except (evidence.ConformanceError, OSError, ValueError, KeyError, TypeError):
+              raise SystemExit("WitnessMissing") from None
+          print('{"qualification":false,"status":"Incomplete","code":"EvidenceIncomplete"}')
+          PY
 
   lock-preparation:
     name: Non-qualifying lock preparation and fresh build replay

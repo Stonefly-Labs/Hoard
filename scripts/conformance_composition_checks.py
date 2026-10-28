@@ -18,9 +18,10 @@ import conformance_baselines as baselines
 import conformance_evidence as evidence
 import conformance_legacy as legacy
 from conformance_case_catalog import composition_execution_cases, composition_snapshot_policy, expected_cases
-from conformance_execution import OwnedRun, capture_control, native_execution_supported, project_event
+from conformance_execution import OwnedRun, capture_control, native_execution_supported
 from conformance_inherited import (
-    CONTROLLER_ERROR_SOURCES, INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
+    INVENTORY_PATH, _controller_incomplete, admit_discovery, controller_phase as _controller_phase,
+    controller_read_inputs, execution_scopes, inventory,
     verify_controller_baselines,
 )
 from conformance_lock_preparation import prepare_project_lock, verify_project_lock
@@ -37,104 +38,6 @@ HOST = "Hoard.Fixtures.Conformance.Host"
 SDK = "Hoard.Testing.Conformance"
 LOGGER = "Hoard.Conformance.TestLogger"
 DISCOVERY_PROJECT = "tests/fixtures/conformance/Discovery/Discovery.csproj"
-
-
-def _controller_incomplete(phase, code, lines):
-    events = [project_event(line) for line in lines]
-    locations = []
-    for event in events:
-        source, line = divmod(event["value"], 100000)
-        if (event["event"] == "control" and event["code"] != "None"
-                and 1 <= source <= len(CONTROLLER_ERROR_SOURCES) and line):
-            locations.append({"source": CONTROLLER_ERROR_SOURCES[source - 1], "line": line})
-    print(json.dumps({"qualification": False, "phase": "inherited-preparation-incomplete",
-                      "scope": phase, "code": code,
-                      "locations": locations,
-                      "events": [dict(event) for event in events if event["event"] == "control"]}), flush=True)
-
-
-def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_package=None, logger_path=None,
-                      reference=None):
-    if phase not in ("historical", "controllers", "mutations", "reference"):
-        raise evidence.ConformanceError("EvidenceSchemaInvalid")
-    if (phase == "reference") != (reference is not None):
-        raise evidence.ConformanceError("EvidenceSchemaInvalid")
-    if phase == "historical" and (run.command_sequence != 0 or (run.root / "feed/candidate").exists()):
-        raise evidence.ConformanceError("InputChanged")
-    request_path = run.root / f"proofs/inherited-{phase}-request.json"
-    output_path = run.root / f"proofs/inherited-{phase}-result.json"
-    script = source / "scripts/conformance_inherited.py"
-    request = {
-        "schemaVersion": 1, "phase": phase, "owner": str(run.root), "repository": str(repository),
-        "runId": run.run_id, "rootId": run.root_id, "source": source.relative_to(run.root).as_posix(),
-        "baselineSeal": baseline_seal,
-        "sdkPackage": None if sdk_package is None else sdk_package.relative_to(run.root).as_posix(),
-        "loggerPath": None if logger_path is None else logger_path.relative_to(run.root).as_posix(),
-    }
-    if reference is not None:
-        request["reference"] = reference
-    write_new(request_path, evidence.canonical_bytes(request))
-    paths = [request_path, script]
-    if baseline_seal is not None:
-        paths.append(run.root / baseline_seal["path"])
-    paths.extend(path for path in (sdk_package, logger_path) if path is not None)
-    if reference is not None:
-        paths.extend(run.root / evidence.relative_path(reference[key]) for key in ("manifestPath", "inputMapPath"))
-    if phase == "mutations":
-        paths.append(run.root / "proofs/composition-inputs.json")
-    for path in paths:
-        path.chmod(0o400)
-    inputs = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in paths}
-    arguments = [sys.executable, "-I", "-S", str(script), "--request", str(request_path), "--output", str(output_path)]
-    try:
-        result = run.command(
-            arguments, cwd=source, kind="events", cache_id="inherited-" + phase, timeout=600,
-            record_execution=True, execution_inputs=tuple(inputs),
-            execution_outputs=(output_path.relative_to(run.root).as_posix(),))
-    except evidence.ConformanceError as error:
-        diagnostic = run.root / f"diagnostics/command-{run.command_sequence:04}.jsonl"
-        lines = read_bounded(diagnostic, 65536).splitlines() if diagnostic.is_file() else ()
-        _controller_incomplete(phase, str(error), lines)
-        raise
-    record = evidence.load_json(run.read_execution_record(run.command_sequence))
-    failures = [event["code"] for event in result.events if event["code"] != "None"]
-    if failures:
-        _controller_incomplete(phase, failures[-1], [evidence.canonical_bytes(dict(event)) for event in result.events])
-        raise evidence.ConformanceError(failures[-1])
-    ordinals = ((0,) if phase == "reference" else (2, 3, 4, 0) if phase == "historical" else
-                (*range(1, 25), 0) if phase == "mutations" else (1, 2, 3, 4, 0))
-    expected_events = [{"event": "control", "code": "None", "value": number} for number in ordinals]
-    if (result.exit_code or list(result.events) != expected_events
-            or record["runId"] != run.run_id or record["rootId"] != run.root_id
-            or record["argvSha256"] != evidence.digest(arguments)
-            or record["cwdSha256"] != hashlib.sha256(str(source).encode("utf-8")).hexdigest()
-            or record["inputFiles"] != inputs or record["groupState"] != "Exited"
-            or record["exitCode"] != 0 or record["diagnosticCode"] != "None"):
-        raise evidence.ConformanceError("ProofMismatch")
-    raw = read_bounded(output_path, 16 * 1024**2)
-    if (record.get("outputFiles") != {
-            output_path.relative_to(run.root).as_posix(): hashlib.sha256(raw).hexdigest()}
-            or result.execution_record_sha256 != evidence.digest(record)):
-        raise evidence.ConformanceError("ProofMismatch")
-    value = evidence.load_json(raw)
-    if (not isinstance(value, dict) or set(value) != {
-            "schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations", "inputSnapshots"}
-            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 3
-            or value["qualification"] is not False or value["phase"] != phase
-            or value["runId"] != run.run_id or value["rootId"] != run.root_id
-            or not isinstance(value["result"], dict)):
-        raise evidence.ConformanceError("ProofMismatch")
-    legacy.verify_borrowed_invocations(
-        value["invocations"], group_pid=record["childPid"], group_start_sha256=record["childStartSha256"])
-    legacy.verify_borrowed_input_snapshots(value["inputSnapshots"], len(value["invocations"]))
-    if phase == "reference" and value["invocations"] != [value["result"].get("invocation")]:
-        raise evidence.ConformanceError("ProofMismatch")
-    return value["result"], result.execution_record_sha256, {
-        "qualification": False, "nativeContainment": True, "inputClosureComplete": False,
-        "scope": "borrowed-launch-observations", "count": len(value["invocations"]),
-        "sha256": evidence.digest(value["invocations"]), "sequence": run.command_sequence,
-        "parentSha256": result.execution_record_sha256,
-        "inputSnapshotsSha256": evidence.digest(value["inputSnapshots"])}
 
 
 def _native_reference_consumer(run, repository, source, controllers, baseline_seal):
@@ -1005,19 +908,34 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
         "configurationSha256": evidence.file_sha256(config),
         "environment": post_environment, "environmentSha256": evidence.digest(post_environment),
     })
-    retained_inputs = _retain_composition_inputs(run, inputs, record)
-    case_report = _composition_case_report(
-        run, inputs, post_inputs, admitted, runtime_directory=output.relative_to(run.root).as_posix(),
-        started_ms=started, ended_ms=ended, resources=run.resource_projection(),
-        transport_paths=(
-            *retained_inputs, *(path for path in command_inputs
-                                if not path.startswith(("stores/", "feed/", "cache/"))),
-            f"proofs/category-command-{attempt}-execution.json",
-            f"proofs/execution-command-{record['sequence']:04}.json",
-            output.relative_to(run.root).as_posix() + "/witnesses.jsonl",
-            output.relative_to(run.root).as_posix() + "/completion.json"))
-    if verify_composition_case_report(run.root, inputs, owner) != case_report:
-        raise evidence.ConformanceError("ProofMismatch")
+    try:
+        retained_inputs = _retain_composition_inputs(run, inputs, record)
+        case_report = _composition_case_report(
+            run, inputs, post_inputs, admitted, runtime_directory=output.relative_to(run.root).as_posix(),
+            started_ms=started, ended_ms=ended, resources=run.resource_projection(),
+            transport_paths=(
+                *retained_inputs, *(path for path in command_inputs
+                                    if not path.startswith(("stores/", "feed/", "cache/"))),
+                f"proofs/category-command-{attempt}-execution.json",
+                f"proofs/execution-command-{record['sequence']:04}.json",
+                output.relative_to(run.root).as_posix() + "/witnesses.jsonl",
+                output.relative_to(run.root).as_posix() + "/completion.json"))
+        if verify_composition_case_report(run.root, inputs, owner) != case_report:
+            raise evidence.ConformanceError("ProofMismatch")
+    except evidence.ConformanceError as error:
+        sources = {str(Path(__file__).with_name(name)): name for name in (
+            "conformance_composition_checks.py", "conformance_sdk_checks.py", "conformance_evidence.py")}
+        locations = []
+        frame = error.__traceback__
+        while frame is not None:
+            source_name = sources.get(frame.tb_frame.f_code.co_filename)
+            if source_name is not None and 0 < frame.tb_lineno < 100000:
+                locations.append({"source": source_name, "line": frame.tb_lineno})
+            frame = frame.tb_next
+        print(json.dumps({
+            "qualification": False, "phase": "composition-report-replay-incomplete",
+            "code": str(error), "locations": locations}), flush=True)
+        raise
     return {
         "schemaVersion": 1, "qualification": False, "nativeContainment": True, "profileComplete": False,
         "safeRuntimeAdmission": True, "runId": run.run_id, "attemptId": attempt,

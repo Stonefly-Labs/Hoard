@@ -1,4 +1,4 @@
-"""Exact source-owned inherited composition inventories and opaque discovery admission."""
+"""Owned original controller preparation and exact inherited runtime inventories."""
 
 from collections import Counter
 from contextlib import contextmanager, redirect_stdout
@@ -30,6 +30,113 @@ CONTROLLER_ERROR_SOURCES = (
     "conformance_evidence.py", "conformance_sources.py", "foundation_evidence.py",
     "lifecycle_evidence.py", "configuration_evidence.py", "discovery_evidence.py", "conformance_execution.py",
 )
+
+
+def _controller_incomplete(phase, code, lines):
+    from conformance_execution import project_event
+
+    events = [project_event(line) for line in lines]
+    locations = []
+    for event in events:
+        source, line = divmod(event["value"], 100000)
+        if (event["event"] == "control" and event["code"] != "None"
+                and 1 <= source <= len(CONTROLLER_ERROR_SOURCES) and line):
+            locations.append({"source": CONTROLLER_ERROR_SOURCES[source - 1], "line": line})
+    print(json.dumps({"qualification": False, "phase": "inherited-preparation-incomplete",
+                      "scope": phase, "code": code, "locations": locations,
+                      "events": [dict(event) for event in events if event["event"] == "control"]}), flush=True)
+
+
+def controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_package=None, logger_path=None,
+                     reference=None):
+    import conformance_evidence as evidence
+    import conformance_legacy as legacy
+    from conformance_sdk_checks import write_new
+    from conformance_sources import read_bounded
+
+    if phase not in ("historical", "controllers", "mutations", "reference", "architecture"):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    if (phase == "reference") != (reference is not None):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    if phase == "architecture" and any(value is not None for value in (baseline_seal, sdk_package, logger_path)):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    if phase == "historical" and (run.command_sequence != 0 or (run.root / "feed/candidate").exists()):
+        raise ConformanceError("InputChanged")
+    request_path = run.root / f"proofs/inherited-{phase}-request.json"
+    output_path = run.root / f"proofs/inherited-{phase}-result.json"
+    script = source / "scripts/conformance_inherited.py"
+    request = {
+        "schemaVersion": 1, "phase": phase, "owner": str(run.root), "repository": str(repository),
+        "runId": run.run_id, "rootId": run.root_id, "source": source.relative_to(run.root).as_posix(),
+        "baselineSeal": baseline_seal,
+        "sdkPackage": None if sdk_package is None else sdk_package.relative_to(run.root).as_posix(),
+        "loggerPath": None if logger_path is None else logger_path.relative_to(run.root).as_posix(),
+    }
+    if reference is not None:
+        request["reference"] = reference
+    write_new(request_path, evidence.canonical_bytes(request))
+    paths = [request_path, script]
+    if baseline_seal is not None:
+        paths.append(run.root / baseline_seal["path"])
+    paths.extend(path for path in (sdk_package, logger_path) if path is not None)
+    if reference is not None:
+        paths.extend(run.root / evidence.relative_path(reference[key]) for key in ("manifestPath", "inputMapPath"))
+    if phase == "mutations":
+        paths.append(run.root / "proofs/composition-inputs.json")
+    for path in paths:
+        path.chmod(0o400)
+    inputs = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in paths}
+    arguments = [sys.executable, "-I", "-S", str(script), "--request", str(request_path), "--output", str(output_path)]
+    try:
+        result = run.command(
+            arguments, cwd=source, kind="events", cache_id="inherited-" + phase, timeout=600,
+            record_execution=True, execution_inputs=tuple(inputs),
+            execution_outputs=(output_path.relative_to(run.root).as_posix(),))
+    except ConformanceError as error:
+        diagnostic = run.root / f"diagnostics/command-{run.command_sequence:04}.jsonl"
+        lines = read_bounded(diagnostic, 65536).splitlines() if diagnostic.is_file() else ()
+        _controller_incomplete(phase, str(error), lines)
+        raise
+    record = load_json(run.read_execution_record(run.command_sequence))
+    failures = [event["code"] for event in result.events if event["code"] != "None"]
+    if failures:
+        _controller_incomplete(phase, failures[-1], [evidence.canonical_bytes(dict(event)) for event in result.events])
+        raise ConformanceError(failures[-1])
+    ordinals = ((0,) if phase == "reference" else (1, 0) if phase == "architecture" else
+                (2, 3, 4, 0) if phase == "historical" else
+                (*range(1, 25), 0) if phase == "mutations" else (1, 2, 3, 4, 0))
+    expected_events = [{"event": "control", "code": "None", "value": number} for number in ordinals]
+    if (result.exit_code or list(result.events) != expected_events
+            or record["runId"] != run.run_id or record["rootId"] != run.root_id
+            or record["argvSha256"] != digest(arguments)
+            or record["cwdSha256"] != hashlib.sha256(str(source).encode("utf-8")).hexdigest()
+            or record["inputFiles"] != inputs or record["groupState"] != "Exited"
+            or record["exitCode"] != 0 or record["diagnosticCode"] != "None"):
+        raise ConformanceError("ProofMismatch")
+    raw = read_bounded(output_path, 16 * 1024**2)
+    if (record.get("outputFiles") != {
+            output_path.relative_to(run.root).as_posix(): hashlib.sha256(raw).hexdigest()}
+            or result.execution_record_sha256 != digest(record)):
+        raise ConformanceError("ProofMismatch")
+    value = load_json(raw)
+    if (not isinstance(value, dict) or set(value) != {
+            "schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations", "inputSnapshots"}
+            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 3
+            or value["qualification"] is not False or value["phase"] != phase
+            or value["runId"] != run.run_id or value["rootId"] != run.root_id
+            or not isinstance(value["result"], dict)):
+        raise ConformanceError("ProofMismatch")
+    legacy.verify_borrowed_invocations(
+        value["invocations"], group_pid=record["childPid"], group_start_sha256=record["childStartSha256"])
+    legacy.verify_borrowed_input_snapshots(value["inputSnapshots"], len(value["invocations"]))
+    if phase == "reference" and value["invocations"] != [value["result"].get("invocation")]:
+        raise ConformanceError("ProofMismatch")
+    return value["result"], result.execution_record_sha256, {
+        "qualification": False, "nativeContainment": True, "inputClosureComplete": False,
+        "scope": "borrowed-launch-observations", "count": len(value["invocations"]),
+        "sha256": digest(value["invocations"]), "sequence": run.command_sequence,
+        "parentSha256": result.execution_record_sha256,
+        "inputSnapshotsSha256": digest(value["inputSnapshots"])}
 
 
 @contextmanager
@@ -953,6 +1060,58 @@ def replay_controller_baseline(owner, baseline, phase, target):
     return retained
 
 
+def prepare_architecture_evidence(repository, owner, source):
+    import foundation_evidence as foundation
+    import conformance_legacy as legacy
+    from conformance_case_catalog import ARCHITECTURE_RUNTIME_ROWS
+
+    owner, source = Path(owner), Path(source)
+    for path in (owner, source):
+        legacy.no_symlinks(path)
+    owner, source = owner.resolve(strict=True), source.resolve(strict=True)
+    if source == owner or not source.is_relative_to(owner):
+        raise ConformanceError("OwnershipInvalid")
+    target = owner / "stores/compatibility-architecture"
+    target.mkdir(mode=0o700)
+    with controller_transport(repository, owner) as controls:
+        controls["phase"] = "foundation"
+        print(json.dumps({"qualification": False, "phase": "inherited-controller-preparation",
+                          "controller": "foundation"}), flush=True)
+        before = foundation.source_hashes(source)
+        core, providers, config = foundation.packages(source, target, False)
+        document = {"core": core, "providers": providers, "localFeed": str(target / "feed")}
+        document["hosts"] = foundation.hosts(source, target, config, False)
+        document["architecture"], document["cycles"] = foundation.architecture(source, target, config, False)
+        document["realArchitecture"] = foundation.real_architecture(source, target, document)
+        if foundation.source_hashes(source) != before:
+            raise ConformanceError("InputChanged")
+        expected = {"permitted", "identity-hosting", *(name for rows in ARCHITECTURE_RUNTIME_ROWS.values()
+                                                      for name in rows)}
+        scans = {
+            "platform", "provider:Hoard.Fixtures.Protocol", "provider:Hoard.Fixtures.Metadata",
+            "provider:Hoard.Fixtures.Artifact.One", "provider:Hoard.Fixtures.Artifact.Two",
+            "provider:Hoard.Fixtures.Identity", "host:One", "host:Two"}
+        if (document["architecture"].keys() != expected or len(document["realArchitecture"]) != len(scans)
+                or {graph["scanId"] for graph in document["realArchitecture"]} != scans):
+            raise ConformanceError("WitnessMissing")
+        manifest_path = target / "manifest.json"
+        legacy._write(manifest_path, document)
+        manifest_path.chmod(0o400)
+        files = controller_read_inputs(owner, {"foundation": manifest_path}, extra=(
+            source / "tests/fixtures/architecture/ownership.json",
+            source / "tests/fixtures/architecture/Cycles/graph.json"))
+    inputs_path = owner / "proofs/compatibility-architecture-inputs.json"
+    legacy._write(inputs_path, files)
+    inputs_path.chmod(0o400)
+    return {
+        "qualification": False, "profileComplete": False,
+        "manifestPath": manifest_path.relative_to(owner).as_posix(), "manifestSha256": legacy._hash(manifest_path),
+        "inputMapPath": inputs_path.relative_to(owner).as_posix(), "inputMapSha256": legacy._hash(inputs_path),
+        "inputCount": len(files), "fixtureGraphs": len(expected), "requiredRealScans": len(scans),
+        "lockDerivationsSha256": digest(controls["lockDerivations"]),
+    }
+
+
 def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, logger_path=None,
                                 prepared_baselines=None):
     """Prepare fresh borrowed evidence, without claiming full controller acceptance."""
@@ -1240,7 +1399,7 @@ def verify_controller_invocations(owner, summary, phase, run_id, root_id):
 
     fields = {"qualification", "nativeContainment", "inputClosureComplete", "scope",
               "count", "sha256", "parentSha256", "sequence", "inputSnapshotsSha256"}
-    if (phase not in ("historical", "controllers", "mutations", "reference")
+    if (phase not in ("historical", "controllers", "mutations", "reference", "architecture")
             or not isinstance(summary, dict) or set(summary) != fields
             or summary["qualification"] is not False or summary["nativeContainment"] is not True
             or summary["inputClosureComplete"] is not False or summary["scope"] != "borrowed-launch-observations"
@@ -1420,7 +1579,7 @@ def controller_child_main(argv=None):
             fields.add("reference")
         if (not isinstance(request, dict) or set(request) != fields
                 or type(request["schemaVersion"]) is not int or request["schemaVersion"] != 1
-                or request["phase"] not in ("historical", "controllers", "mutations", "reference")
+                or request["phase"] not in ("historical", "controllers", "mutations", "reference", "architecture")
                 or not isinstance(request["runId"], str)
                 or str(uuid.UUID(request["runId"])) != request["runId"]):
             raise ConformanceError("EvidenceSchemaInvalid")
@@ -1438,7 +1597,7 @@ def controller_child_main(argv=None):
         if (header["schemaVersion"] != 2 or header["state"] != "Active"
                 or header["runId"] != request["runId"] or header["rootId"] != request["rootId"]
                 or preflight["schemaVersion"] != 1 or preflight["qualification"] is not False
-                or preflight["profileId"] != "composition"):
+                or preflight["profileId"] != ("compatibility" if request["phase"] == "architecture" else "composition")):
             raise ConformanceError("OwnershipInvalid")
         authorized_output = True
         run = SimpleNamespace(root=owner, run_id=request["runId"], root_id=request["rootId"], command_sequence=0)
@@ -1448,7 +1607,12 @@ def controller_child_main(argv=None):
 
         with legacy.native_preparation_group(
                 header, input_owner=owner, input_reader=read_inputs) as observations, redirect_stdout(progress):
-            if request["phase"] == "historical":
+            if request["phase"] == "architecture":
+                if any(request[key] is not None for key in ("baselineSeal", "sdkPackage", "loggerPath")):
+                    raise ConformanceError("EvidenceSchemaInvalid")
+                result = prepare_architecture_evidence(
+                    repository, owner, owner / relative_path(request["source"]))
+            elif request["phase"] == "historical":
                 if any(request[key] is not None for key in ("baselineSeal", "sdkPackage", "loggerPath")):
                     raise ConformanceError("EvidenceSchemaInvalid")
                 result = prepare_controller_baselines(repository, run)

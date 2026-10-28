@@ -14,6 +14,148 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_modeled_architecture_preparation_requires_every_paired_fixture_and_real_scan(self):
+        import conformance_case_catalog as catalog
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+        import foundation_evidence as foundation
+
+        for defect in ("none", "missing-fixture", "missing-scan", "duplicate-scan", "changed-source"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                source = root / "stores/source"
+                fixture = source / "tests/fixtures/architecture"
+                (fixture / "Cycles").mkdir(parents=True)
+                (fixture / "ownership.json").write_bytes(b"{}")
+                (fixture / "Cycles/graph.json").write_bytes(b"{}")
+                graphs = {name: {"projects": []} for name in (
+                    "permitted", "identity-hosting", *(name for rows in catalog.ARCHITECTURE_RUNTIME_ROWS.values()
+                                                      for name in rows))}
+                scans = [{"scanId": name} for name in (
+                    "platform", "provider:Hoard.Fixtures.Protocol", "provider:Hoard.Fixtures.Metadata",
+                    "provider:Hoard.Fixtures.Artifact.One", "provider:Hoard.Fixtures.Artifact.Two",
+                    "provider:Hoard.Fixtures.Identity", "host:One", "host:Two")]
+                if defect == "missing-fixture":
+                    del graphs["identity-hosting"]
+                elif defect == "missing-scan":
+                    scans.pop()
+                elif defect == "duplicate-scan":
+                    scans[-1] = scans[0]
+                target = root / "stores/compatibility-architecture"
+                state = {"lockDerivations": []}
+                with mock.patch.object(inherited, "controller_transport", return_value=contextlib.nullcontext(state)), \
+                        mock.patch.object(foundation, "source_hashes", side_effect=[
+                            {"source": "a"}, {"source": "b" if defect == "changed-source" else "a"}]), \
+                        mock.patch.object(foundation, "packages", return_value=(
+                            {}, [], target / "NuGet.Config")), \
+                        mock.patch.object(foundation, "hosts", return_value=[]), \
+                        mock.patch.object(foundation, "architecture", return_value=(graphs, {})) as architecture, \
+                        mock.patch.object(foundation, "real_architecture", return_value=scans) as real_scans, \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    if defect != "none":
+                        with self.assertRaisesRegex(evidence.ConformanceError,
+                                                    "InputChanged" if defect == "changed-source" else "WitnessMissing"):
+                            inherited.prepare_architecture_evidence(ROOT, root, source)
+                        continue
+                    result = inherited.prepare_architecture_evidence(ROOT, root, source)
+                architecture.assert_called_once_with(source, target, target / "NuGet.Config", False)
+                real_scans.assert_called_once()
+                self.assertFalse(result["qualification"])
+                self.assertFalse(result["profileComplete"])
+                selected = evidence.load_json((root / result["inputMapPath"]).read_bytes())
+                self.assertEqual(len(selected), result["inputCount"])
+                self.assertEqual(dict(evidence.input_manifest(root, list(selected))), selected)
+                self.assertEqual(selected[result["manifestPath"]], result["manifestSha256"])
+                document = evidence.load_json((root / result["manifestPath"]).read_bytes())
+                self.assertEqual(document["architecture"], graphs)
+                self.assertEqual(document["realArchitecture"], scans)
+
+    def test_architecture_child_requires_explicit_compatibility_profile_before_preparation(self):
+        import uuid
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+        import conformance_legacy as legacy
+
+        for profile in ("compatibility", "composition", "baseline"):
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                run_id = str(uuid.uuid4())
+                request = {
+                    "schemaVersion": 1, "phase": "architecture", "owner": str(root), "repository": str(ROOT),
+                    "runId": run_id, "rootId": "modeled-root", "source": "stores/source",
+                    "baselineSeal": None, "sdkPackage": None, "loggerPath": None}
+                for path, value in (
+                        ("proofs/request.json", request),
+                        ("ownership.json", {"schemaVersion": 2, "state": "Active", "runId": run_id,
+                                            "rootId": "modeled-root"}),
+                        ("proofs/preflight.json", {"schemaVersion": 1, "qualification": False, "profileId": profile})):
+                    (root / path).write_bytes(evidence.canonical_bytes(value))
+                output = root / "proofs/result.json"
+                with mock.patch.object(legacy, "native_preparation_group", return_value=contextlib.nullcontext(
+                        {"invocations": [], "inputSnapshots": []})) as group, \
+                        mock.patch.object(inherited, "prepare_architecture_evidence",
+                                          return_value={"qualification": False}) as prepare, \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    status = inherited.controller_child_main([
+                        "--request", str(root / "proofs/request.json"), "--output", str(output)])
+                if profile == "compatibility":
+                    self.assertEqual(status, 0)
+                    prepare.assert_called_once_with(ROOT, root, root / "stores/source")
+                    group.assert_called_once()
+                    self.assertEqual(evidence.load_json(output.read_bytes())["phase"], "architecture")
+                else:
+                    self.assertEqual(status, 2)
+                    prepare.assert_not_called()
+                    group.assert_not_called()
+                    self.assertFalse(output.exists())
+
+    def test_architecture_workflow_requires_released_owner_and_retained_manifest_identity(self):
+        import hashlib
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+
+        workflow = (ROOT / ".github/workflows/conformance.yml").read_text()
+        script = workflow.split("--compatibility-only\n", 1)[1].split("<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
+        code = compile(textwrap.dedent(script), "<architecture-workflow>", "exec")
+        for defect in ("none", "live", "profile", "path", "manifest", "inputs", "qualification"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                manifest = "stores/compatibility-architecture/manifest.json"
+                raw = evidence.canonical_bytes({manifest: "a" * 64})
+                architecture = {
+                    "qualification": False, "profileComplete": False, "fixtureGraphs": 22, "requiredRealScans": 8,
+                    "manifestPath": manifest, "manifestSha256": "b" * 64 if defect == "manifest" else "a" * 64,
+                    "inputMapPath": "../outside" if defect == "path" else "proofs/compatibility-architecture-inputs.json",
+                    "inputMapSha256": "b" * 64 if defect == "inputs" else hashlib.sha256(raw).hexdigest(),
+                    "inputCount": 1, "parentSha256": "c" * 64, "nativeInvocations": {"parentSha256": "c" * 64}}
+                summary = {
+                    "qualification": defect == "qualification", "profileComplete": False,
+                    "processResourcesReleased": True, "architecturePreparation": architecture}
+                owner = {"state": "Active" if defect == "live" else "Released", "runId": "modeled", "rootId": "modeled"}
+                preflight = {"profileId": "baseline" if defect == "profile" else "compatibility"}
+                for path, data in (
+                        ("proofs/compatibility-diagnostic-summary.json", evidence.canonical_bytes(summary)),
+                        ("proofs/compatibility-architecture-inputs.json", raw),
+                        ("ownership.json", evidence.canonical_bytes(owner)),
+                        ("proofs/preflight.json", evidence.canonical_bytes(preflight))):
+                    (root / path).write_bytes(data)
+                output = io.StringIO()
+                with mock.patch.object(sys, "argv", ["workflow", str(root)]), \
+                        mock.patch.object(inherited, "verify_controller_invocations") as verify, \
+                        contextlib.redirect_stdout(output):
+                    if defect == "none":
+                        exec(code, {"__name__": "__main__"})
+                        verify.assert_called_once_with(root, architecture["nativeInvocations"], "architecture",
+                                                       owner["runId"], owner["rootId"])
+                        self.assertFalse(evidence.load_json(output.getvalue().encode())["qualification"])
+                    else:
+                        with self.assertRaisesRegex(SystemExit, "WitnessMissing"):
+                            exec(code, {"__name__": "__main__"})
+                        verify.assert_not_called()
+
     def test_selected_runtime_input_bytes_survive_store_release_and_reject_changed_or_escaping_sources(self):
         import hashlib
         import shutil
@@ -279,7 +421,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
         from conformance_execution import CommandResult
-        for phase, mutation in ((phase, mutation) for phase in ("historical", "mutations", "reference")
+        for phase, mutation in ((phase, mutation) for phase in ("historical", "mutations", "reference", "architecture")
                                 for mutation in ("none", "changed-output", "missing-phase", "retained-process",
                                                  "child-failed", "missing-invocation", "foreign-invocation",
                                                  "duplicate-invocation", "missing-input-snapshot",
@@ -345,7 +487,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         self.assertTrue({reference["manifestPath"], reference["inputMapPath"]}
                                         <= set(kwargs["execution_inputs"]))
                     run.command_sequence = 1
-                    ordinals = ((0,) if phase == "reference" else (2, 3, 4, 0) if phase == "historical"
+                    ordinals = ((0,) if phase == "reference" else (1, 0) if phase == "architecture"
+                                else (2, 3, 4, 0) if phase == "historical"
                                 else (*range(1, 25), 0))
                     if mutation == "missing-phase":
                         ordinals = ordinals[:-1]
@@ -371,7 +514,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                             else "ProofMismatch"):
                         checks._controller_phase(run, ROOT, source, phase, reference=reference)
                     if mutation == "child-failed":
-                        expected = [0, 0] if phase == "reference" else [2, 3, 0] if phase == "historical" else [1, 2, 0]
+                        expected = ([0, 0] if phase == "reference" else [1, 0, 0] if phase == "architecture"
+                                    else [2, 3, 0] if phase == "historical" else [1, 2, 0])
                         self.assertEqual(expected, [event["value"] for event in
                                                    evidence.load_json(output.getvalue().encode())["events"]])
 

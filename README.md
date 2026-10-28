@@ -454,6 +454,18 @@ hash checks. Synthetic NuGet configuration is now reproduced in memory under
 an explicit policy instead of copying its scratch path into retained inputs.
 Local safe tooling passes 581 tests with the same twenty explicit native skips;
 fresh Linux confirmation remains pending.
+The exact `4e29abe` replay also fails `ProofMismatch` before inherited
+execution; the link-level repair is not yet a native acceptance result.
+Replay failures now expose only closed codes and allowlisted script/line
+locations, never raw provider/compiler text.
+The compatibility-only diagnostic also gains bounded native preparation of
+the original 22 architecture fixture graphs and eight required real scans,
+reusing the unchanged foundation factories and the shared native controller
+transport. It requires the explicit compatibility profile, exact inventories,
+input-map agreement and original post-release parent/journal admission.
+This prepares real inputs; it does not yet execute the complete compatibility
+architecture/version profile. Local safe tooling passes 584 tests with twenty
+explicit native skips; Linux confirmation is pending and T057 stays unchecked.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.
