@@ -466,6 +466,37 @@ macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 The portable-PDB checksum rule is documented in the
 [runtime PE-COFF specification](https://github.com/dotnet/runtime/blob/main/docs/design/specs/PE-COFF.md#portable-pdb-checksum).
 
+The subsequent partial T064 build-file reader admits observed imports and known
+physical Csc parameters across disjoint author/generated/toolchain/package roots.
+It requires successful declared projects with source/reference inputs and no
+reported diagnostic/observer errors. All frozen author inputs and selected
+generated/toolchain files are rehashed; package files must also match a supplied
+frozen file policy. Unknown fields/parameters/namespaces, undeclared inputs,
+conflicting hashes, root overlap, links and changed bytes reject. One aggregate
+file/byte/deadline budget covers all roots.
+
+The private actual logger now captures116 imported files and305 distinct file
+hashes,335 reference observations and16 analyzer observations across two Csc
+tasks. It also observes actual additional data and embedded resources; changing
+the additional file or generated reference image rejects independent admission.
+Import events require explicit `MSBUILDLOGIMPORTS=1` in the private component;
+diagnostic verbosity alone originally yielded zero imports and is not accepted
+as closure. The initial import callback also mishandled null imported-file values
+for false conditions/no-match globs. Structured observer-error admission exposed
+this even when the SDK's build-success flag was true. The corrected callback
+handles that documented non-import case explicitly; callback state is serialized
+and no observer/diagnostic error remains. No raw/binary diagnostic log is retained.
+
+This remains a private managed component, not a permanent public logger, complete
+compiler-option/item-metadata/source-generator trace, archive/member/cache
+ownership proof, native provenance or supplied-project build/pack/common-suite
+acceptance. The component has SDK/project-reference inputs only; package policy
+admission is covered by modeled byte cases, not actual package attribution.
+The public executor environment is unchanged and T064 remains open.
+Twenty-four focused contributor cases pass. Frozen full safe tooling observes624
+tests, zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

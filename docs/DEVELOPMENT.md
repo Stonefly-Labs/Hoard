@@ -6348,6 +6348,31 @@ unchecked.
 620 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
 native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
 pass.
+The next build-file reader checks observed imports/known physical Csc parameters
+under disjoint author/generated/toolchain/package roots, rehashing all frozen
+author and selected files with one aggregate count/byte/deadline budget. Package
+files must match a supplied frozen file policy. Unknown fields/parameters/
+namespaces, failed or duplicate/foreign projects, observer errors despite build
+success, undeclared/conflicting/changed inputs, links and overlapping roots reject.
+A private actual build admits116 imported files and305 distinct file hashes,
+335 reference and16 analyzer observations, additional data and embedded resources.
+Actual additional-file/generated-reference mutations reject.
+Private import delivery requires explicit `MSBUILDLOGIMPORTS=1`; normal diagnostic
+delivery alone observed no imports. Null imported-file values for false
+conditions/no-match globs are explicitly non-imports. The initial mishandling
+was detected by structured observer errors even with build success; corrected
+serialized callbacks report no observer/diagnostic errors. No raw/binary logs
+are retained and the public executor environment is unchanged.
+This is not complete compiler-option/item-metadata/source-generator closure,
+archive/member/cache attribution, native containment or public build/common-suite
+acceptance. The component uses SDK/project references only; package-file policy
+admission is modeled and must not be presented as archive ownership. T064 stays
+unchecked.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
+24 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+624 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected incomplete exit2; catalog, SDK and diff checks
+pass.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

@@ -618,6 +618,130 @@ class ContributorAdmissionTests(unittest.TestCase):
             contributors.binding_compilation_documents(
                 compilation, b"x" * (2 * 1024 * 1024 + 1), self.output, "Adapter.dll")
 
+    def build_files(self):
+        compilation = self.compile_inputs(self.compilation())["compilations"][0]
+        self.toolchain, self.package_root = self.parent / "toolchain", self.parent / "packages"
+        self.toolchain.mkdir()
+        self.package_root.mkdir()
+        for root, name, data in (
+                (self.toolchain, "Reference.dll", b"fixed reference image"),
+                (self.toolchain, "Analyzer.dll", b"fixed analyzer image"),
+                (self.toolchain, "Sdk.props", b"<Project />"),
+                (self.package_root, "acme.library/2.0.0/lib/net10.0/Library.dll", b"fixed package image")):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        self.package_inputs = evidence.input_manifest(
+            self.package_root, ["acme.library/2.0.0/lib/net10.0/Library.dll"])
+        return {
+            "schemaVersion": 1, "qualification": False, "succeeded": True,
+            "diagnosticCodes": [], "observerErrors": [],
+            "imports": {"source/Adapter.csproj": self.binding.sources["Adapter.csproj"],
+                        "toolchain/Sdk.props": evidence.file_sha256(self.toolchain / "Sdk.props")},
+            "compilations": [{
+                "project": "Adapter.csproj", "succeeded": True, "inputs": {
+                    "Sources": dict(compilation["sources"]),
+                    "References": {
+                        "toolchain/Reference.dll": evidence.file_sha256(self.toolchain / "Reference.dll"),
+                        **{"packages/" + path: hashed for path, hashed in self.package_inputs.items()}},
+                    "Analyzers": {"toolchain/Analyzer.dll": evidence.file_sha256(self.toolchain / "Analyzer.dll")},
+                    "AdditionalFiles": {}, "Resources": {}}}]}
+
+    def build_file_inputs(self, value):
+        return contributors.binding_build_file_inputs(
+            self.binding, evidence.canonical_bytes(value), self.generated, self.toolchain,
+            self.package_root, self.package_inputs)
+
+    def test_build_file_receipts_rehash_imports_compiler_inputs_and_frozen_package_policy(self):
+        value = self.build_files()
+        result = self.build_file_inputs(value)
+        self.assertEqual(result["imports"], value["imports"])
+        self.assertEqual(result["compilations"], tuple(value["compilations"]))
+        self.assertEqual(result["bindingInputsSha256"], self.binding.inputs_sha256)
+        self.assertEqual(result["packageInputsSha256"], evidence.digest(self.package_inputs))
+        self.assertFalse(result["qualification"])
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(result))
+
+    def test_build_file_receipts_reject_missing_closure_failed_observation_and_unknown_parameters(self):
+        value = self.build_files()
+        for defect in ("diagnostics", "observer", "build-failed", "compiler-failed", "project", "duplicate-project",
+                       "missing-sources", "empty-references", "unknown-parameter", "unknown-field",
+                       "namespace", "undeclared-source", "package-policy", "empty-imports"):
+            changed = copy.deepcopy(value)
+            row = changed["compilations"][0]
+            expected = "EvidenceIncomplete"
+            if defect in ("diagnostics", "observer"):
+                changed["diagnosticCodes" if defect == "diagnostics" else "observerErrors"] = ["MSB4017"]
+            elif defect == "build-failed":
+                changed["succeeded"] = False
+            elif defect == "compiler-failed":
+                row["succeeded"] = False
+            elif defect == "project":
+                row["project"] = "Foreign.csproj"
+            elif defect == "duplicate-project":
+                changed["compilations"].append(copy.deepcopy(row))
+            elif defect == "missing-sources":
+                del row["inputs"]["Sources"]
+                expected = "EvidenceSchemaInvalid"
+            elif defect == "empty-references":
+                row["inputs"]["References"] = {}
+            elif defect == "unknown-parameter":
+                row["inputs"]["UnobservedFiles"] = {}
+                expected = "EvidenceSchemaInvalid"
+            elif defect == "unknown-field":
+                changed["message"] = "must not disappear"
+                expected = "EvidenceSchemaInvalid"
+            elif defect in ("namespace", "undeclared-source", "package-policy"):
+                path = {"namespace": "external/Other.dll", "undeclared-source": "source/Ambient.cs",
+                        "package-policy": "packages/foreign/1.0.0/Other.dll"}[defect]
+                row["inputs"]["References"][path] = "a" * 64
+                if defect == "namespace":
+                    expected = "EvidenceSchemaInvalid"
+            else:
+                changed["imports"] = {}
+                expected = "EvidenceSchemaInvalid"
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^" + expected + "$"):
+                self.build_file_inputs(changed)
+
+    def test_build_file_receipts_reject_changed_bytes_conflicting_hashes_and_package_policy_substitution(self):
+        value = self.build_files()
+        for path in (self.sidecar, self.generated / "Dynamic.cs", self.toolchain / "Reference.dll",
+                     self.toolchain / "Analyzer.dll", self.toolchain / "Sdk.props",
+                     self.package_root / "acme.library/2.0.0/lib/net10.0/Library.dll"):
+            original = path.read_bytes()
+            path.write_bytes(original + b"changed")
+            with self.subTest(path=path.name), self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                self.build_file_inputs(value)
+            path.write_bytes(original)
+        changed = copy.deepcopy(value)
+        changed["imports"]["toolchain/Reference.dll"] = "a" * 64
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.build_file_inputs(changed)
+        self.package_inputs = {path: "a" * 64 for path in self.package_inputs}
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.build_file_inputs(value)
+
+    def test_build_file_receipts_reject_root_overlap_linked_inputs_and_aggregate_read_limit(self):
+        value = self.build_files()
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            contributors.binding_build_file_inputs(
+                self.binding, evidence.canonical_bytes(value), self.generated, self.generated,
+                self.package_root, self.package_inputs)
+        outside = self.parent / "outside.dll"
+        original = (self.toolchain / "Analyzer.dll").read_bytes()
+        outside.write_bytes(original)
+        (self.toolchain / "Analyzer.dll").unlink()
+        (self.toolchain / "Analyzer.dll").symlink_to(outside)
+        with self.assertRaises(evidence.ConformanceError):
+            self.build_file_inputs(value)
+        self.assertEqual(outside.read_bytes(), original)
+        (self.toolchain / "Analyzer.dll").unlink()
+        (self.toolchain / "Analyzer.dll").write_bytes(original)
+        declared_bytes = sum((self.source / path).stat().st_size for path in self.binding.sources)
+        with mock.patch.object(evidence, "MAX_PROOF_BYTES", declared_bytes):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OutputLimitExceeded$"):
+                self.build_file_inputs(value)
+
 
 if __name__ == "__main__":
     unittest.main()

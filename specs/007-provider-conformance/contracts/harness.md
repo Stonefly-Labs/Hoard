@@ -2200,6 +2200,16 @@ Unknown fields and unsafe paths/links reject. A receipt reader alone does not
 parse PE/PDB bytes or prove producer origin, full document coverage or complete
 compiler closure. The independent producer must verify actual PE/portable-PDB
 identity and checksum before such a receipt can contribute to runtime evidence.
+Build-file receipt admission separately checks observed imports and known
+physical compiler-input parameters. Require successful declared projects with
+source/reference inputs and no reported build/observer errors; a success flag
+cannot erase an observer failure. Resolve only disjoint author/generated/
+toolchain/package namespaces, rehash every frozen author input and every selected
+file, and require selected package files to match a frozen package-file policy.
+Reject unknown fields/parameters/namespaces, undeclared inputs, conflicting
+hashes, overlapping roots, links and changes. Bound aggregate reads across all
+roots. A supplied hash policy alone does not establish archive/member/cache
+ownership, complete compiler-option/item-metadata closure or native provenance.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

@@ -301,3 +301,86 @@ def binding_compilation_documents(compilation, data, output_root, assembly_path)
     if evidence.input_manifest(output_root, sorted(outputs)) != outputs:
         raise evidence.ConformanceError("InputChanged")
     return MappingProxyType({**value, "compilerSourcesSha256": evidence.digest(compilation["sources"])})
+
+
+def binding_build_file_inputs(binding, data, generated_root, toolchain_root, package_root, package_inputs):
+    if not isinstance(data, bytes):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if len(data) > 2 * 1024 * 1024:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    kinds = {
+        "Sources", "References", "Analyzers", "AdditionalFiles", "AnalyzerConfigFiles",
+        "EmbeddedFiles", "Resources", "LinkResources", "ResponseFiles", "Win32Resource",
+        "Win32Manifest", "ApplicationConfiguration", "KeyFile", "SourceLink"}
+
+    def parameters(value):
+        if (not isinstance(value, (dict, MappingProxyType)) or not {"Sources", "References"} <= value.keys()
+                or not value.keys() <= kinds):
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        return MappingProxyType({
+            kind: evidence._record({})(items) if items == {} else evidence._hash_map(items)
+            for kind, items in value.items()})
+
+    row = evidence._record({
+        "project": evidence.relative_path, "succeeded": evidence._boolean, "inputs": parameters})
+    errors = evidence._list(evidence.stable_id, 1024, minimum=0, unique=True)
+    value = evidence._record({
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "succeeded": evidence._boolean, "compilations": evidence._list(row, 1024),
+        "imports": evidence._hash_map, "diagnosticCodes": errors, "observerErrors": errors,
+    })(evidence.load_json(data))
+    policy = evidence._record({})(package_inputs) if package_inputs == {} else evidence._hash_map(package_inputs)
+    roots = {"source": binding.root, "generated": Path(generated_root).absolute(),
+             "toolchain": Path(toolchain_root).absolute(), "packages": Path(package_root).absolute()}
+    if any(left != right and root.is_relative_to(other)
+           for left, root in roots.items() for right, other in roots.items()):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    if not value["succeeded"] or value["diagnosticCodes"] or value["observerErrors"]:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    projects, inputs = set(), {kind: {} for kind in roots}
+
+    def observe(items):
+        for path, hashed in items.items():
+            namespace, separator, relative = path.partition("/")
+            if not separator or namespace not in roots:
+                raise evidence.ConformanceError("EvidenceSchemaInvalid")
+            relative = evidence.relative_path(relative)
+            if inputs[namespace].setdefault(relative, hashed) != hashed:
+                raise evidence.ConformanceError("InputChanged")
+            expected = binding.sources if namespace == "source" else policy if namespace == "packages" else None
+            if expected is not None:
+                if relative not in expected:
+                    raise evidence.ConformanceError("EvidenceIncomplete")
+                if expected[relative] != hashed:
+                    raise evidence.ConformanceError("InputChanged")
+
+    observe(value["imports"])
+    for compilation in value["compilations"]:
+        project = compilation["project"]
+        if (not compilation["succeeded"] or project in projects or project not in binding.sources
+                or not project.endswith(".csproj") or not compilation["inputs"]["Sources"]
+                or not compilation["inputs"]["References"]):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        projects.add(project)
+        for items in compilation["inputs"].values():
+            observe(items)
+    if binding.project not in projects:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    inputs["source"] = dict(binding.sources)
+    if sum(map(len, inputs.values())) > evidence.MAX_PROOF_FILES:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    total, deadline = 0, time.monotonic() + 5
+    for namespace, selected in inputs.items():
+        if not selected:
+            continue
+        with evidence._input_root(roots[namespace]) as (_, descriptor):
+            for path, expected in sorted(selected.items()):
+                hashed, size = evidence._source_file(
+                    descriptor, path, remaining=evidence.MAX_PROOF_BYTES - total, deadline=deadline)
+                total += size
+                if hashed != expected:
+                    raise evidence.ConformanceError("InputChanged")
+    if time.monotonic() >= deadline:
+        raise evidence.ConformanceError("DeadlineExceeded")
+    return MappingProxyType({
+        **value, "bindingInputsSha256": binding.inputs_sha256, "packageInputsSha256": evidence.digest(policy)})

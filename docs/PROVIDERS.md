@@ -337,6 +337,32 @@ output-byte admission also rejects both substitutions. This finite managed
 component does not establish full source-document coverage, generator/reference/
 analyzer/package closure, native containment or an integrated public build.
 
+Build-file receipt admission now covers observed imports and known physical Csc
+input parameters across disjoint author/generated/toolchain/package roots.
+It requires successful declared compiler projects with source/reference rows
+and rejects any reported build/observer error, even if a cached build-success
+flag is true. Every frozen author input and every observed generated/toolchain
+file is rehashed. Package files must additionally match an independently supplied
+frozen file policy. Unknown fields/parameters/namespaces, undeclared inputs,
+conflicting hashes, overlapping roots, links and changes reject. File-count,
+byte and time budgets apply across all roots, not independently per root.
+
+A private trusted actual build observes116 imported files and305 distinct file
+hashes, including335 reference and16 analyzer observations across two compiler
+tasks. Additional data and embedded resources are observed; changing the actual
+additional file or generated reference image rejects. Import events require
+explicit `MSBUILDLOGIMPORTS=1` in this private component. Null imported-file
+values mean a condition/glob selected no file and are not file inputs. Structured
+observer errors remain blocking rather than being erased by build success.
+No binary/raw diagnostic log is retained, and the public executor environment
+is unchanged.
+
+This is not a complete compiler-option/item-metadata or source-generator trace.
+The supplied package-file policy does not itself prove archive ownership;
+actual archive/member/cache attribution and owned public build integration are
+still unfinished. The fixed component uses only SDK/project-reference inputs,
+not an independently packaged arbitrary contributor.
+
 ### Earlier F-07 diagnostic checkpoints
 
 The test-only package-mode composition consumer now explicitly references

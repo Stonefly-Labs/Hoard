@@ -632,6 +632,12 @@ actually checks five portable-PDB document hashes and the DLL's CodeView identit
 and specified PDB checksum, rejecting altered or foreign symbols. The reader
 does not itself parse PE/PDB bytes; the producer and public build integration
 remain unfinished, so these checks do not qualify a contributor.
+A build-file reader also checks declared imports and known physical Csc inputs
+across disjoint author/generated/toolchain/package roots, with one aggregate
+read budget and frozen package-file policy. A private managed component admits
+305 distinct hashes, including116 imported files,335 reference observations and
+16 analyzer observations, plus additional/resource files. These remain bounded
+input checks, not complete compiler-option/package provenance or public execution.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
