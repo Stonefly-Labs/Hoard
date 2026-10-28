@@ -400,6 +400,33 @@ Frozen full safe tooling remains652 observed with zero failures/errors/unexpecte
 diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
 Both the44 contributor rows and71 selected built-in rows match independently
 expanded exact discovery sets before their zero-skip VSTest execution.
+The next artifact profile increment uses the existing extensible capabilities:
+require exactly one durability marker and one enumeration-snapshot/
+enumeration-incomplete marker for contributor registrations. Reject missing,
+unknown or ambiguous classification before source staging. Freeze enum constants
+in the generated factory and compare one actual capability snapshot before and
+after every row/control. No provider-name-derived profile or new registration
+field/SDK interface is added; metadata and default fixture declarations remain
+unchanged. No conditional case omissions are introduced yet.
+
+Actual read-only staged/SDK-packed durable-snapshot and simulated-incomplete
+adapters each pass 44 rows/origins, eight-role image attribution, exact discovery,
+fresh-cache locked replay and 71 selected built-in regressions. Three separately
+packed variants falsely claim durability, falsely claim enumeration, or change
+the reported profile during real commit work. All reject at the actual named
+ContributorArtifactSessionTests.AssertProfile assertion, with a fixed boolean/
+exception-type hash rather than raw stack/error text. Typed factory options,
+eight declaration rejection observations and compiler controls also pass.
+The bounded artifact-profile-review interim architecture review found one stale
+positive test declaration, corrected without weakening its component-owner
+assertions. Runtime mismatch/change controls address its acceptance caution.
+This is not final T081 approval or full catalog/native qualification; public
+dispatch remains closed and T064 unchecked.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes653
+tests with zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native skips and expected incomplete exit2. The51 focused contributor cases pass;
+catalog, SDK, focused Consumer whitespace and diff checks pass. Unknown markers
+in the reserved classification namespaces reject even alongside a valid marker.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

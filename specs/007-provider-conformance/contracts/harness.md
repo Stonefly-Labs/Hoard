@@ -2263,6 +2263,17 @@ setup helpers, not built-in provider aliases or applicability. All 71 selected
 built-in Local/Object boundary/budget/recovery/control/release rows still pass.
 Durability/enumeration-dependent applicability and full catalog/native acceptance
 remain separate open work.
+Artifact contributor registration requires exactly one durability classification
+(durable-local-process-crash or non-durable-simulation) and one enumeration
+classification (enumeration-snapshot or enumeration-incomplete) in its existing
+declaration capabilities. Reject missing/unknown/ambiguous classification before
+source staging/build. Generated enum constants come only from those frozen
+inputs, not provider names. Compare one actual Store.Capabilities snapshot
+before and after each assertion/control; false claims and changes must reject.
+Actual durable/snapshot and simulated/incomplete adapters pass; false durability,
+false enumeration and changed-during-work controls fail at the named profile
+assertion. Registration shape, SDK/default fixture contracts and metadata are
+unchanged. This does not yet introduce conditional omissions or full applicability.
 Build/pack archive selection accepts an explicit registered version rather than
 assuming0.1.0. Validate package identity/version before starting commands and
 canonicalize only that exact produced archive; a different version is not a

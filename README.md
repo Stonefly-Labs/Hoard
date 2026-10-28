@@ -703,6 +703,13 @@ The component includes publication barriers, recovery/expiry, cancellation,
 reference checks and all ten fault controls, reusing unchanged shared setup
 helpers. All 71 selected built-in Local/Object boundary, budget, recovery, control
 and concurrent-release regressions also pass; no native qualification is implied.
+Artifact contributor registrations must now include exactly one durability marker
+and one enumeration-snapshot/enumeration-incomplete marker. Generated enum
+constants are checked against actual capabilities before and after each row.
+Both durable/snapshot and simulated/incomplete adapters pass the 44-row component;
+actual false durability/enumeration claims and a mid-assertion profile change
+reject at the named profile assertion. No conditional case omissions or completed
+applicability/native qualification are introduced by this profile check.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

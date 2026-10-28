@@ -292,6 +292,18 @@ test-fixture visibility widens. All 71 selected built-in Local/Object boundary,
 budget, recovery, control and concurrent-release regressions pass. Conditional
 durability/enumeration applicability, complete catalog coverage and native
 provenance remain unfinished; this is not native containment or qualification.
+Artifact contributor registrations additionally require exactly one of
+`durable-local-process-crash` / `non-durable-simulation` and exactly one of
+`enumeration-snapshot` / `enumeration-incomplete` in the existing declaration
+capabilities. Missing, unknown or ambiguous classification rejects at admission.
+The generated factory freezes the corresponding SDK enum constants; the consumer
+compares one actual capability snapshot before and after every assertion/control.
+Both actual durable/snapshot and simulated/incomplete adapters pass. False
+durability/enumeration claims and a profile changed during actual work reject at
+the named profile assertion. This contributor-only convention leaves the
+registration shape, SDK interfaces and default fixture declarations unchanged.
+It is a basis for later independent applicability, not current omission authority
+or completed qualification.
 
 The captured-image helper independently selects every registered role from
 actual local package records and the captured consumer image map. It requires

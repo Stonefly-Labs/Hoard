@@ -328,7 +328,7 @@ class ContributorAdmissionTests(unittest.TestCase):
                 registration["declaration"].update(
                     category=category, bindingId=f"acme.{category}",
                     capabilities=([category, "non-durable"] if category == "metadata"
-                                  else [category, "non-durable-simulation"]),
+                                  else [category, "non-durable-simulation", "enumeration-incomplete"]),
                     faults=sorted(evidence._BINDING_REQUIRED_FAULTS[category]))
                 registration["components"] = {
                     role: dict(registration["adapterPackage"]) for role in evidence._SESSION_ROLES[category]}
@@ -378,6 +378,34 @@ class ContributorAdmissionTests(unittest.TestCase):
         for invalid in ("../foreign", "", None):
             with self.assertRaises(evidence.ConformanceError):
                 catalog.contributor_artifact_component_origin_counts(invalid)
+
+    def test_artifact_profile_requires_unambiguous_input_bound_durability_and_enumeration(self):
+        declaration = copy.deepcopy(self.registration["declaration"])
+        declaration.update(
+            category="artifacts", bindingId="acme.artifacts",
+            capabilities=["artifacts", "non-durable-simulation", "enumeration-incomplete"],
+            faults=sorted(evidence._BINDING_REQUIRED_FAULTS["artifacts"]))
+        self.assertEqual(contributors.artifact_binding_profile(declaration),
+                         {"durability": "SimulationOnly", "enumeration": "Incomplete"})
+        durable = {**declaration, "capabilities": ["artifacts", "durable-local-process-crash", "enumeration-snapshot"]}
+        self.assertEqual(contributors.artifact_binding_profile(durable),
+                         {"durability": "LocalProcessCrash", "enumeration": "Snapshot"})
+        for capabilities in (
+                ["artifacts", "non-durable-simulation"],
+                ["artifacts", "enumeration-incomplete"],
+                ["artifacts", "non-durable-simulation", "enumeration-unknown"],
+                [*declaration["capabilities"], "enumeration-unknown"],
+                [*declaration["capabilities"], "durable-unknown"],
+                [*declaration["capabilities"], "enumeration-snapshot"],
+                [*declaration["capabilities"], "durable-local-process-crash"]):
+            registration = copy.deepcopy(self.registration)
+            registration["declaration"] = {**declaration, "capabilities": capabilities}
+            registration["components"] = {
+                role: dict(registration["adapterPackage"]) for role in evidence._SESSION_ROLES["artifacts"]}
+            self.write(registration)
+            with self.subTest(capabilities=capabilities), \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^BindingInvalid$"):
+                contributors.admit_binding_project(self.project, "artifacts")
 
     def build_fixture(self, name="build"):
         (self.source / "packages.lock.json").write_text('{"version":2,"dependencies":{"net10.0":{}}}')
@@ -807,7 +835,8 @@ class ContributorAdmissionTests(unittest.TestCase):
             contributors.binding_runtime_components(project, packages, images(), "consumer")
 
         self.registration["declaration"].update({
-            "category": "artifacts", "capabilities": ["artifacts", "non-durable"],
+            "category": "artifacts",
+            "capabilities": ["artifacts", "non-durable-simulation", "enumeration-incomplete"],
             "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["artifacts"])})
         del self.registration["components"]["schema"]
         for role in ("validator", "maintenance", "lifetime"):

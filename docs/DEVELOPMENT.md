@@ -6303,6 +6303,19 @@ six property/category controls still pass. All 71 selected built-in Local/Object
 boundary/budget/recovery/control/concurrent-release regressions also pass.
 Durability/enumeration applicability, complete catalog coverage and native
 producer/toolchain closure remain unfinished; this is managed component evidence.
+The artifact profile increment requires one durability marker and one
+enumeration-snapshot/enumeration-incomplete marker in existing contributor
+declaration capabilities. Missing/unknown/ambiguous claims reject before staging;
+generated enum constants are compared to an actual capability snapshot before
+and after every row. Actual durable/snapshot and simulated/incomplete adapters
+each pass 44 rows, exact discovery, eight-role image attribution, fresh-cache
+locked replay and the 71 selected built-in regressions. Independently packed
+false-durability, false-enumeration and changed-during-work variants reject at the
+named profile assertion; raw exception/stack text is not emitted. The typed
+factory/declaration/compiler controls also pass with these profile constants.
+A bounded interim architecture review found an outdated positive fixture, now
+corrected; it is not final T081 approval. No registration field/SDK interface,
+default fixture declaration or conditional case omission is introduced.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

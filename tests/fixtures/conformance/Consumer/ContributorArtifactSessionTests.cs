@@ -78,6 +78,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             ContributorBindingFactory.Create(options), context, default);
         try
         {
+            AssertProfile(session);
             Task WhenIdle() => session.Faults.AwaitSettlementAsync(default).AsTask();
             void AdvanceTo(long timestamp) =>
                 clock.Advance(DateTimeOffset.FromUnixTimeMilliseconds(timestamp) - clock.GetUtcNow());
@@ -129,6 +130,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "concurrent-release" => ArtifactBindingAssertions.ConcurrentReleaseAsync(session, default),
                 _ => throw new ArgumentException("BindingInvalid")
             });
+            AssertProfile(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { await session.DisposeAsync(); }
@@ -164,12 +166,21 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
         var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         try
         {
+            AssertProfile(session);
             await ArtifactBindingAssertions.ControlsAsync(session, fault, clock.Advance, default);
+            AssertProfile(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { await session.DisposeAsync(); }
         Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
         Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    private static void AssertProfile(IArtifactConformanceSession session)
+    {
+        var actual = session.Store.Capabilities;
+        Assert.Equal(ContributorBindingFactory.ExpectedDurability, actual.Durability);
+        Assert.Equal(ContributorBindingFactory.ExpectedEnumeration, actual.Enumeration);
     }
 }
 #endif

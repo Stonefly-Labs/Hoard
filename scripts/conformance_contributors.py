@@ -38,6 +38,24 @@ def _factory_type(value):
     return value
 
 
+def artifact_binding_profile(declaration):
+    declaration = evidence.admit_binding_declaration(declaration, require_archive_hash=False)
+    if declaration["category"] != "artifacts":
+        raise evidence.ConformanceError("BindingInvalid")
+    capabilities = set(declaration["capabilities"])
+    profile = {}
+    for field, choices, prefixes in (
+            ("durability", {"durable-local-process-crash": "LocalProcessCrash",
+                            "non-durable-simulation": "SimulationOnly"}, ("durable-", "non-durable-")),
+            ("enumeration", {"enumeration-snapshot": "Snapshot", "enumeration-incomplete": "Incomplete"},
+             ("enumeration-",))):
+        selected = [capability for capability in capabilities if capability.startswith(prefixes)]
+        if len(selected) != 1 or selected[0] not in choices:
+            raise evidence.ConformanceError("BindingInvalid")
+        profile[field] = choices[selected[0]]
+    return profile
+
+
 def admit_binding_project(project, category):
     if category not in ("metadata", "artifacts"):
         raise evidence.ConformanceError("UnsupportedProfile")
@@ -63,6 +81,8 @@ def admit_binding_project(project, category):
         "components": evidence._record({role: image for role in evidence._SESSION_ROLES[category]}),
         "sourceFiles": evidence._list(evidence.relative_path, evidence.MAX_PROOF_FILES, unique=True),
     })(value)
+    if category == "artifacts":
+        artifact_binding_profile(registration["declaration"])
     relative = Path(registration["project"])
     if (relative.suffix != ".csproj" or relative.name != project.name
             or len(relative.parts) > min(32, len(project.parents))
@@ -311,11 +331,19 @@ def binding_factory_source(binding, adapter_package, provider_package):
     expected_category = "Metadata" if category == "metadata" else "Artifacts"
     capabilities = ", ".join(f'"{item}"' for item in declaration["capabilities"])
     faults = ", ".join(f"{bindings}.ConformanceFault.{item}" for item in declaration["faults"])
+    profile_constants = ""
     construction = (
         f"    internal static {bindings}.{interface} Create()\n"
         "    {\n"
         f'        {bindings}.{interface} binding = new global::{factory}("{provider["sha256"]}");\n')
     if category == "artifacts":
+        profile = artifact_binding_profile(declaration)
+        storage = "global::Hoard.Abstractions.Storage"
+        profile_constants = (
+            f"    internal const {storage}.ArtifactDurability ExpectedDurability = "
+            f'{storage}.ArtifactDurability.{profile["durability"]};\n'
+            f"    internal const {storage}.ArtifactEnumerationConsistency ExpectedEnumeration = "
+            f'{storage}.ArtifactEnumerationConsistency.{profile["enumeration"]};\n\n')
         construction = (
             f"    internal static {bindings}.{interface} Create() => "
             f'Validate(new global::{factory}("{provider["sha256"]}"));\n\n'
@@ -331,7 +359,7 @@ def binding_factory_source(binding, adapter_package, provider_package):
         "internal static class ContributorBindingFactory\n"
         "{\n"
         f'    internal const string BindingId = "{declaration["bindingId"]}";\n\n'
-        + construction +
+        + profile_constants + construction +
         "        var actual = binding.Declaration;\n"
         f"        {bindings}.ConformanceBindingAdmission.Validate(actual, "
         f"{bindings}.ConformanceCategory.{expected_category});\n"
