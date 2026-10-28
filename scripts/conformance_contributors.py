@@ -1,0 +1,81 @@
+"""Explicit contributor registration admission, not execution or qualification."""
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+import hashlib
+import io
+from pathlib import Path
+import re
+import time
+from types import MappingProxyType
+
+import conformance_evidence as evidence
+
+
+@dataclass(frozen=True)
+class BindingProject:
+    root: Path
+    project: str
+    registration: Mapping
+    sources: Mapping
+
+    @property
+    def inputs_sha256(self):
+        return evidence.digest({"registration": self.registration, "sources": self.sources})
+
+
+def _factory_type(value):
+    if (not isinstance(value, str) or not 0 < len(value) <= 1024
+            or re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*", value,
+                            re.ASCII) is None):
+        raise evidence.ConformanceError("BindingInvalid")
+    return value
+
+
+def admit_binding_project(project, category):
+    if category not in ("metadata", "artifacts"):
+        raise evidence.ConformanceError("UnsupportedProfile")
+    project = Path(project).absolute()
+    if project.suffix != ".csproj":
+        raise evidence.ConformanceError("BindingInvalid")
+    sidecar = project.with_suffix(".conformance.json")
+    deadline = time.monotonic() + 5
+    captured = io.BytesIO()
+    with evidence._input_root(project.parent) as (_, directory):
+        evidence._source_file(
+            directory, sidecar.name, remaining=2 * 1024 * 1024, deadline=deadline, target=captured)
+    raw = captured.getvalue()
+    value = evidence.load_json(raw)
+    if not isinstance(value, dict) or not isinstance(value.get("components"), dict):
+        raise evidence.ConformanceError("BindingInvalid")
+    image = evidence._record({
+        "packageId": evidence.stable_id, "version": evidence.stable_id, "assemblyName": evidence.stable_id})
+    registration = evidence._record({
+        "schemaVersion": evidence._constant(1), "project": evidence.relative_path,
+        "factoryType": _factory_type, "adapterPackage": image,
+        "declaration": lambda item: evidence.admit_binding_declaration(item, require_archive_hash=False),
+        "components": evidence._record({role: image for role in evidence._SESSION_ROLES[category]}),
+        "sourceFiles": evidence._list(evidence.relative_path, evidence.MAX_PROOF_FILES, unique=True),
+    })(value)
+    relative = Path(registration["project"])
+    if (relative.suffix != ".csproj" or relative.name != project.name
+            or len(relative.parts) > min(32, len(project.parents))
+            or registration["declaration"]["category"] != category
+            or registration["components"]["factory"] != registration["adapterPackage"]):
+        raise evidence.ConformanceError("BindingInvalid")
+    root = project.parents[len(relative.parts) - 1]
+    if root / relative != project:
+        raise evidence.ConformanceError("BindingInvalid")
+    registration_path = relative.with_suffix(".conformance.json").as_posix()
+    if not {relative.as_posix(), registration_path}.issubset(registration["sourceFiles"]):
+        raise evidence.ConformanceError("BindingInvalid")
+    sources, total = {}, 0
+    with evidence._input_root(root) as (_, directory):
+        for path in sorted(registration["sourceFiles"]):
+            hashed, size = evidence._source_file(
+                directory, path, remaining=evidence.MAX_PROOF_BYTES - total, deadline=deadline)
+            sources[path] = hashed
+            total += size
+    if sources[registration_path] != hashlib.sha256(raw).hexdigest():
+        raise evidence.ConformanceError("InputChanged")
+    return BindingProject(root, relative.as_posix(), registration, MappingProxyType(sources))

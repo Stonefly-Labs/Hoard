@@ -96,6 +96,9 @@ names. Values may be bounded quoted ASCII/version-range tokens, finite decimal
 tokens or bare ASCII identifiers of at most 128 characters (including enum,
 boolean and null display tokens). This grammar does not select expectations or
 authorize arbitrary text, paths, missing parameters or normalization.
+The only literal path exception is the four exact public PE/PDB source
+identities frozen by `binary_runtime_tests()`, with matching logger admission.
+Other methods, unknown paths and mismatched variant/source pairs reject.
 
 ## Validation and Bounds
 

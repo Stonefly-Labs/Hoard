@@ -177,10 +177,12 @@ recipes, package dependencies, executor limits or timeouts change.
 The supplemental scope is committed and pushed at exact
 `3ca391aaae70a80015d687b51158e013a34d99f2`. Its native compatibility job
 122608489234 in run40624928955 was observed starting, but the observer then
-failed `NativeObservationUnavailable`. Both a direct GitHub API retry and an
-HTTP/1.1 retry fail; an unauthenticated HTTPS check reports that
-`api.github.com` cannot be resolved. This is an observation/connectivity blocker,
-not evidence that the native tests passed or failed. T059 remains unchecked.
+failed `NativeObservationUnavailable`. Direct and HTTP/1.1 API retries also
+failed with DNS resolution unavailable. Observation later recovered with the
+system resolver and confirmed an actual failed job: `EvidenceSchemaInvalid`
+at runtime identity admission, followed by `NativeReferenceSummaryMissing`.
+The initial observation failure was not itself test evidence; the subsequently
+observed schema failure is. T059 remains unchecked.
 The provider guide now documents the six exact baseline revisions, the
 twenty-historical/four-current source distinction, retained-byte obligations
 and finite declared-versus-observed version/architecture scope. Its supplemental
@@ -196,6 +198,27 @@ source/import/lock closure copied into owned scratch, never an untracked
 in-place build. The current constructor-flag component journey cannot replace
 separately packed good/red/corrected runs. No contributor execution or
 qualification is implemented or claimed by this review.
+
+The local transport repair permits slash-bearing tokens only for the four
+exact frozen public source-provenance identities, in both Python admission and
+the actual C# logger. Arbitrary/private paths, unknown canonical paths, unrelated
+methods and mismatched variant/source combinations remain forbidden. Original
+compatibility assertions/parameters are unchanged. All174 selected actual
+logger/original compatibility cases,58 focused Python cases and focused C#
+format checks pass locally; fresh Linux acceptance is still required.
+
+Partial T064 admits strict sibling contributor registration through the public
+invocation boundary and freezes bounded declared source hashes. Adapter,
+underlying provider and each component image remain separately declared.
+External namespaces are allowed without aliasing to built-in witnesses.
+Source/import/lock closure, post-admission snapshot revalidation, owned
+build/pack, actual archive/runtime validation, typed factory invocation and
+complete independent shared-suite execution remain unimplemented.
+The custom execution guard remains closed, so T064..T067 stay unchecked.
+Frozen full safe tooling now observes602 tests with zero failures/errors/
+unexpected diagnostic bytes, twenty explicit native macOS skips and expected
+incomplete exit2. Catalog, SDK and diff checks pass. These skipped native cases
+and local component controls do not establish Linux profile acceptance.
 
 ### Generated report and semantic counter controls: T048 continuation
 

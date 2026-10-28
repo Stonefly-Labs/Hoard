@@ -1686,6 +1686,45 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def test_binary_manifest_preserves_all_frozen_relative_source_parameters_and_rejects_unsafe_paths(self):
+        import conformance_case_catalog as catalog
+        self.inputs["profileId"] = "compatibility"
+        self.inputs["budgets"]["profileSeconds"] = 3600
+        self.manifest["inputSha256"] = evidence.digest(self.inputs)
+        template = self.manifest["expected"][0]
+        self.manifest["expected"] = [{
+            **template, "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+            "bindingId": "none", "matrixId": "binary-runtime", "caseId": case, "assertionSymbol": None,
+        } for identity, (_, case) in catalog.binary_runtime_tests().items()]
+        def admit():
+            return evidence._runtime_manifest(
+                self.inputs, evidence.canonical_bytes(self.manifest), evidence.canonical_bytes(self.owner),
+                {row["testIdentity"]: ("none", "binary-runtime") for row in self.manifest["expected"]},
+                evidence.digest(self.manifest), evidence.digest(self.owner), "execution")
+        observed = admit()
+        self.assertEqual(len(observed[2]), 7)
+        original = self.manifest["expected"]
+        row = original[0]
+        for path in ("/private/Contract.cs", "../Contract.cs", "Old/../Contract.cs", "Old//Contract.cs",
+                     "Old/./Contract.cs", "C:/Contract.cs", "Old\\Contract.cs", "Other/Contract.cs",
+                     "a" * 129 + "/Contract.cs"):
+            self.manifest["expected"] = [{
+                **row, "testIdentity": row["testIdentity"].replace("Old/Contract.cs", path)}]
+            with self.subTest(path=path), self.assertRaises(evidence.ConformanceError):
+                admit()
+        self.manifest["expected"] = [{**row, "testIdentity": "Hoard/Frozen.Check"}]
+        with self.assertRaises(evidence.ConformanceError):
+            admit()
+        self.manifest["expected"] = [{
+            **row, "testIdentity": 'Hoard.Frozen.Check(relative: "Old/Contract.cs")',
+            "fullyQualifiedName": "Hoard.Frozen.Check"}]
+        with self.assertRaises(evidence.ConformanceError):
+            admit()
+        self.manifest["expected"] = [{
+            **row, "testIdentity": row["testIdentity"].replace('"baseline"', '"broken"')}]
+        with self.assertRaises(evidence.ConformanceError):
+            admit()
+
     def test_generated_composition_observation_controls_reject_false_readiness_and_optimistic_cleanup(self):
         import conformance_composition_checks as composition
         self.composition_transport()

@@ -69,6 +69,7 @@ class ConformanceInvocation:
     evidence: Path | None = None
     binding_project: Path | None = None
     input_path: Path | None = None
+    binding_inputs_sha256: str | None = None
 
 
 class _Arguments(argparse.ArgumentParser):
@@ -154,13 +155,15 @@ def admit_invocation(repository, arguments):
         raise ConformanceError("OwnershipInvalid")
     if options.update_locks:
         return ConformanceInvocation("preparation", repository, "preparation", evidence=destination)
-    project = None
+    project, binding_inputs_sha256 = None, None
     if options.binding_project is not None:
         if profile not in ("metadata", "artifacts"):
             raise ConformanceError()
         project = _invocation_path(options.binding_project)
         if project.suffix != ".csproj" or not project.is_file():
             raise ConformanceError("BindingInvalid")
+        from conformance_contributors import admit_binding_project
+        binding_inputs_sha256 = admit_binding_project(project, profile).inputs_sha256
     profiles = PROFILES if profile == "baseline" else (profile,)
     cases = tuple(case for selected in profiles for case in expected_cases(selected))
     mode = "qualification"
@@ -173,7 +176,8 @@ def admit_invocation(repository, arguments):
                          if any(case.profile_id == selected for case in cases))
         mode = "diagnostic"
     return ConformanceInvocation("run", repository, mode, profiles,
-                                 tuple(case.key for case in cases), destination, project)
+                                 tuple(case.key for case in cases), destination, project,
+                                 binding_inputs_sha256=binding_inputs_sha256)
 
 
 def dispatch_invocation(invocation):
@@ -854,6 +858,26 @@ _BINDING_REQUIRED_FAULTS = {
 }
 
 
+def admit_binding_declaration(value, *, require_archive_hash=True):
+    faults = frozenset().union(*_BINDING_REQUIRED_FAULTS.values(), ("BackupRestore",))
+    fields = {
+        "schemaVersion": _constant(1), "bindingId": stable_id,
+        "category": _one_of("metadata", "artifacts"), "packageId": stable_id,
+        "packageVersion": stable_id,
+        "capabilities": _ids, "faults": _list(_one_of(*sorted(faults)), 128, unique=True),
+    }
+    if require_archive_hash:
+        fields["packageSha256"] = sha256
+    declaration = _record(fields)(value)
+    required = _BINDING_REQUIRED_FAULTS[declaration["category"]]
+    if (not required.issubset(declaration["faults"])
+            or (declaration["category"] == "metadata"
+                and "durable-local-process-crash" in declaration["capabilities"]
+                and "BackupRestore" not in declaration["faults"])):
+        raise ConformanceError("BindingInvalid")
+    return declaration
+
+
 def capture_binding(root, declaration_path, *, packages, adapter_id, catalog_binding_id=None):
     deadline = time.monotonic() + 5
     declaration_path, adapter_id = relative_path(declaration_path), stable_id(adapter_id)
@@ -863,19 +887,7 @@ def capture_binding(root, declaration_path, *, packages, adapter_id, catalog_bin
         _source_file(descriptor, declaration_path, remaining=64 * 1024,
                      deadline=deadline, target=captured)
     raw = captured.getvalue()
-    faults = frozenset().union(*_BINDING_REQUIRED_FAULTS.values(), ("BackupRestore",))
-    declaration = _record({
-        "schemaVersion": _constant(1), "bindingId": stable_id,
-        "category": _one_of("metadata", "artifacts"), "packageId": stable_id,
-        "packageVersion": stable_id, "packageSha256": sha256,
-        "capabilities": _ids, "faults": _list(_one_of(*sorted(faults)), 128, unique=True),
-    })(load_json(raw))
-    required = _BINDING_REQUIRED_FAULTS[declaration["category"]]
-    if (not required.issubset(declaration["faults"])
-            or (declaration["category"] == "metadata"
-                and "durable-local-process-crash" in declaration["capabilities"]
-                and "BackupRestore" not in declaration["faults"])):
-        raise ConformanceError("BindingInvalid")
+    declaration = admit_binding_declaration(load_json(raw))
     matching = [package for package in packages
                 if package["packageId"].casefold() == declaration["packageId"].casefold()
                 and package["version"].casefold() == declaration["packageVersion"].casefold()]
@@ -1309,8 +1321,12 @@ def ingest_witnesses(data, *, run_id, invocation_group_id, input_sha256,
 
 def _runtime_identity(value):
     if (not isinstance(value, str) or not 0 < len(value) <= 1024
-            or re.fullmatch(r'[a-zA-Z0-9_.():, "\[\]+-]+', value, re.ASCII) is None):
+            or re.fullmatch(r'[a-zA-Z0-9_./():, "\[\]+-]+', value, re.ASCII) is None):
         _invalid()
+    if "/" in value:
+        from conformance_case_catalog import binary_runtime_tests
+        if value not in binary_runtime_tests():
+            _invalid()
     return value
 
 
@@ -1529,7 +1545,7 @@ def _runtime_manifest(inputs, manifest_data, owner_data, expected_tests,
     for entry in expected.values():
         name = entry["fullyQualifiedName"]
         suffix = entry["testIdentity"][len(name):]
-        parameter = r'(?:\"[a-zA-Z0-9._:+,()\[\]-]{0,128}\"|[-+]?[0-9]+(?:\.[0-9]+)?|[a-zA-Z_][a-zA-Z0-9_]{0,127})'
+        parameter = r'(?:\"[a-zA-Z0-9._:/+,()\[\]-]{0,128}\"|[-+]?[0-9]+(?:\.[0-9]+)?|[a-zA-Z_][a-zA-Z0-9_]{0,127})'
         if (re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_.+]*", name, re.ASCII) is None
                 or not entry["testIdentity"].startswith(name)
                 or (suffix and re.fullmatch(

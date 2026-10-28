@@ -1099,6 +1099,84 @@ public sealed class RuntimeLoggerTests
     }
 
     [Fact]
+    public void Frozen_source_parameters_preserve_exact_discovery_and_execution_identity()
+    {
+        const string method = "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+            + "Compiled_source_provenance_matches_actual_pe_pdb_and_frozen_historical_source";
+        foreach (var purpose in new[] { "discovery", "execution" })
+        {
+            foreach (var (variant, name, source) in new[]
+            {
+                ("baseline", "BinaryContract.dll", "Old/Contract.cs"),
+                ("broken", "BinaryContract.dll", "New/Contract.cs"),
+                ("compatible", "BinaryContract.dll", "Old/Contract.cs"),
+                ("consumer", "RetainedConsumer.dll", "Consumer/Program.cs")
+            })
+            {
+                using var owned = new OwnedInput(purpose: purpose);
+                var identity = method + $"(variant: \"{variant}\", name: \"{name}\", relative: \"{source}\")";
+                owned.Input.Expected[0] = owned.Input.Expected[0] with
+                { TestIdentity = identity, FullyQualifiedName = method, AssertionSymbol = null };
+                owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+                using (var recorder = owned.Open())
+                {
+                    if (purpose == "discovery") { recorder.ObserveDiscovery(owned.Result(0).TestCase); }
+                    else { recorder.Observe(owned.Result(0)); }
+                    recorder.Complete();
+                    Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+                }
+                var file = purpose == "discovery" ? "discovered.jsonl" : "witnesses.jsonl";
+                using var record = JsonDocument.Parse(File.ReadAllText(Path.Combine(owned.Output, file)));
+                Assert.Equal(identity, record.RootElement.GetProperty("testIdentity").GetString());
+            }
+        }
+    }
+
+    [Fact]
+    public void Literal_source_paths_reject_unrelated_methods_and_mismatched_frozen_pairs()
+    {
+        const string method = "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+            + "Compiled_source_provenance_matches_actual_pe_pdb_and_frozen_historical_source";
+        foreach (var identity in new[]
+        {
+            "Hoard.Frozen.Check(relative: \"Old/Contract.cs\")",
+            method + "(variant: \"broken\", name: \"BinaryContract.dll\", relative: \"Old/Contract.cs\")"
+        })
+        {
+            using var owned = new OwnedInput();
+            owned.Input.Expected[0] = owned.Input.Expected[0] with
+            { TestIdentity = identity, FullyQualifiedName = identity[..identity.IndexOf('(')], AssertionSymbol = null };
+            owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+            Assert.Throws<InvalidDataException>(() => owned.Open());
+            Assert.False(Directory.Exists(owned.Output));
+        }
+    }
+
+    [Theory]
+    [InlineData("/private/Contract.cs")]
+    [InlineData("../Contract.cs")]
+    [InlineData("Old/../Contract.cs")]
+    [InlineData("Old//Contract.cs")]
+    [InlineData("Old/./Contract.cs")]
+    [InlineData("C:/Contract.cs")]
+    [InlineData("Old\\Contract.cs")]
+    [InlineData("Other/Contract.cs")]
+    public void Source_parameters_reject_absolute_escaping_and_noncanonical_paths(string source)
+    {
+        using var owned = new OwnedInput();
+        const string method = "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+            + "Compiled_source_provenance_matches_actual_pe_pdb_and_frozen_historical_source";
+        owned.Input.Expected[0] = owned.Input.Expected[0] with
+        {
+            TestIdentity = method + $"(variant: \"baseline\", name: \"BinaryContract.dll\", relative: \"{source}\")",
+            FullyQualifiedName = method, AssertionSymbol = null
+        };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        Assert.Equal("EvidenceSchemaInvalid", Assert.Throws<InvalidDataException>(() => owned.Open()).Message);
+        Assert.False(Directory.Exists(owned.Output));
+    }
+
+    [Fact]
     public void Actual_results_preserve_each_parameter_identity_and_append_only_attempts()
     {
         using var owned = new OwnedInput(2);

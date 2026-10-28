@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "project": "tests/fixtures/conformance/Contributor/Contributor.csproj",
+  "factoryType": "Hoard.Fixtures.Conformance.Contributor.ForwardingMetadataBinding",
+  "adapterPackage": {
+    "packageId": "Hoard.Fixtures.Conformance.Contributor",
+    "version": "0.1.0",
+    "assemblyName": "Hoard.Fixtures.Conformance.Contributor"
+  },
+  "declaration": {
+    "schemaVersion": 1,
+    "bindingId": "example.metadata.forwarding",
+    "category": "metadata",
+    "packageId": "Hoard.Fixtures.Metadata.Memory",
+    "packageVersion": "0.1.0",
+    "capabilities": ["metadata", "non-durable", "logical-schema-upgrade", "forwarding-example"],
+    "faults": [
+      "IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",
+      "Capacity", "SchemaState", "LeaseBoundary", "NativeNonCooperation", "CleanupFailure"
+    ]
+  },
+  "components": {
+    "factory": {
+      "packageId": "Hoard.Fixtures.Conformance.Contributor",
+      "version": "0.1.0",
+      "assemblyName": "Hoard.Fixtures.Conformance.Contributor"
+    },
+    "session": {
+      "packageId": "Hoard.Fixtures.Conformance.Contributor",
+      "version": "0.1.0",
+      "assemblyName": "Hoard.Fixtures.Conformance.Contributor"
+    },
+    "store": {
+      "packageId": "Hoard.Fixtures.Conformance.Contributor",
+      "version": "0.1.0",
+      "assemblyName": "Hoard.Fixtures.Conformance.Contributor"
+    },
+    "schema": {
+      "packageId": "Hoard.Fixtures.Metadata.Memory",
+      "version": "0.1.0",
+      "assemblyName": "Hoard.Fixtures.Metadata.Memory"
+    },
+    "authority": {
+      "packageId": "Hoard.Fixtures.Conformance.Bindings.Memory",
+      "version": "0.1.0",
+      "assemblyName": "Hoard.Fixtures.Conformance.Bindings.Memory"
+    },
+    "faults": {
+      "packageId": "Hoard.Fixtures.Conformance.Bindings.Memory",
+      "version": "0.1.0",
+      "assemblyName": "Hoard.Fixtures.Conformance.Bindings.Memory"
+    }
+  },
+  "sourceFiles": [
+    ".editorconfig",
+    "Directory.Build.props",
+    "Directory.Packages.props",
+    "global.json",
+    "tests/fixtures/conformance/Directory.Packages.props",
+    "tests/fixtures/conformance/Bindings/Mutations/StaleOperationStore.cs",
+    "tests/fixtures/conformance/Contributor/Contributor.conformance.json",
+    "tests/fixtures/conformance/Contributor/Contributor.csproj",
+    "tests/fixtures/conformance/Contributor/ForwardingMetadataBinding.cs",
+    "tests/fixtures/conformance/Contributor/packages.lock.json"
+  ]
+}

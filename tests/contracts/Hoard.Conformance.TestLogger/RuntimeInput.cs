@@ -124,8 +124,22 @@ internal static partial class RuntimeSafety
 
     internal static void Id(string? value) => Require(value is not null && IdPattern().IsMatch(value));
     internal static void Digest(string? value) => Require(value is not null && HashPattern().IsMatch(value));
-    internal static void Identity(string? value) => Require(value is { Length: > 0 and <= 1024 }
-        && value.All(c => char.IsAsciiLetterOrDigit(c) || "_.():, []\"-+".Contains(c)));
+    internal static void Identity(string? value)
+    {
+        if (value is null) { throw Error(); }
+        Require(value.Length is > 0 and <= 1024
+            && value.All(c => char.IsAsciiLetterOrDigit(c) || "_./():, []\"-+".Contains(c)));
+        Require(!value.Contains('/') || FrozenSourceIdentity(value));
+    }
+    private static bool FrozenSourceIdentity(string value)
+    {
+        const string prefix = "Hoard.Conformance.Tests.CompatibilityBaselineTests."
+            + "Compiled_source_provenance_matches_actual_pe_pdb_and_frozen_historical_source";
+        return value == prefix + "(variant: \"baseline\", name: \"BinaryContract.dll\", relative: \"Old/Contract.cs\")"
+            || value == prefix + "(variant: \"broken\", name: \"BinaryContract.dll\", relative: \"New/Contract.cs\")"
+            || value == prefix + "(variant: \"compatible\", name: \"BinaryContract.dll\", relative: \"Old/Contract.cs\")"
+            || value == prefix + "(variant: \"consumer\", name: \"RetainedConsumer.dll\", relative: \"Consumer/Program.cs\")";
+    }
     internal static void IdentityPair(string identity, string fullyQualifiedName)
     {
         Identity(identity);
@@ -152,7 +166,7 @@ internal static partial class RuntimeSafety
     private static partial Regex HashPattern();
     [GeneratedRegex(@"\A[a-zA-Z_][a-zA-Z0-9_.+]*\z", RegexOptions.CultureInvariant)]
     private static partial Regex SymbolPattern();
-    [GeneratedRegex("\\A\\([a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:+,()\\[\\]-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|[a-zA-Z_][a-zA-Z0-9_]{0,127})(?:, [a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:+,()\\[\\]-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|[a-zA-Z_][a-zA-Z0-9_]{0,127}))*\\)\\z", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("\\A\\([a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:/+,()\\[\\]-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|[a-zA-Z_][a-zA-Z0-9_]{0,127})(?:, [a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:/+,()\\[\\]-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|[a-zA-Z_][a-zA-Z0-9_]{0,127}))*\\)\\z", RegexOptions.CultureInvariant)]
     private static partial Regex ParameterPattern();
     [GeneratedRegex(@"\AxUnit\.net VSTest Adapter v[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}(?:\+[a-zA-Z0-9.-]{1,64})? \([a-zA-Z0-9 .+-]{1,128}\)\z", RegexOptions.CultureInvariant)]
     private static partial Regex AdapterBannerPattern();

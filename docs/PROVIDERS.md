@@ -196,11 +196,34 @@ retained-binary, graph and runtime-version checks establish different facts;
 none replaces another or grants untested Cartesian-product support.
 
 The supplemental seven-parameter PE/PDB-source and isolated binary
-break/repair/substitution scope at `3ca391a` still awaits native confirmation.
+break/repair/substitution attempt at `3ca391a` failed schema admission before
+confirming its binary scope. The transport repair permits only the four exact
+frozen public source identities; arbitrary/private paths remain prohibited.
+A fresh native confirmation is still required.
 It supplements, never replaces, the nine genuine historical retained scenarios.
 Overall compatibility qualification remains false. These test-only results
 authorize neither package publication, source release, deployment nor production,
 protocol/native-client, identity, external-service or HA support.
+
+### Contributor registration admission, not execution
+
+For metadata/artifact projects, public invocation admission now requires a
+sibling `<Project>.conformance.json` registration. The
+[forwarding fixture registration](../tests/fixtures/conformance/Contributor/Contributor.conformance.json)
+declares the source-root-relative project, source-qualified factory type,
+adapter package, binding declaration, every category component's package/image
+identity and explicit source inventory. Unknown fields, provider-selected
+exclusions, missing hooks/components, unsafe paths and source symlinks reject.
+Bounded source hashing freezes a declared-input fingerprint.
+
+This does not prove complete MSBuild source/import/lock closure or compiled
+factory/category identity. No external project is built in place, no typed
+factory bridge executes yet, and custom execution still returns
+`EvidenceIncomplete`. Adapter wrappers, underlying provider and shared
+authority/fault helpers remain separately declared; this forwarding example
+does not become an independent provider or inherit built-in runtime evidence.
+Owned snapshots, actual package/runtime attribution and separately packaged
+good/red/corrected complete-suite runs remain required by T064..T067.
 
 ### Earlier F-07 diagnostic checkpoints
 

@@ -580,6 +580,13 @@ alongside the exact-axis/schema controls; progress is60/86, implement/running.
 T059 now additionally selects seven existing PE/PDB-source and isolated
 binary-break/repair/substitution parameters; those new native controls remain
 unconfirmed and T059 stays unchecked. No qualification is claimed.
+The `3ca391a` attempt rejected a frozen public source-path parameter at schema
+admission; it did not confirm the new binary scope. Python and the logger now
+admit only the four exact catalog-owned source identities, not arbitrary paths.
+Contributor project admission also validates an explicit `.conformance.json`
+registration and fingerprints its declared source inventory. Complete source
+closure, owned build/pack, typed factory invocation and contributor execution
+remain unimplemented; T064 stays unchecked.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

@@ -6195,6 +6195,27 @@ provenance cannot float outside the input hash. CI requires its matching
 seven-parameter receipt as well as88/114/170. These supplemental native controls
 remain pending; T059 and full-profile qualification stay open.
 
+The exact `3ca391a` supplemental attempt (run40624928955/job122608489234)
+subsequently failed `EvidenceSchemaInvalid` at runtime identity admission.
+Observation recovered after the transient API/DNS failure; it is no longer an
+unknown job outcome. The repaired Python/logger grammar admits only the four
+exact frozen public source-provenance identities, never arbitrary paths.
+All174 selected actual logger/original compatibility component cases and58
+focused Python cases pass locally; these are not fresh Linux acceptance.
+The seven-case native gate and T059 remain open.
+
+Partial T064 now validates explicit contributor sidecar registration and
+fingerprints bounded declared sources at public invocation admission.
+See [the registration limits](PROVIDERS.md#contributor-registration-admission-not-execution).
+Source/import/lock closure, owned build/pack, a compiled typed factory bridge,
+complete independent suite selection and actual contributor execution remain
+unimplemented. The dispatch guard still returns `EvidenceIncomplete`; neither
+T064 nor the separately packaged good/red/corrected journey is complete.
+This checkpoint's frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes602 tests with zero failures/errors/unexpected diagnostic bytes, twenty
+explicit native macOS skips and expected incomplete exit2. Catalog/SDK/diff
+checks and focused C# formatting pass; native/profile acceptance stays open.
+
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and
 twenty explicit native macOS skips (expected incomplete exit2).

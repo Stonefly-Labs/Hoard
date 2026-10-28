@@ -2135,6 +2135,20 @@ diagnostic files, not just public uploads, undergo the sanitation gate.
 
 ## Contributor Entry Point
 
+Current partial T064 admission requires a sibling
+`<Project>.conformance.json`, schemaVersion1, with exact fields `project`,
+`factoryType`, `adapterPackage`, `declaration`, `components` and `sourceFiles`.
+The project is source-root-relative; package/image records contain `packageId`,
+`version` and `assemblyName`. Every category role must be present, with factory
+ownership matching the adapter package. The prepack binding declaration has no
+fabricated archive hash; actual capture still requires the actual package hash.
+The project and registration must appear in the unique bounded source inventory.
+Admission rejects unknown fields, exclusions, missing hooks, unsafe paths and
+symlinks, and fingerprints registration plus captured declared source hashes.
+This is not complete MSBuild closure, an owned snapshot/build, compiled type
+validation or executable contributor registration. The custom dispatch guard
+still returns `EvidenceIncomplete`; T064 remains open.
+
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers
 the above binding contracts and changes only composition/setup code. Its good
