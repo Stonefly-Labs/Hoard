@@ -506,6 +506,9 @@ receipt/closure entries reject. Owned capture freezes the tool's full support
 tree and publishes a read-only derived lock. A managed positive performs a real
 locked NuGet restore; this does not establish a complete native consumer run,
 public dispatch, complete artifact applicability or qualification.
+The first Linux replay passes the consumer-lock component but fails the joined
+builds at content-hash capture. A single closed producer error is now preserved
+through capture orchestration; this is improved diagnosis, not native acceptance.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with

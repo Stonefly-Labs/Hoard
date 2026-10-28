@@ -972,6 +972,28 @@ tests/fixtures/conformance/BuildInputs/BuildInputs.csproj --no-restore
 `python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check`
 pass. No task/checklist markers or flow checkpoint are advanced.
 
+Native run40785247776 at1eb415b executes all697 tooling tests without skips,
+but reports two failures and three errors: the joined-build controls stop
+at content-hash capture before their intended image-substitution boundaries.
+This is not accepted evidence. Native consumer-lock capture is not among the
+failed controls, but that component success cannot qualify the failing suite.
+Capture orchestration previously replaced every producer failure with
+CommandFailed; it now preserves a single closed producer diagnostic while
+retaining CommandFailed for failed exits without a producer code or conflicting
+codes. The new targeted regression verifies PrerequisiteMissing is not masked,
+with all input-revalidation failure paths unchanged.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`
+passes95 tests with two explicit native skips on macOS; `git diff --check`
+passes. This improves bounded diagnosis, not a claim that the Linux cause is
+fixed.
+
+Composition run40782661820 at4d40460 passes full-solution formatting and all
+58 inherited runtime scopes (525 parameters), then fails trusted tooling
+replay with AssertionFailed. The formatting repair therefore clears its
+actual Linux gate, while tooling remains a blocker. Predecessor foundations
+run40779449532 atae85961 completes successfully; neither earlier success
+nor the new partial native controls admit the changed failing input set.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

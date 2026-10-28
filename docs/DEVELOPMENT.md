@@ -6590,6 +6590,11 @@ closure rows and optimistic/unknown fields. The positive managed control uses
 the derived lock for an actual locked NuGet restore. These are private
 preparation/component helpers, not the public contributor runner or native
 acceptance. Separate real-owned-executor controls remain Linux-only.
+The first Linux replay executes all697 tooling tests without skips but fails
+joined builds at content-hash capture; consumer-lock capture is not among the
+failed controls. Capture now preserves a single closed producer diagnostic
+instead of masking it as CommandFailed, without relaxing input revalidation.
+The Linux cause and complete native acceptance remain unresolved.
 
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed

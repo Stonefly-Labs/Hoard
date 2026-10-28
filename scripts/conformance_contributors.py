@@ -150,6 +150,12 @@ def _msbuild_literal(value):
                    for character in str(value))
 
 
+def _require_successful_capture(observed):
+    codes = {event["code"] for event in observed.events if event["code"] != "None"}
+    if observed.exit_code or codes:
+        raise evidence.ConformanceError(next(iter(codes)) if len(codes) == 1 else "CommandFailed")
+
+
 def build_binding_project(binding, owned_run, configuration, feed, *, local_packages=(), compile_action=None):
     from conformance_execution import no_symlinks
     from conformance_lock_preparation import rebind_local_archives
@@ -296,8 +302,7 @@ def capture_binding_evaluation_inputs(binding, owned_run, tool, toolchain_root, 
              "-noconsolelogger", "-nologo", "-nodeReuse:false", "-verbosity:quiet"],
             cwd=tool.parent, kind="events", timeout=60, cache_id="binding-build",
             env={"DOTNET_ROLL_FORWARD": "Disable"})
-        if observed.exit_code or any(event["code"] != "None" for event in observed.events):
-            raise evidence.ConformanceError("CommandFailed")
+        _require_successful_capture(observed)
         raw = read_bounded(output, 2 * 1024 * 1024)
         admitted = binding_evaluation_inputs(binding, raw, toolchain_root)
         rows = evidence.load_json(raw)["Items"]["_BindingInputs"]
@@ -376,8 +381,7 @@ def capture_binding_compilation_inputs(binding, owned_run, built, tool, toolchai
              "-nodeReuse:false", "-maxCpuCount:1", "-noconsolelogger", "-nologo", "-verbosity:minimal", logger],
             cwd=tool.parent, kind="events", timeout=600, cache_id="binding-build",
             env={"DOTNET_ROLL_FORWARD": "Disable", "MSBUILDLOGTASKINPUTS": "1", "MSBUILDLOGIMPORTS": "1"})
-        if observed.exit_code or any(event["code"] != "None" for event in observed.events):
-            raise evidence.ConformanceError("CommandFailed")
+        _require_successful_capture(observed)
         if tuple(observed.events) != ({"event": "control", "code": "None", "value": len(projects)},):
             raise evidence.ConformanceError("ProofMismatch")
         sources = binding_compilation_sources(
@@ -517,8 +521,7 @@ def capture_binding_restore_graphs(binding, owned_run, built, tool, runtime_vers
                  str(owned_run.root), request.relative_to(owned_run.root).as_posix(), request_sha],
                 cwd=tool.parent, kind="events", timeout=60, cache_id="binding-build",
                 env={"DOTNET_ROLL_FORWARD": "Disable"})
-            if observed.exit_code or any(event["code"] != "None" for event in observed.events):
-                raise evidence.ConformanceError("CommandFailed")
+            _require_successful_capture(observed)
             graphs[project] = binding_restore_graph(
                 binding, assets_data, lock_data, project, package_root,
                 expected_lock_sha256=record["preparedLockSha256"],
@@ -587,8 +590,7 @@ def capture_binding_compilation_documents(binding, owned_run, built, tool, runti
                  str(owned_run.root), request.relative_to(owned_run.root).as_posix(), request_sha],
                 cwd=tool.parent, kind="events", timeout=60, cache_id="binding-build",
                 env={"DOTNET_ROLL_FORWARD": "Disable"})
-            if observed.exit_code or any(event["code"] != "None" for event in observed.events):
-                raise evidence.ConformanceError("CommandFailed")
+            _require_successful_capture(observed)
             receipts[project] = binding_compilation_documents(
                 rows[project], read_bounded(output, 2 * 1024 * 1024), output_root, assembly)
             if tuple(observed.events) != ({
@@ -720,8 +722,7 @@ def capture_binding_consumer_lock(owned_run, tool, runtime_version, source_lock,
              str(owned_run.root), request.relative_to(owned_run.root).as_posix(), request_hash],
             cwd=tool.parent, kind="events", timeout=60, cache_id="binding-consumer",
             env={"DOTNET_ROLL_FORWARD": "Disable"})
-        if observed.exit_code or any(event["code"] != "None" for event in observed.events):
-            raise evidence.ConformanceError("CommandFailed")
+        _require_successful_capture(observed)
         row = evidence._record({
             "packageId": evidence.stable_id, "version": evidence.stable_id,
             "archiveSha256": evidence.sha256, "nugetContentSha512": evidence._sha512})

@@ -652,6 +652,8 @@ An internal consumer-lock composer uses NuGet's framework/range/content-hash API
 over explicit frozen archives, preserving the original consumer graph and adding
 only the adapter's required closure without dependency resolution. Its output
 passes a real locked NuGet restore; it is not public contributor execution.
+Fresh Linux joined-build controls fail at content-hash capture; single closed
+producer diagnostics are now preserved instead of masked as CommandFailed.
 Native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the

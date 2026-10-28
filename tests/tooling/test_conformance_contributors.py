@@ -1763,6 +1763,14 @@ class ContributorAdmissionTests(unittest.TestCase):
                         evidence.ConformanceError, "^" + ("ProofMismatch" if defect == "control" else "InputChanged") + "$"):
                     contributors.capture_binding_restore_graphs(binding, owner, built, tool, "10.0.3", cache)
 
+    def test_restore_capture_preserves_closed_producer_failure_instead_of_masking_it(self):
+        binding, owner, built, tool, cache, _ = self.restore_capture_fixture()
+        observed = mock.Mock(exit_code=2, events=({
+            "event": "control", "code": "PrerequisiteMissing", "value": 0},))
+        with mock.patch.object(owner, "command", return_value=observed), self.assertRaisesRegex(
+                evidence.ConformanceError, "^PrerequisiteMissing$"):
+            contributors.capture_binding_restore_graphs(binding, owner, built, tool, "10.0.3", cache)
+
     def evaluation_capture_fixture(self):
         binding, owner, _ = self.build_fixture()
         tool = owner.root / "evaluation-tool.dll"
