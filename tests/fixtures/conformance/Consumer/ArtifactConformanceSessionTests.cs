@@ -1448,12 +1448,25 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var limits = consumer == "reconciliation-history"
             ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, liveTickets: 1) : null;
         var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        try
+        {
+            await GenerationOwnershipConsumerAsync(session, clock, consumer);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    internal static async Task GenerationOwnershipConsumerAsync(IArtifactConformanceSession session, ControlledClock clock,
+        string consumer)
+    {
         IArtifactFaultRegistration? acknowledgment = null;
         IAsyncDisposable? observation = null;
         try
         {
             var point = consumer == "cleanup-generation" ? ArtifactObservationPoint.CleanupCandidate
-                : provider == "local" ? ArtifactObservationPoint.BeforeReconciliation : ArtifactObservationPoint.DirectVerification;
+                : ArtifactObservationPoint.BeforeReconciliation;
             async ValueTask LoseAcknowledgment() =>
                 acknowledgment = await session.Faults.InjectPublicationAcknowledgmentLossAsync(default);
             ValueTask RestoreAcknowledgment() =>
@@ -1471,19 +1484,12 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     session.Store, session.Maintenance, session.Identity, clock.Advance, Observe, Remove, default),
                 _ => throw new ArgumentException("BindingInvalid")
             });
-            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally
         {
-            try
-            {
-                if (observation is not null) { await observation.DisposeAsync(); }
-                if (acknowledgment is not null) { await acknowledgment.DisposeAsync(); }
-            }
-            finally { await session.DisposeAsync(); }
+            try { if (observation is not null) { await observation.DisposeAsync(); } }
+            finally { if (acknowledgment is not null) { await acknowledgment.DisposeAsync(); } }
         }
-        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
-        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
     [Theory]

@@ -86,6 +86,9 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     [ContributorArtifactData("transfer-queue")]
     [ContributorArtifactData("released-shutdown")]
     [ContributorArtifactData("committed-residual")]
+    [ContributorArtifactData("settled-replacement")]
+    [ContributorArtifactData("reconciliation-history")]
+    [ContributorArtifactData("cleanup-generation")]
     public async Task Observed_portable_consumers_preserve_actual_guarantees(string provider, string consumer)
     {
         Assert.Equal(ContributorBindingFactory.BindingId, provider);
@@ -112,6 +115,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             "delete-history" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
             "transfer-queue" => new ArtifactLimits(artifactBytes: 1, stagingBytes: 3, transferSlots: 1, waitingCalls: 1),
             "committed-residual" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024),
+            "reconciliation-history" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, liveTickets: 1),
             _ => null
         };
         long liveReferences = consumer == "live-references" ? 1 : 0;
@@ -191,6 +195,8 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "delete-history" or "transfer-queue" or "released-shutdown" =>
                     ArtifactConformanceSessionTests.AdmittedOwnershipConsumerAsync(session, clock, consumer),
                 "committed-residual" => ArtifactConformanceSessionTests.ResidualCleanupConsumerAsync(session),
+                "settled-replacement" or "reconciliation-history" or "cleanup-generation" =>
+                    ArtifactConformanceSessionTests.GenerationOwnershipConsumerAsync(session, clock, consumer),
                 _ => throw new ArgumentException("BindingInvalid")
             });
             if (consumer is "rollback-history" or "rollback-write-capacity" or "rollback-delete-capacity")

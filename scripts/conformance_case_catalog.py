@@ -238,7 +238,8 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
             "descriptor-completion", "descriptor-handle", "descriptor-renewed",
             "candidate-tickets", "candidate-dependencies", "candidate-decisions", "candidate-resume",
             "receipt", "read-open", "verified-reconciliation", "pending-reclamation",
-            "delete-history", "transfer-queue", "released-shutdown", "committed-residual")}
+            "delete-history", "transfer-queue", "released-shutdown", "committed-residual",
+            "settled-replacement", "reconciliation-history", "cleanup-generation")}
     if profile["enumeration"] == "Incomplete":
         identities[f'{method}(provider: "{binding}", consumer: "direct-availability")'] = 1
     control = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."

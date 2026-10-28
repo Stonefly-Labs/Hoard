@@ -6391,6 +6391,19 @@ category controls. The51 contributor cases, catalog/SDK, whitespace and diff
 checks pass. Frozen full safe tooling remains653 observed, zero failures/errors/
 unexpected diagnostic bytes, twenty native skips and expected incomplete exit2.
 Complete common/native/compiler closure and public dispatch remain unfinished.
+The next three generation-ownership rows share original settled-replacement,
+admitted reconciliation-history and late-cleanup assertions. An interim
+reconciliation-seam-review established that both bindings already expose the
+equivalent unresolved-operation boundary through BeforeReconciliation; the
+Object direct-verification hook has no intervening admission/state mutation.
+Use that existing point for both, not provider-name or capability inference.
+Cleanup still uses CleanupCandidate. No SDK enum/binding rebuild is needed.
+Actual snapshot/incomplete adapters pass106/107 rows with114/108 origins, exact
+discovery, eight-role attribution, fresh-cache locked replay, all194 selected
+built-in regressions and all six input/category controls. The51 contributor cases,
+catalog/SDK, whitespace and diff checks pass. Frozen safe tooling remains653
+observed, zero failures/errors/unexpected diagnostic bytes, twenty native skips
+and expected incomplete exit2. This interim review is not final T081 acceptance.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

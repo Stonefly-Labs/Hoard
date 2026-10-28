@@ -559,6 +559,30 @@ explicit native skips and expected incomplete exit2. Affected README/provider/
 development/harness guidance is updated; public examples, diagrams, production/
 governance/IaC/release/UI documents are unaffected by internal consumer reuse.
 T064 and complete common/native/compiler/public dispatch closure remain open.
+The next three rows share original settled-receipt replacement, admitted
+reconciliation-history and late-cleanup generation assertions. The bounded
+reconciliation-seam-review examined actual provider hook ordering and SDK
+interleavings: LocalReconciliation.cs:14-35 and ObjectReconciliation.cs:14-53
+capture unresolved state with ticket ownership retained before resolution/
+protection/verification. Object's existing BeforeReconciliation hook immediately
+precedes DirectVerification without intervening state mutation or authority
+acquisition. Thus the original provider-name branch is unnecessary: both use
+BeforeReconciliation; cleanup retains CleanupCandidate. No new enum, capability
+classification or binding/provider/SDK package change is introduced. This point
+is conditional on unresolved work, not an all-admitted-operations witness.
+The shared helper preserves all SDK assertions and guarantees acknowledgment
+control disposal even if observation disposal fails. Actual SDK-packed snapshot/
+incomplete adapters pass106/107 rows with114/108 origins, exact discovery,
+eight-role attribution, fresh-cache locked replay, all194 independently discovered
+built-in regressions and all six input/category controls. Crossed inventory-only
+controls require107/115 or106/107 rows/origins, not claimed runtime support.
+The51 contributor cases, catalog/SDK, focused two-file whitespace and diff checks
+pass. Frozen full safe tooling remains653 observed, zero failures/errors/
+unexpected diagnostic bytes, twenty native skips and expected incomplete exit2.
+Affected README/provider/development/harness guidance is updated; public examples,
+diagrams, production/governance/IaC/release/UI documents are unaffected by
+internal consumer reuse. This bounded design review is not final T081 acceptance;
+T064 and complete common/native/compiler/public dispatch closure remain open.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and
