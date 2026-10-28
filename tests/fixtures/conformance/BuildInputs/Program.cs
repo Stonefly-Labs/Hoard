@@ -1,3 +1,5 @@
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -15,13 +17,20 @@ internal static partial class Program
     {
         try
         {
-            Require(args.Length == 4 && args[0] == "content-hashes", "EvidenceSchemaInvalid");
+            Require(args.Length == 4 && args[0] is "content-hashes" or "pdb-documents", "EvidenceSchemaInvalid");
             var root = Path.GetFullPath(args[1]);
             Require(Path.IsPathFullyQualified(args[1]) && root == args[1], "OwnershipInvalid");
             var requestPath = OwnedPath(root, args[2]);
             var requestBytes = Read(requestPath, MaxManifestBytes);
             Require(HashPattern().IsMatch(args[3]) && Hash(requestBytes) == args[3], "InputChanged");
             using var request = JsonDocument.Parse(requestBytes, new JsonDocumentOptions { MaxDepth = 16 });
+            if (args[0] == "pdb-documents")
+            {
+                var count = CaptureDocuments(root, request.RootElement, requestPath, args[3]);
+                Console.WriteLine(JsonSerializer.Serialize(new { @event = "control", code = "None", value = count }));
+                return 0;
+            }
+
             Keys(request.RootElement, "schemaVersion", "qualification", "assets", "cachePath", "outputPath");
             Require(request.RootElement.GetProperty("schemaVersion").GetInt32() == 1
                 && request.RootElement.GetProperty("qualification").ValueKind == JsonValueKind.False,
@@ -100,6 +109,105 @@ internal static partial class Program
             Console.WriteLine("{\"event\":\"control\",\"code\":\"UnknownDiagnostic\",\"value\":0}");
             return 2;
         }
+    }
+
+    private static int CaptureDocuments(string root, JsonElement request, string requestPath, string requestHash)
+    {
+        Keys(request, "schemaVersion", "qualification", "sourcePath", "generatedPath",
+            "outputRoot", "project", "assembly", "pdb", "outputPath");
+        Require(request.GetProperty("schemaVersion").GetInt32() == 1
+            && request.GetProperty("qualification").ValueKind == JsonValueKind.False, "EvidenceSchemaInvalid");
+        var source = OwnedPath(root, Text(request, "sourcePath"));
+        var generated = OwnedPath(root, Text(request, "generatedPath"));
+        Require(Directory.Exists(source) && Directory.Exists(generated) && source != generated
+            && !source.StartsWith(generated + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            && !generated.StartsWith(source + Path.DirectorySeparatorChar, StringComparison.Ordinal), "OwnershipInvalid");
+        var project = Text(request, "project");
+        Require(project.EndsWith(".csproj", StringComparison.Ordinal)
+            && File.Exists(OwnedPath(source, project)), "OwnershipInvalid");
+        var outputRoot = OwnedPath(root, Text(request, "outputRoot"));
+        var outputPath = OwnedPath(root, Text(request, "outputPath"));
+        Require(!File.Exists(outputPath) && !Directory.Exists(outputPath), "OwnershipInvalid");
+        var assembly = request.GetProperty("assembly");
+        var pdb = request.GetProperty("pdb");
+        Keys(assembly, "path", "sha256");
+        Keys(pdb, "path", "sha256");
+        var assemblyName = Text(assembly, "path");
+        var pdbName = Text(pdb, "path");
+        var assemblyPath = OwnedPath(outputRoot, assemblyName);
+        var pdbPath = OwnedPath(outputRoot, pdbName);
+        Require(assemblyName.EndsWith(".dll", StringComparison.Ordinal)
+            && pdbName == Path.ChangeExtension(assemblyName, ".pdb"), "EvidenceSchemaInvalid");
+        var imageBytes = Read(assemblyPath, MaxPackageBytes);
+        var pdbBytes = Read(pdbPath, MaxPackageBytes);
+        Require(HashPattern().IsMatch(Text(assembly, "sha256")) && HashPattern().IsMatch(Text(pdb, "sha256")),
+            "EvidenceSchemaInvalid");
+        Require(Hash(imageBytes) == Text(assembly, "sha256") && Hash(pdbBytes) == Text(pdb, "sha256"), "InputChanged");
+        using var imageStream = new MemoryStream(imageBytes, writable: false);
+        using var image = new PEReader(imageStream);
+        using var pdbStream = new MemoryStream(pdbBytes, writable: false);
+        using var provider = MetadataReaderProvider.FromPortablePdbStream(pdbStream);
+        var reader = provider.GetMetadataReader();
+        var header = reader.DebugMetadataHeader;
+        Require(header is not null, "ProofMismatch");
+        var id = new BlobContentId(header!.Id);
+        var entries = image.ReadDebugDirectory();
+        var codeViews = entries.Where(entry => entry.Type == DebugDirectoryEntryType.CodeView).ToArray();
+        var checksums = entries.Where(entry => entry.Type == DebugDirectoryEntryType.PdbChecksum).ToArray();
+        Require(codeViews.Length == 1 && checksums.Length == 1, "ProofMismatch");
+        var codeView = image.ReadCodeViewDebugDirectoryData(codeViews[0]);
+        var checksum = image.ReadPdbChecksumDebugDirectoryData(checksums[0]);
+        Require(codeViews[0].MinorVersion == 0x504d && codeView.Guid == id.Guid
+            && codeViews[0].Stamp == id.Stamp && codeView.Age == 1, "ProofMismatch");
+        var offset = header.IdStartOffset;
+        Require(offset >= 0 && offset <= pdbBytes.Length - 20, "ProofMismatch");
+        using var checksumHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        checksumHash.AppendData(pdbBytes.AsSpan(0, offset));
+        checksumHash.AppendData(new byte[20]);
+        checksumHash.AppendData(pdbBytes.AsSpan(offset + 20));
+        Require(checksum.AlgorithmName == "SHA256"
+            && checksum.Checksum.AsSpan().SequenceEqual(checksumHash.GetHashAndReset()), "ProofMismatch");
+        var documents = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        long total = imageBytes.Length + pdbBytes.Length;
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        foreach (var handle in reader.Documents)
+        {
+            cancellation.Token.ThrowIfCancellationRequested();
+            var document = reader.GetDocument(handle);
+            var name = reader.GetString(document.Name);
+            Require(Path.IsPathFullyQualified(name), "OwnershipInvalid");
+            var path = Path.GetFullPath(name);
+            var owner = path.StartsWith(source + Path.DirectorySeparatorChar, StringComparison.Ordinal) ? source
+                : path.StartsWith(generated + Path.DirectorySeparatorChar, StringComparison.Ordinal) ? generated : null;
+            Require(owner is not null, "OwnershipInvalid");
+            var relative = path[(owner!.Length + 1)..].Replace(Path.DirectorySeparatorChar, '/');
+            var identity = (owner == source ? "source/" : "generated/") + relative;
+            var hash = reader.GetBlobBytes(document.Hash);
+            Require(reader.GetGuid(document.HashAlgorithm) == new Guid("8829d00f-11b8-4213-878b-770e8597ac16")
+                && hash.Length == 32 && documents.Count < 4096
+                && documents.TryAdd(identity, Convert.ToHexStringLower(hash)), "ProofMismatch");
+            var bytes = Read(OwnedPath(owner, relative), (int)Math.Min(MaxPackageBytes, MaxArchiveBytes - total));
+            total += bytes.Length;
+            Require(Hash(bytes) == documents[identity], "InputChanged");
+        }
+
+        Require(documents.Count > 0, "EvidenceIncomplete");
+        var receipt = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            schemaVersion = 1,
+            qualification = false,
+            project,
+            assembly = new { path = assemblyName, sha256 = Hash(imageBytes) },
+            pdb = new { path = pdbName, sha256 = Hash(pdbBytes) },
+            documents
+        });
+        Require(receipt.Length <= MaxManifestBytes, "OutputLimitExceeded");
+        Require(Hash(Read(requestPath, MaxManifestBytes)) == requestHash
+            && Hash(Read(assemblyPath, MaxPackageBytes)) == Hash(imageBytes)
+            && Hash(Read(pdbPath, MaxPackageBytes)) == Hash(pdbBytes), "InputChanged");
+        using var output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        output.Write(receipt);
+        return documents.Count;
     }
 
     private static byte[] Read(string path, int limit)

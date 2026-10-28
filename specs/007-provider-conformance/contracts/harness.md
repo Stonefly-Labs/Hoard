@@ -2209,6 +2209,17 @@ Unknown fields and unsafe paths/links reject. A receipt reader alone does not
 parse PE/PDB bytes or prove producer origin, full document coverage or complete
 compiler closure. The independent producer must verify actual PE/portable-PDB
 identity and checksum before such a receipt can contribute to runtime evidence.
+The repository-owned BuildInputs `pdb-documents` producer implements this
+identity/checksum check and rehashes every actual document under the two disjoint
+owned roots. Its closed hash-bound request binds project, image hashes and
+create-new receipt output; bounded work emits only fixed safe events.
+Owned-run capture must select the exact runtime without roll-forward, require
+the complete declared compiler/project inventory, bind the selected owned
+per-project DLL/PDB and match exactly one successful document-count event.
+Recheck request/tool/image bytes and all frozen source/generated inputs after
+the command, including failure; a failed child cannot suppress input changes.
+Managed producer controls and modeled owned-command controls are not native
+containment, full compiler/generator closure or public contributor acceptance.
 Build-file receipt admission separately checks observed imports and known
 physical compiler-input parameters. Require successful declared projects with
 source/reference inputs and no reported build/observer errors; a success flag

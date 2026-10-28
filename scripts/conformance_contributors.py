@@ -309,6 +309,74 @@ def capture_binding_restore_graphs(binding, owned_run, built, tool, runtime_vers
     return MappingProxyType(graphs)
 
 
+def capture_binding_compilation_documents(binding, owned_run, built, tool, runtime_version,
+                                          compilation_data, assemblies):
+    from conformance_execution import no_symlinks
+    from conformance_sdk_checks import read_bounded
+
+    owned_run._check_ledger()
+    tool = Path(tool)
+    if (".." in tool.parts or not tool.is_absolute() or not tool.is_relative_to(owned_run.root)
+            or tool.suffix != ".dll" or binding.root != owned_run.root / "binding-source"):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    no_symlinks(tool)
+    runtime_version = evidence.stable_id(runtime_version)
+    projects = {path for path in binding.sources if path.endswith(".csproj")}
+    if (built["bindingInputsSha256"] != binding.inputs_sha256 or set(built["projects"]) != projects
+            or not isinstance(assemblies, (dict, MappingProxyType)) or set(assemblies) != projects):
+        raise evidence.ConformanceError("InputChanged")
+    generated = owned_run.root / "binding-build"
+    compilations = binding_compilation_sources(binding, compilation_data, generated)
+    rows = {row["project"]: row for row in compilations["compilations"]}
+    if set(rows) != projects or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding):
+        raise evidence.ConformanceError("InputChanged")
+    receipts = {}
+    for project in sorted(projects):
+        workspace = generated / hashlib.sha256(project.encode("utf-8")).hexdigest()
+        if built["projects"][project]["root"] != workspace:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        no_symlinks(workspace)
+        output_root = workspace / "bin/Release/net10.0"
+        assembly = evidence.relative_path(assemblies[project])
+        if not assembly.endswith(".dll"):
+            raise evidence.ConformanceError("EvidenceSchemaInvalid")
+        image_paths = [output_root / assembly, output_root / (assembly[:-4] + ".pdb")]
+        frozen = dict(evidence.input_manifest(
+            owned_run.root, [path.relative_to(owned_run.root).as_posix() for path in [tool, *image_paths]]))
+        request, output = workspace / "pdb-documents-request.json", workspace / "pdb-documents.json"
+        payload = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "sourcePath": "binding-source",
+            "generatedPath": "binding-build", "project": project,
+            "outputRoot": output_root.relative_to(owned_run.root).as_posix(),
+            "assembly": {"path": assembly, "sha256": frozen[image_paths[0].relative_to(owned_run.root).as_posix()]},
+            "pdb": {"path": assembly[:-4] + ".pdb",
+                    "sha256": frozen[image_paths[1].relative_to(owned_run.root).as_posix()]},
+            "outputPath": output.relative_to(owned_run.root).as_posix()})
+        request_sha = _write_owned_input(owned_run, request, payload)
+        frozen[request.relative_to(owned_run.root).as_posix()] = request_sha
+        try:
+            observed = owned_run.command(
+                ["dotnet", "exec", "--fx-version", runtime_version, str(tool), "pdb-documents",
+                 str(owned_run.root), request.relative_to(owned_run.root).as_posix(), request_sha],
+                cwd=tool.parent, kind="events", timeout=60, cache_id="binding-build",
+                env={"DOTNET_ROLL_FORWARD": "Disable"})
+            if observed.exit_code or any(event["code"] != "None" for event in observed.events):
+                raise evidence.ConformanceError("CommandFailed")
+            receipts[project] = binding_compilation_documents(
+                rows[project], read_bounded(output, 2 * 1024 * 1024), output_root, assembly)
+            if tuple(observed.events) != ({
+                    "event": "control", "code": "None", "value": len(receipts[project]["documents"])},):
+                raise evidence.ConformanceError("ProofMismatch")
+        finally:
+            owned_run._check_ledger()
+            if (evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen
+                    or request.stat().st_mode & 0o777 != 0o400
+                    or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+                raise evidence.ConformanceError("InputChanged")
+            binding_compilation_sources(binding, compilation_data, generated)
+    return MappingProxyType(receipts)
+
+
 def binding_factory_source(binding, adapter_package, provider_package):
     registration = binding.registration
     declaration = evidence.admit_binding_declaration(

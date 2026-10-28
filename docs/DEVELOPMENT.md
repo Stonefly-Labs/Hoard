@@ -6477,7 +6477,7 @@ the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe
 paths/links, unknown fields, foreign/mismatched sources/projects and changed
 outputs reject. It does not itself parse PE/PDB bytes or prove producer origin.
-A private actual BCL inspector matches the built image's CodeView identity and
+The earlier private BCL inspector matches the built image's CodeView identity and
 specified portable-PDB checksum, then matches five document hashes to actual
 author/generated compiler sources. The initial raw-file checksum attempt failed;
 the corrected check uses the specified20-byte zeroed ID at the actual metadata
@@ -6487,6 +6487,26 @@ The BCL probe uses explicit `LatestPatch` runtime resolution; no native guard,
 SDK pin or product dependency changes. Full compiler/package closure, native
 provenance and the public build/common-suite pipeline remain open; T064 stays
 unchecked.
+
+The promoted repository-owned BuildInputs producer now accepts
+`pdb-documents <owned-root> <request-relative> <sha256>`. Its closed request binds
+disjoint source/generated roots, the selected project, exact DLL/PDB hashes and
+a create-new receipt path. It verifies actual CodeView GUID/stamp/age and the
+specified portable-PDB checksum, and rehashes every physical source document
+without dropping generated documents. Finite image/document/aggregate/time
+budgets and fixed safe events preserve the diagnostic boundary.
+Managed producer tests emit compiler-generated files into the disjoint generated
+root and clear the test build's path mapping; they do not relax native execution.
+Owned-run capture uses explicit `dotnet exec --fx-version` with
+`DOTNET_ROLL_FORWARD=Disable`, a read-only hash-bound request, the selected
+per-project build output and exact document-count events. It independently
+admits the receipt against compiler sources and rechecks source/generated,
+image, request and tool inputs, including after child failure. Three actual
+producer controls and three modeled orchestration controls pass; the full
+focused contributor suite passes57 tests. Frozen full safe tooling observes659
+tests with zero failures/errors/unexpected diagnostic bytes, twenty explicit
+native macOS skips and expected non-qualifying exit2. Complete compiler/generator closure,
+public contributor dispatch and T064 remain unfinished.
 `PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`:
 20 passed. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
 620 observed, zero failures/errors/unexpected diagnostic bytes, twenty explicit

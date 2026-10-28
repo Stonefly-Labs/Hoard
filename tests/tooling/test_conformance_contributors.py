@@ -40,15 +40,21 @@ class NuGetContentToolTests(unittest.TestCase):
         cache.mkdir()
         (cache / "tmp").mkdir()
         cls.environment = command_environment(cls.owner.root, cache, {"DOTNET_ROLL_FORWARD": "LatestPatch"})
+        cls.generated = cls.owner.root / "tool-build/obj"
+        cls.output = cls.owner.root / "tool-build/bin/Release/net10.0"
+        cls.source = source
         config = cls.owner.root / "NuGet.Config"
         config.write_bytes(b"<configuration><packageSources><clear /></packageSources></configuration>")
         code, _ = capture_control(
             ["dotnet", "build", str(source / project), "-c", "Release", "-p:RestoreLockedMode=true",
-             "-p:RestoreConfigFile=" + str(config), "-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"],
+             "-p:RestoreConfigFile=" + str(config), "-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet",
+             "-p:BaseIntermediateOutputPath=" + str(cls.generated) + "/",
+             "-p:BaseOutputPath=" + str(cls.output.parents[1]) + "/", "-p:PathMap=",
+             "-p:EmitCompilerGeneratedFiles=true", "-p:CompilerGeneratedFilesOutputPath=" + str(cls.generated / "generated")],
             cwd=source, env=cls.environment, limit=65536, timeout=120)
         if code:
             raise AssertionError("Managed NuGet content tool build failed")
-        cls.tool = source / project.parent / "bin/Release/net10.0/Hoard.Fixtures.Conformance.BuildInputs.dll"
+        cls.tool = cls.output / "Hoard.Fixtures.Conformance.BuildInputs.dll"
 
     @classmethod
     def tearDownClass(cls):
@@ -82,9 +88,9 @@ class NuGetContentToolTests(unittest.TestCase):
     def relative(self, path):
         return path.relative_to(self.owner.root).as_posix()
 
-    def invoke(self, *, digest=None):
+    def invoke(self, *, digest=None, operation="content-hashes"):
         code, raw = capture_control(
-            ["dotnet", str(self.tool), "content-hashes", str(self.owner.root), self.relative(self.request),
+            ["dotnet", str(self.tool), operation, str(self.owner.root), self.relative(self.request),
              evidence.file_sha256(self.request) if digest is None else digest],
             cwd=self.owner.root, env=self.environment, limit=65536, timeout=30)
         try:
@@ -145,6 +151,84 @@ class NuGetContentToolTests(unittest.TestCase):
         code, event = self.invoke()
         self.assertEqual((code, event["code"]), (2, "OutputLimitExceeded"))
         self.assertFalse(self.output.exists())
+
+    def pdb_request(self):
+        image_directory = self.case / "image"
+        image_directory.mkdir()
+        name = "Hoard.Fixtures.Conformance.BuildInputs"
+        image, pdb = image_directory / (name + ".dll"), image_directory / (name + ".pdb")
+        for path in (image, pdb):
+            shutil.copyfile(self.tool.parent / path.name, path)
+        value = {
+            "schemaVersion": 1, "qualification": False,
+            "sourcePath": self.relative(self.source), "generatedPath": self.relative(self.generated),
+            "outputRoot": self.relative(image_directory),
+            "project": "tests/fixtures/conformance/BuildInputs/BuildInputs.csproj",
+            "assembly": {"path": image.name, "sha256": evidence.file_sha256(image)},
+            "pdb": {"path": pdb.name, "sha256": evidence.file_sha256(pdb)},
+            "outputPath": self.relative(self.output_receipt)}
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        return value, image, pdb
+
+    @property
+    def output_receipt(self):
+        return self.case / "documents.json"
+
+    def test_managed_pdb_tool_binds_actual_image_and_document_checksums_without_output_reuse(self):
+        value, _, _ = self.pdb_request()
+        code, event = self.invoke(operation="pdb-documents")
+        self.assertEqual(code, 0)
+        receipt = evidence.load_json(self.output_receipt.read_bytes())
+        self.assertEqual(event, {"event": "control", "code": "None", "value": len(receipt["documents"])})
+        self.assertEqual(receipt["assembly"], value["assembly"])
+        self.assertEqual(receipt["pdb"], value["pdb"])
+        self.assertEqual(receipt["project"], value["project"])
+        self.assertIn("source/tests/fixtures/conformance/BuildInputs/Program.cs", receipt["documents"])
+        self.assertTrue(any(path.startswith("generated/") for path in receipt["documents"]))
+        for identity, hashed in receipt["documents"].items():
+            namespace, relative = identity.split("/", 1)
+            root = self.source if namespace == "source" else self.generated
+            self.assertEqual(hashed, evidence.file_sha256(root / relative))
+        original = self.output_receipt.read_bytes()
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
+        self.assertEqual(self.output_receipt.read_bytes(), original)
+
+    def test_managed_pdb_tool_rejects_rehashed_checksum_tamper_and_changed_source(self):
+        value, _, pdb = self.pdb_request()
+        original = pdb.read_bytes()
+        pdb.write_bytes(original + b"checksum-tamper")
+        value["pdb"]["sha256"] = evidence.file_sha256(pdb)
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "ProofMismatch")
+        self.assertFalse(self.output_receipt.exists())
+        pdb.write_bytes(original)
+        value["pdb"]["sha256"] = evidence.file_sha256(pdb)
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        path = self.source / "tests/fixtures/conformance/BuildInputs/Program.cs"
+        source = path.read_bytes()
+        try:
+            path.write_bytes(source + b"\n")
+            self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "InputChanged")
+            self.assertFalse(self.output_receipt.exists())
+        finally:
+            path.write_bytes(source)
+
+    def test_managed_pdb_tool_rejects_foreign_paths_links_and_request_changes(self):
+        value, _, pdb = self.pdb_request()
+        self.assertEqual(self.invoke(operation="pdb-documents", digest="a" * 64)[1]["code"], "InputChanged")
+        value["pdb"]["path"] = "../outside-private-canary"
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
+        outside = self.parent / "outside-private-pdb"
+        shutil.copyfile(pdb, outside)
+        pdb.unlink()
+        pdb.symlink_to(outside)
+        value["pdb"]["path"] = pdb.name
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        before = evidence.file_sha256(outside)
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
+        self.assertEqual(evidence.file_sha256(outside), before)
+        self.assertFalse(self.output_receipt.exists())
 
 
 class ContributorAdmissionTests(unittest.TestCase):
@@ -800,6 +884,108 @@ class ContributorAdmissionTests(unittest.TestCase):
                 with mock.patch.object(owner, "command", side_effect=capture), self.assertRaisesRegex(
                         evidence.ConformanceError, "^" + ("ProofMismatch" if defect == "control" else "InputChanged") + "$"):
                     contributors.capture_binding_restore_graphs(binding, owner, built, tool, "10.0.3", cache)
+
+    def documents_capture_fixture(self):
+        binding, owner, _ = self.build_fixture()
+        workspace = owner.root / "binding-build" / hashlib.sha256(binding.project.encode()).hexdigest()
+        output = workspace / "bin/Release/net10.0"
+        output.mkdir(parents=True)
+        generated = workspace / "obj/Generated.cs"
+        generated.parent.mkdir()
+        generated.write_bytes(b"namespace Acme; public class Generated { }\n")
+        for suffix in (".dll", ".pdb"):
+            (output / ("Acme.Adapter" + suffix)).write_bytes(("modeled" + suffix).encode("ascii"))
+        tool = owner.root / "documents-tool.dll"
+        tool.write_bytes(b"modeled producer")
+        built = {"bindingInputsSha256": binding.inputs_sha256,
+                 "projects": {binding.project: {"root": workspace}}}
+        compilation = {"schemaVersion": 1, "qualification": False, "succeeded": True,
+                       "compilations": [{"project": binding.project, "succeeded": True, "sources": {
+                           "source/Binding.cs": binding.sources["Binding.cs"],
+                           "generated/" + generated.relative_to(owner.root / "binding-build").as_posix():
+                               evidence.file_sha256(generated)}}]}
+        return binding, owner, built, tool, compilation, output, generated
+
+    def test_documents_capture_binds_compiler_sources_owned_images_and_exact_runtime(self):
+        binding, owner, built, tool, compilation, output, _ = self.documents_capture_fixture()
+
+        def capture(arguments, **options):
+            self.assertEqual(arguments[:6], ["dotnet", "exec", "--fx-version", "10.0.3", str(tool), "pdb-documents"])
+            self.assertEqual(options["kind"], "events")
+            self.assertEqual(options["env"], {"DOTNET_ROLL_FORWARD": "Disable"})
+            request = owner.root / arguments[-2]
+            self.assertEqual(evidence.file_sha256(request), arguments[-1])
+            self.assertEqual(request.stat().st_mode & 0o777, 0o400)
+            value = evidence.load_json(request.read_bytes())
+            self.assertEqual(value["sourcePath"], "binding-source")
+            self.assertEqual(value["generatedPath"], "binding-build")
+            self.assertEqual(value["outputRoot"], output.relative_to(owner.root).as_posix())
+            receipt = {"schemaVersion": 1, "qualification": False, "project": binding.project,
+                       "assembly": value["assembly"], "pdb": value["pdb"],
+                       "documents": compilation["compilations"][0]["sources"]}
+            (owner.root / value["outputPath"]).write_bytes(evidence.canonical_bytes(receipt))
+            return mock.Mock(exit_code=0, events=({"event": "control", "code": "None", "value": 2},))
+
+        with mock.patch.object(owner, "command", side_effect=capture):
+            receipts = contributors.capture_binding_compilation_documents(
+                binding, owner, built, tool, "10.0.3", evidence.canonical_bytes(compilation),
+                {binding.project: "Acme.Adapter.dll"})
+        self.assertEqual(set(receipts), {binding.project})
+        self.assertEqual(receipts[binding.project]["documents"], compilation["compilations"][0]["sources"])
+
+    def test_documents_capture_rechecks_inputs_even_after_failed_child_and_rejects_missing_events(self):
+        for defect in ("control", "request", "tool", "source", "mode", "generated", "image", "symbols"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory(dir=self.parent) as nested:
+                original_parent = self.parent
+                self.parent = Path(nested)
+                try:
+                    binding, owner, built, tool, compilation, output, generated = self.documents_capture_fixture()
+                finally:
+                    self.parent = original_parent
+
+                def capture(arguments, **options):
+                    request = owner.root / arguments[-2]
+                    if defect == "control":
+                        value = evidence.load_json(request.read_bytes())
+                        receipt = {"schemaVersion": 1, "qualification": False, "project": binding.project,
+                                   "assembly": value["assembly"], "pdb": value["pdb"],
+                                   "documents": compilation["compilations"][0]["sources"]}
+                        (owner.root / value["outputPath"]).write_bytes(evidence.canonical_bytes(receipt))
+                        return mock.Mock(exit_code=0, events=())
+                    path = {"request": request, "tool": tool, "source": binding.root / "Binding.cs",
+                            "mode": binding.root / "Binding.cs", "generated": generated,
+                            "image": output / "Acme.Adapter.dll", "symbols": output / "Acme.Adapter.pdb"}[defect]
+                    path.chmod(0o600)
+                    if defect != "mode":
+                        path.write_bytes(b"changed")
+                    raise evidence.ConformanceError("CommandFailed")
+
+                with mock.patch.object(owner, "command", side_effect=capture), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^" + ("ProofMismatch" if defect == "control" else "InputChanged") + "$"):
+                    contributors.capture_binding_compilation_documents(
+                        binding, owner, built, tool, "10.0.3", evidence.canonical_bytes(compilation),
+                        {binding.project: "Acme.Adapter.dll"})
+
+    def test_documents_capture_rejects_missing_projects_and_foreign_workspace_or_images_before_execution(self):
+        for defect in ("projects", "workspace", "image"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory(dir=self.parent) as nested:
+                original_parent = self.parent
+                self.parent = Path(nested)
+                try:
+                    binding, owner, built, tool, compilation, output, _ = self.documents_capture_fixture()
+                finally:
+                    self.parent = original_parent
+                assemblies = {binding.project: "Acme.Adapter.dll"}
+                if defect == "projects":
+                    assemblies = {}
+                elif defect == "workspace":
+                    built["projects"][binding.project]["root"] = self.parent
+                else:
+                    assemblies[binding.project] = "../Acme.Adapter.dll"
+                with mock.patch.object(owner, "command") as command, self.assertRaises(evidence.ConformanceError):
+                    contributors.capture_binding_compilation_documents(
+                        binding, owner, built, tool, "10.0.3", evidence.canonical_bytes(compilation), assemblies)
+                command.assert_not_called()
 
     def test_registered_runtime_components_preserve_distinct_actual_archive_owners_and_image_names(self):
         feed, output = self.parent / "feed", self.parent / "consumer"

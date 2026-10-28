@@ -718,6 +718,40 @@ macOS skips and expected incomplete exit2; catalog, SDK and diff checks pass.
 The portable-PDB checksum rule is documented in the
 [runtime PE-COFF specification](https://github.com/dotnet/runtime/blob/main/docs/design/specs/PE-COFF.md#portable-pdb-checksum).
 
+The repository-owned BuildInputs `pdb-documents` producer now promotes that BCL
+identity/checksum check into bounded closed-request tooling. It binds exact
+DLL/PDB bytes, rehashes every author/generated source document and refuses
+output reuse, changed requests, foreign paths and links. Three actual managed
+producer controls were red before implementation and now pass. The first
+post-implementation build exposed a misplaced method; moving it to class scope
+fixed the compiler failure without changing the diagnostic budget. The managed
+fixture emits source-generator files into a disjoint generated root and clears
+test-build path mapping rather than omitting unresolved generated documents.
+
+`capture_binding_compilation_documents` adds owned production orchestration:
+complete declared project/compiler inventories, fixed per-project output roots,
+read-only hash-bound requests, exact runtime selection without roll-forward,
+independent compiler/document admission and exact count events. Three focused
+modeled-command tests were red before implementation and now pass, covering
+successful request/runtime/receipt binding, missing events, changed request/tool/
+source/generated/image/PDB inputs after child failure, changed source modes and
+foreign/missing workspace/image inventories. These orchestration controls are
+modeled; actual managed producer controls are not native containment evidence.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`
+passes57 tests. `dotnet format
+tests/fixtures/conformance/BuildInputs/BuildInputs.csproj --no-restore
+--verify-no-changes --include tests/fixtures/conformance/BuildInputs/Program.cs
+--verbosity quiet` passes. `python3 scripts/conformance_unit_checks.py
+--all-tooling` observes659 tests, zero failures/errors/unexpected diagnostic
+bytes, twenty explicit native macOS skips and expected non-qualifying exit2.
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check`
+pass. Complete evaluated/compiler/generator/tool dependency
+closure, full applicable common coverage and public dispatch remain unfinished;
+T064 remains unchecked. Charter, product, architecture/ADR/diagrams, governance,
+backlog/predecessor, examples, IaC, release and UI documents are unaffected:
+this increment changes private test tooling, not product APIs, package/module
+boundaries, operator commands, deployment or any support/qualification claim.
+
 The subsequent partial T064 build-file reader admits observed imports and known
 physical Csc parameters across disjoint author/generated/toolchain/package roots.
 It requires successful declared projects with source/reference inputs and no
