@@ -232,7 +232,11 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
             "finalized-noncommit", "finalized-mutations", "idle-read", "cooperative-inactivity",
             "noncooperative-source", "noncooperative-destination", "authority-deadline",
             "cancel-before", "cancel-waiting", "cooperative-cancel", "reclaimed-identities",
-            "concurrent-release", "sequential-recovery")}
+            "concurrent-release", "sequential-recovery", "released-cancellation", "successful-ticket",
+            "successful-read", "unclaimed-ticket", "unclaimed-read", "expired-staging", "progress-cancellation",
+            "rollback-history", "rollback-write-capacity", "rollback-delete-capacity",
+            "descriptor-completion", "descriptor-handle", "descriptor-renewed",
+            "candidate-tickets", "candidate-dependencies", "candidate-decisions", "candidate-resume")}
     if profile["enumeration"] == "Incomplete":
         identities[f'{method}(provider: "{binding}", consumer: "direct-availability")'] = 1
     control = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
@@ -252,6 +256,12 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
         f'{admission}(provider: "{binding}", probe: {probe})': 1
         for probe in ("Complete", "Version", "Publication", "Deletion", "Recovery", "Fencing",
                       "Readers", "Streaming", "ForeignAuthority")})
+    payload = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+               "Observed_payload_controls_preserve_actual_quarantine_and_declared_state")
+    identities.update({
+        f'{payload}(provider: "{binding}", consumer: "{consumer}")':
+            2 if profile["durability"] == "LocalProcessCrash" and consumer in ("read-bitflip", "read-truncate") else 1
+        for consumer in ("read-bitflip", "read-truncate", "commit-progress", "exact-payload")})
     return identities
 
 

@@ -477,6 +477,29 @@ records this internal component; public examples, diagrams, product/architecture
 ADR/governance, predecessors, IaC, release and UI are unaffected because no
 public dispatch, production contract or deployment behavior changes.
 T064 remains unchecked; full catalog/native qualification is not established.
+The next shared-consumer increment adds21 rows: original damaged-read/payload/
+progress, handoff, history candidate bound/resume and clock-rollback bodies plus
+unchanged cancelled-descriptor SDK assertions. No original assertion is removed;
+test-fixture extraction retains barrier release, settlement and registration
+disposal. The candidate-resume helper also guarantees observer disposal if fault
+registration disposal fails. Declared durability, not provider ID, selects
+damaged-read logical reopen; the independent inventory requires its two origins.
+Both durability/enumeration axes are independently expanded, with crossed
+inventory controls but no claim of crossed runtime support.
+Actual SDK-packed snapshot/incomplete adapters pass 76/77 rows and 79/78 origins,
+exact discovery, eight-role image attribution, fresh-cache locked replay and all
+134 independently discovered built-in regressions. All six input/category
+controls still reject. A separately SDK-packed durable adapter changes profile
+on damaged-read reopen: the actual named profile assertion rejects after19
+preceding rows. Simulation's logical-reopen mutation rejects after76; the
+changed-during-commit control still rejects after nine. Raw exception/stack text
+is not emitted. Frozen full safe tooling remains653 observed, zero failures/
+errors/unexpected diagnostic bytes, twenty native skips and expected incomplete
+exit2. The51 contributor cases, catalog/SDK, focused two-file whitespace and diff
+checks pass. README/provider/development/harness guidance is updated; public
+examples/diagrams and production/governance/IaC/release/UI documents are unaffected
+by internal consumer extraction. T064, native/compiler closure and public
+dispatch remain unfinished; logical reopen is not real process-crash evidence.
 
 Captured role selection now derives exact image/package pairs from every
 registered component, preserving distinct adapter/provider/helper owners and

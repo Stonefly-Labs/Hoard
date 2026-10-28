@@ -6347,6 +6347,18 @@ Frozen full safe tooling remains653 observed, zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native skips and expected incomplete exit2.
 The51 contributor cases, catalog/SDK checks, focused two-file whitespace and
 diff checks pass. T064/public dispatch and native qualification remain open.
+The next 21 rows share original damaged-read/payload/progress, handoff, candidate
+bound/resume and clock-rollback consumers and unchanged cancelled-descriptor SDK
+assertions. Snapshot/incomplete actual runs pass 76/77 rows with 79/78 origins,
+exact discovery, eight-role attribution, fresh-cache locked replay and all 134
+selected built-in regressions. Durable damaged reads require two parent-linked
+origins; no durability is borrowed by simulation. A separately packaged durable
+profile-on-reopen mutation fails during the damaged read after19 preceding rows;
+the incomplete mutation fails at logical reopen after76. Changed-during-commit
+still rejects after nine. Full safe tooling remains653 observed, zero failures/
+errors/unexpected diagnostic bytes, twenty native skips and expected incomplete
+exit2; the51 contributor cases, catalog/SDK, whitespace and diff checks pass.
+These are component/logical journeys, not process-crash/native qualification.
 Captured component selection additionally checks distinct adapter/provider/
 helper owners against exact local archive members and captured runtime bytes,
 without assuming assembly name equals package ID. Thirty focused cases pass,

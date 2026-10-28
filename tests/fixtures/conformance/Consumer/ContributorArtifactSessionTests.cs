@@ -61,11 +61,29 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     [ContributorArtifactData("concurrent-release")]
     [ContributorArtifactData("sequential-recovery")]
     [ContributorArtifactData("direct-availability")]
+    [ContributorArtifactData("released-cancellation")]
+    [ContributorArtifactData("successful-ticket")]
+    [ContributorArtifactData("successful-read")]
+    [ContributorArtifactData("unclaimed-ticket")]
+    [ContributorArtifactData("unclaimed-read")]
+    [ContributorArtifactData("expired-staging")]
+    [ContributorArtifactData("progress-cancellation")]
+    [ContributorArtifactData("rollback-history")]
+    [ContributorArtifactData("rollback-write-capacity")]
+    [ContributorArtifactData("rollback-delete-capacity")]
+    [ContributorArtifactData("descriptor-completion")]
+    [ContributorArtifactData("descriptor-handle")]
+    [ContributorArtifactData("descriptor-renewed")]
+    [ContributorArtifactData("candidate-tickets")]
+    [ContributorArtifactData("candidate-dependencies")]
+    [ContributorArtifactData("candidate-decisions")]
+    [ContributorArtifactData("candidate-resume")]
     public async Task Observed_portable_consumers_preserve_actual_guarantees(string provider, string consumer)
     {
         Assert.Equal(ContributorBindingFactory.BindingId, provider);
         await using var resources = new RecordingDirectories();
         var clock = new ArtifactConformanceSessionTests.ControlledClock();
+        var started = clock.GetTimestamp();
         var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component", clock,
             resources, new ConformanceEvidenceBuffer());
         var limits = consumer switch
@@ -73,6 +91,15 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             "cap-crossing" => new ArtifactLimits(10, 10, 1),
             "ownerless-expiry" => new ArtifactLimits(artifactBytes: 1, stagingBytes: 1),
             "reclaimed-identities" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
+            "successful-ticket" or "successful-read" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0),
+            "unclaimed-ticket" or "unclaimed-read" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0, liveTickets: 2),
+            "expired-staging" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024),
+            "rollback-write-capacity" or "rollback-delete-capacity" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, liveTickets: 4),
+            "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1048576, committedIdentities: 128),
             _ => null
         };
         long liveReferences = consumer == "live-references" ? 1 : 0;
@@ -136,14 +163,45 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "sequential-recovery" => ArtifactRecoveryAssertions.SequentialRecoveryAsync(
                     session.Store, session.Maintenance, session.Identity, clock.Advance,
                     ContributorBindingFactory.ExpectedEnumeration, default),
+                "released-cancellation" or "successful-ticket" or "successful-read" or "unclaimed-ticket"
+                    or "unclaimed-read" or "expired-staging" or "progress-cancellation" =>
+                    ArtifactConformanceSessionTests.HandoffConsumerAsync(session, clock, consumer),
+                "rollback-history" or "rollback-write-capacity" or "rollback-delete-capacity" =>
+                    ArtifactConformanceSessionTests.ClockRollbackConsumerAsync(session, clock, consumer["rollback-".Length..]),
+                "descriptor-completion" or "descriptor-handle" or "descriptor-renewed" =>
+                    ArtifactOwnershipAssertions.CancelledStagedDescriptorAsync(
+                        session.Store, clock.Advance, WhenIdle, consumer["descriptor-".Length..], default),
+                "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" =>
+                    ArtifactConformanceSessionTests.CandidateBoundsConsumerAsync(session, consumer["candidate-".Length..]),
+                "candidate-resume" => ArtifactConformanceSessionTests.CandidateResumeConsumerAsync(session),
                 _ => throw new ArgumentException("BindingInvalid")
             });
+            if (consumer is "rollback-history" or "rollback-write-capacity" or "rollback-delete-capacity")
+            { Assert.True(clock.GetTimestamp() > started); }
             AssertProfile(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { await session.DisposeAsync(); }
         Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
         Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [ContributorArtifactData("read-bitflip")]
+    [ContributorArtifactData("read-truncate")]
+    [ContributorArtifactData("commit-progress")]
+    [ContributorArtifactData("exact-payload")]
+    public async Task Observed_payload_controls_preserve_actual_quarantine_and_declared_state(string provider, string consumer)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var clock = new ArtifactConformanceSessionTests.ControlledClock();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            clock, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.PayloadConsumerAsync(binding, context, resources, output, clock, consumer,
+            ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash, AssertProfile);
     }
 
     [Theory]
