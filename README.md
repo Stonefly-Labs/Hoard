@@ -599,6 +599,11 @@ or an executable contributor route.
 Synthetic feed helpers can also generate and independently verify bounded
 exact-ID local mappings for non-Hoard archives; custom restore/execution is
 still not wired.
+Typed factory-source generation now verifies selected adapter/provider package
+identities and the adapter image, then directly constructs the declared type
+with the actual provider archive hash. A managed metadata component compiles
+and invokes an external Acme type and rejects wrong category/constructor
+signatures. This is not the public contributor route or a complete-suite run.
 
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI

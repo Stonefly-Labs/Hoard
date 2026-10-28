@@ -6251,6 +6251,20 @@ zero failures/errors/unexpected diagnostic bytes, twenty explicit native macOS
 skips and expected incomplete exit2. All61 focused cases and catalog/SDK/diff
 checks pass. No C# assertions, executor limits, budgets or provider behavior
 change in that helper increment.
+The next partial T064 helper emits a direct typed factory after checking exact
+local adapter/provider package identity and adapter image. The declared type
+accepts the actual provider archive hash as a public constructor argument.
+All28 focused contributor/input cases pass. A separate bounded managed
+metadata-only Acme component compiles/invokes the generated factory, matches
+the actual loaded image to its archive, and observes intended `CS0029`/`CS1503`
+rejections for wrong category/constructor types. Its managed child exits and
+temporary owner release are observed. The native macOS execution prerequisite
+still rejects: this component is not Linux containment, full source closure,
+public contributor build/dispatch or a complete common-suite journey.
+Frozen full safe tooling observes607 tests with zero failures/errors/unexpected
+diagnostic bytes, twenty explicit native macOS skips and expected incomplete
+exit2. The28 focused cases and catalog/SDK/diff checks pass; malformed non-local
+package policy fails the existing strict entity schema without remapping.
 
 Fresh checkpoint checks: `python3 scripts/conformance_unit_checks.py --all-tooling`
 observes 590 tests with zero failures/errors/unexpected diagnostic bytes and

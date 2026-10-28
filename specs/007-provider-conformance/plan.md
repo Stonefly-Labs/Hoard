@@ -313,6 +313,35 @@ checks pass. This does not execute custom contributor restore/build or qualify
 the complete controller. T064 and all remaining quality/final acceptance work
 stay open.
 
+The next T064 typed-source increment verifies selected actual local adapter/
+provider package IDs/versions and the adapter's declared net10.0 image, then
+emits a direct source-qualified constructor call with the actual provider
+archive SHA-256. The return is the selected category interface; no reflection,
+directory loading or built-in alias is introduced. Foreign package/image/
+version/source-policy inputs reject. All28 focused contributor/input cases pass.
+
+A separate bounded managed metadata-only Acme component compiles and invokes
+that generated factory. Its loaded adapter image matches its captured archive,
+and the constructor receives the actual archive hash. Wrong-category and
+wrong-constructor candidates reject at actual `CS0029`/`CS1503`, not an invented
+status. Managed process exits are observed and the temporary source owner is
+released. Archive/image SHA-256:
+`fc48e877477cff6540150c125747ff7a6d3a1e13fed93d673d8c817311a35f9c`,
+`0912b6983cc47d6f8a6a6841cc91969ed6eee1b67004dde709f73346afd8de0b`.
+This is component evidence, not Linux confinement, actual public contributor
+dispatch, complete source/import/lock closure, supplied-project build/pack,
+complete independent catalog selection or the separately packaged full
+good/red/corrected journey. The initial local native-executor attempt correctly
+rejected the macOS prerequisite; that guard is unchanged. The managed host probe
+then uses an explicitly measured installed runtime rather than claiming native
+acceptance from a relaxed runtime/platform policy. T064 stays unchecked.
+Frozen full safe tooling after the strict source-policy rejection correction
+observes607 tests, zero failures/errors/unexpected diagnostic bytes, twenty
+explicit native macOS skips and expected incomplete exit2. The28 focused cases,
+catalog, SDK and diff checks pass. The malformed source-policy packet correctly
+fails shared entity admission with `EvidenceSchemaInvalid`, not a later
+`BindingInvalid`; no schema relaxation or broad error remapping is added.
+
 ### Generated report and semantic counter controls: T048 continuation
 
 The subsequent architecture attempt at exact

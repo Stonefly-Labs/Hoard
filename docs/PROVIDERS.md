@@ -231,9 +231,9 @@ inventory with descriptor-based stable-file checks and read-only outputs, then
 revalidates original registration/source bytes. Changed inputs and overlapping
 author/output roots reject; the author's project is never built or modified.
 
-This does not prove complete MSBuild source/import/lock closure or compiled
-factory/category identity. No external project is built in place, no typed
-factory bridge executes yet, and custom execution still returns
+This does not prove complete MSBuild source/import/lock closure or full
+factory/category identity for a supplied project. No external project is built
+in place, the typed bridge is not yet integrated into the public consumer, and custom execution still returns
 `EvidenceIncomplete`. Adapter wrappers, underlying provider and shared
 authority/fault helpers remain separately declared; this forwarding example
 does not become an independent provider or inherit built-in runtime evidence.
@@ -246,6 +246,17 @@ wildcards. The default `Hoard.*` policy is unchanged. Independent verification
 rejects unselected IDs, altered/widened mappings and case-folded duplicates;
 the serialized policy omits private feed paths. This supports future external
 adapter archives but does not yet execute a custom restore or contributor run.
+
+The typed source helper verifies selected local adapter/provider package IDs
+and versions plus the adapter's declared `lib/net10.0` image. It emits a direct
+`new global::<factoryType>(actualProviderArchiveSha256)` returning the selected
+metadata/artifact interface, without reflection or directory loading. The
+registered type therefore needs a public constructor accepting that one hash
+string (additional optional parameters are allowed). A managed metadata-only
+Acme component compiles/invokes this path with matching actual archive/image
+bytes and rejects wrong category/constructor types at compilation. This is not
+Linux containment, complete MSBuild closure, generic supplied-project type
+validation or separately packaged good/red/corrected common-suite acceptance.
 
 ### Earlier F-07 diagnostic checkpoints
 

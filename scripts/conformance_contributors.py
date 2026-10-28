@@ -1,4 +1,4 @@
-"""Explicit contributor registration admission, not execution or qualification."""
+"""Explicit contributor registration/staging and typed source, never qualification."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -94,3 +94,30 @@ def snapshot_binding_project(project, category, expected_inputs_sha256, owned_ru
     if admit_binding_project(project, category).inputs_sha256 != expected:
         raise evidence.ConformanceError("InputChanged")
     return BindingProject(snapshot, admitted.project, admitted.registration, sources)
+
+
+def binding_factory_source(binding, adapter_package, provider_package):
+    registration = binding.registration
+    declaration = registration["declaration"]
+    adapter = evidence.admit_entity("PackageIdentity", adapter_package)
+    provider = evidence.admit_entity("PackageIdentity", provider_package)
+    for package, package_id, version in (
+            (adapter, registration["adapterPackage"]["packageId"], registration["adapterPackage"]["version"]),
+            (provider, declaration["packageId"], declaration["packageVersion"])):
+        if (package["packageId"].casefold() != package_id.casefold()
+                or package["version"].casefold() != version.casefold()):
+            raise evidence.ConformanceError("BindingInvalid")
+    image = f'lib/net10.0/{registration["adapterPackage"]["assemblyName"]}.dll'
+    if image not in adapter["runtimeAssemblies"]:
+        raise evidence.ConformanceError("BindingInvalid")
+    category = evidence._one_of("metadata", "artifacts")(declaration["category"])
+    interface = "IMetadataConformanceBinding" if category == "metadata" else "IArtifactConformanceBinding"
+    factory = _factory_type(registration["factoryType"])
+    return (
+        "namespace Hoard.Fixtures.Conformance.Consumer;\n\n"
+        "internal static class ContributorBindingFactory\n"
+        "{\n"
+        f"    internal static global::Hoard.Testing.Conformance.Bindings.{interface} Create() =>\n"
+        f'        new global::{factory}("{provider["sha256"]}");\n'
+        "}\n"
+    ).encode("ascii")

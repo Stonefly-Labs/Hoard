@@ -2156,6 +2156,14 @@ local package IDs outside `Hoard.*`. Additional IDs are bounded, case-folded,
 unique and literal, never caller-selected glob patterns. The original default
 configuration bytes remain unchanged; a widened or unselected mapping rejects.
 Custom build/restore integration remains unfinished.
+The typed source helper checks selected actual local adapter/provider IDs and
+versions and the adapter's declared `lib/net10.0/<assemblyName>.dll`, then emits
+direct construction of `factoryType` with the actual provider archive hash.
+The type must expose a public constructor accepting that hash string and
+implement the category's binding interface; no reflection/directory loading
+is used. A managed metadata-only component verifies compilation/invocation and
+intended wrong-category/wrong-constructor compiler rejection. This does not yet
+wire or validate arbitrary supplied projects through the public runner.
 
 The starter is a separately packaged forwarding adapter over one existing
 fixture, not a third claimed independent storage implementation. It registers

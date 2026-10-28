@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from unittest import mock
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -177,6 +178,32 @@ class ContributorAdmissionTests(unittest.TestCase):
                 self.project, "metadata", invocation.binding_inputs_sha256, run)
         self.assertEqual((self.source / "Binding.cs").read_bytes(), original)
         self.assertFalse((run.root / "binding-source").exists())
+
+    def test_typed_factory_source_requires_selected_actual_adapter_image_and_provider_package(self):
+        project = contributors.admit_binding_project(self.project, "metadata")
+        feed = self.parent / "feed"
+        feed.mkdir()
+
+        def package(name):
+            with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
+                archive.writestr(f"{name}.nuspec",
+                                f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")
+                archive.writestr(f"lib/net10.0/{name}.dll", name.encode("ascii"))
+            return evidence.package_identity(feed, name, "0.1.0")
+
+        adapter, provider = package("Acme.Adapter"), package("Acme.Provider")
+        source = contributors.binding_factory_source(project, adapter, provider)
+        self.assertIn(b"new global::Acme.Binding(", source)
+        self.assertIn(provider["sha256"].encode("ascii"), source)
+        for selected_adapter, selected_provider in (
+                (provider, provider), (adapter, adapter),
+                ({**adapter, "runtimeAssemblies": {"lib/net10.0/Other.dll": "a" * 64}}, provider),
+                ({**adapter, "version": "0.2.0"}, provider),
+                (adapter, {**provider, "version": "0.2.0"})):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^BindingInvalid$"):
+                contributors.binding_factory_source(project, selected_adapter, selected_provider)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+            contributors.binding_factory_source(project, {**adapter, "sourceMapping": "nuget.org"}, provider)
 
 
 if __name__ == "__main__":
