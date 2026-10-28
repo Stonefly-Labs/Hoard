@@ -454,6 +454,18 @@ three document hashes and exact archive/compiled DLL equality. Its forwarding
 command adapter is not native containment evidence. Source-generator/tool-
 dependency closure, full applicability and public dispatch remain unfinished.
 
+The builder now isolates compiler-generated output per project and enables
+emission. The observer admits the actual typed Csc GeneratedFilesOutputPath,
+rejects reused/foreign/overlapping directories, freezes bounded source-only
+output trees at compiler completion and checks them again before publication.
+Separate generatedOutputs hashes never claim these files were Csc input Sources.
+Compiled-document admission accepts only the union of actual input sources and
+those generated outputs, binding both manifests separately. An actual SDK
+GeneratedRegex generator/PDB control passes; changed output bytes, late tree
+changes and missing generator provenance reject. This closes emitted-source
+correspondence, not the remaining generator/tool dependency closure or native
+qualification requirements.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

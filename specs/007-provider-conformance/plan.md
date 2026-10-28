@@ -798,6 +798,33 @@ macOS skips and expected non-qualifying exit2.
 `python3 scripts/conformance_case_catalog.py --check`,
 `python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check` pass.
 
+The next T064 increment captures the actual scalar typed Csc
+GeneratedFilesOutputPath rather than parsing a command line or trusting intended
+properties. The builder enables per-project isolated emission; the observer
+requires fresh owned non-overlapping directories, freezes bounded source-only
+trees at successful compiler completion and compares exact membership/bytes
+again before publishing. Generated outputs have separate hashes and never
+pretend to be Csc input Sources. Source admission rejects input/output ambiguity
+and cross-project output reuse; document admission binds both manifests.
+An actual SDK GeneratedRegex generator produces one separate source whose hash
+matches an actual DLL/portable-PDB document. Missing output provenance, changed
+bytes, reused/foreign directories and post-compile tree additions reject.
+These controls do not establish native origin or complete generator/tool
+dependency closure. T064 remains open; implementation continues.
+README, provider/development guides and harness contract are synchronized.
+Product/module/provider APIs, operator examples, architecture/ADR/diagrams,
+governance, predecessors, IaC, release and UI documents are unaffected by this
+private compiler-observation increment.
+`PYTHONPATH=tests/tooling python3 -m unittest test_conformance_contributors -q`
+passed75 tests before the final additional ambiguity control.
+`python3 scripts/conformance_unit_checks.py --all-tooling` observes679 tests
+with zero failures/errors/unexpected diagnostic bytes, twenty explicit native
+macOS skips and expected non-qualifying exit2.
+`dotnet format tests/fixtures/conformance/BuildInputs/BuildInputs.csproj
+--no-restore --verify-no-changes --include
+tests/fixtures/conformance/BuildInputs/CompilerInputsLogger.cs --verbosity quiet`
+and `git diff --check` pass.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

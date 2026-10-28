@@ -6537,6 +6537,15 @@ Focused execution/contributor checks pass132 tests with nineteen native skips.
 Frozen full safe tooling observes675 tests, zero failures/errors/unexpected
 diagnostic bytes, twenty explicit native macOS skips and expected incomplete exit2.
 
+The next T064 increment captures actual Roslyn-generated sources separately from
+Csc input Sources. Per-project emission uses isolated directories; the typed Csc
+output-path event must name a fresh owned directory disjoint from other projects.
+Bounded source-only trees are frozen at compiler completion and compared again
+before receipts publish. Actual GeneratedRegex output hashes match the built
+portable-PDB documents; missing provenance, altered bytes, reused/foreign paths
+and post-compile additions reject. These managed checks do not establish native
+containment, complete generator/tool dependency closure or public qualification.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe

@@ -23,6 +23,8 @@ public sealed class CompilerInputsLogger : ILogger
         internal string Project { get; } = project;
         internal bool Succeeded { get; set; }
         internal string? CommandHash { get; set; }
+        internal string? GeneratedDirectory { get; set; }
+        internal SortedDictionary<string, string> GeneratedOutputs { get; } = new(StringComparer.Ordinal);
         internal SortedDictionary<string, string> Sources { get; } = new(StringComparer.Ordinal);
         internal SortedDictionary<string, SortedDictionary<string, string>> Inputs { get; } = new(StringComparer.Ordinal);
         internal SortedDictionary<string, SortedDictionary<string, string>> Metadata { get; } = new(StringComparer.Ordinal);
@@ -134,6 +136,13 @@ public sealed class CompilerInputsLogger : ILogger
                 {
                     Require(active.Remove(Context(data.BuildEventContext), out var compilation), "EvidenceIncomplete");
                     compilation!.Succeeded = data.Succeeded;
+                    if (data.Succeeded)
+                    {
+                        foreach (var (identity, hash) in CaptureGeneratedOutputs(compilation))
+                        {
+                            compilation.GeneratedOutputs.Add(identity, hash);
+                        }
+                    }
                 }
             });
             eventSource.AnyEventRaised += (_, data) => Observe(() => Capture(data));
@@ -211,8 +220,32 @@ public sealed class CompilerInputsLogger : ILogger
             compiled.CommandHash = Hash(Encoding.UTF8.GetBytes(command.CommandLine));
         }
         if (data is not TaskParameterEventArgs parameter || parameter.Kind != TaskParameterMessageKind.TaskInput
-            || !FileParameters.Contains(parameter.ItemType)
             || !active.TryGetValue(Context(parameter.BuildEventContext), out var compilation))
+        {
+            return;
+        }
+
+        if (parameter.ItemType == "GeneratedFilesOutputPath")
+        {
+            Require(compilation.GeneratedDirectory is null && parameter.Items.Count == 1
+                && parameter.Items[0] is string, "EvidenceIncomplete");
+            var path = (string)parameter.Items[0]!;
+            Require(Path.IsPathFullyQualified(path), "OwnershipInvalid");
+            path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+            Require(path.StartsWith(roots["generated"] + Path.DirectorySeparatorChar, StringComparison.Ordinal),
+                "OwnershipInvalid");
+            var relative = path[(roots["generated"].Length + 1)..].Replace(Path.DirectorySeparatorChar, '/');
+            _ = OwnedPath(roots["generated"], relative);
+            Require(compilations.All(row => row.GeneratedDirectory is null
+                || row.GeneratedDirectory != path
+                && !row.GeneratedDirectory.StartsWith(path + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                && !path.StartsWith(row.GeneratedDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal)),
+                "OwnershipInvalid");
+            Require(!Directory.Exists(path) || !Directory.EnumerateFileSystemEntries(path).Any(), "OwnershipInvalid");
+            compilation.GeneratedDirectory = path;
+            return;
+        }
+        if (!FileParameters.Contains(parameter.ItemType))
         {
             return;
         }
@@ -235,6 +268,39 @@ public sealed class CompilerInputsLogger : ILogger
                 compilation.Sources.Add(identity, hash);
             }
         }
+    }
+
+    private SortedDictionary<string, string> CaptureGeneratedOutputs(Compilation compilation)
+    {
+        Require(compilation.GeneratedDirectory is not null, "EvidenceIncomplete");
+        var outputs = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        var pending = new Stack<string>();
+        pending.Push(compilation.GeneratedDirectory!);
+        var entries = 0;
+        while (pending.TryPop(out var directory))
+        {
+            if (!Directory.Exists(directory))
+            {
+                continue;
+            }
+            foreach (var path in Directory.EnumerateFileSystemEntries(directory))
+            {
+                Require(++entries <= 4096 && Stopwatch.GetElapsedTime(started) < TimeSpan.FromMinutes(10),
+                    "OutputLimitExceeded");
+                var relative = path[(roots["generated"].Length + 1)..].Replace(Path.DirectorySeparatorChar, '/');
+                _ = OwnedPath(roots["generated"], relative);
+                if (Directory.Exists(path))
+                {
+                    pending.Push(path);
+                    continue;
+                }
+                Require(path.EndsWith(".cs", StringComparison.Ordinal), "EvidenceIncomplete");
+                var (identity, hash) = FileInput(path);
+                Require(!compilation.Sources.ContainsKey(identity)
+                    && outputs.TryAdd(identity, hash), "EvidenceIncomplete");
+            }
+        }
+        return outputs;
     }
 
     private void Observe(Action operation)
@@ -277,6 +343,10 @@ public sealed class CompilerInputsLogger : ILogger
                     && compilations.All(row => row.Succeeded && row.CommandHash is not null
                         && row.Sources.Count > 0 && row.Inputs.TryGetValue("References", out var references)
                         && references.Count > 0), "EvidenceIncomplete");
+                foreach (var row in compilations)
+                {
+                    Require(CaptureGeneratedOutputs(row).SequenceEqual(row.GeneratedOutputs), "InputChanged");
+                }
                 foreach (var (identity, expected) in frozen.ToArray())
                 {
                     var separator = identity.IndexOf('/');
@@ -299,7 +369,8 @@ public sealed class CompilerInputsLogger : ILogger
                         {
                             project = row.Project,
                             succeeded = row.Succeeded,
-                            sources = row.Sources
+                            sources = row.Sources,
+                            generatedOutputs = row.GeneratedOutputs
                         }).ToArray()
                     }),
                     ["inputs"] = JsonSerializer.SerializeToUtf8Bytes(new

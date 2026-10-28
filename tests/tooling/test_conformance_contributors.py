@@ -360,6 +360,8 @@ class NuGetContentToolTests(unittest.TestCase):
         for name, text in {
                 "BaseIntermediateOutputPath": str(generated) + "/$(MSBuildProjectName)/obj/",
                 "BaseOutputPath": str(generated) + "/$(MSBuildProjectName)/bin/",
+                "EmitCompilerGeneratedFiles": "true",
+                "CompilerGeneratedFilesOutputPath": str(generated) + "/$(MSBuildProjectName)/compiler-generated",
                 "RestorePackagesPath": str(packages), "UseSharedCompilation": "false"}.items():
             ET.SubElement(group, name).text = text
         ET.ElementTree(props).write(properties)
@@ -420,6 +422,79 @@ class NuGetContentToolTests(unittest.TestCase):
 
     def test_managed_compiler_observer_rejects_postcompile_generated_source_changes(self):
         value, _, _, _ = self.compiler_request(change_after_compile=True)
+        _, event = self.compile()
+        self.assertEqual(event["code"], "InputChanged")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
+    def test_managed_compiler_observer_captures_roslyn_generator_outputs_separately(self):
+        value, binding, generated, _ = self.compiler_request()
+        (binding.root / "Adapter/Binding.cs").write_text(
+            'using System.Text.RegularExpressions;\n'
+            'public partial class Binding {\n'
+            '    [GeneratedRegex("a+")] public static partial Regex Pattern();\n}\n')
+        value["sourceHashes"] = evidence.proof_manifest(binding.root)
+        binding = contributors.BindingProject(binding.root, binding.project, {}, value["sourceHashes"])
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        code, event = self.compile()
+        self.assertEqual(code, 0)
+        self.assertEqual(event["code"], "None")
+        raw = (self.owner.root / value["outputs"]["sources"]).read_bytes()
+        result = contributors.binding_compilation_sources(binding, raw, generated)
+        row = next(row for row in result["compilations"] if row["project"] == binding.project)
+        self.assertEqual(len(row["generatedOutputs"]), 1)
+        self.assertFalse(row["sources"].keys() & row["generatedOutputs"].keys())
+        path = next(iter(row["generatedOutputs"]))
+        self.assertIn("RegexGenerator", path)
+        image_directory = generated / "Adapter/bin/Release/net10.0"
+        image, pdb = image_directory / "Adapter.dll", image_directory / "Adapter.pdb"
+        self.request.write_bytes(evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "sourcePath": self.relative(binding.root),
+            "generatedPath": self.relative(generated), "project": binding.project,
+            "outputRoot": self.relative(image_directory),
+            "assembly": {"path": image.name, "sha256": evidence.file_sha256(image)},
+            "pdb": {"path": pdb.name, "sha256": evidence.file_sha256(pdb)},
+            "outputPath": self.relative(self.output_receipt)}))
+        code, event = self.invoke(operation="pdb-documents")
+        self.assertEqual(code, 0)
+        receipt = contributors.binding_compilation_documents(
+            row, self.output_receipt.read_bytes(), image_directory, image.name)
+        self.assertIn(path, receipt["documents"])
+        self.assertEqual(receipt["generatedOutputsSha256"], evidence.digest(row["generatedOutputs"]))
+        changed = dict(row)
+        changed["generatedOutputs"] = {}
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            contributors.binding_compilation_documents(
+                changed, self.output_receipt.read_bytes(), image_directory, image.name)
+        physical = generated / path.removeprefix("generated/")
+        physical.write_bytes(physical.read_bytes() + b"\n")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.binding_compilation_sources(binding, raw, generated)
+
+    def test_managed_compiler_observer_rejects_reused_or_foreign_generator_output_directories(self):
+        value, _, generated, _ = self.compiler_request()
+        directory = generated / "Shared/compiler-generated"
+        directory.mkdir(parents=True)
+        (directory / "preexisting.cs").write_text("private-preexisting-canary")
+        _, event = self.compile()
+        self.assertEqual(event["code"], "OwnershipInvalid")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+        (directory / "preexisting.cs").unlink()
+        properties = ET.parse(self.compiler_properties)
+        properties.find(".//CompilerGeneratedFilesOutputPath").text = str(self.parent / "foreign-generator-output")
+        properties.write(self.compiler_properties)
+        _, event = self.compile()
+        self.assertEqual(event["code"], "OwnershipInvalid")
+        self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
+
+    def test_managed_compiler_observer_rejects_generator_tree_changes_after_compilation(self):
+        value, binding, generated, _ = self.compiler_request()
+        targets = ET.parse(binding.root / "Directory.Build.targets")
+        target = ET.SubElement(targets.getroot(), "Target", Name="ChangeGeneratorOutput", AfterTargets="CoreCompile")
+        ET.SubElement(target, "WriteLinesToFile",
+                      File="$(CompilerGeneratedFilesOutputPath)/late.cs", Lines="private-late-canary", Overwrite="true")
+        targets.write(binding.root / "Directory.Build.targets")
+        value["sourceHashes"] = evidence.proof_manifest(binding.root)
+        self.request.write_bytes(evidence.canonical_bytes(value))
         _, event = self.compile()
         self.assertEqual(event["code"], "InputChanged")
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
@@ -1704,6 +1779,16 @@ class ContributorAdmissionTests(unittest.TestCase):
         self.assertEqual(result["bindingInputsSha256"], self.binding.inputs_sha256)
         self.assertFalse(result["qualification"])
         self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(result))
+
+    def test_compiler_sources_reject_generated_output_namespace_and_input_ambiguity(self):
+        value = self.compilation()
+        row = value["compilations"][0]
+        for path in ("source/Binding.cs", "generated/Dynamic.cs"):
+            changed = copy.deepcopy(value)
+            changed["compilations"][0]["generatedOutputs"] = {path: row["sources"][path]}
+            with self.subTest(path=path), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceIncomplete$"):
+                self.compile_inputs(changed)
 
     def test_compiler_sources_reject_failed_missing_duplicate_or_undeclared_projects(self):
         value = self.compilation()

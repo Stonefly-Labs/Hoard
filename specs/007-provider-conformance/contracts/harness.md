@@ -2231,6 +2231,14 @@ Admit the typed-event environment pair only together at fixed value1; reject
 other MSBuild variables or values. Do not relax native containment, ownership,
 runtime or capacity requirements. Actual managed bridge evidence is not native
 qualification and cannot open public dispatch without the remaining closure.
+Enable isolated per-project Roslyn generated-file emission. Admit its actual
+typed Csc GeneratedFilesOutputPath only beneath the owned generated root, with
+fresh non-overlapping directories. Freeze bounded source-only output trees at
+task completion and recheck exact membership and bytes before publication.
+Record generatedOutputs separately from input Sources; reject cross-project
+reuse or input/output ambiguity. PDB documents may match only that union, with
+separate input/output manifest digests. Emitted-source correspondence does not
+prove complete generator/tool dependency closure or native origin.
 Compiled-document receipt admission must bind the successful compiler project,
 exact selected DLL/PDB paths and current output hashes. Every document hash must
 match an observed compiler source; unknown or mismatched documents reject.

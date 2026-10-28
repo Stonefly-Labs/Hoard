@@ -634,6 +634,10 @@ changed requests, missing typed-event prerequisites and output reuse. Native
 owned compile capture now binds all three receipts, exact declared project/source
 maps and immutable controls. A six-command managed bridge covers evaluation,
 locked restore, observed build, pack and PDB capture with archive/image equality.
+Typed Csc generated-output paths now bind isolated, create-new Roslyn output
+trees. Generated sources have separate hashes, not fictitious Csc input entries;
+an actual GeneratedRegex build matches these hashes to portable-PDB documents.
+Reused/foreign directories and post-compile tree changes reject.
 Native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the

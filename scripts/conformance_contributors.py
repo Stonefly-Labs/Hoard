@@ -218,6 +218,8 @@ def build_binding_project(binding, owned_run, configuration, feed, *, local_pack
             "MSBuildProjectExtensionsPath": str(target / "obj") + "/",
             "BaseOutputPath": str(target / "bin") + "/",
             "NuGetLockFilePath": str(lock),
+            "EmitCompilerGeneratedFiles": "true",
+            "CompilerGeneratedFilesOutputPath": str(target / "compiler-generated"),
         }
         for name, value in values.items():
             ET.SubElement(group, name).text = _msbuild_literal(value)
@@ -831,23 +833,30 @@ def binding_restore_graph(binding, assets_data, lock_data, project, package_root
         "packages": MappingProxyType(packages), "projects": MappingProxyType(projects)})
 
 
+def _compilation_sources(value):
+    fields = {
+        "project": evidence.relative_path, "succeeded": evidence._boolean,
+        "sources": evidence._hash_map}
+    if isinstance(value, (dict, MappingProxyType)) and "generatedOutputs" in value:
+        fields["generatedOutputs"] = lambda items: (
+            evidence._record({})(items) if items == {} else evidence._hash_map(items))
+    return evidence._record(fields)(value)
+
+
 def binding_compilation_sources(binding, data, generated_root):
     if not isinstance(data, bytes):
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
     if len(data) > 2 * 1024 * 1024:
         raise evidence.ConformanceError("OutputLimitExceeded")
-    compilation = evidence._record({
-        "project": evidence.relative_path, "succeeded": evidence._boolean,
-        "sources": evidence._hash_map})
     value = evidence._record({
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
         "succeeded": evidence._boolean,
-        "compilations": evidence._list(compilation, 1024),
+        "compilations": evidence._list(_compilation_sources, 1024),
     })(evidence.load_json(data))
     generated_root = Path(generated_root).absolute()
     if (generated_root.is_relative_to(binding.root) or binding.root.is_relative_to(generated_root)):
         raise evidence.ConformanceError("OwnershipInvalid")
-    projects, generated = set(), {}
+    projects, generated, generator_outputs, compiler_sources = set(), {}, set(), set()
     source_inputs = 0
     for row in value["compilations"]:
         project = row["project"]
@@ -855,10 +864,17 @@ def binding_compilation_sources(binding, data, generated_root):
                 or not project.endswith(".csproj")):
             raise evidence.ConformanceError("EvidenceIncomplete")
         projects.add(project)
-        source_inputs += len(row["sources"])
+        outputs = row.get("generatedOutputs", {})
+        if (any(not path.startswith("generated/") or path in compiler_sources or path in generator_outputs
+                or path in row["sources"] for path in outputs)
+                or generator_outputs & row["sources"].keys()):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        generator_outputs.update(outputs)
+        compiler_sources.update(row["sources"])
+        source_inputs += len(row["sources"]) + len(outputs)
         if source_inputs > evidence.MAX_PROOF_FILES:
             raise evidence.ConformanceError("OutputLimitExceeded")
-        for path, hashed in row["sources"].items():
+        for path, hashed in {**row["sources"], **outputs}.items():
             namespace, separator, relative = path.partition("/")
             if not separator or namespace not in ("source", "generated"):
                 raise evidence.ConformanceError("EvidenceSchemaInvalid")
@@ -884,9 +900,7 @@ def binding_compilation_documents(compilation, data, output_root, assembly_path)
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
     if len(data) > 2 * 1024 * 1024:
         raise evidence.ConformanceError("OutputLimitExceeded")
-    compilation = evidence._record({
-        "project": evidence.relative_path, "succeeded": evidence._boolean,
-        "sources": evidence._hash_map})(compilation)
+    compilation = _compilation_sources(compilation)
     artifact = evidence._record({"path": evidence.relative_path, "sha256": evidence.sha256})
     value = evidence._record({
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
@@ -900,12 +914,15 @@ def binding_compilation_documents(compilation, data, output_root, assembly_path)
         raise evidence.ConformanceError("EvidenceIncomplete")
     if (value["project"] != compilation["project"] or value["assembly"]["path"] != assembly
             or value["pdb"]["path"] != assembly[:-4] + ".pdb"
-            or any(compilation["sources"].get(path) != hashed for path, hashed in value["documents"].items())):
+            or any({**compilation["sources"], **compilation.get("generatedOutputs", {})}.get(path) != hashed
+                   for path, hashed in value["documents"].items())):
         raise evidence.ConformanceError("ProofMismatch")
     outputs = {value[kind]["path"]: value[kind]["sha256"] for kind in ("assembly", "pdb")}
     if evidence.input_manifest(output_root, sorted(outputs)) != outputs:
         raise evidence.ConformanceError("InputChanged")
-    return MappingProxyType({**value, "compilerSourcesSha256": evidence.digest(compilation["sources"])})
+    generators = ({"generatedOutputsSha256": evidence.digest(compilation["generatedOutputs"])}
+                  if "generatedOutputs" in compilation else {})
+    return MappingProxyType({**value, "compilerSourcesSha256": evidence.digest(compilation["sources"]), **generators})
 
 
 def _compiler_file_parameters(value):
