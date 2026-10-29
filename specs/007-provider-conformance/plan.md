@@ -2962,6 +2962,45 @@ contributor example describe the new diagnostic boundary; provider contracts,
 product/architecture/ADR/diagrams, governance, predecessor evidence, IaC,
 release and UI documents are unaffected by this presentation-only increment.
 
+### Transient selected-category executable settings
+
+Private absolute runtime paths and encoded contexts in executable settings
+cannot be made safe merely by projecting public summaries. Selected metadata/
+artifact and contributor runtime settings now use owned `stores/`, removed by
+genuine settlement, rather than retained `proofs/`. Original active source
+corroboration still reads exact readonly settings and compares reconstructed
+bytes, command argv/cwd, input file hashes and original held command records.
+Shared, hook and failed-mutation source packets stop copying raw settings;
+the original safe command/wrapper hashes remain unchanged as provenance.
+No configuration is rewritten/redacted into a new authority or admitted from
+a dead owner. Live replay and the original evaluation snapshot remain mandatory.
+
+Three existing shared/hook source controls first reject raw settings being
+retained; the mutation-pair control also requires their exclusion. Packet
+inspection checks raw and base64 private-root values while preserving all
+settings/command substitution negatives. The sanitation helper additionally
+decodes base64 candidates in output contents and filenames. A native-only
+real-owned-command/settlement control carries all five synthetic canary classes
+and the private root in executable configuration, proves its original held
+input hash, then requires actual Released cleanup and clean retained files.
+This is not a native managed-consumer or category-origin substitute.
+
+The first broad migration exposes three errors/one failure, including
+composition's deliberate post-cleanup settings verification. Rather than
+relax that reader, migration is limited to selected category/contributor scopes;
+the generic command proof accepts only the existing proofs or transient stores
+directory, with the original live file check unchanged. Legacy/composition
+retention remains explicitly unfinished. One residual legacy expectation fails
+the next353-test command's predecessor352 tests; the corrected353-test complete
+evidence/SDK/sanitation replay passes in106.285 seconds with three explicit
+Linux-only skips on macOS. Catalog consistency and diff checks pass.
+Fresh native generation and the new native settlement control are still pending.
+No T068..T086/checklist/flow marker advances. README, DEVELOPMENT and quickstart
+describe the scope; the contributor walkthrough is unchanged because it never
+promised settings retention or all-output sanitation. Product/provider contracts,
+architecture/ADR/diagrams, governance, predecessor evidence, IaC, release and UI
+documents are unaffected by this runtime-resource classification change.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

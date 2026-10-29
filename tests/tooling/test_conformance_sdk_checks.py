@@ -479,8 +479,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                             checks.runtime_command(run, assembly, manifest, **call.args[5])
                     self.assertEqual(set(command.call_args.kwargs["execution_inputs"]), {
                         f'runtime-input-{manifest["attemptId"]}.json', "runtime-owner.json", path,
-                        f'proofs/settings-{manifest["attemptId"]}.runsettings', *images})
-                    settings = ET.parse(root / f'proofs/settings-{manifest["attemptId"]}.runsettings')
+                        f'stores/settings-{manifest["attemptId"]}.runsettings', *images})
+                    settings = ET.parse(root / f'stores/settings-{manifest["attemptId"]}.runsettings')
                     variables = settings.find(".//EnvironmentVariables")
                     expected = {
                         **{variable: package["sha256"] for package, variable in zip(
@@ -549,8 +549,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                                        original_observations=True)
         self.assertEqual(set(command.call_args.kwargs["execution_inputs"]), {
             f'runtime-input-{manifest["attemptId"]}.json', "runtime-owner.json", path,
-            f'proofs/settings-{manifest["attemptId"]}.runsettings', *images})
-        settings = ET.parse(run.root / f'proofs/settings-{manifest["attemptId"]}.runsettings')
+            f'stores/settings-{manifest["attemptId"]}.runsettings', *images})
+        settings = ET.parse(run.root / f'stores/settings-{manifest["attemptId"]}.runsettings')
         context = settings.findtext(".//EnvironmentVariables/HOARD_ORIGINAL_CONTEXT")
         self.assertEqual(checks.evidence.load_json(base64.b64decode(context)), {
             "schemaVersion": 1, "runId": inputs["runId"],
@@ -1163,7 +1163,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         self.assertTrue({entry["path"] for entry in manifest["assemblies"]} <= set(
                             launches[-1][1]["execution_inputs"]))
                     if scope_id == "controller":
-                        settings = ET.fromstring((self.directory / "proofs" / (
+                        settings = ET.fromstring((self.directory / "stores" / (
                             "settings-" + manifest["attemptId"] + ".runsettings")).read_bytes())
                         self.assertEqual(
                             settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_TRANSFER_PROOFS"),
@@ -1300,7 +1300,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     run.run_id, run.root_id = inputs["runId"], str(uuid.uuid4())
                     run.command_sequence, run.live_children = 1, lambda: ()
                     arguments, settings = ["dotnet", "vstest", "synthetic-source-command-canary"], b"<RunSettings/>"
-                    settings_path = self.directory / f'proofs/settings-{manifest["attemptId"]}.runsettings'
+                    settings_path = self.directory / f'stores/settings-{manifest["attemptId"]}.runsettings'
                     settings_path.write_bytes(settings)
                     record = {
                         "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
@@ -1317,7 +1317,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                             run, "read_execution_record", return_value=record_path.read_bytes(), create=True) as native_record:
                         checks.category_command_proof(
                              run, execution, arguments=arguments, cwd=self.directory, manifest=manifest,
-                             settings_data=settings, started_ms=1, ended_ms=4)
+                             settings_data=settings, started_ms=1, ended_ms=4, settings_directory="stores")
                         command_raw = command_parent.read_bytes()
                         command_value = json.loads(command_raw)
                         for change in (
@@ -5423,7 +5423,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.subTest(kind=kind), patch.object(checks, "category_command_proof"):
                 checks.runtime_command(run, assembly, selected, artifact_runner=runner, **(
                     {} if kind == "legacy" else {"category_scope": ("artifacts", "controller")}))
-                settings = ET.fromstring((self.directory / f'proofs/settings-{selected["attemptId"]}.runsettings').read_bytes())
+                settings_directory = "proofs" if kind == "legacy" else "stores"
+                settings_name = f'settings-{selected["attemptId"]}.runsettings'
+                settings = ET.fromstring((self.directory / settings_directory / settings_name).read_bytes())
+                self.assertFalse((self.directory / ("stores" if kind == "legacy" else "proofs") / settings_name).exists())
                 context_path = settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_SOURCE_CONTEXT")
                 namespace = ("qualification-artifact-transfers" if kind.startswith("qualification")
                              else "category-artifact-transfers")
@@ -5439,7 +5442,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         self.directory / f'stores/artifact-source-capture-{selected["attemptId"]}'))
                     expected = {
                         f'runtime-input-{selected["attemptId"]}.json', "runtime-owner.json",
-                        "proofs/category-inputs.json", f'proofs/settings-{selected["attemptId"]}.runsettings',
+                        "proofs/category-inputs.json", f'stores/settings-{selected["attemptId"]}.runsettings',
                         "Hoard.Artifacts.Tests.dll", f'stores/artifact-source-context-{selected["attemptId"]}.json',
                         runner.name, f"proofs/{namespace}.json",
                         *(f"proofs/{namespace}/transfer-{provider}-{size}/proof.json"

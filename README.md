@@ -851,6 +851,12 @@ They expose only closed catalog identifiers, counts and hashes, not private
 input text or proof filenames. Even all-passing runtime JUnit has an explicit
 `EvidenceIncomplete` qualification error. These are safe summaries, not portable
 verification reports; complete private-proof sanitation and qualification remain open.
+Native built-in category settings are now transient owned `stores/` resources,
+not retained proof files. Original live readers still validate their exact bytes
+and command bindings before cleanup; held input/command digests remain in the
+safe receipts. Shared/hook/mutation packets no longer copy executable settings.
+Legacy/composition retention is unchanged and remains part of the unfinished
+all-output sanitation gate.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

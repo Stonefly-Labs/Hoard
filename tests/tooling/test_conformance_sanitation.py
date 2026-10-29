@@ -1,3 +1,5 @@
+import base64
+import binascii
 import contextlib
 import copy
 import hashlib
@@ -5,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 import tempfile
@@ -30,16 +33,23 @@ class ConformanceSanitationTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.parent)
 
     def assert_clean(self, root, *outputs):
-        for output in outputs:
+        def inspect(output):
             for canary in self.canaries:
                 self.assertNotIn(canary, output)
-        for path in root.rglob("*"):
-            for canary in self.canaries:
-                self.assertNotIn(canary, os.fsencode(path.relative_to(root)))
-            if path.is_file():
-                contents = path.read_bytes()
+            for candidate in re.findall(rb"[A-Za-z0-9+/]{16,}={0,2}", output):
+                try:
+                    decoded = base64.b64decode(candidate, validate=True)
+                except binascii.Error:
+                    continue
                 for canary in self.canaries:
-                    self.assertNotIn(canary, contents)
+                    self.assertNotIn(canary, decoded)
+
+        for output in outputs:
+            inspect(output)
+        for path in root.rglob("*"):
+            inspect(os.fsencode(path.relative_to(root)))
+            if path.is_file():
+                inspect(path.read_bytes())
         self.assertFalse(any(path.suffix in (".trx", ".log") for path in root.rglob("*")))
 
     def diagnostic_presentation_fixture(self):
@@ -146,6 +156,40 @@ class ConformanceSanitationTests(unittest.TestCase):
         self.assertEqual(run.state, "Released")
         self.assert_clean(run.root, stdout.getvalue().encode(), stderr.getvalue().encode(),
                           evidence.canonical_bytes(run.resource_projection()))
+
+    @unittest.skipUnless(execution.native_execution_supported(), "Configuration settlement requires native Linux.")
+    def test_private_executable_settings_remain_bound_until_real_settlement_and_do_not_persist(self):
+        import conformance_sdk_checks as checks
+        from conformance_sources import runtime_settings
+
+        run = execution.OwnedRun.allocate(self.parent / "evidence", ROOT, profile="harness")
+        attempt = str(uuid.uuid4())
+        settings = run.root / "stores" / ("settings-" + attempt + ".runsettings")
+        payload = b";".join((*self.canaries, os.fsencode(run.root)))
+        environment = ("<EnvironmentVariables><HOARD_CONFIGURATION_CANARY>"
+                       + base64.b64encode(payload).decode()
+                       + "</HOARD_CONFIGURATION_CANARY></EnvironmentVariables>")
+        raw = runtime_settings(run.root, run.root / "stores/Consumer.dll", attempt, "a" * 64, "b" * 64, environment)
+        checks.write_new(settings, raw)
+        relative = settings.relative_to(run.root).as_posix()
+        command = (
+            "import json,sys,xml.etree.ElementTree as ET;"
+            "ET.parse(sys.argv[1]);"
+            "print(json.dumps({'event':'control','code':'None','value':0}))")
+        observed = run.command(
+            [sys.executable, "-I", "-S", "-c", command, relative], cwd=run.root,
+            record_execution=True, execution_inputs=(relative,))
+        self.assertEqual(observed.exit_code, 0)
+        record = evidence.load_json(run.read_execution_record(run.command_sequence))
+        self.assertEqual(record["inputFiles"], {relative: hashlib.sha256(raw).hexdigest()})
+        self.assertEqual(settings.read_bytes(), raw)
+        with self.assertRaises(AssertionError):
+            self.assert_clean(run.root, raw)
+        run.transition("Settling")
+        run.release()
+        self.assertEqual(run.state, "Released")
+        self.assertFalse(settings.exists())
+        self.assert_clean(run.root, evidence.canonical_bytes(run.resource_projection()))
 
     @unittest.skipUnless(execution.native_execution_supported(), "All-output flood inspection requires native Linux.")
     def test_output_flood_is_incomplete_without_spooling_or_truncating_into_success(self):

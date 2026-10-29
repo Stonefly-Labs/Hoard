@@ -3490,7 +3490,7 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
         record_path = run.root / f"proofs/execution-command-{sequence:04}.json"
         record_raw = (run.read_execution_record(sequence) if native
                       else read_bounded(record_path, 64 * 1024))
-        settings_raw = read_bounded(run.root / f'proofs/settings-{manifest["attemptId"]}.runsettings', 256 * 1024)
+        settings_raw = read_bounded(run.root / f'stores/settings-{manifest["attemptId"]}.runsettings', 256 * 1024)
         if (path.stat().st_mode & 0o777 != 0o400 or record_path.stat().st_mode & 0o777 != 0o400
                 or run.run_id != inputs["runId"] or run.live_children()
                 or hashlib.sha256(record_raw).hexdigest() != record_sha
@@ -3595,7 +3595,8 @@ def verify_category_command_proof(root, *, run_id, root_id, arguments, cwd, mani
     return receipt, record
 
 
-def category_command_proof(run, result, *, arguments, cwd, manifest, settings_data, started_ms, ended_ms):
+def category_command_proof(run, result, *, arguments, cwd, manifest, settings_data, started_ms, ended_ms,
+                           settings_directory="proofs"):
     record_sha = getattr(result, "execution_record_sha256", None)
     if record_sha is None:
         if isinstance(run, OwnedRun):
@@ -3615,7 +3616,9 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
     attempt = evidence._uuid(manifest["attemptId"])
     if manifest["purpose"] not in ("discovery", "execution"):
         raise evidence.ConformanceError("ProofMismatch")
-    if read_bounded(run.root / f"proofs/settings-{attempt}.runsettings", 256 * 1024) != settings_data:
+    if settings_directory not in ("proofs", "stores"):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if read_bounded(run.root / settings_directory / f"settings-{attempt}.runsettings", 256 * 1024) != settings_data:
         raise evidence.ConformanceError("InputChanged")
     receipt = {
         "schemaVersion": 1, "qualification": False, "nativeContainment": isinstance(run, OwnedRun),
@@ -3877,7 +3880,9 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     manifest_sha = hashlib.sha256(manifest_data).hexdigest()
     owner_sha = hashlib.sha256(owner_data).hexdigest()
     write_new(run.root / f"runtime-input-{attempt_id}.json", manifest_data)
-    settings = run.root / "proofs" / f"settings-{attempt_id}.runsettings"
+    settings_directory = ("stores" if contributor_binding is not None or category_scope is not None
+                          and category_scope[0] in ("metadata", "artifacts") else "proofs")
+    settings = run.root / settings_directory / f"settings-{attempt_id}.runsettings"
     settings_data = runtime_settings(run.root, assembly, attempt_id, manifest_sha, owner_sha, origin_environment)
     write_new(settings, settings_data)
     started = time.monotonic() * 1000
@@ -3971,7 +3976,8 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     if recorded:
         category_command_proof(
             run, result, arguments=arguments, cwd=assembly.parent, manifest=manifest,
-            settings_data=settings_data, started_ms=started, ended_ms=ended)
+            settings_data=settings_data, started_ms=started, ended_ms=ended,
+            settings_directory=settings_directory)
     output = run.root / f'{"discovery" if discovery else "runtime"}-{attempt_id}'
     no_symlinks(output)
     return result, output, {

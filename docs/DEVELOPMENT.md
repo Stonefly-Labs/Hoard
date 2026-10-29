@@ -7570,6 +7570,40 @@ trusted original coordinator report/input digests, not artifact-derived anchors;
 their four readonly summaries retain the93/9 and99/4 pass/exclusion counts
 and remain NotQualified. The fixed SDK catalog and diff checks pass.
 
+Selected metadata/artifact runtime settings now live at
+`stores/settings-<attempt>.runsettings`, including their discovery and custom
+contributor launches. They are executable configuration resources, not safe
+retained diagnostics: private absolute paths and encoded runtime context can
+be necessary during execution. Original live source readers still compare
+their exact readonly bytes, reconstructed settings, command arguments and
+held command input hashes before replay/capture. Shared, hook and failed-mutation
+proof collectors no longer copy these configuration bytes into retained proofs.
+The existing command wrapper retains their exact SHA-256; it is not redacted
+or rehashed into replacement authority. Genuine owned settlement removes the
+original stores directory before final report publication.
+
+This migration is deliberately limited to selected category/contributor execution.
+Legacy and composition command replay keep their existing settings/proof contract;
+removing those files without an appropriate original-origin handoff would weaken
+post-cleanup verification. Their sanitation and the complete all-profile gate
+remain unfinished. Updated source controls reject both raw and base64-encoded
+private roots in returned packets while retaining negative checks for altered
+settings and held commands. The all-output canary scanner now also decodes
+base64 candidates in contents/filenames. A separate native-only configuration
+test binds a private synthetic settings file to a real held command and requires
+actual settlement to remove it before inspecting every retained owned file.
+It is a resource-lifecycle control, not a VSTest/category origin proof.
+
+The initial source controls fail because executable settings are retained as
+proof bytes. A first broad path migration exposes composition's post-cleanup
+dependency and stale test expectations; the implementation is scoped rather
+than relaxing its verifier. After one remaining legacy test expectation is
+corrected, `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_evidence test_conformance_sdk_checks test_conformance_sanitation -q`
+passes353 tests in106.285 seconds, with three explicit Linux-only skips on macOS.
+The fixed SDK catalog and diff checks pass. Fresh native category generation
+and the new native settlement control remain pending; T070/T071 do not advance.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

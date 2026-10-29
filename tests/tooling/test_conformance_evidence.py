@@ -1,3 +1,4 @@
+import base64
 import contextlib
 import copy
 import hashlib
@@ -5656,7 +5657,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 "HOARD_ARTIFACT_SOURCE_CONTEXT": str(root / context_path)}
             environment = "<EnvironmentVariables>" + "".join(
                 f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>"
-            settings = root / "proofs" / f"settings-{self.attempt}.runsettings"
+            settings = root / "stores" / f"settings-{self.attempt}.runsettings"
             settings_raw = sources.runtime_settings(
                 root, root / assembly_path, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
             write(settings, settings_raw)
@@ -5845,7 +5846,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             environment = ("<EnvironmentVariables><HOARD_ORIGINAL_CONTEXT>"
                            + base64.b64encode(evidence.canonical_bytes(context)).decode()
                            + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
-            assembly, settings = root / assembly_path, root / "proofs" / f"settings-{self.attempt}.runsettings"
+            assembly, settings = root / assembly_path, root / "stores" / f"settings-{self.attempt}.runsettings"
             settings_raw = sources.runtime_settings(
                 root, assembly, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
             write(settings, settings_raw)
@@ -6309,7 +6310,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                        + base64.b64encode(evidence.canonical_bytes(context)).decode()
                        + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
         assembly = run.root / manifest["assemblies"][0]["path"]
-        settings = run.root / "proofs" / f"settings-{self.attempt}.runsettings"
+        settings = run.root / "stores" / f"settings-{self.attempt}.runsettings"
         settings_raw = sources.runtime_settings(
             run.root, assembly, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
         write(settings, settings_raw)
@@ -6545,7 +6546,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 started_ms=9, ended_ms=12)["observation"]
             attempt = self.attempt
             assembly = root / assembly_path
-            settings_path = f"proofs/settings-{attempt}.runsettings"
+            settings_path = f"stores/settings-{attempt}.runsettings"
             environment = "<EnvironmentVariables>" + "".join(
                 f"<{key}>{escape(value)}</{key}>" for key, value in sources.category_consumer_environment(
                     self.inputs).items()) + "</EnvironmentVariables>"
@@ -6598,7 +6599,13 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         run, self.inputs, started_ms=9, ended_ms=12)
 
             admitted = admit()
-            self.assertEqual(set(admitted["sourceProofs"]), set(originals))
+            self.assertTrue(settings_path not in admitted["sourceProofs"],
+                            "Private executable settings are transient resources, not retained proof bytes.")
+            proof_originals = {path: raw for path, raw in originals.items() if path != settings_path}
+            self.assertEqual(set(admitted["sourceProofs"]), set(proof_originals))
+            private = (str(root).encode(), base64.b64encode(str(root).encode()))
+            self.assertFalse(any(value in raw for raw in admitted["sourceProofs"].values() for value in private))
+            self.assertEqual(record["inputFiles"][settings_path], hashlib.sha256(settings).hexdigest())
             self.assertEqual(len(witnesses), 2 if hooks else 152 if profile == "metadata" else 250)
             self.assertEqual(set(admitted["controls"]),
                              {"hook-admission-sdk-consumer", *catalog.obligation_controls(5)} if hooks
@@ -6621,8 +6628,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     result = history._ingest_parts({}, {}, 9, 12, 1)
                     self.assertEqual(result[8], admitted["controls"])
                     self.assertEqual(result[2], {
-                        path: hashlib.sha256(raw).hexdigest() for path, raw in originals.items()})
-                    self.assertEqual(result[9], sum(len(raw) for raw in originals.values()))
+                        path: hashlib.sha256(raw).hexdigest() for path, raw in proof_originals.items()})
+                    self.assertEqual(result[9], sum(len(raw) for raw in proof_originals.values()))
                     if profile in ("metadata", "artifacts"):
                         for conflict in (
                                 {"controls": {}, "sourceProofs": {"runtime-owner.json": b"foreign"}},
@@ -6902,7 +6909,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     f"<{key}>{escape(value)}</{key}>" for key, value in sources.category_consumer_environment(
                         self.inputs).items()) + "</EnvironmentVariables>"
                 assembly = root / assembly_path
-                settings_path = f"proofs/settings-{faulty_id}.runsettings"
+                settings_path = f"stores/settings-{faulty_id}.runsettings"
                 settings = root / settings_path
                 settings_raw = sources.runtime_settings(
                     root, assembly, faulty_id, evidence.digest(faulty_manifest), evidence.digest(self.owner), environment)
@@ -6943,11 +6950,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         run, self.inputs, manifest, observed, sequence=2, started_ms=9, ended_ms=12)
 
                 facts, packets = admit()
+                self.assertTrue(settings_path not in packets,
+                                "Faulted executable settings must not become retained diagnostic proofs.")
+                private = (str(root).encode(), base64.b64encode(str(root).encode()))
+                self.assertFalse(any(value in raw for raw in packets.values() for value in private))
                 self.assertEqual({row["testIdentity"] for row in facts}, corrected.keys())
                 self.assertEqual({row["sourceProofSha256"] for row in facts}, {row["proofSha256"] for row in failed})
                 self.assertIn(f"proofs/execution-command-0001.json", packets)
                 write(root / f"runtime-input-{corrected_id}.json", transport["manifest_data"])
-                current_settings = root / "proofs" / f"settings-{corrected_id}.runsettings"
+                current_settings = root / "stores" / f"settings-{corrected_id}.runsettings"
                 current_settings_raw = sources.runtime_settings(
                     root, assembly, corrected_id, evidence.digest(manifest), evidence.digest(self.owner), environment)
                 write(current_settings, current_settings_raw)
@@ -7127,7 +7138,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 "inputsSha256": evidence.digest(self.inputs), "outputDirectory": str(capture),
                 "cases": {identity: {} for identity in expected}}))
             assembly = root / assembly_path
-            settings = root / "proofs" / f"settings-{self.attempt}.runsettings"
+            settings = root / "stores" / f"settings-{self.attempt}.runsettings"
             environment = "<EnvironmentVariables><HOARD_INSPECTION_CONTEXT>" + escape(str(context)) + (
                 "</HOARD_INSPECTION_CONTEXT></EnvironmentVariables>")
             settings_data = sources.runtime_settings(

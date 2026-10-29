@@ -14,6 +14,10 @@ an explicit `EvidenceIncomplete` qualification error. These summaries are not
 portable verification reports or evidence of complete private-proof sanitation.
 They do not change the separate custom-contributor path or deliver the planned
 `--verify`, `--aggregate` or five-profile qualification workflow.
+Selected metadata/artifact settings are transient owned `stores/` resources;
+live replay checks their original bytes and held command hashes before genuine
+cleanup. They are no longer copied into shared/hook/mutation proof packets.
+Legacy/composition retention and complete private-proof sanitation remain open.
 `bash scripts/validate-conformance.sh --profile composition --evidence /fresh/private/path`
 now attempts CP36/110 and all 525 inherited parameters, not qualification.
 Exact standalone Linux run40451900182 at `f319b77` passes that native scope;
