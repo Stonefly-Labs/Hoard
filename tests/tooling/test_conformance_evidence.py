@@ -425,7 +425,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
             "Budgets": inputs["budgets"], "Environment": inputs["environment"], "RunInputs": inputs,
             "ResourceOwnership": {
                 "runId": inputs["runId"], "rootId": "root", "childPid": 0,
-                "childStartSha256": "a" * 64, "state": "Allocated", "cleanupDurationMs": 0,
+                "childStartSha256": "0" * 64, "state": "Allocated", "cleanupDurationMs": 0,
                 "diagnosticCode": "None",
             },
             "Attempt": self.result()["attempts"][0], "CaseResult": self.result(),
@@ -594,6 +594,11 @@ class ConformanceAdmissionTests(unittest.TestCase):
                 (root / "proofs").mkdir()
                 report = self.report()
                 report["qualification"] = True
+                report["resources"] = [{
+                    "runId": report["inputs"]["runId"], "rootId": "root", "childPid": 0,
+                    "childStartSha256": "0" * 64, "state": "Released",
+                    "cleanupDurationMs": 1, "diagnosticCode": "None",
+                }]
                 report["inputs"]["mode"] = "qualification"
                 report["witnesses"][0]["inputSha256"] = evidence.digest(report["inputs"])
                 completion = copy.deepcopy(report["inputs"])
@@ -620,6 +625,55 @@ class ConformanceAdmissionTests(unittest.TestCase):
                         evidence.verify_retained_category_report(
                             root, evidence.canonical_bytes(report), expected_inputs=report["inputs"],
                             expected_report_sha256=evidence.digest(report))
+
+    def test_resource_projection_rejects_live_released_children_and_false_empty_identities(self):
+        resource = {
+            "runId": self.inputs()["runId"], "rootId": "root", "childPid": 0,
+            "childStartSha256": "0" * 64, "state": "Released",
+            "cleanupDurationMs": 1, "diagnosticCode": "None",
+        }
+        evidence.admit_entity("ResourceOwnership", resource)
+        live = {**resource, "state": "Retained", "childPid": 123, "childStartSha256": "a" * 64,
+                "diagnosticCode": "CleanupIncomplete"}
+        evidence.admit_entity("ResourceOwnership", live)
+        for mutation in (
+                {"childPid": 123, "childStartSha256": "a" * 64},
+                {"childStartSha256": "a" * 64},
+                {"diagnosticCode": "CleanupIncomplete"},
+                {"state": "Active", "childPid": 123}):
+            with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("ResourceOwnership", {**resource, **mutation})
+
+    def test_report_resource_inventory_cannot_omit_duplicate_or_mix_owner_projections(self):
+        report = self.report()
+        report["inputs"]["mode"] = "qualification"
+        report["witnesses"][0]["inputSha256"] = evidence.digest(report["inputs"])
+        completion = "proofs/category-metadata-qualification-completion-inputs.json"
+        report["postInputSha256"] = evidence.digest(report["inputs"])
+        report["proofs"][completion] = report["postInputSha256"]
+        report["qualification"] = True
+        resource = {
+            "runId": report["inputs"]["runId"], "rootId": "root", "childPid": 0,
+            "childStartSha256": "0" * 64, "state": "Released",
+            "cleanupDurationMs": 1, "diagnosticCode": "None",
+        }
+        report["resources"] = [resource]
+        evidence.admit_entity("QualificationReport", report)
+        for resources in ([], [resource, resource]):
+            with self.subTest(resources=resources), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", {**report, "resources": resources})
+        report["qualification"] = False
+        live = {**resource, "state": "Active", "childPid": 123, "childStartSha256": "a" * 64}
+        second = {**live, "childPid": 124, "childStartSha256": "b" * 64}
+        report["resources"] = [live, second]
+        evidence.admit_entity("QualificationReport", report)
+        for changed in (
+                {**second, "childPid": 0, "childStartSha256": "0" * 64},
+                {**second, "state": "Retained"},
+                {**second, "cleanupDurationMs": 2},
+                {**second, "diagnosticCode": "CleanupIncomplete"}):
+            with self.subTest(changed=changed), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", {**report, "resources": [live, changed]})
 
     def test_exclusions_and_interruption_do_not_invent_runtime_executions(self):
         excluded = self.result()

@@ -3548,6 +3548,28 @@ verbatim; CustomHost/product/architecture/ADR/diagram/governance/backlog/
 predecessor/IaC/release/UI documents are unaffected by this diagnostic/transport
 batch. No task/checklist/flow markers or public product APIs change.
 
+### Resource projection contradictions and omitted ownership inventories
+
+Two schema regressions genuinely reproduce ten accepted mutations: Released
+with a live child, inconsistent zero-PID/start-hash sentinels, cleanup failure
+labeled Released, an empty claimed-qualification inventory, duplicate root/PID
+rows and mixed empty/live or state/duration/code snapshots for one owner.
+Admission now rejects those contradictions while permitting coherent live/
+retained resources, multiple actual children and empty initial diagnostics.
+The existing modeled completion-input positive supplies a coherent resource
+shape and still cannot establish native origin or pass retained diagnostic
+verification. No live owner/cleanup behavior, budgets, retry history or native
+authority is substituted by these structural checks.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_execution test_conformance_ci`
+passes267 tests in86.771 seconds with21 explicit native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. README, DEVELOPMENT and the evidence contract are
+updated; provider APIs, guide commands and other product/architecture/governance/
+IaC/release/UI documents are unaffected by schema-only ownership admission.
+T068--T086, reviewer-owned checklists and implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

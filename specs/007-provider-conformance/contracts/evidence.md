@@ -59,6 +59,14 @@ expected invocation/assembly and test discovery inventory. A TRX total or
 copied case name/flag is not enough. Missing mandatory tests cannot become a
 smaller expected inventory.
 
+Resource projections use zero PID and all-zero start hash together for no live
+child. Released has no live child or cleanup error. One report cannot repeat a
+root/PID, combine an empty-root sentinel with live children, or mix different
+state/cleanup duration/code snapshots for the same owner. Claimed qualification
+requires a nonempty ownership inventory; initial/partial diagnostic inventories
+may remain empty. Schema consistency is necessary, not proof of actual release
+or runtime origin; independently observed settlement remains mandatory.
+
 QC-12 explicitly requires all 32 fully parameterized
 `AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority`
 witnesses in the independent and embedded SDK catalogs, in addition to its

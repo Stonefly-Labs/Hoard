@@ -7960,6 +7960,21 @@ tests/tooling -p test_conformance_ci.py -v` passes all eight tests afterward.
 This remains nonqualifying inspection: common configuration-policy attestation,
 runtime-origin/settlement evaluation and actual five-profile CI remain open.
 
+Resource schema admission additionally requires zero PID and zero start hash
+together; Released permits no live child or cleanup error. Report resources
+cannot duplicate a root/PID, mix a no-child sentinel with live children, or mix
+state/cleanup duration/code snapshots for one root. A claimed qualification
+cannot omit its entire ownership inventory. Initial/partial diagnostics may
+still have no observations, and coherent retained/live snapshots remain valid.
+The two focused regressions reproduce ten accepting mutations before the fix.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_execution test_conformance_ci` passes267
+tests in86.771 seconds with21 explicit native-only skips. The existing modeled
+completion-input test now supplies a coherent ownership shape; it still rejects
+retained diagnostic verification and establishes no actual runtime settlement.
+These guards preserve actual release/recovery behavior and do not replace the
+unfinished independent evaluator.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

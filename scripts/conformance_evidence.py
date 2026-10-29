@@ -547,6 +547,11 @@ def admit_entity(kind, value):
             _invalid()
         if set(result["proofSha256"]) != {proof for attempt in result["attempts"] for proof in attempt["proofSha256"]}:
             _invalid()
+    if kind == "ResourceOwnership":
+        if ((result["childPid"] == 0) != (result["childStartSha256"] == "0" * 64)
+                or result["state"] == "Released"
+                and (result["childPid"] != 0 or result["diagnosticCode"] != "None")):
+            _invalid()
     if kind == "Budgets":
         ceilings = {
             "operationSeconds": 5, "barrierSeconds": 15, "childSeconds": 600,
@@ -679,8 +684,21 @@ def _validate_report_links(report):
                     _invalid()
     if referenced != set(executions) or any(resource["runId"] != inputs["runId"] for resource in report["resources"]):
         _invalid()
+    resources = {}
+    resource_keys = set()
+    for resource in report["resources"]:
+        key = resource["rootId"], resource["childPid"]
+        if key in resource_keys:
+            _invalid()
+        resource_keys.add(key)
+        resources.setdefault(resource["rootId"], []).append(resource)
+    for rows in resources.values():
+        if (len(rows) > 1 and any(row["childPid"] == 0 for row in rows)
+                or len({(row["state"], row["cleanupDurationMs"], row["diagnosticCode"]) for row in rows}) != 1):
+            _invalid()
     if report["qualification"] and (
             inputs["mode"] != "qualification" or report["state"] != "Complete"
+            or not report["resources"]
             or report["postInputSha256"] != report["proofs"].get(
                 f'proofs/category-{inputs["profileId"]}-{inputs["mode"]}-completion-inputs.json')
             or any(result["status"] not in ("Passed", "NotApplicable") for result in report["results"])

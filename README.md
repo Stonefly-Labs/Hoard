@@ -934,6 +934,11 @@ Five-profile transport inspection additionally rejects a foreign evaluator
 source manifest even with matching revision/catalog/SDK and per-profile pins;
 eight modeled tests pass. Common configuration-policy attestation, independent
 evaluation and actual five-profile CI remain unfinished.
+Resource-report admission now also rejects live children labeled Released,
+contradictory empty-child identities, missing/duplicate owner inventories and
+mixed snapshots of one owner. The267 focused evidence/ownership/transport checks
+pass with21 explicit native-only skips. These schema guards do not attest
+runtime origin or turn diagnostic reports into qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
