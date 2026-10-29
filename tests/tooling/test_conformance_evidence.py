@@ -8739,10 +8739,11 @@ def live_native_category_replay_tests(history, *, plan, transports):
             or history._native_sources._run.state != "Active"):
         raise evidence.ConformanceError("OwnershipInvalid")
     root = history._native_sources._run.root
-    source_scope = next(scope for scope in plan if scope != "hook-admission")
+    source_scope = next(scope for scope in sorted(plan) if scope != "hook-admission")
     parent_path = root / f'proofs/category-source-{plan[source_scope]["attemptId"]}.json'
     parent = evidence.load_json(parent_path.read_bytes())
     command_path = root / f'proofs/execution-command-{parent["commandSequence"]:04}.json'
+    execution_path = root / f'proofs/category-command-{plan[source_scope]["attemptId"]}-execution.json'
     existing = {path: hashed for path, hashed in history.proofs.items() if (root / path).is_file()}
     snapshot = evidence.input_manifest(root, list(existing))
     if snapshot != existing:
@@ -8815,23 +8816,34 @@ def live_native_category_replay_tests(history, *, plan, transports):
 
         def test_rehashed_command_and_parent_cannot_replace_executor_held_bytes(self):
             original_command, original_parent = command_path.read_bytes(), parent_path.read_bytes()
+            original_execution = execution_path.read_bytes()
             changed_command = original_command + b"\n"
+            changed_execution = evidence.load_json(original_execution)
             changed_parent = evidence.load_json(original_parent)
-            self.assertIn("executionRecordSha256", changed_parent)
-            changed_parent["executionRecordSha256"] = hashlib.sha256(changed_command).hexdigest()
+            self.assertIn("executionRecordSha256", changed_execution)
+            self.assertIn("executionParentSha256", changed_parent)
+            changed_execution["executionRecordSha256"] = hashlib.sha256(changed_command).hexdigest()
+            changed_execution = evidence.canonical_bytes(changed_execution)
+            changed_parent["executionParentSha256"] = hashlib.sha256(changed_execution).hexdigest()
+            owner = history._native_sources._run
             try:
                 for path, raw in ((command_path, changed_command),
+                                  (execution_path, changed_execution),
                                   (parent_path, evidence.canonical_bytes(changed_parent))):
                     path.chmod(0o600)
                     path.write_bytes(raw)
                     path.chmod(0o400)
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    owner.read_execution_record(parent["commandSequence"])
+                with self.assertRaises(evidence.ConformanceError):
                     history.replay_joint(plan=plan, transports=transports)
             finally:
-                for path, raw in ((command_path, original_command), (parent_path, original_parent)):
+                for path, raw in ((command_path, original_command), (execution_path, original_execution),
+                                  (parent_path, original_parent)):
                     path.chmod(0o600)
                     path.write_bytes(raw)
                     path.chmod(0o400)
+            self.assertEqual(owner.read_execution_record(parent["commandSequence"]), original_command)
 
     return unittest.TestLoader().loadTestsFromTestCase(LiveNativeCategoryReplayTests)
 

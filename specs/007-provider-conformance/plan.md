@@ -2793,6 +2793,24 @@ after each family; held original command authority is never replaced. Modeled
 factory admission rejects, as does modeled direct replay. That regression passes
 in0.049 seconds; catalog/SDK, diff and isolated-driver shell syntax checks pass.
 Fresh native execution of these new challenges remains pending.
+The first exact0317814 artifact control then observes four families with one
+failure, zero errors/skips, and no final category report. The test incorrectly
+expects `executionRecordSha256` on the category source packet; actual source
+schema places it on the intermediate category execution wrapper, with
+`executionParentSha256` linking that wrapper from the source packet. This is a
+test-harness schema error, not evidence that replaced records were accepted.
+The original owner remains Settling; no release or qualification is fabricated.
+All observations are retained before removal of the exact stopped namespace/
+volume, whose absence is checked.
+
+The corrected challenge replaces and rehashes the original command, execution
+wrapper and source parent, directly requires OwnershipInvalid from the original
+held-record reader, then requires complete replay rejection. It restores all
+three originals and verifies the reader again succeeds with the original bytes.
+The separate immutable driver now projects only closed test/code/source-line
+failure observations rather than losing failure identity or retaining raw
+unittest exceptions. Modeled rejection, catalog/SDK, diff and driver syntax
+checks pass; fresh corrected native execution remains pending.
 Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes753
 tests with zero failures/errors/expected failures/unexpected successes/
 unexpected diagnostic bytes,27 explicit native macOS skips and expected
