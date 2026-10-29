@@ -146,6 +146,8 @@ PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
                        "Compiled_common_consumers_execute_against_the_independent_memory_store")
 OWNED = "Hoard.Conformance.Tests.OwnedResourceTests."
 OWNED_FACTS = (
+    "Control_file_growth_cannot_expand_the_admitted_read_bound",
+    "Private_control_files_bound_bytes_and_reject_links_replacements_and_overwrites",
     "Original_controller_descriptor_supplies_one_exact_resource_without_releasing_its_pin",
     "Controller_descriptor_cannot_admit_a_foreign_path_replaced_inode_or_standard_stream",
     "Fresh_private_leases_reject_forged_foreign_and_second_writer_authority",

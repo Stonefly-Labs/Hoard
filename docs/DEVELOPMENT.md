@@ -6909,6 +6909,41 @@ Three-file SDK ownership whitespace, catalog/SDK and diff checks pass.
 Linux descriptor handoff/partial cleanup and current-source native verification
 remain pending; no task/checklist/flow markers advance.
 
+The next partial T064 producer compiles `ArtifactContributorProcess` only in
+the explicitly artifact-selected Consumer, preserving ordinary VSTest execution
+and metadata builds. It uses the generated typed supplied factory, actual
+profile checks and unchanged shared crash assertions. Private continuation
+bytes live under stores outside the provider resource, never under proof output.
+Safe source-origin/hash-index and separate recovery-origin/readback outputs are
+created once, flushed and sealed0400. Recovery uses the inherited original
+descriptor, request/state hashes and supplied recovery interface; session
+disposal must finish before the process can exit successfully.
+
+Control files use pinned native directories and centralized descriptor-relative
+I/O. Darwin `/dev/fd` directory traversal and native vararg creation were tried
+and rejected by actual tests. Final creation is Linux-only rather than a weaker
+path-based fallback; the entrypoint emits explicit PrerequisiteMissing elsewhere.
+The incremental architecture review found a read-allocation race from sampling
+Length twice. Final reads validate one captured length and reject trailing bytes.
+A controlled growing-stream test fails without that correction. SDK ownership
+now observes ten tests: nine pass locally and one Linux-only writer test skips.
+Both new facts enter the exact native SDK diagnostic inventory.
+
+The actual separately packaged Acme adapter forwards recovery through its
+typed Local binding. Its existing full component replay still passes114 rows/
+125 origins and checks the actual executable's closed unsupported-platform
+result. On supported Linux that same fixture also runs all six source SIGKILL/
+fresh-recovery cases, checks original input/output/lease seals and source-state
+hash correspondence, and independently admits the recovery leaf. The local
+macOS run does not execute or qualify those Linux cases.
+
+One managed preparation replay emits UnknownDiagnostic with no exposed cause;
+an unchanged-source classified replay subsequently passes without projecting
+unknown raw text or weakening admission. That passing replay does not diagnose
+or erase the earlier failure. Review ran no tests and is not final T081.
+Public artifact dispatch, production native orchestration/strict complete
+crash admission and T064..T086 remain open.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

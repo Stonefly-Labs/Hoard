@@ -6,6 +6,83 @@ namespace Hoard.Conformance.Tests;
 public sealed class OwnedResourceTests
 {
     [Fact]
+    public void Control_file_growth_cannot_expand_the_admitted_read_bound()
+    {
+        using var stream = new GrowingControlStream();
+        Assert.Equal("InputChanged", Assert.Throws<InvalidOperationException>(
+            () => ConformanceControlFiles.ReadBounded(stream, 64)).Message);
+    }
+
+    private sealed class GrowingControlStream() : MemoryStream(new byte[65])
+    {
+        private bool observed;
+        public override long Length
+        {
+            get
+            {
+                var length = observed ? base.Length : 5;
+                observed = true;
+                return length;
+            }
+        }
+    }
+
+    [LinuxControlFact]
+    public void Private_control_files_bound_bytes_and_reject_links_replacements_and_overwrites()
+    {
+        using var fixture = new Fixture();
+        using var outside = new Fixture();
+        using var files = new ConformanceControlFiles(fixture.Root);
+        files.Write("control.json", "owned"u8, 64);
+        Assert.Equal("owned"u8.ToArray(), files.Read("control.json", 64));
+        if (!OperatingSystem.IsWindows())
+        { Assert.Equal(UnixFileMode.UserRead, File.GetUnixFileMode(Path.Combine(fixture.Root, "control.json"))); }
+        Assert.Throws<IOException>(() => files.Write("control.json", "changed"u8, 64));
+        Assert.Throws<InvalidOperationException>(() => files.Read("control.json", 1));
+        Assert.Throws<InvalidOperationException>(() => files.Write("oversize", new byte[65], 64));
+        Assert.Throws<InvalidOperationException>(() => files.Write("../escape", "no"u8, 64));
+        Assert.Throws<InvalidOperationException>(() => files.Read("control.json/../control.json", 64));
+        var sentinel = Path.Combine(outside.Root, "sentinel");
+        File.WriteAllText(sentinel, "untouched");
+        var link = Path.Combine(fixture.Root, "link");
+        File.CreateSymbolicLink(link, sentinel);
+        Assert.Throws<InvalidOperationException>(() => files.Read("link", 64));
+        Assert.Throws<IOException>(() => files.Write("link", "no"u8, 64));
+        File.Delete(link);
+        Directory.CreateSymbolicLink(link, outside.Root);
+        Assert.Throws<InvalidOperationException>(() => files.Write("link/new-file", "no"u8, 64));
+        Assert.False(File.Exists(Path.Combine(outside.Root, "new-file")));
+        Directory.Delete(link);
+        var parked = fixture.Root + "-parked";
+        Directory.Move(fixture.Root, parked);
+        Directory.CreateSymbolicLink(fixture.Root, outside.Root);
+        try
+        {
+            Assert.Throws<InvalidOperationException>(() => files.Read("control.json", 64));
+            Assert.Throws<InvalidOperationException>(() => files.Write("new-file", "no"u8, 64));
+            Assert.False(File.Exists(Path.Combine(outside.Root, "new-file")));
+        }
+        finally
+        {
+            Directory.Delete(fixture.Root);
+            Directory.Move(parked, fixture.Root);
+            File.Delete(Path.Combine(fixture.Root, "control.json"));
+            Assert.Equal("untouched", File.ReadAllText(sentinel));
+            File.Delete(sentinel);
+        }
+        files.Dispose();
+        Assert.Throws<ObjectDisposedException>(() => files.Read("control.json", 64));
+    }
+
+    private sealed class LinuxControlFactAttribute : FactAttribute
+    {
+        public LinuxControlFactAttribute()
+        {
+            if (!OperatingSystem.IsLinux()) { Skip = "Native control-file creation requires Linux."; }
+        }
+    }
+
+    [Fact]
     public async Task Original_controller_descriptor_supplies_one_exact_resource_without_releasing_its_pin()
     {
         using var fixture = new Fixture();

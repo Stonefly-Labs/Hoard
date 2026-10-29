@@ -1687,6 +1687,70 @@ increment. Supplied-factory Consumer orchestration, independent crash/request/
 state/origin admission and full applicable artifact coverage remain unfinished.
 T064..T086 remain open; implement/running continues.
 
+### Supplied-factory crash-process producer and private control I/O
+
+The explicitly artifact-selected Consumer compiles a private Linux-only process
+entrypoint while ordinary VSTest and metadata entry behavior remain unchanged.
+It instantiates only the generated typed supplied factory, checks the frozen
+actual profile and invokes the same six shared crash/recovery assertions.
+Source continuation bytes stay under private stores outside the provider
+resource; safe source-origin/hash-index files bind run/case/boundary/session,
+origin bytes and continuation hash without exposing staged handles. Recovery
+requires the explicit supplied recovery interface, frozen request/state hashes
+and inherited original-controller descriptor. Separate recovery origin/readback
+remain safe outputs; actual session disposal precedes successful process exit.
+
+The new bounded ConformanceControlFiles API owns native directory pins, traverses
+private relative parents without following links, opens immutable-mode regular
+inputs and creates new flushed0400 outputs without overwrites. Native operations
+remain centralized in OwnedDirectoryHandle. Actual Darwin `/dev/fd` traversal
+fails, and an actual native-vararg declaration compiles but fails with
+InvalidProgramException; neither fallback remains. Final descriptor-relative
+creation is explicitly Linux-only. Unsupported producer execution emits a
+closed PrerequisiteMissing result rather than weaker path-based I/O.
+
+Incremental architecture review finds a real length-allocation race: two
+stream.Length reads could allow file growth to exceed the admitted buffer bound.
+The corrected helper samples once and requires exact bytes/EOF. A controlled
+growing-stream test would return over-budget bytes without that correction.
+The native SDK inventory explicitly includes both new control-file facts.
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore --filter FullyQualifiedName~OwnedResourceTests -v quiet
+-p:UseSharedCompilation=false -nodeReuse:false`: nine passed/one explicit
+Linux-only writer skip, ten total. Review executes no tests, does not verify a
+Git diff and does not close T081.
+
+The actual Acme packaged adapter now forwards the explicit recovery method.
+Its existing production package/component regression compiles the new executable,
+preserves114 rows/125 origins and checks closed unsupported-platform admission.
+On supported Linux the same fixture additionally runs all six actual source
+SIGKILL/fresh recovery pairs and checks original command/input/output/directory
+seals, source-index/state correspondence, nonoverlapping distinct processes and
+the independent recovery-origin leaf. Those cases are not locally executed on
+macOS and cannot be inferred from compilation or prerequisite denial.
+
+One actual managed preparation replay fails UnknownDiagnostic without exposing
+a cause. An unchanged-source diagnostic replay subsequently passes102.432s
+without relaxing projection or exposing unknown raw text. The failed observation
+is retained and not diagnosed or erased by that pass. The SDK read-race fix
+follows that component replay; a fresh frozen tooling replay covers final bytes.
+Formatting/catalog/SDK/diff checks pass before that replay. README, PROVIDERS,
+DEVELOPMENT and harness are synchronized; product/architecture/ADR/diagrams/
+examples, governance, predecessor contracts, IaC, release and UI remain unaffected
+by this private test-only producer increment. Production native orchestration/
+strict full crash admission, remaining native applicability and public artifact
+dispatch remain unfinished. No T064..T086, checklist or flow markers advance.
+
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes
+726 tests, zero failures/errors/expected failures/unexpected successes, 25
+explicit native macOS skips and zero unexpected diagnostic bytes. Exit 2 is the
+expected non-qualifying EvidenceIncomplete result, not full native acceptance.
+The prior 6b84549 foundations observation now has successful compatibility,
+artifact extraction, metadata extraction and lock preparation; its ownership
+job is cancelled and SDK diagnostics remain running. No manual cancellation was
+performed and no cancellation cause is inferred. Its composition observation
+is running. None of those prior-source observations verifies this new producer.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

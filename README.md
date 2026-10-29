@@ -750,6 +750,12 @@ taking over physical cleanup. Failed admission and cleanup retain ownership;
 completed cleanup and release publication are tracked separately for safe retry.
 SDK ownership tests pass; actual Linux descriptor inheritance and partial-unlink
 retry remain native-only checks, not locally established qualification.
+The artifact-selected Consumer also compiles a Linux-only crash-process
+entrypoint using the supplied typed factory and shared assertions. Continuation
+bytes stay in private stores; proofs contain origins, a state-hash index and
+safe recovery readback. Descriptor-rooted control-file creation rejects
+unsupported platforms. The packaged macOS regression preserves114 rows/125
+origins and verifies explicit prerequisite denial, not actual Linux recovery.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

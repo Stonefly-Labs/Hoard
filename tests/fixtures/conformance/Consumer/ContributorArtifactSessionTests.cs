@@ -477,7 +477,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
         await ArtifactConformanceSessionTests.AdmissionConsumerAsync(binding, context, resources, output, probe, AssertProfile);
     }
 
-    private static void AssertProfile(IArtifactConformanceSession session)
+    internal static void AssertProfile(IArtifactConformanceSession session)
     {
         var actual = session.Store.Capabilities;
         Assert.Equal(ContributorBindingFactory.ExpectedDurability, actual.Durability);

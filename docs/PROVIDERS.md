@@ -699,6 +699,36 @@ that witness here and remains fail-closed after partial leased-directory removal
 no macOS native qualification is claimed. Consumer crash orchestration and
 independent artifact proof admission are still unfinished.
 
+The artifact-selected Consumer now has a private Linux-only
+`ArtifactContributorProcess` entrypoint. It uses only the generated supplied
+factory, requires the frozen durable profile and forwards typed observation
+points into the same six `ArtifactCrashAssertions` bodies. It does not choose
+a built-in runner from a provider name. Source setup writes a private bounded
+continuation outside the provider directory plus safe origin/hash-index files,
+then waits for the owning parent to kill it. Recovery verifies the frozen
+request/state hashes, uses the explicit recovery binding and original descriptor,
+captures a separate recovery origin and joins actual session disposal before
+successful exit. The hash index binds continuation bytes without putting opaque
+staged handles in proof or diagnostic output.
+
+`ConformanceControlFiles` pins private native directory handles, traverses
+relative parents without following links and performs bounded read-only input/
+create-new output I/O. It rejects unsafe paths, foreign/private-mode changes,
+overwrites and directory replacements. File creation uses Linux descriptor-
+relative openat; Darwin variadic interop and descriptor-path traversal are not
+silently substituted. Unsupported creation is an explicit prerequisite failure.
+Capture the file length once before allocating a read buffer, then require
+exact bytes and EOF; a writable handle can grow even a0400 inode.
+
+The existing packaged Acme regression now forwards explicit recovery and
+checks the actual entrypoint as well as all114 logical rows/125 origins.
+On supported Linux it additionally exercises all six actual killed-source/
+distinct-recovery pairs, original command/request/output/directory seals and
+the independent recovery-origin reader. Those pairs are not executed on macOS:
+its explicit prerequisite-denial check cannot count as native recovery.
+Production orchestration/strict complete crash admission, remaining applicable
+native consumers and public artifact dispatch are still unfinished.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

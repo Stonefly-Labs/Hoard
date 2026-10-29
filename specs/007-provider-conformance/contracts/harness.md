@@ -2494,6 +2494,23 @@ publication so retries neither reopen deleted resources nor double-close pins.
 Partial cleanup may admit absence only with the original held unlinked inode;
 moving/replacing a directory is not cleanup. Where native unlink evidence is
 unavailable, retain explicitly rather than infer deletion or qualification.
+The artifact-selected Consumer's native entrypoint must instantiate only the
+generated supplied factory, validate actual profile before/after shared work
+and preserve ordinary VSTest/metadata entry behavior. Source continuation
+belongs in private stores outside the provider resource, not safe proof output.
+The safe source index binds run/case/boundary/session, origin hash and continuation
+hash. Recovery consumes the frozen request/state, explicitly reopens through
+the supplied recovery binding and emits the separate recovery origin with the
+actual request SHA-256. Successful exit requires actual disposal/settlement.
+Centralize control-file native operations; traverse pinned private directories,
+reject links/replacements/overwrites, bound bytes and capture input length once
+before allocation, then require exact read and EOF. Unsupported native creation
+must reject explicitly rather than introduce weaker path or vararg fallbacks.
+Actual native producer checks must join both original command receipts, frozen
+inputs/outputs, same directory lease, source state/index and distinct nonoverlapping
+process identities. Compilation or unsupported-platform rejection is not that
+execution proof. A leaf reader or test-only join is not production full crash
+admission or complete artifact applicability.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

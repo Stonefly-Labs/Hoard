@@ -1158,7 +1158,7 @@ class NuGetContentToolTests(unittest.TestCase):
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Fixtures.Conformance.Bindings.Local;
 namespace Acme;
-public sealed class ArtifactFactory : IArtifactConformanceBinding
+public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
 {
     private readonly LocalBinding inner;
     public ArtifactFactory(string sha) : this(sha, new ArtifactAssertionOptions()) { }
@@ -1174,6 +1174,9 @@ public sealed class ArtifactFactory : IArtifactConformanceBinding
     public ConformanceBindingDeclaration Declaration { get; }
     public ValueTask<IArtifactConformanceSession> CreateSessionAsync(
         ConformanceRunContext context, CancellationToken token) => inner.CreateSessionAsync(context, token);
+    public ValueTask<IArtifactConformanceSession> ReopenSessionAsync(
+        ConformanceRunContext context, Hoard.Abstractions.Storage.ArtifactStoreIdentity identity,
+        CancellationToken token) => inner.ReopenSessionAsync(context, identity, token);
 }
 """)
             adapter = {"packageId": "Acme.ArtifactAdapter", "version": "0.1.0",
@@ -1261,6 +1264,17 @@ public sealed class ArtifactFactory : IArtifactConformanceBinding
             self.assertIn(result["assemblyPath"].relative_to(owner.root).as_posix(), result["runtimeAssemblies"])
             self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
                                 for path in result["runtimeAssemblies"]))
+            if artifacts:
+                code, raw = capture_control(
+                    ["dotnet", "exec", "--fx-version", self.runtime_version,
+                     str(result["assemblyPath"]), "artifact-crash"],
+                    cwd=owner.root, env=command_environment(owner.root, owner.root / "cache/binding-consumer", None),
+                    limit=65536, timeout=30)
+                self.assertEqual(code, 2)
+                self.assertEqual(evidence.load_json(raw), {
+                    "event": "control",
+                    "code": "EvidenceSchemaInvalid" if sys.platform == "linux" else "PrerequisiteMissing",
+                    "value": 0})
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["controlInputs"])), result["controlInputs"])
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["cachedArchives"])), result["cachedArchives"])
             prepared_commands = (53 if runtime else 50) + (3 if captured else 0) + (3 if artifacts else 0)
@@ -1386,11 +1400,106 @@ public sealed class ArtifactFactory : IArtifactConformanceBinding
                         runner, inputs, result["assemblyPath"], recovery, {identity: ("local", "none")}, {})
                     sdk.validate_observation(
                         observed, checked, (identity,), "None", "Passed", 0, transport["proofs"], "None")
+                    if native_execution_supported():
+                        self.native_artifact_contributor_crashes(owner, inputs, result)
         finally:
             if owner.state == "Allocated":
                 owner.transition("Active")
             owner.transition("Settling")
             owner.release()
+
+    def native_artifact_contributor_crashes(self, owner, inputs, consumer):
+        import conformance_sources as sources
+
+        assembly = consumer["assemblyPath"]
+        directory = assembly.parent.relative_to(owner.root).as_posix()
+        selected = {
+            *(path for path, _ in consumer["components"].values()),
+            assembly.relative_to(owner.root).as_posix(),
+            f"{directory}/Hoard.Testing.Conformance.dll",
+            f"{directory}/Hoard.Abstractions.dll",
+            assembly.with_suffix(".deps.json").relative_to(owner.root).as_posix(),
+            assembly.with_suffix(".runtimeconfig.json").relative_to(owner.root).as_posix(),
+            "proofs/contributor-inputs.json"}
+        for relative in selected:
+            (owner.root / relative).chmod(0o400)
+        binding, = inputs["bindings"]
+        declaration = (owner.root / "binding-consumer/declaration.json").read_bytes()
+        for boundary, value in zip(("B0", "B1", "B2", "B3", "D0", "D1"), range(40, 46), strict=True):
+            lease = owner.lease_directory()
+            control = owner.root / f"stores/crash-control-{boundary}"
+            control.mkdir(mode=0o700)
+            state_path = f"stores/crash-control-{boundary}/state.json"
+            receipts = []
+            source_origin = source_index = None
+            for action in ("source", "recover"):
+                prefix = f"proofs/contributor-crash-{boundary}-{action}"
+                request_path, origin_path, readback_path = prefix + "-request.json", prefix + "-origin.json", prefix + "-readback.json"
+                request = {
+                    "schemaVersion": 1, "qualification": False, "action": action, "boundary": boundary,
+                    "runId": owner.run_id, "caseId": "contributor-artifact-component",
+                    "resourceId": lease.resource_id, "descriptor": lease.descriptor, "repositoryRoot": str(ROOT),
+                    "statePath": state_path, "originPath": origin_path, "readbackPath": readback_path,
+                    "sourceSessionId": None if source_origin is None else evidence.load_json(source_origin)["sessionId"],
+                    "stateSha256": None if source_index is None else source_index["stateSha256"]}
+                raw_request = evidence.canonical_bytes(request)
+                path = owner.root / request_path
+                path.write_bytes(raw_request)
+                path.chmod(0o400)
+                execution_inputs = tuple(sorted({
+                    *selected, request_path,
+                    *((state_path, source_origin_path, source_index_path) if action == "recover" else ())}))
+                captured = evidence.input_manifest(owner.root, execution_inputs)
+                arguments = ["dotnet", "exec", "--fx-version", self.runtime_version, str(assembly),
+                             "artifact-crash", str(owner.root), request_path, hashlib.sha256(raw_request).hexdigest()]
+                self.assertEqual(evidence.input_manifest(owner.root, sorted(consumer["runtimeAssemblies"])),
+                                 consumer["runtimeAssemblies"])
+                observed = owner.command(
+                    arguments, cwd=owner.root, scope="recovery", record_execution=True, directory_lease=lease,
+                    execution_inputs=execution_inputs, execution_outputs=(origin_path, readback_path),
+                    **({"stop_at_barrier": value} if action == "source" else {}))
+                self.assertEqual(observed.exit_code, -9 if action == "source" else 0)
+                self.assertEqual(tuple(dict(row) for row in observed.events),
+                                 ({"event": "barrier" if action == "source" else "test",
+                                   "code": "None", "value": value if action == "source" else 1},))
+                sequence = owner.command_sequence
+                control_raw = (owner.root / f"proofs/recovery-command-{sequence:04}.json").read_bytes()
+                outputs = evidence.input_manifest(owner.root, (origin_path, readback_path))
+                raw_record = sources.native_control_record(
+                    owner, sequence, control_raw, arguments=arguments, cwd=owner.root,
+                    input_files=captured, output_files=outputs, directory_lease=lease)
+                self.assertEqual(hashlib.sha256(raw_record).hexdigest(), observed.execution_record_sha256)
+                receipts.append(evidence.load_json(raw_record))
+                if action == "source":
+                    source_origin_path, source_index_path = origin_path, readback_path
+                    source_origin = (owner.root / origin_path).read_bytes()
+                    source_index = evidence.load_json((owner.root / readback_path).read_bytes())
+                    self.assertEqual(source_index, {
+                        "schemaVersion": 1, "qualification": False, "kind": "artifact-crash-source",
+                        "runId": owner.run_id, "caseId": request["caseId"], "boundary": boundary,
+                        "sessionId": evidence.load_json(source_origin)["sessionId"],
+                        "stateSha256": hashlib.sha256((owner.root / state_path).read_bytes()).hexdigest(),
+                        "originSha256": hashlib.sha256(source_origin).hexdigest()})
+                    owner._capture_execution_inputs((state_path,), time.monotonic() + 5)
+                else:
+                    recovered = evidence.ingest_artifact_recovery_origin(
+                        inputs, (owner.root / origin_path).read_bytes(), binding_id=binding["bindingId"],
+                        case_id=request["caseId"], component_inputs=consumer["components"],
+                        declaration_data=declaration, source_data=source_origin,
+                        recovery_input_sha256=hashlib.sha256(raw_request).hexdigest())
+                    self.assertEqual(recovered["sourceSessionId"], source_index["sessionId"])
+                    readback = evidence.load_json((owner.root / readback_path).read_bytes())
+                    self.assertEqual((readback["runId"], readback["boundary"], readback["qualification"]),
+                                     (owner.run_id, boundary, False))
+                    self.assertEqual(hashlib.sha256((owner.root / state_path).read_bytes()).hexdigest(),
+                                     source_index["stateSha256"])
+                self.assertFalse(owner.live_children())
+                self.assertEqual(evidence.input_manifest(owner.root, execution_inputs), captured)
+                self.assertEqual(evidence.input_manifest(owner.root, sorted(consumer["runtimeAssemblies"])),
+                                 consumer["runtimeAssemblies"])
+            self.assertLessEqual(receipts[0]["endedMs"], receipts[1]["startedMs"])
+            self.assertNotEqual(receipts[0]["childStartSha256"], receipts[1]["childStartSha256"])
+            self.assertEqual(receipts[0]["directoryLease"], receipts[1]["directoryLease"])
 
     def test_managed_contributor_runtime_executes_every_common_metadata_row_with_exact_origins(self):
         self.package_consumer_build(runtime=True, captured=True)

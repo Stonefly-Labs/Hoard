@@ -104,6 +104,55 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
         return result;
     }
 
+    internal OwnedDirectoryHandle OpenRelativeDirectory(string relative)
+    {
+        var current = Duplicate(Descriptor);
+        try
+        {
+            foreach (var part in relative.Split('/', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var descriptor = OpenAt(current.Descriptor, part, OpenFlags);
+                if (descriptor < 0) { throw new InvalidOperationException("OwnershipInvalid"); }
+                var next = new OwnedDirectoryHandle(descriptor);
+                current.Dispose();
+                current = next;
+                current.CheckPrivate();
+            }
+            return current;
+        }
+        catch { current.Dispose(); throw; }
+    }
+
+    internal SafeFileHandle OpenReadFile(string name)
+    {
+        var directoryFlag = Mac ? 0x100000
+            : RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? 0x4000 : 0x10000;
+        var descriptor = OpenAt(Descriptor, name, (OpenFlags & ~directoryFlag) | (Mac ? 0x4 : 0x800));
+        if (descriptor < 0) { throw new InvalidOperationException("OwnershipInvalid"); }
+        var result = new SafeFileHandle(descriptor, true);
+        try
+        {
+            var file = ReadIdentity(descriptor);
+            if (file.Uid != GetUid() || file.Mode != (0x8000 | 0x100))
+            { throw new InvalidOperationException("OwnershipInvalid"); }
+            return result;
+        }
+        catch { result.Dispose(); throw; }
+    }
+
+    internal FileStream CreatePrivateFile(string name)
+    {
+        if (!OperatingSystem.IsLinux()) { throw new PlatformNotSupportedException("PrerequisiteMissing"); }
+        CheckPrivate();
+        var directoryFlag = RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? 0x4000 : 0x10000;
+        var flags = (OpenFlags & ~directoryFlag) | 1 | 0x40 | 0x80;
+        var descriptor = CreateAt(Descriptor, name, flags, 0x180);
+        if (descriptor < 0) { throw new IOException("OwnershipInvalid"); }
+        var file = new SafeFileHandle(descriptor, true);
+        try { return new FileStream(file, FileAccess.Write); }
+        catch { file.Dispose(); throw; }
+    }
+
     internal void VerifyPath(string path)
     {
         CheckPrivate();
@@ -126,7 +175,8 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
         { throw new InvalidOperationException("OwnershipInvalid"); }
     }
 
-    private int Descriptor => handle.ToInt32();
+    private int Descriptor => !IsClosed && !IsInvalid ? handle.ToInt32()
+        : throw new ObjectDisposedException(nameof(OwnedDirectoryHandle));
     protected override bool ReleaseHandle() => Close(handle.ToInt32()) == 0;
 
     private static Identity ReadIdentity(int descriptor)
@@ -160,6 +210,8 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
     private static extern int Open(string path, int flags);
     [DllImport("libc", EntryPoint = "openat", SetLastError = true)]
     private static extern int OpenAt(int directory, string path, int flags);
+    [DllImport("libc", EntryPoint = "openat", CallingConvention = CallingConvention.Cdecl, SetLastError = true)]
+    private static extern int CreateAt(int directory, string path, int flags, int mode);
     [DllImport("libc", EntryPoint = "mkdirat", SetLastError = true)]
     private static extern int MkdirAt(int directory, string path, uint mode);
     [DllImport("libc", EntryPoint = "fstat", SetLastError = true)]
