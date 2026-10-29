@@ -110,6 +110,7 @@ jobs:
                   or inputs["mode"] != "diagnostic" or inputs["profileId"] != "composition"
                   or summary["inputSha256"] != evidence.digest(inputs)
                   or owner["runId"] != inputs["runId"]
+                  or type(baseline["schemaVersion"]) is not int or baseline["schemaVersion"] != 2
                   or baseline["runId"] != inputs["runId"] or baseline["rootId"] != owner["rootId"]
                   or baseline["qualification"] is not False or baseline["nativeContainment"] is not False
                   or baseline["mode"] != "preparation" or baseline["baselineRevision"] != BASELINE

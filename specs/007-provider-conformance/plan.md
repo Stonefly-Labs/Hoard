@@ -3208,6 +3208,37 @@ expected non-qualifying exit2. SDK catalog consistency and diff checks pass.
 A new native composition observation remains pending; no earlier failed
 observation is relabeled, and no task or qualification gate is closed.
 
+### Typed retained controller paths
+
+The next producer checkpoint closes the known historical baseline/result path
+copies before publication rather than rewriting retained provenance. Historical
+seals become version2: strict closed registration/configuration/discovery entry
+schemas, fixed known identities/revisions, hash metadata and root-relative
+assembly/assets paths. Both producer and live reader use the same entry
+admission; unknown/encoded extra fields, absolute/escaping paths, invalid
+metadata and former version1 seals reject. The reader verifies original owned
+file hashes before creating only a private hydrated view for unchanged legacy
+calls. Original retained seal bytes are never rewritten to that view.
+
+Candidate controller result manifest descriptors likewise become root-relative;
+only live read-input/environment consumers hydrate them. Inherited settings
+contain private environment values, so they move to owned transient `stores`
+with the existing original settings/input hashes and command guards. Pure CP
+settings remain retained for unchanged strict post-release byte replay.
+The diagnostic composition workflow now requires the version2 baseline header.
+No origin, input-closure or qualification claims are upgraded.
+
+The baseline test first exposes the actual private-root copy in persisted
+bytes. Regression extends it with six resealed invalid schema/path/field/
+metadata controls while preserving original hash/replay checks, and adds a
+live-consumer hydration boundary case. The exact six-module command recorded
+above executes163 tests in6.026 seconds, zero failures/errors and25 native macOS
+skips. `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_sdk_checks -q` executes157 tests in28.968 seconds, zero failures/
+errors/skips. SDK catalog and diff checks pass. Full tooling and fresh native
+composition/all-output validation for these new bytes remain pending.
+T068--T086 and implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

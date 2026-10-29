@@ -307,6 +307,8 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     _prepare_solution_formatting(run, source, config, feed)
     reference_consumer = _native_reference_consumer(run, repository, source, controllers, baseline_seal)
     historical = verify_controller_baselines(run, baseline_seal)
+    manifest_paths = {key: str(run.root / evidence.relative_path(path))
+                      for key, path in controllers["manifests"].items()}
     root = run.root / "stores/inherited-runtime"
     root.mkdir(mode=0o700)
     normative = root / "specs/004-module-discovery/contracts/openapi.json"
@@ -315,7 +317,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     driver = root / "driver"
     legacy._copy_runtime((source / DISCOVERY_PROJECT).parent / "bin/Release/net10.0", driver)
     files = controller_read_inputs(
-        run.root, controllers["manifests"],
+        run.root, manifest_paths,
         extra=(normative, run.root / controllers["formatting"]["path"], run.root / baseline_seal["path"],
                run.root / "proofs/inherited-solution-lock-derivations.json",
                *(source / name for name in sources),
@@ -327,7 +329,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     owner_raw = read_bounded(run.root / "runtime-owner.json", 65536)
     owner = evidence.load_json(owner_raw)
     variables = {
-        **controllers["manifests"], "HOARD_DISCOVERY_RUN_ID": run.run_id,
+        **manifest_paths, "HOARD_DISCOVERY_RUN_ID": run.run_id,
         "HOARD_DISCOVERY_SDK": prior["environment"]["sdk"],
         "HOARD_DISCOVERY_OUTPUT": str(root / "performance"),
     }
@@ -386,7 +388,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         write_new(manifest_path, manifest_raw)
         settings_data = runtime_settings(
             run.root, assembly, attempt, evidence.digest(manifest), evidence.digest(owner), environment_xml)
-        settings_path = run.root / f"proofs/settings-{attempt}.runsettings"
+        settings_path = run.root / f"stores/settings-{attempt}.runsettings"
         write_new(settings_path, settings_data)
         bound_paths = (
             manifest_path, inputs_path, run.root / "runtime-owner.json", settings_path, closure_path,
@@ -407,7 +409,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         ended = time.monotonic() * 1000
         parent_sha = category_command_proof(
             run, result, arguments=arguments, cwd=runtime, manifest=manifest,
-            settings_data=settings_data, started_ms=started, ended_ms=ended)
+            settings_data=settings_data, started_ms=started, ended_ms=ended, settings_directory="stores")
         record = evidence.load_json(run.read_execution_record(run.command_sequence))
         if parent_sha is None or record.get("inputFiles") != bound:
             raise evidence.ConformanceError("ProofMismatch")

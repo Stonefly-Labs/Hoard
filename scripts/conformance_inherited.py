@@ -941,6 +941,37 @@ def run_controller_tooling(repository, run, sources):
 CONTROLLER_BASELINES = "proofs/inherited-controller-baselines.json"
 
 
+def _controller_baseline_entries(registration, retained, path):
+    import configuration_evidence as configuration
+    import discovery_evidence as discovery
+    from conformance_evidence import _constant, _one_of, _record, relative_path, sha256
+
+    def hashes(value):
+        if not isinstance(value, dict) or len(value) > 50000:
+            raise ConformanceError("EvidenceSchemaInvalid")
+        return {relative_path(key): sha256(hashed) for key, hashed in value.items()}
+
+    registration = dict(_record({"assembly": path, "sha256": sha256})(registration))
+    if not isinstance(retained, dict) or set(retained) != {"configuration", "discovery"}:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    result = {}
+    for phase, revision, names in (
+            ("configuration", configuration.BASELINE, ("LegacyOptions", "LifecycleConsumer")),
+            ("discovery", discovery.BASELINE, ("RetainedLifecycle", "RetainedConfiguration", "LegacyOptions"))):
+        fields = {"name": _one_of(*names), "baseline": _constant(revision),
+                  "assembly": path, "sha256": sha256, "assets": path}
+        if phase == "discovery":
+            fields.update(baselineAssetsSha256=sha256, baselineDependencyHashes=hashes,
+                          linkedSourceHashes=hashes, sourceHashes=hashes)
+        entries = retained[phase]
+        if not isinstance(entries, list) or len(entries) != len(names):
+            raise ConformanceError("EvidenceSchemaInvalid")
+        result[phase] = [dict(_record(fields)(entry)) for entry in entries]
+        if {entry["name"] for entry in result[phase]} != set(names):
+            raise ConformanceError("EvidenceSchemaInvalid")
+    return registration, result
+
+
 def _controller_baseline_files(owner, roots):
     import conformance_legacy as legacy
     from conformance_evidence import file_sha256
@@ -1009,8 +1040,20 @@ def prepare_controller_baselines(repository, run):
     if baselines._hash_tree(frozen, exclude_outputs=True) != recipes:
         raise ConformanceError("InputChanged")
     files = _controller_baseline_files(run.root, roots)
+
+    def relative(value):
+        from conformance_evidence import relative_path
+        if not isinstance(value, str):
+            raise ConformanceError("EvidenceSchemaInvalid")
+        path = Path(value)
+        legacy.no_symlinks(path)
+        if not path.is_absolute() or not path.is_file() or not path.is_relative_to(run.root):
+            raise ConformanceError("OwnershipInvalid")
+        return relative_path(path.relative_to(run.root).as_posix())
+
+    registration, retained = _controller_baseline_entries(registration, retained, relative)
     document = {
-        "schemaVersion": 1, "qualification": False, "nativeContainment": False, "mode": "preparation",
+        "schemaVersion": 2, "qualification": False, "nativeContainment": False, "mode": "preparation",
         "runId": run.run_id, "rootId": run.root_id, "baselineRevision": BASELINE,
         "recipeSourceSha256": digest(recipes), "registration": registration, "retained": retained,
         "files": files,
@@ -1025,8 +1068,6 @@ def prepare_controller_baselines(repository, run):
 
 
 def verify_controller_baselines(run, seal):
-    import configuration_evidence as configuration
-    import discovery_evidence as discovery
     import conformance_legacy as legacy
     from conformance_evidence import file_sha256, relative_path
     from conformance_sources import read_bounded
@@ -1044,7 +1085,7 @@ def verify_controller_baselines(run, seal):
     if (not isinstance(value, dict) or set(value) != {
             "schemaVersion", "qualification", "nativeContainment", "mode", "runId", "rootId",
             "baselineRevision", "recipeSourceSha256", "registration", "retained", "files"}
-            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 1
+            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 2
             or value["qualification"] is not False or value["nativeContainment"] is not False
             or value["mode"] != "preparation" or value["runId"] != run.run_id or value["rootId"] != run.root_id
             or value["baselineRevision"] != BASELINE or not isinstance(value["recipeSourceSha256"], str)
@@ -1067,32 +1108,22 @@ def verify_controller_baselines(run, seal):
             raise ConformanceError("OutputLimitExceeded")
         if file_sha256(path) != hashed:
             raise ConformanceError("InputChanged")
-    entries = [value["registration"]]
-    for phase, revision, names in (
-            ("configuration", configuration.BASELINE, {"LegacyOptions", "LifecycleConsumer"}),
-            ("discovery", discovery.BASELINE, {"RetainedLifecycle", "RetainedConfiguration", "LegacyOptions"})):
-        retained = value["retained"][phase]
-        if (not isinstance(retained, list) or len(retained) != len(names)
-                or any(not isinstance(entry, dict) or not isinstance(entry.get("name"), str)
-                       or entry.get("baseline") != revision or not isinstance(entry.get("assets"), str)
-                       for entry in retained)
-                or {entry["name"] for entry in retained} != names):
-            raise ConformanceError("EvidenceSchemaInvalid")
-        for entry in retained:
-            assets = Path(entry["assets"])
-            if (not assets.is_absolute() or not assets.is_relative_to(run.root)
-                    or assets.relative_to(run.root).as_posix() not in value["files"]):
+    registration, retained = _controller_baseline_entries(value["registration"], value["retained"], relative_path)
+    entries = [registration]
+    for phase_entries in retained.values():
+        for entry in phase_entries:
+            if entry["assets"] not in value["files"]:
                 raise ConformanceError("ProofMismatch")
-        entries.extend(retained)
+        entries.extend(phase_entries)
     for entry in entries:
-        if (not isinstance(entry, dict) or not isinstance(entry.get("assembly"), str)
-                or not isinstance(entry.get("sha256"), str)):
-            raise ConformanceError("EvidenceSchemaInvalid")
-        assembly = Path(entry["assembly"])
-        if (not assembly.is_absolute() or not assembly.is_relative_to(run.root)
-                or value["files"].get(assembly.relative_to(run.root).as_posix()) != entry["sha256"]):
+        if value["files"].get(entry["assembly"]) != entry["sha256"]:
             raise ConformanceError("ProofMismatch")
-    return value
+    return {
+        **value, "registration": {**registration, "assembly": str(run.root / registration["assembly"])},
+        "retained": {phase: [{**entry, "assembly": str(run.root / entry["assembly"]),
+                             "assets": str(run.root / entry["assets"])} for entry in entries]
+                     for phase, entries in retained.items()},
+    }
 
 
 def replay_controller_baseline(owner, baseline, phase, target):
@@ -1304,7 +1335,7 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                 manifest = target / (phase + "-evidence.json")
                 legacy._write(manifest, document)
             variable = "HOARD_" + phase.upper() + "_EVIDENCE"
-            manifests[variable] = str(manifest)
+            manifests[variable] = manifest.relative_to(owner).as_posix()
             phases[phase] = {
                 **summary, "manifestPath": manifest.relative_to(owner).as_posix(),
                 "manifestSha256": legacy._hash(manifest),

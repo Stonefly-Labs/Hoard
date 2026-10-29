@@ -7743,6 +7743,24 @@ diagnostic bytes,28 explicit native macOS skips and expected non-qualifying
 exit2. SDK catalog consistency and diff checks pass. Fresh native composition
 remains pending.
 
+The next controller-output change publishes historical seals as version2:
+closed registration/configuration/discovery entry shapes, exact known identities
+and typed hash metadata, with root-relative assembly/assets paths before initial
+publication. The live reader rejects old absolute-path version1, unknown fields,
+escape paths and invalid metadata, verifies the original file hashes and only
+then returns a private hydrated legacy-call view. Original retained bytes and
+the seal remain unchanged. Candidate controller results now also publish
+root-relative manifest descriptors; only their live environment/read-input
+consumers hydrate them. Inherited settings containing those private environment
+values move to owned `stores` with the existing live settings/input checks and
+hash-only command receipts; pure CP settings keep strict retained-byte replay.
+The red baseline case detects the original private-root leak. The corrected
+six-module command above executes163 tests in6.026 seconds, zero failures/errors
+and25 native macOS skips; `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_sdk_checks -q` executes157 tests in28.968 seconds with zero
+failures/errors/skips. Full tooling and a new native composition observation
+for this subsequent source change remain pending.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

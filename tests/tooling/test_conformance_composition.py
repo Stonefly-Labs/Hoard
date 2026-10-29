@@ -17,6 +17,46 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_inherited_runtime_hydrates_relative_manifest_paths_only_for_live_consumers(self):
+        import conformance_composition_checks as composition
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            source = root / "stores/source"
+            source.mkdir(parents=True)
+            logger = source / f"tests/contracts/{composition.LOGGER}/bin/Release/net10.0/{composition.LOGGER}.dll"
+            logger.parent.mkdir(parents=True)
+            logger.write_bytes(b"logger")
+            normative = source / "specs/004-module-discovery/contracts/openapi.json"
+            normative.parent.mkdir(parents=True)
+            normative.write_bytes(b"{}")
+            (root / "proofs").mkdir()
+            controllers = {
+                "manifests": {"HOARD_" + phase.upper() + "_EVIDENCE":
+                              f"stores/inherited-controller-{phase}/{phase}-evidence.json"
+                              for phase in ("foundation", "lifecycle", "configuration", "discovery")},
+                "formatting": {"path": "proofs/formatting.json"},
+            }
+            run = SimpleNamespace(root=root)
+
+            def read_inputs(owner, manifests, **kwargs):
+                self.assertEqual(manifests, {key: str(root / path)
+                                            for key, path in controllers["manifests"].items()})
+                self.assertEqual(owner, root)
+                raise RuntimeError("live-input-boundary")
+
+            with mock.patch.object(composition.baselines, "_command"), \
+                    mock.patch.object(composition, "verify_controller_baselines", return_value={"files": {}}), \
+                    mock.patch.object(composition, "_controller_phase", return_value=(controllers, None, None)), \
+                    mock.patch.object(composition, "_prepare_solution_formatting"), \
+                    mock.patch.object(composition, "_native_reference_consumer"), \
+                    mock.patch.object(composition, "controller_read_inputs", side_effect=read_inputs), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaisesRegex(RuntimeError, "^live-input-boundary$"):
+                    composition._inherited_runtime(
+                        run, ROOT, source, {}, root / "config", root / "feed",
+                        {"path": "proofs/inherited-controller-baselines.json"})
+
     def test_compatibility_runtime_seals_compiler_outputs_for_the_real_executor_input_guard(self):
         import conformance_execution as execution
         import conformance_evidence as evidence
@@ -920,9 +960,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     inputs["sourceRevision"] = "b" * 40
                 baseline = {"runId": "run", "rootId": "root", "qualification": False,
                             "nativeContainment": False, "mode": "preparation",
-                            "schemaVersion": 1, "baselineRevision": inherited.BASELINE,
+                            "schemaVersion": 2, "baselineRevision": inherited.BASELINE,
                             "recipeSourceSha256": "b" * 64, "files": {}, "retained": {},
-                            "registration": {"assembly": str(root / "stores/old/RegistrationConsumer.dll"),
+                            "registration": {"assembly": "stores/old/RegistrationConsumer.dll",
                                              "sha256": "c" * 64}}
                 for phase, revision, names in (
                         ("configuration", "b80c69fc386541be4f56f6ef2edeca40f43a0e1c",
@@ -930,14 +970,14 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         ("discovery", "7fd73267a5154583363c94e9e85b9bac7d4a16b3",
                          ("RetainedLifecycle", "RetainedConfiguration", "LegacyOptions"))):
                     baseline["retained"][phase] = [{
-                        "name": name, "baseline": revision, "assembly": str(root / f"stores/{phase}/{name}.dll"),
-                        "assets": str(root / f"stores/{phase}/{name}.assets.json"), "sha256": "c" * 64,
+                        "name": name, "baseline": revision, "assembly": f"stores/{phase}/{name}.dll",
+                        "assets": f"stores/{phase}/{name}.assets.json", "sha256": "c" * 64,
                     } for name in names]
                 for entry in (baseline["registration"], *baseline["retained"]["configuration"],
                               *baseline["retained"]["discovery"]):
                     for field in ("assembly", "assets"):
                         if field in entry:
-                            baseline["files"][Path(entry[field]).relative_to(root).as_posix()] = "c" * 64
+                            baseline["files"][entry[field]] = "c" * 64
                 if mutation == "resealed-foreign-root":
                     baseline["rootId"] = "foreign-root"
                 elif mutation == "false-qualification":

@@ -879,6 +879,11 @@ before runtime; a separate hash-only diagnosis identifies one exact benign SDK
 workload advisory, now narrowly recognized without admitting unknown output or
 failed commands. Full retained controller-result sanitation and a successful
 fresh composition observation remain pending.
+Historical controller seals now use a closed version2 schema with root-relative
+paths; live readers validate original file hashes before privately hydrating
+legacy arguments. Controller manifest descriptors are also root-relative, and
+inherited settings containing private environment values are transient inputs.
+These producer changes do not replace the pending fresh native all-output check.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

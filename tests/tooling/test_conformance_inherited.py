@@ -618,6 +618,11 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                                                               else configuration).BASELINE,
                                    "assembly": str(binary),
                                    "sha256": file_sha256(binary), "assets": str(assets)})
+                    if work.name == "discovery":
+                        result[-1].update(
+                            baselineAssetsSha256=file_sha256(assets),
+                            baselineDependencyHashes={"Hoard.Core.dll": file_sha256(binary.parent / "Hoard.Core.dll")},
+                            linkedSourceHashes={}, sourceHashes={name + ".csproj": file_sha256(project / (name + ".csproj"))})
                 return result
 
             def registration(root, work, config, update):
@@ -639,8 +644,40 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 for name in ("lifecycle", "configuration", "discovery")
             ], [json.loads(line) for line in progress.getvalue().splitlines()])
             verified = inherited.verify_controller_baselines(run, seal)
+            retained_bytes = (owner / inherited.CONTROLLER_BASELINES).read_bytes()
+            self.assertFalse(os.fsencode(owner) in retained_bytes)
+            stored = json.loads(retained_bytes)
+            self.assertFalse(Path(stored["registration"]["assembly"]).is_absolute())
+            for entries in stored["retained"].values():
+                for entry in entries:
+                    self.assertFalse(Path(entry["assembly"]).is_absolute())
+                    self.assertFalse(Path(entry["assets"]).is_absolute())
             self.assertFalse(verified["qualification"])
             self.assertFalse(verified["nativeContainment"])
+            manifest = owner / inherited.CONTROLLER_BASELINES
+            for defect in ("old-schema", "absolute", "escaping", "unknown", "encoded", "metadata"):
+                with self.subTest(defect=defect):
+                    altered = copy.deepcopy(stored)
+                    entry = altered["retained"]["discovery"][0]
+                    if defect == "old-schema":
+                        altered["schemaVersion"] = 1
+                    elif defect == "absolute":
+                        entry["assembly"] = str(owner / entry["assembly"])
+                    elif defect == "escaping":
+                        entry["assets"] = "../private-canary"
+                    elif defect == "unknown":
+                        entry["unexpected"] = "private-canary"
+                    elif defect == "encoded":
+                        altered["registration"]["unexpected"] = "cHJpdmF0ZS1jYW5hcnk="
+                    else:
+                        entry["baselineDependencyHashes"]["Hoard.Core.dll"] = "private-canary"
+                    manifest.chmod(0o600)
+                    manifest.write_bytes(canonical_bytes(altered))
+                    with self.assertRaises(ConformanceError):
+                        inherited.verify_controller_baselines(
+                            run, {**seal, "sha256": file_sha256(manifest)})
+            manifest.write_bytes(retained_bytes)
+            manifest.chmod(0o400)
             original = Path(verified["retained"]["configuration"][0]["assembly"])
             target = owner / "stores/replay"
             target.mkdir()

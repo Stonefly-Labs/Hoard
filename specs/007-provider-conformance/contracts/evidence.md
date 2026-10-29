@@ -1044,6 +1044,17 @@ their original readonly bytes remain declared command inputs. Results and
 hash-only execution receipts stay in `proofs`. This does not make all other
 legacy controller outputs safe; their typed retained projections remain part
 of the unfinished sanitation gate.
+Historical controller seals now publish version2 closed registration/
+configuration/discovery entries, using root-relative assembly/assets paths and
+typed identity/hash metadata. Producers reject unknown or malformed entry
+fields before publication; readers reject former absolute-path version1 seals,
+validate original owned file hashes and only then build a private hydrated
+legacy-call view. The persisted bytes/seal are never rewritten to that view.
+Controller-result manifest descriptors are root-relative as well. Inherited
+execution settings containing private environment paths belong in `stores`;
+live command/settings validation and original settings hashes are unchanged.
+Pure CP settings remain retained and subject to their existing strict original
+byte replay. These distinctions do not close the all-output sanitation gate.
 
 Delivered category diagnostic JSON/JUnit/Markdown/CI projections use closed
 catalog identities, counts and hashes. They independently verify the retained
