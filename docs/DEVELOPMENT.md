@@ -8429,6 +8429,20 @@ formatting, frozen inventory/catalog checks and `git diff --check` pass.
 This repairs the demonstrated inventory-controller defect, not the separate
 earlier Object native-I/O deadline failure or complete profile qualification.
 
+Run40928378773 atcc1c374 later rejects both current-input metadata inventory
+runtime identities. Their closed diagnostic hashes resolve to the independent
+inventory-controller partition. The Python producer already emits owned
+`stores/snapshot` descriptors, but the managed decoder/model still require
+`snapshot`. The decoder and fixture now require the current owned namespace
+for the script and every exact command input. Fully resealed legacy, foreign
+and escaping namespaces reject without output. The current-namespace positive
+and legacy-namespace rejection first fail against the old decoder.
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore -c Release -p:UseSharedCompilation=false -nodeReuse:false --filter 'FullyQualifiedName~MetadataInventorySourceTests|FullyQualifiedName~MetadataRecoverySourceTests' --logger 'console;verbosity=minimal'`
+passes11 tests with zero skips. Focused `dotnet format --verify-no-changes`
+and the two Python original-inventory/scope checks pass. Fresh native execution
+remains required; this does not repair or explain the separate composition
+runtime failure, advance T068--T086 or establish qualification.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

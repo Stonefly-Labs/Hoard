@@ -946,6 +946,9 @@ preimages bind a common policy without requiring equal per-profile hashes.
 They remain explicitly nonqualifying; actual runtime-origin/settlement
 evaluation, trusted baseline/CI coordinator generation and qualification are
 unfinished. See [offline inspection](specs/007-provider-conformance/quickstart.md#offline-correspondence-inspection).
+The managed metadata inventory verifier now matches the producer's owned
+`stores/snapshot` namespace and rejects resealed legacy/foreign namespaces.
+Eleven focused inventory/recovery tests pass; fresh native CI remains required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

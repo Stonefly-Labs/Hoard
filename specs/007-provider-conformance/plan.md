@@ -3653,6 +3653,38 @@ These failures are distinct from the local disk failure and earlier frozen
 successes. Their causes are not inferred from scalar classifications; actual
 failure diagnosis and a new source-bound execution remain required.
 
+### Current owned namespace in the managed inventory verifier
+
+The admitted metadata/SDK failure hashes fromcc1c374 resolve independently to
+the Memory/Sqlite current-input inventory runtime methods, both in the
+`inventory-controller` partition. The Python producer's graph and native input
+map already use `stores/snapshot`; the C# decoder and its model still require
+`snapshot`. Updating the fixture to actual producer shape reproduces rejection
+of the valid graph and acceptance of a fully resealed legacy-namespace graph
+before the fix. The decoder now independently requires `stores/snapshot` for
+the exact script and every command input. Added fully resealed legacy, foreign
+and escaping namespace controls reject without producing source receipts.
+Original hash, source-manifest, named mutation and same-source repair checks
+are unchanged.
+
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore -c Release -p:UseSharedCompilation=false -nodeReuse:false --filter 'FullyQualifiedName~MetadataInventorySourceTests|FullyQualifiedName~MetadataRecoverySourceTests' --logger 'console;verbosity=minimal'`
+passes11 tests with zero skips. `dotnet format
+tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--verify-no-changes --no-restore --include
+tests/contracts/Hoard.Conformance.Tests/MetadataInventorySource.cs
+tests/contracts/Hoard.Conformance.Tests/MetadataInventorySourceTests.cs -v quiet`
+passes. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence.ConformanceRuntimeIngestionTests.test_metadata_verifier_inventory_requires_original_native_red_and_same_source_repair
+test_conformance_sdk_checks.SdkDiagnosticTests.test_qualification_selects_independent_metadata_recovery_and_inventory_source_scopes`
+passes two tests. Catalog/SDK and diff checks pass.
+
+README and DEVELOPMENT record the repair and pending native validation.
+Provider contracts, contributor commands, remaining examples/spec schemas,
+product/architecture/ADR/diagrams/governance/backlog/predecessor/IaC/release/UI
+documents are unaffected. This demonstrated managed-consumer correction does
+not diagnose composition's separate runtime failure or replace fresh native
+evidence. T068--T086, reviewer-owned checklists and implement/running remain.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

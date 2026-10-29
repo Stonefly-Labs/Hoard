@@ -46,10 +46,37 @@ public sealed class MetadataInventorySourceTests
         {
             var path = $"proofs/execution-command-{sequence:D4}.json";
             var native = JsonNode.Parse(fixture.Read(path))!;
-            Assert.True(native["inputFiles"]!.AsObject().Remove("snapshot/scripts/conformance_legacy.py"));
+            Assert.True(native["inputFiles"]!.AsObject().Remove("stores/snapshot/scripts/conformance_legacy.py"));
             fixture.Write(path, native);
             fixture.Graph["commands"]![sequence - 1]!["executionSha256"] = fixture.Files[fixture.Absolute(path)];
         }
+        fixture.SaveContext();
+        Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => MetadataInventorySource.Verify(fixture.ContextPath, "model-only"));
+        Assert.Empty(Directory.GetFiles(fixture.Output));
+    }
+
+    [Theory]
+    [InlineData("snapshot/")]
+    [InlineData("stores/foreign/")]
+    [InlineData("../snapshot/")]
+    public void Resealed_commands_cannot_select_a_foreign_source_namespace(string sourcePrefix)
+    {
+        using var fixture = new SourceFixture();
+        for (var sequence = 1; sequence <= 3; sequence++)
+        {
+            var path = $"proofs/execution-command-{sequence:D4}.json";
+            var native = JsonNode.Parse(fixture.Read(path))!;
+            var inputFiles = native["inputFiles"]!.AsObject();
+            foreach (var file in inputFiles.ToArray())
+            {
+                if (!file.Key.StartsWith("stores/snapshot/", StringComparison.Ordinal)) { continue; }
+                inputFiles.Remove(file.Key);
+                inputFiles.Add(sourcePrefix + file.Key["stores/snapshot/".Length..], file.Value);
+            }
+            fixture.Write(path, native);
+            fixture.Graph["commands"]![sequence - 1]!["executionSha256"] = fixture.Files[fixture.Absolute(path)];
+        }
+        fixture.Graph["scriptPath"] = sourcePrefix + "scripts/conformance_unit_checks.py";
         fixture.SaveContext();
         Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => MetadataInventorySource.Verify(fixture.ContextPath, "model-only"));
         Assert.Empty(Directory.GetFiles(fixture.Output));
@@ -145,7 +172,7 @@ public sealed class MetadataInventorySourceTests
                 native["argvSha256"] = new string('e', 64);
                 native["cwdSha256"] = new string('f', 64);
                 native["controlRecordSha256"] = Files[Absolute(controlPath)];
-                var inputFiles = sources.ToDictionary(pair => "snapshot/" + pair.Key, pair => pair.Value);
+                var inputFiles = sources.ToDictionary(pair => "stores/snapshot/" + pair.Key, pair => pair.Value);
                 inputFiles[inputsPath] = inputHash;
                 native["inputFiles"] = JsonSerializer.SerializeToNode(inputFiles);
                 native["outputFiles"] = JsonSerializer.SerializeToNode(new Dictionary<string, string>
@@ -170,7 +197,7 @@ public sealed class MetadataInventorySourceTests
                 ["runId"] = run,
                 ["invocationGroupId"] = group,
                 ["inputsSha256"] = inputHash,
-                ["scriptPath"] = "snapshot/scripts/conformance_unit_checks.py",
+                ["scriptPath"] = "stores/snapshot/scripts/conformance_unit_checks.py",
                 ["inputsPath"] = inputsPath,
                 ["commands"] = commands
             };

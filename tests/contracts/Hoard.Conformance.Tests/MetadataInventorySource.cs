@@ -45,7 +45,7 @@ internal static class MetadataInventorySource
         Assert.False(graph.GetProperty("qualification").GetBoolean());
         foreach (var key in new[] { "runId", "invocationGroupId", "inputsSha256" })
         { Assert.Equal(Text(context, key), Text(graph, key)); }
-        Assert.Equal("snapshot/scripts/conformance_unit_checks.py", Text(graph, "scriptPath"));
+        Assert.Equal("stores/snapshot/scripts/conformance_unit_checks.py", Text(graph, "scriptPath"));
         var inputsPath = prefix + "-native-inputs.json";
         Assert.Equal(inputsPath, Text(graph, "inputsPath"));
         using var inputsDocument = ReadJson(inputsPath);
@@ -113,9 +113,9 @@ internal static class MetadataInventorySource
                 "scripts/conformance_legacy.py",
                 "scripts/metadata_evidence.py", "scripts/foundation_evidence.py", "scripts/lifecycle_evidence.py",
                 "tests/tooling/test_metadata_evidence.py" };
-            Fields(inputFiles, [.. names.Select(name => "snapshot/" + name), inputsPath]);
+            Fields(inputFiles, [.. names.Select(name => "stores/snapshot/" + name), inputsPath]);
             foreach (var name in names)
-            { Assert.Equal(Text(inputs.GetProperty("sourceManifest"), name), Text(inputFiles, "snapshot/" + name)); }
+            { Assert.Equal(Text(inputs.GetProperty("sourceManifest"), name), Text(inputFiles, "stores/snapshot/" + name)); }
             Assert.Equal(Text(context, "inputsSha256"), Text(inputFiles, inputsPath));
             var outputs = native.GetProperty("outputFiles");
             Fields(outputs, prefix + "-" + mode + ".json", prefix + "-" + mode + ".py");
