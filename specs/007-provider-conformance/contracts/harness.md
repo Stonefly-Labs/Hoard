@@ -2542,6 +2542,23 @@ receipts, failed exits and reused sessions. Actual session disposal must precede
 final control. A successful diagnostic component does not establish native
 retention/noncooperation, complete artifact applicability, public dispatch or
 profile qualification.
+Retained source/destination/native children must share the original actual
+noncooperative assertions, not a contributor-specific copy. Caller-owned setup
+may expose genuine worker settlement, an owned real synchronous hold and a
+competing-root initialization probe returning actual admission and shutdown.
+Always stop the competing lifetime; only common assertions decide expected
+Unavailable. Preserve existing observation/hold type identities and source-link
+the BCL/Abstractions-only body/control declarations in the original runner.
+Require both contained/inspected phases to retain actual pending workers,
+borrowed streams, admission/shutdown ownership, protection and root with readiness
+blocked. A synchronous fixture hold is not a stalled OS filesystem syscall.
+Do not release/dispose live work into a success: original parent alone inspects
+and SIGKILLs under the unchanged15-second scope. Independently join both packets,
+exact original native argv/input/output/request/control bytes, distinct process/
+session identities and the frozen ordinary origin within16 combined pins.
+Explicitly mark containment as non-durability proof. Clean preparation must
+copy every exact source-linked assertion/control/stream file before runner
+builds, including transfer helpers; host output or partial copying is not proof.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

@@ -184,6 +184,8 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ArtifactStoreIdentity Identity { get; }
     bool Ready { get; }
     ArtifactInitializationObservation ObserveInitialization();
+    ValueTask<ArtifactCompetingInitializationObservation> ProbeCompetingInitializationAsync(
+        ArtifactInitializationMode mode, CancellationToken cancellationToken);
     int WaitingAuthorityAdmissions { get; }
     /// <summary>Reopens Local compatibly; Object simulation restarts empty with a fresh epoch and authority.</summary>
     ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken);
@@ -217,18 +219,8 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask<ArtifactStorageObservation> ObserveStorageAsync(CancellationToken cancellationToken);
     /// <summary>Joins current provider workers; this does not close authority admission or release owned roots.</summary>
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
+    Task ObserveWorkerSettlement();
     ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken);
-}
-
-public interface IArtifactFaultRegistration : IAsyncDisposable
-{
-    long ObservationCount { get; }
-    ValueTask WaitForEntryAsync(CancellationToken cancellationToken);
-}
-
-public interface IArtifactSynchronousHold : IArtifactFaultRegistration
-{
-    void Release();
 }
 
 public interface IArtifactConformanceSession : IAsyncDisposable
@@ -247,6 +239,10 @@ public interface IArtifactConformanceSession : IAsyncDisposable
 public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
 {
     ArtifactInitializationObservation ObserveInitialization();
+    ValueTask<ArtifactCompetingInitializationObservation> ProbeCompetingInitializationAsync(
+        ArtifactInitializationMode mode, CancellationToken cancellationToken);
+    ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken);
+    Task ObserveWorkerSettlement();
     int WaitingAuthorityAdmissions { get; }
     IArtifactBorrowedStream BorrowedSource { get; }
     IArtifactBorrowedStream BorrowedDestination { get; }

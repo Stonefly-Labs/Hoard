@@ -3,6 +3,8 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Fixtures.Artifacts.ObjectSemantics;
+using Hoard.Testing.Conformance.Artifacts;
+using Hoard.Testing.Conformance.Bindings;
 
 internal static class ArtifactNonCooperativeScenario
 {
@@ -30,106 +32,45 @@ internal static class ArtifactNonCooperativeScenario
         Need(await lifetime.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity, authority,
             new ArtifactLimits(transferSlots: 1, waitingCalls: 0)), new(), default));
         var store = (IArtifactStore)lifetime;
-        var stall = new Stall();
-        var source = new StalledSource(stall);
-        var destination = new StalledDestination(stall);
-        ArtifactStamp? stamp = null;
-        ArtifactCleanupState cleanup;
-        ArtifactFailureCode callerCode;
-        using var cancellation = new CancellationTokenSource();
-        if (scenario == "source")
-        {
-            var ticket = Need(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-            var stage = store.StageAsync(ticket, source, new(), cancellation.Token).AsTask();
-            await stall.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
-            cancellation.Cancel();
-            var failed = Retained(await stage.WaitAsync(TimeSpan.FromSeconds(2)));
-            Require(failed.Code == ArtifactFailureCode.CancelledBeforeCommit);
-            cleanup = failed.Cleanup;
-            callerCode = failed.Code;
-        }
-        else
-        {
-            var ticket = Need(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-            using var bytes = new MemoryStream("owned-child-control"u8.ToArray());
-            var staged = Need(await store.StageAsync(ticket, bytes, new(), default));
-            stamp = Need(await store.CommitAsync(staged, new(), default)).Stamp;
-            if (scenario == "destination")
-            {
-                var read = Need(await store.OpenReadAsync(new(stamp.Identity.Digest), new(), default));
-                var copy = read.CopyToAsync(destination, new(), cancellation.Token).AsTask();
-                await stall.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
-                cancellation.Cancel();
-                var failed = Retained(await copy.WaitAsync(TimeSpan.FromSeconds(2)));
-                Require(failed.Code == ArtifactFailureCode.CancelledBeforeCommit);
-                cleanup = failed.Cleanup;
-                callerCode = failed.Code;
-                Require(Retained(await read.CloseAsync(new(TimeSpan.FromMilliseconds(50)), default)).Code
-                    == ArtifactFailureCode.CleanupIncomplete);
-            }
-            else
-            {
-                var deletion = Need(await store.ReserveDeleteAsync(new(stamp), new(), default));
-                if (provider == "local") { localFaults.BeforeRecordWrite = stall.BlockNative; }
-                else { objectFaults.BeforeObjectDelete = stall.BlockNative; }
-                var delete = store.DeleteAsync(deletion, new(TimeSpan.FromMilliseconds(100)), default).AsTask();
-                await stall.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
-                var failed = Retained(await delete.WaitAsync(TimeSpan.FromSeconds(2)));
-                Require(failed.Code is ArtifactFailureCode.DeadlineExceeded or ArtifactFailureCode.Uncertain);
-                cleanup = failed.Cleanup;
-                callerCode = failed.Code;
-            }
-        }
-        await InspectAsync("contained");
         using var parent = new CancellationTokenSource(TimeSpan.FromMinutes(4));
-        Require(await Console.In.ReadLineAsync(parent.Token) == "inspect");
-        await InspectAsync("inspected");
-        // Only the owning parent terminates this deliberately uncooperative child.
-        await Task.Delay(Timeout.InfiniteTimeSpan, parent.Token);
-        return 1;
-
-        async Task InspectAsync(string phase)
-        {
-            var idle = lifetime switch
+        await ArtifactNonCooperationAssertions.ExecuteAsync(store, lifetime, authority, identity, scenario,
+            token =>
+            {
+                token.ThrowIfCancellationRequested();
+                var hold = new NativeHold(() =>
+                {
+                    if (provider == "local") { localFaults.BeforeRecordWrite = null; }
+                    else { objectFaults.BeforeObjectDelete = null; }
+                });
+                if (provider == "local") { localFaults.BeforeRecordWrite = hold.Block; }
+                else { objectFaults.BeforeObjectDelete = hold.Block; }
+                return ValueTask.FromResult<IArtifactSynchronousHold>(hold);
+            },
+            () => lifetime switch
             {
                 LocalArtifactStore local => local.WhenIdleForQualificationAsync(),
                 ObjectArtifactStore objects => objects.WhenIdleForQualificationAsync(),
                 _ => throw new InvalidOperationException("Unknown artifact child store.")
-            };
-            Require(!idle.IsCompleted && stall.Count == 1 && !source.WasDisposed && !destination.WasDisposed);
-            var admission = Retained(await store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
-            Require(admission.Code == ArtifactFailureCode.CleanupIncomplete);
-            var protectionRetained = false;
-            if (stamp is not null)
-            {
-                var operation = scenario == "destination" ? ArtifactProtectionOperation.Deletion : ArtifactProtectionOperation.Read;
-                var request = new ArtifactProtectionRequest(Guid.NewGuid(), operation, identity, stamp.Identity.Digest,
-                    new ArtifactOption<ArtifactStamp>.Some(stamp));
-                var blocked = await authority.AcquireAsync(request, new(TimeSpan.FromMilliseconds(50)), default);
-                if (blocked is ArtifactResult<IArtifactProtectionGuard>.Success unexpected)
-                {
-                    await unexpected.Value.DisposeAsync();
-                    throw new InvalidOperationException("Non-cooperative artifact work lost protection.");
-                }
-                Require(blocked is ArtifactResult<IArtifactProtectionGuard>.Failure
-                { Code: ArtifactFailureCode.DeadlineExceeded });
-                protectionRetained = true;
-            }
-            var shutdown = Retained(await lifetime.StopAsync(new(TimeSpan.FromMilliseconds(50)), default)
-                .AsTask().WaitAsync(TimeSpan.FromSeconds(2)));
-            Require(shutdown.Code == ArtifactFailureCode.CleanupIncomplete && !idle.IsCompleted);
-            IArtifactStoreLifetime competing = provider == "local" ? new LocalArtifactStore(root) : new ObjectArtifactStore(root);
-            var duplicate = await competing.InitializeAsync(new(provider == "local" ? ArtifactInitializationMode.ReopenCompatible
-                : ArtifactInitializationMode.CreateEmpty, identity, authority), new(), default);
-            Require(duplicate is ArtifactResult<ArtifactAdmission>.Failure { Code: ArtifactFailureCode.Unavailable });
-            Need(await competing.StopAsync(new(), default));
-            var ready = lifetime switch
+            },
+            () => new(Directory.Exists(root), lifetime switch
             {
                 LocalArtifactStore local => local.Ready,
                 ObjectArtifactStore objects => objects.Ready,
                 _ => throw new InvalidOperationException("Unknown artifact child store.")
-            };
-            Require(!ready && !idle.IsCompleted && stall.Count == 1);
+            }),
+            async (mode, token) =>
+            {
+                IArtifactStoreLifetime competing = provider == "local" ? new LocalArtifactStore(root) : new ObjectArtifactStore(root);
+                ArtifactResult<ArtifactAdmission> admission;
+                ArtifactResult<ArtifactShutdown> shutdown;
+                try { admission = await competing.InitializeAsync(new(mode, identity, authority), new(), token); }
+                finally { shutdown = await competing.StopAsync(new(), default); }
+                return new(admission, shutdown);
+            }, InspectAsync, parent.Token);
+        return 1;
+
+        async ValueTask InspectAsync(string phase, ArtifactNonCooperationReadback readback)
+        {
             var observation = JsonSerializer.Serialize(new
             {
                 eventName = "noncooperative",
@@ -139,16 +80,16 @@ internal static class ArtifactNonCooperativeScenario
                 provider,
                 scenario,
                 durableCrashProof = false,
-                cleanup = cleanup.ToString(),
-                callerCode = callerCode.ToString(),
-                admissionCode = admission.Code.ToString(),
-                shutdownCode = shutdown.Code.ToString(),
-                enteredWorkers = stall.Count,
-                workerPending = !idle.IsCompleted,
-                borrowedStreamsIntact = !source.WasDisposed && !destination.WasDisposed,
-                rootStillOwned = true,
-                readinessBlocked = !ready,
-                protectionRetained
+                cleanup = readback.Cleanup.ToString(),
+                callerCode = readback.CallerCode.ToString(),
+                admissionCode = readback.AdmissionCode.ToString(),
+                shutdownCode = readback.ShutdownCode.ToString(),
+                enteredWorkers = readback.EnteredWorkers,
+                workerPending = readback.WorkerPending,
+                borrowedStreamsIntact = readback.BorrowedStreamsIntact,
+                rootStillOwned = readback.RootStillOwned,
+                readinessBlocked = readback.ReadinessBlocked,
+                protectionRetained = readback.ProtectionRetained
             });
             if (safeEvents)
             {
@@ -168,6 +109,8 @@ internal static class ArtifactNonCooperativeScenario
             else
             { Console.WriteLine(observation); }
             await Console.Out.FlushAsync();
+            if (phase == "contained")
+            { Require(await Console.In.ReadLineAsync(parent.Token) == "inspect"); }
         }
     }
 
@@ -175,40 +118,21 @@ internal static class ArtifactNonCooperativeScenario
         => result is ArtifactResult<T>.Success success ? success.Value
             : throw new InvalidOperationException("Artifact child control operation failed.");
 
-    private static ArtifactResult<T>.Failure Retained<T>(ArtifactResult<T> result) where T : notnull
-        => result is ArtifactResult<T>.Failure { Cleanup: ArtifactCleanupState.RetainedLiveOwnership } failure
-            ? failure : throw new InvalidOperationException("Artifact child lost live ownership.");
-
     private static void Require(bool condition)
     {
         if (!condition) { throw new InvalidOperationException("Artifact non-cooperative containment assertion failed."); }
     }
 
-    private sealed class Stall
+    private sealed class NativeHold(Action clear) : IArtifactSynchronousHold
     {
         private int count;
         private readonly ManualResetEventSlim native = new();
-        public int Count => Volatile.Read(ref count);
-        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public TaskCompletionSource<int> Read { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public TaskCompletionSource Write { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public void Enter() { Interlocked.Increment(ref count); Entered.TrySetResult(); }
-        public void BlockNative() { Enter(); native.Wait(); }
-    }
-
-    private sealed class StalledSource(Stall stall) : MemoryStream
-    {
-        public bool WasDisposed { get; private set; }
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        { stall.Enter(); return new(stall.Read.Task); }
-        protected override void Dispose(bool disposing) { WasDisposed = true; base.Dispose(disposing); }
-    }
-
-    private sealed class StalledDestination(Stall stall) : MemoryStream
-    {
-        public bool WasDisposed { get; private set; }
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
-        { stall.Enter(); return new(stall.Write.Task); }
-        protected override void Dispose(bool disposing) { WasDisposed = true; base.Dispose(disposing); }
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public long ObservationCount => Volatile.Read(ref count);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken));
+        public void Block() { Interlocked.Increment(ref count); entered.TrySetResult(); native.Wait(); }
+        public void Release() => native.Set();
+        public ValueTask DisposeAsync() { Release(); clear(); return ValueTask.CompletedTask; }
     }
 }

@@ -34,6 +34,11 @@ class ArtifactEvidenceTests(unittest.TestCase):
         work = self.work / "prepared"
         root.mkdir()
         work.mkdir()
+        shared_sources = (
+            *(f"tests/contracts/Hoard.Testing.Conformance/Artifacts/{name}.cs" for name in (
+                "ArtifactCrashAssertions", "ArtifactNonCooperationAssertions", "ArtifactTransferAssertions",
+                "GeneratedArtifactSource", "ArtifactHashingSink")),
+            "tests/contracts/Hoard.Testing.Conformance/Bindings/ArtifactControlObservations.cs")
         for relative in (
                 "Directory.Build.props", "Directory.Packages.props", "global.json",
                 "specs/004-module-discovery/contracts/openapi.json",
@@ -43,7 +48,7 @@ class ArtifactEvidenceTests(unittest.TestCase):
                     "Local", "ObjectSemantics", "HostAdapters", "Consumer",
                     "CrashRunner", "TransferRunner", "BoundaryLeak")),
                 "tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj",
-                "tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactCrashAssertions.cs"):
+                *shared_sources):
             target = root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("tooling-only-current-source")
@@ -73,9 +78,9 @@ class ArtifactEvidenceTests(unittest.TestCase):
             commands.append(args)
             project = Path(args[2])
             self.assertTrue(project.is_file())
-            if project.stem == "CrashRunner":
-                shared = Path("tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactCrashAssertions.cs")
-                self.assertEqual((work / "current" / shared).read_bytes(), (root / shared).read_bytes())
+            if project.stem in ("CrashRunner", "TransferRunner"):
+                for shared in shared_sources:
+                    self.assertEqual((work / "current" / shared).read_bytes(), (root / shared).read_bytes())
             if project.stem == "Hoard.Artifacts.Tests":
                 self.assertEqual((work / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").read_bytes(),
                                  b"tooling-only-current-sdk")

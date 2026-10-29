@@ -768,8 +768,13 @@ original transfer runner. An isolated unprivileged Linux/arm64 btrfs replay
 passes both measured transfers, exact bytes/hashes/origins and original native
 receipt admission, with peak RSS deltas of 5,668,864 and 24,399,872 bytes.
 Real filesystem/24 GiB admission and the 16-pin limit remain mandatory.
-Native retention/noncooperation, complete applicability and public artifact
-dispatch remain unfinished; these component diagnostics do not qualify a profile.
+Three supplied-factory source/destination/native retention children now reuse
+the original provider-neutral assertions, retain actual workers/protection/root
+through both inspections and terminate only by original-parent SIGKILL.
+The isolated replay passes those three cases and all six original Local/Object
+child tests. Clean artifact preparation copies every exact source-linked helper.
+Complete applicability and public artifact dispatch remain unfinished; these
+component diagnostics do not qualify a profile.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

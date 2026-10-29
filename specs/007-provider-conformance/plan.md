@@ -1922,6 +1922,109 @@ diagnostic bytes,25 explicit native macOS skips; expected diagnostic
 EvidenceIncomplete exit2. `tooling-contributor-transfers-final.json` retains
 the exact safe result. Catalog/SDK and diff checks pass.
 
+### Shared supplied-factory noncooperative retention
+
+The original six Local/Object source/destination/native child bodies now use
+SDK-owned `ArtifactNonCooperationAssertions`; the original CrashRunner links
+that BCL/Abstractions-only source and its primitive control declarations without
+referencing the SDK package. Its concrete setup, raw/safe proof/event shape and
+owning-parent-only termination remain unchanged. Actual directory existence
+now corroborates root retention instead of a hardcoded true. Original source/
+destination cancellation and native synchronous hold expectations are preserved;
+the latter is not claimed as a stalled OS syscall.
+
+Existing initialization/hold/registration type full names are preserved when
+moved into `ArtifactControlObservations.cs`. New typed observations expose
+the actual provider worker task, existing real synchronous hold and competing
+initialization. The latter creates another actual same-provider lifetime for
+the same physical root and caller-chosen mode, returns actual admission/shutdown
+results and always stops that lifetime. Shared assertions, not bindings, decide
+expected Unavailable and retained state. The original source ownership assertion
+now also checks those observations; before implementation it fails CS1061 on
+the two missing seams. SDK build then passes without warnings/errors, and20
+existing binding-contract facts pass after dummy-interface consistency updates.
+No product contract, runtime dependency or provider-name switch enters the
+shared body.
+
+The generated-factory Consumer's closed nine-field hash-bound private request
+selects one fixed source/destination/native scenario with forced safe output
+paths. It validates the actual frozen profile, emits its ordinary source origin
+and both safe inspection packets, then deliberately retains work until parent
+termination. Releasing/disposal would defeat the test and cannot claim cleanup.
+The internal original-controller reader independently admits both inspections,
+exact request/argv/input/output/control bytes, frozen declaration/role origin,
+actual contained->inspect->SIGKILL chronology and exit. It retains16 combined
+pins and15-second execution. A safe exact bindingId replaces the leaf's old
+local/object-only argument restriction; original-specific callers still bind
+their independently expected provider, and new contributor admission also
+requires the frozen package/build/runtime/role context.
+
+Three focused portable facts cover both phases for all scenarios and reject
+changed requests/images/origins/packets/native receipts, relabelled original
+run/root/argv/output/control records, unsupported/foreign ownership, oversized
+pin layouts and failed-child next-scenario execution. These modeled controls
+remain distinct from actual native execution.
+
+An enhanced clean-preparation test exposes missing source-linked files: the
+old preparation copied only ArtifactCrashAssertions, omitting the previous
+increment's three shared transfer files and the new noncooperative/control
+sources. The production preparation now copies all six exact sources before
+either runner build, rather than consuming host output. The regression first
+rejects the incomplete copy, then passes. A direct host CrashRunner no-restore
+build separately encounters missing project.assets.json; private actual
+current-source package preparation restores/builds successfully. Neither
+observation is hidden or counted as a passing missing-prerequisite build.
+
+Native observation uses exact7a69fd5 plus19 explicit source overlays, local
+Unix-socket Docker, the same pinned SDK image, UID10001/Linux-arm64/Python3.12.3/
+SDK10.0.203 and an anonymous btrfs private clone/scratch. Source overlay SHA-256:
+`a0c750479a814c617408b380c59035883ab665dfe844739bc8abcb60b8581472`;
+production retention controller:
+`a6176642e86f86a0082c058070be5022087191d94e062aac12583056fc13c170`;
+shared assertion:
+`7564d08bf44e6d6206bf217f5fbfc7b248097de6359445225283b763415c333e`.
+`linux-artifact-contributor-retention.log` retains exact observations:
+
+- `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --filter 'FullyQualifiedName~OwnedResourceTests|FullyQualifiedName~Generated_transfer_streams|FullyQualifiedName~BindingContractTests' -v minimal -p:RestoreLockedMode=true -p:UseSharedCompilation=false -nodeReuse:false`:31 passed, zero skips.
+- The four crash, four transfer and three retention controls, linked-source preparation regression and actual packaged artifact fixture:13 passed in109.248s. The fixture executes114 logical rows/125 origins, six real source SIGKILL/fresh recovery pairs and all three actual contained/inspected/SIGKILL retention children with distinct process/session identities. The bounded session wrapper additionally calls the actual production measured transfers.
+- Real256MiB transfer retains exact expected/source/sink hash, baseline60,112,896/peak66,551,808 bytes, delta6,438,912,12 samples; original native receipt SHA-256 `2dd8ceeb5ba57e13e58d54555eab19314d4192756265fec13fa911c211480efe`.
+- Real4GiB transfer retains exact expected/source/sink hash, baseline60,190,720/peak84,865,024 bytes, delta24,674,304,230 samples; original native receipt SHA-256 `9bccb416f2b4953fcdec56f1343a93069d731a9a4173aed90e255e86a7921da6`.
+- Supplied source/destination/native original native receipt SHA-256 values respectively: `80e38a9e38c0a56bc239c08ca144105169b4bd53d8085f67b5300dd92f7acc5c`, `8cc3a4c95c087ba039500ed6c3f393be06426a555b7a79b896160158f65d6b11`, `be40ffdc7f879253d46291d4734d488f949342a4b52c47a9e3532b979e298fb9`. Exact origin/contained/inspected hashes remain in that safe log.
+- Separate `artifact_evidence.prepare_packages` against the current isolated source succeeds, including both source-linked runner builds. `dotnet vstest <private-current>/tests/contracts/Hoard.Artifacts.Tests/bin/Release/net10.0/Hoard.Artifacts.Tests.dll --TestCaseFilter:FullyQualifiedName~ArtifactNonCooperativeChildTests`: six passed, zero skips; six original safe proof packets observed.
+
+All work remains honestly dirty-local/component diagnostic, not a clean CI,
+complete applicable category, binary baseline or profile qualification.
+The specific task container and its observed anonymous-volume ID are absent
+after bounded exit; shared cached SDK images remain. No host home/credentials,
+Docker socket or ignored worktree content is mounted.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_artifact_evidence
+test_conformance_contributors.ContributorNonCooperationAdmissionTests
+test_conformance_sdk_checks -q`:184 passed. Bounded `hoard-architecture-review`
+finds no actionable findings/unresolved questions. Its read/search review
+cannot independently establish the exact Git delta or verify retained native
+receipts; it executes no tests and is not final T081 acceptance. The separate
+original six-child replay was pending at review and subsequently passes as
+recorded above.
+
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes
+737 tests with zero failures/errors/expected failures/unexpected successes/
+unexpected diagnostic bytes,25 explicit native macOS skips and expected
+diagnostic EvidenceIncomplete exit2. Exact13-file C# whitespace verification,
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Earlier7a69fd5 composition run40836663466 remains in
+progress and foundations run40836663646 remains pending;2cc409f foundations
+run40834036320 remains in progress and its composition run40834036457 is
+cancelled. These separate prior-source observations do not verify this increment;
+no manual cancellation or unobserved cause is inferred.
+
+README, PROVIDERS, DEVELOPMENT and harness are synchronized. Product charter/
+spec/architecture/ADR/diagrams/examples/governance/backlog/predecessor/IaC/release/
+UI documents are unaffected by this test-only internal control increment:
+no product/public CLI/deployment claims change. Complete contributor applicability/
+dispatch, guide journey, qualifying profiles and T064..T086 remain open;
+no task/checklist/flow/convergence/merge/release/readiness marker advances.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

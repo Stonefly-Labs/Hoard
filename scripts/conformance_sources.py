@@ -1153,12 +1153,13 @@ def native_artifact_transfer_controls(run, inputs, *, started_ms, ended_ms):
 
 
 def admit_artifact_noncooperation(observed, provider, scenario, phase, pid, run_id):
+    provider = evidence.stable_id(provider)
     fields = {
         "eventName", "phase", "pid", "runId", "provider", "scenario", "durableCrashProof",
         "cleanup", "callerCode", "admissionCode", "shutdownCode", "enteredWorkers",
         "workerPending", "borrowedStreamsIntact", "rootStillOwned", "readinessBlocked", "protectionRetained",
     }
-    if (provider not in ("local", "object") or scenario not in ("source", "destination", "native")
+    if (scenario not in ("source", "destination", "native")
             or phase not in ("contained", "inspected") or not isinstance(observed, dict) or set(observed) != fields
             or observed["eventName"] != "noncooperative" or observed["phase"] != phase
             or type(observed["pid"]) is not int or observed["pid"] != pid

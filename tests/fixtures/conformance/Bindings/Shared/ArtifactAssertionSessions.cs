@@ -281,6 +281,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     public abstract IArtifactEvidenceValidator Validator { get; }
     public abstract IArtifactMaintenance Maintenance { get; }
     public abstract IArtifactStoreLifetime Lifetime { get; }
+    protected abstract IArtifactStoreLifetime CreateCompetingLifetime();
     protected abstract bool ProviderReady { get; }
     public IArtifactCoordinationAuthority Authority => Generation.Authority;
     public int WaitingAuthorityAdmissions => Generation.Authority.WaitingAdmissions;
@@ -317,6 +318,27 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
             cancellationToken.ThrowIfCancellationRequested();
             throw new InvalidOperationException("BindingInvalid");
         }
+    }
+
+    public async ValueTask<ArtifactCompetingInitializationObservation> ProbeCompetingInitializationAsync(
+        ArtifactInitializationMode mode, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!Enum.IsDefined(mode)) { throw new ArgumentException("BindingInvalid"); }
+        _ = ObserveInitialization();
+        var competing = CreateCompetingLifetime();
+        ArtifactResult<ArtifactAdmission> admission;
+        ArtifactResult<ArtifactShutdown> shutdown;
+        try
+        {
+            admission = await competing.InitializeAsync(new(mode, Identity, Authority, Generation.Limits),
+                new(ownership.Context.ControlBudget), cancellationToken);
+        }
+        finally
+        {
+            shutdown = await competing.StopAsync(new(ownership.Context.ControlBudget), CancellationToken.None);
+        }
+        return new(admission, shutdown);
     }
 
     public ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken) =>

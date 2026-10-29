@@ -7,6 +7,10 @@
   <ItemGroup>
     <Compile Include="../../../contracts/Hoard.Testing.Conformance/Artifacts/ArtifactCrashAssertions.cs"
              Link="ArtifactCrashAssertions.cs" />
+    <Compile Include="../../../contracts/Hoard.Testing.Conformance/Artifacts/ArtifactNonCooperationAssertions.cs"
+             Link="ArtifactNonCooperationAssertions.cs" />
+    <Compile Include="../../../contracts/Hoard.Testing.Conformance/Bindings/ArtifactControlObservations.cs"
+             Link="ArtifactControlObservations.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Hoard.Abstractions" />

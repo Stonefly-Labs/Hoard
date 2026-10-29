@@ -64,6 +64,12 @@ internal sealed class ArtifactConformanceFaults(
         ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Artifacts);
     public int WaitingAuthorityAdmissions => session.WaitingAuthorityAdmissions;
     public ArtifactInitializationObservation ObserveInitialization() => session.ObserveInitialization();
+    public ValueTask<ArtifactCompetingInitializationObservation> ProbeCompetingInitializationAsync(
+        ArtifactInitializationMode mode, CancellationToken cancellationToken) =>
+        session.ProbeCompetingInitializationAsync(mode, cancellationToken);
+    public ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken) =>
+        session.HoldSynchronousStorageAsync(cancellationToken);
+    public Task ObserveWorkerSettlement() => session.ObserveWorkerSettlement();
     public IArtifactBorrowedStream BorrowedSource => Borrowed(ConformanceFault.SourceNonCooperation);
     public IArtifactBorrowedStream BorrowedDestination => Borrowed(ConformanceFault.SinkNonCooperation);
 

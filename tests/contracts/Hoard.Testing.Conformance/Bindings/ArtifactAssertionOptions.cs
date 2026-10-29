@@ -7,8 +7,6 @@ public enum ArtifactAdmissionProbe
     None, Complete, Version, Publication, Deletion, Recovery, Fencing, Readers, Streaming, ForeignAuthority
 }
 
-public sealed record ArtifactInitializationObservation(bool RootExists, bool Ready);
-
 public sealed class ArtifactAssertionOptions
 {
     public ArtifactAssertionOptions(ArtifactLimits? limits = null,

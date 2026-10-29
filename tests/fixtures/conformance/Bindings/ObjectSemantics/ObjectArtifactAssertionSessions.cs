@@ -32,6 +32,7 @@ public static class ObjectArtifactAssertionSessions
         public override IArtifactEvidenceValidator Validator => store;
         public override IArtifactMaintenance Maintenance => store;
         public override IArtifactStoreLifetime Lifetime => store;
+        protected override IArtifactStoreLifetime CreateCompetingLifetime() => new ObjectArtifactStore(Generation.DirectoryPath);
         protected override bool ProviderReady => store.Ready;
         public override Task ObserveWorkerSettlement() => store.WhenIdleForQualificationAsync();
         protected override ValueTask<ArtifactResult<long>> DamageProviderPayloadAsync(

@@ -772,9 +772,34 @@ all six real crash/recovery pairs after context extraction, and both actual
 transfer sizes. Peak deltas are 5,668,864 and 24,399,872 bytes (12 and 303 samples).
 This is diagnostic component execution, not clean CI or full artifact category
 qualification. Real 4 GiB execution stays in explicit native validation rather
-than every bounded tooling replay. Native retention/noncooperation, complete
-catalog/public dispatch and the clean-checkout good/red/corrected guide remain
-unfinished.
+than every bounded tooling replay. Complete catalog/public dispatch and the
+clean-checkout good/red/corrected guide remain unfinished.
+
+`ArtifactNonCooperationAssertions` now shares the original deliberately retained
+source/destination/native child bodies with the source-linked original runner.
+Setup exposes actual worker settlement, the real synchronous hold and a competing
+initialization probe returning actual admission/shutdown results. The probe
+always stops its new lifetime; only shared assertions decide expected failure.
+Existing observation/hold type full names are unchanged. No concrete provider
+or private path enters the common body, and no new production dependency is added.
+
+The generated-factory Consumer checks actual frozen capabilities and reports
+two safe inspections plus an ordinary session origin. Deliberately pending work
+is neither released nor disposed into a fabricated success: the original parent
+inspects, then SIGKILLs within the unchanged 15-second scope. The internal
+`conformance_contributor_noncooperation` reader independently joins the two
+inspection packets, exact native/request/input/output receipts and frozen origin.
+It requires pending workers, intact borrowed streams, unavailable competing
+initialization, retained protection/root and blocked readiness through both
+phases. These are containment observations, explicitly not durability proof.
+
+Actual UID10001 Linux/arm64 btrfs execution passes all three supplied scenarios
+with distinct sessions/process identities and all six original Local/Object
+child cases. The same replay preserves114 rows/125 origins, six crash/recovery
+pairs and both real transfer sizes. Clean artifact preparation now copies all
+six exact linked assertion/control/stream sources; a regression first rejects
+the incomplete copy. Complete applicability/public dispatch and qualification
+remain unfinished.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with

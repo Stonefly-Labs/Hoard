@@ -28,7 +28,7 @@ public static class ArtifactOwnershipAssertions
                 await deleting.WaitAsync(TimeSpan.FromSeconds(2)));
             Assert.True(failed.Code is ArtifactFailureCode.DeadlineExceeded or ArtifactFailureCode.Uncertain);
             Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
-            workers = session.AwaitSettlementAsync(CancellationToken.None).AsTask();
+            workers = session.ObserveWorkerSettlement();
             Assert.False(workers.IsCompleted);
             Assert.Equal(1, hold.ObservationCount);
             var rejected = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
@@ -52,6 +52,14 @@ public static class ArtifactOwnershipAssertions
             Assert.False(session.Ready);
             Assert.Equal(1, hold.ObservationCount);
             Assert.False(source.WasDisposed);
+            var mode = session.Store.Capabilities.Durability == ArtifactDurability.LocalProcessCrash
+                ? ArtifactInitializationMode.ReopenCompatible : ArtifactInitializationMode.CreateEmpty;
+            var competing = await session.ProbeCompetingInitializationAsync(mode, cancellationToken);
+            Assert.Equal(ArtifactFailureCode.Unavailable,
+                Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(competing.Admission).Code);
+            Success(competing.Shutdown);
+            Assert.True(session.ObserveInitialization().RootExists);
+            Assert.False(workers.IsCompleted);
         }
         finally
         {

@@ -407,6 +407,140 @@ class ContributorTransferAdmissionTests(unittest.TestCase):
                 transfers._admission(run, inputs)
 
 
+class ContributorNonCooperationAdmissionTests(unittest.TestCase):
+    def test_retained_reader_requires_both_original_inspections_and_native_output_receipt(self):
+        import conformance_contributor_noncooperation as retention
+        import conformance_sources as sources
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir(mode=0o700)
+            records = {}
+            run = SimpleNamespace(
+                root=root, run_id=ContributorCrashAdmissionTests.run_id, root_id="a" * 32, command_sequence=1,
+                live_children=lambda: (), read_execution_record=lambda sequence: records[sequence])
+            inputs = {"environment": {"runtime": "10.0.7"}, "bindings": [{"bindingId": "acme.adapter"}]}
+            assembly = root / "consumer.dll"
+            selected = {"consumer.dll": hashlib.sha256(b"consumer").hexdigest()}
+            consumer, declaration = {"components": {}}, b"declaration"
+            origin = {
+                "sessionId": ContributorCrashAdmissionTests.source_id, "parentSessionId": None,
+                "descriptorSha256": hashlib.sha256(declaration).hexdigest()}
+
+            def write(path, data):
+                target = root / path
+                if target.exists():
+                    target.chmod(0o600)
+                target.write_bytes(data)
+                target.chmod(0o400)
+
+            write("consumer.dll", b"consumer")
+            for offset, scenario in enumerate(retention.SCENARIOS):
+                resource = "retention-" + scenario
+                request_path = f"stores/{resource}-control/request.json"
+                (root / Path(request_path).parent).mkdir(parents=True, mode=0o700)
+                request = retention._request(run, resource, scenario, ROOT)
+                request_data = evidence.canonical_bytes(request)
+                write(request_path, request_data)
+                write(request["originPath"], evidence.canonical_bytes(origin))
+                readbacks = {}
+                for phase in ("contained", "inspected"):
+                    readback = {
+                        "eventName": "noncooperative", "phase": phase, "pid": 101, "runId": run.run_id,
+                        "provider": "acme.adapter", "scenario": scenario, "durableCrashProof": False,
+                        "cleanup": "RetainedLiveOwnership",
+                        "callerCode": "Uncertain" if scenario == "native" else "CancelledBeforeCommit",
+                        "admissionCode": "CleanupIncomplete", "shutdownCode": "CleanupIncomplete",
+                        "enteredWorkers": 1, "workerPending": True, "borrowedStreamsIntact": True,
+                        "rootStillOwned": True, "readinessBlocked": True, "protectionRetained": scenario != "source"}
+                    path = request["readbackPrefix"] + "-" + phase + ".json"
+                    readbacks[path] = readback
+                    write(path, evidence.canonical_bytes(readback))
+                command = {
+                    "schemaVersion": 1, "sequence": 1, "childPid": 101, "childStartSha256": "2" * 64,
+                    "startedMs": 1000, "endedMs": 1400, "exitCode": -9, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "recovery", "barrier": {
+                        "value": 70 + offset, "observedMs": 1300, "signalMs": 1350,
+                        "inspection": {"value": 60 + offset, "observedMs": 1100, "requestMs": 1200}}}
+                control_raw = evidence.canonical_bytes(command)
+                control_path = "proofs/recovery-command-0001.json"
+                write(control_path, control_raw)
+                records[1] = evidence.canonical_bytes({
+                    **{key: value for key, value in command.items() if key != "barrier"},
+                    "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": evidence.digest(retention._arguments(run, inputs, assembly, request_path, request_data)),
+                    "cwdSha256": hashlib.sha256(str(root).encode()).hexdigest(),
+                    "inputFiles": evidence.input_manifest(root, sorted({*selected, request_path})),
+                    "outputFiles": evidence.input_manifest(root, retention._outputs(request)),
+                    "controlRecordSha256": hashlib.sha256(control_raw).hexdigest()})
+                options = {"repository": ROOT, "resource_id": resource, "scenario": scenario, "sequence": 1}
+                with mock.patch.object(retention, "artifact_process_context",
+                                       return_value=(inputs, assembly, selected, declaration)), \
+                        mock.patch.object(sources, "OwnedRun", type(run)), \
+                        mock.patch.object(evidence, "_ingest_runtime_origins", return_value=(origin,)):
+                    good = retention.admit_noncooperation(run, inputs, consumer, None, **options)
+                    self.assertEqual(good["nativeParentSha256"], hashlib.sha256(records[1]).hexdigest())
+                    for path, replacement in (
+                            (request_path, request_data + b"\n"), ("consumer.dll", b"borrowed"),
+                            (request["originPath"], evidence.canonical_bytes(origin) + b" "),
+                            (control_path, control_raw + b"\n"),
+                            *((path, evidence.canonical_bytes(value | {"workerPending": False}))
+                              for path, value in readbacks.items())):
+                        original = (root / path).read_bytes()
+                        try:
+                            write(path, replacement)
+                            with self.subTest(scenario=scenario, path=path), self.assertRaises(evidence.ConformanceError):
+                                retention.admit_noncooperation(run, inputs, consumer, None, **options)
+                        finally:
+                            write(path, original)
+                    for change in ({"runId": ContributorCrashAdmissionTests.source_id}, {"rootId": "b" * 32},
+                                   {"argvSha256": "0" * 64}, {"outputFiles": {}}, {"controlRecordSha256": "0" * 64}):
+                        original = records[1]
+                        try:
+                            records[1] = evidence.canonical_bytes(evidence.load_json(original) | change)
+                            with self.subTest(record=change), self.assertRaises(evidence.ConformanceError):
+                                retention.admit_noncooperation(run, inputs, consumer, None, **options)
+                        finally:
+                            records[1] = original
+
+    def test_unsupported_foreign_or_oversized_retention_rejects_before_allocation(self):
+        import conformance_contributor_noncooperation as retention
+
+        with mock.patch.object(retention, "native_execution_supported", return_value=False), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^PrerequisiteMissing$"):
+            retention.execute_noncooperation(None, None, None, None, repository=ROOT)
+        with mock.patch.object(retention, "native_execution_supported", return_value=True):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                retention.execute_noncooperation(SimpleNamespace(), None, None, None, repository=ROOT)
+            with mock.patch.object(retention, "artifact_process_context",
+                                   return_value=(None, None, dict.fromkeys(range(13)), None)), \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                retention.execute_noncooperation(None, None, None, None, repository=ROOT)
+
+    def test_failed_retention_child_keeps_closed_diagnostic_and_never_starts_next_scenario(self):
+        import conformance_contributor_noncooperation as retention
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "stores").mkdir(mode=0o700)
+            inputs = {"environment": {"runtime": "10.0.7"}}
+            run = SimpleNamespace(
+                root=root, run_id=ContributorCrashAdmissionTests.run_id,
+                _directory_descriptor=lambda name: os.open(root / name, os.O_RDONLY | os.O_DIRECTORY),
+                _root_descriptor=lambda: os.open(root, os.O_RDONLY | os.O_DIRECTORY),
+                command=mock.Mock(return_value=SimpleNamespace(
+                    exit_code=2, events=({"event": "control", "code": "AssertionFailed", "value": 0},))))
+            with mock.patch.object(retention, "native_execution_supported", return_value=True), \
+                    mock.patch.object(retention, "artifact_process_context",
+                                      return_value=(inputs, root / "consumer.dll", {}, b"declaration")), \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^AssertionFailed$"):
+                retention.execute_noncooperation(run, inputs, None, None, repository=ROOT)
+            run.command.assert_called_once()
+            self.assertTrue(run.command.call_args.args[0][-2].startswith("stores/"))
+            self.assertEqual(run.command.call_args.kwargs["inspect_at_barrier"], 60)
+            self.assertEqual(run.command.call_args.kwargs["stop_at_barrier"], 70)
+
+
 class NuGetContentToolTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -1647,7 +1781,7 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
             self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
                                 for path in result["runtimeAssemblies"]))
             if artifacts:
-                for entry in ("artifact-crash", "artifact-transfer"):
+                for entry in ("artifact-crash", "artifact-transfer", "artifact-noncooperative"):
                     code, raw = capture_control(
                         ["dotnet", "exec", "--fx-version", self.runtime_version,
                          str(result["assemblyPath"]), entry],
@@ -1788,6 +1922,7 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                     crashes._context(owner, inputs, result, binding)
                     if native_execution_supported():
                         self.native_artifact_contributor_crashes(owner, inputs, result, binding)
+                        self.native_artifact_contributor_noncooperation(owner, inputs, result, binding)
         finally:
             if owner.state == "Allocated":
                 owner.transition("Active")
@@ -1802,6 +1937,15 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
         self.assertEqual(len({row["directoryLease"]["resourceId"] for row in observed}), 6)
         self.assertEqual(len({row[key] for row in observed
                               for key in ("sourceSessionId", "recoverySessionId")}), 12)
+        self.assertFalse(owner.live_children())
+
+    def native_artifact_contributor_noncooperation(self, owner, inputs, consumer, binding):
+        import conformance_contributor_noncooperation as retention
+
+        observed = retention.execute_noncooperation(owner, inputs, consumer, binding, repository=ROOT)
+        self.assertEqual(tuple(row["scenario"] for row in observed), retention.SCENARIOS)
+        for field in ("sessionId", "childStartSha256"):
+            self.assertEqual(len({row[field] for row in observed}), 3)
         self.assertFalse(owner.live_children())
 
     def test_managed_contributor_runtime_executes_every_common_metadata_row_with_exact_origins(self):

@@ -26,7 +26,7 @@ internal static class ArtifactContributorProcess
         try
         {
             Check(OperatingSystem.IsLinux(), ConformanceDiagnosticCode.PrerequisiteMissing);
-            Check(args.Length == 4 && args[0] is "artifact-crash" or "artifact-transfer",
+            Check(args.Length == 4 && args[0] is "artifact-crash" or "artifact-transfer" or "artifact-noncooperative",
                 ConformanceDiagnosticCode.EvidenceSchemaInvalid);
             var requestHash = ConformanceBindingDeclaration.Hash(args[3]);
             using var files = new ConformanceControlFiles(args[1]);
@@ -38,6 +38,10 @@ internal static class ArtifactContributorProcess
                 if (args[0] == "artifact-transfer")
                 {
                     await ArtifactContributorTransfer.ExecuteAsync(files, args[1], bytes, cancellation.Token);
+                }
+                else if (args[0] == "artifact-noncooperative")
+                {
+                    await ArtifactContributorNonCooperation.ExecuteAsync(files, args[1], bytes, cancellation.Token);
                 }
                 else
                 {

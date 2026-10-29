@@ -7038,6 +7038,62 @@ Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
 diagnostic bytes, 25 explicit native macOS skips and expected diagnostic
 EvidenceIncomplete exit2.
 
+### Supplied-factory retained-child component
+
+The original source/destination/native noncooperative child assertions now live
+in SDK-owned `ArtifactNonCooperationAssertions`, linked with their primitive
+control/observation declarations by the legacy CrashRunner. The wrapper retains
+its concrete construction, safe/raw event schema and actual parent-only kill.
+Actual provider-neutral SDK controls expose the genuine worker task, existing
+synchronous hold and a competing-root initialization probe. The latter returns
+actual admission/shutdown results and always stops its new lifetime; bindings
+do not decide expected Unavailable or claim a pass. Existing observation/hold
+type full names remain unchanged when moved into the linked source file.
+
+The generated supplied factory uses those same assertions and setup seams.
+Both inspection phases require actual pending workers, borrowed streams intact,
+blocked new admission/shutdown, retained protection/root and unavailable competing
+initialization. Native control is a real synchronous fixture hold, not a stalled
+filesystem syscall. The child deliberately retains rather than releases/disposes
+live work; only the owning parent sends inspect then SIGKILL. This is containment,
+never durable crash proof. The internal independent reader reconstructs exact
+native requests/argv/input/output receipts, both inspection packets and ordinary
+origin, preserving16 combined pins and15 seconds. Failure cannot start another
+scenario, erase diagnostics or substitute another owner.
+
+Fresh local Unix-socket Docker validation uses exact7a69fd5 plus19 explicit
+source overlays, the same pinned SDK image/unprivileged UID10001 and anonymous
+btrfs private scratch.31 SDK facts pass without skips;13 Python tests pass in
+109.248 seconds, including114 rows/125 origins, six actual crash/recovery pairs,
+both actual transfers and all three contained/inspected/killed supplied children.
+Transfer deltas are6,438,912 bytes with12 samples and24,674,304 bytes with230
+samples. Separate current artifact package preparation and
+`dotnet vstest <private-current>/tests/contracts/Hoard.Artifacts.Tests/bin/Release/net10.0/Hoard.Artifacts.Tests.dll --TestCaseFilter:FullyQualifiedName~ArtifactNonCooperativeChildTests`
+pass all six original Local/Object children and retain six safe proof packets.
+The exact task container and observed anonymous-volume ID are absent afterward.
+
+The preparation regression exposes a coupled bug: only the old crash assertion
+was copied, omitting the previous increment's three source-linked transfer files
+and the new retained-child sources. Preparation now copies all six exact files
+before either runner build; its focused rejecting/accepting regression passes.
+A direct host CrashRunner no-restore build separately reports missing assets;
+actual private current-source preparation restores/builds successfully, rather
+than treating missing host output as a source defect or using a stale binary.
+
+The184-test focused Python selection, SDK build and20 binding-contract facts pass.
+The initial enhanced ownership assertion fails to compile before the two new
+setup observations exist, then builds after their implementation. Bounded
+architecture review finds no actionable findings/unresolved questions; it runs
+no tests, has no independently established diff/receipts and is not final T081.
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes
+737 tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,25 explicit native macOS skips and expected non-qualifying
+EvidenceIncomplete exit2. Exact13-file C# whitespace verification,
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass.
+Complete contributor applicability/public dispatch, guide journey, qualifying
+profiles and T064..T086 remain open.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.
