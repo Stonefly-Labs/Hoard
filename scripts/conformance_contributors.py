@@ -703,18 +703,19 @@ def prepare_binding_project_consumer(binding, owned_run, candidate, candidate_so
 
 def execute(repository, destination, *, project, category, binding_inputs_sha256):
     import conformance_sdk_checks as sdk
-    from conformance_case_catalog import metadata_common_consumer_origin_counts
-    from conformance_execution import OwnedRun, native_execution_supported
+    from conformance_case_catalog import contributor_artifact_component_origin_counts, metadata_common_consumer_origin_counts
+    from conformance_execution import OwnedRun, native_execution_supported, profile_budget
 
-    if category != "metadata":
-        raise evidence.ConformanceError("EvidenceIncomplete")
+    if category not in ("metadata", "artifacts"):
+        raise evidence.ConformanceError("BindingInvalid")
     expected = evidence.sha256(binding_inputs_sha256)
     if admit_binding_project(project, category).inputs_sha256 != expected:
         raise evidence.ConformanceError("InputChanged")
     if not native_execution_supported():
         raise evidence.ConformanceError("PrerequisiteMissing")
     run = OwnedRun.allocate(destination, repository, profile=category)
-    run.deadline = min(run.deadline, time.monotonic() + 60 * 60)
+    seconds = profile_budget("artifacts") if category == "artifacts" else 60 * 60
+    run.deadline = min(run.deadline, time.monotonic() + seconds)
     captured, binding, feed, toolchain_root = None, None, None, None
     try:
         (run.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
@@ -740,7 +741,7 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
             raise evidence.ConformanceError("InputChanged")
         prepared = prepare_binding_consumer_runtime(
             binding, run, repository, candidate, consumer, feed, observed_environment,
-            group_id=str(uuid.uuid4()), budgets=sdk.BUDGETS, ci_revision=ci_revision,
+            group_id=str(uuid.uuid4()), budgets={**sdk.BUDGETS, "profileSeconds": seconds}, ci_revision=ci_revision,
             captured_build=captured, toolchain_root=toolchain_root)
         inputs = prepared["inputs"]
         _write_owned_input(run, run.root / "proofs/contributor-inputs.json", evidence.canonical_bytes(inputs))
@@ -749,7 +750,9 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}))
         manifest = binding_consumer_manifest(binding, run, inputs, attempt_id=str(uuid.uuid4()))
         binding_id = binding.registration["declaration"]["bindingId"]
-        counts = metadata_common_consumer_origin_counts(binding_ids=(binding_id,))
+        profile = artifact_binding_profile(binding.registration["declaration"]) if category == "artifacts" else None
+        counts = (contributor_artifact_component_origin_counts(binding_id, profile=profile) if profile is not None
+                  else metadata_common_consumer_origin_counts(binding_ids=(binding_id,)))
         result, observed, transport, discovery_sha = sdk._execute_runtime_transport(
             run, inputs, consumer["assemblyPath"], manifest,
             {identity: (binding_id, "none") for identity in counts}, {"contributor_binding": binding},
@@ -759,6 +762,20 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
         sdk.validate_full_binding_origins(observed, inputs, counts)
         if result.execution_record_sha256 is None:
             raise evidence.ConformanceError("ProofMismatch")
+        native = None
+        if profile is not None:
+            from conformance_contributor_crashes import execute_crashes
+            from conformance_contributor_noncooperation import execute_noncooperation
+            from conformance_contributor_transfers import execute_transfers
+
+            native = {
+                "crashRecovery": [dict(row) for row in execute_crashes(
+                    run, inputs, consumer, binding, repository=repository)]
+                if profile["durability"] == "LocalProcessCrash" else [],
+                "retention": [dict(row) for row in execute_noncooperation(
+                    run, inputs, consumer, binding, repository=repository)],
+                "transfers": [dict(row) for row in execute_transfers(
+                    run, inputs, consumer, binding, repository=repository)]}
         post = evidence.capture_profile_inputs(run, repository, candidate, **{
             **prepared["captureArguments"], "observed_environment": sdk.environment(run, phase="completion")})
         evidence.verify_input_recomputation(inputs, post)
@@ -767,7 +784,7 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
         _write_owned_input(
             run, run.root / "proofs/contributor-completion-inputs.json", evidence.canonical_bytes(post))
         summary = {
-            "qualification": False, "profileComplete": False, "scope": "contributor-metadata-runtime-diagnostic",
+            "qualification": False, "profileComplete": False, "scope": f"contributor-{category}-runtime-diagnostic",
             "bindingId": binding_id, "bindingInputsSha256": expected,
             "inputsSha256": evidence.digest(inputs), "postInputsSha256": evidence.digest(post),
             "passedParameters": len(counts), "sessionOrigins": sum(
@@ -776,6 +793,8 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
             "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
             "runtimeProofsSha256": evidence.digest(observed["proofs"]),
             "nativeParentSha256": result.execution_record_sha256}
+        if native is not None:
+            summary["nativeArtifact"] = native
     except RuntimeError:
         raise evidence.ConformanceError("EvidenceIncomplete") from None
     finally:
@@ -1269,11 +1288,26 @@ def _binding_consumer_images(owned_run):
             (".dll", ".so", ".dylib", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))).items()}
 
 
+def vstest_runner_inputs(toolchain_root, sdk_version):
+    from conformance_execution import no_symlinks
+
+    directory = Path(toolchain_root) / "sdk" / evidence.stable_id(sdk_version)
+    no_symlinks(directory)
+    files = evidence.proof_manifest(
+        directory, include_file=lambda path: "/" not in path or path.startswith("Extensions/")
+        or path.count("/") == 1 and path.endswith(".resources.dll")
+        and Path(path).name.startswith(("Microsoft.TestPlatform.", "Microsoft.VisualStudio.TestPlatform.",
+                                        "vstest.console.")))
+    if not {"vstest.console.dll", "vstest.console.deps.json", "vstest.console.runtimeconfig.json"} <= files.keys():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    return {"schemaVersion": 1, "qualification": False, "sdkVersion": sdk_version, "files": files}
+
+
 def prepare_binding_consumer_runtime(binding, owned_run, repository, candidate, consumer, source_feed,
                                      observed_environment, *, group_id, budgets, ci_revision=None,
                                      captured_build=None, toolchain_root=None):
     from conformance_execution import no_symlinks
-    from conformance_sdk_checks import LOGGER, read_bounded
+    from conformance_sdk_checks import LOGGER, inspection_reference_roots, read_bounded
 
     owned_run._check_ledger()
     candidate, source_feed = Path(candidate), Path(source_feed)
@@ -1359,6 +1393,10 @@ def prepare_binding_consumer_runtime(binding, owned_run, repository, candidate, 
         for path in runtime:
             (owned_run.root / path).chmod(0o400)
         frozen.update(runtime)
+        runner_path = "proofs/contributor-vstest-inputs.json"
+        frozen[runner_path] = _write_owned_input(owned_run, owned_run.root / runner_path, evidence.canonical_bytes(
+            vstest_runner_inputs(
+                inspection_reference_roots()["Microsoft.NETCore.App"].parents[1], observed_environment["sdk"])))
         controls_path = "proofs/contributor-build-controls.json"
         controls_hash = _write_owned_input(owned_run, owned_run.root / controls_path, evidence.canonical_bytes({
             "schemaVersion": 1, "qualification": False, "bindingInputsSha256": binding.inputs_sha256,
@@ -1454,18 +1492,24 @@ def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
 
 
 def read_binding_runtime_controls(owned_run, binding, inputs):
-    from conformance_sdk_checks import read_bounded
+    from conformance_sdk_checks import inspection_reference_roots, read_bounded
 
     raw = read_bounded(owned_run.root / "proofs/contributor-build-controls.json", 16 * 1024 * 1024)
     controls = evidence._record({
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
         "bindingInputsSha256": evidence.sha256, "inputs": evidence._hash_map,
         "runtimeAssemblies": evidence._hash_map})(evidence.load_json(raw))
-    if (controls["bindingInputsSha256"] != binding.inputs_sha256
+    if (hashlib.sha256(raw).hexdigest() != inputs["invocation"][2]
+            or controls["bindingInputsSha256"] != binding.inputs_sha256
             or controls["runtimeAssemblies"] != inputs["runtimeAssemblies"]
             or evidence.input_manifest(owned_run.root, sorted(controls["inputs"])) != controls["inputs"]
             or _binding_consumer_images(owned_run) != inputs["runtimeAssemblies"]
             or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+        raise evidence.ConformanceError("InputChanged")
+    runner = read_bounded(owned_run.root / "proofs/contributor-vstest-inputs.json", 16 * 1024 * 1024)
+    if (controls["inputs"].get("proofs/contributor-vstest-inputs.json") != hashlib.sha256(runner).hexdigest()
+            or runner != evidence.canonical_bytes(vstest_runner_inputs(
+                inspection_reference_roots()["Microsoft.NETCore.App"].parents[1], inputs["environment"]["sdk"]))):
         raise evidence.ConformanceError("InputChanged")
     evidence.verify_snapshot(owned_run.root / "snapshot", inputs["sourceManifest"])
     return raw
@@ -1493,17 +1537,19 @@ def artifact_process_context(run, inputs, consumer, binding):
     relative = evidence.relative_path(assembly.relative_to(run.root).as_posix())
     directory = assembly.parent.relative_to(run.root).as_posix()
     selected = {
-        *(path for path, _ in consumer["components"].values()), relative,
+        relative,
         f"{directory}/Hoard.Testing.Conformance.dll", f"{directory}/Hoard.Abstractions.dll",
         assembly.with_suffix(".deps.json").relative_to(run.root).as_posix(),
         assembly.with_suffix(".runtimeconfig.json").relative_to(run.root).as_posix(),
-        "proofs/contributor-inputs.json"}
+        "proofs/contributor-inputs.json", "proofs/contributor-build-controls.json"}
     if (set(consumer["components"]) != set(evidence._SESSION_ROLES["artifacts"])
-            or not selected - {"proofs/contributor-inputs.json"} <= images.keys()):
+            or not selected - {"proofs/contributor-inputs.json", "proofs/contributor-build-controls.json"}
+            <= images.keys()):
         raise evidence.ConformanceError("EvidenceIncomplete")
     selected = evidence.input_manifest(run.root, sorted(selected))
     if (any(selected[path] != images[path] for path in selected if path in images)
-            or selected["proofs/contributor-inputs.json"] != evidence.digest(inputs)):
+            or selected["proofs/contributor-inputs.json"] != evidence.digest(inputs)
+            or selected["proofs/contributor-build-controls.json"] != inputs["invocation"][2]):
         raise evidence.ConformanceError("InputChanged")
     declaration = _readonly(run.root / "binding-consumer/declaration.json", 65536)
     return inputs, assembly, selected, declaration

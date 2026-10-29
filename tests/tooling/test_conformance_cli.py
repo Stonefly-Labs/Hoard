@@ -239,6 +239,35 @@ class ConformanceCliTests(unittest.TestCase):
                 evidence.dispatch_invocation(invocation)
         self.assertFalse(self.destination.exists())
 
+    def test_explicit_artifact_dispatch_uses_only_the_complete_contributor_agreement(self):
+        project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"
+        admitted = evidence.admit_invocation(ROOT, [
+            "--profile", "metadata", "--binding-project", str(project), "--evidence", str(self.destination)])
+        invocation = replace(admitted, profiles=("artifacts",),
+                             case_keys=tuple(case.key for case in expected_cases("artifacts")))
+        with patch("conformance_contributors.execute", return_value=0) as execute, patch(
+                "conformance_sdk_checks.execute") as builtin:
+            with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                evidence.dispatch_invocation(invocation)
+            execute.assert_called_once_with(
+                ROOT, self.destination, project=project, category="artifacts",
+                binding_inputs_sha256=invocation.binding_inputs_sha256)
+            builtin.assert_not_called()
+        for changed in (
+                replace(invocation, case_keys=invocation.case_keys[:-1]),
+                replace(invocation, case_keys=(*invocation.case_keys, invocation.case_keys[0])),
+                replace(invocation, mode="diagnostic"), replace(invocation, profiles=("artifacts", "metadata"))):
+            with self.subTest(profiles=changed.profiles, mode=changed.mode), patch(
+                    "conformance_contributors.execute") as execute, self.assertRaises(evidence.ConformanceError):
+                evidence.dispatch_invocation(changed)
+            execute.assert_not_called()
+        for code in ("AssertionFailed", "InputChanged", "InsufficientCapacity", "CleanupIncomplete"):
+            with self.subTest(code=code), patch(
+                    "conformance_contributors.execute", side_effect=evidence.ConformanceError(code)), (
+                    self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$")):
+                evidence.dispatch_invocation(invocation)
+        self.assertFalse(self.destination.exists())
+
     def test_cli_rejects_private_unknown_input_without_persistence_or_false_success(self):
         import conformance_cli
         for arguments, code in (

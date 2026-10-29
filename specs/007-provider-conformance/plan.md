@@ -2104,6 +2104,118 @@ on this contract decision; there is no new runtime failure or qualification
 claim. README and guides already state that complete applicability and public
 dispatch are unfinished, so this decision checkpoint changes only the plan.
 
+### T064 applicability decision resolved and public artifact dispatch
+
+The subsequent instruction to continue autonomously supersedes the pending
+decision above. Use the conservative contract-neutral policy: original built-in
+private mechanism assertions remain mandatory for their own fixtures;
+contributors run every implementation-neutral common assertion selected by the
+two frozen durability/enumeration markers and every applicable native obligation.
+No provider-chosen omission, new trait-registration contract, provider-name
+branch or expected-outcome fork is introduced. Remove five previously selected
+durable mechanism rows from contributor scope only: third-write durable receipt,
+ordinary record callback, record-mode application/shutdown and two record-mode
+release variants. Original Local126/137 and Object124/125 catalogs are unchanged.
+Current contributor inventories are durable Snapshot118/128, durable Incomplete
+119/129, simulated Snapshot113/114 and simulated Incomplete114/115.
+
+Public complete artifact `--binding-project` selection now owns actual project
+admission/build/pack/common runtime, six crash/recovery pairs where durable,
+three retained children and both measured transfers. It independently recomputes
+completion inputs and verifies actual Released settlement. The existing artifact
+10800-second budget applies unchanged. Reduced/duplicate/focused/mixed agreements
+reject before backend execution; no built-in provider substitutes for the
+supplied factory. The summary stays diagnostic, not the T071 evaluator/report.
+
+Initial isolated public CLI attempts reject discovery as UnknownDiagnostic.
+The exact97-byte line hash
+`9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`
+matches the SDK's authoritative fixed WorkloadIntegrityCheckError resource text,
+not a provider assertion or bad-image message. Advertising-download suppression
+does not solve it; the experiment is removed. Discovery/execution now use the
+explicit selected SDK VSTest image through the frozen measured runtime, analogous
+to existing explicit MSBuild execution. This avoids ambient SDK CLI setup, not
+an integrity check on the provider; no unknown output is admitted or suppressed,
+and no claim is made that the SDK workload-integrity issue itself is repaired.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_cli
+test_conformance_contributors.ContributorAdmissionTests
+test_conformance_sdk_checks -q` passes234 tests in28.672 seconds.
+The actual current packaged macOS component previously passes118 rows/128 origins.
+The native public CLI observation uses exact9f44d90 plus seven explicit source
+overlays, pinned cached SDK image
+`mcr.microsoft.com/dotnet/sdk@sha256:8a90a473da5205a16979de99d2fc20975e922c68304f5c79d564e666dc3982fc`,
+UID10001/Linux-arm64,4 CPUs/6GiB/512 PIDs and private anonymous btrfs scratch.
+Overlay SHA-256:
+`ebeb5f343ad67fa07ec96553ffc5148bab0c883153e76ce7280c02dee8b670d6`.
+Session `linux-public-artifact-contributor-explicit-vstest.log` records84 tests
+passing in123.849 seconds, including actual public CLI admission of the separate
+Acme factory,118 common rows/128 origins, all six source/fresh-recovery pairs,
+all three retained children and actual256 MiB/4 GiB transfers. Exact source/sink
+hashes, original native receipts, post-input recomputation, stored summary
+equality, Released resources and absent stores/cache/feed pass. The task container
+is absent after successful bounded exit; shared SDK images remain. No independent
+anonymous-volume-ID verification is claimed.
+The safe common native parent SHA-256 is
+`3d6e27c7a9ace76154a0feb557594487eea85ad01e70e83c3716834652ee9be9`.
+The output remains `qualification:false`, `profileComplete:false`,
+`EvidenceIncomplete` exit2. Other profile scopes remain inventory expansion
+checks; this is neither qualifying CI nor an untested support cross-product.
+The preceding failed observations remain retained as failures.
+
+The required bounded `hoard-architecture-review` finds two P2 issues in this
+increment: version-only selection leaves VSTest runner bytes unfrozen, and
+variable per-role pins impose an undeclared component-assembly layout limit.
+Both are corrected and closed at code-review level by the same reviewer
+(`38864e82-b027-4568-ac5c-9b6d03717fdd`, same-scope follow-up). This is not T081;
+the reviewer is read-only, runs no checks and cannot independently attribute Git
+hunks with its restricted tools.
+
+The bounded VSTest manifest captures SDK-root flattened files, Extensions and
+direct localized TestPlatform/VSTest resources, requiring runner DLL/deps/
+runtimeconfig. Its hash is frozen in the input-bound build-controls map; the
+reader validates the raw controls against invocation[2] and independently
+rehashes/re-enumerates actual SDK bytes around commands. Fixed driver/SDK/
+Abstractions/configuration and sealed-map pins replace variable role pins;
+all runtime images remain frozen, independently rehashed and matched to actual
+origins. Native crash admission is14 combined pins even with eight distinct
+role images; the executor's16-pin bound is unchanged. The eight-image regression
+is structural/model evidence only. Two initial new test setups fail closed
+(incomplete declaration, then writable declaration); both fixtures are corrected
+without relaxing production schema/read-only checks. Same-version runner
+dependencies, extensions/resources, added extensions, modified controls/runner
+manifests and changed factory DLLs now have focused rejection coverage.
+
+Final native sealed-source overlay:
+`906888760a4abbefb7f1916c0c9644429ac841efb02f6abc232f0c686e817508`.
+Session `linux-public-artifact-contributor-sealed-vstest.log` passes86 tests
+in162.759 seconds on the same isolated pinned SDK/UID10001/Linux-arm64 btrfs
+setup, initially admitting52,469,522,432 free bytes. It preserves118 common
+rows/128 origins, six crash/recovery pairs, all three retained children, both
+real transfer sizes, exact hashes/native receipts, post-input recomputation,
+stored summary equality and Released/absent stores/cache/feed. Common native
+parent SHA-256:
+`99e3b0c2ade96ace708465c72728b1e06d57e8a42f4bcc67c93b576010e66a13`.
+Exact task container absence is observed after successful exit; shared cached
+images remain. No independent volume-ID removal check or runtime cross-product
+is claimed.
+
+Final checks:
+
+- `PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_contributors.ContributorAdmissionTests.test_runtime_controls_freeze_same_version_vstest_dependencies_extensions_and_resources test_conformance_contributors.ContributorAdmissionTests.test_native_pin_admission_uses_sealed_closure_for_eight_distinct_component_images -v`: two pass in0.121 seconds.
+- `PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_contributors.NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins -v`: actual packaged macOS runtime and tampering rejection pass in137.116 seconds.
+- `python3 scripts/conformance_unit_checks.py --all-tooling`:740 tests, zero failures/errors/expected failures/unexpected successes/unexpected diagnostic bytes,25 explicit native macOS skips; expected diagnostic EvidenceIncomplete exit2.
+- `dotnet format tests/fixtures/conformance/Consumer/Consumer.csproj whitespace --no-restore --verify-no-changes --include tests/fixtures/conformance/Consumer/ContributorArtifactSessionTests.cs`: passed.
+- `python3 scripts/conformance_evidence.py --check-catalog --check-sdk`: passed.
+- `git diff --check`: passed.
+
+README, PROVIDERS, DEVELOPMENT and harness are synchronized. Charter/product/
+architecture/ADR/diagrams/governance/backlog/predecessor/IaC/release/UI and existing
+examples are unaffected: no product/provider contract, production dependency,
+deployment, release or executable example changes. The new contributor guide is
+the next task. T064 alone is checked; T065..T086 and implement/running remain.
+No checklist approval, convergence, readiness, merge or release advances.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

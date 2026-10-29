@@ -30,7 +30,6 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
 {
     [Theory]
     [ContributorArtifactData("committed-decision", DurableOnly = true)]
-    [ContributorArtifactData("durable-receipt", DurableOnly = true)]
     public async Task Observed_durable_reopen_preserves_actual_decisions_and_receipts(string provider, string consumer)
     {
         Assert.Equal(ContributorBindingFactory.BindingId, provider);
@@ -59,20 +58,6 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
         var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
         await ArtifactConformanceSessionTests.QuarantinePersistenceConsumerAsync(
-            binding, context, resources, output, AssertProfile);
-    }
-
-    [Theory]
-    [ContributorArtifactData(DurableOnly = true)]
-    public async Task Observed_durable_record_callback_errors_preserve_actual_faulted_ownership(string provider)
-    {
-        Assert.Equal(ContributorBindingFactory.BindingId, provider);
-        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
-        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
-            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
-        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
-            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
-        await ArtifactConformanceSessionTests.RecordWriteFailureConsumerAsync(
             binding, context, resources, output, AssertProfile);
     }
 
@@ -410,38 +395,6 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             : new IOException("Ordinary access release failure");
         await ArtifactConformanceSessionTests.AccessReleaseErrorConsumerAsync(
             binding, context, resources, output, unavailable, failure, assertProfile: AssertProfile);
-    }
-
-    [Theory]
-    [ContributorArtifactData(DurableOnly = true)]
-    public async Task Observed_durable_record_application_shutdown_preserves_actual_resource_ownership(string provider)
-    {
-        Assert.Equal(ContributorBindingFactory.BindingId, provider);
-        await using var resources = new RecordingDirectories();
-        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
-            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
-        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
-            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
-        await ArtifactConformanceSessionTests.AccessApplicationShutdownConsumerAsync(
-            binding, context, resources, output, false, recordWrites: true, assertProfile: AssertProfile);
-    }
-
-    [Theory]
-    [ContributorArtifactData(false, DurableOnly = true)]
-    [ContributorArtifactData(true, DurableOnly = true)]
-    public async Task Observed_durable_record_release_errors_preserve_actual_mode_and_faulted_ownership(
-        string provider, bool cancellation)
-    {
-        Assert.Equal(ContributorBindingFactory.BindingId, provider);
-        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
-        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
-            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
-        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
-            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
-        Exception failure = cancellation ? new OperationCanceledException("Ordinary record access cancellation")
-            : new IOException("Ordinary record access failure");
-        await ArtifactConformanceSessionTests.AccessReleaseErrorConsumerAsync(
-            binding, context, resources, output, false, failure, recordWrites: true, assertProfile: AssertProfile);
     }
 
     [Theory]

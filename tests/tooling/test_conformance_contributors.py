@@ -1639,7 +1639,8 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):
         self.captured_build(native=True)
 
-    def package_consumer_build(self, *, native=False, runtime=False, captured=False, artifacts=False):
+    def package_consumer_build(self, *, native=False, runtime=False, captured=False, artifacts=False,
+                               public_entrypoint=False):
         import conformance_sdk_checks as sdk
         import uuid
         from conformance_execution import project_build_line, project_discovery_line, project_test_line
@@ -1730,6 +1731,38 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                 "version": 1, "dependencies": {"net10.0": dependencies}}))
             project.with_suffix(".conformance.json").write_bytes(evidence.canonical_bytes(registration))
         admitted = contributors.admit_binding_project(project, category)
+        if public_entrypoint:
+            import conformance_cli
+
+            self.assertTrue(native and runtime and captured and artifacts)
+            owner.transition("Active")
+            owner.transition("Settling")
+            owner.release()
+            destination = parent / "public-artifact-contributor"
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                status = conformance_cli.main([
+                    "--profile", "artifacts", "--binding-project", str(project), "--evidence", str(destination)])
+            records = tuple(evidence.load_json(line.encode("utf-8")) for line in output.getvalue().splitlines())
+            self.assertEqual(status, 2)
+            self.assertEqual(len(records), 2, records)
+            summary, incomplete = records
+            self.assertEqual(incomplete["code"], "EvidenceIncomplete")
+            self.assertFalse(summary["qualification"])
+            self.assertFalse(summary["profileComplete"])
+            self.assertEqual(summary["scope"], "contributor-artifacts-runtime-diagnostic")
+            self.assertEqual(summary["passedParameters"], 118)
+            self.assertEqual(summary["sessionOrigins"], 128)
+            self.assertEqual(len(summary["nativeArtifact"]["crashRecovery"]), 6)
+            self.assertEqual(tuple(row["scenario"] for row in summary["nativeArtifact"]["retention"]),
+                             ("source", "destination", "native"))
+            self.assertEqual(tuple(row["size"] for row in summary["nativeArtifact"]["transfers"]),
+                             (268435456, 4294967296))
+            self.assertEqual(summary, evidence.load_json(
+                (destination / "proofs/contributor-runtime-summary.json").read_bytes()))
+            self.assertTrue(all(resource["state"] == "Released" for resource in summary["resources"]))
+            self.assertFalse(any((destination / directory).exists() for directory in ("stores", "cache", "feed")))
+            print(evidence.canonical_bytes({"publicArtifact": summary}).decode("utf-8"), flush=True)
+            return
         binding = contributors.snapshot_binding_project(project, category, admitted.inputs_sha256, owner)
         tools = owner.root / "tools"
         shutil.copytree(self.tool.parent, tools)
@@ -1848,6 +1881,8 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                             binding, owner, bad, attempt_id=str(uuid.uuid4()))
                 altered_paths = (
                     "proofs/contributor-build-controls.json",
+                    "proofs/contributor-vstest-inputs.json",
+                    next(iter(result["components"].values()))[0],
                     "binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.runtimeconfig.json",
                     "binding-build/compiler-sources.json",
                     "binding-evaluation/inputs.json",
@@ -1877,6 +1912,10 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                 self.assertEqual(sum(len(rows) for rows in observed["sessionOrigins"].values()), sum(counts.values()))
                 self.assertRegex(discovery_sha, r"^[0-9a-f]{64}$")
                 self.assertEqual(len(commands), prepared_commands + 2)
+                for arguments in commands[-2:]:
+                    self.assertEqual(arguments[:5], (
+                        "dotnet", "exec", "--fx-version", self.runtime_version,
+                        str(self.msbuild.parent / "vstest.console.dll")))
                 self.assertEqual(evidence.input_manifest(
                     owner.root, sorted(prepared["controlInputs"])), prepared["controlInputs"])
                 self.assertEqual(inputs, evidence.capture_profile_inputs(
@@ -2032,6 +2071,109 @@ class ContributorAdmissionTests(unittest.TestCase):
         return evidence.admit_invocation(ROOT, [
             "--profile", profile, "--binding-project", str(self.project),
             "--evidence", str(self.parent / "fresh")])
+
+    def test_runtime_controls_freeze_same_version_vstest_dependencies_extensions_and_resources(self):
+        import conformance_sdk_checks as sdk
+
+        toolchain = self.parent / "toolchain"
+        directory = toolchain / "sdk/10.0.203"
+        files = ("vstest.console.dll", "vstest.console.deps.json", "vstest.console.runtimeconfig.json",
+                 "Newtonsoft.Json.dll", "Extensions/Logger.dll", "fr/vstest.console.resources.dll")
+        for relative in files:
+            path = directory / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(relative.encode())
+        root = self.parent / "run"
+        (root / "proofs").mkdir(parents=True)
+        (root / "snapshot").mkdir()
+        output = root / "binding-consumer/bin/Release/net10.0"
+        output.mkdir(parents=True)
+        (output / "Consumer.dll").write_bytes(b"consumer")
+        for path in self.source.iterdir():
+            path.chmod(0o400)
+        binding = SimpleNamespace(
+            root=self.source, sources=evidence.proof_manifest(self.source), inputs_sha256="a" * 64)
+        run = SimpleNamespace(root=root)
+        images = contributors._binding_consumer_images(run)
+        runner_path = root / "proofs/contributor-vstest-inputs.json"
+        runner_path.write_bytes(evidence.canonical_bytes(contributors.vstest_runner_inputs(toolchain, "10.0.203")))
+        controls = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "bindingInputsSha256": binding.inputs_sha256,
+            "inputs": evidence.input_manifest(root, ("proofs/contributor-vstest-inputs.json",)),
+            "runtimeAssemblies": images})
+        (root / "proofs/contributor-build-controls.json").write_bytes(controls)
+        inputs = {
+            "runtimeAssemblies": images, "sourceManifest": {},
+            "environment": {"sdk": "10.0.203"},
+            "invocation": ("binding-project", binding.inputs_sha256, hashlib.sha256(controls).hexdigest())}
+        with mock.patch.object(sdk, "inspection_reference_roots", return_value={
+                "Microsoft.NETCore.App": toolchain / "packs/Microsoft.NETCore.App.Ref"}), \
+                mock.patch.object(evidence, "verify_snapshot"):
+            self.assertEqual(contributors.read_binding_runtime_controls(run, binding, inputs), controls)
+            for relative in files:
+                path = directory / relative
+                original = path.read_bytes()
+                try:
+                    path.write_bytes(original + b"changed")
+                    with self.subTest(changed=relative), self.assertRaisesRegex(
+                            evidence.ConformanceError, "^InputChanged$"):
+                        contributors.read_binding_runtime_controls(run, binding, inputs)
+                finally:
+                    path.write_bytes(original)
+            added = directory / "Extensions/Additional.dll"
+            added.write_bytes(b"new extension")
+            with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                contributors.read_binding_runtime_controls(run, binding, inputs)
+            added.unlink()
+            altered = evidence.load_json(controls)
+            altered["inputs"] = {"proofs/contributor-vstest-inputs.json": "0" * 64}
+            (root / "proofs/contributor-build-controls.json").write_bytes(evidence.canonical_bytes(altered))
+            with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                contributors.read_binding_runtime_controls(run, binding, inputs)
+
+    def test_native_pin_admission_uses_sealed_closure_for_eight_distinct_component_images(self):
+        import conformance_contributor_crashes as crashes
+
+        run = OwnedRun.allocate(self.parent / "component-run", ROOT, profile="harness")
+        try:
+            output = run.root / "binding-consumer/bin/Release/net10.0"
+            output.mkdir(parents=True)
+            names = ("Consumer.dll", "Hoard.Testing.Conformance.dll", "Hoard.Abstractions.dll",
+                     "Consumer.deps.json", "Consumer.runtimeconfig.json")
+            roles = tuple(evidence._SESSION_ROLES["artifacts"])
+            for name in (*names, *(role + ".dll" for role in roles)):
+                (output / name).write_bytes(name.encode())
+            images = contributors._binding_consumer_images(run)
+            components = {role: ((output / (role + ".dll")).relative_to(run.root).as_posix(), "Acme.Adapter")
+                          for role in roles}
+            controls = evidence.canonical_bytes({"runtimeAssemblies": images})
+            (run.root / "proofs/contributor-build-controls.json").write_bytes(controls)
+            inputs = {
+                "profileId": "artifacts", "mode": "diagnostic", "runId": run.run_id, "bindings": [{}],
+                "runtimeAssemblies": images, "invocation": ("binding-project", "a" * 64,
+                                                          hashlib.sha256(controls).hexdigest())}
+            (run.root / "proofs/contributor-inputs.json").write_bytes(evidence.canonical_bytes(inputs))
+            (run.root / "binding-consumer/declaration.json").write_bytes(b"declaration")
+            (run.root / "binding-consumer/declaration.json").chmod(0o400)
+            declaration = {
+                **self.registration["declaration"], "category": "artifacts",
+                "capabilities": ["artifacts", "durable-local-process-crash", "enumeration-snapshot"],
+                "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["artifacts"])}
+            binding = SimpleNamespace(registration={"declaration": declaration})
+            consumer = {"qualification": False, "assemblyPath": output / "Consumer.dll",
+                        "runtimeAssemblies": images, "components": components}
+            with mock.patch.object(evidence, "admit_entity", side_effect=lambda _, value: value), \
+                    mock.patch.object(contributors, "read_binding_runtime_controls", return_value=controls):
+                _, _, selected, _ = crashes._context(run, inputs, consumer, binding)
+            self.assertLessEqual(len(selected) + 7, 16)
+            self.assertIn("proofs/contributor-build-controls.json", selected)
+            self.assertEqual(selected["proofs/contributor-build-controls.json"], inputs["invocation"][2])
+            self.assertTrue(set(path for path, _ in components.values()) <=
+                            evidence.load_json(controls)["runtimeAssemblies"].keys())
+        finally:
+            run.transition("Active")
+            run.transition("Settling")
+            run.release()
 
     def test_explicit_external_registration_freezes_declared_source_bytes_without_allocating_or_building(self):
         first = self.admit()
@@ -2231,12 +2373,12 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertEqual(catalog.contributor_artifact_component_origin_counts("acme.artifacts", profile=profile), actual)
         snapshot = catalog.contributor_artifact_component_origin_counts(
             "acme.artifacts", profile={"durability": "LocalProcessCrash", "enumeration": "Snapshot"})
-        self.assertEqual(len(snapshot), 123)
-        self.assertEqual(sum(snapshot.values()), 134)
+        self.assertEqual(len(snapshot), 118)
+        self.assertEqual(sum(snapshot.values()), 128)
         self.assertEqual(set(actual) - set(snapshot), {
             'Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests.'
             'Observed_portable_consumers_preserve_actual_guarantees(provider: "acme.artifacts", consumer: "direct-availability")'})
-        self.assertEqual(len(set(snapshot) - set(actual)), 10)
+        self.assertEqual(len(set(snapshot) - set(actual)), 5)
         self.assertTrue(all(".Observed_durable_" in identity or any(
             f'consumer: "{consumer}"' in identity for consumer in ("reclaimed-incarnations", "candidate-reclamation"))
                             for identity in set(snapshot) - set(actual)))
@@ -2246,11 +2388,13 @@ class ContributorAdmissionTests(unittest.TestCase):
             f'{release}(provider: "acme.artifacts", unavailable: {unavailable}, cancellation: {cancellation})'
             for unavailable in ("False", "True") for cancellation in ("False", "True")})
         for durability, enumeration, rows, origins in (
-                ("LocalProcessCrash", "Incomplete", 124, 135), ("SimulationOnly", "Snapshot", 113, 114)):
+                ("LocalProcessCrash", "Incomplete", 119, 129), ("SimulationOnly", "Snapshot", 113, 114)):
             crossed = catalog.contributor_artifact_component_origin_counts(
                 "acme.artifacts", profile={"durability": durability, "enumeration": enumeration})
             self.assertEqual(len(crossed), rows)
             self.assertEqual(sum(crossed.values()), origins)
+        self.assertFalse(any("record_" in identity or 'consumer: "durable-receipt"' in identity
+                             for identity in snapshot))
         for invalid in ("../foreign", "", None):
             with self.assertRaises(evidence.ConformanceError):
                 catalog.contributor_artifact_component_origin_counts(invalid, profile=profile)

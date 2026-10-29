@@ -3859,6 +3859,14 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     write_new(settings, settings_data)
     started = time.monotonic() * 1000
     arguments = runtime_arguments(assembly, settings, identities, discovery=discovery)
+    if contributor_binding is not None:
+        toolchain = inspection_reference_roots()["Microsoft.NETCore.App"].parents[1]
+        vstest = toolchain / "sdk" / inputs["environment"]["sdk"] / "vstest.console.dll"
+        no_symlinks(vstest)
+        if not vstest.is_file():
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        arguments = [
+            "dotnet", "exec", "--fx-version", inputs["environment"]["runtime"], str(vstest), *arguments[2:]]
     execution_inputs = []
     execution_outputs = ()
     recorded = category_scope is not None or contributor_binding is not None
@@ -3907,7 +3915,10 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         execution_inputs = [
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
             settings.relative_to(run.root).as_posix(), "proofs/contributor-build-controls.json",
-            *(entry["path"] for entry in manifest["assemblies"])]
+            *(entry["path"] for entry in manifest["assemblies"]
+              if Path(entry["path"]).name in (
+                  assembly.name, "Hoard.Testing.Conformance.dll", "Hoard.Abstractions.dll",
+                  "Hoard.Conformance.TestLogger.dll"))]
     try:
         result = run.command(
             arguments,

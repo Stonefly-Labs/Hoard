@@ -773,11 +773,21 @@ the original provider-neutral assertions, retain actual workers/protection/root
 through both inspections and terminate only by original-parent SIGKILL.
 The isolated replay passes those three cases and all six original Local/Object
 child tests. Clean artifact preparation copies every exact source-linked helper.
-The packaged component also preserves original access-restoration error/
-cancellation, durable record-permission shutdown/restoration and reclaimed-history
-assertions:123 rows/134 origins pass on macOS and isolated unprivileged Linux.
-Complete applicability and public artifact dispatch remain unfinished; these
-component diagnostics do not qualify a profile.
+The packaged component preserves original payload access-restoration error/
+cancellation and durable reclaimed-history assertions. Contributor applicability
+uses implementation-neutral contracts and the two frozen profile markers;
+record-layout/write-count/Unix-mode and object-residual mechanics stay mandatory
+for their built-in fixtures, not arbitrary contributors. The current durable
+Snapshot component has118 rows/128 origins. Public artifact `--binding-project`
+dispatch now builds/packs the supplied adapter and executes that complete common
+scope, six real crash/recovery pairs, three retained children and both measured
+256 MiB/4 GiB transfers on isolated unprivileged Linux, then verifies post-inputs
+and releases resources. VSTest uses the explicitly selected SDK/runtime rather
+than ambient SDK CLI setup, with its dependency/extension/resource bytes sealed
+and rechecked. A sealed full-component map avoids layout-dependent descriptor
+growth without raising the16-pin limit. Output remains diagnostic (`qualification:false`,
+`profileComplete:false`, `EvidenceIncomplete` exit2); guide journeys, independent
+evaluation, qualifying profiles and CI remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

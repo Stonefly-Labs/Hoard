@@ -7132,6 +7132,70 @@ Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
 diagnostic bytes,25 explicit native macOS skips and expected non-qualifying
 EvidenceIncomplete exit2. T064..T086 remain open.
 
+### Contract-neutral applicability and public artifact dispatch
+
+The subsequent applicability decision keeps private mechanism checks mandatory
+for the original built-in fixtures, while contributors run every
+implementation-neutral common assertion selected by frozen durability and
+enumeration. These markers do not imply Unix directory modes, a third physical
+record write, invalid filesystem inventory shapes or object residual mechanics.
+Five previously selected durable mechanism rows are removed only from the
+contributor scope; no original built-in assertion, provider-name branch, new
+registration trait or provider-selected omission is introduced.
+The independent scopes are durable Snapshot118 rows/128 origins, durable
+Incomplete119/129, simulated Snapshot113/114 and simulated Incomplete114/115.
+
+Public explicit artifact `--binding-project` dispatch now executes actual
+supplied-project admission/build/pack/common runtime, applicable crash/recovery,
+all three retained children and both measured transfers, followed by independent
+post-input recomputation and actual resource release. The existing artifact
+10800-second profile policy is reused; no budget or16-pin bound is raised.
+Discovery and execution invoke the selected SDK's `vstest.console.dll` through
+`dotnet exec --fx-version` with the frozen runtime, matching the existing
+explicit MSBuild strategy. This avoids ambient SDK CLI initialization; it does
+not whitelist or suppress an SDK workload-integrity warning.
+
+The initial native CLI attempts fail closed at discovery on the exact97-byte
+SDK `WorkloadIntegrityCheckError` notice, SHA-256
+`9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`.
+The fixed canonical SDK resource text matches exactly. An advertising-download
+environment experiment does not fix that warning and is removed; no production
+environment override or relaxed output admission is added.
+The subsequent isolated native public CLI run passes84 tests in123.849 seconds,
+including the actual118-row/128-origin separately packaged artifact adapter,
+six killed-source/fresh-recovery pairs, source/destination/native retention and
+real268435456/4294967296-byte transfers with exact expected hashes. Completion
+input recomputation, stored summary equality, Released resource state and absent
+stores/cache/feed all pass. This remains diagnostic `EvidenceIncomplete` exit2,
+with `qualification:false` and `profileComplete:false`, not final evaluation or
+CI qualification. The other profile scopes are inventory checks, not a newly
+executed runtime cross-product.
+
+The bounded architecture review finds two P2 issues: SDK-version-only runner
+selection does not freeze its bytes, and per-role image pins reject valid
+separately assembled components. Both are corrected and closed by the same
+read-only reviewer. The runner's bounded dependency/extension/resource manifest
+is sealed into the input-bound build controls and rehashed/re-enumerated around
+commands. Fixed driver/map pins bind the full component closure without
+layout-dependent descriptor growth; complete images remain independently
+rehashed and matched to genuine origins. Crash admission uses14 combined pins
+even with eight distinct role images, under the unchanged16 limit. The new
+eight-image case is structural/model coverage, not a runtime cross-product.
+Same-version dependency/resource/extension changes, added extensions, mutated
+controls, altered runner manifests and changed adapter DLLs reject.
+
+Final sealed-source native replay uses overlay SHA-256
+`906888760a4abbefb7f1916c0c9644429ac841efb02f6abc232f0c686e817508`
+and passes86 tests in162.759 seconds, preserving all common/native/post-input/
+settlement obligations above. Its common native parent is
+`99e3b0c2ade96ace708465c72728b1e06d57e8a42f4bcc67c93b576010e66a13`.
+Actual packaged macOS runtime and tampering checks pass in137.116 seconds.
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+740 tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,25 explicit native macOS skips and expected non-qualifying
+EvidenceIncomplete exit2. Affected C# whitespace verification and
+`git diff --check` pass. T064 is complete; T065..T086 and implement/running remain.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

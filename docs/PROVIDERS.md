@@ -805,16 +805,39 @@ The contributor component additionally reuses the original payload-access
 release error/cancellation body for both denied/unavailable variants. It checks
 actual restored payload bytes, faulted resource settlement with the exact
 ordinary exception, and no fabricated Released observation. Durable profiles
-also run the original record-permission application/shutdown and both release
-variants, restored actual mode, reclaimed-incarnation capacity and reclamation
-candidate bounds. Frozen durability, not provider identity, selects those rows;
+also run original reclaimed-incarnation capacity and reclamation candidate
+bounds. Frozen durability, not provider identity, selects those rows;
 actual capabilities are checked before/after their assertions.
-The independent inventories are123/124 rows and134/135 origins for durable
+The independent inventories are118/119 rows and128/129 origins for durable
 Snapshot/Incomplete, and113/114 rows and114/115 origins for simulation.
-The actual123-row/134-origin durable Snapshot component passes on macOS and
+The actual118-row/128-origin durable Snapshot component passes on macOS and
 isolated unprivileged Linux; the other new profile inventories are expansion
-checks, not a new runtime cross-product claim. Complete applicability/public
-dispatch and qualification remain unfinished.
+checks, not a new runtime cross-product claim.
+
+Applicability is contract-neutral: durability/enumeration do not imply a
+`decisions` directory, a third physical record write, Unix-mode restoration,
+filesystem inventory layout or object-publication residuals. Those private
+mechanism assertions remain mandatory for the original built-in bindings;
+contributors cannot select omissions or register extra mechanism traits.
+Explicit artifact `--binding-project` dispatch now runs all common assertions
+selected by the frozen profile plus applicable native obligations. The public
+durable Snapshot journey passes118 rows/128 origins, all six killed-source/fresh
+recovery pairs, source/destination/native retention and measured256 MiB/4 GiB
+transfers in isolated UID10001 Linux. Post-input recomputation and actual Released
+settlement pass. Discovery/execution use the selected SDK's `vstest.console.dll`
+through the exact measured runtime, not ambient SDK CLI startup. No unknown
+output is suppressed or admitted. A bounded manifest freezes the selected SDK's
+flattened runner dependencies, extensions and localized TestPlatform resources.
+Its hash is sealed into input-bound build controls and independently rechecked
+before/after commands. The same sealed controls bind every runtime/component
+image; fixed driver/map pins avoid imposing a component-assembly layout limit.
+All eight distinct role images pass structural native admission within the
+unchanged16-pin policy; this is not an eight-assembly runtime support claim.
+The final native public replay passes86 tests in162.759 seconds, and actual
+packaged macOS execution plus tampering controls passes in137.116 seconds.
+The summary remains explicitly non-qualifying
+and ends with `EvidenceIncomplete` exit2; guide red/green journeys, independent
+qualification/evaluation and CI are not established by this diagnostic run.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with

@@ -2564,12 +2564,32 @@ payload-access release error/cancellation combinations, using the original
 typed consumer body. Require actual restored bytes and the original ordinary
 exception in faulted settlement, never a Released observation. Frozen durable
 profiles additionally select original reclaimed-incarnation and reclamation
-candidate bounds, record-permission application joined with shutdown and both
-record-permission release variants with actual restored mode. Check actual
+candidate bounds. Check actual
 capabilities before/after; provider identity must not choose applicability.
-Those additions yield123/124 durable Snapshot/Incomplete rows with134/135
+The current contract-neutral scope yields118/119 durable Snapshot/Incomplete rows with128/129
 origins and113/114 simulated rows with114/115 origins. Exact inventory expansion
 and a passing diagnostic component are not complete category qualification.
+Keep record-layout/write-count/Unix-mode, invalid filesystem-inventory and
+object-publication residual assertions mandatory for their original built-in
+fixtures. Do not infer those private mechanisms from durability/enumeration,
+add provider-selected omissions or introduce a new mechanism-trait contract.
+Explicit complete artifact contributor dispatch must build/pack the actual
+supplied adapter, execute every independently expanded common row plus applicable
+native crash/recovery/retention/transfers, independently recompute inputs and
+settle actual resources. Use the exact measured SDK VSTest image/runtime, not
+ambient SDK CLI startup; retain strict unknown-output rejection. The native
+durable Snapshot diagnostic passes118 rows/128 origins, six crash/recovery pairs,
+three retained children and both actual sizes. Its summary is not a qualifying
+report: `qualification:false`, `profileComplete:false`, `EvidenceIncomplete` exit2.
+Freeze the SDK runner's flattened dependency/configuration files, Extensions
+closure and localized TestPlatform resources in a bounded relative hash map.
+Seal that manifest through the input-bound build-controls digest and independently
+rehash/re-enumerate it before/after commands; SDK version equality alone is not
+byte provenance. The sealed controls also bind all runtime/component images.
+Pin fixed driver/SDK/contracts/configuration and sealed maps rather than a
+layout-dependent number of role DLLs; independently rehash every map member
+around children and join actual loaded component origins. Eight separately
+assembled roles must not exceed the unchanged16-pin admission policy.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing
