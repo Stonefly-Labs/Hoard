@@ -7324,6 +7324,28 @@ qualification is inferred; a fresh corrected-source observation remains required
 Safe packets precede removal of only the stopped task containers/volumes,
 with both exact volumes independently verified absent.
 
+Fresh exact1f69eaf Linux generation now completes the metadata category
+diagnostic:102 cases/141 witnesses,93 Passed, nine frozen NotApplicable,
+zero Failed/Incomplete. Run7c294e84-eece-4ed8-bd00-12e41409a35a genuinely
+reaches Released, with stores/cache/feed absent. Report SHA-256:
+`dd0f95c139812ecdb5a4871a9b37a453ea97080d1bf35229b69f3969a36b3032`.
+Actual admission/completion packets and470 referenced proofs independently
+pass structural inspection both in the original namespace and from retained
+bytes. This414.945-second observation is generated-native diagnostic evidence,
+not independent runtime-origin evaluation or qualification.
+
+The same exact source's frozen tooling observes751 tests with zero failures/
+errors/expected failures/unexpected successes/unexpected diagnostic bytes,
+27 explicit native macOS skips and expected incomplete exit2. After that
+frozen replay completes, a focused regression catches SDK-sidecar insertion
+preceding the mandatory compiled-runtime guard. The sidecar now appends only
+after actual runtime and lock inventories are nonempty; it cannot substitute
+for compiled outputs or reach profile admission alone. All156 final SDK
+controls pass in27.122 seconds, with catalog/SDK and diff checks passing.
+The native positive control is still identified as1f69eaf, not relabeled as
+this later guard correction. Generated-native mutation controls and T068..T086
+remain unfinished.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

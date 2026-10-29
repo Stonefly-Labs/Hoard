@@ -2525,6 +2525,55 @@ checklists remain unchanged. Other guides/examples/product/provider contracts/
 architecture/ADR/diagrams/governance/IaC/release/UI are unaffected by this
 tooling-only command/byte-admission correction; T081 final review is outstanding.
 
+### Generated-native metadata positive control and runtime inventory guard
+
+The next fresh isolated run uses exact
+1f69eaf6143eeb69c786d2f5b1d0c6e8b39b322e with genuine main ancestry and the
+same pinned SDK image/four-CPU/6-GiB/512-PID/private unprivileged environment.
+Actual admission free scratch is52,393,672,704 bytes. The namespace executes
+for414.945 seconds and exits zero after observing the public CLI's expected
+EvidenceIncomplete exit2. Actual run7c294e84-eece-4ed8-bd00-12e41409a35a
+produces the complete metadata category diagnostic:102 cases,141 witnesses,
+93 Passed, nine catalog-authorized NotApplicable and zero Failed/Incomplete.
+The original controller genuinely reaches Released; stores/cache/feed are
+absent, with actual cleanup242.551983 milliseconds.
+
+The raw report SHA-256 is
+dd0f95c139812ecdb5a4871a9b37a453ea97080d1bf35229b69f3969a36b3032;
+the original input digest is
+33ae8cb3784c4f028e5429d154f802887544bc8266252d3fbf3db14988caf96a.
+All470 referenced proof files and actual admission/completion packets pass
+independent structural inspection in the original namespace, then again from
+the unchanged retained bytes. Packet:
+`native-category-frozen-runner-retained`. The report explicitly remains
+Incomplete/qualification:false/category-runtime-diagnostic. This proves an
+actual generated-native structural positive control, not final independent
+runtime-origin attestation, five-profile support or qualification. No prior
+failed attempt is erased or relabeled.
+
+`python3 scripts/conformance_unit_checks.py --all-tooling` at that same exact
+source observes751 tests, zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,27 explicit native macOS skips and
+expected incomplete exit2. Packet: `tooling-frozen-runner.json`. Source and
+tooling tests remain frozen until this replay finishes.
+
+Afterward, a focused regression exposes a tightly coupled admission bug:
+appending the SDK sidecar before checking nonempty actual runtime inventory
+lets the sidecar reach profile admission alone. The regression explicitly
+observes that erroneous admission call before the fix. Moving only the append
+after the unchanged actual-runtime/lock guard restores the original finite
+EvidenceIncomplete prerequisite; no missing runtime is replaced by a metadata
+hash. `PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_sdk_checks -q`
+then passes156 tests in27.122 seconds; catalog/SDK consistency and diff checks
+pass. The exact1f69eaf native control is not relabeled as this later source.
+
+README/DEVELOPMENT reflect the boundary. Other guides/examples/contracts/
+product/provider/architecture/ADR/diagrams/governance/IaC/release/UI artifacts
+are unaffected by this prerequisite-order correction; the private SDK sidecar
+changes no public contract or operator command. Generated-native mutation
+coverage, final strict evaluation and T068..T086 remain outstanding, with
+implement/running and reviewer-owned checklist state preserved.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -810,7 +810,11 @@ historical builds and uses explicit MSBuild for historical/candidate builds and
 inspection resolution. Category VSTest also pins the selected SDK runner closure,
 uses explicit runtime selection, and rechecks those bytes after failed children.
 This does not whitelist SDK notices or repair workloads;
-fresh native report generation and independent origin evaluation remain required.
+fresh exact1f69eaf Linux generation produces102 cases/141 witnesses with93
+Passed, nine catalog exclusions and no Failed/Incomplete cases. Its owner
+genuinely releases, and structural inspection also passes after bounded packet
+retention. The report remains incomplete diagnostic evidence, not final
+independent origin evaluation, verification/aggregation or qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -2561,9 +2561,9 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     prefix = candidate.relative_to(run.root).as_posix()
     locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime = [f"{prefix}/{name}" for name in inventory if runtime_input(name)]
-    runtime.append("proofs/sdk-vstest-inputs.json")
     if not runtime or not locks:
         raise evidence.ConformanceError("EvidenceIncomplete")
+    runtime.append("proofs/sdk-vstest-inputs.json")
     inputs = evidence.capture_profile_inputs(
         run, repository, candidate, profile_id=profile_id, mode=mode,
         invocation_group_id=str(uuid.uuid4()) if group_id is None else group_id,

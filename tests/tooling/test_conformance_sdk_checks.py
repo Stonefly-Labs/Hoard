@@ -6019,6 +6019,18 @@ class SdkDiagnosticTests(unittest.TestCase):
             output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
             checks.evidence.proof_manifest(candidate)
+        inventory = checks.evidence.proof_manifest
+        def locks_only(path, **options):
+            files = inventory(path, **options)
+            if path != candidate:
+                return files
+            return {name: hashed for name, hashed in files.items() if name.endswith("packages.lock.json")}
+        with patch.object(checks.evidence, "proof_manifest", side_effect=locks_only), patch.object(
+                checks.evidence, "capture_profile_inputs",
+                side_effect=AssertionError("Compiled runtime must be required before admission.")) as admit:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete"):
+                capture()
+        admit.assert_not_called()
         before = capture()
         for profile in ("metadata", "artifacts"):
             category_inputs = capture(profile_id=profile)
