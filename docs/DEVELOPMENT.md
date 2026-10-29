@@ -7270,8 +7270,28 @@ No notice whitelist, warning suppression, profile pass or SDK repair is claimed.
 The probe genuinely releases; failed category ledgers remain failed/Settling,
 not relabeled Released. Safe packets are retained before exact stopped
 container/volume removal and independent volume absence checks. The default
-historical restore/build path still needs the selected explicit SDK backend;
-the contributor-specific MSBuild/VSTest routes do not establish that repair.
+historical restore/build path in that attempt predates the shared selected-SDK
+correction below; contributor-specific MSBuild/VSTest success alone does not
+establish successful default report generation.
+
+Default category execution now captures an owned build-environment observation
+before baseline preparation. It selects the measured SDK's `MSBuild.dll` and
+measured runtime explicitly, without fallback to another installed SDK. Shared
+command construction preserves locked restore, private caches/feeds, disabled
+compiler servers, release build and no-build packing. Historical preparation,
+candidate/nested builds and copied compatibility controls receive that prefix.
+Owned inspection workers read the retained measured build environment rather
+than invoke the ambient SDK frontend; subsequent runtime admission rejects a
+changed SDK/runtime. Explicit lock-update preparation retains its separate
+force-evaluation behavior; it never replaces failed locked replay.
+
+Three focused controls first fail before implementation. The final SDK suite
+passes155 tests in27.151 seconds, the joined SDK/legacy/contributor/composition
+regressions pass333 tests in335.377 seconds with four explicit skips, and all17
+baseline source/lock/retained-binary controls pass in0.321 seconds. This is a
+tooling backend correction, not an SDK workload repair, successful native
+category report, runtime-origin attestation or qualification. Fresh isolated
+native generation, final evaluation and T068..T086 remain outstanding.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/

@@ -28,6 +28,83 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_historical_and_candidate_builds_use_the_same_explicit_sdk_backend(self):
+        project = self.directory / "Provider.csproj"
+        config, feed = self.directory / "NuGet.Config", self.directory / "feed"
+        feed.mkdir()
+        prefix = ("dotnet", "exec", "--fx-version", "10.0.8", "/selected/sdk/10.0.204/MSBuild.dll")
+        commands = []
+        with patch.object(checks.baselines, "_command", side_effect=lambda run, argv, **kwargs: (
+                commands.append(argv))), patch.object(checks, "canonicalize_acceptance_archive"):
+            checks.baselines._build(
+                None, project, config, "historical", pack=True, feed=feed, msbuild=prefix)
+            checks.build(None, project, config, "candidate", feed=feed, msbuild=prefix)
+        self.assertEqual(len(commands), 6)
+        self.assertEqual(commands[:3], commands[3:])
+        for command, target in zip(commands[:3], ("Restore", "Build", "Pack")):
+            self.assertEqual(command[:len(prefix)], list(prefix))
+            self.assertIn("-target:" + target, command)
+            self.assertIn("-p:UseSharedCompilation=false", command)
+            self.assertIn("-nodeReuse:false", command)
+        self.assertIn("-p:RestoreLockedMode=true", commands[0])
+        self.assertIn("-p:RestoreConfigFile=" + str(config), commands[0])
+        self.assertIn("-p:NoBuild=true", commands[2])
+        self.assertIn("-p:PackageOutputPath=" + str(feed), commands[2])
+
+    def test_selected_msbuild_uses_measured_sdk_and_runtime_without_fallback(self):
+        root = self.directory / "dotnet"
+        selected = root / "sdk/10.0.204/MSBuild.dll"
+        selected.parent.mkdir(parents=True)
+        selected.write_bytes(b"selected SDK image")
+        observed = {**ENVIRONMENT, "sdk": "10.0.204", "runtime": "10.0.8"}
+        with patch.object(checks, "inspection_reference_roots", return_value={
+                "Microsoft.NETCore.App": root / "packs/Microsoft.NETCore.App.Ref"}):
+            self.assertEqual(checks.selected_msbuild(observed), (
+                "dotnet", "exec", "--fx-version", "10.0.8", str(selected)))
+            selected.unlink()
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                checks.selected_msbuild(observed)
+
+    def test_default_preparation_measures_and_selects_build_sdk_before_historical_builds(self):
+        run = SimpleNamespace(
+            root=self.directory, deadline=float("inf"), state="Settling", live_children=lambda: ())
+        prefix = ("dotnet", "exec", "--fx-version", "10.0.8", "/selected/sdk/10.0.204/MSBuild.dll")
+        order = []
+        def prepare(*args, **kwargs):
+            order.append(("prepare", kwargs))
+            raise checks.evidence.ConformanceError("InputChanged")
+        with patch.object(checks, "native_execution_supported", return_value=True), patch.object(
+                checks.OwnedRun, "allocate", return_value=run), patch.object(
+                checks, "environment", side_effect=lambda *args, **kwargs: (
+                    order.append("environment") or ENVIRONMENT)) as observe, patch.object(
+                checks, "selected_msbuild", side_effect=lambda observed: (
+                    order.append("selection") or prefix)), patch.object(
+                checks.baselines, "prepare", side_effect=prepare), (
+                contextlib.redirect_stdout(io.StringIO())):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.execute(ROOT, self.directory / "destination", category="metadata")
+        self.assertEqual(order, [
+            "environment", "selection", ("prepare", {"prepare_local_archives": True, "msbuild": prefix})])
+        observe.assert_called_once_with(run, scope="build")
+
+    def test_inspection_resolution_uses_the_retained_measured_build_environment(self):
+        project = self.directory / "Actual.csproj"
+        project.write_text("<Project/>")
+        observed = self.directory / "build-environment.json"
+        observed.write_bytes(checks.evidence.canonical_bytes(ENVIRONMENT))
+        raw = {
+            "Properties": {"TargetPath": str(self.directory / "Actual.dll"),
+                           "ProjectAssetsFile": str(self.directory / "assets.json")},
+            "Items": {"ReferencePath": [{"Identity": str(self.directory / "Reference.dll")}], "Compile": []}}
+        prefix = ("dotnet", "exec", "--fx-version", "10.0.7", "/selected/sdk/10.0.203/MSBuild.dll")
+        with patch.object(checks, "selected_msbuild", return_value=prefix) as select, patch.object(
+                checks, "capture_control", return_value=(0, checks.evidence.canonical_bytes(raw))) as capture:
+            checks.probe_inspection_project(
+                project, self.directory / "resolution.json", build_environment=observed)
+        select.assert_called_once_with(ENVIRONMENT)
+        self.assertEqual(capture.call_args.args[0][:len(prefix)], list(prefix))
+        self.assertIn("-target:ResolveReferences", capture.call_args.args[0])
+
     def test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting(self):
         finish = getattr(checks, "_execute_selected_category", None)
         self.assertTrue(callable(finish), "Selected categories need their own bounded native execution path.")
@@ -1614,14 +1691,16 @@ class SdkDiagnosticTests(unittest.TestCase):
             return project.parent / "obj/selected.packages.lock.json", receipt
         with patch.object(checks, "prepare_project_lock", side_effect=prepare), \
                 patch.object(checks, "build") as build, patch.object(checks, "verify_project_lock") as verify:
-            observed = checks.build_inspection_projects(SimpleNamespace(root=self.directory), candidate, config, feed)
+            observed = checks.build_inspection_projects(
+                SimpleNamespace(root=self.directory), candidate, config, feed, msbuild=("selected-msbuild",))
         self.assertEqual(observed, tuple(receipts))
         self.assertEqual({row["project"] for row in observed}, {
             "src/Hoard.Application/Hoard.Application.csproj",
             *(f"tests/fixtures/{family}/{name}/{name}.csproj"
               for family in ("metadata", "artifacts") for name in ("Consumer", "BoundaryLeak"))})
         for call in build.call_args_list:
-            self.assertEqual(call.kwargs, {"lock": call.args[1].parent / "obj/selected.packages.lock.json"})
+            self.assertEqual(call.kwargs, {
+                "lock": call.args[1].parent / "obj/selected.packages.lock.json", "msbuild": ("selected-msbuild",)})
             self.assertEqual(call.args[2], config)
         self.assertEqual(verify.call_count, len(observed))
         self.assertEqual({json.loads(path.read_bytes())["project"] for path in
@@ -1779,7 +1858,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 project.parent.mkdir(parents=True)
                 project.write_text("<Project/>")
         calls = []
-        def resolve(run, project):
+        def resolve(run, project, *, build_environment=None):
             calls.append(project)
             return {"Properties": {
                 "TargetPath": str(project.parent / (project.stem + ".Actual.dll")),
@@ -5654,7 +5733,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run.transition = lambda state: setattr(run, "state", state)
 
         def prepare(*args, **kwargs):
-            self.assertEqual(kwargs, {"prepare_local_archives": True})
+            self.assertEqual(kwargs, {"prepare_local_archives": True, "msbuild": ("selected-msbuild",)})
             self.assertTrue((run.root / "cache/.local/share").is_dir())
             self.assertEqual((run.root / "cache/.local").stat().st_mode & 0o777, 0o700)
             calls.append("prepare")
@@ -5671,6 +5750,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()) as output, \
                 patch.object(checks, "native_execution_supported", return_value=True), \
                 patch.object(checks.OwnedRun, "allocate", return_value=run), \
+                patch.object(checks, "environment", return_value=ENVIRONMENT), \
+                patch.object(checks, "selected_msbuild", return_value=("selected-msbuild",)), \
                 patch.object(checks.baselines, "prepare", side_effect=prepare), \
                 patch.object(checks.baselines, "verify_prepared_baselines", side_effect=verify), \
                 patch.object(checks, "snapshot", side_effect=snapshot), \
@@ -5692,6 +5773,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()) as output, \
                 patch.object(checks, "native_execution_supported", return_value=True), \
                 patch.object(checks.OwnedRun, "allocate", return_value=run), \
+                patch.object(checks, "environment", return_value=ENVIRONMENT), \
+                patch.object(checks, "selected_msbuild", return_value=("selected-msbuild",)), \
                 patch.object(checks.baselines, "prepare", return_value=seal), \
                 patch.object(checks.baselines, "verify_prepared_baselines",
                              side_effect=checks.evidence.ConformanceError("InputChanged")), \
@@ -6237,18 +6320,29 @@ class SdkDiagnosticTests(unittest.TestCase):
     def test_failed_locked_restore_never_switches_to_dependency_resolution_or_build(self):
         import conformance_prepare as preparation
         project = preparation.Project("tests/fixtures/conformance/Consumer/Consumer.csproj")
-        calls = []
-        def fail(run, args, **kwargs):
-            calls.append(args)
-            raise checks.evidence.ConformanceError("CommandFailed")
-        with patch.object(preparation.baselines, "_command", side_effect=fail):
-            with self.assertRaisesRegex(checks.evidence.ConformanceError, "CommandFailed"):
-                preparation.build_project(
-                    object(), self.directory, project, self.directory / "NuGet.Config",
-                    self.directory / "feed", update=False)
-        self.assertEqual(len(calls), 1)
-        self.assertIn("--locked-mode", calls[0])
-        self.assertNotIn("--force-evaluate", calls[0])
+        prefix = ("dotnet", "exec", "--fx-version", "10.0.7", "/selected/sdk/10.0.203/MSBuild.dll")
+        for msbuild in (None, prefix):
+            for update in (False, True):
+                with self.subTest(msbuild=msbuild, update=update):
+                    calls = []
+                    def fail(run, args, **kwargs):
+                        calls.append(args)
+                        raise checks.evidence.ConformanceError("CommandFailed")
+                    with patch.object(preparation.baselines, "_command", side_effect=fail):
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "CommandFailed"):
+                            preparation.build_project(
+                                object(), self.directory, project, self.directory / "NuGet.Config",
+                                self.directory / "feed", update=update, msbuild=msbuild)
+                    self.assertEqual(len(calls), 1)
+                    if msbuild is None:
+                        self.assertIn("--force-evaluate" if update else "--locked-mode", calls[0])
+                        self.assertNotIn("--locked-mode" if update else "--force-evaluate", calls[0])
+                    else:
+                        self.assertEqual(calls[0][:len(prefix)], list(prefix))
+                        self.assertIn("-p:RestoreForceEvaluate=true" if update else "-p:RestoreLockedMode=true",
+                                      calls[0])
+                        self.assertNotIn("-p:RestoreLockedMode=true" if update else "-p:RestoreForceEvaluate=true",
+                                         calls[0])
 
     def test_lock_publication_rejects_concurrent_source_changes_and_foreign_paths(self):
         import conformance_prepare as preparation

@@ -133,7 +133,7 @@ def _source_recipe_packages(project, feed, *, baseline=False):
     return packages, hashlib.sha256(assets_raw).hexdigest()
 
 
-def execute_source_recipes(repository, run, candidate, candidate_sources, baseline_sha256):
+def execute_source_recipes(repository, run, candidate, candidate_sources, baseline_sha256, *, msbuild=None):
     """Compile copied source inputs; never rebuild or modify sealed retained binaries."""
     candidate = Path(candidate)
     no_symlinks(candidate)
@@ -179,7 +179,7 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
         properties = ("-p:ManagePackageVersionsCentrally=false",) if explicit else ()
         baseline_lock = not (project.parent / "packages.lock.json").is_file()
         _build(run, project, config, "candidate", source_root=copied, preparations=preparations,
-               properties=properties, baseline=baseline_lock)
+               properties=properties, baseline=baseline_lock, msbuild=msbuild)
         verify_snapshot(copied, manifest)
         verify_snapshot(feed, feed_hashes)
         for preparation in preparations:
@@ -213,7 +213,7 @@ def verify_source_break_result(result):
         raise ConformanceError("ProofMismatch")
 
 
-def execute_source_break(run, candidate, candidate_sources, config, baseline_sha256):
+def execute_source_break(run, candidate, candidate_sources, config, baseline_sha256, *, msbuild=None):
     """Challenge the unchanged historical implementer, then repair only its contract."""
     from conformance_sources import read_bounded
     verify_snapshot(candidate, candidate_sources)
@@ -226,7 +226,7 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
     _copy_recipe_sources(run.root / "stores/f06", copied, historical["sources"])
     fixture = copied / controls["source"]["fixture"]
     for variant in ("Old", "New"):
-        _build(run, fixture / variant / "RequiredContract.csproj", config, "compatibility-source")
+        _build(run, fixture / variant / "RequiredContract.csproj", config, "compatibility-source", msbuild=msbuild)
     contracts = {variant: fixture / variant / "bin/Release/net10.0/RequiredContract.dll"
                  for variant in ("Old", "New")}
     for contract in contracts.values():
@@ -238,7 +238,7 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
     project = fixture / "Consumer/RequiredConsumer.csproj"
     original = historical["sources"][project.with_name("Provider.cs").relative_to(copied).as_posix()]
     _build(run, project, config, "compatibility-source",
-           properties=("-p:ContractAssembly=" + str(contracts["Old"]),))
+           properties=("-p:ContractAssembly=" + str(contracts["Old"]),), msbuild=msbuild)
     output = project.parent / "bin/Release/net10.0/RequiredConsumer.dll"
     baseline_output = file_sha256(output)
     manifest_path = "proofs/compatibility-source-break-inputs.json"
@@ -246,9 +246,8 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
     with (run.root / manifest_path).open("xb") as destination:
         destination.write(canonical_bytes(manifest))
     (run.root / manifest_path).chmod(0o400)
-    arguments = ["dotnet", "build", str(project), "-c", "Release", "--no-restore",
-                 "-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet",
-                 "-p:ContractAssembly=" + str(contracts["New"])]
+    _, arguments, _ = project_build_commands(
+        project, config, properties=("-p:ContractAssembly=" + str(contracts["New"]),), msbuild=msbuild)
     result = run.command(
         arguments, cwd=project.parent, cache_id="compatibility-source", kind="compatibility-source",
         env={"DOTNET_ROLL_FORWARD": "Disable"}, record_execution=True,
@@ -407,12 +406,12 @@ def verify_retained_observation(raw, request, expected_sha256):
     return observed
 
 
-def execute_retained_consumers(run, candidate, candidate_sources, config, baseline_sha256):
+def execute_retained_consumers(run, candidate, candidate_sources, config, baseline_sha256, *, msbuild=None):
     from conformance_sources import read_bounded
     if type(run) is not OwnedRun or run.state != "Active":
         raise ConformanceError("OwnershipInvalid")
     verify_snapshot(candidate, candidate_sources)
-    _build(run, candidate / OBSERVER_PROJECT, config, "compatibility-observer")
+    _build(run, candidate / OBSERVER_PROJECT, config, "compatibility-observer", msbuild=msbuild)
     verify_snapshot(candidate, candidate_sources)
     observer = (candidate / OBSERVER_PROJECT).parent / (
         "bin/Release/net10.0/Hoard.Conformance.Compatibility.Observer.dll")
@@ -552,8 +551,31 @@ def _config(run, name):
     return config, feed
 
 
+def project_build_commands(project, config, *, feed=None, lock=None, properties=(), msbuild=None, update_lock=False):
+    if msbuild is None:
+        common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet", *properties]
+        if lock is not None:
+            common.append("-p:NuGetLockFilePath=" + str(lock))
+        restore = ["dotnet", "restore", str(project), "--force-evaluate" if update_lock else "--locked-mode",
+                   "--configfile", str(config), *common]
+        compile_command = ["dotnet", "build", str(project), "-c", "Release", "--no-restore", *common]
+        pack = ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
+                "--no-restore", "-o", str(feed), *common]
+    else:
+        common = ["-nologo", "-p:UseSharedCompilation=false", "-nodeReuse:false", "-verbosity:quiet", *properties]
+        if lock is not None:
+            common.append("-p:NuGetLockFilePath=" + str(lock))
+        restore = [*msbuild, str(project), "-target:Restore",
+                   "-p:RestoreForceEvaluate=true" if update_lock else "-p:RestoreLockedMode=true",
+                   "-p:RestoreConfigFile=" + str(config), *common]
+        compile_command = [*msbuild, str(project), "-target:Build", "-p:Configuration=Release", *common]
+        pack = [*msbuild, str(project), "-target:Pack", "-p:Configuration=Release",
+                "-p:NoBuild=true", "-p:PackageOutputPath=" + str(feed), *common]
+    return restore, compile_command, pack
+
+
 def _build(run, project, config, name, *, pack=False, feed=None, source_root=None, preparations=None,
-           properties=(), baseline=False):
+           properties=(), baseline=False, msbuild=None):
     lock_args = []
     if preparations is not None:
         alternate, record = prepare_project_lock(project, source_root, run.root / "feed" / name, name,
@@ -563,21 +585,17 @@ def _build(run, project, config, name, *, pack=False, feed=None, source_root=Non
             lock_args = [f"-p:NuGetLockFilePath={alternate}"]
         elif baseline:
             lock_args = [f"-p:NuGetLockFilePath={project.parent / 'Baseline/packages.lock.json'}"]
-    _command(run, ["dotnet", "restore", str(project), "--locked-mode",
-                   "--configfile", str(config), "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                   "-v", "quiet", *lock_args, *properties], cwd=project.parent, cache_id=name)
-    _command(run, ["dotnet", "build", str(project), "-c", "Release",
-                   "--no-restore", "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                   "-v", "quiet", *lock_args, *properties], cwd=project.parent, cache_id=name)
+    restore, compile_command, pack_command = project_build_commands(
+        project, config, feed=feed, properties=(*lock_args, *properties), msbuild=msbuild)
+    _command(run, restore, cwd=project.parent, cache_id=name)
+    _command(run, compile_command, cwd=project.parent, cache_id=name)
     if pack:
-        _command(run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
-                       "--no-restore", "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                       "-o", str(feed), "-v", "quiet", *lock_args, *properties], cwd=project.parent, cache_id=name)
+        _command(run, pack_command, cwd=project.parent, cache_id=name)
         for package in feed.glob("*.nupkg"):
             canonicalize_acceptance_archive(package)
 
 
-def prepare(repository, run, *, prepare_local_archives=False):
+def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):
     frozen = export_revision(repository, run, BASELINE, "f06")
     specs = (*BASELINES, ("f06", BASELINE, None, None))
     entries = []
@@ -589,7 +607,7 @@ def prepare(repository, run, *, prepare_local_archives=False):
 
         def build(project, configuration, cache_id, *, pack=False, feed=None):
             _build(run, project, configuration, cache_id, pack=pack, feed=feed,
-                   source_root=source, preparations=preparations)
+                   source_root=source, preparations=preparations, msbuild=msbuild)
 
         for package in ("Abstractions", "Core", "Hosting", "Application"):
             project = source / f"src/Hoard.{package}/Hoard.{package}.csproj"

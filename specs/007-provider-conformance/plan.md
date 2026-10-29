@@ -2416,6 +2416,53 @@ are unaffected: these test controls change no product/provider contract,
 operator command, support scope, package graph or deployment. T068..T086,
 implement/running and reviewer-owned checklist state remain unchanged.
 
+### Measured default historical/candidate SDK backend
+
+The preserved first historical restore failure at117b0b2 is addressed in code,
+not by admitting its workload-integrity notice. Default SDK/category execution
+now captures an actual owned build-environment observation before historical
+preparation and selects its measured SDK image/runtime explicitly. Missing
+selected images fail PrerequisiteMissing rather than choosing an installed
+fallback or hardcoding the requested global.json version.
+
+Historical and candidate builds share one command constructor. Locked restore,
+private NuGet configuration/cache/feed, disabled compilation servers, release
+builds, no-build packing, lock overrides and archive canonicalization remain.
+The selected explicit prefix propagates through historical preparation,
+candidate/runtime/inspection builds and copied source/retained compatibility
+controls. Version-host lock preparation uses the same constructor; explicit
+lock-update mode keeps its separately requested force-evaluation semantics.
+Owned inspection workers read the retained measured build-environment packet
+and resolve references through that SDK/runtime, not ambient `dotnet msbuild`.
+Runtime input admission rejects SDK/runtime changes after preparation.
+No wrapper/PATH mutation, SDK repair, warning whitelist/suppression, budget
+relaxation or provider-result change is introduced.
+
+Three new focused controls first fail against the previous backend. Four
+focused controls now cover matching historical/candidate commands, selection of
+measured rather than requested versions, missing-image rejection, actual
+preparation ordering and inspection-worker selection. Existing lock-failure
+controls cover locked/update modes through both frontends without build/retry
+after a failed restore. Exact final checks:
+
+- `PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_sdk_checks -q`:
+ 155 passed in27.151 seconds.
+- `PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_sdk_checks test_conformance_legacy test_conformance_contributors test_conformance_composition -q`:
+ 333 passed in335.377 seconds, four explicit skips. The final SDK-only replay
+ additionally covers the last inspection-selector/lock-mode test adjustments.
+- `PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence.ConformanceBaselineTests -q`:
+ 17 passed in0.321 seconds.
+
+These are backend/unit regressions, not a generated-good runtime control.
+Fresh native generation at the corrected exact source and independent
+runtime-origin mutation/evaluation remain required. Previous failed native
+attempts are preserved, not retried away or relabeled successful. T068..T086,
+implement/running and reviewer-owned checklist state remain unchanged. This
+tooling-only correction changes no product/provider contract, reference graph,
+operator command, support matrix, infrastructure or release policy; other
+guides/examples/architecture/ADR/diagrams/governance remain unaffected. The
+separate final T081 architecture review is still required.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

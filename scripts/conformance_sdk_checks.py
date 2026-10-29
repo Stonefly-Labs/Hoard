@@ -664,23 +664,8 @@ def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()
         identity = evidence.stable_id(project.stem if package_id is None else package_id)
         version = evidence.stable_id(package_version)
         archive = feed / f"{identity}.{version}.nupkg"
-    common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet", *properties]
-    if lock is not None:
-        common.append("-p:NuGetLockFilePath=" + str(lock))
-    if msbuild is None:
-        restore = ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config), *common]
-        compile_command = ["dotnet", "build", str(project), "-c", "Release", "--no-restore", *common]
-        pack = ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
-                "--no-restore", "-o", str(feed), *common]
-    else:
-        common = ["-nologo", "-p:UseSharedCompilation=false", "-nodeReuse:false", "-verbosity:quiet", *properties]
-        if lock is not None:
-            common.append("-p:NuGetLockFilePath=" + str(lock))
-        restore = [*msbuild, str(project), "-target:Restore", "-p:RestoreLockedMode=true",
-                   "-p:RestoreConfigFile=" + str(config), *common]
-        compile_command = [*msbuild, str(project), "-target:Build", "-p:Configuration=Release", *common]
-        pack = [*msbuild, str(project), "-target:Pack", "-p:Configuration=Release",
-                "-p:NoBuild=true", "-p:PackageOutputPath=" + str(feed), *common]
+    restore, compile_command, pack = baselines.project_build_commands(
+        project, config, feed=feed, lock=lock, properties=properties, msbuild=msbuild)
     baselines._command(
         run, restore,
         cwd=project.parent, cache_id=cache_id)
@@ -753,9 +738,9 @@ def _original_wrapper_runtime(candidate, feed, project, output_folder, packages)
     verify_runtime_packages(output, feed, (*packages, logger))
 
 
-def build_inspection_runtime(run, candidate, config, feed):
+def build_inspection_runtime(run, candidate, config, feed, *, msbuild=None):
     project = candidate / ARCHITECTURE_TESTS / "Hoard.Architecture.Tests.csproj"
-    build(run, project, config, "inspection-build")
+    build(run, project, config, "inspection-build", msbuild=msbuild)
     output = project.parent / "bin/Release/net10.0"
     for folder, name in ((LOGGER, "Hoard.Conformance.TestLogger"), (SDK, "Hoard.Testing.Conformance"),
                          ("src/Hoard.Abstractions", "Hoard.Abstractions")):
@@ -773,12 +758,12 @@ def artifact_wrapper_runtime(candidate, feed):
     _original_wrapper_runtime(candidate, feed, ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, ARTIFACT_PACKAGES)
 
 
-def build_artifact_assertion_consumer(run, candidate, config, feed):
+def build_artifact_assertion_consumer(run, candidate, config, feed, *, msbuild=None):
     for name in ("Local", "ObjectSemantics"):
         project = candidate / f"tests/fixtures/conformance/Bindings/{name}/{name}.csproj"
         lock, record = prepare_project_lock(project, candidate, feed, "candidate")
         build(run, project, config, "artifact-binding-package", lock=lock, feed=feed,
-              package_id="Hoard.Fixtures.Conformance.Bindings." + name)
+              package_id="Hoard.Fixtures.Conformance.Bindings." + name, msbuild=msbuild)
         if record is not None:
             verify_project_lock(record, candidate, feed)
             write_new(run.root / f"proofs/artifact-binding-{name}-lock-derivation.json",
@@ -786,13 +771,13 @@ def build_artifact_assertion_consumer(run, candidate, config, feed):
     project = candidate / "tests/fixtures/conformance/Contributor/Contributor.csproj"
     lock, record = prepare_project_lock(project, candidate, feed, "candidate")
     build(run, project, config, "contributor-binding-package", lock=lock, feed=feed,
-          package_id="Hoard.Fixtures.Conformance.Contributor")
+          package_id="Hoard.Fixtures.Conformance.Contributor", msbuild=msbuild)
     if record is not None:
         verify_project_lock(record, candidate, feed)
         write_new(run.root / "proofs/contributor-binding-lock-derivation.json", evidence.canonical_bytes(record))
     project = candidate / ARTIFACT_CONSUMER / "Consumer.csproj"
     lock, record = prepare_project_lock(project, candidate, feed, "candidate")
-    build(run, project, config, "artifact-consumer-locked-replay", lock=lock,
+    build(run, project, config, "artifact-consumer-locked-replay", lock=lock, msbuild=msbuild,
           properties=("-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/", "-p:ConformanceCategoryMutations=true"))
     if record is not None:
         verify_project_lock(record, candidate, feed)
@@ -2197,12 +2182,14 @@ def _inspection_resolution(value, project):
         "Items": {"ReferencePath": selected, "Compile": compiled}}
 
 
-def probe_inspection_project(project, output):
+def probe_inspection_project(project, output, *, build_environment=None):
     project = Path(_inspection_path(str(project)))
     no_symlinks(project)
     before = hashlib.sha256(read_bounded(project, 1024 * 1024)).hexdigest()
+    prefix = ("dotnet", "msbuild") if build_environment is None else selected_msbuild(
+        evidence.load_json(read_bounded(build_environment, 64 * 1024)))
     code, raw = capture_control([
-        "dotnet", "msbuild", str(project), "-target:ResolveReferences", "-property:Configuration=Release",
+        *prefix, str(project), "-target:ResolveReferences", "-property:Configuration=Release",
         "-getProperty:TargetPath,ProjectAssetsFile", "-getItem:ReferencePath,Compile",
         "-property:UseSharedCompilation=false", "-nodeReuse:false", "-verbosity:quiet"],
         limit=1024 * 1024, timeout=110)
@@ -2218,16 +2205,23 @@ def probe_inspection_project(project, output):
         "schemaVersion": 1, "project": str(project), "projectSha256": before, **selected}))
 
 
-def resolve_inspection_project(run, project):
+def resolve_inspection_project(run, project, *, build_environment=None):
     project = Path(_inspection_path(str(project)))
     if not project.is_relative_to(run.root) or project.suffix != ".csproj":
         raise evidence.ConformanceError("OwnershipInvalid")
     no_symlinks(project)
     before = hashlib.sha256(read_bounded(project, 1024 * 1024)).hexdigest()
     output = run.root / "stores" / ("inspection-resolution-" + str(uuid.uuid4()) + ".json")
-    result = run.command([
+    arguments = [
         sys.executable, str(Path(__file__).resolve()), "--inspection-project", str(project),
-        "--inspection-output", str(output)],
+        "--inspection-output", str(output)]
+    if build_environment is not None:
+        build_environment = Path(_inspection_path(str(build_environment)))
+        if not build_environment.is_relative_to(run.root):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        no_symlinks(build_environment)
+        arguments.extend(("--inspection-build-environment", str(build_environment)))
+    result = run.command(arguments,
         cwd=Path(__file__).resolve().parents[1], kind="build", timeout=120)
     if result.exit_code or result.events:
         raise evidence.ConformanceError("EvidenceIncomplete")
@@ -2243,7 +2237,7 @@ def resolve_inspection_project(run, project):
     return selected
 
 
-def prepared_inspection_graphs(run, candidate, category):
+def prepared_inspection_graphs(run, candidate, category, *, build_environment=None):
     candidate = Path(_inspection_path(str(candidate)))
     if not candidate.is_relative_to(run.root) or category not in ("metadata", "artifacts"):
         raise evidence.ConformanceError("OwnershipInvalid")
@@ -2254,7 +2248,7 @@ def prepared_inspection_graphs(run, candidate, category):
         if not project.is_relative_to(candidate):
             raise evidence.ConformanceError("OwnershipInvalid")
         if project not in resolved:
-            resolved[project] = resolve_inspection_project(run, project)
+            resolved[project] = resolve_inspection_project(run, project, build_environment=build_environment)
         return resolved[project]
     graphs = []
     for scan, roots in projects:
@@ -2264,7 +2258,7 @@ def prepared_inspection_graphs(run, candidate, category):
     return graphs
 
 
-def build_inspection_projects(run, candidate, config, feed):
+def build_inspection_projects(run, candidate, config, feed, *, msbuild=None):
     projects = [("application", candidate / "src/Hoard.Application/Hoard.Application.csproj")]
     projects.extend(
         (family + "-" + name, candidate / f"tests/fixtures/{family}/{name}/{name}.csproj")
@@ -2272,7 +2266,7 @@ def build_inspection_projects(run, candidate, config, feed):
     receipts = []
     for name, project in projects:
         lock, receipt = prepare_project_lock(project, candidate, feed, "candidate")
-        build(run, project, config, "inspection-build", lock=lock)
+        build(run, project, config, "inspection-build", lock=lock, msbuild=msbuild)
         if receipt is not None:
             verify_project_lock(receipt, candidate, feed)
             write_new(run.root / f"proofs/inspection-{name}-lock-derivation.json", evidence.canonical_bytes(receipt))
@@ -2306,7 +2300,7 @@ def stage_metadata_binary_runtime(run, candidate, seal_sha):
     return destination
 
 
-def prepare_inspection_configurations(run, candidate, seal_sha):
+def prepare_inspection_configurations(run, candidate, seal_sha, *, build_environment=None):
     sealed = baselines.verify_prepared_baselines(run.root, seal_sha)
     relative = "src/Hoard.Abstractions/bin/Release/net10.0/Hoard.Abstractions.dll"
     configurations = {}
@@ -2318,7 +2312,7 @@ def prepare_inspection_configurations(run, candidate, seal_sha):
             raise evidence.ConformanceError("InputChanged")
         configuration = run.root / "stores" / (category + "-inspection-boundaries.json")
         write_new(configuration, evidence.canonical_bytes({
-            "graphs": prepared_inspection_graphs(run, candidate, category),
+            "graphs": prepared_inspection_graphs(run, candidate, category, build_environment=build_environment),
             "baselineAbstractions": str(image), "currentAbstractions": str(candidate / relative)}))
         configurations[category] = configuration
     return MappingProxyType(configurations)
@@ -2343,6 +2337,16 @@ def inspection_reference_roots():
     except OSError:
         raise evidence.ConformanceError("PrerequisiteMissing") from None
     return MappingProxyType(roots)
+
+
+def selected_msbuild(observed_environment):
+    observed = evidence.admit_entity("Environment", observed_environment)
+    root = inspection_reference_roots()["Microsoft.NETCore.App"].parents[1]
+    image = root / "sdk" / observed["sdk"] / "MSBuild.dll"
+    no_symlinks(image)
+    if not image.is_file():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    return ("dotnet", "exec", "--fx-version", observed["runtime"], str(image))
 
 
 def collect_inspection_inputs(run, configurations):
@@ -3997,20 +4001,21 @@ def compatibility_runtime_paths(run, runtime):
     return paths
 
 
-def execute_version_runtime(run, repository, candidate, sources, config, feed, seal_sha, *, ci_revision=None):
+def execute_version_runtime(run, repository, candidate, sources, config, feed, seal_sha, *,
+                            ci_revision=None, msbuild=None):
     from conformance_case_catalog import version_runtime_tests
     from conformance_prepare import Project, build_project
 
     record = build_project(
         run, candidate, Project("tests/fixtures/conformance/Host/Host.csproj", "Hoard.Fixtures.Conformance.Host"),
-        config, feed, update=False, historical_lock=True)
+        config, feed, update=False, historical_lock=True, msbuild=msbuild)
     if record is not None:
         write_new(run.root / "proofs/version-host-lock-derivation.json", evidence.canonical_bytes(record))
     lock, receipt = prepare_package_consumer_lock(candidate, feed, project=VERSION_TESTS,
                                                   local_packages=VERSION_PACKAGES)
     write_new(run.root / "proofs/version-consumer-lock-derivation.json", evidence.canonical_bytes(receipt))
     build(run, candidate / VERSION_TESTS / "Hoard.Composition.Tests.csproj", config,
-          "version-consumer-locked-replay", lock=lock, properties=(
+          "version-consumer-locked-replay", lock=lock, msbuild=msbuild, properties=(
               "-p:ConformancePackageAcceptance=true", "-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/"))
     verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
     _original_wrapper_runtime(candidate, feed, VERSION_TESTS, PACKAGE_TEST_OUTPUT, VERSION_PACKAGES)
@@ -4217,8 +4222,10 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         home.mkdir(exist_ok=True, mode=0o700)
         (home / ".local").mkdir(mode=0o700)
         (home / ".local/share").mkdir(mode=0o700)
+        build_environment = environment(run, scope="build")
+        msbuild = selected_msbuild(build_environment)
         print(json.dumps({"qualification": False, "phase": "baseline-preparation"}), flush=True)
-        seal = baselines.prepare(repository, run, prepare_local_archives=True)
+        seal = baselines.prepare(repository, run, prepare_local_archives=True, msbuild=msbuild)
         seal_sha = evidence.file_sha256(seal)
         baselines.verify_prepared_baselines(run.root, seal_sha)
         ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
@@ -4233,43 +4240,44 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             (LOGGER, "Hoard.Conformance.TestLogger"),
             ("src/Hoard.Core", "Hoard.Core"), ("src/Hoard.Hosting", "Hoard.Hosting"),
         ):
-            build(run, candidate / folder / f"{project_name}.csproj", config, "candidate-build", feed=feed)
-        build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config, "candidate-build")
-        build_inspection_runtime(run, candidate, config, feed)
+            build(run, candidate / folder / f"{project_name}.csproj", config, "candidate-build",
+                  feed=feed, msbuild=msbuild)
+        build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config, "candidate-build", msbuild=msbuild)
+        build_inspection_runtime(run, candidate, config, feed, msbuild=msbuild)
         memory_lock, memory_record = prepare_project_lock(candidate / MEMORY, candidate, feed, "candidate")
         build(run, candidate / MEMORY, config, "memory-package", lock=memory_lock, feed=feed,
-              package_id="Hoard.Fixtures.Metadata.Memory")
+              package_id="Hoard.Fixtures.Metadata.Memory", msbuild=msbuild)
         if memory_record is not None:
             verify_project_lock(memory_record, candidate, feed)
             write_new(run.root / "proofs/memory-lock-derivation.json", evidence.canonical_bytes(memory_record))
         binding_lock, binding_record = prepare_project_lock(candidate / MEMORY_BINDING, candidate, feed, "candidate")
         build(run, candidate / MEMORY_BINDING, config, "memory-binding-package", lock=binding_lock, feed=feed,
-              package_id="Hoard.Fixtures.Conformance.Bindings.Memory")
+              package_id="Hoard.Fixtures.Conformance.Bindings.Memory", msbuild=msbuild)
         if binding_record is not None:
             verify_project_lock(binding_record, candidate, feed)
             write_new(run.root / "proofs/memory-binding-lock-derivation.json", evidence.canonical_bytes(binding_record))
         sqlite_lock, sqlite_record = prepare_project_lock(candidate / SQLITE, candidate, feed, "candidate")
         build(run, candidate / SQLITE, config, "sqlite-package", lock=sqlite_lock, feed=feed,
-              package_id="Hoard.Fixtures.Metadata.Sqlite")
+              package_id="Hoard.Fixtures.Metadata.Sqlite", msbuild=msbuild)
         if sqlite_record is not None:
             verify_project_lock(sqlite_record, candidate, feed)
             write_new(run.root / "proofs/sqlite-lock-derivation.json", evidence.canonical_bytes(sqlite_record))
         sqlite_binding_lock, sqlite_binding_record = prepare_project_lock(candidate / SQLITE_BINDING, candidate, feed, "candidate")
         build(run, candidate / SQLITE_BINDING, config, "sqlite-binding-package", lock=sqlite_binding_lock, feed=feed,
-              package_id="Hoard.Fixtures.Conformance.Bindings.Sqlite")
+              package_id="Hoard.Fixtures.Conformance.Bindings.Sqlite", msbuild=msbuild)
         if sqlite_binding_record is not None:
             verify_project_lock(sqlite_binding_record, candidate, feed)
             write_new(run.root / "proofs/sqlite-binding-lock-derivation.json", evidence.canonical_bytes(sqlite_binding_record))
         adapter_project = candidate / "tests/fixtures/metadata/HostAdapters/HostAdapters.csproj"
         adapter_lock, adapter_record = prepare_project_lock(adapter_project, candidate, feed, "candidate")
         build(run, adapter_project, config, "metadata-host-package", lock=adapter_lock, feed=feed,
-              package_id="Hoard.Fixtures.Metadata.HostAdapters")
+              package_id="Hoard.Fixtures.Metadata.HostAdapters", msbuild=msbuild)
         if adapter_record is not None:
             verify_project_lock(adapter_record, candidate, feed)
             write_new(run.root / "proofs/metadata-host-lock-derivation.json", evidence.canonical_bytes(adapter_record))
         recovery_project = candidate / METADATA_RECOVERY / "CrashRunner.csproj"
         recovery_lock, recovery_record = prepare_project_lock(recovery_project, candidate, feed, "candidate")
-        build(run, recovery_project, config, "metadata-recovery", lock=recovery_lock)
+        build(run, recovery_project, config, "metadata-recovery", lock=recovery_lock, msbuild=msbuild)
         if recovery_record is not None:
             verify_project_lock(recovery_record, candidate, feed)
             write_new(run.root / "proofs/metadata-recovery-lock-derivation.json",
@@ -4281,7 +4289,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             project = candidate / f"tests/fixtures/artifacts/{name}/{name}.csproj"
             artifact_lock, artifact_record = prepare_project_lock(project, candidate, feed, "candidate")
             build(run, project, config, "artifact-package", lock=artifact_lock, feed=feed,
-                  package_id="Hoard.Fixtures.Artifacts." + name)
+                  package_id="Hoard.Fixtures.Artifacts." + name, msbuild=msbuild)
             if artifact_record is not None:
                 verify_project_lock(artifact_record, candidate, feed)
                 artifact_records.append(artifact_record)
@@ -4290,7 +4298,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         artifact_recovery_project = candidate / ARTIFACT_RECOVERY / "CrashRunner.csproj"
         artifact_recovery_lock, artifact_recovery_record = prepare_project_lock(
             artifact_recovery_project, candidate, feed, "candidate")
-        build(run, artifact_recovery_project, config, "artifact-recovery", lock=artifact_recovery_lock)
+        build(run, artifact_recovery_project, config, "artifact-recovery", lock=artifact_recovery_lock,
+              msbuild=msbuild)
         if artifact_recovery_record is not None:
             verify_project_lock(artifact_recovery_record, candidate, feed)
             write_new(run.root / "proofs/artifact-recovery-lock-derivation.json",
@@ -4300,7 +4309,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         artifact_transfer_project = candidate / ARTIFACT_TRANSFER / "TransferRunner.csproj"
         artifact_transfer_lock, artifact_transfer_record = prepare_project_lock(
             artifact_transfer_project, candidate, feed, "candidate")
-        build(run, artifact_transfer_project, config, "artifact-transfers", lock=artifact_transfer_lock)
+        build(run, artifact_transfer_project, config, "artifact-transfers", lock=artifact_transfer_lock,
+              msbuild=msbuild)
         if artifact_transfer_record is not None:
             verify_project_lock(artifact_transfer_record, candidate, feed)
             write_new(run.root / "proofs/artifact-transfer-lock-derivation.json",
@@ -4311,7 +4321,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         write_new(run.root / "proofs/consumer-lock-derivation.json", evidence.canonical_bytes(consumer_receipt))
         build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config,
-              "consumer-locked-replay", lock=consumer_lock, properties=(
+              "consumer-locked-replay", lock=consumer_lock, msbuild=msbuild, properties=(
                   "-p:ConformancePackageAcceptance=true", "-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/"))
         smoke_lock = candidate / LOGGER / "Smoke/packages.lock.json"
         source_lock_sha = evidence.file_sha256(smoke_lock)
@@ -4329,13 +4339,13 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         write_new(run.root / "proofs/smoke-lock-preparation.json",
                   evidence.canonical_bytes(lock_preparation))
         print(json.dumps({"qualification": False, "phase": "locked-replay"}), flush=True)
-        build(run, smoke_project, config, "smoke-locked-replay", lock=alternate)
+        build(run, smoke_project, config, "smoke-locked-replay", lock=alternate, msbuild=msbuild)
         wrapper_lock, wrapper_receipt = prepare_package_consumer_lock(
             candidate, feed, project=METADATA_TESTS, local_packages=METADATA_PACKAGES)
         verify_package_consumer_lock(candidate, feed, wrapper_lock, wrapper_receipt, project=METADATA_TESTS)
         write_new(run.root / "proofs/metadata-wrapper-lock-derivation.json", evidence.canonical_bytes(wrapper_receipt))
         build(run, candidate / METADATA_TESTS / "Hoard.Metadata.Tests.csproj", config,
-              "metadata-wrapper-locked-replay", lock=wrapper_lock, properties=(
+              "metadata-wrapper-locked-replay", lock=wrapper_lock, msbuild=msbuild, properties=(
                   "-p:MetadataPackageAcceptance=true", "-p:BaseOutputPath=" + METADATA_TEST_OUTPUT + "/"))
         metadata_wrapper_runtime(candidate, feed)
         artifact_wrapper_lock, artifact_wrapper_receipt = prepare_package_consumer_lock(
@@ -4345,21 +4355,22 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         write_new(run.root / "proofs/artifact-wrapper-lock-derivation.json",
                   evidence.canonical_bytes(artifact_wrapper_receipt))
         build(run, candidate / ARTIFACT_TESTS / "Hoard.Artifacts.Tests.csproj", config,
-              "artifact-wrapper-locked-replay", lock=artifact_wrapper_lock, properties=(
+              "artifact-wrapper-locked-replay", lock=artifact_wrapper_lock, msbuild=msbuild, properties=(
                   "-p:ArtifactPackageAcceptance=true", "-p:BaseOutputPath=" + ARTIFACT_TEST_OUTPUT + "/"))
         artifact_wrapper_runtime(candidate, feed)
-        build_artifact_assertion_consumer(run, candidate, config, feed)
+        build_artifact_assertion_consumer(run, candidate, config, feed, msbuild=msbuild)
         if category is None:
             print(json.dumps({"qualification": False, "phase": "compatibility-replay"}), flush=True)
             build(run, candidate / "src/Hoard.Application/Hoard.Application.csproj", config,
-                  "compatibility-application", feed=feed)
+                  "compatibility-application", feed=feed, msbuild=msbuild)
             source_compatibility = baselines.execute_source_recipes(
-                repository, run, candidate, sources, seal_sha)
+                repository, run, candidate, sources, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/source-compatibility.json", evidence.canonical_bytes(source_compatibility))
             retained_compatibility = baselines.execute_retained_consumers(
-                run, candidate, sources, config, seal_sha)
+                run, candidate, sources, config, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/retained-compatibility.json", evidence.canonical_bytes(retained_compatibility))
-            source_break = baselines.execute_source_break(run, candidate, sources, config, seal_sha)
+            source_break = baselines.execute_source_break(
+                run, candidate, sources, config, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/source-break-control.json", evidence.canonical_bytes(source_break))
             compatibility_summary = {
                 "qualification": False, "phase": "compatibility-replay-admitted",
@@ -4385,7 +4396,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
                     ci_revision=ci_revision)
                 compatibility_summary["versionRuntime"] = execute_version_runtime(
-                    run, repository, candidate, sources, config, feed, seal_sha, ci_revision=ci_revision)
+                    run, repository, candidate, sources, config, feed, seal_sha,
+                    ci_revision=ci_revision, msbuild=msbuild)
                 compatibility_summary["binaryRuntime"] = execute_binary_runtime(
                     run, repository, candidate, sources, config, feed, seal_sha, ci_revision=ci_revision)
                 admit_architecture_preparation(run.root, prepared)
@@ -4405,11 +4417,12 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 print(json.dumps(summary), flush=True)
                 return 0
         print(json.dumps({"qualification": False, "phase": "inspection-preparation"}), flush=True)
-        inspection_records = build_inspection_projects(run, candidate, config, feed)
+        inspection_records = build_inspection_projects(run, candidate, config, feed, msbuild=msbuild)
         verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",
                                 feed, METADATA_RECOVERY_PACKAGES)
         stage_metadata_binary_runtime(run, candidate, seal_sha)
-        inspection_configurations = prepare_inspection_configurations(run, candidate, seal_sha)
+        inspection_configurations = prepare_inspection_configurations(
+            run, candidate, seal_sha, build_environment=run.root / "proofs/environment-admission-build.json")
         inspection_inputs = collect_inspection_inputs(run, inspection_configurations)
         if evidence.source_identity(repository, ci_revision=ci_revision) != identity:
             raise evidence.ConformanceError("InputChanged")
@@ -4429,6 +4442,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             binding_sources.append({"path": path, "adapterId": declaration["bindingId"]})
         print(json.dumps({"qualification": False, "phase": "sqlite-environment-admission"}), flush=True)
         admitted_environment = environment(run, candidate=candidate)
+        if any(admitted_environment[name] != build_environment[name] for name in ("sdk", "runtime")):
+            raise evidence.ConformanceError("InputChanged")
         print(json.dumps({"qualification": False, "phase": "runtime-input-capture"}), flush=True)
         inputs = make_inputs(run, repository, candidate, sources, admitted_environment, identity, seal_sha,
                              ci_revision=ci_revision, binding_sources=binding_sources, inspection_inputs=inspection_inputs)
@@ -4788,15 +4803,18 @@ def main():
                         help="only source/retained compatibility diagnostics with owned cleanup; never qualification")
     parser.add_argument("--probe", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--inspection-project", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--inspection-build-environment", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--inspection-output", type=Path, help=argparse.SUPPRESS)
     options = parser.parse_args()
     try:
-        if options.inspection_project is not None or options.inspection_output is not None:
+        if (options.inspection_project is not None or options.inspection_output is not None
+                or options.inspection_build_environment is not None):
             if (options.inspection_project is None or options.inspection_output is None
                     or options.probe is not None or options.evidence is not None or options.category is not None
                     or options.compatibility_only):
                 raise evidence.ConformanceError()
-            probe_inspection_project(options.inspection_project, options.inspection_output)
+            probe_inspection_project(options.inspection_project, options.inspection_output,
+                                     build_environment=options.inspection_build_environment)
             return 0
         if options.probe is not None:
             if options.category is not None or options.compatibility_only:

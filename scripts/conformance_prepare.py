@@ -55,8 +55,8 @@ TARGETS = (
 )
 
 
-def build_project(run, source, project, config, feed, *, update, historical_lock=False):
-    properties = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"]
+def build_project(run, source, project, config, feed, *, update, historical_lock=False, msbuild=None):
+    properties = []
     if project.package_mode:
         properties.append("-p:ConformancePackageAcceptance=true")
     record = None
@@ -68,15 +68,12 @@ def build_project(run, source, project, config, feed, *, update, historical_lock
         no_symlinks(source / project.lock_path)
         (source / project.lock_path).chmod(0o600)
     cache = "candidate-lock-preparation" if update else "candidate-locked-replay"
-    baselines._command(run, ["dotnet", "restore", str(source / project.path), "--configfile", str(config),
-                            "--force-evaluate" if update else "--locked-mode", *properties],
-                       cwd=source, cache_id=cache)
-    baselines._command(run, ["dotnet", "build", str(source / project.path), "-c", "Release",
-                            "--no-restore", *properties], cwd=source, cache_id=cache)
+    restore, compile_command, pack = baselines.project_build_commands(
+        source / project.path, config, feed=feed, properties=properties, msbuild=msbuild, update_lock=update)
+    baselines._command(run, restore, cwd=source, cache_id=cache)
+    baselines._command(run, compile_command, cwd=source, cache_id=cache)
     if project.package is not None:
-        baselines._command(run, ["dotnet", "pack", str(source / project.path), "-c", "Release",
-                                "--no-build", "--no-restore", "-o", str(feed), *properties],
-                           cwd=source, cache_id=cache)
+        baselines._command(run, pack, cwd=source, cache_id=cache)
         canonicalize_acceptance_archive(feed / f"{project.package}.0.1.0.nupkg")
     if record is not None:
         verify_project_lock(record, source, feed)
