@@ -1423,6 +1423,42 @@ change; no product/provider contract, examples, diagrams, governance,
 infrastructure or release behavior changes. Earlier native failures remain
 retained; current-source native failure diagnosis and T064..T086 remain open.
 
+### Artifact integration Linux scratch prerequisites
+
+Exacta610c01 native ownership job123253829360 in run40814397164 observes719
+tests with one error, zero failures/skips/expected failures/unexpected successes/
+unexpected diagnostic bytes. The bounded projection now establishes106 failed
+and8 passed artifact component rows. Resolved hashes include idle-read,
+cooperative-cancel, rollback-write-capacity and descriptor-handle; this is broad
+shared setup failure, not evidence isolating a new durable assertion. The test
+still cannot expose raw provider errors to infer an unobserved exception.
+
+The fixture's owned run was beneath ambient temporary ancestors and omitted
+cache/.local/share. Existing SDK/public metadata entrypoints explicitly
+bootstrap that Linux application-data directory; Local also rejects writable/
+linked ancestors. The artifact regression now mirrors those prerequisites:
+unique private scratch beneath the repository's parent, outside the repository,
+and private cache/.local/share before execution. Original Local root checks,
+assertions, package/runtime control maps and component counts are unchanged.
+Temporary ownership stays with the test and the allocated run is released before
+its exact private parent is removed. This is a candidate setup repair pending
+Linux confirmation, not a claim that the earlier failure has passed.
+
+`PYTHONPATH=tests/tooling python3 -m unittest
+test_conformance_contributors.NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins
+-v` passes114 component rows/125 origins plus the separate exact-state recovery
+setup check. Catalog/SDK and diff checks pass. The previous frozen full719 replay
+is at a610c01, before this fixture-only change; it is not claimed as a new full
+native pass. README, DEVELOPMENT and plan explain this prerequisite repair;
+PROVIDERS/harness contracts, product/architecture/diagrams/examples, governance,
+IaC, release and UI are unaffected because no assertion, binding API, admission
+policy or user command changes. T064..T086 remain open.
+Earlier2a5018d SDK job123246080870 in run40812567099 now passes, as do
+its four preparation/category/compatibility jobs. Its ownership job still fails
+the artifact regression. That SDK success covers the additive Local recovery
+setup at that source, not a passing overall run, repaired custom artifact
+runtime or failure-erasing replacement for earlier MP37 evidence.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

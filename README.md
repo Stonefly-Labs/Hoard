@@ -723,6 +723,9 @@ Tooling failures now preserve a closed runtime projection containing only
 diagnostic codes, finite counts and test-identity hashes. Composition emits its
 failure observation before enforcing the required diagnostic exit, so an
 assertion exit cannot bypass observation or become an accepted run.
+The artifact package regression now supplies private Linux application data and
+scratch outside ambient temporary-directory ancestors; Local's existing path
+admission remains unchanged. Native confirmation of this setup repair is pending.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

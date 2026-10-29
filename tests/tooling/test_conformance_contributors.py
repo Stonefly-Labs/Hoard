@@ -1130,7 +1130,15 @@ class NuGetContentToolTests(unittest.TestCase):
         from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 
         measured, _, _ = self.evaluation_request()
-        owner = OwnedRun.allocate(self.case / "package-consumer-run", ROOT, profile="harness")
+        parent = self.case
+        if artifacts:
+            temporary = tempfile.TemporaryDirectory(prefix="hoard-artifact-contributor-", dir=ROOT.parent)
+            self.addCleanup(temporary.cleanup)
+            parent = Path(temporary.name).resolve()
+        owner = OwnedRun.allocate(parent / "package-consumer-run", ROOT, profile="harness")
+        if artifacts:
+            (owner.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
+            (owner.root / "cache/.local").chmod(0o700)
         candidate, sources = evidence.snapshot_sources(ROOT, owner)
         category = "artifacts" if artifacts else "metadata"
         project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"

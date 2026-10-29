@@ -6779,6 +6779,17 @@ tests, zero failures/errors/expected failures/unexpected successes/unexpected
 diagnostic bytes,23 native macOS skips and expected incomplete exit2.
 Catalog/SDK and diff checks pass; no native failure is reclassified as success.
 
+Exacta610c01 native ownership job123253829360 observes719 tests with one error,
+zero failures/skips/unexpected diagnostics. Its new projection identifies106
+failed/8 passed artifact component rows, not a single new durable assertion.
+The integration fixture omitted the private Linux application-data bootstrap
+already used by SDK/public metadata execution and rooted its owned run beneath
+ambient temporary ancestors. Local rejects writable/link ancestors; these checks
+must remain unchanged. The artifact fixture now uses a unique private sibling
+scratch parent outside the repository and creates its private cache/.local/share
+before runtime. The focused artifact test, catalog/SDK and diff checks pass.
+Linux confirmation is still required; the earlier failed evidence stays failed.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.
