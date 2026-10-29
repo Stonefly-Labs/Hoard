@@ -906,6 +906,18 @@ def verify_completion_inputs(root, report):
     return completion
 
 
+def verify_retained_category_report(root, report_data, *, expected_inputs, expected_report_sha256=None):
+    """Verify a caller-pinned diagnostic; its digest must come from outside the artifact."""
+    if expected_report_sha256 is None:
+        raise ConformanceError("EvidenceIncomplete")
+    expected_report_sha256 = sha256(expected_report_sha256)
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    if hashlib.sha256(report_data).hexdigest() != expected_report_sha256:
+        raise ConformanceError("ProofMismatch")
+    return inspect_category_report(root, report_data, expected_inputs=expected_inputs)
+
+
 def inspect_category_report(root, report_data, *, expected_inputs):
     """Inspect a complete category ledger without attesting runtime origin."""
     from conformance_case_catalog import expected_cases
@@ -2894,6 +2906,7 @@ class CategoryRuntimeHistory:
         self._active = {}
         self._partitions = {}
         self._joint_plan = None
+        self._joint_origin = None
         self._sequences = {binding: 0 for binding in self._bindings}
         self._used_attempts = frozenset()
         self._used_executions = frozenset()
@@ -3228,8 +3241,64 @@ class CategoryRuntimeHistory:
         return code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes, arguments
 
     def finish_joint(self, *, transports):
-        plan = self.joint_partitions()
+        self.joint_partitions()
+        attempt_id, started = self._active[next(iter(self._bindings))]
         ended = _number(time.monotonic() * 1000)
+        committed = self._finish_joint(transports=transports, ended=ended)
+        self._joint_origin = (attempt_id, started, ended)
+        return committed
+
+    def replay_joint(self, *, plan, transports):
+        """Reconstruct the first joint ledger against the original live native source."""
+        if self._native_sources is None:
+            raise ConformanceError("OwnershipInvalid")
+        if (self._active or self._joint_plan is not None or self._joint_origin is None
+                or set(self._sequences.values()) != {1}):
+            raise ConformanceError("EvidenceIncomplete")
+        results = self.results()
+        attempts = [row["attempts"] for row in results if row["status"] != "NotApplicable"]
+        if not attempts or any(len(rows) != 1 for rows in attempts):
+            raise ConformanceError("EvidenceIncomplete")
+        attempt_id, started, ended = self._joint_origin
+        windows = {(rows[0]["startedMs"], rows[0]["endedMs"]) for rows in attempts}
+        if windows != {(started, ended)}:
+            raise ConformanceError("ProofMismatch")
+        from conformance_case_catalog import category_execution_partitions
+        replay = CategoryRuntimeHistory(
+            self._inputs, origin_inputs=self._origin_inputs, original_inputs=self._original_inputs,
+            native_sources=self._native_sources)
+        replay.begin_joint(attempt_id, partitions=category_execution_partitions(
+            self._inputs["profileId"], mode="qualification"))
+        expected = replay.joint_partitions()
+        if not isinstance(plan, Mapping) or set(plan) != set(expected):
+            raise ConformanceError("WitnessMissing")
+        observed = {}
+        for scope_id, scope in plan.items():
+            if (not isinstance(scope, Mapping) or set(scope) != {"attemptId", "tests"}
+                    or scope["tests"] != expected[scope_id]["tests"]):
+                raise ConformanceError("WitnessMissing")
+            observed[scope_id] = MappingProxyType({
+                "attemptId": _uuid(scope["attemptId"]), "tests": expected[scope_id]["tests"]})
+        identities = {scope["attemptId"] for scope in observed.values()}
+        if len(identities) != len(observed) or attempt_id in identities:
+            raise ConformanceError("ProofMismatch")
+        # Replay the captured parent window and scope identities, not new executions.
+        replay._joint_plan = MappingProxyType(observed)
+        replay._active = {binding: (attempt_id, started) for binding in replay._bindings}
+        replay._used_attempts = frozenset({attempt_id, *identities})
+        replay._finish_joint(transports=transports, ended=ended)
+        for original, reconstructed in (
+                (results, replay.results()), (self.witnesses, replay.witnesses),
+                (self.proofs, replay.proofs), (self.quality_proofs, replay.quality_proofs)):
+            if original != reconstructed:
+                raise ConformanceError("ProofMismatch")
+        return MappingProxyType({
+            "inputsSha256": digest(self._inputs), "planSha256": digest(plan),
+            "resultsSha256": digest(replay.results()), "witnessesSha256": digest(replay.witnesses),
+            "proofsSha256": digest(replay.proofs)})
+
+    def _finish_joint(self, *, transports, ended):
+        plan = self.joint_partitions()
         try:
             binding = next(iter(self._bindings))
             code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes, arguments = self._ingest_parts(

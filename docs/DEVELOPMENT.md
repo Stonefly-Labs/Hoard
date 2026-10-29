@@ -7365,7 +7365,7 @@ PYTHONPATH=scripts:tests/tooling python3 -m unittest \
 ```
 
 These are structural diagnostics, not final runtime-origin qualification.
-Absent fixture configuration explicitly skips all six with
+Absent fixture configuration explicitly skips the selected tests with
 `PrerequisiteMissing`; configured missing/ambiguous/incomplete packets fail
 rather than substitute modeled data. The ordinary unittest skip exit is not
 qualification; the safe full-tooling runner continues treating skips as
@@ -7429,6 +7429,26 @@ After the native attempt finishes, exact6305356 default frozen tooling passes
 successes/unexpected diagnostic bytes,27 native macOS skips and expected
 incomplete exit2. The external fixture prerequisite does not enter ordinary
 discovery.
+
+The retained-category API now requires `expected_report_sha256`, supplied
+independently by a trusted coordinator rather than read from the untrusted
+artifact. It rejects missing/malformed/mismatched anchors before reading proofs,
+then performs the existing exact ledger, proof-byte and completion-input
+inspection. Its result remains a structural diagnostic even with a valid pin.
+The explicit native suite adds a seventh digest/scope-boundary test; the six
+existing mutation families retain all90 challenges.
+
+The native producer also replays the complete category history before cleanup,
+while the original `OwnedRun` and its held execution records remain available.
+It expands the expected partitions afresh, preserves the actual captured parent
+window and scope identities, independently re-ingests the immutable transports,
+and compares exact results, witnesses, proof registries and derived quality
+packet bytes. It does not launch a second provider execution, reconstruct a dead
+owner or broaden original ownership reads. A closed readonly replay packet is
+linked into the retained history/report. That packet is diagnostic, not portable
+origin authority on its own. Fresh native confirmation of this increment is
+pending; full qualification, report sanitation and standalone CLI/aggregate
+delivery remain unfinished.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/

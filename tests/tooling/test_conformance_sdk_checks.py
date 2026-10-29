@@ -772,6 +772,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             history.begin_joint.side_effect = lambda *args, **options: calls.append("begin")
             history.joint_partitions.return_value = {"hook-admission": {}, "scope": {}}
             history.finish_joint.side_effect = lambda **options: calls.append("finish")
+            history.replay_joint.side_effect = lambda **options: calls.append("replay")
 
             def controls(name, namespace):
                 def execute(actual_run, actual_inputs, actual_candidate=None, **options):
@@ -810,7 +811,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
                     self.assertEqual(calls, [
                         "begin", "stall", "recovery", "ownership", "consumer", "shared-consumer",
-                        "binary", "inventory", "hooks", "scope", "finish"])
+                        "binary", "inventory", "hooks", "scope", "finish", "replay"])
+                    self.assertIs(history.replay_joint.call_args.kwargs["plan"],
+                                  history.joint_partitions.return_value)
+                    self.assertEqual(set(history.replay_joint.call_args.kwargs["transports"]),
+                                     {"hook-admission", "scope"})
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
@@ -822,7 +827,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     history.finish_joint.assert_not_called()
 
     def test_qualification_artifact_transfers_are_fresh_before_scopes_and_fail_closed(self):
-        for failed in (None, "shared-consumer", "transfers", "hooks", "scope"):
+        for failed in (None, "shared-consumer", "transfers", "hooks", "scope", "replay"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -834,6 +839,13 @@ class SdkDiagnosticTests(unittest.TestCase):
             history.begin_joint.side_effect = lambda *args, **options: calls.append("begin")
             history.joint_partitions.return_value = {"hook-admission": {}, "controller": {}}
             history.finish_joint.side_effect = lambda **options: calls.append("finish")
+
+            def replay(**options):
+                calls.append("replay")
+                if failed == "replay":
+                    raise checks.evidence.ConformanceError("ProofMismatch")
+
+            history.replay_joint.side_effect = replay
 
             def shared(actual_run, actual_inputs, **options):
                 self.assertIs(actual_run, run)
@@ -871,15 +883,24 @@ class SdkDiagnosticTests(unittest.TestCase):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "shared-consumer", "transfers", "hooks", "scope", "finish"])
+                    self.assertEqual(calls, [
+                        "begin", "shared-consumer", "transfers", "hooks", "scope", "finish", "replay"])
                     history.interrupt_joint.assert_not_called()
+                    self.assertIs(history.replay_joint.call_args.kwargs["plan"],
+                                  history.joint_partitions.return_value)
+                    self.assertEqual(set(history.replay_joint.call_args.kwargs["transports"]),
+                                     {"hook-admission", "controller"})
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    expected = ["begin", "shared-consumer", "transfers", "hooks", "scope"]
+                    expected = ["begin", "shared-consumer", "transfers", "hooks", "scope", "finish", "replay"]
                     self.assertEqual(calls, expected[:expected.index(failed) + 1])
-                    history.interrupt_joint.assert_called_once_with("ProofMismatch")
-                    history.finish_joint.assert_not_called()
+                    if failed == "replay":
+                        history.interrupt_joint.assert_not_called()
+                        history.finish_joint.assert_called_once()
+                    else:
+                        history.interrupt_joint.assert_called_once_with("ProofMismatch")
+                        history.finish_joint.assert_not_called()
                     self.assertEqual(record.call_args.args[-1], "ProofMismatch")
 
     def test_category_record_persists_original_quality_basis_and_rejects_replacement(self):
@@ -910,6 +931,49 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(summary["qualitySourceCount"], 1)
                     self.assertEqual(summary["qualitySourcesSha256"], checks.evidence.digest(history.proofs))
                     self.assertFalse(summary["qualification"])
+
+    def test_category_record_binds_live_replay_to_exact_ledger_without_qualification(self):
+        for defect in (None, "inputs", "results", "witnesses", "proofs", "plan", "extra", "mode"):
+            root = self.directory / str(defect)
+            (root / "proofs").mkdir(parents=True)
+            inputs = {"profileId": "artifacts", "mode": "qualification"}
+            results = [{"status": "Incomplete"}]
+            history = SimpleNamespace(quality_proofs={}, witnesses=(), proofs={}, results=lambda: results)
+            replay = {
+                "inputsSha256": checks.evidence.digest(inputs), "resultsSha256": checks.evidence.digest(results),
+                "witnessesSha256": checks.evidence.digest(()), "proofsSha256": checks.evidence.digest({}),
+                "planSha256": "1" * 64}
+            if defect in ("inputs", "results", "witnesses", "proofs"):
+                replay[defect + "Sha256"] = "0" * 64
+            elif defect == "plan":
+                replay["planSha256"] = "invalid"
+            elif defect == "extra":
+                replay["qualification"] = True
+            elif defect == "mode":
+                inputs["mode"] = "diagnostic"
+                replay["inputsSha256"] = checks.evidence.digest(inputs)
+            with self.subTest(defect=defect):
+                report_path = root / "proofs/category-artifacts-qualification-history.json"
+                replay_path = root / "proofs/category-artifacts-qualification-native-replay.json"
+                if defect is not None:
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks._category_record(
+                            SimpleNamespace(root=root), inputs, history, {}, native_replay=replay)
+                    self.assertFalse(report_path.exists())
+                    self.assertFalse(replay_path.exists())
+                else:
+                    summary = checks._category_record(
+                        SimpleNamespace(root=root), inputs, history, {}, native_replay=replay)
+                    self.assertFalse(summary["qualification"])
+                    packet = json.loads(replay_path.read_bytes())
+                    self.assertFalse(packet["qualification"])
+                    self.assertEqual(packet["scope"], "live-native-ledger-replay-diagnostic")
+                    self.assertEqual(packet["resultsSha256"], checks.evidence.digest(results))
+                    self.assertEqual(summary["nativeReplaySha256"], checks.evidence.file_sha256(replay_path))
+                    record = json.loads(report_path.read_bytes())
+                    self.assertEqual(record["proofs"][replay_path.relative_to(root).as_posix()],
+                                     summary["nativeReplaySha256"])
+                    self.assertEqual(replay_path.stat().st_mode & 0o777, 0o400)
 
     def _assert_category_batch(self, profile, witness_count):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases, expected_cases

@@ -2943,7 +2943,7 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
                if inspection_prepared else {})}
 
 
-def _category_record(run, inputs, history, scopes, code=None):
+def _category_record(run, inputs, history, scopes, code=None, *, native_replay=None):
     quality_sources = {}
     for path, raw in history.quality_proofs.items():
         quality_sources[path] = hashlib.sha256(raw).hexdigest()
@@ -2984,9 +2984,28 @@ def _category_record(run, inputs, history, scopes, code=None):
         **({"qualitySourceCount": len(quality_sources), "qualitySourcesSha256": evidence.digest(quality_sources)}
            if quality_sources else {})}
     history_mode = "qualification" if inputs["mode"] == "qualification" else "diagnostic"
+    proofs = dict(history.proofs)
+    if native_replay is not None:
+        expected = {
+            "inputsSha256": evidence.digest(inputs), "resultsSha256": evidence.digest(results),
+            "witnessesSha256": evidence.digest(history.witnesses), "proofsSha256": evidence.digest(history.proofs)}
+        if (inputs["mode"] != "qualification" or not isinstance(native_replay, Mapping)
+                or set(native_replay) != set(expected) | {"planSha256"}
+                or any(native_replay[key] != value for key, value in expected.items())):
+            raise evidence.ConformanceError("ProofMismatch")
+        evidence.sha256(native_replay["planSha256"])
+        replay_path = f'proofs/category-{inputs["profileId"]}-{history_mode}-native-replay.json'
+        if replay_path in proofs:
+            raise evidence.ConformanceError("ProofMismatch")
+        replay_raw = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "scope": "live-native-ledger-replay-diagnostic",
+            **native_replay})
+        write_new(run.root / replay_path, replay_raw)
+        proofs[replay_path] = hashlib.sha256(replay_raw).hexdigest()
+        summary["nativeReplaySha256"] = proofs[replay_path]
     raw = evidence.canonical_bytes({
         "schemaVersion": 1, **summary, "scopes": scopes, "results": results,
-        "witnesses": history.witnesses, "proofs": history.proofs})
+        "witnesses": history.witnesses, "proofs": proofs})
     if len(raw) > evidence.MAX_REPORT_BYTES:
         raise evidence.ConformanceError("OutputLimitExceeded")
     write_new(run.root / f'proofs/category-{inputs["profileId"]}-{history_mode}-history.json', raw)
@@ -3111,6 +3130,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
         raise
     try:
         history.finish_joint(transports=transports)
+        native_replay = history.replay_joint(plan=plan, transports=transports) if qualification else None
     except evidence.ConformanceError as error:
         if isinstance(run, OwnedRun):
             print(json.dumps({
@@ -3119,7 +3139,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
                 "locations": _category_failure_locations(error)}), flush=True)
         _category_record(run, inputs, history, scopes, str(error))
         raise
-    return _category_record(run, inputs, history, scopes)
+    return _category_record(run, inputs, history, scopes, native_replay=native_replay)
 
 
 def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path, attempt_sequence=1,

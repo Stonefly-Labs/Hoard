@@ -4157,6 +4157,14 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.assertRaises(evidence.ConformanceError):
                     evidence.admit_entity("QualificationReport", changed)
 
+    def test_native_replay_cannot_mint_origin_from_a_modeled_history(self):
+        history, finish = self.category_quality_fixture()
+        finish()
+        replay = getattr(history, "replay_joint", None)
+        self.assertTrue(callable(replay), "Native history needs independent original-owner replay.")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            replay(plan={}, transports={})
+
     def test_native_category_reports_recheck_original_history_inputs_and_proof_files(self):
         import conformance_sdk_checks as checks
         from types import SimpleNamespace
@@ -8537,6 +8545,31 @@ class _RetainedNativeCategoryStructureControls:
                 self.fail("An admission field lacks a native mutation control.")
             with self.subTest(field=field, mutation="changed"):
                 self.reject(inputs=changed)
+
+    def test_retained_verification_requires_an_external_digest_and_preserves_diagnostic_scope(self):
+        verify = getattr(evidence, "verify_retained_category_report", None)
+        self.assertTrue(callable(verify), "Retained verification needs an independently supplied digest.")
+        expected = hashlib.sha256(self.raw).hexdigest()
+        observed = verify(self.root, self.raw, expected_inputs=self.inputs,
+                          expected_report_sha256=expected)
+        self.assertFalse(observed["qualification"])
+        self.assertEqual(observed["code"], "EvidenceIncomplete")
+        self.assertEqual(observed["scope"], "category-report-structure-diagnostic")
+        for supplied in (None, "0" * 64, expected.upper(), "not-a-digest"):
+            with self.subTest(supplied=supplied), self.assertRaises(evidence.ConformanceError):
+                verify(self.root, self.raw, expected_inputs=self.inputs,
+                       expected_report_sha256=supplied)
+        changed = copy.deepcopy(self.original)
+        changed.update(qualification=True, state="Complete", scope=[self.profile])
+        with mock.patch.object(evidence, "input_manifest",
+                               side_effect=AssertionError("Untrusted reports must reject before proof reads")):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                verify(self.root, evidence.canonical_bytes(changed), expected_inputs=self.inputs,
+                       expected_report_sha256=expected)
+        # A caller pinning a diagnostic is not granting it a wider scope.
+        with self.assertRaises(evidence.ConformanceError):
+            verify(self.root, evidence.canonical_bytes(changed), expected_inputs=self.inputs,
+                   expected_report_sha256=evidence.digest(changed))
 
     def test_exact_case_and_parameter_sets_reject_missing_duplicate_and_unknown_rows(self):
         for defect in ("missing-case", "duplicate-case", "unknown-case", "missing-parameter",

@@ -2731,24 +2731,49 @@ The existing workflow is still non-qualifying foundations/diagnostics, not
 the planned mandatory five-profile/aggregate workflow; actual CI success is
 not inferred from these local Linux observations.
 
-### Remaining retained-origin authority decision
+### Retained-origin authority boundary
 
 The actual generated controls and mutations do not select a new trust policy.
 `OwnedRun.read_execution_record` still requires the original live Active owner
 and its in-memory original command bytes. After original process exit, neither
 rehashing a persisted receipt nor a structurally consistent report can replace
 that authority. The standalone verify/aggregate dispatcher remains explicitly
-incomplete. No persisted independently trusted origin anchor has been selected.
+incomplete.
 
-The next evaluator step therefore needs a trust-model decision: independently
-trusted expected report digests supplied by a local coordinator/CI job outputs,
-with a corresponding standalone verification input, versus narrowing retained
-verification to non-qualifying diagnostics while keeping qualification within
-the original live controller. An anchor cannot come solely from the same
-untrusted report/artifact it purports to authenticate. No signing service,
-secret, external store, daemon, relaxed ownership read or new CLI trust semantic
-has been silently introduced. T068..T086 remain unchecked and implement/running
-is preserved pending that decision and the remaining acceptance obligations.
+Autonomous continuation selects independently trusted expected report digests
+supplied by the local coordinator/CI job outputs, not an adjacent artifact file.
+No signing service, secret, external store, daemon or relaxed ownership read is
+introduced. The first implementation adds a diagnostic retained API requiring
+that external digest before proof I/O; it cannot promote historical diagnostics.
+A seventh explicit native-control test covers absent/malformed/mismatched pins
+and both pinned and unpinned scope relabeling, alongside the unchanged90 mutations.
+Its initial red run fails exactly at the missing verifier. Actual retained
+artifact replay then passes all seven tests in7.572 seconds.
+
+Native history finalization now captures the actual parent window in memory.
+A separate first-attempt reconstruction expands current catalog partitions,
+re-ingests the same immutable original transports through the live native source
+reader, and compares exact results/witnesses/proof maps/derived quality bytes.
+Original scope identities and measured bounds are preserved, not reallocated
+executions or fabricated clocks. Modeled histories cannot invoke this path.
+The native producer requires this replay before resource release; failures
+retain their original history and closed rejecting code. A readonly diagnostic
+replay packet binds the exact input/plan/ledger hashes into the final proof map.
+It is not itself a portable origin anchor.
+
+The modeled-origin regression first fails at the missing replay. Both complete
+evidence/SDK suites subsequently pass346 tests in95.549 seconds; an additional
+packet-persistence regression checks altered hashes, extra flags, malformed
+plan identity and diagnostic-mode rejection. The combined explicit metadata
+suite and packet-persistence selector pass eight tests in4.854 seconds; an
+initial command used a nonexistent SDK test-class name and failed at discovery,
+then the corrected exact selector passes. Catalog/SDK and diff checks pass.
+Fresh native replay confirmation
+is pending. T068..T086 remain unchecked, implement/running is preserved, and no
+standalone qualification/aggregation or all-output report gate is claimed.
+README and DEVELOPMENT are affected; provider contracts, product/architecture/
+ADR/diagrams, examples, governance, predecessor evidence, IaC, release and UI
+documents are unaffected by this diagnostic-only tooling increment.
 
 ### Retained composition failure diagnostics
 
