@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using Hoard.Testing.Conformance.Artifacts;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Catalog;
 using Hoard.Testing.Conformance.Diagnostics;
@@ -6,6 +8,33 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class ArtifactBindingTests
 {
+    [Fact]
+    public async Task Generated_transfer_streams_preserve_unaligned_bytes_pacing_and_cancellation()
+    {
+        const int length = 4194427;
+        using var source = new GeneratedArtifactSource(length);
+        using var sink = new ArtifactHashingSink();
+        var buffer = new byte[100003];
+        int count;
+        while ((count = await source.ReadAsync(buffer)) != 0)
+        { await sink.WriteAsync(buffer.AsMemory(0, count)); }
+        var expected = Enumerable.Range(0, length).Select(index => (byte)(((index % 262144) * 31 + 7) % 251)).ToArray();
+        var hash = Convert.ToHexStringLower(SHA256.HashData(expected));
+        Assert.Equal(hash, source.Digest);
+        Assert.Equal(hash, sink.Digest);
+        Assert.Equal(length, source.BytesRead);
+        Assert.Equal(length, sink.BytesWritten);
+        Assert.True(source.Paced && sink.Paced);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        using var freshSource = new GeneratedArtifactSource(length);
+        using var freshSink = new ArtifactHashingSink();
+        await Assert.ThrowsAsync<OperationCanceledException>(() => freshSource.ReadAsync(buffer, cancelled.Token).AsTask());
+        await Assert.ThrowsAsync<OperationCanceledException>(() => freshSink.WriteAsync(buffer, cancelled.Token).AsTask());
+        Assert.Equal(0, freshSource.BytesRead);
+        Assert.Equal(0, freshSink.BytesWritten);
+    }
+
     [Theory]
     [InlineData("local")]
     [InlineData("object")]

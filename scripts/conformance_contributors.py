@@ -1471,6 +1471,44 @@ def read_binding_runtime_controls(owned_run, binding, inputs):
     return raw
 
 
+def artifact_process_context(run, inputs, consumer, binding):
+    from conformance_execution import OwnedRun
+    from conformance_sources import _readonly
+
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    if (inputs["profileId"] != "artifacts" or inputs["mode"] != "diagnostic"
+            or inputs["runId"] != run.run_id or len(inputs["bindings"]) != 1
+            or consumer["qualification"] is not False):
+        raise evidence.ConformanceError("BindingInvalid")
+    artifact_binding_profile(binding.registration["declaration"])
+    read_binding_runtime_controls(run, binding, inputs)
+    images = inputs["runtimeAssemblies"]
+    if any(images.get(path) != hashed for path, hashed in consumer["runtimeAssemblies"].items()):
+        raise evidence.ConformanceError("InputChanged")
+    assembly = Path(consumer["assemblyPath"])
+    if not assembly.is_relative_to(run.root):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    relative = evidence.relative_path(assembly.relative_to(run.root).as_posix())
+    directory = assembly.parent.relative_to(run.root).as_posix()
+    selected = {
+        *(path for path, _ in consumer["components"].values()), relative,
+        f"{directory}/Hoard.Testing.Conformance.dll", f"{directory}/Hoard.Abstractions.dll",
+        assembly.with_suffix(".deps.json").relative_to(run.root).as_posix(),
+        assembly.with_suffix(".runtimeconfig.json").relative_to(run.root).as_posix(),
+        "proofs/contributor-inputs.json"}
+    if (set(consumer["components"]) != set(evidence._SESSION_ROLES["artifacts"])
+            or not selected - {"proofs/contributor-inputs.json"} <= images.keys()):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    selected = evidence.input_manifest(run.root, sorted(selected))
+    if (any(selected[path] != images[path] for path in selected if path in images)
+            or selected["proofs/contributor-inputs.json"] != evidence.digest(inputs)):
+        raise evidence.ConformanceError("InputChanged")
+    declaration = _readonly(run.root / "binding-consumer/declaration.json", 65536)
+    return inputs, assembly, selected, declaration
+
+
 def binding_runtime_components(binding, packages, runtime_assemblies, consumer_directory):
     packages = evidence._list(evidence._entity("PackageIdentity"), 1024)(packages)
     images = evidence._hash_map(runtime_assemblies)

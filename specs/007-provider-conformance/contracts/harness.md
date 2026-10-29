@@ -2525,6 +2525,23 @@ producer code and never start recovery after a failed source. The prepared
 logger may enlarge the runtime map, but all original consumer images must
 remain byte-identical members of the fully frozen/rechecked map. This internal
 diagnostic controller is not full artifact applicability or qualifying dispatch.
+Actual contributor transfers must call the generated supplied typed factory,
+check the frozen actual profile before/after and use the same provider-neutral
+warmup/generated non-seekable paced stage/commit/full-read assertions as the
+original transfer runner. The SDK owns those bodies; the original runner links
+the exact BCL/Abstractions-only source without a new production dependency.
+Do not replace 256 MiB/4 GiB with a small proxy or select a built-in alias.
+Require real filesystem and at least 24 GiB admission before either command,
+original native proc-status baseline/peak/sample/handshake proof and the
+unchanged 64 MiB peak-delta/16 combined pin limits. Use an owned empty private
+parent through the normal SDK allocator, not a recovery-only descriptor lease.
+Keep absolute-root-bearing requests private. Independently reconstruct original
+argv/input/output/request/control bytes, producer counts/hashes/buffers/slots
+and ordinary create-session origin; reject live children, borrowed/relabelled
+receipts, failed exits and reused sessions. Actual session disposal must precede
+final control. A successful diagnostic component does not establish native
+retention/noncooperation, complete artifact applicability, public dispatch or
+profile qualification.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

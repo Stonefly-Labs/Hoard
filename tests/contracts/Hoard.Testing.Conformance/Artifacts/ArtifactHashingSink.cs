@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 
-namespace Hoard.Fixtures.Artifacts.TransferRunner;
+namespace Hoard.Testing.Conformance.Artifacts;
 
-internal sealed class HashingSink : Stream
+internal sealed class ArtifactHashingSink : Stream
 {
     private readonly IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
     private long nextPace = 4194304;

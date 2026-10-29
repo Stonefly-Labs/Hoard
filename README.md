@@ -762,6 +762,14 @@ separate origins and exact recovery readback. An isolated unprivileged Linux/
 arm64 run passes all ten SDK ownership tests, the packaged component replay and
 all six real killed-source/fresh-recovery pairs. This is diagnostic component
 evidence, not full artifact applicability, qualifying CI or public dispatch.
+The same generated supplied factory now executes actual paced 256 MiB and
+4 GiB transfers through provider-neutral SDK assertions also linked by the
+original transfer runner. An isolated unprivileged Linux/arm64 btrfs replay
+passes both measured transfers, exact bytes/hashes/origins and original native
+receipt admission, with peak RSS deltas of 5,668,864 and 24,399,872 bytes.
+Real filesystem/24 GiB admission and the 16-pin limit remain mandatory.
+Native retention/noncooperation, complete applicability and public artifact
+dispatch remain unfinished; these component diagnostics do not qualify a profile.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

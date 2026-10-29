@@ -1824,6 +1824,104 @@ tests, zero failures/errors/expected failures/unexpected successes, 25 explicit
 native macOS skips and zero unexpected diagnostic bytes; expected diagnostic
 EvidenceIncomplete exit 2. Catalog/SDK and diff checks pass.
 
+### Shared supplied-factory measured transfers
+
+The original TransferRunner's generated source, hashing sink and actual transfer
+body now belong to `Hoard.Testing.Conformance.Artifacts`. The runner links those
+three BCL/Abstractions-only source files; it gains no SDK package dependency.
+The package-only Contributor Consumer uses that SDK and the generated supplied
+typed factory, not a built-in provider alias. Shared assertions preserve the
+actual 8 MiB warmup, paced non-seekable source/sink, stage/commit/full read,
+exact byte counts and independent expected hashes for 256 MiB and 4 GiB.
+The new focused stream fact exercises unaligned 100,003-byte reads/writes across
+the 262,144-byte pattern, exact independent hash/count/pacing and cancellation.
+It first fails because the shared types do not exist, then passes after extraction.
+A prior misplaced using-directive compilation failure is corrected and retained,
+not counted as the intended behavioral red.
+
+The artifact-selected entrypoint accepts a closed ten-field hash-bound transfer
+request under private control stores, with forced safe output paths and a
+40-minute cancellation budget. It opens one controller-created private empty
+parent through the normal SDK allocator, calls the actual supplied factory,
+checks frozen capabilities before/after and disposes before final control1.
+Recovery-only inherited directory leases remain recovery-only.
+
+The reusable internal `scripts/conformance_contributor_transfers.py` checks
+real filesystem and >=24 GiB free, freezes a safe admission document, executes
+both actual sizes with original native measurement and independently admits
+the original argv/input/output/request/control bytes, strict proc-status
+RSS/handshake/count/hash/buffer/slot readback and ordinary session origin.
+The 16 combined pins, >=2 samples and <=64 MiB RSS delta remain unchanged.
+Shared `artifact_process_context` preserves complete build/source/role/runtime
+checks and the legitimate prepared-logger subset join; crash-only durability
+and original-controller directory-lease checks stay in the crash controller.
+
+Native validation uses the same pinned SDK image/local Unix-socket Docker
+daemon as above, exact 2cc409f bundle plus thirteen explicitly selected overlaid
+source files, with no host home/credentials/socket or ignored content mounted.
+The isolated clone remains honestly dirty-local. An anonymous btrfs volume holds
+private clone/scratch; UID10001, Linux/arm64, Python3.12.3, SDK10.0.203 run within
+four CPUs/6 GiB/512 PIDs. Initial free scratch is 55,690,960,896 bytes, and the
+production controller independently passes its real admission. The bounded
+session wrapper additionally invokes `execute_transfers` after the existing
+fixture's actual native crash helper; full 4 GiB work is not inserted into
+every 600-second tooling replay.
+
+`linux-artifact-contributor-transfers-clean.log` retains:
+
+- `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --filter 'FullyQualifiedName~OwnedResourceTests|FullyQualifiedName~Generated_transfer_streams' -v minimal -p:RestoreLockedMode=true -p:UseSharedCompilation=false -nodeReuse:false`: eleven passed, zero skips.
+- The four crash controls, two then-existing transfer guards and actual packaged artifact fixture: seven tests passed in117.426s, including114 logical rows/125 origins and all six real SIGKILL/distinct fresh-recovery pairs after shared-context refactoring.
+- Real256MiB transfer: exact expected/source/sink hash `113c39a8d2254b64b3df2bdfeeaeb80c277bf4f68ea42510e7cf97e4b8467fb2`, proc-status baseline59,965,440/peak65,634,304 bytes, delta5,668,864, twelve samples; original native receipt SHA-256 `43358db040625bee89ab5933b9f492ef0828cde330e1340a0d077fa1230843c0`.
+- Real4GiB transfer: exact expected/source/sink hash `f3492797d78d20782483a505e9a249466dc027f86615e647f4719cd7e93301b2`, baseline59,797,504/peak84,197,376 bytes, delta24,399,872,303 samples; original native receipt SHA-256 `80d80713b13090ee02f4ac7a2c182323e5ae5083dd236666b27e5517ab405f50`.
+
+The explicit overlay archive SHA-256 is
+`ae95819f2c29cc6aef2f04c7e238cc00dd16c6ec18b17b5c299c086eabfe36e7`;
+the production transfer controller SHA-256 is
+`07d37bd9b67cbcca7344872c1a669c072e9cc12dd0b8524bcd35148995bfb8cc`.
+Its source/producer bytes are unchanged after that observation. The final two
+portable receipt-mutation/failure tests are added afterward; their separate
+passing replay is not retroactively included in native test counts. The first
+archive attempt contains macOS AppleDouble binary source sidecars and fails
+compilation. Recreating only the explicit source archive with
+`COPYFILE_DISABLE=1 tar --no-xattrs` removes that transport defect. The failed
+log is retained as nonaccepting, not a provider/compiler success. All bounded
+containers/anonymous volumes are removed on exit; shared images are preserved.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_contributors.ContributorTransferAdmissionTests
+test_conformance_contributors.ContributorCrashAdmissionTests -v`: eight passed.
+They reject altered original native argv/run/root/input/output/control receipts,
+changed requests/origins/producer/image/admission bytes, invalid sizes/sequences,
+over-limit peaks, live children, insufficient/relabelled environment,
+unsupported/foreign ownership and failed-child second-size execution.
+Modeled leaf controls remain nonqualifying; actual native results above are
+separate original executions.
+
+`dotnet build tests/fixtures/artifacts/TransferRunner/TransferRunner.csproj
+--no-restore -p:UseSharedCompilation=false -nodeReuse:false -v quiet`: passed,
+zero warnings/errors. The focused shared-stream SDK fact and actual packaged
+artifact macOS fixture pass. Focused `dotnet format whitespace --folder
+--verify-no-changes --include` across the seven affected C# files, catalog/SDK
+and diff checks pass. Initial portable snapshot discovery fails InputChanged
+until the two removed source paths are staged as real moves; no snapshot
+admission is relaxed. Bounded `hoard-architecture-review` reports no actionable
+findings or unresolved questions: provider neutrality, source-link/package
+boundaries, frozen role/runtime provenance, streaming and original ownership
+remain intact. Review executes no tests, cannot independently verify retained
+native receipts, and does not complete final T081.
+
+README, PROVIDERS, DEVELOPMENT and harness are synchronized. Product charter/
+spec/architecture/ADR/diagrams/examples/governance/backlog/predecessor/IaC/
+release/UI documents are unaffected: no product API/provider/deployment or
+public CLI behavior changes. T064 stays unchecked; native retention/noncooperation,
+complete applicability/public dispatch, qualifying profiles and T065..T086
+remain open. No checklist/flow/convergence/merge/release/readiness advances.
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:734
+tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,25 explicit native macOS skips; expected diagnostic
+EvidenceIncomplete exit2. `tooling-contributor-transfers-final.json` retains
+the exact safe result. Catalog/SDK and diff checks pass.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

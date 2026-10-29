@@ -26,18 +26,26 @@ internal static class ArtifactContributorProcess
         try
         {
             Check(OperatingSystem.IsLinux(), ConformanceDiagnosticCode.PrerequisiteMissing);
-            Check(args.Length == 4 && args[0] == "artifact-crash", ConformanceDiagnosticCode.EvidenceSchemaInvalid);
+            Check(args.Length == 4 && args[0] is "artifact-crash" or "artifact-transfer",
+                ConformanceDiagnosticCode.EvidenceSchemaInvalid);
             var requestHash = ConformanceBindingDeclaration.Hash(args[3]);
             using var files = new ConformanceControlFiles(args[1]);
             var bytes = files.Read(args[2], 16384);
             Check(Hash(bytes) == requestHash, ConformanceDiagnosticCode.InputChanged);
-            var request = Parse(bytes);
-            Check(ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash,
-                ConformanceDiagnosticCode.UnsupportedProfile);
-            using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(args[0] == "artifact-transfer" ? 40 : 5));
             try
             {
-                await ExecuteAsync(files, args[1], request, requestHash, cancellation.Token);
+                if (args[0] == "artifact-transfer")
+                {
+                    await ArtifactContributorTransfer.ExecuteAsync(files, args[1], bytes, cancellation.Token);
+                }
+                else
+                {
+                    var request = Parse(bytes);
+                    Check(ContributorBindingFactory.ExpectedDurability == ArtifactDurability.LocalProcessCrash,
+                        ConformanceDiagnosticCode.UnsupportedProfile);
+                    await ExecuteAsync(files, args[1], request, requestHash, cancellation.Token);
+                }
             }
             finally
             {

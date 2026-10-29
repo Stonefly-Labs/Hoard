@@ -6984,6 +6984,60 @@ observes 730 tests, zero failures/errors/expected failures/unexpected successes,
 25 explicit native macOS skips and zero unexpected diagnostic bytes. Expected
 exit 2 remains diagnostic EvidenceIncomplete, not qualification.
 
+### Supplied-factory measured-transfer component
+
+The original transfer runner and package-only Contributor Consumer now use
+the same SDK-owned `ArtifactTransferAssertions`, generated source and hashing
+sink. TransferRunner links the three source files explicitly without adding
+a package/production graph edge. Actual 8 MiB warmup, generated non-seekable
+pacing, stage/commit/read and exact byte/hash assertions are shared. The
+supplied-factory process has a closed hash-bound private request, checks its
+actual frozen profile and disposes its session before final control.
+
+`scripts/conformance_contributor_transfers.py` performs actual filesystem and
+24 GiB capacity admission, then owns both native transfer commands and their
+idle/transfer/settle handshakes. Its independent reader joins original native
+argv/input/output receipts, exact requests, proc-status RSS measurement,
+producer readback and independently admitted ordinary session origins. Shared
+artifact context rechecks the full frozen build/source/runtime map; crash
+durability and original directory leases remain separate recovery-only rules.
+The combined 16-pin and 64 MiB RSS-delta limits are unchanged.
+
+The bounded local Unix-socket Docker replay mounts only an exact 2cc409f Git
+bundle, thirteen explicitly selected dirty source files and the session script
+read-only. An anonymous btrfs volume holds the private clone and scratch;
+UID 10001, Linux/arm64, Python 3.12.3 and SDK 10.0.203 execute under four
+CPUs/6 GiB/512 PIDs. Initial free scratch is 55,690,960,896 bytes; actual
+transfer admission independently passes the 24 GiB floor. No host home,
+credentials, ignored worktree content or Docker socket is mounted.
+
+The isolated replay passes eleven SDK ownership/stream facts without skips
+and seven Python tests in 117.426 seconds, including the 114-row/125-origin
+actual packaged component, six actual SIGKILL/fresh recovery pairs and both
+256 MiB/4 GiB transfers. Exact hashes match; proc-status baseline/peak pairs
+are 59,965,440/65,634,304 bytes with 12 samples and 59,797,504/84,197,376 bytes
+with 303 samples. An initial archive includes macOS AppleDouble metadata and
+fails C# compilation; it is retained as nonaccepting. Recreating the same
+explicit source archive without metadata fixes transport, not product code.
+The task container/anonymous volume are removed on exit; the cached shared
+SDK image is not deleted.
+
+Four portable transfer controls now cover original native receipt/input/output
+mutations, relabelled/insufficient environment, unsupported/foreign ownership
+and failed-child short-circuiting. The two additional receipt/failure tests
+were added after native execution and pass in the final eight-test combined
+crash/transfer selection. Native transfer producer/controller bytes are unchanged.
+The focused shared-stream fact, exact C# formatting, legacy TransferRunner
+build, catalog/SDK and diff checks pass. Bounded architecture review finds no
+actionable findings; it runs no tests and is not final T081 acceptance.
+The actual 4 GiB work is explicit native validation, not automatic work added
+to every 600-second tooling replay. Native retention/noncooperation, complete
+applicability/public dispatch and T064..T086 remain open.
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+734 tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes, 25 explicit native macOS skips and expected diagnostic
+EvidenceIncomplete exit2.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

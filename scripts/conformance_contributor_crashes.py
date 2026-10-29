@@ -8,7 +8,7 @@ from types import MappingProxyType
 
 import conformance_evidence as evidence
 import conformance_sources as sources
-from conformance_execution import OwnedRun, native_execution_supported
+from conformance_execution import native_execution_supported
 
 
 BOUNDARIES = MappingProxyType(dict(zip(("B0", "B1", "B2", "B3", "D0", "D1"), range(40, 46), strict=True)))
@@ -63,41 +63,14 @@ def _layout(lease, boundary):
 
 
 def _context(run, inputs, consumer, binding):
-    from conformance_contributors import artifact_binding_profile, read_binding_runtime_controls
+    from conformance_contributors import artifact_binding_profile, artifact_process_context
 
-    if type(run) is not OwnedRun:
-        raise evidence.ConformanceError("OwnershipInvalid")
-    inputs = evidence.admit_entity("RunInputs", inputs)
-    if (inputs["profileId"] != "artifacts" or inputs["mode"] != "diagnostic"
-            or inputs["runId"] != run.run_id or len(inputs["bindings"]) != 1
-            or consumer["qualification"] is not False
-            or artifact_binding_profile(binding.registration["declaration"])["durability"] != "LocalProcessCrash"):
+    context = artifact_process_context(run, inputs, consumer, binding)
+    if artifact_binding_profile(binding.registration["declaration"])["durability"] != "LocalProcessCrash":
         raise evidence.ConformanceError("BindingInvalid")
-    read_binding_runtime_controls(run, binding, inputs)
-    images = inputs["runtimeAssemblies"]
-    if any(images.get(path) != hashed for path, hashed in consumer["runtimeAssemblies"].items()):
-        raise evidence.ConformanceError("InputChanged")
-    assembly = Path(consumer["assemblyPath"])
-    if not assembly.is_relative_to(run.root):
-        raise evidence.ConformanceError("OwnershipInvalid")
-    relative = evidence.relative_path(assembly.relative_to(run.root).as_posix())
-    directory = assembly.parent.relative_to(run.root).as_posix()
-    selected = {
-        *(path for path, _ in consumer["components"].values()), relative,
-        f"{directory}/Hoard.Testing.Conformance.dll", f"{directory}/Hoard.Abstractions.dll",
-        assembly.with_suffix(".deps.json").relative_to(run.root).as_posix(),
-        assembly.with_suffix(".runtimeconfig.json").relative_to(run.root).as_posix(),
-        "proofs/contributor-inputs.json"}
-    if (set(consumer["components"]) != set(evidence._SESSION_ROLES["artifacts"])
-            or not selected - {"proofs/contributor-inputs.json"} <= images.keys()
-            or len(selected) + 7 > 16):
+    if len(context[2]) + 7 > 16:
         raise evidence.ConformanceError("EvidenceIncomplete")
-    selected = evidence.input_manifest(run.root, sorted(selected))
-    if (any(selected[path] != images[path] for path in selected if path in images)
-            or selected["proofs/contributor-inputs.json"] != evidence.digest(inputs)):
-        raise evidence.ConformanceError("InputChanged")
-    declaration = sources._readonly(run.root / "binding-consumer/declaration.json", 65536)
-    return inputs, assembly, selected, declaration
+    return context
 
 
 def _request(run, lease, boundary, repository, action, source_origin=None, source_index=None):

@@ -252,6 +252,8 @@ SCENARIOS = (
           for binding in ("local", "object")),
         "Hoard.Conformance.Tests.ArtifactBindingTests."
         "Simulation_cannot_take_local_restart_witnesses_or_remove_its_frozen_exclusions",
+        "Hoard.Conformance.Tests.ArtifactBindingTests."
+        "Generated_transfer_streams_preserve_unaligned_bytes_pacing_and_cancellation",
     ), "None", "Passed", 0, "None"),
     ("metadata-consumers", tuple("Hoard.Conformance.Tests.MetadataConsumerTests." + method for method in (
         "Precancelled_reservation_is_settled_before_the_next_operation",

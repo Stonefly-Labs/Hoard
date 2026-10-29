@@ -231,6 +231,182 @@ class ContributorCrashAdmissionTests(unittest.TestCase):
             self.assertFalse((root / "proofs").exists())
 
 
+class ContributorTransferAdmissionTests(unittest.TestCase):
+    def test_transfer_reader_binds_original_native_measurement_inputs_and_producer_bytes(self):
+        import conformance_contributor_transfers as transfers
+        import conformance_sources as sources
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir(mode=0o700)
+            resource, size = "transfer-test", transfers.SIZES[0]
+            request_path = f"stores/{resource}-control/request.json"
+            (root / Path(request_path).parent).mkdir(parents=True, mode=0o700)
+            records = {}
+            run = SimpleNamespace(
+                root=root, run_id=ContributorCrashAdmissionTests.run_id, root_id="a" * 32, command_sequence=1,
+                live_children=lambda: (), read_execution_record=lambda sequence: records[sequence])
+            inputs = {"environment": {"runtime": "10.0.7"}, "bindings": [{"bindingId": "acme.adapter"}]}
+            assembly = root / "consumer.dll"
+            selected = {"consumer.dll": hashlib.sha256(b"consumer").hexdigest()}
+            consumer = {"components": {}}
+            declaration = b"declaration"
+
+            def write(path, data):
+                target = root / path
+                if target.exists():
+                    target.chmod(0o600)
+                target.write_bytes(data)
+                target.chmod(0o400)
+
+            with mock.patch.object(transfers.artifacts, "expected_transfer_hash", return_value="1" * 64):
+                request = transfers._request(run, resource, size, ROOT)
+                request_data = evidence.canonical_bytes(request)
+                write(request_path, request_data)
+                write("consumer.dll", b"consumer")
+                write(transfers.ADMISSION_PATH, b'{"admission":"modeled-leaf"}')
+                origin = {
+                    "sessionId": ContributorCrashAdmissionTests.source_id, "parentSessionId": None,
+                    "descriptorSha256": hashlib.sha256(declaration).hexdigest()}
+                write(request["originPath"], evidence.canonical_bytes(origin))
+                producer = {
+                    "eventName": "complete", "provider": "acme.adapter", "runId": run.run_id, "pid": 101,
+                    "size": size, "written": size, "read": size, "expectedSha256": "1" * 64,
+                    "sourceSha256": "1" * 64, "sinkSha256": "1" * 64, "runtime": ".NET 10.0.7",
+                    "sourcePaced": True, "sinkPaced": True, "nonSeekable": True, "generated": True,
+                    "independentExpectedHash": True, "warmupComplete": True,
+                    "bufferBytes": 262144, "providerBufferLimit": 2097152, "slots": 1}
+                write(request["readbackPath"], evidence.canonical_bytes(producer))
+                command = {
+                    "schemaVersion": 1, "sequence": 1, "childPid": 101, "childStartSha256": "2" * 64,
+                    "startedMs": 1000, "endedMs": 1300, "exitCode": 0, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "transfer", "transfer": {
+                        "bytes": size, "phase": "complete", "baselineRssBytes": 10000000,
+                        "osPeakRssBytes": 20000000, "sampledPeakRssBytes": 20000000, "samples": 3,
+                        "osPeakMethod": "proc-status", "baselineMs": 1100, "completedMs": 1200}}
+                control_raw = evidence.canonical_bytes(command)
+                control_path = "proofs/transfer-command-0001.json"
+                write(control_path, control_raw)
+                records[1] = evidence.canonical_bytes({
+                    **{key: value for key, value in command.items() if key != "transfer"},
+                    "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": evidence.digest(transfers._arguments(run, inputs, assembly, request_path, request_data)),
+                    "cwdSha256": hashlib.sha256(str(root).encode()).hexdigest(),
+                    "inputFiles": evidence.input_manifest(root, sorted({*selected, transfers.ADMISSION_PATH, request_path})),
+                    "outputFiles": evidence.input_manifest(root, (request["originPath"], request["readbackPath"])),
+                    "controlRecordSha256": hashlib.sha256(control_raw).hexdigest()})
+                options = {"repository": ROOT, "resource_id": resource, "size": size, "sequence": 1}
+                with mock.patch.object(transfers, "artifact_process_context",
+                                       return_value=(inputs, assembly, selected, declaration)), \
+                        mock.patch.object(transfers, "_admission"), \
+                        mock.patch.object(sources, "OwnedRun", type(run)), \
+                        mock.patch.object(evidence, "_ingest_runtime_origins", return_value=(origin,)):
+                    good = transfers.admit_transfer(run, inputs, consumer, None, **options)
+                    self.assertEqual(good["nativeParentSha256"], hashlib.sha256(records[1]).hexdigest())
+                    for path, replacement in (
+                            (request_path, request_data + b"\n"), ("consumer.dll", b"borrowed"),
+                            (transfers.ADMISSION_PATH, b'{"admission":"changed"}'),
+                            (request["originPath"], evidence.canonical_bytes(origin) + b" "),
+                            (request["readbackPath"], evidence.canonical_bytes(producer | {"read": size - 1})),
+                            (control_path, control_raw + b"\n"),
+                            (control_path, evidence.canonical_bytes(command | {
+                                "transfer": command["transfer"] | {"osPeakRssBytes": 80000000}}))):
+                        original = (root / path).read_bytes()
+                        try:
+                            write(path, replacement)
+                            with self.subTest(path=path), self.assertRaises(evidence.ConformanceError):
+                                transfers.admit_transfer(run, inputs, consumer, None, **options)
+                        finally:
+                            write(path, original)
+                    for change in ({"runId": ContributorCrashAdmissionTests.source_id}, {"rootId": "b" * 32},
+                                   {"argvSha256": "0" * 64}, {"controlRecordSha256": "0" * 64},
+                                   {"inputFiles": {}}, {"outputFiles": {}}):
+                        original = records[1]
+                        try:
+                            records[1] = evidence.canonical_bytes(evidence.load_json(original) | change)
+                            with self.subTest(record=change), self.assertRaises(evidence.ConformanceError):
+                                transfers.admit_transfer(run, inputs, consumer, None, **options)
+                        finally:
+                            records[1] = original
+                    for change in ({"sequence": True}, {"sequence": 2}, {"size": True}, {"size": 1}):
+                        with self.subTest(options=change), self.assertRaises(evidence.ConformanceError):
+                            transfers.admit_transfer(run, inputs, consumer, None, **(options | change))
+                    run.live_children = lambda: (101,)
+                    with self.assertRaises(evidence.ConformanceError):
+                        transfers.admit_transfer(run, inputs, consumer, None, **options)
+
+    def test_failed_transfer_preserves_closed_diagnostic_and_does_not_start_second_size(self):
+        import conformance_contributor_transfers as transfers
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "stores").mkdir(mode=0o700)
+            inputs = {"environment": {"runtime": "10.0.7", "filesystem": "ext2-ext3"}}
+            run = SimpleNamespace(
+                root=root, run_id=ContributorCrashAdmissionTests.run_id, root_id="a" * 32,
+                _directory_descriptor=lambda name: os.open(root / name, os.O_RDONLY | os.O_DIRECTORY),
+                _root_descriptor=lambda: os.open(root, os.O_RDONLY | os.O_DIRECTORY),
+                command=mock.Mock(return_value=SimpleNamespace(
+                    exit_code=2, events=({"event": "control", "code": "AssertionFailed", "value": 0},))))
+            with mock.patch.object(transfers, "native_execution_supported", return_value=True), \
+                    mock.patch.object(transfers, "artifact_process_context",
+                                      return_value=(inputs, root / "consumer.dll", {}, b"declaration")), \
+                    mock.patch.object(transfers.shutil, "disk_usage", return_value=SimpleNamespace(free=24 * 1024**3)), \
+                    mock.patch.object(transfers, "scratch_filesystem", return_value="ext2-ext3"), \
+                    mock.patch.object(transfers.artifacts, "expected_transfer_hash", return_value="1" * 64), \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^AssertionFailed$"):
+                transfers.execute_transfers(run, inputs, None, None, repository=ROOT)
+            run.command.assert_called_once()
+            self.assertTrue(run.command.call_args.args[0][-2].startswith("stores/"))
+            self.assertEqual(run.command.call_args.kwargs["measure_transfer_bytes"], transfers.SIZES[0])
+
+    def test_native_transfers_reject_missing_platform_and_foreign_controller_before_io(self):
+        import conformance_contributor_transfers as transfers
+
+        with mock.patch.object(transfers, "native_execution_supported", return_value=False), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^PrerequisiteMissing$"):
+            transfers.execute_transfers(None, None, None, None, repository=ROOT)
+        with mock.patch.object(transfers, "native_execution_supported", return_value=True), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            transfers.execute_transfers(SimpleNamespace(), None, None, None, repository=ROOT)
+
+    def test_measured_transfer_admission_rejects_relabelled_or_insufficient_environment(self):
+        import conformance_contributor_transfers as transfers
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir(mode=0o700)
+            path = root / transfers.ADMISSION_PATH
+            inputs = {"environment": {"filesystem": "ext2-ext3"}}
+            run = SimpleNamespace(
+                root=root, run_id=ContributorCrashAdmissionTests.run_id, root_id="a" * 32,
+                _root_descriptor=lambda: os.open(root, os.O_RDONLY | os.O_DIRECTORY))
+            good = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id, "rootId": run.root_id,
+                "inputsSha256": evidence.digest(inputs), "filesystem": "ext2-ext3", "freeBytes": 24 * 1024**3}
+
+            def write(value):
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(evidence.canonical_bytes(value))
+                path.chmod(0o400)
+
+            write(good)
+            with mock.patch.object(transfers, "scratch_filesystem", return_value="ext2-ext3"):
+                self.assertEqual(transfers._admission(run, inputs), good)
+                for change in (
+                        {"qualification": True}, {"extra": True}, {"runId": ContributorCrashAdmissionTests.source_id},
+                        {"rootId": "b" * 32}, {"inputsSha256": "0" * 64}, {"filesystem": "xfs"},
+                        {"freeBytes": 24 * 1024**3 - 1}, {"freeBytes": True}):
+                    write(good | change)
+                    with self.subTest(change=change), self.assertRaises(evidence.ConformanceError):
+                        transfers._admission(run, inputs)
+                write(good)
+            with mock.patch.object(transfers, "scratch_filesystem", return_value="xfs"), \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                transfers._admission(run, inputs)
+
+
 class NuGetContentToolTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -1471,16 +1647,17 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
             self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
                                 for path in result["runtimeAssemblies"]))
             if artifacts:
-                code, raw = capture_control(
-                    ["dotnet", "exec", "--fx-version", self.runtime_version,
-                     str(result["assemblyPath"]), "artifact-crash"],
-                    cwd=owner.root, env=command_environment(owner.root, owner.root / "cache/binding-consumer", None),
-                    limit=65536, timeout=30)
-                self.assertEqual(code, 2)
-                self.assertEqual(evidence.load_json(raw), {
-                    "event": "control",
-                    "code": "EvidenceSchemaInvalid" if sys.platform == "linux" else "PrerequisiteMissing",
-                    "value": 0})
+                for entry in ("artifact-crash", "artifact-transfer"):
+                    code, raw = capture_control(
+                        ["dotnet", "exec", "--fx-version", self.runtime_version,
+                         str(result["assemblyPath"]), entry],
+                        cwd=owner.root, env=command_environment(owner.root, owner.root / "cache/binding-consumer", None),
+                        limit=65536, timeout=30)
+                    self.assertEqual(code, 2)
+                    self.assertEqual(evidence.load_json(raw), {
+                        "event": "control",
+                        "code": "EvidenceSchemaInvalid" if sys.platform == "linux" else "PrerequisiteMissing",
+                        "value": 0})
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["controlInputs"])), result["controlInputs"])
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["cachedArchives"])), result["cachedArchives"])
             prepared_commands = (53 if runtime else 50) + (3 if captured else 0) + (3 if artifacts else 0)
@@ -1490,7 +1667,8 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                     binding, owner, ROOT, candidate, result, feed, {
                         "os": sys.platform, "osVersion": os.uname().release, "architecture": os.uname().machine,
                         "sdk": self.msbuild.parent.name, "runtime": self.runtime_version, "nativeSqlite": "not-used",
-                        "filesystem": "unobserved", "runnerImage": "none", "freeBytes": shutil.disk_usage(owner.root).free,
+                        "filesystem": evidence.load_json((owner.root / "proofs/preflight.json").read_bytes())["filesystem"],
+                        "runnerImage": "none", "freeBytes": shutil.disk_usage(owner.root).free,
                         "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0}},
                     group_id=str(uuid.uuid4()), budgets=sdk.BUDGETS,
                     captured_build=supplied, toolchain_root=Path(measured["toolchainRoot"]))

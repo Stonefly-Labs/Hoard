@@ -748,6 +748,34 @@ regressions cover strict readback/parent mutation and explicit failure behavior.
 These are component diagnostics, not the remaining native transfers/retention/
 noncooperation, complete applicable category, qualifying CI or public dispatch.
 
+`ArtifactTransferAssertions` now owns the original actual 8 MiB warmup and
+256 MiB/4 GiB generated non-seekable paced stage/commit/full-read checks.
+The original TransferRunner links those same BCL/Abstractions-only sources;
+the package-only Consumer uses the SDK and its generated supplied factory.
+No provider-name switch or new production dependency selects the contributor.
+Actual source/sink byte counts, independently expected hashes and pacing must
+match, with the frozen actual profile checked before/after. Successful final
+control follows actual session disposal.
+
+The internal `conformance_contributor_transfers` controller checks the actual
+supported filesystem and at least 24 GiB free before starting, then independently
+joins each original native proc-status measurement, exact request/input/output
+receipt, producer readback and ordinary session origin. Requests remain private;
+safe admission contains only run/root IDs, the input hash, filesystem and capacity.
+The original controller must settle, stay within 16 combined pins and observe
+at least two RSS samples with at most 64 MiB peak delta. Altered/relabelled
+receipts, changed bytes, insufficient capacity, failed children and live resources
+reject rather than retry or start the second transfer.
+
+An isolated UID 10001 Linux/arm64 btrfs run passes the actual packaged component,
+all six real crash/recovery pairs after context extraction, and both actual
+transfer sizes. Peak deltas are 5,668,864 and 24,399,872 bytes (12 and 303 samples).
+This is diagnostic component execution, not clean CI or full artifact category
+qualification. Real 4 GiB execution stays in explicit native validation rather
+than every bounded tooling replay. Native retention/noncooperation, complete
+catalog/public dispatch and the clean-checkout good/red/corrected guide remain
+unfinished.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output
