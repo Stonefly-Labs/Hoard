@@ -13,18 +13,28 @@ public sealed class LocalArtifactSessionTests
     [Fact]
     public async Task Recovery_binding_reopens_exact_owned_state_with_fresh_factory_and_authority()
     {
-        await using var resources = new RecordingDirectories();
+        await using var resources = new RecordingDirectories(useActualAllocator: true);
         var context = Context(resources);
         IArtifactRecoveryConformanceBinding binding = new LocalBinding(new string('0', 64));
         var original = await binding.CreateSessionAsync(context, default);
         ArtifactMutationReceipt receipt;
         var identity = original.Identity;
         var authority = original.Authority;
-        try { receipt = await ArtifactCompositionAssertions.ConfiguredPublicationAsync(original.Store, default); }
+        try
+        {
+            receipt = await ArtifactCompositionAssertions.ConfiguredPublicationAsync(original.Store, default);
+            Assert.Equal("CleanupIncomplete", Assert.Throws<InvalidOperationException>(() =>
+                resources.OpenRecovery(Assert.Single(resources.Directories))).Message);
+        }
         finally { await original.DisposeAsync(); }
         var resource = Assert.Single(resources.Directories);
         Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
-        var allocator = new RecoveryDirectories(resource, resources.Settlements[resource]);
+        Assert.Equal("OwnershipInvalid", Assert.Throws<InvalidOperationException>(() =>
+            resources.OpenRecovery(new(resource.ResourceId, resource.DirectoryPath))).Message);
+        using var recoveryOwner = resources.OpenRecovery(resource);
+        Assert.Equal("OwnershipInvalid", Assert.Throws<InvalidOperationException>(() =>
+            resources.OpenRecovery(resource)).Message);
+        var allocator = new RecoveryDirectories(recoveryOwner);
         var recoveryContext = new ConformanceRunContext(
             context.RunId, context.CaseId, context.Clock, allocator, context.Evidence);
         IArtifactRecoveryConformanceBinding fresh = new LocalBinding(new string('0', 64));
@@ -44,10 +54,16 @@ public sealed class LocalArtifactSessionTests
         }
         finally { await recovered.DisposeAsync(); }
         Assert.Equal(1, allocator.Allocations);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => allocator.AllocateDirectoryAsync(default).AsTask());
         var settlement = Assert.IsAssignableFrom<Task>(allocator.Settlement);
         Assert.True(settlement.IsCompletedSuccessfully);
+        Assert.DoesNotContain(recoveryOwner.ObserveLedger(), item =>
+            item.Observation.State is ConformanceOwnershipState.Released or ConformanceOwnershipState.Retained);
+        recoveryOwner.Dispose();
+        Assert.True(Directory.Exists(resource.DirectoryPath));
         Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
-        var rejected = new RecoveryDirectories(resource, settlement);
+        using var rejectedOwner = resources.OpenRecovery(resource);
+        var rejected = new RecoveryDirectories(rejectedOwner);
         var rejectedContext = new ConformanceRunContext(
             context.RunId, context.CaseId, context.Clock, rejected, context.Evidence);
         Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(() => fresh.ReopenSessionAsync(
@@ -55,18 +71,17 @@ public sealed class LocalArtifactSessionTests
         Assert.True(Assert.IsAssignableFrom<Task>(rejected.Settlement).IsCompletedSuccessfully);
     }
 
-    private sealed class RecoveryDirectories(ConformanceOwnedDirectory resource, Task previousSettlement)
+    private sealed class RecoveryDirectories(ConformanceResourceAllocator allocator)
         : IConformanceResourceAllocator
     {
         public int Allocations { get; private set; }
         public Task? Settlement { get; private set; }
 
-        public ValueTask<ConformanceOwnedDirectory> AllocateDirectoryAsync(CancellationToken cancellationToken)
+        public async ValueTask<ConformanceOwnedDirectory> AllocateDirectoryAsync(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            Assert.True(previousSettlement.IsCompletedSuccessfully);
-            Assert.Equal(0, Allocations++);
-            return ValueTask.FromResult(resource);
+            var resource = await allocator.AllocateDirectoryAsync(cancellationToken);
+            Allocations++;
+            return resource;
         }
 
         public ValueTask<ConformanceCleanupObservation> ReleaseAsync(
@@ -76,10 +91,8 @@ public sealed class LocalArtifactSessionTests
         public async ValueTask<ConformanceCleanupObservation> ReleaseAsync(
             ConformanceOwnedDirectory owned, Task actualSettlement, CancellationToken cancellationToken)
         {
-            Assert.Same(resource, owned);
             Assert.Same(actualSettlement, Settlement ??= actualSettlement);
-            await actualSettlement.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
-            return new(ConformanceOwnershipState.Settling, [resource.ResourceId]);
+            return await allocator.ReleaseAsync(owned, actualSettlement, cancellationToken);
         }
     }
 
@@ -397,6 +410,9 @@ public sealed class LocalArtifactSessionTests
         private ConformanceResourceAllocator? allocator;
         private string? allocatorParent;
         public int ReleaseCalls => Volatile.Read(ref releaseCalls);
+
+        internal ConformanceResourceAllocator OpenRecovery(ConformanceOwnedDirectory resource) =>
+            (allocator ?? throw new InvalidOperationException("OwnershipInvalid")).OpenRecovery(resource);
 
         public async ValueTask<ConformanceOwnedDirectory> AllocateDirectoryAsync(CancellationToken cancellationToken)
         {

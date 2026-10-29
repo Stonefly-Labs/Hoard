@@ -2443,6 +2443,17 @@ count and tooling-test hashes, never raw provider output or private paths.
 Validate failed tooling rows against observed tests and source-bound locations.
 The composition shell must run its observer before enforcing the expected exit2;
 an assertion exit1 must remain a failed job without bypassing safe observation.
+SDK recovery allocation must be issued by the original owning allocator, using
+its reference-identity lease and its registered successfully settled actual work;
+caller-supplied path/task assertions are insufficient. Compare original and
+recovery native directory identities, hold an exclusive recovery lock, and
+allocate exactly that existing lease once. At allocation, directly compare the
+resource descriptor to the locked recovery pin as well as verifying paths.
+Keep original controller pins alive through new actual settlement. Parent
+teardown must reject any still-live issued recovery allocator, so exception
+unwinding cannot delete state beneath pending recovery. Reuse existing bounded
+settlement/history rules; recovery never deletes state or reports Released.
+This setup lease is not cross-process origin or crash-proof admission.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

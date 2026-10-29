@@ -11,37 +11,75 @@ public sealed class ConformanceResourceAllocator : IConformanceResourceAllocator
 {
     private readonly object gate = new();
     private readonly string parent;
+    private readonly string repositoryRoot;
     private readonly OwnedDirectoryHandle parentHandle;
     private readonly TimeSpan cleanupBudget;
+    private readonly ConformanceOwnedDirectory? recoveryResource;
     private readonly Dictionary<ConformanceOwnedDirectory, Entry> entries = new(ReferenceEqualityComparer.Instance);
-    private bool disposed;
+    private readonly List<ConformanceResourceAllocator> recoveryOwners = [];
+    private ConformanceResourceAllocator? controller;
+    private volatile bool disposed;
 
-    private ConformanceResourceAllocator(string parent, OwnedDirectoryHandle handle, TimeSpan cleanupBudget)
+    private ConformanceResourceAllocator(string parent, OwnedDirectoryHandle handle, TimeSpan cleanupBudget,
+        ConformanceOwnedDirectory? recoveryResource, string repositoryRoot)
     {
         this.parent = parent;
+        this.repositoryRoot = repositoryRoot;
         parentHandle = handle;
         this.cleanupBudget = cleanupBudget;
+        this.recoveryResource = recoveryResource;
     }
 
     public static ConformanceResourceAllocator Open(string privateParent, string repositoryRoot,
-        TimeSpan? cleanupBudget = null)
+        TimeSpan? cleanupBudget = null) => OpenCore(privateParent, repositoryRoot, cleanupBudget, null);
+
+    /// <summary>
+    /// Pins one existing controller-owned directory after prior work settles. The controller must
+    /// join this allocator's new settlement before physical cleanup; this allocator never deletes.
+    /// </summary>
+    public ConformanceResourceAllocator OpenRecovery(ConformanceOwnedDirectory resource, TimeSpan? cleanupBudget = null)
+    {
+        lock (gate)
+        {
+            var entry = Find(resource);
+            Verify(entry);
+            if (entry.Observing || entry.Settlement is not { IsCompletedSuccessfully: true })
+            { throw new InvalidOperationException("CleanupIncomplete"); }
+            if (recoveryOwners.Count >= 1024) { throw new InvalidOperationException("OwnershipInvalid"); }
+            var recovery = OpenCore(resource.DirectoryPath, repositoryRoot, cleanupBudget, resource);
+            try
+            {
+                recovery.parentHandle.VerifySameDirectory(
+                    entry.Handle ?? throw new InvalidOperationException("OwnershipInvalid"));
+                Verify(entry);
+                recovery.controller = this;
+                recoveryOwners.Add(recovery);
+                return recovery;
+            }
+            catch { recovery.Dispose(); throw; }
+        }
+    }
+
+    private static ConformanceResourceAllocator OpenCore(string privateParent, string repositoryRoot,
+        TimeSpan? cleanupBudget, ConformanceOwnedDirectory? recoveryResource)
     {
         var budget = cleanupBudget ?? TimeSpan.FromSeconds(30);
         if (budget <= TimeSpan.Zero || budget > TimeSpan.FromSeconds(30))
         { throw new ArgumentOutOfRangeException(nameof(cleanupBudget), "OwnershipInvalid"); }
         var path = OwnedDirectoryHandle.Normalize(privateParent);
         var repository = OwnedDirectoryHandle.Normalize(repositoryRoot);
-        if (path == repository || path.StartsWith(repository + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        if ((recoveryResource is not null && recoveryResource.DirectoryPath != path)
+            || path == repository || path.StartsWith(repository + Path.DirectorySeparatorChar, StringComparison.Ordinal))
         { throw new InvalidOperationException("OwnershipInvalid"); }
         var handle = OwnedDirectoryHandle.OpenPrivateParent(path);
         try
         {
             handle.Lock();
             handle.VerifyPath(path);
-            if (Directory.EnumerateFileSystemEntries(path).Any())
+            if (recoveryResource is null && Directory.EnumerateFileSystemEntries(path).Any())
             { throw new InvalidOperationException("OwnershipInvalid"); }
             handle.VerifyPath(path);
-            return new(path, handle, budget);
+            return new(path, handle, budget, recoveryResource, repository);
         }
         catch (PlatformNotSupportedException) { handle.Dispose(); throw; }
         catch { handle.Dispose(); throw new InvalidOperationException("OwnershipInvalid"); }
@@ -53,16 +91,19 @@ public sealed class ConformanceResourceAllocator : IConformanceResourceAllocator
         lock (gate)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            if (entries.Count >= 1024) { throw new InvalidOperationException("OwnershipInvalid"); }
+            if (entries.Count >= 1024 || recoveryResource is not null && entries.Count != 0)
+            { throw new InvalidOperationException("OwnershipInvalid"); }
             parentHandle.VerifyPath(parent);
-            var name = "resource-" + Guid.NewGuid().ToString("N");
-            var path = Path.Combine(parent, name);
-            var lease = new ConformanceOwnedDirectory(name, path);
+            var name = recoveryResource?.ResourceId ?? "resource-" + Guid.NewGuid().ToString("N");
+            var path = recoveryResource?.DirectoryPath ?? Path.Combine(parent, name);
+            var lease = recoveryResource ?? new ConformanceOwnedDirectory(name, path);
             var entry = new Entry(lease);
             entries.Add(lease, entry);
             try
             {
-                entry.Handle = parentHandle.CreateChild(name);
+                entry.Handle = recoveryResource is null
+                    ? parentHandle.CreateChild(name) : OwnedDirectoryHandle.OpenPrivateParent(path);
+                if (recoveryResource is not null) { entry.Handle.VerifySameDirectory(parentHandle); }
                 // Admission retains the descriptor even if the path was swapped during creation.
                 Verify(entry);
             }
@@ -119,7 +160,7 @@ public sealed class ConformanceResourceAllocator : IConformanceResourceAllocator
             if (entry.Settlement is null)
             {
                 // Keep identity pins alive beyond a timed-out observer, until the actual work ends.
-                _ = actualSettlement.ContinueWith(static (_, owner) => GC.KeepAlive(owner), this,
+                _ = actualSettlement.ContinueWith(static (_, owner) => GC.KeepAlive(owner), (this, controller),
                     CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             }
             entry.Settlement = actualSettlement;
@@ -151,7 +192,8 @@ public sealed class ConformanceResourceAllocator : IConformanceResourceAllocator
         lock (gate)
         {
             if (disposed) { return; }
-            if (entries.Values.Any(entry => entry.Observing || entry.Settlement is null || !entry.Settlement.IsCompleted))
+            if (recoveryOwners.Any(owner => !owner.disposed)
+                || entries.Values.Any(entry => entry.Observing || entry.Settlement is null || !entry.Settlement.IsCompleted))
             { throw new InvalidOperationException("CleanupIncomplete"); }
             foreach (var entry in entries.Values) { entry.Handle?.Dispose(); }
             parentHandle.Dispose();

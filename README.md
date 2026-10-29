@@ -725,7 +725,13 @@ failure observation before enforcing the required diagnostic exit, so an
 assertion exit cannot bypass observation or become an accepted run.
 The artifact package regression now supplies private Linux application data and
 scratch outside ambient temporary-directory ancestors; Local's existing path
-admission remains unchanged. Native confirmation of this setup repair is pending.
+admission remains unchanged.
+Exactfbac058 now passes all six native foundations jobs and composition
+diagnostics, including719 tooling tests without skips or unexpected diagnostics.
+The next recovery increment uses an original-owner-issued SDK lease with native
+directory identity/exclusive pins, joined actual settlement and blocked parent
+teardown while a recovery lease remains live. This is still setup infrastructure,
+not abrupt-process contributor recovery or full qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -28,6 +28,17 @@ public sealed class OwnedResourceTests
         Assert.True(Directory.Exists(first.DirectoryPath));
         await allocator.ReleaseAsync(first, Task.CompletedTask, default);
         await allocator.ReleaseAsync(second, Task.CompletedTask, default);
+        using var recovery = allocator.OpenRecovery(first);
+        Assert.Same(first, await recovery.AllocateDirectoryAsync(default));
+        var recovering = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Assert.Equal(ConformanceOwnershipState.Retained,
+            (await recovery.ReleaseAsync(first, recovering.Task, new CancellationToken(true))).State);
+        Assert.Equal("CleanupIncomplete", Assert.Throws<InvalidOperationException>(() => recovery.Dispose()).Message);
+        Assert.Equal("CleanupIncomplete", Assert.Throws<InvalidOperationException>(() => allocator.Dispose()).Message);
+        Assert.True(Directory.Exists(first.DirectoryPath));
+        recovering.SetResult();
+        await recovery.ReleaseAsync(first, recovering.Task, default);
+        recovery.Dispose();
         allocator.Dispose();
         Directory.Delete(first.DirectoryPath);
         Directory.Delete(second.DirectoryPath);
@@ -46,6 +57,8 @@ public sealed class OwnedResourceTests
         Directory.CreateDirectory(resource.DirectoryPath);
         if (!OperatingSystem.IsWindows()) { File.SetUnixFileMode(resource.DirectoryPath, Fixture.PrivateMode); }
         File.Copy(Path.Combine(original, "marker"), Path.Combine(resource.DirectoryPath, "marker"));
+        Assert.Equal("OwnershipInvalid", Assert.Throws<InvalidOperationException>(
+            () => allocator.OpenRecovery(resource)).Message);
         var failure = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await allocator.ReleaseAsync(resource, default));
         Assert.Equal("OwnershipInvalid", failure.Message);
@@ -82,6 +95,8 @@ public sealed class OwnedResourceTests
         Directory.CreateSymbolicLink(resource.DirectoryPath, foreign.Root);
         try
         {
+            Assert.Equal("OwnershipInvalid", Assert.Throws<InvalidOperationException>(
+                () => allocator.OpenRecovery(resource)).Message);
             await Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await allocator.ReleaseAsync(resource, default));
             Assert.Equal("untouched", File.ReadAllText(sentinel));
@@ -133,6 +148,8 @@ public sealed class OwnedResourceTests
         Assert.Equal(ConformanceOwnershipState.Retained, timeout.State);
         Assert.Equal(ConformanceDiagnosticCode.CleanupIncomplete, timeout.Reason);
         Assert.False(work.Task.IsCompleted);
+        Assert.Equal("CleanupIncomplete", Assert.Throws<InvalidOperationException>(
+            () => allocator.OpenRecovery(resource)).Message);
         Assert.Throws<InvalidOperationException>(() => allocator.Dispose());
         Assert.Equal(ConformanceOwnershipState.Retained, (await allocator.ReleaseAsync(resource, default)).State);
         var frozen = allocator.ObserveLedger();

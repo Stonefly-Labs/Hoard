@@ -1459,6 +1459,52 @@ the artifact regression. That SDK success covers the additive Local recovery
 setup at that source, not a passing overall run, repaired custom artifact
 runtime or failure-erasing replacement for earlier MP37 evidence.
 
+### Original-owner-issued recovery directory leases
+
+Exactfbac058 foundations run40817572159 passes all six jobs. Ownership
+job123264330273 observes719 native tests, zero failures/errors/skips/expected
+failures/unexpected successes/unexpected diagnostic bytes. SDK/category/lock/
+compatibility jobs pass, and composition run40817572151/job123266854799 passes
+its non-qualifying checks. This confirms the Linux scratch prerequisite repair
+without changing the600-second supervisor bound. Earlier failed/cancelled
+receipts stay retained; this is not later-source acceptance or qualification.
+
+The SDK allocator now issues OpenRecovery from the original owner. It validates
+the exact resource reference and its own registered successful actual settlement,
+verifies original/recovery native identities, takes an exclusive directory lock
+and supplies only that existing lease once. A draft arbitrary-path/task opener
+was rejected before commit because it could not establish original inode
+ownership. No product dependency or existing logical-origin rule changes.
+The packaged setup now uses the real SDK allocator; it rejects a live predecessor,
+forged reference, overlapping recovery, duplicate allocation, cancelled/foreign
+admission and incompatible epoch, while preserving exact receipt/content and
+fresh factory/authority. Recovery never performs physical deletion or Released.
+
+The bounded hoard-architecture-review identifies two medium ownership issues:
+the later allocation descriptor must directly match the locked recovery pin,
+and exceptional unwinding must not let original teardown delete beneath pending
+recovery. Both are fixed before checkpoint: compare those descriptors directly,
+register issued recovery owners with the original allocator, block original
+Dispose until they safely close, and retain original controller pins through
+new actual settlement. Existing pending-work tests verify both disposers reject
+while recovery work is pending and original physical state remains present;
+replacement/symlink tests also reject recovery admission. Review is read-only,
+cannot inspect Git diff or rerun validation, and is not final T081 acceptance.
+
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore --filter FullyQualifiedName~OwnedResourceTests --verbosity quiet
+-p:UseSharedCompilation=false -nodeReuse:false` passes all6 cases. The focused
+production artifact test passes114 rows/125 exact component origins plus the
+separate real-allocator recovery setup. Frozen `python3
+scripts/conformance_unit_checks.py --all-tooling` observes719 tests, zero
+failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,23 native macOS skips and expected incomplete exit2. Four-file C# whitespace
+formatting, catalog/SDK and diff checks pass. README, PROVIDERS, DEVELOPMENT and
+harness are updated. Product/architecture/ADR/diagrams/examples, governance,
+predecessors, IaC, release and UI are unaffected by this test-only ownership
+increment. Native verification of the new lease and cross-process contributor
+recovery/transfer/full applicability remain open. T064..T086 stay unchecked.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

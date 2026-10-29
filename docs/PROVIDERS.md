@@ -629,6 +629,19 @@ counts and up to four hashed identities through the tooling supervisor. Raw
 provider messages, paths and payloads are not added. Invalid projections reject;
 observing failures never authorizes contributor qualification or erases them.
 
+The concrete SDK allocator now issues recovery through its instance
+`OpenRecovery(resource)` method. Only the original allocator's exact resource
+reference and successfully settled registered work are admitted. It compares
+original/recovery native directory identities, takes an exclusive directory
+lock, and supplies that exact existing resource once. The existing actual-task,
+bounded observation and retained-history rules still apply. The original owner
+cannot dispose while any issued recovery allocator is live; recovery settlement
+also retains original controller pins. Recovery allocators never delete state
+or report Released. The controller must observe their histories and dispose
+them only after actual work ends, before original physical cleanup. This setup
+API does not by itself admit a crashed process, cross-process origin or native
+contributor recovery proof.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

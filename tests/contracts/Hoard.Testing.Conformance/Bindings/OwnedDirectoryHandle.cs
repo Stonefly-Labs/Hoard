@@ -89,6 +89,13 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
         if (identity != current.identity) { throw new InvalidOperationException("OwnershipInvalid"); }
     }
 
+    internal void VerifySameDirectory(OwnedDirectoryHandle other)
+    {
+        CheckPrivate();
+        other.CheckPrivate();
+        if (identity != other.identity) { throw new InvalidOperationException("OwnershipInvalid"); }
+    }
+
     private void CheckPrivate()
     {
         var current = ReadIdentity(Descriptor);

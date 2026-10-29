@@ -6788,7 +6788,30 @@ ambient temporary ancestors. Local rejects writable/link ancestors; these checks
 must remain unchanged. The artifact fixture now uses a unique private sibling
 scratch parent outside the repository and creates its private cache/.local/share
 before runtime. The focused artifact test, catalog/SDK and diff checks pass.
-Linux confirmation is still required; the earlier failed evidence stays failed.
+The earlier failed evidence stays failed.
+Exactfbac058 foundations run40817572159 now passes all six jobs, including719
+native tooling tests with zero failures/errors/skips/expected failures/
+unexpected successes/unexpected diagnostic bytes. Composition run40817572151
+also passes its non-qualifying diagnostic checks. The scratch prerequisite
+repair is therefore confirmed at that source without changing the600-second
+supervisor bound. Earlier failed/cancelled runs stay retained.
+
+The next recovery setup uses the actual SDK allocator rather than a test-only
+directory-returning stub. Call OpenRecovery on the original owning allocator,
+not with an arbitrary path or claimed completed task. It requires its own
+registered work to have settled, verifies the original/recovery native inode
+pins, locks recovery exclusively and allocates the same exact resource once.
+The original allocator refuses teardown while any issued recovery owner is
+live; new actual settlement retains original controller pins. Observe recovery
+history and dispose it after settlement before the original owner deletes state.
+The bounded architecture review finds two issues, both repaired: directly bind
+the allocation descriptor to the locked pin, and block parent cleanup until
+issued recovery owners safely close. Six OwnedResourceTests and the packaged
+artifact/recovery regression pass. Frozen full tooling observes719 tests, zero
+failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,23 native macOS skips and expected incomplete exit2. Four-file whitespace
+formatting, catalog/SDK and diff checks pass. Native verification of this later
+lease code and actual cross-process contributor recovery remain open.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
