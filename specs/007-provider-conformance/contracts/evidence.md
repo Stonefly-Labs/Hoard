@@ -1064,8 +1064,16 @@ remain bound while live; actual release removes these private build inputs.
 The shared SDK metadata/artifact/compatibility snapshot also uses
 `stores/snapshot`; metadata inventory source/argv/cwd/script authority binds
 that exact role without weakening original-byte or red/repair checks.
-Contributor and preparation snapshot/workspace placement remains subject
-to the unfinished full all-output audit.
+Contributor source/evaluation/build/configuration/consumer workspaces likewise
+use owned stores. Original runtime images may be retained as readonly hash-named
+copies under `proofs/contributor-runtime-inputs`; original admitted hashes and
+plain/one-level-base64 private-root checks apply before copying and original
+live inputs are rechecked afterward. They are not rewritten images or runtime
+origin attestations. Generated symbols use the explicit `/_generated/` prefix,
+admitted only alongside `/_/` source mapping; every document must still resolve
+under its original disjoint owned source/generated root and match physical
+bytes, compiler observations and verified PE/PDB identity/checksum.
+Preparation workspaces and full native all-output validation remain open.
 Discovery mutation observations likewise publish projection and input
 descriptors relative to the owned root before persistence. Live verification
 hydrates only that private view; membership admission requires the exact

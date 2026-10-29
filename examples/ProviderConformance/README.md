@@ -132,6 +132,8 @@ It reads only bounded toolkit-generated packets, prints only frozen catalog
 identities and safe hashes/counts, and requires the intended failed row plus
 passing good/corrected runs. It checks common consumer/assertion source hashes,
 SDK/provider/binding image bytes and provider package hashes across the runs.
+Executable source/build/configuration workspaces are transient owned inputs;
+only hash-named original runtime image copies remain for this inspection.
 Adapter-specific compiled-driver/PDB provenance remains bound separately to
 each run; do not claim those artifacts are invariant merely because the common
 assertion source is unchanged.
@@ -184,7 +186,8 @@ def inspect(root, faulty):
                     if Path(path).name == name]
         require(len(selected) == 1)
         path, hashed = selected[0]
-        require(evidence.input_manifest(root, (path,))[path] == hashed)
+        retained = "proofs/contributor-runtime-inputs/" + hashed
+        require(evidence.input_manifest(root, (retained,))[retained] == hashed)
         images[name] = hashed
     common = {path: hashed for path, hashed in inputs["sourceManifest"].items()
               if path.endswith(".cs") and path.startswith((

@@ -897,8 +897,13 @@ projection descriptors reject. This closes another inspected publication gap,
 not the pending native all-output gate.
 The shared SDK metadata/artifact/compatibility build snapshot now also uses
 owned transient stores. Metadata inventory controls retain the exact new
-source/command authority; contributor and preparation workspaces still need
-their separate all-output audit.
+source/command authority. Contributor source/evaluation/build/configuration/
+consumer workspaces likewise move into stores; readonly hash-named original
+runtime copies preserve guide inspection after release. Private-root-bearing
+images reject before copying. Source and generated symbol paths use separate
+explicit mappings with original PDB/source checksum verification. Actual managed
+metadata/artifact consumers pass; native contributor all-output and preparation
+workspace audits remain pending.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

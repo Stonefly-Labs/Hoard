@@ -14,6 +14,7 @@ import time
 from types import SimpleNamespace
 import unittest
 from unittest import mock
+import uuid
 import zipfile
 import xml.etree.ElementTree as ET
 
@@ -789,7 +790,7 @@ class NuGetContentToolTests(unittest.TestCase):
                     arguments, cwd=cwd, env=environment, limit=65536, timeout=timeout)
                 result = mock.Mock(exit_code=code, events=(evidence.load_json(raw),))
             commands.append(tuple(arguments))
-            receipt = owner.root / "binding-consumer/lock-receipt.json"
+            receipt = owner.root / "stores/binding-consumer/lock-receipt.json"
             if mutation in ("unused", "baseline", "missing", "extra"):
                 document = evidence.load_json(receipt.read_bytes())
                 if mutation == "extra":
@@ -1248,7 +1249,8 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_managed_pdb_tool_maps_only_explicit_repository_prefix_to_owned_recorded_sources(self):
         value, binding, generated, _ = self.compiler_request()
         properties = ET.parse(self.compiler_properties)
-        ET.SubElement(properties.find(".//PropertyGroup"), "PathMap").text = str(binding.root) + "/=/_/"
+        ET.SubElement(properties.find(".//PropertyGroup"), "PathMap").text = (
+            str(binding.root) + "/=/_/," + str(generated) + "/=/_generated/")
         properties.write(self.compiler_properties)
         self.assertEqual(self.compile()[1]["code"], "None")
         rows = contributors.binding_compilation_sources(
@@ -1270,14 +1272,40 @@ class NuGetContentToolTests(unittest.TestCase):
                 self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "EvidenceSchemaInvalid")
                 self.assertFalse(self.output_receipt.exists())
         self.request.write_bytes(evidence.canonical_bytes({**request, "sourceDocumentPrefix": "/_/"}))
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
+        for prefix in ("/foreign/", "../", None, 1):
+            self.request.write_bytes(evidence.canonical_bytes({
+                **request, "sourceDocumentPrefix": "/_/", "generatedDocumentPrefix": prefix}))
+            with self.subTest(generatedPrefix=prefix):
+                self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "EvidenceSchemaInvalid")
+                self.assertFalse(self.output_receipt.exists())
+        self.request.write_bytes(evidence.canonical_bytes({**request, "generatedDocumentPrefix": "/_generated/"}))
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "EvidenceSchemaInvalid")
+        self.request.write_bytes(evidence.canonical_bytes({
+            **request, "sourceDocumentPrefix": "/_/", "generatedDocumentPrefix": "/_generated/"}))
         self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "None")
         admitted = contributors.binding_compilation_documents(
             row, self.output_receipt.read_bytes(), output, "Adapter.dll")
         self.assertTrue(any(path.startswith("source/") for path in admitted["documents"]))
+        generated_name = next(path for path in admitted["documents"] if path.startswith("generated/"))
         self.output_receipt.unlink()
         path = binding.root / "Adapter/Binding.cs"
         original = path.read_bytes()
         outside = self.parent / "mapped-pdb-outside-canary"
+        outside.write_bytes(original)
+        path.unlink()
+        path.symlink_to(outside)
+        try:
+            self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
+            self.assertEqual(outside.read_bytes(), original)
+            self.assertFalse(self.output_receipt.exists())
+        finally:
+            path.unlink()
+            path.write_bytes(original)
+            outside.unlink()
+        path = generated / generated_name.removeprefix("generated/")
+        original = path.read_bytes()
+        outside = self.parent / "mapped-generated-pdb-outside-canary"
         outside.write_bytes(original)
         path.unlink()
         path.symlink_to(outside)
@@ -1541,7 +1569,7 @@ class NuGetContentToolTests(unittest.TestCase):
                         archive.writestr(member, data)
             if packing and code == 0 and change_dependency_after_pack:
                 project_hash = hashlib.sha256(b"Shared/Shared.csproj").hexdigest()
-                path = (owner.root / "binding-build" / project_hash
+                path = (owner.root / "stores/binding-build" / project_hash
                         / "obj/Release/net10.0/Acme.Shared.Emitted.dll")
                 path.write_bytes(path.read_bytes() + b"changed-dependency-after-pack")
             if packing and code == 0 and package_mutation:
@@ -1656,7 +1684,7 @@ class NuGetContentToolTests(unittest.TestCase):
         if artifacts:
             (owner.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
             (owner.root / "cache/.local").chmod(0o700)
-        candidate, sources = evidence.snapshot_sources(ROOT, owner)
+        candidate, sources = evidence.snapshot_sources(ROOT, owner, transient=True)
         category = "artifacts" if artifacts else "metadata"
         project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"
         if artifacts:
@@ -1761,6 +1789,10 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                 (destination / "proofs/contributor-runtime-summary.json").read_bytes()))
             self.assertTrue(all(resource["state"] == "Released" for resource in summary["resources"]))
             self.assertFalse(any((destination / directory).exists() for directory in ("stores", "cache", "feed")))
+            retained = destination / "proofs/contributor-runtime-inputs"
+            inputs = evidence.load_json((destination / "proofs/contributor-inputs.json").read_bytes())
+            self.assertEqual(evidence.input_manifest(retained, sorted(set(inputs["runtimeAssemblies"].values()))),
+                             {hashed: hashed for hashed in inputs["runtimeAssemblies"].values()})
             print(evidence.canonical_bytes({"publicArtifact": summary}).decode("utf-8"), flush=True)
             return
         binding = contributors.snapshot_binding_project(project, category, admitted.inputs_sha256, owner)
@@ -1811,7 +1843,7 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
             self.assertFalse(result["qualification"])
             self.assertEqual(set(result["components"]), set(evidence._SESSION_ROLES[category]))
             self.assertIn(result["assemblyPath"].relative_to(owner.root).as_posix(), result["runtimeAssemblies"])
-            self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
+            self.assertTrue(all(path.startswith("stores/binding-consumer/bin/Release/net10.0/")
                                 for path in result["runtimeAssemblies"]))
             if artifacts:
                 for entry in ("artifact-crash", "artifact-transfer", "artifact-noncooperative"):
@@ -1844,6 +1876,7 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                 self.assertEqual(inputs, evidence.capture_profile_inputs(
                     owner, ROOT, candidate, **prepared["captureArguments"]))
                 sdk.write_new(owner.root / "proofs/contributor-inputs.json", evidence.canonical_bytes(inputs))
+                contributors.retain_binding_runtime_inputs(owner, inputs)
                 sdk.write_new(owner.root / "runtime-owner.json", evidence.canonical_bytes({
                     "schemaVersion": 1, "runId": owner.run_id, "invocationGroupId": inputs["invocationGroupId"],
                     "rootId": owner.root_id, "rootPathSha256": hashlib.sha256(str(owner.root).encode()).hexdigest()}))
@@ -1883,9 +1916,9 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                     "proofs/contributor-build-controls.json",
                     "proofs/contributor-vstest-inputs.json",
                     next(iter(result["components"].values()))[0],
-                    "binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.runtimeconfig.json",
-                    "binding-build/compiler-sources.json",
-                    "binding-evaluation/inputs.json",
+                    "stores/binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.runtimeconfig.json",
+                    "stores/binding-build/compiler-sources.json",
+                    "stores/binding-evaluation/inputs.json",
                     "feed/" + package_id + ".0.1.0.nupkg",
                     next(iter(result["cachedArchives"])))
                 for relative in altered_paths:
@@ -1949,7 +1982,7 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                         **manifest, "attemptId": str(uuid.uuid4()),
                         "packages": [{
                             "id": package["packageId"], "sha256": package["sha256"],
-                            "path": f'binding-consumer/feed/{package["packageId"]}.{package["version"]}.nupkg'}],
+                            "path": f'stores/binding-consumer/feed/{package["packageId"]}.{package["version"]}.nupkg'}],
                         "expected": [{
                             **manifest["expected"][0], "testIdentity": identity, "fullyQualifiedName": identity,
                             "packageId": package["packageId"], "bindingId": "local", "caseId": "local-artifact-session"}]}
@@ -2013,6 +2046,10 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
             (destination / "proofs/contributor-runtime-summary.json").read_bytes()))
         self.assertTrue(all(resource["state"] == "Released" for resource in summary["resources"]))
         self.assertFalse(any((destination / directory).exists() for directory in ("stores", "cache", "feed")))
+        from test_conformance_sanitation import ConformanceSanitationTests
+        inspection = ConformanceSanitationTests()
+        inspection.canaries = (os.fsencode(destination),)
+        inspection.assert_clean(destination, output.getvalue().encode())
 
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()
@@ -2072,6 +2109,47 @@ class ContributorAdmissionTests(unittest.TestCase):
             "--profile", profile, "--binding-project", str(self.project),
             "--evidence", str(self.parent / "fresh")])
 
+    def test_retained_runtime_images_keep_original_bytes_without_private_workspaces(self):
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        for defect in ("none", "changed", "private", "encoded", "foreign-run"):
+            with self.subTest(defect=defect):
+                run = OwnedRun.allocate(self.parent / defect, ROOT, profile="harness")
+                path = run.root / "stores/Consumer.dll"
+                raw = b"original-runtime-image"
+                if defect in ("private", "encoded"):
+                    raw = os.fsencode(run.root)
+                    if defect == "encoded":
+                        raw = base64.b64encode(raw)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+                inputs = ConformanceAdmissionTests().inputs()
+                inputs.update(runId=run.run_id, mode="diagnostic",
+                              runtimeAssemblies={"stores/Consumer.dll": hashlib.sha256(raw).hexdigest()})
+                if defect == "changed":
+                    path.chmod(0o600)
+                    path.write_bytes(b"changed")
+                    path.chmod(0o400)
+                elif defect == "foreign-run":
+                    inputs["runId"] = str(uuid.uuid4())
+                directory = run.root / "proofs/contributor-runtime-inputs"
+                try:
+                    if defect == "none":
+                        contributors.retain_binding_runtime_inputs(run, inputs)
+                        blob = directory / hashlib.sha256(raw).hexdigest()
+                        self.assertEqual(blob.read_bytes(), raw)
+                        self.assertEqual(blob.stat().st_mode & 0o777, 0o400)
+                    else:
+                        with self.assertRaises(evidence.ConformanceError):
+                            contributors.retain_binding_runtime_inputs(run, inputs)
+                        self.assertFalse(directory.exists())
+                finally:
+                    run.transition("Settling")
+                    run.release()
+                self.assertFalse(path.exists())
+                if defect == "none":
+                    self.assertEqual(blob.read_bytes(), raw)
+
     def test_runtime_controls_freeze_same_version_vstest_dependencies_extensions_and_resources(self):
         import conformance_sdk_checks as sdk
 
@@ -2085,8 +2163,8 @@ class ContributorAdmissionTests(unittest.TestCase):
             path.write_bytes(relative.encode())
         root = self.parent / "run"
         (root / "proofs").mkdir(parents=True)
-        (root / "snapshot").mkdir()
-        output = root / "binding-consumer/bin/Release/net10.0"
+        (root / "stores/snapshot").mkdir(parents=True)
+        output = root / "stores/binding-consumer/bin/Release/net10.0"
         output.mkdir(parents=True)
         (output / "Consumer.dll").write_bytes(b"consumer")
         for path in self.source.iterdir():
@@ -2136,7 +2214,7 @@ class ContributorAdmissionTests(unittest.TestCase):
 
         run = OwnedRun.allocate(self.parent / "component-run", ROOT, profile="harness")
         try:
-            output = run.root / "binding-consumer/bin/Release/net10.0"
+            output = run.root / "stores/binding-consumer/bin/Release/net10.0"
             output.mkdir(parents=True)
             names = ("Consumer.dll", "Hoard.Testing.Conformance.dll", "Hoard.Abstractions.dll",
                      "Consumer.deps.json", "Consumer.runtimeconfig.json")
@@ -2153,8 +2231,8 @@ class ContributorAdmissionTests(unittest.TestCase):
                 "runtimeAssemblies": images, "invocation": ("binding-project", "a" * 64,
                                                           hashlib.sha256(controls).hexdigest())}
             (run.root / "proofs/contributor-inputs.json").write_bytes(evidence.canonical_bytes(inputs))
-            (run.root / "binding-consumer/declaration.json").write_bytes(b"declaration")
-            (run.root / "binding-consumer/declaration.json").chmod(0o400)
+            (run.root / "stores/binding-consumer/declaration.json").write_bytes(b"declaration")
+            (run.root / "stores/binding-consumer/declaration.json").chmod(0o400)
             declaration = {
                 **self.registration["declaration"], "category": "artifacts",
                 "capabilities": ["artifacts", "durable-local-process-crash", "enumeration-snapshot"],
@@ -2249,7 +2327,7 @@ class ContributorAdmissionTests(unittest.TestCase):
         run = OwnedRun.allocate(self.parent / "fresh", ROOT, profile="harness")
         captured = contributors.snapshot_binding_project(
             self.project, "metadata", invocation.binding_inputs_sha256, run)
-        self.assertEqual(captured.root, run.root / "binding-source")
+        self.assertEqual(captured.root, run.root / "stores/binding-source")
         self.assertEqual(captured.project, "Adapter.csproj")
         self.assertEqual(captured.inputs_sha256, invocation.binding_inputs_sha256)
         self.assertEqual({path.name: path.read_bytes() for path in self.source.iterdir()}, original)
@@ -2257,6 +2335,9 @@ class ContributorAdmissionTests(unittest.TestCase):
         self.assertTrue(all(path.stat().st_mode & 0o777 == 0o400 for path in captured.root.iterdir()))
         self.assertFalse((self.source / "obj").exists())
         self.assertFalse((captured.root / "obj").exists())
+        run.transition("Settling")
+        run.release()
+        self.assertFalse(captured.root.exists())
 
     def test_owned_snapshot_rejects_changes_after_admission_before_copy_and_during_copy(self):
         invocation = self.admit()
@@ -2267,7 +2348,7 @@ class ContributorAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             contributors.snapshot_binding_project(
                 self.project, "metadata", invocation.binding_inputs_sha256, run)
-        self.assertFalse((run.root / "binding-source").exists())
+        self.assertFalse((run.root / "stores/binding-source").exists())
         source.write_bytes(original)
         registration = self.sidecar.read_bytes()
         changed = copy.deepcopy(self.registration)
@@ -2276,7 +2357,7 @@ class ContributorAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             contributors.snapshot_binding_project(
                 self.project, "metadata", invocation.binding_inputs_sha256, run)
-        self.assertFalse((run.root / "binding-source").exists())
+        self.assertFalse((run.root / "stores/binding-source").exists())
         self.sidecar.write_bytes(registration)
         actual = evidence._source_file
 
@@ -2290,7 +2371,7 @@ class ContributorAdmissionTests(unittest.TestCase):
             with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
                 contributors.snapshot_binding_project(
                     self.project, "metadata", invocation.binding_inputs_sha256, run)
-        self.assertEqual((run.root / "binding-source/Binding.cs").read_bytes(), original)
+        self.assertEqual((run.root / "stores/binding-source/Binding.cs").read_bytes(), original)
         self.assertFalse((self.source / "obj").exists())
 
     def test_owned_snapshot_rejects_output_inside_author_source_root(self):
@@ -2302,7 +2383,7 @@ class ContributorAdmissionTests(unittest.TestCase):
             contributors.snapshot_binding_project(
                 self.project, "metadata", invocation.binding_inputs_sha256, run)
         self.assertEqual((self.source / "Binding.cs").read_bytes(), original)
-        self.assertFalse((run.root / "binding-source").exists())
+        self.assertFalse((run.root / "stores/binding-source").exists())
 
     def test_typed_factory_source_requires_selected_actual_adapter_image_and_provider_package(self):
         feed = self.parent / "feed"
@@ -2458,14 +2539,14 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertEqual(config, configuration)
             self.assertEqual(options["package_id"], "Acme.Adapter")
             self.assertEqual(options["package_version"], "2.4.0-preview.1")
-            properties = run.root / "binding-build/binding.props"
+            properties = run.root / "stores/binding-build/binding.props"
             self.assertEqual(options["properties"], ("-p:CustomAfterDirectoryBuildProps=" + str(properties),))
             groups = ET.parse(properties).findall("./Choose/When/PropertyGroup")
             self.assertEqual(len(groups), 2)
             self.assertEqual(len({group.findtext("BaseIntermediateOutputPath") for group in groups}), 2)
             for group in groups:
                 output = Path(group.findtext("BaseOutputPath"))
-                self.assertTrue(output.is_relative_to(run.root / "binding-build"))
+                self.assertTrue(output.is_relative_to(run.root / "stores/binding-build"))
                 self.assertFalse(output.is_relative_to(binding.root))
             with zipfile.ZipFile(options["feed"] / "Acme.Adapter.2.4.0-preview.1.nupkg", "w") as archive:
                 archive.writestr("Acme.Adapter.nuspec",
@@ -2484,7 +2565,7 @@ class ContributorAdmissionTests(unittest.TestCase):
 
     def consumer_build_fixture(self, name="consumer-build"):
         binding, owner, configuration = self.build_fixture(name)
-        candidate = owner.root / "snapshot"
+        candidate = owner.root / "stores/snapshot"
         project = candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj"
         project.parent.mkdir(parents=True)
         project.write_text('<Project Sdk="Microsoft.NET.Sdk" />')
@@ -2518,7 +2599,7 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertEqual((selected_tool, version, selected_lock), (tool, "10.0.7", lock))
             self.assertEqual(selected_archives, archives)
             self.assertEqual(adapter, packages[0])
-            derived = owner.root / "binding-consumer/packages.lock.json"
+            derived = owner.root / "stores/binding-consumer/packages.lock.json"
             digest = contributors._write_owned_input(owner, derived, b"modeled derived lock")
             return {"qualification": False, "lockPath": derived, "lockSha256": digest,
                     "packages": [{"packageId": package["packageId"], "version": package["version"],
@@ -2527,12 +2608,12 @@ class ContributorAdmissionTests(unittest.TestCase):
         def build(run, project, config, cache, **options):
             self.assertIs(run, owner)
             self.assertEqual(project, candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj")
-            self.assertEqual((config, cache), (owner.root / "binding-consumer/NuGet.Config", "binding-consumer"))
+            self.assertEqual((config, cache), (owner.root / "stores/binding-consumer/NuGet.Config", "binding-consumer"))
             configured = ET.parse(config).findall("./packageSources/add")
             self.assertEqual(len(configured), 1)
-            self.assertEqual(configured[0].get("value"), str(owner.root / "binding-consumer/feed"))
+            self.assertEqual(configured[0].get("value"), str(owner.root / "stores/binding-consumer/feed"))
             self.assertEqual(config.stat().st_mode & 0o777, 0o400)
-            self.assertEqual(options["lock"], owner.root / "binding-consumer/packages.lock.json")
+            self.assertEqual(options["lock"], owner.root / "stores/binding-consumer/packages.lock.json")
             self.assertNotIn("feed", options)
             self.assertEqual(options["msbuild"],
                              ("dotnet", "exec", "--fx-version", "10.0.7",
@@ -2544,7 +2625,7 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertIn(packages[1]["sha256"].encode("ascii"), factory.read_bytes())
             self.assertEqual(factory.stat().st_mode & 0o777, 0o400)
             self.assertEqual(options["lock"].stat().st_mode & 0o777, 0o400)
-            output = owner.root / "binding-consumer/bin/Release/net10.0"
+            output = owner.root / "stores/binding-consumer/bin/Release/net10.0"
             output.mkdir(parents=True)
             (output / "Hoard.Fixtures.Conformance.Consumer.dll").write_bytes(b"modeled compiled consumer")
             for package in packages:
@@ -2552,7 +2633,7 @@ class ContributorAdmissionTests(unittest.TestCase):
                 filename = f'{package["packageId"]}.{package["version"]}.nupkg'
                 cached = owner.root / "cache/binding-consumer" / package["packageId"].lower() / package["version"].lower()
                 cached.mkdir(parents=True)
-                shutil.copyfile(owner.root / "binding-consumer/feed" / filename, cached / filename.lower())
+                shutil.copyfile(owner.root / "stores/binding-consumer/feed" / filename, cached / filename.lower())
             if defect == "sdk":
                 (output / "Hoard.Testing.Conformance.dll").write_bytes(b"substituted SDK")
             elif defect == "cache-archive":
@@ -2566,7 +2647,7 @@ class ContributorAdmissionTests(unittest.TestCase):
                 selected = {
                     "factory": factory, "lock": options["lock"], "configuration": config,
                     "archive": archives[0], "tool": tool, "source": project,
-                    "staged-archive": owner.root / "binding-consumer/feed/Acme.Adapter.0.1.0.nupkg",
+                    "staged-archive": owner.root / "stores/binding-consumer/feed/Acme.Adapter.0.1.0.nupkg",
                     "msbuild": toolchain / "sdk/10.0.203/MSBuild.dll"}[defect]
                 selected.chmod(0o600)
                 selected.write_bytes(b"changed")
@@ -2583,9 +2664,9 @@ class ContributorAdmissionTests(unittest.TestCase):
         result = self.run_consumer_build(fixture)
         self.assertFalse(result["qualification"])
         self.assertEqual(result["assemblyPath"],
-                         fixture[1].root / "binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+                         fixture[1].root / "stores/binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
         self.assertEqual(set(result["components"]), set(evidence._SESSION_ROLES["metadata"]))
-        self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
+        self.assertTrue(all(path.startswith("stores/binding-consumer/bin/Release/net10.0/")
                             for path in result["runtimeAssemblies"]))
 
     def test_registered_consumer_build_rejects_substituted_common_sdk(self):
@@ -2644,7 +2725,7 @@ class ContributorAdmissionTests(unittest.TestCase):
         def capture(prepared):
             self.assertEqual(prepared["bindingInputsSha256"], binding.inputs_sha256)
             self.assertEqual(prepared["propertiesSha256"],
-                             evidence.file_sha256(owner.root / "binding-build/binding.props"))
+                             evidence.file_sha256(owner.root / "stores/binding-build/binding.props"))
             self.assertEqual(set(prepared["projects"]), {binding.project})
             self.assertNotIn("package", prepared)
             observed.append(prepared)
@@ -2690,14 +2771,14 @@ class ContributorAdmissionTests(unittest.TestCase):
                 if defect in ("source", "mode"):
                     path = binding.root / "Binding.cs"
                 elif defect == "properties":
-                    path = run.root / "binding-build/binding.props"
+                    path = run.root / "stores/binding-build/binding.props"
                 elif defect == "configuration":
                     path = configuration
                 elif defect == "extra":
                     path = binding.root / "undeclared.cs"
                     path.touch()
                 else:
-                    path = next((run.root / "binding-build").glob("*/packages.lock.json"))
+                    path = next((run.root / "stores/binding-build").glob("*/packages.lock.json"))
                 path.chmod(0o600)
                 if defect != "mode":
                     path.write_bytes(b"changed")
@@ -3012,7 +3093,7 @@ class ContributorAdmissionTests(unittest.TestCase):
             "projectPath": str(binding.root / binding.project),
             "projectUniqueName": str(binding.root / binding.project), "packagesPath": str(cache)})
         assets["packageFolders"] = {str(cache): {}}
-        workspace = owner.root / "binding-build" / hashlib.sha256(binding.project.encode()).hexdigest()
+        workspace = owner.root / "stores/binding-build" / hashlib.sha256(binding.project.encode()).hexdigest()
         (workspace / "obj").mkdir(parents=True)
         (workspace / "obj/project.assets.json").write_bytes(evidence.canonical_bytes(assets))
         (workspace / "packages.lock.json").write_bytes(evidence.canonical_bytes(lock))
@@ -3174,7 +3255,7 @@ class ContributorAdmissionTests(unittest.TestCase):
 
     def documents_capture_fixture(self):
         binding, owner, _ = self.build_fixture()
-        workspace = owner.root / "binding-build" / hashlib.sha256(binding.project.encode()).hexdigest()
+        workspace = owner.root / "stores/binding-build" / hashlib.sha256(binding.project.encode()).hexdigest()
         output = workspace / "bin/Release/net10.0"
         output.mkdir(parents=True)
         generated = workspace / "obj/Generated.cs"
@@ -3189,7 +3270,7 @@ class ContributorAdmissionTests(unittest.TestCase):
         compilation = {"schemaVersion": 1, "qualification": False, "succeeded": True,
                        "compilations": [{"project": binding.project, "succeeded": True, "sources": {
                            "source/Binding.cs": binding.sources["Binding.cs"],
-                           "generated/" + generated.relative_to(owner.root / "binding-build").as_posix():
+                           "generated/" + generated.relative_to(owner.root / "stores/binding-build").as_posix():
                                evidence.file_sha256(generated)}}]}
         return binding, owner, built, tool, compilation, output, generated
 
@@ -3204,8 +3285,8 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertEqual(evidence.file_sha256(request), arguments[-1])
             self.assertEqual(request.stat().st_mode & 0o777, 0o400)
             value = evidence.load_json(request.read_bytes())
-            self.assertEqual(value["sourcePath"], "binding-source")
-            self.assertEqual(value["generatedPath"], "binding-build")
+            self.assertEqual(value["sourcePath"], "stores/binding-source")
+            self.assertEqual(value["generatedPath"], "stores/binding-build")
             self.assertEqual(value["outputRoot"], output.relative_to(owner.root).as_posix())
             receipt = {"schemaVersion": 1, "qualification": False, "project": binding.project,
                        "assembly": value["assembly"], "pdb": value["pdb"],
@@ -3276,7 +3357,7 @@ class ContributorAdmissionTests(unittest.TestCase):
 
     def compilation_capture_fixture(self):
         binding, owner, built, tool, compilation, _, generated = self.documents_capture_fixture()
-        properties = owner.root / "binding-build/binding.props"
+        properties = owner.root / "stores/binding-build/binding.props"
         properties.write_bytes(b"<Project />")
         properties.chmod(0o400)
         built["propertiesSha256"] = evidence.file_sha256(properties)
@@ -3343,7 +3424,7 @@ class ContributorAdmissionTests(unittest.TestCase):
                 def capture(arguments, **options):
                     logger = next(argument for argument in arguments if argument.startswith("-logger:"))
                     path = {"request": owner.root / logger.split(";")[-2],
-                            "properties": owner.root / "binding-build/binding.props", "tool": tool, "host": host,
+                            "properties": owner.root / "stores/binding-build/binding.props", "tool": tool, "host": host,
                             "source": binding.root / "Binding.cs", "mode": binding.root / "Binding.cs"}[defect]
                     path.chmod(0o600)
                     if defect != "mode":

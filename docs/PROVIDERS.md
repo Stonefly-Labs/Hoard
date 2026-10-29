@@ -556,6 +556,17 @@ manifests reject. The native executor retains its existing pin limits and comman
 proofs; managed adapters cannot substitute for native provenance. Native replay,
 complete artifact applicability and public contributor dispatch remain open.
 
+The later all-output boundary puts contributor source/evaluation/build/config/
+consumer workspaces in owned transient stores. Exact original runtime images
+remain as readonly hash-named copies for post-release guide inspection; private
+root plain/base64 values reject before copying, not after publication. Generated
+symbol paths map to `/_generated`; the PDB tool accepts that exact explicit
+marker only with the source marker and resolves every document to the original
+disjoint owned root. PE/PDB identity/checksums, physical document hashes and
+independent compiler-source correspondence still apply. The actual managed
+metadata/artifact consumers and malformed/missing/mapped-link controls pass;
+native complete-owned-tree validation of this change remains pending.
+
 Exact-source native ownership job123205181349 atb49fa51 passes all713 controls,
 including native contributor discovery/execution and settlement, without skips
 or unexpected diagnostic bytes. The next supplied-project integration then

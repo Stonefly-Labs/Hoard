@@ -126,6 +126,18 @@ internal static partial class Program
         {
             Require(prefix.ValueKind == JsonValueKind.String && prefix.GetString() == "/_/", "EvidenceSchemaInvalid");
             sourceDocumentPrefix = prefix.GetString();
+        }
+        string? generatedDocumentPrefix = null;
+        if (request.TryGetProperty("generatedDocumentPrefix", out var generatedPrefix))
+        {
+            Require(sourceDocumentPrefix is not null && generatedPrefix.ValueKind == JsonValueKind.String
+                && generatedPrefix.GetString() == "/_generated/", "EvidenceSchemaInvalid");
+            generatedDocumentPrefix = generatedPrefix.GetString();
+            Keys(request, "schemaVersion", "qualification", "sourcePath", "generatedPath",
+                "outputRoot", "project", "assembly", "pdb", "outputPath", "sourceDocumentPrefix", "generatedDocumentPrefix");
+        }
+        else if (sourceDocumentPrefix is not null)
+        {
             Keys(request, "schemaVersion", "qualification", "sourcePath", "generatedPath",
                 "outputRoot", "project", "assembly", "pdb", "outputPath", "sourceDocumentPrefix");
         }
@@ -204,6 +216,13 @@ internal static partial class Program
             {
                 owner = source;
                 relative = name[sourceDocumentPrefix.Length..];
+                _ = OwnedPath(owner, relative);
+            }
+            else if (owner is null && generatedDocumentPrefix is not null
+                && name.StartsWith(generatedDocumentPrefix, StringComparison.Ordinal))
+            {
+                owner = generated;
+                relative = name[generatedDocumentPrefix.Length..];
                 _ = OwnedPath(owner, relative);
             }
             else

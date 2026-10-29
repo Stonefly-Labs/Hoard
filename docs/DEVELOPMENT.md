@@ -7818,6 +7818,49 @@ catalog/SDK and diff checks pass. These subsequent bytes are not part of the
 already frozen06c3a16 composition attempt. Full shared-SDK/native validation and
 the contributor/preparation workspace audit remain pending.
 
+Contributor source/evaluation/build/configuration/consumer workspaces now use
+owned stores as well. Exact ownership, declared source/build/cache/pack/runtime
+checks move together; original author files and tracked locks are unchanged.
+Original readonly runtime images are copied to hash-named
+`proofs/contributor-runtime-inputs` before runtime so good and intended-faulty
+guide runs can still inspect their bytes after actual release. Changed/foreign
+inputs or images containing the private root in plain/one-level-base64 reject
+before their first retained copy; no image bytes or old receipts are rewritten.
+The first real managed attempts correctly reject private PE symbol paths.
+Compilation now maps the generated namespace to `/_generated`; the PDB producer
+requires the explicit `/_generated/` marker to resolve those documents under
+the original disjoint generated root. Original image/PDB identity, checksum,
+every document hash, compiler-source correspondence and path/link guards remain.
+The fixed Consumer maps its own private owner prefix without altering source.
+
+The contributor snapshot regression first fails its former retained placement.
+The combined71 admission cases plus actual managed metadata/artifact consumers
+pass73 tests in230.049 seconds. The explicit mapped source/generated PDB case
+then passes in9.754 seconds, covering omitted/malformed/foreign markers and
+outside source/generated links with unchanged sentinels. Managed producer
+format verification, catalog/SDK and diff checks pass. The guide now reads the
+original hash-named copies rather than deleted workspaces. The frozen full
+`python3 scripts/conformance_unit_checks.py --all-tooling` run observes770 tests,
+zero failures/errors/expected failures/unexpected successes/diagnostic bytes
+and29 macOS native skips. Exit2/EvidenceIncomplete correctly remains
+nonqualifying. Native all-output replay of these new bytes remains pending.
+
+Separately, frozen06c3a16 native run
+`ae0dd227-bed6-489d-b52b-6f57b786100c` passes all eight sanitation controls without
+skips or unexpected output, completes pure CP ingestion and reaches inherited
+runtime. It fails an actual
+`LifecycleDeadlineTests.Timeout_cancellation_reports_additional_fault_before_cleanup_publication`
+parameter (nine of ten class rows pass), command160 exit1/None/Exited. It is
+not retried into success or called composition qualification. The namespace
+lasts541.138 seconds; cgroup peak is1,344,643,072 bytes with zero OOM events.
+Actual Released cleanup takes593.596 ms with zero children/groups. All1226
+remaining owned files/names are private-root absent in plain/one-level base64;
+stores/feed/cache/snapshot are absent. The complete original failed tree,
+console and ownership bytes are retained. The exact stopped namespace and
+volume are removed after that verification. Final report, post-release CP
+report replay and29/2 controls remain unverified; the lifecycle failure needs
+separate diagnosis.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

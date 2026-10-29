@@ -3330,6 +3330,68 @@ existing exact original/red/repair inventory checks. Catalog/SDK and diff checks
 pass. These source changes occur after the immutable06c3a16 native composition
 bundle; they require separate shared-SDK/native validation. No task gate closes.
 
+### Transient contributor workspaces and original runtime retention
+
+Contributor source/evaluation/build/configuration/consumer workspaces now live
+in owned stores. Exact ownership checks, request role descriptors, compiler/
+restore/pack/cache/consumer origins and physical source/control rechecks move
+together; author source/tracked locks and native authority remain unchanged.
+Original runtime images have readonly hash-named retained copies, preserving
+the guide's actual post-release SDK/provider/binding byte checks for good and
+intended-faulty runs. Changed inputs, foreign run identity and plain/base64
+private-root-bearing images reject before first copying. New retention controls
+preserve original bytes after actual settlement and verify failure creates no
+blob directory. Original images/provenance are never redacted or rewritten.
+
+Real managed retention first rejects private PE symbol paths. Generated paths
+now map to `/_generated`, retaining the existing source map; the PDB producer
+requires an explicit exact `/_generated/` marker alongside the source marker
+and resolves each generated suffix under the original disjoint generated root.
+Every document hash, compiler source correspondence, PE/PDB identity/checksum,
+original byte recheck and path/link guard remains mandatory. The fixed Consumer
+also maps its owner prefix for private debug paths without changing its source.
+
+The snapshot placement regression first fails its old retained role.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_contributors.ContributorAdmissionTests
+test_conformance_contributors.NuGetContentToolTests.test_managed_contributor_runtime_executes_every_common_metadata_row_with_exact_origins
+test_conformance_contributors.NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins
+-q` passes73 tests in230.049 seconds. The mapped-PDB case separately passes
+in9.754 seconds, covering missing/malformed/foreign source/generated markers and
+both mapped outside links with intact sentinels. Managed producer formatting,
+catalog/SDK and diff checks pass. The guide now resolves original hash-named
+copies after release. Frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` observes770 tests,
+zero failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes and29 native macOS skips. Exit2/EvidenceIncomplete is nonqualifying, not
+an all-native pass. Native all-output replay remains pending.
+
+This tooling-only publication boundary does not change runtime provider
+contracts, product APIs, module composition, UI, infrastructure, releases or
+governance. Charter/product/architecture/ADR/diagrams/backlog/predecessor/IaC/
+release/UI documents therefore remain unaffected by this checkpoint.
+
+### Frozen06c3a16 partial native composition and actual lifecycle failure
+
+Original run `ae0dd227-bed6-489d-b52b-6f57b786100c` passes all eight native
+sanitation controls with zero failures/errors/skips/unexpected output. Pure CP
+runtime reaches ingestion/completion; inherited runtime then fails one actual
+`Timeout_cancellation_reports_additional_fault_before_cleanup_publication`
+parameter (nine of ten LifecycleDeadlineTests rows pass). Command160 is
+exit1/None/Exited. No successful full composition/report/29/2 controls are claimed.
+The failure remains original evidence and requires separate diagnosis, not a
+failure-erasing retry.
+
+The four-CPU/6 GiB/512-PID namespace lasts541.138 seconds, peak cgroup memory
+1,344,643,072 bytes with zero OOM events. Actual Released cleanup takes593.596 ms,
+zero children/groups, stores/feed/cache/snapshot absent. All1226 original
+remaining files/names pass private-root inspection in plain/one-level base64.
+The complete original failed tree, console, ledger and immutable bundle/driver
+remain retained. Only the exact stopped namespace and inspected volume
+`5b98d0fe9dfa9a85a254e973ed043aa6967f8c6d6a02c7a082b648f543e54d1d`
+are removed afterward. This finite clean failed tree is not full all-profile
+sanitation or qualification. T068--T086 and implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
