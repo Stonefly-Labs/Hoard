@@ -7,6 +7,7 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 import zipfile
@@ -113,7 +114,7 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual((code, event["code"]), (2, "OwnershipInvalid"))
         self.assertEqual(self.output.read_bytes(), original)
 
-    def consumer_lock_request(self, *, dependency_version="3.2.1", cycle=False):
+    def consumer_lock_request(self, *, dependency_version="3.2.1", cycle=False, pruned_baseline=False):
         archives = []
 
         def package(name, version, dependencies=""):
@@ -128,7 +129,10 @@ class NuGetContentToolTests(unittest.TestCase):
             archives.append({"path": self.relative(path), "sha256": evidence.file_sha256(path)})
             return path
 
-        baseline = package("Acme.Base", "0.1.0")
+        baseline = package("Acme.Base", "0.1.0", (
+            '<dependencies><group targetFramework="net10.0">'
+            '<dependency id="System.Memory" version="4.5.3" />'
+            '</group></dependencies>' if pruned_baseline else ""))
         package("Acme.Dependency", dependency_version, (
             '<dependencies><group targetFramework="net10.0">'
             '<dependency id="Acme.Adapter" version="[2.4.0-preview.1]" />'
@@ -153,8 +157,8 @@ class NuGetContentToolTests(unittest.TestCase):
         self.request.write_bytes(evidence.canonical_bytes(value))
         return value
 
-    def test_managed_consumer_lock_composition_uses_exact_archive_closure_without_resolving(self):
-        self.consumer_lock_request()
+    def consumer_lock_round_trip(self, *, pruned_baseline=False):
+        self.consumer_lock_request(pruned_baseline=pruned_baseline)
         code, event = self.invoke(operation="consumer-lock")
         self.assertEqual((code, event), (0, {"event": "control", "code": "None", "value": 3}))
         receipt = evidence.load_json(self.output.read_bytes())
@@ -181,7 +185,8 @@ class NuGetContentToolTests(unittest.TestCase):
         project = consumer / "Consumer.csproj"
         project.write_text(
             '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>'
-            '<TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup>'
+            '<TargetFramework>net10.0</TargetFramework>'
+            '<RestoreEnablePackagePruning>true</RestoreEnablePackagePruning></PropertyGroup><ItemGroup>'
             '<PackageReference Include="Acme.Base" Version="[0.1.0]" />'
             '<PackageReference Include="Acme.Adapter" Version="[2.4.0-preview.1]" />'
             '</ItemGroup></Project>')
@@ -194,16 +199,40 @@ class NuGetContentToolTests(unittest.TestCase):
         ET.SubElement(sources, "clear")
         ET.SubElement(sources, "add", key="fixture", value=str(self.case))
         config.write_bytes(ET.tostring(configuration, encoding="utf-8"))
+        cache = self.case / "restore-cache"
+        (cache / "tmp").mkdir(parents=True)
+        environment = command_environment(self.owner.root, cache, {"DOTNET_ROLL_FORWARD": "LatestPatch"})
         code, raw = capture_control(
             ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config),
              "-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"],
-            cwd=consumer, env=self.environment, limit=65536, timeout=120)
+            cwd=consumer, env=environment, limit=65536, timeout=120)
         self.assertEqual(code, 0, "Composed lock did not support actual locked NuGet restore")
         self.assertEqual(raw, b"")
         self.assertEqual(lock.read_bytes(), lock_bytes)
         original = self.output.read_bytes()
         self.assertEqual(self.invoke(operation="consumer-lock")[1]["code"], "OwnershipInvalid")
         self.assertEqual(self.output.read_bytes(), original)
+
+    def test_managed_consumer_lock_composition_uses_exact_archive_closure_without_resolving(self):
+        self.consumer_lock_round_trip()
+
+    def test_managed_consumer_lock_composition_preserves_framework_pruned_original_dependency_graph(self):
+        self.consumer_lock_round_trip(pruned_baseline=True)
+
+    def test_managed_consumer_lock_composition_does_not_repair_a_missing_original_dependency_row(self):
+        value = self.consumer_lock_request(pruned_baseline=True)
+        path = self.case / "System.Memory.4.5.3.nupkg"
+        with zipfile.ZipFile(path, "w") as archive:
+            archive.writestr("System.Memory.nuspec", (
+                "<package><metadata><id>System.Memory</id><version>4.5.3</version></metadata></package>"))
+        value["archives"].append({"path": self.relative(path), "sha256": evidence.file_sha256(path)})
+        self.lock_value["dependencies"]["net10.0"]["Acme.Base"]["dependencies"] = {"System.Memory": "4.5.3"}
+        self.lock.write_bytes(evidence.canonical_bytes(self.lock_value))
+        value["sourceLock"]["sha256"] = evidence.file_sha256(self.lock)
+        self.request.write_bytes(evidence.canonical_bytes(value))
+        self.assertEqual(self.invoke(operation="consumer-lock"), (
+            2, {"event": "control", "code": "ProofMismatch", "value": 0}))
+        self.assertFalse(self.output.exists())
 
     def test_managed_consumer_lock_composition_rejects_unsatisfied_exact_archive_versions(self):
         self.consumer_lock_request(dependency_version="3.2.2")
@@ -1001,6 +1030,113 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):
         self.captured_build(native=True)
 
+    def package_consumer_build(self, *, native=False):
+        import conformance_sdk_checks as sdk
+        from conformance_execution import project_build_line
+        from conformance_lock_preparation import prepare_project_lock, verify_project_lock
+
+        measured, _, _ = self.evaluation_request()
+        owner = OwnedRun.allocate(self.case / "package-consumer-run", ROOT, profile="harness")
+        candidate, sources = evidence.snapshot_sources(ROOT, owner)
+        project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"
+        admitted = contributors.admit_binding_project(project, "metadata")
+        binding = contributors.snapshot_binding_project(project, "metadata", admitted.inputs_sha256, owner)
+        tools = owner.root / "tools"
+        shutil.copytree(self.tool.parent, tools)
+        config, feed = owner.root / "NuGet.Config", owner.root / "feed"
+        config.write_bytes(evidence.synthetic_nuget_configuration(feed))
+        config.chmod(0o400)
+        projects = (
+            ("src/Hoard.Abstractions/Hoard.Abstractions.csproj", "Hoard.Abstractions"),
+            (sdk.SDK + "/Hoard.Testing.Conformance.csproj", "Hoard.Testing.Conformance"),
+            ("src/Hoard.Core/Hoard.Core.csproj", "Hoard.Core"),
+            ("src/Hoard.Hosting/Hoard.Hosting.csproj", "Hoard.Hosting"),
+            (sdk.MEMORY, "Hoard.Fixtures.Metadata.Memory"),
+            (sdk.MEMORY_BINDING, "Hoard.Fixtures.Conformance.Bindings.Memory"),
+            (sdk.SQLITE, "Hoard.Fixtures.Metadata.Sqlite"),
+            (sdk.SQLITE_BINDING, "Hoard.Fixtures.Conformance.Bindings.Sqlite"),
+            ("tests/fixtures/metadata/HostAdapters/HostAdapters.csproj", "Hoard.Fixtures.Metadata.HostAdapters"),
+            ("tests/fixtures/artifacts/Local/Local.csproj", "Hoard.Fixtures.Artifacts.Local"),
+            ("tests/fixtures/artifacts/ObjectSemantics/ObjectSemantics.csproj", "Hoard.Fixtures.Artifacts.ObjectSemantics"),
+            ("tests/fixtures/artifacts/HostAdapters/HostAdapters.csproj", "Hoard.Fixtures.Artifacts.HostAdapters"),
+            ("tests/fixtures/conformance/Bindings/Local/Local.csproj", "Hoard.Fixtures.Conformance.Bindings.Local"),
+            ("tests/fixtures/conformance/Bindings/ObjectSemantics/ObjectSemantics.csproj",
+             "Hoard.Fixtures.Conformance.Bindings.ObjectSemantics"),
+            ("tests/fixtures/conformance/Contributor/Contributor.csproj", "Hoard.Fixtures.Conformance.Contributor"),
+        )
+        native_command, commands, deadline = owner.command, [], time.monotonic() + 600
+
+        def execute(arguments, *, cwd, cache_id, kind, timeout=600, env=None):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise evidence.ConformanceError("DeadlineExceeded")
+            timeout = min(timeout, remaining)
+            if native:
+                result = native_command(
+                    arguments, cwd=cwd, cache_id=cache_id, kind=kind, timeout=timeout, env=env)
+            else:
+                cache = owner.root / "cache" / cache_id
+                (cache / "tmp").mkdir(parents=True, exist_ok=True)
+                environment = command_environment(owner.root, cache, env)
+                code, raw = capture_control(
+                    arguments, cwd=cwd, env=environment, limit=65536, timeout=min(timeout, 120))
+                events = ((evidence.load_json(raw),) if kind == "events" else
+                          tuple(event for line in raw.splitlines() if line.strip()
+                                if (event := project_build_line(line)) is not None))
+                result = mock.Mock(exit_code=code, events=events)
+            commands.append(tuple(arguments))
+            return result
+
+        try:
+            with mock.patch.object(owner, "command", side_effect=execute):
+                for relative, package_id in projects:
+                    selected = candidate / relative
+                    lock, receipt = prepare_project_lock(selected, candidate, feed, "candidate")
+                    sdk.build(owner, selected, config, "local-packages", feed=feed,
+                              lock=lock, package_id=package_id)
+                    if receipt is not None:
+                        verify_project_lock(receipt, candidate, feed)
+                selected = candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj"
+                lock, receipt = prepare_project_lock(selected, candidate, feed, "candidate")
+                sdk.build(owner, selected, config, "local-packages", lock=lock,
+                          properties=("-p:BaseOutputPath=bin/baseline-consumer/",))
+                if receipt is not None:
+                    verify_project_lock(receipt, candidate, feed)
+                self.assertTrue((selected.parent / "obj/Release/net10.0/Consumer.AssemblyInfo.cs").is_file())
+                source_lock = lock if lock is not None else selected.with_name("packages.lock.json")
+                baseline = evidence.load_json(source_lock.read_bytes())
+                archives = []
+                for package_id, row in baseline["dependencies"]["net10.0"].items():
+                    filename = f'{package_id}.{row["resolved"]}.nupkg'
+                    archives.append(feed / filename if package_id.startswith("Hoard.") else
+                                    owner.root / "cache/local-packages" / package_id.lower()
+                                    / row["resolved"].lower() / filename.lower())
+                packages = [evidence.package_identity(feed, package_id, "0.1.0") for _, package_id in projects]
+                result = contributors.build_binding_consumer(
+                    binding, owner, candidate, sources, tools / self.tool.name, Path(measured["toolchainRoot"]),
+                    self.msbuild.parent.name, self.runtime_version,
+                    source_lock=source_lock, packages=packages, archive_paths=archives)
+            self.assertFalse(result["qualification"])
+            self.assertEqual(set(result["components"]), set(evidence._SESSION_ROLES["metadata"]))
+            self.assertIn(result["assemblyPath"].relative_to(owner.root).as_posix(), result["runtimeAssemblies"])
+            self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
+                                for path in result["runtimeAssemblies"]))
+            self.assertEqual(evidence.input_manifest(owner.root, sorted(result["controlInputs"])), result["controlInputs"])
+            self.assertEqual(evidence.input_manifest(owner.root, sorted(result["cachedArchives"])), result["cachedArchives"])
+            self.assertEqual(len(commands), 50)
+        finally:
+            if owner.state == "Allocated":
+                owner.transition("Active")
+            owner.transition("Settling")
+            owner.release()
+
+    def test_managed_package_only_consumer_build_preserves_baseline_and_isolates_generated_sources(self):
+        self.package_consumer_build()
+
+    @unittest.skipUnless(native_execution_supported(), "Native package consumer build requires supported Linux containment")
+    def test_native_package_only_consumer_build_uses_owned_commands_and_settles_resources(self):
+        self.package_consumer_build(native=True)
+
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()
         toolchain = value["toolchainRoot"]
@@ -1354,6 +1490,127 @@ class ContributorAdmissionTests(unittest.TestCase):
         self.assertFalse((binding.root / "obj").exists())
         self.assertFalse((binding.root / "shared/obj").exists())
         self.assertEqual(evidence.input_manifest(binding.root, sorted(binding.sources)), binding.sources)
+
+    def consumer_build_fixture(self, name="consumer-build"):
+        binding, owner, configuration = self.build_fixture(name)
+        candidate = owner.root / "snapshot"
+        project = candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj"
+        project.parent.mkdir(parents=True)
+        project.write_text('<Project Sdk="Microsoft.NET.Sdk" />')
+        project.chmod(0o400)
+        sources = evidence.proof_manifest(candidate)
+        tool = owner.root / "tools/BuildInputs.dll"
+        tool.parent.mkdir()
+        tool.write_bytes(b"modeled content tool")
+        toolchain = self.parent / (name + "-toolchain")
+        msbuild = toolchain / "sdk/10.0.203/MSBuild.dll"
+        msbuild.parent.mkdir(parents=True)
+        msbuild.write_bytes(b"modeled measured MSBuild")
+        lock = owner.root / "consumer-source.lock.json"
+        lock.write_bytes(evidence.canonical_bytes({"version": 2, "dependencies": {"net10.0": {}}}))
+        packages, archives = [], []
+        for name in ("Acme.Adapter", "Acme.Provider", "Hoard.Testing.Conformance", "Hoard.Abstractions"):
+            archive = owner.root / "feed" / f"{name}.0.1.0.nupkg"
+            with zipfile.ZipFile(archive, "w") as packed:
+                packed.writestr(f"{name}.nuspec",
+                                f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")
+                packed.writestr(f"lib/net10.0/{name}.dll", name.encode("ascii"))
+            packages.append(evidence.package_identity(archive.parent, name, "0.1.0"))
+            archives.append(archive)
+        return binding, owner, candidate, sources, configuration, tool, toolchain, lock, packages, archives
+
+    def run_consumer_build(self, fixture, *, defect=None):
+        binding, owner, candidate, sources, configuration, tool, toolchain, lock, packages, archives = fixture
+
+        def capture(run, selected_tool, version, selected_lock, adapter, selected_archives):
+            self.assertIs(run, owner)
+            self.assertEqual((selected_tool, version, selected_lock), (tool, "10.0.7", lock))
+            self.assertEqual(selected_archives, archives)
+            self.assertEqual(adapter, packages[0])
+            derived = owner.root / "binding-consumer/packages.lock.json"
+            digest = contributors._write_owned_input(owner, derived, b"modeled derived lock")
+            return {"qualification": False, "lockPath": derived, "lockSha256": digest,
+                    "packages": [{"packageId": package["packageId"], "version": package["version"],
+                                  "archiveSha256": package["sha256"]} for package in packages]}
+
+        def build(run, project, config, cache, **options):
+            self.assertIs(run, owner)
+            self.assertEqual(project, candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj")
+            self.assertEqual((config, cache), (owner.root / "binding-consumer/NuGet.Config", "binding-consumer"))
+            configured = ET.parse(config).findall("./packageSources/add")
+            self.assertEqual(len(configured), 1)
+            self.assertEqual(configured[0].get("value"), str(owner.root / "binding-consumer/feed"))
+            self.assertEqual(config.stat().st_mode & 0o777, 0o400)
+            self.assertEqual(options["lock"], owner.root / "binding-consumer/packages.lock.json")
+            self.assertNotIn("feed", options)
+            self.assertEqual(options["msbuild"],
+                             ("dotnet", "exec", "--fx-version", "10.0.7",
+                              str(toolchain / "sdk/10.0.203/MSBuild.dll")))
+            properties = dict(item[3:].split("=", 1) for item in options["properties"])
+            self.assertEqual(properties["ConformanceContributorCategory"], "metadata")
+            self.assertEqual(properties["ConformanceContributorPackageId"], "Acme.Adapter")
+            factory = Path(properties["ConformanceContributorFactory"])
+            self.assertIn(packages[1]["sha256"].encode("ascii"), factory.read_bytes())
+            self.assertEqual(factory.stat().st_mode & 0o777, 0o400)
+            self.assertEqual(options["lock"].stat().st_mode & 0o777, 0o400)
+            output = owner.root / "binding-consumer/bin/Release/net10.0"
+            output.mkdir(parents=True)
+            (output / "Hoard.Fixtures.Conformance.Consumer.dll").write_bytes(b"modeled compiled consumer")
+            for package in packages:
+                (output / (package["packageId"] + ".dll")).write_bytes(package["packageId"].encode("ascii"))
+                filename = f'{package["packageId"]}.{package["version"]}.nupkg'
+                cached = owner.root / "cache/binding-consumer" / package["packageId"].lower() / package["version"].lower()
+                cached.mkdir(parents=True)
+                shutil.copyfile(owner.root / "binding-consumer/feed" / filename, cached / filename.lower())
+            if defect == "sdk":
+                (output / "Hoard.Testing.Conformance.dll").write_bytes(b"substituted SDK")
+            elif defect == "cache-archive":
+                (owner.root / "cache/binding-consumer/acme.adapter/0.1.0/acme.adapter.0.1.0.nupkg").write_bytes(b"changed")
+            elif defect == "support-extra":
+                (tool.parent / "unexpected.json").write_bytes(b"changed support inventory")
+                raise evidence.ConformanceError("CommandFailed")
+            elif defect == "build-failure":
+                raise evidence.ConformanceError("CommandFailed")
+            elif defect in ("factory", "lock", "configuration", "archive", "staged-archive", "tool", "source", "msbuild"):
+                selected = {
+                    "factory": factory, "lock": options["lock"], "configuration": config,
+                    "archive": archives[0], "tool": tool, "source": project,
+                    "staged-archive": owner.root / "binding-consumer/feed/Acme.Adapter.0.1.0.nupkg",
+                    "msbuild": toolchain / "sdk/10.0.203/MSBuild.dll"}[defect]
+                selected.chmod(0o600)
+                selected.write_bytes(b"changed")
+                raise evidence.ConformanceError("CommandFailed")
+
+        with mock.patch.object(contributors, "capture_binding_consumer_lock", side_effect=capture), \
+                mock.patch("conformance_sdk_checks.build", side_effect=build):
+            return contributors.build_binding_consumer(
+                binding, owner, candidate, sources, tool, toolchain, "10.0.203", "10.0.7",
+                source_lock=lock, packages=packages, archive_paths=archives)
+
+    def test_registered_consumer_build_uses_frozen_package_only_controls_and_matches_output_component_bytes(self):
+        fixture = self.consumer_build_fixture()
+        result = self.run_consumer_build(fixture)
+        self.assertFalse(result["qualification"])
+        self.assertEqual(result["assemblyPath"],
+                         fixture[1].root / "binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        self.assertEqual(set(result["components"]), set(evidence._SESSION_ROLES["metadata"]))
+        self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
+                            for path in result["runtimeAssemblies"]))
+
+    def test_registered_consumer_build_rejects_substituted_common_sdk(self):
+        for defect in ("sdk", "cache-archive"):
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                self.run_consumer_build(self.consumer_build_fixture(defect), defect=defect)
+
+    def test_registered_consumer_build_rechecks_all_frozen_inputs_even_after_build_failure(self):
+        for defect in ("factory", "lock", "configuration", "archive", "staged-archive",
+                       "tool", "support-extra", "source", "msbuild"):
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                self.run_consumer_build(self.consumer_build_fixture(defect), defect=defect)
+
+    def test_registered_consumer_build_preserves_failed_build_without_fallback(self):
+        with self.assertRaisesRegex(evidence.ConformanceError, "^CommandFailed$"):
+            self.run_consumer_build(self.consumer_build_fixture(), defect="build-failure")
 
     def test_shared_build_runs_observed_compile_between_restore_and_pack_without_a_fallback_build(self):
         from conformance_sdk_checks import build

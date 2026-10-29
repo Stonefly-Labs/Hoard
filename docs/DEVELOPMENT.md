@@ -6613,8 +6613,38 @@ now reads versions3/4 only. Independent v4 graph admission additionally requires
 exact single-net10.0 maps with matching framework/targetAlias in both project
 and restore metadata. Unknown versions and missing/extra/foreign mappings
 reject; archive/hash/edge/ownership checks are unchanged. Dedicated v4 controls
-first failed, then pass locally. Fresh native verification is still required.
+first failed, then pass locally.
 The temporary schema-diagnosis assertions are removed after isolating the gate.
+The ownership/evidence job in run40791780057 at50a6672 now passes all701 tests
+without failures, errors, skips or unexpected diagnostic bytes. The real owned
+executor joined build, multi-project graphs and intended post-pack image
+rejections all complete. This verifies the v4 repair at that source revision;
+All six jobs in that exact workflow have now completed successfully. The public contributor
+runner, complete applicability and qualification are still unfinished.
+
+The next partial T064 package-only consumer bridge joins frozen lock capture and
+typed factory generation to a measured-MSBuild build in its own output roots.
+Only explicitly selected archives enter its owned read-only feed; the private
+consumer configuration has no remote package source. Actual restored cache
+archives, SDK/Abstractions images and registered component bytes must match.
+Frozen sources, generated controls, input archives and tool support are
+revalidated even on failure. Modeled controls reject substituted SDK/cache bytes,
+nine late input/support changes and failed builds without fallback.
+
+The actual managed integration initially fails `ProofMismatch`: the original
+`SQLitePCLRaw.core` lock row omits a dependency already provided/pruned by the
+target framework. Composition now preserves the original graph without repairing
+missing baseline rows; new packages still require complete exact nuspec closure.
+A lower-bounded System.Memory fixture passes real locked restore without lock
+changes, and an original edge to a missing baseline row rejects even with its
+archive supplied. Those restores use separate private caches, avoiding same-ID/
+version byte reuse between fixtures. The subsequent actual build findsCS0579:
+redirecting intermediate roots exposes the previously built baseline's original
+generated files. Consumer default items now explicitly exclude its original
+`obj`/`bin` trees. The persistent managed build regression passes50 commands with
+123 runtime files and six registered component roles; its native counterpart
+remains an explicit local skip. No logger/runtime dispatch or public qualification
+is delivered by this preparation bridge.
 
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed

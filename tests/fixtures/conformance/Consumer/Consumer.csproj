@@ -3,6 +3,7 @@
     <AssemblyName>Hoard.Fixtures.Conformance.Consumer</AssemblyName>
     <IsTestProject>true</IsTestProject>
     <IsPackable>false</IsPackable>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)/obj/**;$(MSBuildProjectDirectory)/bin/**</DefaultItemExcludes>
     <DefineConstants Condition="'$(ConformanceContributorCategory)' == 'metadata'">$(DefineConstants);HOARD_METADATA_CONTRIBUTOR</DefineConstants>
     <DefineConstants Condition="'$(ConformanceContributorCategory)' == 'artifacts'">$(DefineConstants);HOARD_ARTIFACT_CONTRIBUTOR</DefineConstants>
   </PropertyGroup>

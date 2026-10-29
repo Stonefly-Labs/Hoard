@@ -1085,6 +1085,74 @@ PROVIDERS, DEVELOPMENT and harness are synchronized. Product APIs,
 architecture/ADR/diagrams, public examples, governance, predecessors, IaC,
 release and UI remain unaffected by this private schema-compatibility repair.
 
+Native ownership/evidence job123178671599 in
+[run40791780057](https://github.com/Stonefly-Labs/Hoard/actions/runs/40791780057)
+at50a6672 passes all701 tests, with zero failures/errors/skips/expected failures/
+unexpected successes/unexpected diagnostic bytes and codeNone. This includes
+the real owned-executor joined build, referenced-project graphs/images,
+ambient-SDK control, intended packaged-image ProofMismatch, referenced-image
+InputChanged and owned consumer-lock capture. Only v4 was newly admitted by
+the repair; combined with the prior v3-only boundary failure, this verifies the
+actual Linux restored assets use that supported format. All six jobs in that
+exact workflow have now completed successfully. This is not a pass for later
+source, public dispatch, complete contributor applicability/consumer journey or
+full qualification. T064 stays unchecked and
+the implementation stage continues.
+
+### Package-only contributor Consumer preparation (partial T064)
+
+The new internal bridge compiles the fixed Consumer with the generated typed
+factory, exact adapter reference and independently admitted derived lock. Its
+own intermediate/output roots do not overwrite baseline builds. Selected frozen
+archives are copied into a create-new read-only owned feed; the consumer's private
+configuration has no remote source. After locked restore/build through the
+measured MSBuild/runtime, every restored cache archive must match the explicit raw
+archive hash, SDK/Abstractions images must match their packages, and all registered
+runtime component images must match. Frozen source/control/archive/tool/MSBuild
+inputs are revalidated on success and failure; returned controls/cache maps stay
+explicitly non-qualifying.
+
+The first actual integration exposed a genuine baseline mismatch:
+`SQLitePCLRaw.core` has an SDK-pruned dependency omitted from the frozen Consumer
+lock. Strict comparison with the unpruned nuspec incorrectly rejected it before
+compilation. Preserve original dependency sets and validate every retained edge,
+but never expand/repair missing original rows. New rows still require exact
+complete nuspec closure. A real System.Memory lower-bounded pruning fixture
+first fails, then passes actual locked restore with unchanged derived lock bytes.
+An edge to a missing original row rejects even with that archive supplied.
+Separate private restore caches prevent same-ID/version fixture bytes from
+contaminating each other. New-package pruning contexts are not inferred.
+
+The next actual integration exposedCS0579: changing BaseIntermediateOutputPath
+made the previously built Consumer's original obj-generated assembly attributes
+visible to default compilation. Explicit original obj/bin exclusions fix this
+without altering any common assertion. The actual managed component then passes
+all50 commands, captures123 runtime files and matches six registered metadata
+component roles. The same operation is now a persistent managed regression,
+with a separately gated native counterpart; it intentionally leaves the
+baseline's generated files in place. Four modeled bridge controls additionally
+exercise substituted SDK/cache archives, nine late input/support changes and
+build failure without fallback.
+
+This is not yet a logger-backed runtime manifest/origin route, complete artifact
+applicability, public contributor dispatch or full good/red/corrected journey.
+T064 remains unchecked; T065–T086 and implement/running are unchanged. README,
+PROVIDERS, DEVELOPMENT and harness contract are affected. Charter/product,
+architecture/ADR/diagrams, public examples, governance, predecessors, IaC,
+release and UI remain unaffected by this private preparation increment; the
+public reproduction guide is still a later task.
+
+Validation: `python3 scripts/conformance_unit_checks.py --all-tooling` observes709
+tests with zero failures/errors/expected failures/unexpected successes/
+unexpected diagnostic bytes,23 explicit native-only macOS skips and the expected
+incomplete exit2. The real managed consumer regression passes in that frozen
+full replay; its native counterpart has not yet run at this source.
+`dotnet format tests/fixtures/conformance/BuildInputs/BuildInputs.csproj
+--verify-no-changes --no-restore --include
+tests/fixtures/conformance/BuildInputs/ConsumerLock.cs -v quiet`,
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. No task/checklist or flow marker changes.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

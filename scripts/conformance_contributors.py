@@ -822,6 +822,134 @@ def capture_binding_consumer_lock(owned_run, tool, runtime_version, source_lock,
             raise evidence.ConformanceError("InputChanged")
 
 
+def build_binding_consumer(binding, owned_run, candidate, candidate_sources, tool,
+                           toolchain_root, sdk_version, runtime_version, *, source_lock, packages, archive_paths):
+    from conformance_execution import no_symlinks
+    from conformance_sdk_checks import build, read_bounded
+
+    owned_run._check_ledger()
+    candidate, tool, source_lock = map(Path, (candidate, tool, source_lock))
+    toolchain_root = Path(toolchain_root)
+    sdk_version, runtime_version = evidence.stable_id(sdk_version), evidence.stable_id(runtime_version)
+    if (candidate != owned_run.root / "snapshot" or binding.root != owned_run.root / "binding-source"
+            or not toolchain_root.is_absolute() or ".." in toolchain_root.parts
+            or toolchain_root.is_relative_to(owned_run.root) or owned_run.root.is_relative_to(toolchain_root)
+            or re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", sdk_version, re.ASCII) is None):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    if not isinstance(archive_paths, (list, tuple)) or not 0 < len(archive_paths) <= 1024:
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    paths = [tool, source_lock, *(Path(path) for path in archive_paths)]
+    for path in [*paths, toolchain_root]:
+        if ".." in path.parts or ";" in str(path) or not path.is_absolute():
+            raise evidence.ConformanceError("OwnershipInvalid")
+        no_symlinks(path)
+    if any(not path.is_relative_to(owned_run.root) for path in paths):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    evidence.verify_snapshot(candidate, candidate_sources)
+    if evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding):
+        raise evidence.ConformanceError("InputChanged")
+    project = candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj"
+    if project.relative_to(candidate).as_posix() not in candidate_sources:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    msbuild_relative = f"sdk/{sdk_version}/MSBuild.dll"
+    host = evidence.input_manifest(toolchain_root, [msbuild_relative])
+    support = evidence.proof_manifest(tool.parent)
+    frozen = dict(evidence.input_manifest(
+        owned_run.root, [path.relative_to(owned_run.root).as_posix() for path in paths]))
+    frozen.update({(tool.parent / path).relative_to(owned_run.root).as_posix(): hashed
+                   for path, hashed in support.items()})
+    packages = evidence._list(evidence._entity("PackageIdentity"), 1024)(packages)
+    indexed = {package["packageId"].casefold(): package for package in packages}
+    if len(indexed) != len(packages):
+        raise evidence.ConformanceError("BindingInvalid")
+    required = {binding.registration["adapterPackage"]["packageId"].casefold(),
+                binding.registration["declaration"]["packageId"].casefold(),
+                "hoard.testing.conformance", "hoard.abstractions"}
+    required.update(identity["packageId"].casefold() for identity in binding.registration["components"].values())
+    if not required <= set(indexed):
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    for package in packages:
+        filename = f'{package["packageId"]}.{package["version"]}.nupkg'
+        selected = [Path(path) for path in archive_paths if Path(path).name == filename]
+        if (len(selected) != 1 or frozen[selected[0].relative_to(owned_run.root).as_posix()] != package["sha256"]
+                or evidence.package_identity(
+                    selected[0].parent, package["packageId"], package["version"]) != package):
+            raise evidence.ConformanceError("InputChanged")
+    adapter = indexed[binding.registration["adapterPackage"]["packageId"].casefold()]
+    provider = indexed[binding.registration["declaration"]["packageId"].casefold()]
+    factory_data = binding_factory_source(binding, adapter, provider)
+    workspace = owned_run.root / "binding-consumer"
+    if any((workspace / name).exists() for name in ("bin", "obj")):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    try:
+        derived = capture_binding_consumer_lock(
+            owned_run, tool, runtime_version, source_lock, adapter, archive_paths)
+        feed = workspace / "feed"
+        cached = {}
+        for package in derived["packages"]:
+            filename = f'{package["packageId"]}.{package["version"]}.nupkg'
+            selected = [Path(path) for path in archive_paths if Path(path).name.casefold() == filename.casefold()]
+            if len(selected) != 1:
+                raise evidence.ConformanceError("ProofMismatch")
+            if _write_owned_input(owned_run, feed / filename, read_bounded(
+                    selected[0], evidence.MAX_PACKAGE_BYTES)) != package["archiveSha256"]:
+                raise evidence.ConformanceError("InputChanged")
+            prefix = f'{package["packageId"].lower()}/{package["version"].lower()}'
+            cached[f'cache/binding-consumer/{prefix}/{filename.lower()}'] = package["archiveSha256"]
+        configuration = workspace / "NuGet.Config"
+        document = ET.Element("configuration")
+        sources = ET.SubElement(document, "packageSources")
+        ET.SubElement(sources, "clear")
+        ET.SubElement(sources, "add", key="frozen", value=str(feed))
+        _write_owned_input(owned_run, configuration, ET.tostring(document, encoding="utf-8"))
+        factory = workspace / "ContributorBindingFactory.cs"
+        _write_owned_input(owned_run, factory, factory_data)
+        frozen.update({(workspace / path).relative_to(owned_run.root).as_posix(): hashed
+                       for path, hashed in evidence.proof_manifest(workspace).items()})
+        properties = {
+            "BaseIntermediateOutputPath": str(workspace / "obj") + "/",
+            "MSBuildProjectExtensionsPath": str(workspace / "obj") + "/",
+            "BaseOutputPath": str(workspace / "bin") + "/",
+            "ConformanceContributorCategory": binding.registration["declaration"]["category"],
+            "ConformanceContributorFactory": str(factory),
+            "ConformanceContributorPackageId": adapter["packageId"],
+            "ConformanceContributorPackageVersion": adapter["version"],
+        }
+        build(owned_run, project, configuration, "binding-consumer", lock=derived["lockPath"],
+              properties=tuple(f"-p:{name}={_msbuild_literal(value)}" for name, value in properties.items()),
+              msbuild=("dotnet", "exec", "--fx-version", runtime_version, str(toolchain_root / msbuild_relative)))
+        if evidence.input_manifest(owned_run.root, sorted(cached)) != cached:
+            raise evidence.ConformanceError("InputChanged")
+        output = workspace / "bin/Release/net10.0"
+        directory = output.relative_to(owned_run.root).as_posix()
+        runtime = {f"{directory}/{path}": hashed for path, hashed in evidence.proof_manifest(
+            output, include_file=lambda path: path.endswith(
+                (".dll", ".so", ".dylib", ".deps.json", ".runtimeconfig.json"))).items()}
+        assembly = output / "Hoard.Fixtures.Conformance.Consumer.dll"
+        if assembly.relative_to(owned_run.root).as_posix() not in runtime:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        for name in ("Hoard.Testing.Conformance", "Hoard.Abstractions"):
+            package = indexed[name.casefold()]
+            expected = package["runtimeAssemblies"].get(f"lib/net10.0/{name}.dll")
+            if expected is None or runtime.get(f"{directory}/{name}.dll") != expected:
+                raise evidence.ConformanceError("InputChanged")
+        components = binding_runtime_components(binding, packages, runtime, directory)
+        return MappingProxyType({
+            "qualification": False, "assemblyPath": assembly, "runtimeAssemblies": MappingProxyType(runtime),
+            "components": components, "lock": derived,
+            "configurationPath": configuration, "controlInputs": MappingProxyType(frozen),
+            "cachedArchives": MappingProxyType(cached),
+            "factorySha256": frozen[factory.relative_to(owned_run.root).as_posix()]})
+    finally:
+        owned_run._check_ledger()
+        if (evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen
+                or evidence.input_manifest(toolchain_root, [msbuild_relative]) != host
+                or evidence.proof_manifest(tool.parent) != support
+                or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+            raise evidence.ConformanceError("InputChanged")
+        evidence.verify_snapshot(candidate, candidate_sources)
+
+
 def binding_runtime_components(binding, packages, runtime_assemblies, consumer_directory):
     packages = evidence._list(evidence._entity("PackageIdentity"), 1024)(packages)
     images = evidence._hash_map(runtime_assemblies)

@@ -109,6 +109,7 @@ internal static partial class Program
             }
         }
 
+        var originalNames = names.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var visiting = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         void Include(string id)
@@ -139,15 +140,19 @@ internal static partial class Program
                 locked.Add(key, row);
             }
             var declared = locked[key]!.AsObject()["dependencies"]?.AsObject() ?? new JsonObject();
-            Require(declared.Count == archive!.Dependencies.Count
+            // Preserve the SDK-pruned baseline; only new rows require the full nuspec closure.
+            Require((originalNames.Contains(id) ? declared.Count <= archive!.Dependencies.Count
+                    : declared.Count == archive!.Dependencies.Count)
+                && declared.Select(edge => edge.Key).Distinct(StringComparer.OrdinalIgnoreCase).Count() == declared.Count
                 && declared.All(edge => archive.Dependencies.Keys.Contains(edge.Key, StringComparer.OrdinalIgnoreCase)),
                 "ProofMismatch");
-            foreach (var (dependency, range) in archive.Dependencies)
+            foreach (var (dependency, value) in declared)
             {
-                Require(archives.TryGetValue(dependency, out var target) && range.Satisfies(target.Version),
+                Require(!originalNames.Contains(id) || originalNames.Contains(dependency), "ProofMismatch");
+                Require(archives.TryGetValue(dependency, out var target)
+                    && archive.Dependencies[dependency].Satisfies(target.Version),
                     "ProofMismatch");
-                var edge = declared.Single(item => item.Key.Equals(dependency, StringComparison.OrdinalIgnoreCase));
-                Require(edge.Value is JsonValue value && value.TryGetValue<string>(out var text)
+                Require(value is JsonValue scalar && scalar.TryGetValue<string>(out var text)
                     && text.Length <= 1024 && VersionRange.TryParse(text, out var declaredRange)
                     && declaredRange.Satisfies(target!.Version), "ProofMismatch");
                 Include(dependency);

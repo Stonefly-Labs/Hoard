@@ -520,7 +520,29 @@ but pivots framework sections by alias. The private producer/reader now accepts
 v3/v4 only, requiring both v4 framework maps to contain exactly net10.0 with
 matching framework and targetAlias values. Existing graph, edge, hash and
 ownership checks remain; unknown versions and foreign/extra aliases reject.
-Local controls pass; the corrected native pipeline remains unverified.
+Initial local controls passed before native replay.
+The corrected source50a6672 then passes all701 native tooling controls without
+skips, failures, errors or unexpected diagnostic bytes in run40791780057. This
+verifies the owned joined build and both late-image rejection boundaries, not
+the unfinished public contributor/common-consumer journey or qualification.
+
+The next private bridge builds the fixed package-only Consumer with the generated
+typed factory and derived lock, using the same measured MSBuild/runtime. It stages
+only the selected frozen archives in an owned read-only feed and uses a private
+configuration with no remote sources. Restored archive bytes, common SDK/
+Abstractions images and every registered component must match; generated controls,
+source snapshots, original archives and tool support are rechecked after success
+or failure. Redirected output also excludes the baseline project's original
+`obj`/`bin` sources, avoiding duplicate generated assembly attributes.
+The original consumer graph retains SDK-pruned dependency edges without adding
+missing baseline rows; newly added packages still require their exact complete
+nuspec closure. A real lower-bounded framework-pruning fixture passes locked
+restore with unchanged derived lock bytes; incomplete original graphs still
+reject even when the missing archive is supplied. The actual managed example
+build passes50 commands,123 runtime files and six component roles. This is
+preparation, not native containment, logger execution, complete artifact
+applicability, a public contributor journey or qualification; new-package pruning
+contexts outside this finite supported composition are not inferred.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with

@@ -2279,13 +2279,29 @@ consumer-lock composition may only combine an existing frozen consumer graph
 with an explicit adapter archive and frozen archive dependency closure. Use
 NuGet's own framework/range/content-hash APIs; never resolve or widen versions.
 Preserve original entries except the selected adapter's direct/exact reference,
-and exclude unreferenced build-only inputs. Reject missing/conflicting versions,
+including SDK-pruned dependency sets. Validate every retained edge/range, but do
+not reconstruct omitted baseline edges from nuspecs or add missing original rows
+even when their archives are supplied. Newly added rows still require complete
+exact nuspec dependency closure. Do not infer new-package pruning contexts.
+Exclude unreferenced build-only inputs. Reject missing/conflicting versions,
 cycles, altered hashes and unknown policy/receipt fields. Bind owned capture to
 the full co-located tool support tree and rehash source locks, archives,
 requests and receipts before admitting a read-only derived lock. Independently
 reject omitted/extra closure entries or changes to original consumer entries.
 An actual locked restore of a managed fixture validates the derived format,
 not native containment, complete applicability or public qualification.
+The internal consumer build must use the exact measured MSBuild/runtime and
+the fixed common Consumer project, with isolated intermediate/output roots.
+Exclude the project's original obj/bin trees even when those output roots are
+redirected. Stage selected frozen archives into a create-new owned read-only
+feed and configuration with no remote sources; verify the actual restored cache
+archives against those raw archive hashes. Common SDK/Abstractions and registered
+runtime components must match the captured package images. Freeze generated
+factory/configuration/lock/receipt/feed controls, original archives, source
+snapshots, tool support and measured MSBuild; recheck them after success or
+failure. Return only non-qualifying preparation and its control/cache hash maps.
+Native execution of this build is not logger execution, full applicability or
+public qualification.
 Compiled-document receipt admission must bind the successful compiler project,
 exact selected DLL/PDB paths and current output hashes. Every document hash must
 match an observed compiler source; unknown or mismatched documents reject.

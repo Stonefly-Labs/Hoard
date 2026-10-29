@@ -652,17 +652,23 @@ An internal consumer-lock composer uses NuGet's framework/range/content-hash API
 over explicit frozen archives, preserving the original consumer graph and adding
 only the adapter's required closure without dependency resolution. Its output
 passes a real locked NuGet restore; it is not public contributor execution.
-Fresh Linux joined-build controls fail at content-hash capture; single closed
-producer diagnostics are now preserved instead of masked as CommandFailed.
+Single closed producer diagnostics are preserved instead of masked as CommandFailed.
 Restore and pack now explicitly invoke the same measured MSBuild/runtime as
 evaluation and compilation, instead of selecting an ambient SDK. A managed
-regression passes with an unavailable SDK requested outside the owned source;
-native replay shows this separate repair does not resolve content capture.
-Safe native diagnosis identifies the v3-only assets-version gate.
+regression passes with an unavailable SDK requested outside the owned source.
+Safe native diagnosis identifies and repairs the v3-only assets-version gate.
 The internal reader now supports NuGet assets v3 and v4; v4 requires exact
 single-net10.0 framework/alias mappings. Unknown versions and mismatched aliases
-reject. The v4 correction passes local controls; its native replay is pending.
-Native acceptance and source-generator/tool-dependency closure remain unfinished;
+reject. Linux replay at50a6672 passes all701 tooling controls without skips, including
+the owned joined build and late-image rejection boundaries.
+The next internal bridge builds the typed package-only Consumer from an explicit
+frozen-archive-only feed, verifies restored archive and registered runtime bytes,
+and rechecks its generated controls even after failure. The original SDK-pruned
+lock graph is preserved; new packages still require complete archive closure.
+A real managed build passes, including reuse of a previously built baseline
+without compiling its generated sources again. Native replay of this increment
+and complete public contributor execution remain unfinished.
+Complete native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
