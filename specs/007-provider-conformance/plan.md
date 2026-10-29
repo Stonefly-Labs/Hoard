@@ -3392,6 +3392,33 @@ remain retained. Only the exact stopped namespace and inspected volume
 are removed afterward. This finite clean failed tree is not full all-profile
 sanitation or qualification. T068--T086 and implement/running remain unchanged.
 
+### Readiness cancellation ownership race diagnosis and focused repair
+
+A distinct default-console observer of unmodified14244ed source reproduces
+the lifecycle failure on its third class execution after two passing executions.
+It retains only transient-output hashes/counts and fixed source line numbers,
+not unknown assertion text/stack paths; lines141/172 identify the wrong-owner
+assertion and its finalizer. It is not the original runtime observer or a
+replacement for the failed ae0dd227 run. The readiness timeout's scheduled
+intermediate cancellation races startup shutdown through the linked token.
+The winning global cancellation can claim the provider callback's failure.
+
+`CancelPending` now invokes `CancelAsync` before its first await, marking the
+original linked readiness source before shutdown starts. Callback completion
+still runs asynchronously and holds the original owner/phase activity until
+safe diagnostics publish. Remove only the redundant intermediate readiness
+source; bounded waits, original assertions, error sanitation, cleanup retention
+and public lifecycle APIs remain unchanged.
+
+`dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj
+--no-restore -c Release -p:UseSharedCompilation=false -nodeReuse:false --filter
+'FullyQualifiedName~LifecycleDeadlineTests|FullyQualifiedName~LifecycleShutdownTests|FullyQualifiedName~LifecycleReadinessTests'
+--logger 'console;verbosity=minimal'` passes21 tests, zero skips in16 seconds.
+`dotnet format src/Hoard.Hosting/Hoard.Hosting.csproj --verify-no-changes
+--no-restore --include src/Hoard.Hosting/Lifecycle/HoardLifecycleCoordinator.cs
+-v quiet` passes. Fresh native original-observer composition and repeated
+diagnostic reproduction remain pending; no inherited gate or task is closed.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

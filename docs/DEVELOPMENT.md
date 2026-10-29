@@ -7861,6 +7861,23 @@ volume are removed after that verification. Final report, post-release CP
 report replay and29/2 controls remain unverified; the lifecycle failure needs
 separate diagnosis.
 
+A distinct unmodified-source native console observer at14244ed reproduces the
+lifecycle failure on its third class execution after two passing executions.
+Only bounded output hashes/counts and fixed test source lines141/172 are
+retained, not raw assertion text or stacks. Line141 checks cancellation's
+module owner. Readiness timeout schedules cancellation through an intermediate
+source on a worker; startup shutdown can win cancellation of the linked probe,
+attributing the provider callback failure to global composition instead.
+Cancellation initiation now marks the original linked probe synchronously via
+`CancelAsync`, before shutdown can compete; its asynchronous callback task
+remains supervised by the original owner/phase activity. No callback is invoked
+synchronously, wait budget extended, assertion changed or failure erased.
+The redundant intermediate timeout source is removed. The existing deadline,
+shutdown and readiness selection passes21 tests with zero skips, and focused
+Hosting format verification passes. The original failed proof remains failed;
+fresh native repeated-observer and original composition transport checks remain
+required. Public lifecycle contracts, module graph and architecture are unchanged.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

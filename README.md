@@ -904,6 +904,10 @@ images reject before copying. Source and generated symbol paths use separate
 explicit mappings with original PDB/source checksum verification. Actual managed
 metadata/artifact consumers pass; native contributor all-output and preparation
 workspace audits remain pending.
+An independent native diagnostic reproduces the inherited readiness-cancellation
+owner race. Cancellation now marks the original linked probe before shutdown
+can compete, retaining asynchronous callback supervision;21 focused lifecycle
+tests and formatting pass. Fresh native replay remains required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

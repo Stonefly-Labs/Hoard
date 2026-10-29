@@ -156,7 +156,8 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
     private void CancelPending(CancellationTokenSource source, Task? work, string owner, HoardLifecyclePhase at)
     {
         var activity = Activities.Enter(owner, HoardActivityKind.Phase);
-        _ = Task.Run(async () =>
+        _ = CancelAsync();
+        async Task CancelAsync()
         {
             using (activity)
             {
@@ -164,7 +165,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 catch (ObjectDisposedException) when (work?.IsCompleted == true) { return; }
                 catch (Exception) { Error("CancellationFailure", owner, at, true); }
             }
-        });
+        }
     }
 
     internal void MarkMapped()
@@ -277,8 +278,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             initial ? StartupDeadline.Cap(Options.ReadinessTimeout) : Options.ReadinessTimeout);
         var results = new Dictionary<string, HoardModuleReadiness>(StringComparer.Ordinal);
         var probes = new List<Task>();
-        var timeout = new CancellationTokenSource();
-        var linked = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token, timeout.Token);
+        var linked = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         try
         {
             foreach (var id in Composition.ActivationOrder)
@@ -319,7 +319,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                     observation.Abandon();
                     if (CallbackObservation.IsTimeout(error) || error is OperationCanceledException)
                     {
-                        CancelPending(timeout, work, id, HoardLifecyclePhase.AssessingReadiness);
+                        CancelPending(linked, work, id, HoardLifecyclePhase.AssessingReadiness);
                     }
                     if (error is not HoardLifecycleException)
                     { Error(error is TimeoutException ? "Timeout" : error is OperationCanceledException ? "Cancelled" : "InvalidReadiness", id, HoardLifecyclePhase.AssessingReadiness); }
@@ -357,7 +357,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 using (activity)
                 {
                     await observation.RunAsync(() =>
-                    { linked.Dispose(); timeout.Dispose(); return Task.CompletedTask; }).ConfigureAwait(false);
+                    { linked.Dispose(); return Task.CompletedTask; }).ConfigureAwait(false);
                 }
             }
         }
