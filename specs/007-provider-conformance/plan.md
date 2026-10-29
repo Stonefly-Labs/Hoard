@@ -3104,6 +3104,33 @@ and quickstart document this boundary; examples/product/provider contracts/
 architecture/ADR/diagrams/governance/predecessor/IaC/release/UI documents are
 unaffected because no public command or support claim changes.
 
+### Actual root-relative metadata observation
+
+Immutable exactc23251a subsequently passes genuine VSTest execution at four
+CPUs/6 GiB/512 PIDs: run9c7dc0a9-3445-4ffa-a816-639d1f3b88dd,102 cases/
+141 witnesses/468 verified proofs,93 Passed/nine frozen exclusions and zero
+Failed/Incomplete. Seven sanitation, four live-origin and five released-origin
+families pass without failures/errors/skips. Actual Released cleanup271.842 ms;
+stores/cache/feed are absent. Namespace466.825 seconds; admission scratch
+45,669,031,936 bytes. Actual cgroup peak1,966,931,968 bytes at the unchanged
+6,442,450,944-byte limit, with zero max/oom/oom_kill/oom_group_kill events;
+these observations do not diagnose earlier failures.
+
+Original trusted driver report pin
+`3b8242a11d9ebb440f96cd289cea1912f1fd1fdcfde8c673c2c1c924df8d01a2`
+and input pin
+`50305e133705c4ae86f93edf2ee154e1a24dec75c0e34082f0a0e031d47a47fc`
+anchor independent host verification and exact reproduction of all four actual
+public outputs. Eight retained controls pass in5.403 seconds. All retained names/
+files pass the original-private-root plain/base64 scan, with executable settings
+absent. Bundle, immutable driver, log and actual packet are retained. The stopped
+namespace and exact volume
+`9313b67a6121fb02fc5eb49299f8a0d47feb486b967b5c0d6960b161903884ec`
+are removed and independent listings confirm absence.
+This confirms the newer template in native metadata, not composition's entire
+retained-proof tree, final qualification, all profiles or CI. Unchecked tasks
+and the running implementation stage remain unchanged.
+
 ### Partial five-profile transport controls
 
 T069 now has seven tests in `test_conformance_ci.py` and a pure internal

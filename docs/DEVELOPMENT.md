@@ -7669,6 +7669,26 @@ non-qualifying. The SDK catalog consistency check and `git diff --check` pass.
 Native verification of this subsequent template change remains pending; prior
 exact3d2a38d observations are not relabeled as testing these new source bytes.
 
+Fresh exactc23251a metadata subsequently confirms the new template through actual
+VSTest: run9c7dc0a9-3445-4ffa-a816-639d1f3b88dd,102 cases/141 witnesses/
+468 verified proof files,93 Passed/nine frozen exclusions and no Failed/Incomplete.
+All seven sanitation, four live-origin and five released-origin families pass
+without failures/errors/skips; genuine Released cleanup is271.842 ms.
+Namespace466.825 seconds, admission scratch45,669,031,936 bytes and actual
+cgroup peak1,966,931,968 bytes at the unchanged6,442,450,944-byte limit, with
+zero max/oom/oom_kill/oom_group_kill events. No cause for prior failures is inferred.
+The host verifies the retained packet with separately retained original driver
+report/input pins, reproduces all four actual public outputs and passes all
+eight retained controls in5.403 seconds. All filenames/files exclude the original
+private root in plain/base64 values; no executable settings remain.
+Report SHA-256:
+`3b8242a11d9ebb440f96cd289cea1912f1fd1fdcfde8c673c2c1c924df8d01a2`.
+Input SHA-256:
+`50305e133705c4ae86f93edf2ee154e1a24dec75c0e34082f0a0e031d47a47fc`.
+The exact stopped namespace and volume are removed after retention and independent
+absence checks. This confirms finite native metadata behavior, not full
+composition/all-output/all-profile/CI qualification.
+
 The first T069 transport controls are now present in
 `tests/tooling/test_conformance_ci.py`, with an internal pure inspector in
 `scripts/conformance_ci.py`. It requires exactly five reports, separately

@@ -864,8 +864,10 @@ exclude the original private root in plain/base64 values and contain no executab
 settings; all four actual public surfaces reproduce with trusted driver pins.
 These independent observations do not erase or explain earlier failed runs.
 Retained composition settings now also use a root-relative logger path and put
-adapter paths only in hash-bound command arguments. Local affected suites pass;
-fresh native confirmation of that subsequent template change remains pending.
+adapter paths only in hash-bound command arguments. Fresh exactc23251a native
+metadata confirms the new template:102 cases/141 witnesses, all seven sanitation
+and original/released-origin controls, genuine cleanup and four reproduced
+public surfaces pass. Full composition/CI qualification is still unfinished.
 An internal five-profile transport inspector now rejects missing/foreign
 assignments, changed trusted pins and unsuccessful job/upload/download outcomes.
 It uses the same independent inventories locally and in CI, permits predeclared
