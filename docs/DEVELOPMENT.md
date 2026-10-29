@@ -7792,6 +7792,20 @@ zero failures/errors/expected failures/unexpected successes/unexpected diagnosti
 bytes,29 explicit native macOS skips and expected non-qualifying exit2.
 SDK catalog and diff checks pass.
 
+Before launching the next native attempt, inspection finds two more private
+path fields in discovery mutation results: projection and input descriptors.
+Both are now root-relative before first publication; only live reads hydrate
+them. Membership verification requires the exact expected relative projection
+descriptor and rejects absolute, escaping and foreign paths. The original
+projection bytes/hashes, parameter membership and negative/repair assertions
+are unchanged. The valid-relative regression first fails the former reader.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_inherited test_conformance_composition
+test_conformance_sanitation -q` executes60 tests in1.319 seconds with zero
+failures/errors and four native macOS skips. The allocated a6ff8ff namespace
+never starts and its empty volume is removed; it is not a native execution
+observation. Fresh native validation of these subsequent bytes remains pending.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

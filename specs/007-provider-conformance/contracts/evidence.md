@@ -1063,6 +1063,11 @@ create-new/no-symlink/original source pre/post checks. Source/command hashes
 remain bound while live; actual release removes these private build inputs.
 Other callers' original snapshot placement is unchanged and remains subject
 to the unfinished full all-output audit.
+Discovery mutation observations likewise publish projection and input
+descriptors relative to the owned root before persistence. Live verification
+hydrates only that private view; membership admission requires the exact
+expected relative projection descriptor, rejecting absolute/escaping/foreign
+paths without changing original projection hashes or negative/repair assertions.
 
 Delivered category diagnostic JSON/JUnit/Markdown/CI projections use closed
 catalog identities, counts and hashes. They independently verify the retained

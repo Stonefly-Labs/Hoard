@@ -306,7 +306,7 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
         from conformance_case_catalog import INHERITED_GUARD_FAILURES
 
         for mutation in ("none", "foreign-parameter", "omitted-repair", "false-negative",
-                         "false-count", "changed-projection", "foreign-path", "omitted-mutation",
+                         "false-count", "changed-projection", "foreign-path", "absolute-path", "escaping-path", "omitted-mutation",
                          "malformed-row", "boolean-count"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
@@ -326,7 +326,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                         path.write_bytes(ET.tostring(element))
                         guard = "inherited-discovery-guard-" + identity in INHERITED_GUARD_FAILURES
                         row[phase] = {
-                            "projection": str(path), "projectionSha256": file_sha256(path), "parameters": 1,
+                            "projection": path.relative_to(root).as_posix(),
+                            "projectionSha256": file_sha256(path), "parameters": 1,
                             "failedParameters": int(phase == "negative"),
                             "failureKind": "None" if phase == "repair" else "Guard" if guard else "Assertion",
                         }
@@ -340,14 +341,18 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                             testName=rows[0]["failedTests"][0].replace("a" * 64, "b" * 64)
                             if mutation == "foreign-parameter" else rows[0]["failedTests"][0],
                             outcome="Passed" if mutation == "false-negative" else "Failed")
-                    Path(entry["projection"]).write_bytes(ET.tostring(tree))
-                    entry["projectionSha256"] = file_sha256(Path(entry["projection"]))
+                    (root / entry["projection"]).write_bytes(ET.tostring(tree))
+                    entry["projectionSha256"] = file_sha256(root / entry["projection"])
                 elif mutation == "false-count":
                     rows[0]["negative"]["parameters"] = 2
                 elif mutation == "changed-projection":
                     rows[0]["negative"]["projectionSha256"] = "0" * 64
                 elif mutation == "foreign-path":
-                    rows[0]["negative"]["projection"] = str(root / "foreign.trx")
+                    rows[0]["negative"]["projection"] = "foreign.trx"
+                elif mutation == "absolute-path":
+                    rows[0]["negative"]["projection"] = str(root / rows[0]["negative"]["projection"])
+                elif mutation == "escaping-path":
+                    rows[0]["negative"]["projection"] = "../" + root.name + "/" + rows[0]["negative"]["projection"]
                 elif mutation == "omitted-mutation":
                     rows.pop()
                 elif mutation == "malformed-row":

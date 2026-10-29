@@ -574,8 +574,8 @@ def run_discovery_mutations(repository, owner, source, sources, sdk, *, sdk_pack
             }
             legacy._write(descriptor, document)
             observations[identity, phase] = {
-                "projection": str(projection), "projectionSha256": legacy._hash(projection),
-                "inputDescriptor": str(descriptor), "inputSha256": digest(document),
+                "projection": projection.relative_to(owner).as_posix(), "projectionSha256": legacy._hash(projection),
+                "inputDescriptor": descriptor.relative_to(owner).as_posix(), "inputSha256": digest(document),
                 "parameters": summary["tests"], "failedParameters": summary["failed"],
                 "failureKind": "None" if phase == "repair" else "Guard" if guard else "Assertion",
             }
@@ -600,8 +600,8 @@ def run_discovery_mutations(repository, owner, source, sources, sdk, *, sdk_pack
             or dict(input_manifest(owner, list(original_files))) != original_files):
         raise ConformanceError("InputChanged")
     for observation in observations.values():
-        document = load_json(read_bounded(Path(observation["inputDescriptor"]), 2 * 1024**2))
-        projection = Path(observation["projection"])
+        document = load_json(read_bounded(owner / observation["inputDescriptor"], 2 * 1024**2))
+        projection = owner / observation["projection"]
         guard = "inherited-discovery-guard-" + document["mutation"] in INHERITED_GUARD_FAILURES
         legacy.verify_projection(projection, expected_binding="none" if guard else "legacy",
                                  expected_environment={"HOARD_DISCOVERY_MUTATION": "active"})
@@ -647,7 +647,7 @@ def verify_discovery_mutation_membership(owner, mutations, scenarios):
                     or type(observed.get("failedParameters")) is not int):
                 raise ConformanceError("WitnessMissing")
             path = owner / "stores/inherited-discovery-mutations" / directory / identity / filename
-            if Path(observed["projection"]) != path:
+            if observed["projection"] != path.relative_to(owner).as_posix():
                 raise ConformanceError("OwnershipInvalid")
             raw = read_bounded(path, 2 * 1024**2)
             if hashlib.sha256(raw).hexdigest() != observed.get("projectionSha256"):

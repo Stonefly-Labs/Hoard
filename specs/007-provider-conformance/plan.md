@@ -3291,6 +3291,26 @@ zero failures/errors/expected failures/unexpected successes/unexpected diagnosti
 bytes,29 explicit native macOS skips and expected non-qualifying exit2.
 SDK catalog and diff checks pass. No task/qualification gate closes.
 
+### Root-relative discovery mutation observations
+
+Before starting the next frozen native attempt, direct inspection finds
+projection and input-descriptor fields copied as absolute private paths into
+retained discovery mutation results. They now become root-relative before
+publication, with hydration only for original live reads. Membership verification
+requires the exact expected relative projection descriptor; absolute, escaping
+and foreign paths reject. Original byte/hash, parameter membership and actual
+negative/repair requirements are unchanged.
+
+The valid-relative regression first fails against the old reader.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_inherited test_conformance_composition
+test_conformance_sanitation -q` executes60 tests in1.319 seconds, zero failures/
+errors and four native macOS skips. The a6ff8ff namespace was allocated but never
+started (PID0/no start time), then removed with its inspected empty volume
+`69db6baca9233744b9b0427beb910415c43c1845ed739616ffd0bc94259f5bb3`.
+No native run or sanitation success is claimed for that source. A fresh immutable
+bundle/driver will test the subsequent bytes. T068--T086 remain open.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

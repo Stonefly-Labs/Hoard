@@ -891,6 +891,10 @@ still rejected. The failed retained tree also exposes180 private-path-bearing
 build snapshot files outside transient stores. Composition and mutation source
 snapshots now opt into descriptor-bound owned stores; fresh full validation
 remains pending, and the original failures are not relabeled.
+Discovery mutation results now also publish root-relative projection/input
+descriptors, hydrating them only for live verification. Absolute and escaping
+projection descriptors reject. This closes another inspected publication gap,
+not the pending native all-output gate.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
