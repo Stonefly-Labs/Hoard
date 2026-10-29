@@ -748,14 +748,20 @@ binds its identity into executor-held command receipts. The SDK duplicates that
 descriptor for one exact resource without weakening original-owner recovery or
 taking over physical cleanup. Failed admission and cleanup retain ownership;
 completed cleanup and release publication are tracked separately for safe retry.
-SDK ownership tests pass; actual Linux descriptor inheritance and partial-unlink
-retry remain native-only checks, not locally established qualification.
+SDK ownership tests pass; the Linux partial-unlink retry remains a native-only
+check, not locally established qualification.
 The artifact-selected Consumer also compiles a Linux-only crash-process
 entrypoint using the supplied typed factory and shared assertions. Continuation
 bytes stay in private stores; proofs contain origins, a state-hash index and
 safe recovery readback. Descriptor-rooted control-file creation rejects
-unsupported platforms. The packaged macOS regression preserves114 rows/125
+unsupported platforms. The packaged macOS regression preserves 114 rows/125
 origins and verifies explicit prerequisite denial, not actual Linux recovery.
+The reusable internal crash controller now independently joins original native
+receipts, frozen requests/images, the held directory lease, source state/index,
+separate origins and exact recovery readback. An isolated unprivileged Linux/
+arm64 run passes all ten SDK ownership tests, the packaged component replay and
+all six real killed-source/fresh-recovery pairs. This is diagnostic component
+evidence, not full artifact applicability, qualifying CI or public dispatch.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

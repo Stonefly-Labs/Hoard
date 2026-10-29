@@ -25,6 +25,212 @@ import conformance_case_catalog as catalog
 from conformance_execution import OwnedRun, capture_control, command_environment, native_execution_supported
 
 
+class ContributorCrashAdmissionTests(unittest.TestCase):
+    run_id = "e02917fa-6725-4ebe-9bfd-4703ea533479"
+    source_id = "7eeb81e3-b717-4461-a313-5a3281e0f9fc"
+    recovery_id = "b57bcff9-1992-49e3-8235-27996cd66482"
+    receipt_id = "5ce8e7c7-8cb6-40da-a8d1-c01682fd8774"
+
+    def readback(self, boundary):
+        import conformance_contributor_crashes as crashes
+
+        control = b"acknowledged independent control before crash"
+        observed = {
+            "schemaVersion": 1, "qualification": False, "runId": self.run_id,
+            "caseId": crashes.CASE_ID, "boundary": boundary, "ownerFenced": True,
+            "reconstructed": boundary in ("B0", "B1"),
+            "reclamation": {"D0": "Pending", "D1": "Reclaimed"}.get(boundary, "NotApplicable"),
+            "contentSha256": hashlib.sha256(
+                bytes((index * 17 + 11) % 256 for index in range(256)) * 4096).hexdigest(),
+            "contentLength": 1048576, "controlSha256": hashlib.sha256(control).hexdigest(),
+            "controlLength": len(control), "outcome": "Removed" if boundary.startswith("D") else "Published",
+            "receiptId": self.receipt_id}
+        state = {
+            "Run": self.run_id, "Barrier": boundary, "TargetDigest": observed["contentSha256"],
+            "TargetLength": observed["contentLength"],
+            "Control": {"Digest": observed["controlSha256"], "Length": observed["controlLength"]},
+            "AcknowledgedReceipt": self.receipt_id if boundary == "B3" else None}
+        return observed, state
+
+    def test_six_readbacks_require_exact_shared_bytes_outcomes_and_original_acknowledgement(self):
+        import conformance_contributor_crashes as crashes
+
+        for boundary in crashes.BOUNDARIES:
+            good, state = self.readback(boundary)
+            arguments = {"boundary": boundary, "run_id": self.run_id, "case_id": crashes.CASE_ID}
+            admitted = crashes.admit_readback(
+                evidence.canonical_bytes(good), evidence.canonical_bytes(state), **arguments)
+            self.assertEqual(admitted, good)
+            for change in (
+                    {"schemaVersion": True}, {"qualification": True}, {"extra": True},
+                    {"runId": self.source_id}, {"caseId": "foreign"}, {"boundary": "unknown"},
+                    {"ownerFenced": False}, {"reconstructed": not good["reconstructed"]},
+                    {"reclamation": "Reclaimed" if boundary != "D1" else "Pending"},
+                    {"contentSha256": "0" * 64}, {"controlSha256": "0" * 64},
+                    {"contentLength": True}, {"contentLength": 1048575}, {"controlLength": 1},
+                    {"outcome": "Removed" if good["outcome"] == "Published" else "Published"},
+                    {"receiptId": "00000000-0000-0000-0000-000000000000"}):
+                with self.subTest(boundary=boundary, change=change), self.assertRaises(evidence.ConformanceError):
+                    crashes.admit_readback(
+                        evidence.canonical_bytes(good | change), evidence.canonical_bytes(state), **arguments)
+            for change in ({"Run": self.source_id}, {"Barrier": "foreign"}, {"TargetDigest": "0" * 64},
+                           {"TargetLength": 1}, {"Control": {}},
+                           *([{"AcknowledgedReceipt": self.recovery_id}] if boundary == "B3" else [])):
+                with self.subTest(boundary=boundary, state=change), self.assertRaises(evidence.ConformanceError):
+                    crashes.admit_readback(
+                        evidence.canonical_bytes(good), evidence.canonical_bytes(state | change), **arguments)
+
+    def test_native_pair_reader_rejects_borrowed_changed_and_non_original_receipts(self):
+        import conformance_contributor_crashes as crashes
+        import conformance_sources as sources
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            lease = SimpleNamespace(resource_id="resource-test", descriptor=17)
+            seal = {"resourceId": lease.resource_id, "pathSha256": "a" * 64, "identitySha256": "b" * 64}
+            records = {}
+            run = SimpleNamespace(
+                root=root, run_id=self.run_id, root_id="c" * 32, command_sequence=2,
+                live_children=lambda: (), read_execution_record=lambda sequence: records[sequence],
+                _directory_lease_snapshot=lambda candidate: seal if candidate is lease else {})
+            inputs = {"environment": {"runtime": "10.0.7"}, "bindings": [{"bindingId": "acme.adapter"}]}
+            assembly = root / "consumer.dll"
+            selected = {"consumer.dll": hashlib.sha256(b"consumer").hexdigest()}
+            consumer = {"components": {}}
+            boundary = "B3"
+            control, state_path, prefix = crashes._layout(lease, boundary)
+            (root / control).mkdir(parents=True, mode=0o700)
+            (root / "proofs").mkdir(mode=0o700)
+
+            def write(path, data):
+                target = root / path
+                if target.exists():
+                    target.chmod(0o600)
+                target.write_bytes(data)
+                target.chmod(0o400)
+
+            write("consumer.dll", b"consumer")
+            observed, state = self.readback(boundary)
+            state_data = evidence.canonical_bytes(state)
+            source_data = evidence.canonical_bytes({"sessionId": self.source_id})
+            index = {
+                "schemaVersion": 1, "qualification": False, "kind": "artifact-crash-source",
+                "runId": self.run_id, "caseId": crashes.CASE_ID, "boundary": boundary,
+                "sessionId": self.source_id, "stateSha256": hashlib.sha256(state_data).hexdigest(),
+                "originSha256": hashlib.sha256(source_data).hexdigest()}
+            write(state_path, state_data)
+            write(f"{prefix}-source-origin.json", source_data)
+            write(f"{prefix}-source-readback.json", evidence.canonical_bytes(index))
+            write(f"{prefix}-recover-origin.json", b'{"recovery":"modeled-leaf"}')
+            write(f"{prefix}-recover-readback.json", evidence.canonical_bytes(observed))
+            requests, controls = [], []
+            for sequence, action in enumerate(("source", "recover"), 1):
+                path, request = crashes._request(
+                    run, lease, boundary, ROOT, action,
+                    source_data if action == "recover" else None, index if action == "recover" else None)
+                raw = evidence.canonical_bytes(request)
+                write(path, raw)
+                requests.append(path)
+                command = {
+                    "schemaVersion": 1, "sequence": sequence, "childPid": 100 + sequence,
+                    "childStartSha256": str(sequence) * 64, "startedMs": sequence * 1000,
+                    "endedMs": sequence * 1000 + 300, "exitCode": -9 if sequence == 1 else 0,
+                    "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
+                    **({"barrier": {"value": 43, "observedMs": 1100, "signalMs": 1200}} if sequence == 1 else {})}
+                controls.append(command)
+                control_raw = evidence.canonical_bytes(command)
+                write(f"proofs/recovery-command-{sequence:04}.json", control_raw)
+                paths = {*selected, path}
+                if sequence == 2:
+                    paths.update((state_path, f"{prefix}-source-origin.json", f"{prefix}-source-readback.json"))
+                records[sequence] = evidence.canonical_bytes({
+                    **{key: value for key, value in command.items() if key != "barrier"},
+                    "runId": run.run_id, "rootId": run.root_id, "directoryLease": dict(seal),
+                    "argvSha256": evidence.digest(crashes._arguments(run, inputs, assembly, path, raw)),
+                    "cwdSha256": hashlib.sha256(str(root).encode()).hexdigest(),
+                    "inputFiles": evidence.input_manifest(root, sorted(paths)),
+                    "outputFiles": evidence.input_manifest(root, (request["originPath"], request["readbackPath"])),
+                    "controlRecordSha256": hashlib.sha256(control_raw).hexdigest()})
+            options = {
+                "repository": ROOT, "lease": lease, "boundary": boundary,
+                "source_sequence": 1, "recovery_sequence": 2}
+            with mock.patch.object(crashes, "_context", return_value=(inputs, assembly, selected, b"declaration")), \
+                    mock.patch.object(sources, "OwnedRun", type(run)), \
+                    mock.patch.object(evidence, "ingest_artifact_recovery_origin",
+                                      return_value={"sessionId": self.recovery_id}) as leaf:
+                good = crashes.admit_crash(run, inputs, consumer, None, **options)
+                self.assertEqual(good["sourceParentSha256"], hashlib.sha256(records[1]).hexdigest())
+                self.assertEqual(good["recoveryParentSha256"], hashlib.sha256(records[2]).hexdigest())
+                self.assertEqual(leaf.call_args.kwargs["source_data"], source_data)
+                for path, replacement in (
+                        (requests[0], (root / requests[0]).read_bytes() + b"\n"),
+                        (requests[1], (root / requests[1]).read_bytes() + b"\n"),
+                        (state_path, state_data + b" "),
+                        (f"{prefix}-source-readback.json", evidence.canonical_bytes(index | {"stateSha256": "0" * 64})),
+                        (f"{prefix}-source-origin.json", evidence.canonical_bytes({"sessionId": self.recovery_id})),
+                        (f"{prefix}-recover-readback.json", evidence.canonical_bytes(observed | {"ownerFenced": False})),
+                        ("consumer.dll", b"borrowed"),
+                        ("proofs/recovery-command-0001.json", evidence.canonical_bytes(controls[0]) + b"\n"),
+                        ("proofs/recovery-command-0002.json", evidence.canonical_bytes(controls[1] | {"exitCode": 2}))):
+                    original = (root / path).read_bytes()
+                    try:
+                        write(path, replacement)
+                        with self.subTest(path=path), self.assertRaises(evidence.ConformanceError):
+                            crashes.admit_crash(run, inputs, consumer, None, **options)
+                    finally:
+                        write(path, original)
+                for change in ({"source_sequence": 2}, {"recovery_sequence": 3},
+                               {"boundary": "B2"}, {"lease": SimpleNamespace(resource_id="borrowed", descriptor=17)}):
+                    with self.subTest(change=change), self.assertRaises((evidence.ConformanceError, OSError)):
+                        crashes.admit_crash(run, inputs, consumer, None, **(options | change))
+                for change in ({"runId": self.source_id}, {"rootId": "d" * 32}, {"argvSha256": "0" * 64},
+                               {"directoryLease": seal | {"identitySha256": "e" * 64}},
+                               {"childStartSha256": controls[0]["childStartSha256"]}):
+                    original = records[2]
+                    try:
+                        records[2] = evidence.canonical_bytes(evidence.load_json(original) | change)
+                        with self.subTest(record=change), self.assertRaises(evidence.ConformanceError):
+                            crashes.admit_crash(run, inputs, consumer, None, **options)
+                    finally:
+                        records[2] = original
+                run.live_children = lambda: (101,)
+                with self.assertRaises(evidence.ConformanceError):
+                    crashes.admit_crash(run, inputs, consumer, None, **options)
+
+    def test_unsupported_crash_orchestration_rejects_before_allocating_or_writing(self):
+        import conformance_contributor_crashes as crashes
+
+        with mock.patch.object(crashes, "native_execution_supported", return_value=False), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^PrerequisiteMissing$"):
+            crashes.execute_crashes(None, None, None, None, repository=ROOT)
+
+    def test_failed_crash_child_preserves_closed_diagnostic_and_does_not_start_recovery(self):
+        import conformance_contributor_crashes as crashes
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "stores").mkdir(mode=0o700)
+            lease = SimpleNamespace(resource_id="failed-resource", descriptor=17)
+            inputs = {"environment": {"runtime": "10.0.7"}}
+            run = SimpleNamespace(
+                root=root, run_id=self.run_id, command_sequence=1,
+                lease_directory=mock.Mock(return_value=lease),
+                _directory_descriptor=lambda name: os.open(root / name, os.O_RDONLY | os.O_DIRECTORY),
+                _root_descriptor=lambda: os.open(root, os.O_RDONLY | os.O_DIRECTORY),
+                command=mock.Mock(return_value=SimpleNamespace(
+                    exit_code=2, events=({"event": "control", "code": "AssertionFailed", "value": 0},))))
+            with mock.patch.object(crashes, "native_execution_supported", return_value=True), \
+                    mock.patch.object(crashes, "_context",
+                                      return_value=(inputs, root / "consumer.dll", {}, b"declaration")), \
+                    self.assertRaisesRegex(evidence.ConformanceError, "^AssertionFailed$"):
+                crashes.execute_crashes(run, inputs, None, None, repository=ROOT)
+            run.command.assert_called_once()
+            run.lease_directory.assert_called_once()
+            request = run.command.call_args.args[0][-2]
+            self.assertTrue(request.startswith("stores/"))
+            self.assertFalse((root / "proofs").exists())
+
+
 class NuGetContentToolTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -1400,106 +1606,25 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                         runner, inputs, result["assemblyPath"], recovery, {identity: ("local", "none")}, {})
                     sdk.validate_observation(
                         observed, checked, (identity,), "None", "Passed", 0, transport["proofs"], "None")
+                    import conformance_contributor_crashes as crashes
+                    crashes._context(owner, inputs, result, binding)
                     if native_execution_supported():
-                        self.native_artifact_contributor_crashes(owner, inputs, result)
+                        self.native_artifact_contributor_crashes(owner, inputs, result, binding)
         finally:
             if owner.state == "Allocated":
                 owner.transition("Active")
             owner.transition("Settling")
             owner.release()
 
-    def native_artifact_contributor_crashes(self, owner, inputs, consumer):
-        import conformance_sources as sources
+    def native_artifact_contributor_crashes(self, owner, inputs, consumer, binding):
+        import conformance_contributor_crashes as crashes
 
-        assembly = consumer["assemblyPath"]
-        directory = assembly.parent.relative_to(owner.root).as_posix()
-        selected = {
-            *(path for path, _ in consumer["components"].values()),
-            assembly.relative_to(owner.root).as_posix(),
-            f"{directory}/Hoard.Testing.Conformance.dll",
-            f"{directory}/Hoard.Abstractions.dll",
-            assembly.with_suffix(".deps.json").relative_to(owner.root).as_posix(),
-            assembly.with_suffix(".runtimeconfig.json").relative_to(owner.root).as_posix(),
-            "proofs/contributor-inputs.json"}
-        for relative in selected:
-            (owner.root / relative).chmod(0o400)
-        binding, = inputs["bindings"]
-        declaration = (owner.root / "binding-consumer/declaration.json").read_bytes()
-        for boundary, value in zip(("B0", "B1", "B2", "B3", "D0", "D1"), range(40, 46), strict=True):
-            lease = owner.lease_directory()
-            control = owner.root / f"stores/crash-control-{boundary}"
-            control.mkdir(mode=0o700)
-            state_path = f"stores/crash-control-{boundary}/state.json"
-            receipts = []
-            source_origin = source_index = None
-            for action in ("source", "recover"):
-                prefix = f"proofs/contributor-crash-{boundary}-{action}"
-                request_path, origin_path, readback_path = prefix + "-request.json", prefix + "-origin.json", prefix + "-readback.json"
-                request = {
-                    "schemaVersion": 1, "qualification": False, "action": action, "boundary": boundary,
-                    "runId": owner.run_id, "caseId": "contributor-artifact-component",
-                    "resourceId": lease.resource_id, "descriptor": lease.descriptor, "repositoryRoot": str(ROOT),
-                    "statePath": state_path, "originPath": origin_path, "readbackPath": readback_path,
-                    "sourceSessionId": None if source_origin is None else evidence.load_json(source_origin)["sessionId"],
-                    "stateSha256": None if source_index is None else source_index["stateSha256"]}
-                raw_request = evidence.canonical_bytes(request)
-                path = owner.root / request_path
-                path.write_bytes(raw_request)
-                path.chmod(0o400)
-                execution_inputs = tuple(sorted({
-                    *selected, request_path,
-                    *((state_path, source_origin_path, source_index_path) if action == "recover" else ())}))
-                captured = evidence.input_manifest(owner.root, execution_inputs)
-                arguments = ["dotnet", "exec", "--fx-version", self.runtime_version, str(assembly),
-                             "artifact-crash", str(owner.root), request_path, hashlib.sha256(raw_request).hexdigest()]
-                self.assertEqual(evidence.input_manifest(owner.root, sorted(consumer["runtimeAssemblies"])),
-                                 consumer["runtimeAssemblies"])
-                observed = owner.command(
-                    arguments, cwd=owner.root, scope="recovery", record_execution=True, directory_lease=lease,
-                    execution_inputs=execution_inputs, execution_outputs=(origin_path, readback_path),
-                    **({"stop_at_barrier": value} if action == "source" else {}))
-                self.assertEqual(observed.exit_code, -9 if action == "source" else 0)
-                self.assertEqual(tuple(dict(row) for row in observed.events),
-                                 ({"event": "barrier" if action == "source" else "test",
-                                   "code": "None", "value": value if action == "source" else 1},))
-                sequence = owner.command_sequence
-                control_raw = (owner.root / f"proofs/recovery-command-{sequence:04}.json").read_bytes()
-                outputs = evidence.input_manifest(owner.root, (origin_path, readback_path))
-                raw_record = sources.native_control_record(
-                    owner, sequence, control_raw, arguments=arguments, cwd=owner.root,
-                    input_files=captured, output_files=outputs, directory_lease=lease)
-                self.assertEqual(hashlib.sha256(raw_record).hexdigest(), observed.execution_record_sha256)
-                receipts.append(evidence.load_json(raw_record))
-                if action == "source":
-                    source_origin_path, source_index_path = origin_path, readback_path
-                    source_origin = (owner.root / origin_path).read_bytes()
-                    source_index = evidence.load_json((owner.root / readback_path).read_bytes())
-                    self.assertEqual(source_index, {
-                        "schemaVersion": 1, "qualification": False, "kind": "artifact-crash-source",
-                        "runId": owner.run_id, "caseId": request["caseId"], "boundary": boundary,
-                        "sessionId": evidence.load_json(source_origin)["sessionId"],
-                        "stateSha256": hashlib.sha256((owner.root / state_path).read_bytes()).hexdigest(),
-                        "originSha256": hashlib.sha256(source_origin).hexdigest()})
-                    owner._capture_execution_inputs((state_path,), time.monotonic() + 5)
-                else:
-                    recovered = evidence.ingest_artifact_recovery_origin(
-                        inputs, (owner.root / origin_path).read_bytes(), binding_id=binding["bindingId"],
-                        case_id=request["caseId"], component_inputs=consumer["components"],
-                        declaration_data=declaration, source_data=source_origin,
-                        recovery_input_sha256=hashlib.sha256(raw_request).hexdigest())
-                    self.assertEqual(recovered["sourceSessionId"], source_index["sessionId"])
-                    readback = evidence.load_json((owner.root / readback_path).read_bytes())
-                    self.assertEqual((readback["runId"], readback["boundary"], readback["qualification"]),
-                                     (owner.run_id, boundary, False))
-                    self.assertEqual(hashlib.sha256((owner.root / state_path).read_bytes()).hexdigest(),
-                                     source_index["stateSha256"])
-                self.assertFalse(owner.live_children())
-                self.assertEqual(evidence.input_manifest(owner.root, execution_inputs), captured)
-                self.assertEqual(evidence.input_manifest(owner.root, sorted(consumer["runtimeAssemblies"])),
-                                 consumer["runtimeAssemblies"])
-            self.assertLessEqual(receipts[0]["endedMs"], receipts[1]["startedMs"])
-            self.assertNotEqual(receipts[0]["childStartSha256"], receipts[1]["childStartSha256"])
-            self.assertEqual(receipts[0]["directoryLease"], receipts[1]["directoryLease"])
+        observed = crashes.execute_crashes(owner, inputs, consumer, binding, repository=ROOT)
+        self.assertEqual(tuple(row["boundary"] for row in observed), tuple(crashes.BOUNDARIES))
+        self.assertEqual(len({row["directoryLease"]["resourceId"] for row in observed}), 6)
+        self.assertEqual(len({row[key] for row in observed
+                              for key in ("sourceSessionId", "recoverySessionId")}), 12)
+        self.assertFalse(owner.live_children())
 
     def test_managed_contributor_runtime_executes_every_common_metadata_row_with_exact_origins(self):
         self.package_consumer_build(runtime=True, captured=True)

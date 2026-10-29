@@ -6941,8 +6941,48 @@ One managed preparation replay emits UnknownDiagnostic with no exposed cause;
 an unchanged-source classified replay subsequently passes without projecting
 unknown raw text or weakening admission. That passing replay does not diagnose
 or erase the earlier failure. Review ran no tests and is not final T081.
-Public artifact dispatch, production native orchestration/strict complete
-crash admission and T064..T086 remain open.
+At this producer-only checkpoint, public artifact dispatch, production native
+orchestration/strict complete crash admission and T064..T086 remain open.
+
+The subsequent internal controller in `scripts/conformance_contributor_crashes.py`
+now executes all six supplied-factory source/recovery pairs and independently
+admits original native receipts, exact requests/inputs/outputs, the original
+held directory lease, source index/state, source/recovery origins and strict
+shared readback expectations. Requests move from proofs into private control
+stores because they contain an absolute repository root. Mutation controls
+reject altered request formatting, state/index/origin/image bytes, borrowed
+native receipts, failed exits, changed lease identity and live children.
+Closed producer errors remain explicit; failure never starts recovery or retries.
+Complete artifact applicability and public dispatch remain unfinished.
+
+Real Linux validation uses the local Unix-socket OrbStack Docker daemon and
+`mcr.microsoft.com/dotnet/sdk@sha256:8a90a473da5205a16979de99d2fc20975e922c68304f5c79d564e666dc3982fc`,
+not an external Docker endpoint. Only an exact edcbec7 Git bundle, the two
+changed source files and a bounded test script are mounted read-only. No host
+home, credentials, Docker socket or ignored worktree files enter the container.
+Python is installed after the image explicitly lacks it; the unprivileged
+UID 10001 executes on Linux/arm64, Python 3.12.3, SDK 10.0.203. The isolated
+clone remains honestly dirty-local for the overlaid implementation. No
+current-source clean CI or full artifact filesystem/capacity claim is inferred.
+
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--filter FullyQualifiedName~OwnedResourceTests -v minimal
+-p:RestoreLockedMode=true -p:UseSharedCompilation=false -nodeReuse:false` passes
+all ten tests without skips. The four portable crash admission controls and
+actual packaged artifact runtime test pass together in 71.736 seconds, including
+all six actual SIGKILL/fresh recovery pairs. Initial root-container replays
+have five failed permission-fault cases; an unchanged unprivileged replay passes
+the component rows and exposes an actual new controller InputChanged defect.
+Runtime preparation adds the logger, so the original consumer image map must
+be a byte-identical subset, not equal the final frozen runtime map. Correcting
+that join makes the actual native pairs pass; a portable check now exercises
+the real prepared join too. Failed observations remain retained, not erased
+or counted as native success. The earlier unexplained managed UnknownDiagnostic
+and unrelated CI failures are not diagnosed by this environment correction.
+The final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes 730 tests, zero failures/errors/expected failures/unexpected successes,
+25 explicit native macOS skips and zero unexpected diagnostic bytes. Expected
+exit 2 remains diagnostic EvidenceIncomplete, not qualification.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/

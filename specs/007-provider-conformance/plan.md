@@ -1751,6 +1751,79 @@ job is cancelled and SDK diagnostics remain running. No manual cancellation was
 performed and no cancellation cause is inferred. Its composition observation
 is running. None of those prior-source observations verifies this new producer.
 
+### Original-controller supplied-factory crash admission
+
+The reusable internal `scripts/conformance_contributor_crashes.py` controller
+replaces the test-only orchestration duplicate. All six boundaries remain fixed
+by the harness, not a contributor selection. Production admission independently
+reconstructs exact native argv, frozen requests/inputs/outputs and original
+directory-lease seals from the original OwnedRun receipts. It joins the safe
+source index to private continuation and original source bytes, independently
+admits the separate recovery origin and validates actual shared expected
+content/control hashes/lengths, fencing/reconstruction/reclamation/outcome and
+B3's acknowledged receipt. Changed/borrowed records, source/state/request/images,
+noncanonical request/control bytes, failed exits, foreign leases, live children,
+overlapping execution and reused process identities reject. Requests contain
+the absolute repository root and now stay in private control stores rather
+than proof output. A closed source error survives and cannot launch recovery.
+The combined pin count remains 16; oversized component layouts explicitly reject.
+
+Four portable tests in `test_conformance_contributors.ContributorCrashAdmissionTests`
+cover all six good/rejecting readbacks, original-parent/source/input/output/
+lease mutations, failure short-circuiting and unsupported-platform denial.
+The parent receipt tests are explicitly modeled non-qualifying controls, not
+native execution. `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_contributors.ContributorCrashAdmissionTests -v`: four passed.
+The actual packaged runtime test also checks the prepared production context
+on macOS, rather than postponing that join to Linux.
+
+Real native validation uses the local Unix-socket OrbStack daemon, Linux/arm64,
+Python 3.12.3, SDK 10.0.203 and an unprivileged UID 10001. The SDK image digest is
+`mcr.microsoft.com/dotnet/sdk@sha256:8a90a473da5205a16979de99d2fc20975e922c68304f5c79d564e666dc3982fc`.
+Only the exact edcbec7 Git bundle, these two overlaid source files and the
+bounded session test script are mounted read-only. No host home/credentials,
+ignored worktree files or Docker socket are mounted. Python is restored only
+after an actual missing-python prerequisite observation. The private clone
+uses the feature branch and honestly reports dirty-local, not clean CI.
+Containers are bounded to four CPUs/6 GiB/512 PIDs and removed on exit.
+This is not a full qualifying artifact runner filesystem/capacity observation.
+
+Initial root-container component replays fail five permission-fault rows
+(109 passed/5 failed, UnknownDiagnostic). The unchanged-source unprivileged
+replay passes all 114 logical rows/125 origins and then exposes InputChanged
+in the new controller's runtime-map equality. Preparation legitimately adds
+the logger; original consumer images must instead remain byte-identical members
+of the final independently frozen/rechecked runtime map. The corrected native
+replay passes all six real source SIGKILL/distinct fresh-recovery pairs through
+the reusable controller and its independent reader. All 12 session IDs and
+six physical leases are distinct; original process/output/input seals and
+actual session disposal precede successful recovery exit.
+
+The successful native source hashes are
+`13ec79db0edf634aa12ac535adb6be69ff31eec0f55fdf3692837c49c57cdacf`
+for the controller and
+`2cc65a409f0de28ddc2d8401a97667a7fb7ba2ec74b84ad8617a0c65c56a683d`
+for the contributor test file. Session `linux-artifact-producer-logger-join.log`
+retains the exact observations. Inside that isolated clone:
+
+- `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --filter FullyQualifiedName~OwnedResourceTests -v minimal -p:RestoreLockedMode=true -p:UseSharedCompilation=false -nodeReuse:false`: ten passed, zero skips.
+- `PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_contributors.ContributorCrashAdmissionTests test_conformance_contributors.NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins -v`: all five passed in 71.736 seconds, including the packaged logical replay and six actual source/recovery pairs. A bounded diagnostic result class additionally projects only safe runtime counts/catalog hashes on failure.
+
+Failed root/initial-join observations remain retained and nonaccepting. Neither
+the earlier unexplained managed UnknownDiagnostic nor unrelated CI failures
+are diagnosed or erased by this environment/join correction. Earlier 6b84549
+foundations now has five successful jobs and cancelled ownership; no manual
+cancellation was performed and no cause is inferred. edcbec7 foundations is
+running. README, PROVIDERS, DEVELOPMENT and harness are synchronized; product/
+architecture/ADR/diagrams/examples/governance/predecessor/IaC/release/UI documents
+remain unaffected by this internal test-controller increment. No task/checklist/
+flow marker advances. Native transfers/retention/noncooperation, complete
+applicability, public dispatch, qualifying profiles and T064..T086 remain open.
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`: 730
+tests, zero failures/errors/expected failures/unexpected successes, 25 explicit
+native macOS skips and zero unexpected diagnostic bytes; expected diagnostic
+EvidenceIncomplete exit 2. Catalog/SDK and diff checks pass.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

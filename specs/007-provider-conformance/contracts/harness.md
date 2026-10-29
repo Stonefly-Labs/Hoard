@@ -2511,6 +2511,20 @@ inputs/outputs, same directory lease, source state/index and distinct nonoverlap
 process identities. Compilation or unsupported-platform rejection is not that
 execution proof. A leaf reader or test-only join is not production full crash
 admission or complete artifact applicability.
+The reusable original-controller admission now joins both native receipts,
+canonical frozen requests, source output/index/state, exact recovery input,
+original directory lease and independent source/recovery origins. It must
+reconstruct expected commands from frozen runtime/environment inputs and reject
+noncanonical/changed request or native control bytes, changed images/outputs,
+foreign lease/run/root, live children, overlapping intervals and reused process
+identity. Independently validate all six shared content/control hashes/lengths,
+fencing/reconstruction/reclamation/outcome and B3's original acknowledged receipt.
+Do not treat successful exit as complete readback. Keep absolute-root-bearing
+requests in private control stores, not proof output. Preserve a closed failing
+producer code and never start recovery after a failed source. The prepared
+logger may enlarge the runtime map, but all original consumer images must
+remain byte-identical members of the fully frozen/rechecked map. This internal
+diagnostic controller is not full artifact applicability or qualifying dispatch.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

@@ -726,8 +726,27 @@ On supported Linux it additionally exercises all six actual killed-source/
 distinct-recovery pairs, original command/request/output/directory seals and
 the independent recovery-origin reader. Those pairs are not executed on macOS:
 its explicit prerequisite-denial check cannot count as native recovery.
-Production orchestration/strict complete crash admission, remaining applicable
-native consumers and public artifact dispatch are still unfinished.
+Remaining applicable native consumers and public artifact dispatch are still
+unfinished.
+
+The reusable internal `conformance_contributor_crashes` controller now owns
+all six source/recovery pairs and independently admits their original native
+command receipts. Requests and opaque continuation stay under private stores;
+only safe origins/index/readback belong in proofs. The reader reconstructs
+exact argv, input/output hashes and original directory-lease seals; it rejects
+changed/borrowed requests, state, images and command bytes, live children,
+overlapping execution and reused process identity. It checks all shared expected
+content hashes/lengths, fencing/reconstruction/reclamation/outcome and the original
+B3 acknowledged receipt rather than accepting a successful exit alone.
+
+An isolated Linux/arm64 run as UID 10001 passes all ten SDK ownership tests,
+the 114-row/125-origin packaged replay and all six real native crash pairs
+through this production helper. The runtime preparation legitimately adds the
+logger image; the original Consumer images must remain byte-identical members
+of the final frozen runtime map, not equal that larger map. Four portable
+regressions cover strict readback/parent mutation and explicit failure behavior.
+These are component diagnostics, not the remaining native transfers/retention/
+noncooperation, complete applicable category, qualifying CI or public dispatch.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
