@@ -685,6 +685,20 @@ compiler-source correspondence and link protection. The managed joined
 source/pack/common-runtime case passes; this later change awaits native replay.
 Complete native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
+The next T064 increment wires explicit metadata `--binding-project` dispatch to
+owned prerequisite builds, captured supplied-project packaging, a frozen
+package-only Consumer and the existing common runtime transport. It remains a
+diagnostic path: successful observation still exits incomplete, never qualified;
+artifact dispatch and the clean-checkout good/red/corrected guide remain closed.
+Referenced package identities come from evaluated NuGet properties and must match
+the actual restore graph, not inferred archive/assembly names. Their packed DLLs
+must match captured Csc images; nonpackable projects stay in compilation proof
+without requiring an archive. Unrelated feed changes and producer-support changes
+between phases reject. Source-build receipts, consumed cache members and archives
+are bound into runtime controls, excluding volatile scratch/socket trees.
+The managed production preparation/runtime path passes76 rows with86 origins.
+Native replay at55c94dc passes712 controls without skips, including the earlier
+joined mapped-PDB path; that is not native verification of this new public entry.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

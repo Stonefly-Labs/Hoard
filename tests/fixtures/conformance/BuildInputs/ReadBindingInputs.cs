@@ -113,6 +113,7 @@ public sealed class ReadBindingInputs : Microsoft.Build.Utilities.Task
 
         var pending = new Queue<string>();
         var visited = new HashSet<string>(StringComparer.Ordinal);
+        var projects = new List<object>();
         pending.Enqueue(projectPath);
         using var collection = new ProjectCollection(new Dictionary<string, string>
         {
@@ -129,6 +130,20 @@ public sealed class ReadBindingInputs : Microsoft.Build.Utilities.Task
             Require(visited.Count <= 128, "OutputLimitExceeded");
             Add(path);
             var evaluated = collection.LoadProject(path);
+            var packable = evaluated.GetPropertyValue("IsPackable");
+            var packageId = evaluated.GetPropertyValue("PackageId");
+            Require(bool.TryParse(packable, out var isPackable)
+                && PackagePartPattern().IsMatch(packageId)
+                && NuGet.Versioning.NuGetVersion.TryParse(evaluated.GetPropertyValue("PackageVersion"), out _),
+                "BindingInvalid");
+            projects.Add(new
+            {
+                Identity = Path.GetRelativePath(source, path).Replace(Path.DirectorySeparatorChar, '/'),
+                PackageId = packageId,
+                PackageVersion = NuGet.Versioning.NuGetVersion.Parse(
+                    evaluated.GetPropertyValue("PackageVersion")).ToNormalizedString(),
+                IsPackable = isPackable ? "true" : "false"
+            });
             foreach (var import in evaluated.Imports)
             {
                 Add(import.ImportedProject.FullPath);
@@ -169,7 +184,8 @@ public sealed class ReadBindingInputs : Microsoft.Build.Utilities.Task
                     Identity = input.Key,
                     Kind = input.Key.StartsWith("source/", StringComparison.Ordinal) ? "source" : "toolchain",
                     Sha256 = input.Value
-                }).ToArray()
+                }).ToArray(),
+                _BindingProjects = projects
             }
         });
         Require(receipt.Length <= MaxManifestBytes, "OutputLimitExceeded");

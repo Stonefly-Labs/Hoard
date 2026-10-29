@@ -566,6 +566,34 @@ values and links still reject. PE/PDB identity, document hashes and independent
 captured-Csc correspondence are unchanged. The actual joined managed case passes
 all76 metadata rows with86 origins; later-source native replay is still required.
 
+The next metadata increment connects the public `--binding-project` selection to
+owned prerequisite builds and the captured supplied-project/Consumer/runtime
+pipeline. It uses the common prerequisite project inventory rather than a second
+package list, reserves platform package identities, and builds the selected
+same-version example before freezing the baseline Consumer lock. Explicit archive
+bytes from that lock, supplied restore graphs and newly packed source projects
+form a bounded owned archive universe. Package/version identity is retained
+explicitly when normalizing cache filenames; it is not guessed from filenames.
+Only the existing frozen local feed is available to the final Consumer restore.
+
+Evaluated package identities and packability are captured for every source
+project. Packable reference identities must equal the observed NuGet project
+graph; each exact archive image must equal its actual Csc image, even when the
+package ID/version and assembly name differ. Nonpackable projects still require
+compiler/graph/document proof but not their own package. Missing required NuGet
+closure still rejects at Consumer composition/restore. Feed overwrites, substituted
+reference images and changes to the complete producer support tree reject.
+Revalidation is reusable around runtime; its control map now also freezes source
+build/evaluation receipts, consumed restored files and original archives, not
+volatile cache scratch/socket trees. The actual managed production path passes
+all76 metadata rows with86 origins, including changed build-receipt controls.
+The new public native controller has a separately gated full-entry regression;
+its current-source native result is not yet available. Exact55c94dc native replay
+passes712 controls without skips and metadata extraction, but does not validate
+this later entrypoint. Public metadata success remains diagnostic/incomplete
+until independent qualification is implemented. Artifact dispatch, full artifact
+applicability and the good/red/corrected contributor guide remain unfinished.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

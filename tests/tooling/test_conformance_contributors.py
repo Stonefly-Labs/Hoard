@@ -1,6 +1,8 @@
 import base64
 import copy
+import contextlib
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -581,7 +583,8 @@ class NuGetContentToolTests(unittest.TestCase):
         value, source, receipt = self.evaluation_request()
         code, event = self.evaluate()
         self.assertEqual(code, 0)
-        rows = evidence.load_json(receipt.read_bytes())["Items"]["_BindingInputs"]
+        captured = evidence.load_json(receipt.read_bytes())
+        rows = captured["Items"]["_BindingInputs"]
         self.assertEqual(event, {"event": "control", "code": "None", "value": len(rows)})
         identities = {row["Identity"] for row in rows}
         self.assertTrue({"source/Release.props", "source/Injected.cs", "source/Shared/Shared.csproj",
@@ -594,7 +597,7 @@ class NuGetContentToolTests(unittest.TestCase):
         rows[0]["Sha256"] = "a" * 64
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             contributors.binding_evaluation_inputs(
-                binding, evidence.canonical_bytes({"Items": {"_BindingInputs": rows}}), Path(value["toolchainRoot"]))
+                binding, evidence.canonical_bytes(captured), Path(value["toolchainRoot"]))
         self.assertEqual(self.evaluate()[1]["code"], "OwnershipInvalid")
 
     def test_managed_evaluation_task_rejects_changed_requests_sources_and_undeclared_ambient_inputs(self):
@@ -904,7 +907,8 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
 
     def captured_build(self, *, change_after_pack=False, shared=False, change_dependency_after_pack=False,
-                       ambient_sdk=False, native=False):
+                       ambient_sdk=False, native=False, nonpackable=False, package_mutation=None,
+                       change_tool_after_restore=False):
         measured, _, _ = self.evaluation_request()
         if ambient_sdk:
             (self.case / "global.json").write_bytes(evidence.canonical_bytes({
@@ -927,7 +931,9 @@ class NuGetContentToolTests(unittest.TestCase):
             (source / "Shared/Shared.csproj").write_text(
                 '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>'
                 '<TargetFramework>net10.0</TargetFramework><AssemblyName>Acme.Shared.Emitted</AssemblyName>'
-                '</PropertyGroup></Project>')
+                '<PackageId>Acme.Shared.Package</PackageId><Version>3.1.0</Version>'
+                + ('<IsPackable>false</IsPackable>' if nonpackable else '')
+                + '</PropertyGroup></Project>')
             (source / "Shared/Dependency.cs").write_text(
                 "namespace Shared; public class Dependency { public int Value => 7; }\n")
             (source / "Shared/packages.lock.json").write_bytes(evidence.canonical_bytes({
@@ -948,7 +954,7 @@ class NuGetContentToolTests(unittest.TestCase):
                 "type": "Direct", "requested": "[3.2.1, )", "resolved": "3.2.1",
                 "contentHash": base64.b64encode(hashlib.sha512(dependency.read_bytes()).digest()).decode()}}
         if shared:
-            dependencies["Acme.Shared.Emitted"] = {"type": "Project"}
+            dependencies["Acme.Shared.Package"] = {"type": "Project"}
         (source / "packages.lock.json").write_bytes(evidence.canonical_bytes({
             "version": 2, "dependencies": {"net10.0": dependencies}}))
         adapter = {"packageId": "Acme.Adapter", "version": "2.4.0-preview.1", "assemblyName": "Acme.Emitted"}
@@ -1004,6 +1010,10 @@ class NuGetContentToolTests(unittest.TestCase):
                     events = tuple(project_build_line(line) for line in raw.splitlines() if line.strip())
                 result = mock.Mock(exit_code=code, events=events)
             commands.append(tuple(arguments))
+            if change_tool_after_restore and "-target:Restore" in arguments and code == 0:
+                support = tool.with_name("NuGet.Versioning.dll")
+                support.chmod(0o600)
+                support.write_bytes(support.read_bytes() + b"changed-between-producer-phases")
             packing = arguments[1] == "pack" or "-target:Pack" in arguments
             if packing and code == 0 and change_after_pack:
                 path = feed / "Acme.Adapter.2.4.0-preview.1.nupkg"
@@ -1018,6 +1028,19 @@ class NuGetContentToolTests(unittest.TestCase):
                 path = (owner.root / "binding-build" / project_hash
                         / "obj/Release/net10.0/Acme.Shared.Emitted.dll")
                 path.write_bytes(path.read_bytes() + b"changed-dependency-after-pack")
+            if packing and code == 0 and package_mutation:
+                shared_archive = feed / "Acme.Shared.Package.3.1.0.nupkg"
+                if shared_archive.exists():
+                    if package_mutation == "image":
+                        with zipfile.ZipFile(shared_archive) as archive:
+                            members = {member: archive.read(member) for member in archive.namelist()}
+                        members["lib/net10.0/Acme.Shared.Emitted.dll"] += b"not-the-observed-csc-image"
+                        with zipfile.ZipFile(shared_archive, "w") as archive:
+                            for member, data in members.items():
+                                archive.writestr(member, data)
+                    elif package_mutation == "feed":
+                        path = feed / dependency.name
+                        path.write_bytes(path.read_bytes() + b"changed-unrelated-archive")
             return result
 
         try:
@@ -1025,7 +1048,7 @@ class NuGetContentToolTests(unittest.TestCase):
                 result = contributors.build_captured_binding_project(
                     binding, owner, config, feed, tool, Path(measured["toolchainRoot"]),
                     self.msbuild.parent.name, self.runtime_version)
-            self.assertEqual(len(commands), 8 if shared else 6)
+            self.assertEqual(len(commands), (8 if nonpackable else 9) if shared else 6)
             if ambient_sdk:
                 for target in ("Restore", "Pack"):
                     selected = [command for command in commands if "-target:" + target in command]
@@ -1049,6 +1072,14 @@ class NuGetContentToolTests(unittest.TestCase):
                 dependency_receipt = result["documents"]["Shared/Shared.csproj"]
                 self.assertEqual(dependency_receipt["assembly"]["path"], "Acme.Shared.Emitted.dll")
                 self.assertNotEqual(dependency_receipt["assembly"]["sha256"], receipt["assembly"]["sha256"])
+                if nonpackable:
+                    self.assertNotIn("Shared/Shared.csproj", result["projectPackages"])
+                    self.assertFalse((feed / "Acme.Shared.Package.3.1.0.nupkg").exists())
+                else:
+                    package = evidence.package_identity(feed, "Acme.Shared.Package", "3.1.0")
+                    self.assertEqual(package, result["projectPackages"]["Shared/Shared.csproj"])
+                    self.assertEqual(package["runtimeAssemblies"]["lib/net10.0/Acme.Shared.Emitted.dll"],
+                                     dependency_receipt["assembly"]["sha256"])
             self.assertEqual(evidence.proof_manifest(source), admitted.sources)
         finally:
             if owner.state == "Allocated":
@@ -1069,6 +1100,21 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_managed_captured_build_rechecks_referenced_project_image_after_pack(self):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             self.captured_build(shared=True, change_dependency_after_pack=True)
+
+    def test_managed_captured_build_preserves_explicitly_nonpackable_referenced_projects(self):
+        self.captured_build(shared=True, nonpackable=True)
+
+    def test_managed_captured_build_rejects_referenced_package_image_substitution(self):
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            self.captured_build(shared=True, package_mutation="image")
+
+    def test_managed_captured_build_rejects_referenced_pack_overwriting_existing_feed_inputs(self):
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.captured_build(shared=True, package_mutation="feed")
+
+    def test_managed_captured_build_rejects_tool_support_change_between_evaluation_and_compile(self):
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.captured_build(change_tool_after_restore=True)
 
     def test_managed_captured_build_uses_measured_sdk_for_restore_and_pack_not_ambient_sdk_selection(self):
         self.captured_build(ambient_sdk=True)
@@ -1094,26 +1140,6 @@ class NuGetContentToolTests(unittest.TestCase):
         config, feed = owner.root / "NuGet.Config", owner.root / "feed"
         config.write_bytes(evidence.synthetic_nuget_configuration(feed))
         config.chmod(0o400)
-        projects = (
-            ("src/Hoard.Abstractions/Hoard.Abstractions.csproj", "Hoard.Abstractions"),
-            (sdk.SDK + "/Hoard.Testing.Conformance.csproj", "Hoard.Testing.Conformance"),
-            ("src/Hoard.Core/Hoard.Core.csproj", "Hoard.Core"),
-            ("src/Hoard.Hosting/Hoard.Hosting.csproj", "Hoard.Hosting"),
-            (sdk.MEMORY, "Hoard.Fixtures.Metadata.Memory"),
-            (sdk.MEMORY_BINDING, "Hoard.Fixtures.Conformance.Bindings.Memory"),
-            (sdk.SQLITE, "Hoard.Fixtures.Metadata.Sqlite"),
-            (sdk.SQLITE_BINDING, "Hoard.Fixtures.Conformance.Bindings.Sqlite"),
-            ("tests/fixtures/metadata/HostAdapters/HostAdapters.csproj", "Hoard.Fixtures.Metadata.HostAdapters"),
-            ("tests/fixtures/artifacts/Local/Local.csproj", "Hoard.Fixtures.Artifacts.Local"),
-            ("tests/fixtures/artifacts/ObjectSemantics/ObjectSemantics.csproj", "Hoard.Fixtures.Artifacts.ObjectSemantics"),
-            ("tests/fixtures/artifacts/HostAdapters/HostAdapters.csproj", "Hoard.Fixtures.Artifacts.HostAdapters"),
-            ("tests/fixtures/conformance/Bindings/Local/Local.csproj", "Hoard.Fixtures.Conformance.Bindings.Local"),
-            ("tests/fixtures/conformance/Bindings/ObjectSemantics/ObjectSemantics.csproj",
-             "Hoard.Fixtures.Conformance.Bindings.ObjectSemantics"),
-            ("tests/fixtures/conformance/Contributor/Contributor.csproj", "Hoard.Fixtures.Conformance.Contributor"),
-        )
-        if runtime:
-            projects += ((sdk.LOGGER + "/Hoard.Conformance.TestLogger.csproj", "Hoard.Conformance.TestLogger"),)
         native_command, commands, deadline = owner.command, [], time.monotonic() + 600
 
         def execute(arguments, *, cwd, cache_id, kind, timeout=600, env=None,
@@ -1143,42 +1169,16 @@ class NuGetContentToolTests(unittest.TestCase):
 
         try:
             with mock.patch.object(owner, "command", side_effect=execute):
-                for relative, package_id in projects:
-                    selected = candidate / relative
-                    if captured and package_id == binding.registration["adapterPackage"]["packageId"]:
-                        supplied = contributors.build_captured_binding_project(
-                            binding, owner, config, feed, tools / self.tool.name, Path(measured["toolchainRoot"]),
-                            self.msbuild.parent.name, self.runtime_version)
-                        self.assertEqual(
-                            supplied["package"]["runtimeAssemblies"]["lib/net10.0/" + package_id + ".dll"],
-                            supplied["documents"][binding.project]["assembly"]["sha256"])
-                        continue
-                    lock, receipt = prepare_project_lock(selected, candidate, feed, "candidate")
-                    sdk.build(owner, selected, config, "local-packages", feed=feed,
-                              lock=lock, package_id=package_id)
-                    if receipt is not None:
-                        verify_project_lock(receipt, candidate, feed)
+                preparation = contributors.prepare_binding_project_consumer(
+                    binding, owner, candidate, sources, config, feed, tools / self.tool.name,
+                    Path(measured["toolchainRoot"]), self.msbuild.parent.name, self.runtime_version)
+                supplied, result = preparation["captured"], preparation["consumer"]
+                package_id = binding.registration["adapterPackage"]["packageId"]
+                self.assertEqual(
+                    supplied["package"]["runtimeAssemblies"]["lib/net10.0/" + package_id + ".dll"],
+                    supplied["documents"][binding.project]["assembly"]["sha256"])
                 selected = candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj"
-                lock, receipt = prepare_project_lock(selected, candidate, feed, "candidate")
-                sdk.build(owner, selected, config, "local-packages", lock=lock,
-                          properties=("-p:BaseOutputPath=bin/baseline-consumer/",))
-                if receipt is not None:
-                    verify_project_lock(receipt, candidate, feed)
                 self.assertTrue((selected.parent / "obj/Release/net10.0/Consumer.AssemblyInfo.cs").is_file())
-                source_lock = lock if lock is not None else selected.with_name("packages.lock.json")
-                baseline = evidence.load_json(source_lock.read_bytes())
-                archives = []
-                for package_id, row in baseline["dependencies"]["net10.0"].items():
-                    filename = f'{package_id}.{row["resolved"]}.nupkg'
-                    archives.append(feed / filename if package_id.startswith("Hoard.") else
-                                    owner.root / "cache/local-packages" / package_id.lower()
-                                    / row["resolved"].lower() / filename.lower())
-                packages = [evidence.package_identity(feed, package_id, "0.1.0") for _, package_id in projects
-                            if package_id != "Hoard.Conformance.TestLogger"]
-                result = contributors.build_binding_consumer(
-                    binding, owner, candidate, sources, tools / self.tool.name, Path(measured["toolchainRoot"]),
-                    self.msbuild.parent.name, self.runtime_version,
-                    source_lock=source_lock, packages=packages, archive_paths=archives)
             self.assertFalse(result["qualification"])
             self.assertEqual(set(result["components"]), set(evidence._SESSION_ROLES["metadata"]))
             self.assertIn(result["assemblyPath"].relative_to(owner.root).as_posix(), result["runtimeAssemblies"])
@@ -1195,7 +1195,8 @@ class NuGetContentToolTests(unittest.TestCase):
                         "sdk": self.msbuild.parent.name, "runtime": self.runtime_version, "nativeSqlite": "not-used",
                         "filesystem": "unobserved", "runnerImage": "none", "freeBytes": shutil.disk_usage(owner.root).free,
                         "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0}},
-                    group_id=str(uuid.uuid4()), budgets=sdk.BUDGETS)
+                    group_id=str(uuid.uuid4()), budgets=sdk.BUDGETS,
+                    captured_build=supplied, toolchain_root=Path(measured["toolchainRoot"]))
                 self.assertFalse(prepared["qualification"])
                 inputs = prepared["inputs"]
                 self.assertEqual(inputs, evidence.capture_profile_inputs(
@@ -1236,6 +1237,9 @@ class NuGetContentToolTests(unittest.TestCase):
                 altered_paths = (
                     "proofs/contributor-build-controls.json",
                     "binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.runtimeconfig.json",
+                    "binding-build/compiler-sources.json",
+                    "binding-evaluation/inputs.json",
+                    "feed/" + package_id + ".0.1.0.nupkg",
                     next(iter(result["cachedArchives"])))
                 for relative in altered_paths:
                     path = owner.root / relative
@@ -1296,7 +1300,24 @@ class NuGetContentToolTests(unittest.TestCase):
 
     @unittest.skipUnless(native_execution_supported(), "Native contributor runtime requires supported Linux containment")
     def test_native_contributor_runtime_uses_owned_common_suite_and_actual_component_origins(self):
-        self.package_consumer_build(native=True, runtime=True, captured=True)
+        project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"
+        binding = contributors.admit_binding_project(project, "metadata")
+        destination = self.case / "public-contributor"
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            result = contributors.execute(
+                ROOT, destination, project=project, category="metadata",
+                binding_inputs_sha256=binding.inputs_sha256)
+        self.assertEqual(result, 0)
+        summary = evidence.load_json(output.getvalue())
+        self.assertFalse(summary["qualification"])
+        self.assertFalse(summary["profileComplete"])
+        self.assertEqual(summary["passedParameters"], 76)
+        self.assertEqual(summary["sessionOrigins"], 86)
+        self.assertRegex(summary["nativeParentSha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(summary, evidence.load_json(
+            (destination / "proofs/contributor-runtime-summary.json").read_bytes()))
+        self.assertTrue(all(resource["state"] == "Released" for resource in summary["resources"]))
+        self.assertFalse(any((destination / directory).exists() for directory in ("stores", "cache", "feed")))
 
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()
@@ -1366,7 +1387,7 @@ class ContributorAdmissionTests(unittest.TestCase):
         self.assertFalse((self.parent / "fresh").exists())
         self.assertEqual({path.name for path in self.source.iterdir()},
                          {"Adapter.csproj", "Adapter.conformance.json", "Binding.cs", "packages.lock.json"})
-        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             evidence.dispatch_invocation(first)
 
     def test_registration_rejects_foreign_categories_missing_hooks_and_provider_selected_omissions(self):
@@ -2263,6 +2284,13 @@ class ContributorAdmissionTests(unittest.TestCase):
                      "Sha256": evidence.file_sha256(props)})
         return binding, owner, tool, toolchain, msbuild, props, rows
 
+    def evaluation_receipt(self, binding, rows):
+        adapter = binding.registration["adapterPackage"]
+        return evidence.canonical_bytes({"Items": {
+            "_BindingInputs": rows, "_BindingProjects": [{
+                "Identity": binding.project, "PackageId": adapter["packageId"],
+                "PackageVersion": adapter["version"], "IsPackable": "true"}]}})
+
     def test_evaluation_capture_uses_safe_driver_hash_bound_inputs_and_explicit_sdk_runtime(self):
         binding, owner, tool, toolchain, msbuild, _, rows = self.evaluation_capture_fixture()
 
@@ -2280,7 +2308,7 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertEqual(request.stat().st_mode & 0o777, 0o400)
             value = evidence.load_json(request.read_bytes())
             self.assertEqual(value["sources"], binding.sources)
-            (owner.root / value["outputPath"]).write_bytes(evidence.canonical_bytes({"Items": {"_BindingInputs": rows}}))
+            (owner.root / value["outputPath"]).write_bytes(self.evaluation_receipt(binding, rows))
             return mock.Mock(exit_code=0, events=({"event": "control", "code": "None", "value": len(rows)},))
 
         with mock.patch.object(owner, "command", side_effect=capture):
@@ -2310,7 +2338,7 @@ class ContributorAdmissionTests(unittest.TestCase):
                             props.write_bytes(b"<Project changed='true' />")
                         value = evidence.load_json(request.read_bytes())
                         (owner.root / value["outputPath"]).write_bytes(
-                            evidence.canonical_bytes({"Items": {"_BindingInputs": rows}}))
+                            self.evaluation_receipt(binding, rows))
                         return mock.Mock(exit_code=0, events=() if defect == "control" else (
                             {"event": "control", "code": "None", "value": len(rows)},))
                     path = {"request": request, "driver": driver, "tool": tool, "host": msbuild,
@@ -2717,7 +2745,7 @@ class ContributorAdmissionTests(unittest.TestCase):
 
         def capture(items):
             return contributors.binding_evaluation_inputs(
-                binding, evidence.canonical_bytes({"Items": {"_BindingInputs": items}}), toolchain)
+                binding, self.evaluation_receipt(binding, items), toolchain)
 
         captured = capture(rows)
         self.assertFalse(captured["qualification"])

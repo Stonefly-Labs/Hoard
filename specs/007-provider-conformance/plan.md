@@ -1221,6 +1221,65 @@ other product/architecture/ADR/diagram/example/governance/predecessor/IaC/releas
 UI documents are unaffected by this private mapped-document repair. T064 stays
 unchecked and implement/running continues.
 
+### T064 production metadata preparation checkpoint
+
+Explicit complete metadata `--binding-project` dispatch now calls an owned native
+controller rather than silently selecting a builtin. It snapshots source and
+binding inputs, measures SDK/runtime/environment, builds the repository-owned
+producer, reuses the common prerequisite package inventory, captures the supplied
+project, prepares a baseline Consumer lock after the selected example package,
+and builds the final typed Consumer from an explicit frozen archive universe.
+Platform identities are reserved. Cache normalization retains explicit package
+identity/version; it does not split dotted filenames. Source-build verification
+and input recomputation surround common runtime execution and actual settlement.
+Successful diagnostics still produce incomplete exit2, never qualification;
+focused/reduced/duplicate selections do not execute this controller.
+
+Evaluation captures package ID, normalized version and packability for every
+declared source project. Packable reference identity must match the captured
+NuGet project graph; no-build pack runs through measured MSBuild/runtime and its
+actual archive DLL must match the captured Csc image. The shared fixture uses
+Acme.Shared.Package3.1.0 with Acme.Shared.Emitted.dll, proving those names are not
+interchangeable. Explicit nonpackable references retain compilation/graph/PDB
+proof without demanding a package. Required missing Consumer closure still
+rejects. New controls reject substituted reference-package images, unrelated
+feed overwrites and producer-support changes between evaluation and compilation.
+The extracted captured-build verifier also rechecks evaluation, outputs, graphs,
+packages and toolchain. Runtime controls additionally freeze build/evaluation
+receipts, consumed restored members and original archives. Whole cache scratch
+trees are not inputs: real diagnostic sockets make such a blanket scan invalid.
+
+The managed production preparation/runtime integration passes76 rows with86
+origins and build-receipt/cache/feed mutation rejection. The native regression
+now exercises the complete public controller and actual Released resources,
+instead of duplicating its preparation in the fixture; managed mutation coverage
+is retained. Its current-source native result is pending. Exact-source55c94dc
+job123215871067 passes712 tooling controls with zero failures/errors/skips/
+expected failures/unexpected successes/unexpected diagnostic bytes. All six
+foundations jobs in run40802490588 now pass, including the complete SDK
+diagnostic job123215871569. This is not a native pass for later
+source. The older b49fa51 MP19 failure remains retained, with no established cause.
+Its separate composition job123208527540 fails before a usable final summary;
+the reader's OutputLimitExceeded also covers missing files, so do not infer a
+size defect or relax its bound from that code alone.
+
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` now observes717
+tests with zero failures/errors/expected failures/unexpected successes/
+unexpected diagnostic bytes,23 explicit native macOS skips and expected
+incomplete exit2. `dotnet format
+tests/fixtures/conformance/BuildInputs/BuildInputs.csproj --verify-no-changes
+--no-restore --include tests/fixtures/conformance/BuildInputs/Program.cs
+tests/fixtures/conformance/BuildInputs/ReadBindingInputs.cs -v quiet`,
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. This includes the final cross-phase producer-support
+guard; its focused captured-build replay passes10 tests with one native skip.
+Current-source native replay, complete artifact applicability/dispatch and the
+good/red/corrected guide remain open. T064 is unchecked, T065..T086 remain open,
+and implement/running is unchanged. README, PROVIDERS, DEVELOPMENT and harness
+are affected; product/charter, architecture/ADR/diagrams, public examples,
+governance, predecessors, IaC, release and UI are unchanged by this diagnostic
+metadata/tooling increment. No merge, finalization or release is authorized.
+
 Validation: `python3 scripts/conformance_unit_checks.py --all-tooling` observes709
 tests with zero failures/errors/expected failures/unexpected successes/
 unexpected diagnostic bytes,23 explicit native-only macOS skips and the expected

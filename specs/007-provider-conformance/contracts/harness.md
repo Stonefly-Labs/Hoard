@@ -2274,8 +2274,24 @@ each with framework=net10.0 and targetAlias=net10.0. Reject missing/extra/foreig
 aliases, other target keys and unknown assets versions. Do not normalize
 arbitrary alias/framework combinations into the supported scope.
 Join every declared referenced project's restore graph, actual compiler DLL/PDB
-and portable documents; revalidate those images after pack too. Internal
-consumer-lock composition may only combine an existing frozen consumer graph
+and portable documents; revalidate those images after pack too. Evaluation
+additionally records closed package ID/version/packability rows for the exact
+declared project set. Match packable reference identities against observed NuGet
+project nodes; never infer identity from archive/assembly names. Require every
+emitted reference package's DLL to match its captured compiler image. Nonpackable
+source projects still require complete compilation/graph/document proof; required
+but missing package closure must reject during Consumer composition/restore.
+Reject overwriting unrelated feed archives and verify the complete producer
+support tree across all supplied-project build phases.
+Production metadata preparation reuses the common prerequisite project inventory,
+reserves platform identities and freezes the selected example package before
+baseline Consumer lock preparation. Its explicit archive universe retains actual
+identities while normalizing cache filenames. Runtime controls include captured
+build/evaluation receipts, exact consumed cache members and original archives;
+do not recursively hash volatile scratch/socket trees. Public custom metadata
+execution remains diagnostic/incomplete, not a qualification route. The artifact
+component catalog must not become public complete artifact dispatch by omission.
+Internal consumer-lock composition may only combine an existing frozen consumer graph
 with an explicit adapter archive and frozen archive dependency closure. Use
 NuGet's own framework/range/content-hash APIs; never resolve or widen versions.
 Preserve original entries except the selected adapter's direct/exact reference,

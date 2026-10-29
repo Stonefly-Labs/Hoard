@@ -298,5 +298,5 @@ internal static partial class Program
     internal static partial Regex HashPattern();
 
     [GeneratedRegex(@"\A[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}\z")]
-    private static partial Regex PackagePartPattern();
+    internal static partial Regex PackagePartPattern();
 }

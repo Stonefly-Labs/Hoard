@@ -6671,6 +6671,43 @@ errors/expected failures/unexpected successes/unexpected diagnostic bytes,
 checks pass. This remains diagnostic-only: public dispatch, complete artifact
 applicability, good/red/corrected guide execution and T064..T086 remain open.
 
+The next T064 increment adds production owned prerequisite/captured-project/
+Consumer preparation and wires only explicit complete metadata binding dispatch.
+The existing prerequisite inventory is reused; platform identities cannot be
+replaced by the adapter. The supplied same-ID/version example is built before
+baseline Consumer lock preparation. An explicitly identified bounded archive
+universe joins baseline lock archives, supplied restore packages and packed
+source projects, normalizing cache filenames without guessing package identity.
+Final Consumer restore has only its frozen local feed.
+
+Evaluation now records every project's exact package ID, normalized version and
+packability. Packable reference identities must match the captured NuGet graph,
+and their archives' images must match actual Csc outputs. A real shared fixture
+uses package Acme.Shared.Package3.1.0 with assembly Acme.Shared.Emitted; explicit
+nonpackable references still retain their graph/compiler/document proof.
+Substituted reference images and unrelated feed changes reject. The captured
+verifier can be reused before/after runtime, and the complete producer support
+tree is checked across evaluation, restore/compile and pack boundaries.
+Runtime controls also freeze build/evaluation receipts, consumed cache members
+and original archive bytes, without recursively hashing volatile socket-bearing
+scratch trees. The managed production path passes76 rows with86 exact origins.
+Public metadata observation remains diagnostic and exits incomplete; custom
+artifact dispatch, complete artifact applicability and the clean guide remain
+unfinished. Its full native entrypoint regression awaits current-source CI.
+Native55c94dc job123215871067 passes712 controls without skips/errors/failures or
+unexpected diagnostic bytes; all six foundations jobs in run40802490588 now
+pass, including SDK diagnostics. Frozen `python3
+scripts/conformance_unit_checks.py --all-tooling` at the new metadata-dispatch
+source observes717 tests, zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,23 native macOS skips and expected
+incomplete exit2. BuildInputs Program.cs/ReadBindingInputs.cs formatting,
+catalog/SDK consistency and diff checks pass. This is not current-source native
+acceptance or qualification.
+The b49fa51 MP19 failure remains retained, with no established underlying cause.
+The separate b49fa51 composition workflow fails before a usable summary can be
+admitted; its reader reports OutputLimitExceeded, which can also mean a missing
+file. Do not infer an oversized summary or raise a limit from that code alone.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

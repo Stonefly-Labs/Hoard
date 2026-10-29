@@ -187,6 +187,18 @@ def dispatch_invocation(invocation):
     if invocation.action == "preparation":
         from conformance_prepare import execute
         return execute(invocation.repository, invocation.evidence)
+    if (invocation.action == "run" and invocation.profiles == ("metadata",)
+            and invocation.mode == "qualification" and invocation.binding_project is not None):
+        from conformance_case_catalog import expected_cases
+        from conformance_contributors import execute
+        if invocation.case_keys != tuple(case.key for case in expected_cases("metadata")):
+            raise ConformanceError("WitnessMissing")
+        result = execute(
+            invocation.repository, invocation.evidence, project=invocation.binding_project,
+            category="metadata", binding_inputs_sha256=invocation.binding_inputs_sha256)
+        if type(result) is not int or result != 0:
+            raise ConformanceError("CommandFailed")
+        raise ConformanceError("EvidenceIncomplete")
     if (invocation.action == "run" and invocation.profiles in (
             ("metadata",), ("artifacts",), ("composition",), ("compatibility",))
             and invocation.mode == "qualification" and invocation.binding_project is None):

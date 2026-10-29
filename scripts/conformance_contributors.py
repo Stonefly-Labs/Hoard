@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import time
 from types import MappingProxyType
+import uuid
 import zipfile
 import zlib
 import xml.etree.ElementTree as ET
@@ -417,13 +418,31 @@ def capture_binding_compilation_inputs(binding, owned_run, built, tool, toolchai
 def build_captured_binding_project(binding, owned_run, configuration, feed, tool, toolchain_root,
                                    sdk_version, runtime_version, *, local_packages=()):
     from conformance_sdk_checks import read_bounded
+    from foundation_evidence import canonicalize_acceptance_archive
 
-    evaluation = capture_binding_evaluation_inputs(
-        binding, owned_run, tool, toolchain_root, sdk_version, runtime_version)
+    tool = Path(tool)
+    if ".." in tool.parts or not tool.is_absolute() or not tool.is_relative_to(owned_run.root):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    support = evidence.proof_manifest(tool.parent)
+
+    def verify_tool():
+        if evidence.proof_manifest(tool.parent) != support:
+            raise evidence.ConformanceError("InputChanged")
+
+    try:
+        evaluation = capture_binding_evaluation_inputs(
+            binding, owned_run, tool, toolchain_root, sdk_version, runtime_version)
+    finally:
+        verify_tool()
+    feed = Path(feed)
+    if ".." in feed.parts or not feed.is_absolute() or not feed.is_relative_to(owned_run.root):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    original_feed = evidence.proof_manifest(feed)
     package_root = owned_run.root / "cache/binding-build"
     captured = {}
 
     def compile_action(prepared):
+        verify_tool()
         graphs = capture_binding_restore_graphs(
             binding, owned_run, prepared, tool, runtime_version, package_root)
         compilation = capture_binding_compilation_inputs(
@@ -439,19 +458,114 @@ def build_captured_binding_project(binding, owned_run, configuration, feed, tool
             binding, owned_run, prepared, tool, runtime_version, raw, assemblies)
         captured.update(graphs=graphs, compilation=compilation, documents=documents)
 
-    built = build_binding_project(
-        binding, owned_run, configuration, feed, local_packages=local_packages, compile_action=compile_action,
-        msbuild=("dotnet", "exec", "--fx-version", runtime_version,
-                 str(Path(toolchain_root) / "sdk" / sdk_version / "MSBuild.dll")))
+    try:
+        built = build_binding_project(
+            binding, owned_run, configuration, feed, local_packages=local_packages, compile_action=compile_action,
+            msbuild=("dotnet", "exec", "--fx-version", runtime_version,
+                     str(Path(toolchain_root) / "sdk" / sdk_version / "MSBuild.dll")))
+    finally:
+        verify_tool()
     if set(captured) != {"graphs", "compilation", "documents"}:
         raise evidence.ConformanceError("EvidenceIncomplete")
+    project_packages = {binding.project: built["package"]}
+    for project in sorted(set(built["projects"]) - {binding.project}):
+        packaging = evaluation["packaging"][project]
+        if not packaging["packable"]:
+            continue
+        identities = {identity for graph in captured["graphs"].values()
+                      for identity, path in graph["projects"].items() if path == project}
+        identity = packaging["packageId"] + "/" + packaging["version"]
+        if identities != {identity}:
+            raise evidence.ConformanceError("ProofMismatch")
+        package_id, version = packaging["packageId"], packaging["version"]
+        archive = feed / f"{package_id}.{version}.nupkg"
+        if archive.exists():
+            raise evidence.ConformanceError("OwnershipInvalid")
+        protected_feed = evidence.proof_manifest(feed)
+        try:
+            observed = owned_run.command([
+                "dotnet", "exec", "--fx-version", runtime_version,
+                str(Path(toolchain_root) / "sdk" / sdk_version / "MSBuild.dll"), str(binding.root / project),
+                "-target:Pack", "-p:Configuration=Release", "-p:NoBuild=true", "-p:UseSharedCompilation=false",
+                "-p:PackageOutputPath=" + _msbuild_literal(feed),
+                "-p:CustomAfterDirectoryBuildProps=" + _msbuild_literal(owned_run.root / "binding-build/binding.props"),
+                "-nodeReuse:false", "-nologo", "-verbosity:quiet"],
+                cwd=binding.root / Path(project).parent, kind="build", timeout=600, cache_id="binding-build",
+                env={"DOTNET_ROLL_FORWARD": "Disable"})
+            _require_successful_capture(observed)
+        finally:
+            verify_tool()
+            if (evidence.input_manifest(feed, sorted(protected_feed)) != protected_feed
+                    or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+                raise evidence.ConformanceError("InputChanged")
+        evidence.package_identity(feed, package_id, version)
+        canonicalize_acceptance_archive(archive, expected_package_id=package_id)
+        project_packages[project] = evidence.package_identity(feed, package_id, version)
+    result = MappingProxyType({
+        **built, "evaluation": evaluation, **captured, "projectPackages": MappingProxyType(project_packages),
+        "feedInputs": original_feed, "toolPath": tool.relative_to(owned_run.root).as_posix(),
+        "toolSupport": support})
+    verify_captured_binding_project(binding, owned_run, result, toolchain_root, feed)
+    return result
+
+
+def verify_captured_binding_project(binding, owned_run, captured, toolchain_root, feed):
+    from conformance_sdk_checks import read_bounded
+
+    owned_run._check_ledger()
+    feed = Path(feed)
+    if ".." in feed.parts or not feed.is_absolute() or not feed.is_relative_to(owned_run.root):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    tool = owned_run.root / evidence.relative_path(captured["toolPath"])
+    if evidence.proof_manifest(tool.parent) != captured["toolSupport"]:
+        raise evidence.ConformanceError("InputChanged")
+    projects = {path for path in binding.sources if path.endswith(".csproj")}
+    if (binding.root != owned_run.root / "binding-source" or captured["qualification"] is not False
+            or captured["bindingInputsSha256"] != binding.inputs_sha256
+            or any(set(captured[field]) != projects for field in (
+                "projects", "documents", "graphs"))
+            or set(captured["evaluation"]["packaging"]) != projects):
+        raise evidence.ConformanceError("InputChanged")
+    packaging = captured["evaluation"]["packaging"]
+    if (not packaging[binding.project]["packable"]
+            or set(captured["projectPackages"]) != {
+                project for project, row in packaging.items() if row["packable"]}):
+        raise evidence.ConformanceError("ProofMismatch")
+    for project in projects:
+        expected = owned_run.root / "binding-build" / hashlib.sha256(project.encode("utf-8")).hexdigest()
+        if captured["projects"][project]["root"] != expected:
+            raise evidence.ConformanceError("OwnershipInvalid")
+    package_root = owned_run.root / "cache/binding-build"
     registered = binding.registration["adapterPackage"]
     documents = captured["documents"][binding.project]
     member = "lib/net10.0/" + registered["assemblyName"] + ".dll"
     if (documents["assembly"]["path"] != registered["assemblyName"] + ".dll"
-            or built["package"]["runtimeAssemblies"].get(member) != documents["assembly"]["sha256"]):
+            or captured["package"]["runtimeAssemblies"].get(member) != documents["assembly"]["sha256"]):
         raise evidence.ConformanceError("ProofMismatch")
+    if evidence.package_identity(feed, registered["packageId"], registered["version"]) != captured["package"]:
+        raise evidence.ConformanceError("InputChanged")
+    for project, package in captured["projectPackages"].items():
+        package = evidence.admit_entity("PackageIdentity", package)
+        if (package["packageId"] != packaging[project]["packageId"]
+                or package["version"] != packaging[project]["version"]):
+            raise evidence.ConformanceError("ProofMismatch")
+        actual = evidence.package_identity(feed, package["packageId"], package["version"])
+        image = captured["documents"][project]["assembly"]
+        if package["runtimeAssemblies"].get("lib/net10.0/" + image["path"]) != image["sha256"]:
+            raise evidence.ConformanceError("ProofMismatch")
+        if actual != package:
+            raise evidence.ConformanceError("InputChanged")
+    expected_feed = {
+        **captured["feedInputs"],
+        **{f'{package["packageId"]}.{package["version"]}.nupkg': package["sha256"]
+           for package in captured["projectPackages"].values()}}
+    if evidence.proof_manifest(feed) != expected_feed:
+        raise evidence.ConformanceError("InputChanged")
     workspace = owned_run.root / "binding-build"
+    if binding_evaluation_inputs(
+            binding, read_bounded(owned_run.root / "binding-evaluation/inputs.json", 2 * 1024 * 1024),
+            toolchain_root) != captured["evaluation"]:
+        raise evidence.ConformanceError("InputChanged")
     sources_data = read_bounded(workspace / "compiler-sources.json", 2 * 1024 * 1024)
     if binding_compilation_sources(binding, sources_data, workspace) != captured["compilation"]["sources"]:
         raise evidence.ConformanceError("InputChanged")
@@ -463,7 +577,7 @@ def build_captured_binding_project(binding, owned_run, configuration, feed, tool
     if files != captured["compilation"]["inputs"] or parameters != captured["compilation"]["parameters"]:
         raise evidence.ConformanceError("InputChanged")
     for project, receipt in captured["documents"].items():
-        root = built["projects"][project]["root"]
+        root = captured["projects"][project]["root"]
         row = next(item for item in captured["compilation"]["sources"]["compilations"] if item["project"] == project)
         if binding_compilation_documents(
                 row, read_bounded(root / "pdb-documents.json", 2 * 1024 * 1024),
@@ -472,13 +586,214 @@ def build_captured_binding_project(binding, owned_run, configuration, feed, tool
         graph = binding_restore_graph(
             binding, read_bounded(root / "obj/project.assets.json", 2 * 1024 * 1024),
             read_bounded(root / "packages.lock.json", 2 * 1024 * 1024), project, package_root,
-            expected_lock_sha256=built["projects"][project]["preparedLockSha256"],
+            expected_lock_sha256=captured["projects"][project]["preparedLockSha256"],
             content_hashes_data=read_bounded(root / "nuget-content.json", 2 * 1024 * 1024))
         if graph != captured["graphs"][project]:
             raise evidence.ConformanceError("InputChanged")
-    if evaluation["toolchain"] != evidence.input_manifest(toolchain_root, sorted(evaluation["toolchain"])):
+    toolchain = captured["evaluation"]["toolchain"]
+    if toolchain != evidence.input_manifest(toolchain_root, sorted(toolchain)):
         raise evidence.ConformanceError("InputChanged")
-    return MappingProxyType({**built, "evaluation": evaluation, **captured})
+
+
+def prepare_binding_project_consumer(binding, owned_run, candidate, candidate_sources, configuration, feed,
+                                     tool, toolchain_root, sdk_version, runtime_version):
+    from conformance_lock_preparation import prepare_project_lock, verify_project_lock
+    from conformance_prepare import PREREQUISITES, TARGETS
+    from conformance_sdk_checks import build, read_bounded
+
+    owned_run._check_ledger()
+    if binding.root != owned_run.root / "binding-source" or candidate != owned_run.root / "snapshot":
+        raise evidence.ConformanceError("OwnershipInvalid")
+    evidence.verify_snapshot(candidate, candidate_sources)
+    adapter = binding.registration["adapterPackage"]
+    projects = tuple(project for project in (*PREREQUISITES, *TARGETS)
+                     if project.package is not None
+                     and project.package not in ("Hoard.Application", "Hoard.Fixtures.Conformance.Host"))
+    reserved = {project.package.casefold() for project in projects
+                if project.package != "Hoard.Fixtures.Conformance.Contributor"}
+    if adapter["packageId"].casefold() in reserved:
+        raise evidence.ConformanceError("BindingInvalid")
+    msbuild = ("dotnet", "exec", "--fx-version", runtime_version,
+               str(Path(toolchain_root) / "sdk" / sdk_version / "MSBuild.dll"))
+    records = []
+    for project in projects:
+        if project.package.casefold() == adapter["packageId"].casefold() and adapter["version"] == "0.1.0":
+            continue
+        selected = candidate / project.path
+        lock, receipt = prepare_project_lock(selected, candidate, feed, "candidate")
+        build(owned_run, selected, configuration, "contributor-prerequisites", feed=feed,
+              lock=lock, package_id=project.package, msbuild=msbuild)
+        if receipt is not None:
+            verify_project_lock(receipt, candidate, feed)
+            records.append(receipt)
+    captured = build_captured_binding_project(
+        binding, owned_run, configuration, feed, tool, toolchain_root, sdk_version, runtime_version)
+    project = candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj"
+    lock, receipt = prepare_project_lock(project, candidate, feed, "candidate")
+    build(owned_run, project, configuration, "contributor-prerequisites", lock=lock, msbuild=msbuild,
+          properties=("-p:BaseOutputPath=bin/baseline-consumer/",))
+    if receipt is not None:
+        verify_project_lock(receipt, candidate, feed)
+        records.append(receipt)
+    source_lock = lock if lock is not None else project.with_name("packages.lock.json")
+    baseline = evidence.load_json(read_bounded(source_lock, 2 * 1024 * 1024))
+    archives = {}
+    total, deadline = 0, time.monotonic() + 5
+
+    def stage(package_id, version, path, *, expected=None):
+        nonlocal total
+        package_id, version = evidence.stable_id(package_id), evidence.stable_id(version)
+        if time.monotonic() >= deadline:
+            raise evidence.ConformanceError("DeadlineExceeded")
+        data = read_bounded(path, min(evidence.MAX_PACKAGE_BYTES, evidence.MAX_PROOF_BYTES - total))
+        total += len(data)
+        hashed = hashlib.sha256(data).hexdigest()
+        if expected is not None and hashed != expected:
+            raise evidence.ConformanceError("InputChanged")
+        key = (package_id.casefold(), version.casefold())
+        if key in archives:
+            if evidence.file_sha256(archives[key][2]) != hashed:
+                raise evidence.ConformanceError("InputChanged")
+            return
+        if len(archives) >= 1024:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        target = owned_run.root / "binding-archives" / f"{package_id}.{version}.nupkg"
+        _write_owned_input(owned_run, target, data)
+        evidence.package_archive_identity(target.parent, package_id, version)
+        archives[key] = (package_id, version, target)
+
+    for package_id, row in baseline["dependencies"]["net10.0"].items():
+        version = evidence.stable_id(row["resolved"])
+        filename = f"{package_id}.{version}.nupkg"
+        local = feed / filename
+        path = (local if local.exists() else owned_run.root / "cache/contributor-prerequisites"
+                / package_id.lower() / version.lower() / filename.lower())
+        stage(package_id, version, path)
+    for graph in captured["graphs"].values():
+        for prefix, row in graph["packages"].items():
+            path = (owned_run.root / "cache/binding-build" / prefix
+                    / f'{row["packageId"].lower()}.{row["version"].lower()}.nupkg')
+            stage(row["packageId"], row["version"], path, expected=row["archiveSha256"])
+    for package in captured["projectPackages"].values():
+        stage(package["packageId"], package["version"],
+              feed / f'{package["packageId"]}.{package["version"]}.nupkg', expected=package["sha256"])
+    required = {**{role: image for role, image in binding.registration["components"].items()},
+                "provider": {"packageId": binding.registration["declaration"]["packageId"],
+                             "version": binding.registration["declaration"]["packageVersion"]},
+                "sdk": {"packageId": "Hoard.Testing.Conformance", "version": "0.1.0"},
+                "abstractions": {"packageId": "Hoard.Abstractions", "version": "0.1.0"}}
+    packages = {}
+    for image in required.values():
+        key = (image["packageId"].casefold(), image["version"].casefold())
+        if key not in archives:
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        package_id, version, path = archives[key]
+        package = evidence.package_identity(path.parent, package_id, version)
+        packages[key] = package
+    consumer = build_binding_consumer(
+        binding, owned_run, candidate, candidate_sources, tool, toolchain_root, sdk_version, runtime_version,
+        source_lock=source_lock, packages=list(packages.values()),
+        archive_paths=[path for _, _, path in archives.values()])
+    for receipt in records:
+        verify_project_lock(receipt, candidate, feed)
+    verify_captured_binding_project(binding, owned_run, captured, toolchain_root, feed)
+    evidence.verify_snapshot(candidate, candidate_sources)
+    return MappingProxyType({"qualification": False, "captured": captured, "consumer": consumer})
+
+
+def execute(repository, destination, *, project, category, binding_inputs_sha256):
+    import conformance_sdk_checks as sdk
+    from conformance_case_catalog import metadata_common_consumer_origin_counts
+    from conformance_execution import OwnedRun, native_execution_supported
+
+    if category != "metadata":
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    expected = evidence.sha256(binding_inputs_sha256)
+    if admit_binding_project(project, category).inputs_sha256 != expected:
+        raise evidence.ConformanceError("InputChanged")
+    if not native_execution_supported():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    run = OwnedRun.allocate(destination, repository, profile=category)
+    run.deadline = min(run.deadline, time.monotonic() + 60 * 60)
+    captured, binding, feed, toolchain_root = None, None, None, None
+    try:
+        (run.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
+        (run.root / "cache/.local").chmod(0o700)
+        candidate, sources = evidence.snapshot_sources(repository, run)
+        binding = snapshot_binding_project(project, category, expected, run)
+        config, feed = run.root / "NuGet.Config", run.root / "feed/contributor"
+        feed.mkdir(mode=0o700)
+        _write_owned_input(run, config, evidence.synthetic_nuget_configuration(feed))
+        observed_environment = sdk.environment(run)
+        toolchain_root = sdk.inspection_reference_roots()["Microsoft.NETCore.App"].parents[1]
+        sdk_version, runtime_version = observed_environment["sdk"], observed_environment["runtime"]
+        tool_project = candidate / "tests/fixtures/conformance/BuildInputs/BuildInputs.csproj"
+        sdk.build(run, tool_project, config, "contributor-tool", msbuild=(
+            "dotnet", "exec", "--fx-version", runtime_version,
+            str(toolchain_root / "sdk" / sdk_version / "MSBuild.dll")))
+        tool = tool_project.parent / "bin/Release/net10.0/Hoard.Fixtures.Conformance.BuildInputs.dll"
+        preparation = prepare_binding_project_consumer(
+            binding, run, candidate, sources, config, feed, tool, toolchain_root, sdk_version, runtime_version)
+        captured, consumer = preparation["captured"], preparation["consumer"]
+        ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+        if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
+            raise evidence.ConformanceError("InputChanged")
+        prepared = prepare_binding_consumer_runtime(
+            binding, run, repository, candidate, consumer, feed, observed_environment,
+            group_id=str(uuid.uuid4()), budgets=sdk.BUDGETS, ci_revision=ci_revision,
+            captured_build=captured, toolchain_root=toolchain_root)
+        inputs = prepared["inputs"]
+        _write_owned_input(run, run.root / "proofs/contributor-inputs.json", evidence.canonical_bytes(inputs))
+        _write_owned_input(run, run.root / "runtime-owner.json", evidence.canonical_bytes({
+            "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": inputs["invocationGroupId"],
+            "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}))
+        manifest = binding_consumer_manifest(binding, run, inputs, attempt_id=str(uuid.uuid4()))
+        binding_id = binding.registration["declaration"]["bindingId"]
+        counts = metadata_common_consumer_origin_counts(binding_ids=(binding_id,))
+        result, observed, transport, discovery_sha = sdk._execute_runtime_transport(
+            run, inputs, consumer["assemblyPath"], manifest,
+            {identity: (binding_id, "none") for identity in counts}, {"contributor_binding": binding},
+            origin_inputs={binding_id: consumer["components"]})
+        sdk.validate_observation(
+            observed, result, tuple(counts), "None", "Passed", 0, transport["proofs"], "None")
+        sdk.validate_full_binding_origins(observed, inputs, counts)
+        if result.execution_record_sha256 is None:
+            raise evidence.ConformanceError("ProofMismatch")
+        post = evidence.capture_profile_inputs(run, repository, candidate, **{
+            **prepared["captureArguments"], "observed_environment": sdk.environment(run, phase="completion")})
+        evidence.verify_input_recomputation(inputs, post)
+        read_binding_runtime_controls(run, binding, inputs)
+        verify_captured_binding_project(binding, run, captured, toolchain_root, feed)
+        _write_owned_input(
+            run, run.root / "proofs/contributor-completion-inputs.json", evidence.canonical_bytes(post))
+        summary = {
+            "qualification": False, "profileComplete": False, "scope": "contributor-metadata-runtime-diagnostic",
+            "bindingId": binding_id, "bindingInputsSha256": expected,
+            "inputsSha256": evidence.digest(inputs), "postInputsSha256": evidence.digest(post),
+            "passedParameters": len(counts), "sessionOrigins": sum(
+                len(rows) for rows in observed["sessionOrigins"].values()),
+            "discoverySha256": discovery_sha,
+            "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
+            "runtimeProofsSha256": evidence.digest(observed["proofs"]),
+            "nativeParentSha256": result.execution_record_sha256}
+    except RuntimeError:
+        raise evidence.ConformanceError("EvidenceIncomplete") from None
+    finally:
+        try:
+            if captured is not None:
+                verify_captured_binding_project(binding, run, captured, toolchain_root, feed)
+        finally:
+            if run.state in ("Allocated", "Active"):
+                run.transition("Settling")
+            if run.state == "Settling":
+                if run.live_children():
+                    run.transition("Retained")
+                    raise evidence.ConformanceError("CleanupIncomplete")
+                run.release()
+    summary["resources"] = run.resource_projection()
+    _write_owned_input(run, run.root / "proofs/contributor-runtime-summary.json", evidence.canonical_bytes(summary))
+    print(evidence.canonical_bytes(summary).decode("utf-8"))
+    return 0
 
 
 def capture_binding_restore_graphs(binding, owned_run, built, tool, runtime_version, package_root):
@@ -955,7 +1270,8 @@ def _binding_consumer_images(owned_run):
 
 
 def prepare_binding_consumer_runtime(binding, owned_run, repository, candidate, consumer, source_feed,
-                                     observed_environment, *, group_id, budgets, ci_revision=None):
+                                     observed_environment, *, group_id, budgets, ci_revision=None,
+                                     captured_build=None, toolchain_root=None):
     from conformance_execution import no_symlinks
     from conformance_sdk_checks import LOGGER, read_bounded
 
@@ -974,6 +1290,24 @@ def prepare_binding_consumer_runtime(binding, owned_run, repository, candidate, 
     frozen.update(evidence._hash_map(consumer["cachedArchives"]))
     frozen.update(consumer["runtimeAssemblies"])
     frozen.update({f"binding-source/{path}": hashed for path, hashed in binding.sources.items()})
+    if (captured_build is None) != (toolchain_root is None):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if captured_build is not None:
+        verify_captured_binding_project(binding, owned_run, captured_build, toolchain_root, source_feed)
+        for directory in ("binding-evaluation", "binding-build"):
+            frozen.update({f"{directory}/{path}": hashed
+                           for path, hashed in evidence.proof_manifest(owned_run.root / directory).items()})
+        files = captured_build["compilation"]["inputs"]
+        consumed = [files["imports"], files.get("tools", {}), files.get("supportFiles", {})]
+        consumed.extend(items for row in files["compilations"] for items in row["inputs"].values())
+        frozen.update({"cache/binding-build/" + path[len("packages/"):]: hashed
+                       for items in consumed for path, hashed in items.items() if path.startswith("packages/")})
+        for graph in captured_build["graphs"].values():
+            frozen.update({
+                f'cache/binding-build/{prefix}/{row["packageId"].lower()}.{row["version"].lower()}.nupkg':
+                row["archiveSha256"] for prefix, row in graph["packages"].items()})
+        frozen.update({(source_feed / path).relative_to(owned_run.root).as_posix(): hashed
+                       for path, hashed in evidence.proof_manifest(source_feed).items()})
     if evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen:
         raise evidence.ConformanceError("InputChanged")
     packages = list(evidence._list(evidence._entity("PackageIdentity"), 1024)(consumer["packages"]))
@@ -1182,8 +1516,19 @@ def binding_evaluation_inputs(binding, data, toolchain_root):
         raise evidence.ConformanceError("OutputLimitExceeded")
     value = evidence.load_json(data)
     if (not isinstance(value, dict) or set(value) != {"Items"}
-            or not isinstance(value["Items"], dict) or set(value["Items"]) != {"_BindingInputs"}):
+            or not isinstance(value["Items"], dict)
+            or set(value["Items"]) != {"_BindingInputs", "_BindingProjects"}):
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    project_rows = evidence._list(evidence._record({
+        "Identity": evidence.relative_path, "PackageId": evidence.stable_id,
+        "PackageVersion": evidence.stable_id, "IsPackable": evidence._one_of("true", "false"),
+    }), 128)(value["Items"]["_BindingProjects"])
+    packaging = {row["Identity"]: MappingProxyType({
+        "packageId": row["PackageId"], "version": row["PackageVersion"],
+        "packable": row["IsPackable"] == "true"}) for row in project_rows}
+    if (len(packaging) != len(project_rows)
+            or set(packaging) != {path for path in binding.sources if path.endswith(".csproj")}):
+        raise evidence.ConformanceError("EvidenceIncomplete")
     rows = value["Items"]["_BindingInputs"]
     if not isinstance(rows, list) or not 0 < len(rows) <= evidence.MAX_PROOF_FILES:
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
@@ -1221,7 +1566,7 @@ def binding_evaluation_inputs(binding, data, toolchain_root):
             raise evidence.ConformanceError("InputChanged")
     return MappingProxyType({
         "schemaVersion": 1, "qualification": False, "bindingInputsSha256": binding.inputs_sha256,
-        "project": binding.project,
+        "project": binding.project, "packaging": MappingProxyType(packaging),
         "sources": MappingProxyType({path: sources[path] for path in sorted(paths["source"])}),
         "toolchain": toolchain})
 
