@@ -2454,6 +2454,15 @@ teardown must reject any still-live issued recovery allocator, so exception
 unwinding cannot delete state beneath pending recovery. Reuse existing bounded
 settlement/history rules; recovery never deletes state or reports Released.
 This setup lease is not cross-process origin or crash-proof admission.
+Observed setup recovery must expose a distinct artifact-recovery/recover payload
+with sourceSessionId and recoveryInputSha256, not parentSessionId. Do not expose
+its internal create-shaped component capture through ordinary Render/Write.
+Keep ordinary closed-schema/create/reopen/same-factory admission unchanged.
+Live reopen of the recovered session returns an unobserved session, not an
+ordinary observed descendant whose recovery parent cannot enter that channel.
+Reject invalid source IDs/input hashes, cancellation and non-durable declarations
+before invoking the recovery binding. These setup facts do not prove an actual
+terminated predecessor, frozen cross-process inputs or a new process.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

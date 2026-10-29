@@ -7495,7 +7495,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         lineage["sessionOrigins"].append(reopened)
         self.assertEqual(len(admit_changed(lineage)["sessionOrigins"][self.execution]), 2)
         for mutation in ("case", "runtime", "type", "descriptor", "missing", "replay", "absent",
-                         "parent", "factory", "instance"):
+                         "parent", "factory", "instance", "recovery"):
             changed = json.loads(evidence.canonical_bytes(self.proof))
             captured = changed["sessionOrigins"][0]
             if mutation == "case":
@@ -7510,6 +7510,10 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 del captured["components"]["store"]
             elif mutation == "absent":
                 changed["sessionOrigins"] = []
+            elif mutation == "recovery":
+                del captured["parentSessionId"]
+                captured.update(kind="artifact-recovery", factoryOperation="recover",
+                                sourceSessionId=str(uuid.uuid4()), recoveryInputSha256="c" * 64)
             elif mutation in ("parent", "factory", "instance"):
                 child = json.loads(evidence.canonical_bytes(reopened))
                 if mutation == "parent":

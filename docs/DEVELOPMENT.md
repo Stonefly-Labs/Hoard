@@ -6813,6 +6813,17 @@ bytes,23 native macOS skips and expected incomplete exit2. Four-file whitespace
 formatting, catalog/SDK and diff checks pass. Native verification of this later
 lease code and actual cross-process contributor recovery remain open.
 
+The observed recovery wrapper now captures a distinct `artifact-recovery`
+payload: `recover`, source-session ID and recovery-input SHA-256, without
+parentSessionId. It reuses component observation internally but cannot write
+that internal create-shaped root through the ordinary origin channel. Live
+reopen returns an unobserved session. The packaged setup checks persisted state
+after both recovery and live reopen, validates safe payload fields and rejects
+invalid source/hash, cancellation and foreign identity before allocation.
+The existing ordinary-origin mutation control also rejects recovery payloads;
+its same-factory create/reopen rules are unchanged. Cross-process controller/
+input/termination admission still must be implemented before native qualification.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

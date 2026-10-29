@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Hoard.Abstractions.Metadata;
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Conformance.Bindings.Local;
 using Hoard.Testing.Conformance.Artifacts;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Diagnostics;
+using Hoard.Testing.Conformance.Evidence;
 
 namespace Hoard.Fixtures.Conformance.Consumer;
 
@@ -16,12 +18,16 @@ public sealed class LocalArtifactSessionTests
         await using var resources = new RecordingDirectories(useActualAllocator: true);
         var context = Context(resources);
         IArtifactRecoveryConformanceBinding binding = new LocalBinding(new string('0', 64));
-        var original = await binding.CreateSessionAsync(context, default);
+        var original = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         ArtifactMutationReceipt receipt;
-        var identity = original.Identity;
-        var authority = original.Authority;
+        ArtifactStoreIdentity identity;
+        IArtifactCoordinationAuthority authority;
+        ConformanceSessionOrigin sourceOrigin;
         try
         {
+            identity = original.Identity;
+            authority = original.Authority;
+            sourceOrigin = original.CaptureOrigin();
             receipt = await ArtifactCompositionAssertions.ConfiguredPublicationAsync(original.Store, default);
             Assert.Equal("CleanupIncomplete", Assert.Throws<InvalidOperationException>(() =>
                 resources.OpenRecovery(Assert.Single(resources.Directories))).Message);
@@ -38,12 +44,22 @@ public sealed class LocalArtifactSessionTests
         var recoveryContext = new ConformanceRunContext(
             context.RunId, context.CaseId, context.Clock, allocator, context.Evidence);
         IArtifactRecoveryConformanceBinding fresh = new LocalBinding(new string('0', 64));
-        Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<ArgumentException>(() => fresh.ReopenSessionAsync(
-            recoveryContext, new("foreign.provider", identity.InstanceId, identity.Epoch), default).AsTask())).Message);
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fresh.ReopenSessionAsync(
-            recoveryContext, identity, new CancellationToken(true)).AsTask());
+        Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<ArgumentException>(() =>
+            ConformanceObservedArtifactRecoverySession.OpenAsync(fresh, recoveryContext,
+                new("foreign.provider", identity.InstanceId, identity.Epoch),
+                sourceOrigin.SessionId, new string('c', 64), default).AsTask())).Message);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            ConformanceObservedArtifactRecoverySession.OpenAsync(fresh, recoveryContext, identity,
+                sourceOrigin.SessionId, new string('c', 64), new CancellationToken(true)).AsTask());
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            ConformanceObservedArtifactRecoverySession.OpenAsync(
+                fresh, recoveryContext, identity, Guid.Empty, new string('c', 64), default).AsTask());
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            ConformanceObservedArtifactRecoverySession.OpenAsync(
+                fresh, recoveryContext, identity, sourceOrigin.SessionId, "invalid", default).AsTask());
         Assert.Equal(0, allocator.Allocations);
-        var recovered = await fresh.ReopenSessionAsync(recoveryContext, identity, default);
+        var recovered = await ConformanceObservedArtifactRecoverySession.OpenAsync(
+            fresh, recoveryContext, identity, sourceOrigin.SessionId, new string('c', 64), default);
         try
         {
             Assert.Equal(identity, recovered.Identity);
@@ -51,6 +67,18 @@ public sealed class LocalArtifactSessionTests
             Assert.NotSame(original.Store, recovered.Store);
             Assert.True(recovered.Faults.ObserveInitialization().Ready);
             await ArtifactCompositionAssertions.CompatibleReopenAsync(recovered.Store, identity, receipt, default);
+            var origin = recovered.CaptureOrigin();
+            using var packet = JsonDocument.Parse(ConformanceSessionOriginOutput.Serialize(origin));
+            Assert.Equal("artifact-recovery", packet.RootElement.GetProperty("kind").GetString());
+            Assert.Equal("recover", packet.RootElement.GetProperty("factoryOperation").GetString());
+            Assert.Equal(sourceOrigin.SessionId, packet.RootElement.GetProperty("sourceSessionId").GetGuid());
+            Assert.Equal(new string('c', 64), packet.RootElement.GetProperty("recoveryInputSha256").GetString());
+            Assert.False(packet.RootElement.TryGetProperty("parentSessionId", out _));
+            Assert.NotEqual(sourceOrigin.Components["factory"].InstanceId, origin.Components["factory"].InstanceId);
+            Assert.Equal(sourceOrigin.DescriptorSha256, origin.DescriptorSha256);
+            await using var liveReopen = await recovered.ReopenAsync(default);
+            Assert.IsNotType<ConformanceObservedArtifactSession>(liveReopen);
+            await ArtifactCompositionAssertions.CompatibleReopenAsync(liveReopen.Store, identity, receipt, default);
         }
         finally { await recovered.DisposeAsync(); }
         Assert.Equal(1, allocator.Allocations);

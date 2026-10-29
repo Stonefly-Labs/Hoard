@@ -1505,6 +1505,40 @@ predecessors, IaC, release and UI are unaffected by this test-only ownership
 increment. Native verification of the new lease and cross-process contributor
 recovery/transfer/full applicability remain open. T064..T086 stay unchecked.
 
+### Distinct observed recovery setup origins
+
+The test-only observed recovery wrapper calls the supplied typed recovery
+factory after validating source-session ID, input SHA-256, cancellation,
+category and durable capability. Its separate artifact-recovery/recover payload
+contains sourceSessionId and recoveryInputSha256, not parentSessionId. Internal
+reuse of lazy component capture does not expose a create-shaped root through
+ordinary Render/Write. A typed safe component projection preserves the ordinary
+origin packet protocol. No normal live-origin schema/factory-lineage rule changes.
+
+The bounded incremental hoard-architecture-review finds no confirmed boundary
+violation or ownership leak. It identifies a nonblocking descendant ambiguity:
+delegating to the observed live wrapper exposes a reopen origin whose recovery
+parent cannot enter the ordinary channel. The correction retains the actual
+underlying recovery session and delegates live reopen without ordinary observed
+wrapping. The existing packaged setup now verifies exact persisted state after
+that live reopen and checks the returned session does not expose the ordinary
+observed type. The ordinary runtime-origin mutation test rejects a recovery
+payload. Invalid source/hash, cancellation and foreign identity reject before
+allocation. No claim is made that fresh GUIDs prove a distinct process.
+
+The focused packaged artifact regression passes before the descendant correction;
+the subsequent frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+reexecutes the final packaged regression and observes719 tests, zero failures/
+errors/expected failures/unexpected successes/unexpected diagnostic bytes,
+23 native macOS skips and expected incomplete exit2. Five-file C# whitespace
+formatting, catalog/SDK and diff checks pass. README, PROVIDERS, DEVELOPMENT and
+harness document the seam. Product/architecture/ADR/diagrams/examples, governance,
+predecessors, IaC, release and UI are unaffected by this test-only setup API.
+This review did not execute commands or inspect Git diff and is not final T081.
+Actual input/controller/process-bound recovery admission, generic contributor
+crash/transfer execution and complete applicability remain open. T064..T086
+stay unchecked; implement/running continues.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

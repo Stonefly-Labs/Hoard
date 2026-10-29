@@ -17,7 +17,7 @@ public sealed class ConformanceObservedArtifactSession : IArtifactConformanceSes
     private readonly Lazy<ArtifactStoreIdentity> identity;
     private readonly Lazy<IArtifactConformanceFaultDriver> faults;
 
-    private ConformanceObservedArtifactSession(IArtifactConformanceSession session,
+    internal ConformanceObservedArtifactSession(IArtifactConformanceSession session,
         ConformanceSessionOriginTracker origins, Guid? parentSessionId)
     {
         this.session = session ?? throw new ArgumentException("BindingInvalid");

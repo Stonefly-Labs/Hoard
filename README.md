@@ -732,6 +732,10 @@ The next recovery increment uses an original-owner-issued SDK lease with native
 directory identity/exclusive pins, joined actual settlement and blocked parent
 teardown while a recovery lease remains live. This is still setup infrastructure,
 not abrupt-process contributor recovery or full qualification.
+Observed recovery uses a separate `artifact-recovery` payload with source-session
+and recovery-input hashes, never the ordinary parent-linked live-origin channel.
+Its live reopen returns an unobserved session; cross-process proof admission
+remains unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

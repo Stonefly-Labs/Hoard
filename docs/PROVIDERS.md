@@ -642,6 +642,17 @@ them only after actual work ends, before original physical cleanup. This setup
 API does not by itself admit a crashed process, cross-process origin or native
 contributor recovery proof.
 
+`ConformanceObservedArtifactRecoverySession.OpenAsync` observes this setup through
+the supplied recovery binding. Its separate `ConformanceArtifactRecoveryOrigin`
+payload identifies `artifact-recovery`, `recover`, the source session and the
+recovery-input SHA-256, with no ordinary parent-session field. Only safe JSON
+serialization is exposed; the ordinary origin output/logger channel has no
+recovery overload and continues rejecting recovery payloads. Validate source ID,
+input hash, cancellation and durable capability before calling the binding.
+Live reopen remains functional but returns an unobserved session, so it cannot
+emit an ordinary observed descendant of the unpublished recovery root. This is
+not independent proof of a terminated predecessor or a distinct recovery process.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output
