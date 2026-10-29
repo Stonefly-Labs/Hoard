@@ -124,6 +124,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     [ContributorArtifactData("cancel-waiting")]
     [ContributorArtifactData("cooperative-cancel")]
     [ContributorArtifactData("reclaimed-identities")]
+    [ContributorArtifactData("reclaimed-incarnations", DurableOnly = true)]
     [ContributorArtifactData("concurrent-release")]
     [ContributorArtifactData("sequential-recovery")]
     [ContributorArtifactData("direct-availability")]
@@ -143,6 +144,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     [ContributorArtifactData("candidate-tickets")]
     [ContributorArtifactData("candidate-dependencies")]
     [ContributorArtifactData("candidate-decisions")]
+    [ContributorArtifactData("candidate-reclamation", DurableOnly = true)]
     [ContributorArtifactData("candidate-resume")]
     [ContributorArtifactData("receipt")]
     [ContributorArtifactData("read-open")]
@@ -167,7 +169,8 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
         {
             "cap-crossing" => new ArtifactLimits(10, 10, 1),
             "ownerless-expiry" => new ArtifactLimits(artifactBytes: 1, stagingBytes: 1),
-            "reclaimed-identities" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
+            "reclaimed-identities" or "reclaimed-incarnations" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
             "successful-ticket" or "successful-read" =>
                 new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0),
             "unclaimed-ticket" or "unclaimed-read" =>
@@ -175,7 +178,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             "expired-staging" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024),
             "rollback-write-capacity" or "rollback-delete-capacity" =>
                 new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, liveTickets: 4),
-            "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" =>
+            "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" or "candidate-reclamation" =>
                 new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1048576, committedIdentities: 128),
             "read-open" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, transferSlots: 1, waitingCalls: 0),
             "delete-history" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
@@ -241,6 +244,8 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "cooperative-cancel" => ArtifactBudgetAssertions.CooperativeCancellationAsync(session.Store, default),
                 "reclaimed-identities" => ArtifactHistoryAssertions.ReclaimedIdentityExpiryAsync(
                     session.Store, session.Maintenance, session.Identity, AdvanceTo, default),
+                "reclaimed-incarnations" => ArtifactHistoryAssertions.ReclaimedIncarnationBudgetAsync(
+                    session.Store, AdvanceTo, default),
                 "concurrent-release" => ArtifactBindingAssertions.ConcurrentReleaseAsync(session, default),
                 "sequential-recovery" => ArtifactRecoveryAssertions.SequentialRecoveryAsync(
                     session.Store, session.Maintenance, session.Identity, clock.Advance,
@@ -253,7 +258,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
                 "descriptor-completion" or "descriptor-handle" or "descriptor-renewed" =>
                     ArtifactOwnershipAssertions.CancelledStagedDescriptorAsync(
                         session.Store, clock.Advance, WhenIdle, consumer["descriptor-".Length..], default),
-                "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" =>
+                "candidate-tickets" or "candidate-dependencies" or "candidate-decisions" or "candidate-reclamation" =>
                     ArtifactConformanceSessionTests.CandidateBoundsConsumerAsync(session, consumer["candidate-".Length..]),
                 "candidate-resume" => ArtifactConformanceSessionTests.CandidateResumeConsumerAsync(session),
                 "receipt" or "read-open" or "verified-reconciliation" or "pending-reclamation" =>
@@ -385,6 +390,58 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
             ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
         await ArtifactConformanceSessionTests.AccessApplicationShutdownConsumerAsync(binding, context, resources, output,
             unavailable, assertProfile: AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(false, false)]
+    [ContributorArtifactData(false, true)]
+    [ContributorArtifactData(true, false)]
+    [ContributorArtifactData(true, true)]
+    public async Task Observed_payload_release_errors_preserve_actual_restoration_and_faulted_ownership(
+        string provider, bool unavailable, bool cancellation)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        Exception failure = cancellation ? new OperationCanceledException("Ordinary access release cancellation")
+            : new IOException("Ordinary access release failure");
+        await ArtifactConformanceSessionTests.AccessReleaseErrorConsumerAsync(
+            binding, context, resources, output, unavailable, failure, assertProfile: AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(DurableOnly = true)]
+    public async Task Observed_durable_record_application_shutdown_preserves_actual_resource_ownership(string provider)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.AccessApplicationShutdownConsumerAsync(
+            binding, context, resources, output, false, recordWrites: true, assertProfile: AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(false, DurableOnly = true)]
+    [ContributorArtifactData(true, DurableOnly = true)]
+    public async Task Observed_durable_record_release_errors_preserve_actual_mode_and_faulted_ownership(
+        string provider, bool cancellation)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        Exception failure = cancellation ? new OperationCanceledException("Ordinary record access cancellation")
+            : new IOException("Ordinary record access failure");
+        await ArtifactConformanceSessionTests.AccessReleaseErrorConsumerAsync(
+            binding, context, resources, output, false, failure, recordWrites: true, assertProfile: AssertProfile);
     }
 
     [Theory]

@@ -2559,6 +2559,17 @@ session identities and the frozen ordinary origin within16 combined pins.
 Explicitly mark containment as non-durability proof. Clean preparation must
 copy every exact source-linked assertion/control/stream file before runner
 builds, including transfer helpers; host output or partial copying is not proof.
+The independent contributor inventory also includes both denied/unavailable
+payload-access release error/cancellation combinations, using the original
+typed consumer body. Require actual restored bytes and the original ordinary
+exception in faulted settlement, never a Released observation. Frozen durable
+profiles additionally select original reclaimed-incarnation and reclamation
+candidate bounds, record-permission application joined with shutdown and both
+record-permission release variants with actual restored mode. Check actual
+capabilities before/after; provider identity must not choose applicability.
+Those additions yield123/124 durable Snapshot/Incomplete rows with134/135
+origins and113/114 simulated rows with114/115 origins. Exact inventory expansion
+and a passing diagnostic component are not complete category qualification.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

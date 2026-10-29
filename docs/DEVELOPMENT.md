@@ -7094,6 +7094,44 @@ EvidenceIncomplete exit2. Exact13-file C# whitespace verification,
 Complete contributor applicability/public dispatch, guide journey, qualifying
 profiles and T064..T086 remain open.
 
+### Additional contributor history and access restoration
+
+The original access-release error/cancellation assertions now have a typed
+consumer helper also used by the generated supplied factory. Existing Local/
+Object wrappers retain their names, parameter inventories and expected body.
+Four common denied/unavailable/error/cancellation rows require actual restored
+payload bytes, the original exception in faulted settlement and no Released
+observation. Five additional durable rows cover original reclaimed-incarnation
+capacity, reclamation candidate bounds, record-permission application joined
+with shutdown and both record-permission release variants with restored mode.
+Selection uses the frozen durability marker and actual profile checks, never
+the contributor name. No SDK/product contract or production edge changes.
+
+The independent inventory regression first fails110 versus114, then passes
+all four immutable profile expansions: durable Snapshot123 rows/134 origins,
+durable Incomplete124/135, simulated Snapshot113/114 and simulated Incomplete
+114/115. `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_contributors.ContributorAdmissionTests
+test_conformance_contributors.NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins -v`
+passes69 tests in115.205s on macOS, including the actual123-row/134-origin
+packaged component.
+
+Fresh UID10001 Linux/arm64 observation uses exacte50c924 plus four explicit
+source overlays, the same pinned local Unix-socket Docker SDK image,
+Python3.12.3/SDK10.0.203 and an anonymous btrfs scratch volume initially admitting
+53,601,800,192 free bytes. Overlay SHA-256:
+`139e727e39e9beab35f5ad5750f2ca07cef235e013e7020dd77d27c083b395d0`.
+The inventory fact and actual packaged component pass in86.108s, including its
+six actual source/fresh-recovery pairs and three retained children. No new
+transfer code changes or additional real4GiB execution are claimed. The exact
+task container is absent after exit. Other new profile inventories remain
+expansion checks, not new runtime support. Two-file C# whitespace verification,
+catalog/SDK consistency and diff checks pass.
+Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:
+737 tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,25 explicit native macOS skips and expected non-qualifying
+EvidenceIncomplete exit2. T064..T086 remain open.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

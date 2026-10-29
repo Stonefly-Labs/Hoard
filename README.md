@@ -773,6 +773,9 @@ the original provider-neutral assertions, retain actual workers/protection/root
 through both inspections and terminate only by original-parent SIGKILL.
 The isolated replay passes those three cases and all six original Local/Object
 child tests. Clean artifact preparation copies every exact source-linked helper.
+The packaged component also preserves original access-restoration error/
+cancellation, durable record-permission shutdown/restoration and reclaimed-history
+assertions:123 rows/134 origins pass on macOS and isolated unprivileged Linux.
 Complete applicability and public artifact dispatch remain unfinished; these
 component diagnostics do not qualify a profile.
 A compiled-document reader also binds closed source-document receipts to the

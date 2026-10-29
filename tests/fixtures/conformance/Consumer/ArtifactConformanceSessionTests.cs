@@ -538,7 +538,16 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await AccessReleaseErrorConsumerAsync(Binding(provider), context, resources, output,
+            unavailable, failure, recordWrites);
+    }
+
+    internal static async Task AccessReleaseErrorConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        bool unavailable, Exception failure, bool recordWrites = false,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var bytes = "payload access restoration after a release observer exception"u8.ToArray();
         IAsyncDisposable? observation = null;
         IAsyncDisposable? access = null;
@@ -547,6 +556,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         Exception? disposalFailure = null;
         try
         {
+            assertProfile?.Invoke(session);
             using var source = new ArtifactPublicationAssertions.ShortSource(bytes);
             var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
             if (recordWrites)
@@ -568,6 +578,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 Assert.Same(failure, await Record.ExceptionAsync(() => Restrict().AsTask()));
             }
             await observation.DisposeAsync();
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally

@@ -801,6 +801,21 @@ six exact linked assertion/control/stream sources; a regression first rejects
 the incomplete copy. Complete applicability/public dispatch and qualification
 remain unfinished.
 
+The contributor component additionally reuses the original payload-access
+release error/cancellation body for both denied/unavailable variants. It checks
+actual restored payload bytes, faulted resource settlement with the exact
+ordinary exception, and no fabricated Released observation. Durable profiles
+also run the original record-permission application/shutdown and both release
+variants, restored actual mode, reclaimed-incarnation capacity and reclamation
+candidate bounds. Frozen durability, not provider identity, selects those rows;
+actual capabilities are checked before/after their assertions.
+The independent inventories are123/124 rows and134/135 origins for durable
+Snapshot/Incomplete, and113/114 rows and114/115 origins for simulation.
+The actual123-row/134-origin durable Snapshot component passes on macOS and
+isolated unprivileged Linux; the other new profile inventories are expansion
+checks, not a new runtime cross-product claim. Complete applicability/public
+dispatch and qualification remain unfinished.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

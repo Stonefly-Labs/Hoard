@@ -2025,6 +2025,50 @@ no product/public CLI/deployment claims change. Complete contributor applicabili
 dispatch, guide journey, qualifying profiles and T064..T086 remain open;
 no task/checklist/flow/convergence/merge/release/readiness marker advances.
 
+### Additional supplied-factory history and access restoration
+
+Nine additional durable-Snapshot logical rows reuse original assertion bodies:
+four payload access release error/cancellation combinations, reclaimed-incarnation
+capacity, reclamation candidate bounds, record-permission application/shutdown
+and both record-permission release variants. Extraction preserves all original
+Local/Object wrapper names/parameters, actual file/mode restoration assertions,
+exact ordinary exception in faulted settlement and absence of Released.
+The generated supplied factory has actual pre/post capability checks; frozen
+durability selects the five durable rows without provider-name branching.
+There is no new SDK/product contract, expected-outcome fork or production edge.
+
+The independent applicability fact first fails110 versus114, then passes
+all four inventories: durable Snapshot123 rows/134 origins, durable Incomplete
+124/135, simulated Snapshot113/114 and simulated Incomplete114/115.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_contributors.ContributorAdmissionTests
+test_conformance_contributors.NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins -v`:
+69 passed in115.205s, including the actual123-row/134-origin packaged component.
+
+The isolated UID10001/Linux-arm64 observation uses exacte50c924 plus four
+explicit source overlays, local Unix-socket Docker and the same pinned SDK
+image/Python3.12.3/SDK10.0.203, bounded4 CPUs/6GiB/512 PIDs and anonymous btrfs
+scratch admitting53,601,800,192 free bytes. Overlay SHA-256:
+`139e727e39e9beab35f5ad5750f2ca07cef235e013e7020dd77d27c083b395d0`.
+`linux-artifact-contributor-catalog.log` records two tests passing in86.108s:
+the expanded inventory fact and actual packaged component, whose supported
+native path additionally executes six real source/fresh recovery pairs and
+three retained children. It does not newly execute4GiB or establish a runtime
+cross-product for the other three inventory profiles. The exact task container
+is absent after successful bounded exit; shared cached SDK images remain.
+
+Two-file C# whitespace verification, catalog/SDK consistency and diff checks
+pass. Final frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes737 tests, zero failures/errors/expected failures/unexpected successes/
+unexpected diagnostic bytes,25 explicit native macOS skips and expected
+diagnostic EvidenceIncomplete exit2.
+README, PROVIDERS, DEVELOPMENT and harness are synchronized; charter/
+product/architecture/ADR/diagrams/examples/governance/backlog/predecessor/IaC/
+release/UI documents are unaffected by this test-only component extension.
+Complete applicability/public artifact dispatch, guide journey, qualifying
+profiles and T064..T086 stay open. No task/checklist/flow, convergence, merge,
+release or readiness marker advances; implementation continues.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
