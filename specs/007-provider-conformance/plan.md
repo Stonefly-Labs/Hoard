@@ -2069,6 +2069,41 @@ Complete applicability/public artifact dispatch, guide journey, qualifying
 profiles and T064..T086 stay open. No task/checklist/flow, convergence, merge,
 release or readiness marker advances; implementation continues.
 
+### Pending T064 mechanism-applicability decision
+
+The current frozen contributor classification describes durability and
+enumeration, not storage mechanics. Original checks for Unix record-directory
+mode restoration, invalid filesystem inventory shapes and selected/unselected
+object-publication residuals depend on mechanics those markers do not identify.
+The successful forwarding-Local observations above remain valid finite evidence;
+they do not establish that arbitrary durable providers have a `decisions`
+directory or implement Unix permission controls. In particular, the added
+record-permission rows still need this applicability decision before generic
+artifact dispatch can be considered complete.
+
+The original250-row Local/Object inventory has126/124 rows and137/125 origins.
+Compared with the new123-row durable Snapshot and114-row simulated Incomplete
+components, six invalid-inventory, two unsupported-record-control and six
+object-residual rows are not yet wired; the simulated component independently
+also includes visible-before-ack. These counts locate the remaining fixture
+mechanics, not an authorized exclusion policy.
+
+Two coherent choices require maintainer resolution: keep fixture-private
+mechanism checks mandatory for built-in fixtures while contributors run every
+implementation-neutral common assertion and applicable native obligation; or
+extend frozen registration and typed setup controls so applicable mechanism
+checks can also run for contributors. The former avoids imposing private
+implementation layouts and is recommended, but neither a new exclusion policy
+nor a new setup-trait contract is silently adopted. Provider names must not
+select outcomes or omissions.
+
+A targeted maintainer question receives no response because the user is
+unavailable. T064 stays unchecked and implement/running is preserved. Public
+artifact dispatch, all later tasks, convergence and readiness remain blocked
+on this contract decision; there is no new runtime failure or qualification
+claim. README and guides already state that complete applicability and public
+dispatch are unfinished, so this decision checkpoint changes only the plan.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
