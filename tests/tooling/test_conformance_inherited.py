@@ -2,6 +2,7 @@
 
 import importlib.util
 import copy
+import hashlib
 from contextlib import nullcontext, redirect_stdout
 import io
 import json
@@ -342,7 +343,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
         identity = "test_control.Case.test_assertion"
         sources = {"tests/tooling/test_control.py": "a" * 64}
         for mutation in ("none", "changed-source", "missing-observation", "foreign-module", "skipped", "deadline",
-                         "borrowed-provider-group", "live-child"):
+                         "borrowed-provider-group", "live-child", "runtime-failure", "unsafe-runtime-failure",
+                         "foreign-runtime-failure"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -366,6 +368,18 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 elif mutation == "deadline":
                     packet.update(expectedTests=[identity, "test_control.Case.test_unobserved"],
                                   code="EvidenceIncomplete")
+                elif mutation.endswith("runtime-failure"):
+                    packet.update(errors=1, code="EvidenceIncomplete", failedTests=[{
+                        "test": identity, "code": "EvidenceIncomplete",
+                        "locations": [{"source": "tests/tooling/test_control.py", "line": 1}],
+                        "runtimeDiagnostic": {
+                            "observedCode": "UnknownDiagnostic", "observedExit": 1,
+                            "witnessStates": {"Passed": 113, "Failed": 1, "Incomplete": 0},
+                            "mismatchCount": 1, "mismatchedTestsSha256": ["b" * 64]}}])
+                    if mutation == "unsafe-runtime-failure":
+                        packet["failedTests"][0]["runtimeDiagnostic"]["observedCode"] = "PrivateCanary"
+                    elif mutation == "foreign-runtime-failure":
+                        packet["failedTests"][0]["test"] = "test_foreign.Case.test_other"
                 clock = patch.object(time, "monotonic", side_effect=[1, 602]) if mutation == "deadline" else nullcontext()
                 with patch.object(evidence, "source_manifest", side_effect=[
                         sources, {} if mutation == "changed-source" else sources]), \
@@ -392,12 +406,19 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                             inherited.run_controller_tooling(ROOT, run, sources)
                         if mutation in ("borrowed-provider-group", "live-child"):
                             execute.assert_not_called()
-                        if mutation in ("skipped", "deadline"):
+                        if mutation in ("skipped", "deadline", "runtime-failure"):
                             inputs = {"runId": "run", "sourceManifest": sources,
                                       "sourceManifestSha256": evidence.digest(sources)}
                             observation = inherited.controller_tooling_observation(root, inputs, {"rootId": "root"})
                             self.assertEqual("EvidenceIncomplete", observation["code"])
                             self.assertFalse(observation["qualification"])
+                            if mutation == "runtime-failure":
+                                self.assertEqual(observation["runtimeFailureCount"], 1)
+                                failure, = observation["runtimeFailures"]
+                                self.assertEqual(failure, {
+                                    "toolingTestSha256": hashlib.sha256(identity.encode()).hexdigest(),
+                                    **packet["failedTests"][0]["runtimeDiagnostic"]})
+                                self.assertNotIn(identity, json.dumps(observation))
                             if mutation == "deadline":
                                 self.assertEqual((2, 1, 601000), tuple(observation[key] for key in (
                                     "expectedTests", "observedTests", "elapsedMs")))
@@ -407,6 +428,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                                        "sha256": file_sha256(root / "proofs/inherited-controller-tooling.json")}
                             with self.assertRaises(ConformanceError):
                                 inherited.verify_controller_tooling(root, summary, inputs, {"rootId": "root"})
+                        if mutation in ("unsafe-runtime-failure", "foreign-runtime-failure"):
+                            self.assertFalse((root / "proofs/inherited-controller-tooling.json").exists())
 
     def test_selected_mutation_discovery_requires_actual_complete_unchanged_images(self):
         import conformance_legacy as legacy

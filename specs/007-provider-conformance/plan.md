@@ -1391,6 +1391,38 @@ runtime mismatch projection, so the failing artifact row is not yet established.
 These failures predate this recovery facet, remain retained, and cannot be
 replaced by the clean managed replay. Current-source native acceptance is open.
 
+### Bounded runtime failure retention and shell observation
+
+The exact2ec1de1 composition run40809976278/job123240031312 fails with
+AssertionFailed/exit1. The shell's early `test "$status" -eq 2` prevents the
+following safe missing-summary observer from running on that exit. Move the
+status assertion after observation; it still rejects every exit other than2
+even if observation succeeds. A real Bash control executes all three exits
+0/1/2 with a successful stub observer, proving observation runs and only2 is
+accepted. Existing inline Python controls still reject missing/foreign/unsafe
+evidence. This explains absent observation, not the underlying runtime failure
+or a tooling deadline; no execution/time/summary bound is increased.
+
+The contributor runtime regression now preserves the typed observation error
+rather than converting its finite diagnostic to a plain assertion. SafeResult
+retains only an independently bounded closed projection: code, integer exit,
+exact witness-state counts, mismatch count and up to four sorted unique identity
+hashes. Unknown fields, private canaries, malformed hashes/counts and boolean
+exits reject as UnknownDiagnostic without persisting the malformed projection.
+Failed controller rows must name observed tooling tests/source-bound locations.
+The controller observer exposes at most four validated runtime rows plus a total
+and hashed tooling-test identity, never raw messages, names or private paths.
+It still rejects failed/incomplete/over-budget runs for strict verification.
+
+The combined SDK projection/inherited/composition controls pass51 tests. Frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` observes719 tests,
+zero failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,23 native macOS skips and expected incomplete exit2. Catalog/SDK and diff
+checks pass. README, PROVIDERS, DEVELOPMENT and harness document this diagnostic
+change; no product/provider contract, examples, diagrams, governance,
+infrastructure or release behavior changes. Earlier native failures remain
+retained; current-source native failure diagnosis and T064..T086 remain open.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

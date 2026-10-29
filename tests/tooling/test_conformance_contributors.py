@@ -1330,15 +1330,8 @@ public sealed class ArtifactFactory : IArtifactConformanceBinding
                     observed_result, observed, transport, discovery_sha = sdk._execute_runtime_transport(
                         runner, inputs, result["assemblyPath"], manifest, expected,
                         {"contributor_binding": binding}, origin_inputs={binding_id: result["components"]})
-                try:
-                    sdk.validate_observation(
-                        observed, observed_result, tuple(counts), "None", "Passed", 0, transport["proofs"], "None")
-                except sdk._RuntimeObservationError as error:
-                    failed = set(error.runtime_diagnostic["mismatchedTestsSha256"])
-                    self.fail({
-                        **error.runtime_diagnostic,
-                        "catalogRows": sorted(identity for identity in counts
-                                              if hashlib.sha256(identity.encode()).hexdigest() in failed)})
+                sdk.validate_observation(
+                    observed, observed_result, tuple(counts), "None", "Passed", 0, transport["proofs"], "None")
                 sdk.validate_full_binding_origins(observed, inputs, counts)
                 self.assertEqual(len(observed["witnesses"]), len(counts))
                 self.assertEqual(sum(len(rows) for rows in observed["sessionOrigins"].values()), sum(counts.values()))

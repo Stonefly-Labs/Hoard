@@ -719,6 +719,10 @@ retains the original physical directory owner, joins both settlements, and
 rejects foreign identities, cancelled admission and incompatible epochs.
 This same-process setup check is separate from contributor component origins;
 it does not establish abrupt-process recovery or change live-reopen admission.
+Tooling failures now preserve a closed runtime projection containing only
+diagnostic codes, finite counts and test-identity hashes. Composition emits its
+failure observation before enforcing the required diagnostic exit, so an
+assertion exit cannot bypass observation or become an accepted run.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

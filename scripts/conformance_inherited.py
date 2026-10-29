@@ -822,6 +822,22 @@ def _admit_tooling_result(packet, sources):
     if packet["code"] == "None" and (
             expected != observed or packet["failedTests"] != [] or any(packet[key] != 0 for key in counts)):
         raise ConformanceError("EvidenceIncomplete")
+    if type(packet["failedTests"]) is not list or len(packet["failedTests"]) > 10000:
+        raise ConformanceError("WitnessMissing")
+    from conformance_sdk_checks import bounded_runtime_diagnostic
+    for row in packet["failedTests"]:
+        if (type(row) is not dict or set(row) not in (
+                {"test", "code", "locations"}, {"test", "code", "locations", "runtimeDiagnostic"})
+                or type(row["test"]) is not str or row["test"] not in observed
+                or type(row["code"]) is not str or row["code"] not in DIAGNOSTIC_CODES
+                or type(row["locations"]) is not list or len(row["locations"]) > 4
+                or any(type(location) is not dict or set(location) != {"source", "line"}
+                       or type(location["source"]) is not str or location["source"] not in sources
+                       or type(location["line"]) is not int or not 1 <= location["line"] <= 2**31 - 1
+                       for location in row["locations"])):
+            raise ConformanceError("WitnessMissing")
+        if "runtimeDiagnostic" in row:
+            bounded_runtime_diagnostic(row["runtimeDiagnostic"])
 
 
 def _read_controller_tooling(root, inputs, owner):
@@ -853,12 +869,17 @@ def controller_tooling_observation(root, inputs, owner):
     """Project only validated finite diagnostics, including an incomplete supervisor run."""
     _, document = _read_controller_tooling(root, inputs, owner)
     packet = document["result"]
+    runtime = [{
+        "toolingTestSha256": hashlib.sha256(row["test"].encode("utf-8")).hexdigest(),
+        **row["runtimeDiagnostic"],
+    } for row in packet["failedTests"] if "runtimeDiagnostic" in row]
     return {
         "qualification": False, "nativeContainment": False, "scope": "trusted-tooling-supervisor",
         "code": packet["code"], "elapsedMs": document["endedMs"] - document["startedMs"],
         "expectedTests": len(packet["expectedTests"]), "observedTests": packet["tests"],
         **{key: packet[key] for key in (
             "failures", "errors", "skipped", "expectedFailures", "unexpectedSuccesses", "unexpectedDiagnosticBytes")},
+        **({"runtimeFailureCount": len(runtime), "runtimeFailures": runtime[:4]} if runtime else {}),
     }
 
 

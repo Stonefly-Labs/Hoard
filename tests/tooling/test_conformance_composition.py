@@ -3,6 +3,7 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import textwrap
@@ -841,6 +842,23 @@ class CompositionDiagnosticTests(unittest.TestCase):
                                     else [2, 3, 0] if phase == "historical" else [1, 2, 0])
                         self.assertEqual(expected, [event["value"] for event in
                                                    evidence.load_json(output.getvalue().encode())["events"]])
+
+    def test_workflow_observes_failed_controller_before_enforcing_diagnostic_exit(self):
+        workflow = (ROOT / ".github/workflows/conformance-composition.yml").read_text()
+        script = textwrap.dedent(workflow.split("        run: |\n", 1)[1])
+        for status in (0, 1, 2):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as temporary:
+                environment = {
+                    **os.environ, "GITHUB_WORKSPACE": str(Path(temporary) / "workspace"),
+                    "GITHUB_RUN_ID": "control", "GITHUB_RUN_ATTEMPT": "1", "GITHUB_SHA": "a" * 40}
+                controls = (f"bash() {{ return {status}; }}\n"
+                            "python3() { printf 'projection-reached\\n'; return 0; }\n")
+                result = subprocess.run(
+                    ["/bin/bash", "-c", controls + script], cwd=ROOT, env=environment,
+                    capture_output=True, timeout=10)
+                self.assertEqual(result.stdout, b"projection-reached\n")
+                self.assertEqual(result.stderr, b"")
+                self.assertEqual(result.returncode == 0, status == 2)
 
     def test_workflow_checks_retained_historical_seal_after_stores_are_released(self):
         import hashlib

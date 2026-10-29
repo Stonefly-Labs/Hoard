@@ -38,7 +38,6 @@ jobs:
           status=0
           bash scripts/validate-conformance.sh \
             --profile composition --evidence "$private_parent/run" || status=$?
-          test "$status" -eq 2
           python3 - "$private_parent/run" "$GITHUB_SHA" <<'PY'
           import hashlib
           import sys
@@ -158,3 +157,4 @@ jobs:
               raise SystemExit("WitnessMissing")
           print('{"qualification":false,"status":"Incomplete","code":"EvidenceIncomplete"}')
           PY
+          test "$status" -eq 2

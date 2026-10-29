@@ -3931,6 +3931,27 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     }
 
 
+def bounded_runtime_diagnostic(value):
+    fields = {"observedCode", "observedExit", "witnessStates", "mismatchCount", "mismatchedTestsSha256"}
+    if (type(value) is not dict or set(value) != fields
+            or type(value["observedCode"]) is not str or value["observedCode"] not in evidence.DIAGNOSTIC_CODES
+            or type(value["observedExit"]) is not int or not -(2**31) <= value["observedExit"] < 2**31
+            or type(value["witnessStates"]) is not dict
+            or set(value["witnessStates"]) != {"Passed", "Failed", "Incomplete"}
+            or any(type(count) is not int or not 0 <= count <= 10000 for count in value["witnessStates"].values())
+            or sum(value["witnessStates"].values()) > 10000
+            or type(value["mismatchCount"]) is not int
+            or not 0 <= value["mismatchCount"] <= sum(value["witnessStates"].values())
+            or type(value["mismatchedTestsSha256"]) is not list
+            or len(value["mismatchedTestsSha256"]) != min(4, value["mismatchCount"])
+            or any(type(hashed) is not str or re.fullmatch(r"[a-f0-9]{64}", hashed) is None
+                   for hashed in value["mismatchedTestsSha256"])
+            or value["mismatchedTestsSha256"] != sorted(set(value["mismatchedTestsSha256"]))):
+        raise evidence.ConformanceError("UnknownDiagnostic")
+    return {**value, "witnessStates": dict(value["witnessStates"]),
+            "mismatchedTestsSha256": list(value["mismatchedTestsSha256"])}
+
+
 class _RuntimeObservationError(evidence.ConformanceError):
     def __init__(self, ingested, result, expected_status):
         super().__init__("EvidenceIncomplete")

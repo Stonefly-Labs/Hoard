@@ -2434,6 +2434,15 @@ Its same-process fresh-factory replay is a separate Local diagnostic, not a
 contributor component or abrupt-process witness. Do not emit it as a live
 logical-reopen origin or relax existing parent/factory equality. Cross-process
 input-bound origin and ownership admission remains required before qualification.
+Tooling may retain a closed runtime failure projection only from the typed
+runtime observation error: a diagnostic code, bounded integer exit, exact
+Passed/Failed/Incomplete counts, mismatch count and at most four sorted unique
+SHA-256 test identities. Malformed or unknown fields fail closed. Admitted
+controller observations may expose at most four such rows plus their total
+count and tooling-test hashes, never raw provider output or private paths.
+Validate failed tooling rows against observed tests and source-bound locations.
+The composition shell must run its observer before enforcing the expected exit2;
+an assertion exit1 must remain a failed job without bypassing safe observation.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

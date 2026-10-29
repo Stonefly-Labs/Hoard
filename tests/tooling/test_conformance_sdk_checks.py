@@ -6165,6 +6165,38 @@ class SdkDiagnosticTests(unittest.TestCase):
         raw = json.dumps(observed).encode()
         self.assertLessEqual(len(raw), 1024)
         self.assertNotIn(b"PrivateCanary", raw)
+        import conformance_unit_checks as unit_checks
+
+        class RuntimeFailure(unittest.TestCase):
+            def runTest(self):
+                raise raised.exception
+
+        result = unit_checks.SafeResult()
+        RuntimeFailure().run(result)
+        failure, = unit_checks.failed_tests(result)
+        self.assertEqual(failure["runtimeDiagnostic"], observed)
+        self.assertEqual(failure["code"], "EvidenceIncomplete")
+        self.assertNotIn("PrivateCanary", json.dumps(failure))
+        for field, value in (
+                ("observedCode", "PrivateCanary"),
+                ("observedExit", True),
+                ("witnessStates", {"Passed": 0, "Failed": 10001, "Incomplete": 0}),
+                ("mismatchCount", -1),
+                ("mismatchedTestsSha256", ["PrivateCanary"]),
+                ("unknown", "PrivateCanary")):
+            with self.subTest(runtime_field=field):
+                changed = json.loads(raw)
+                changed[field] = value
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "^UnknownDiagnostic$"):
+                    checks.bounded_runtime_diagnostic(changed)
+                raised.exception.runtime_diagnostic = changed
+                result = unit_checks.SafeResult()
+                RuntimeFailure().run(result)
+                failure, = unit_checks.failed_tests(result)
+                self.assertEqual(failure["code"], "UnknownDiagnostic")
+                self.assertNotIn("runtimeDiagnostic", failure)
+                self.assertNotIn("PrivateCanary", json.dumps(failure))
+        raised.exception.runtime_diagnostic = observed
         output = io.StringIO()
         with patch.object(sys, "argv", ["conformance_sdk_checks.py", "--evidence", "unused"]), \
                 patch.object(checks, "execute", side_effect=raised.exception), contextlib.redirect_stdout(output):

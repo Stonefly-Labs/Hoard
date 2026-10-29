@@ -28,9 +28,11 @@ class SafeResult(unittest.TestResult):
             for folder, pattern in (("scripts", "*.py"), ("tests/tooling", "test_*.py"))
             for path in (root / folder).glob(pattern)}
         self.locations = {}
+        self.runtime_diagnostics = {}
 
     def startTest(self, test):
         super().startTest(test)
+        self.runtime_diagnostics.pop(id(test), None)
         self.observed_tests.append(test.id())
 
     def stopTest(self, test):
@@ -47,6 +49,13 @@ class SafeResult(unittest.TestResult):
                 locations = [*locations[-3:], {"source": source, "line": trace.tb_lineno}]
             trace, count = trace.tb_next, count + 1
         self.locations[id(test)] = locations
+        if isinstance(error[1], ConformanceError):
+            from conformance_sdk_checks import _RuntimeObservationError, bounded_runtime_diagnostic
+            if isinstance(error[1], _RuntimeObservationError):
+                try:
+                    self.runtime_diagnostics[id(test)] = bounded_runtime_diagnostic(error[1].runtime_diagnostic)
+                except ConformanceError:
+                    return "UnknownDiagnostic"
         return str(error[1]) if isinstance(error[1], ConformanceError) else "AssertionFailed"
 
 
@@ -56,7 +65,10 @@ def failed_tests(result):
         identity = getattr(test, "test_case", test).id()
         if len(identity) > 512 or not re.fullmatch(r"[a-zA-Z0-9_.]+", identity):
             identity = "UnknownDiagnostic"
-        failures.append({"test": identity, "code": code, "locations": result.locations.get(id(test), [])})
+        failures.append({
+            "test": identity, "code": code, "locations": result.locations.get(id(test), []),
+            **({"runtimeDiagnostic": result.runtime_diagnostics[id(test)]}
+               if id(test) in result.runtime_diagnostics else {})})
     return failures
 
 

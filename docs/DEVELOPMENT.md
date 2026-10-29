@@ -6763,6 +6763,22 @@ diagnostic bytes,23 native macOS skips and expected incomplete exit2. The focuse
 production artifact regression, five-file whitespace formatting, catalog/SDK and
 diff checks pass. T064 and all later tasks remain open.
 
+The tooling supervisor now retains the existing closed runtime mismatch
+projection instead of replacing it with an ordinary assertion string. Validate
+its exact fields, finite counts/exit, closed code and at most four sorted unique
+identity hashes before retaining or rendering it. The controller adds only a
+tooling-test hash, a total count and at most four such observations; foreign
+tests/sources, unsafe fields/codes and malformed projections reject. Raw
+provider messages, test identities, payloads and private paths remain excluded.
+The composition shell now observes failure before enforcing exit2: its previous
+early status check bypassed observation on the actual assertion exit1 at2ec1de1.
+The job still fails for unexpected exits even if the observer succeeds.
+The combined bounded-runtime/inherited/composition controls pass51 tests.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes719
+tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,23 native macOS skips and expected incomplete exit2.
+Catalog/SDK and diff checks pass; no native failure is reclassified as success.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

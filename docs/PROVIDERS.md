@@ -624,6 +624,10 @@ allocator admits one exact directory only after prior settlement; the original
 owner alone performs physical deletion. This is a same-process setup check,
 not abrupt-process proof or complete contributor recovery admission. Existing
 parent-linked live-reopen origins still require the same factory component.
+Unexpected runtime failures retain only a bounded projection of finite codes/
+counts and up to four hashed identities through the tooling supervisor. Raw
+provider messages, paths and payloads are not added. Invalid projections reject;
+observing failures never authorizes contributor qualification or erases them.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
