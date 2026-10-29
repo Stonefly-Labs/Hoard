@@ -544,6 +544,18 @@ preparation, not native containment, logger execution, complete artifact
 applicability, a public contributor journey or qualification; new-package pruning
 contexts outside this finite supported composition are not inferred.
 
+The internal contributor runtime now stages the exact logger package/image,
+captures ordered declaration bytes matching the SDK snapshot, and freezes one
+local feed's complete membership/hash policy without serializing its private
+absolute location. Complete independently derived manifests enter the existing
+logger discovery/execution and origin admission path, with no settings patch or
+provider-selected case list. The managed metadata example passes76 rows and86
+origins. Full build/cache/source/runtime control maps are checked before and
+after commands, including failures; changed bytes and shortened/duplicate/foreign
+manifests reject. The native executor retains its existing pin limits and command
+proofs; managed adapters cannot substitute for native provenance. Native replay,
+complete artifact applicability and public contributor dispatch remain open.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

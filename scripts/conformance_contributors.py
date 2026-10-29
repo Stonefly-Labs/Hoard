@@ -6,6 +6,7 @@ import base64
 import binascii
 import hashlib
 import io
+import json
 import os
 from pathlib import Path
 import re
@@ -897,11 +898,7 @@ def build_binding_consumer(binding, owned_run, candidate, candidate_sources, too
             prefix = f'{package["packageId"].lower()}/{package["version"].lower()}'
             cached[f'cache/binding-consumer/{prefix}/{filename.lower()}'] = package["archiveSha256"]
         configuration = workspace / "NuGet.Config"
-        document = ET.Element("configuration")
-        sources = ET.SubElement(document, "packageSources")
-        ET.SubElement(sources, "clear")
-        ET.SubElement(sources, "add", key="frozen", value=str(feed))
-        _write_owned_input(owned_run, configuration, ET.tostring(document, encoding="utf-8"))
+        _write_owned_input(owned_run, configuration, evidence.frozen_nuget_configuration(feed))
         factory = workspace / "ContributorBindingFactory.cs"
         _write_owned_input(owned_run, factory, factory_data)
         frozen.update({(workspace / path).relative_to(owned_run.root).as_posix(): hashed
@@ -922,9 +919,7 @@ def build_binding_consumer(binding, owned_run, candidate, candidate_sources, too
             raise evidence.ConformanceError("InputChanged")
         output = workspace / "bin/Release/net10.0"
         directory = output.relative_to(owned_run.root).as_posix()
-        runtime = {f"{directory}/{path}": hashed for path, hashed in evidence.proof_manifest(
-            output, include_file=lambda path: path.endswith(
-                (".dll", ".so", ".dylib", ".deps.json", ".runtimeconfig.json"))).items()}
+        runtime = _binding_consumer_images(owned_run)
         assembly = output / "Hoard.Fixtures.Conformance.Consumer.dll"
         if assembly.relative_to(owned_run.root).as_posix() not in runtime:
             raise evidence.ConformanceError("EvidenceIncomplete")
@@ -937,6 +932,7 @@ def build_binding_consumer(binding, owned_run, candidate, candidate_sources, too
         return MappingProxyType({
             "qualification": False, "assemblyPath": assembly, "runtimeAssemblies": MappingProxyType(runtime),
             "components": components, "lock": derived,
+            "packages": packages,
             "configurationPath": configuration, "controlInputs": MappingProxyType(frozen),
             "cachedArchives": MappingProxyType(cached),
             "factorySha256": frozen[factory.relative_to(owned_run.root).as_posix()]})
@@ -948,6 +944,196 @@ def build_binding_consumer(binding, owned_run, candidate, candidate_sources, too
                 or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
             raise evidence.ConformanceError("InputChanged")
         evidence.verify_snapshot(candidate, candidate_sources)
+
+
+def _binding_consumer_images(owned_run):
+    directory = "binding-consumer/bin/Release/net10.0"
+    return {f"{directory}/{path}": hashed for path, hashed in evidence.proof_manifest(
+        owned_run.root / directory, include_file=lambda path: path.endswith(
+            (".dll", ".so", ".dylib", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))).items()}
+
+
+def prepare_binding_consumer_runtime(binding, owned_run, repository, candidate, consumer, source_feed,
+                                     observed_environment, *, group_id, budgets, ci_revision=None):
+    from conformance_execution import no_symlinks
+    from conformance_sdk_checks import LOGGER, read_bounded
+
+    owned_run._check_ledger()
+    candidate, source_feed = Path(candidate), Path(source_feed)
+    if (consumer["qualification"] is not False or candidate != owned_run.root / "snapshot"
+            or binding.root != owned_run.root / "binding-source"
+            or not source_feed.is_absolute() or ".." in source_feed.parts
+            or not source_feed.is_relative_to(owned_run.root)):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    no_symlinks(source_feed)
+    if (evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)
+            or _binding_consumer_images(owned_run) != consumer["runtimeAssemblies"]):
+        raise evidence.ConformanceError("InputChanged")
+    frozen = dict(evidence._hash_map(consumer["controlInputs"]))
+    frozen.update(evidence._hash_map(consumer["cachedArchives"]))
+    frozen.update(consumer["runtimeAssemblies"])
+    frozen.update({f"binding-source/{path}": hashed for path, hashed in binding.sources.items()})
+    if evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen:
+        raise evidence.ConformanceError("InputChanged")
+    packages = list(evidence._list(evidence._entity("PackageIdentity"), 1024)(consumer["packages"]))
+    logger = evidence.package_identity(source_feed, "Hoard.Conformance.TestLogger", "0.1.0")
+    logger_archive = source_feed / "Hoard.Conformance.TestLogger.0.1.0.nupkg"
+    logger_source = candidate / LOGGER / "bin/Release/net10.0/Hoard.Conformance.TestLogger.dll"
+    frozen.update(evidence.input_manifest(
+        owned_run.root, [path.relative_to(owned_run.root).as_posix() for path in (logger_archive, logger_source)]))
+    workspace = owned_run.root / "binding-consumer"
+    output = workspace / "bin/Release/net10.0"
+
+    def stage(path, source, expected):
+        data = read_bounded(source, evidence.MAX_PACKAGE_BYTES)
+        if expected is None or hashlib.sha256(data).hexdigest() != expected:
+            raise evidence.ConformanceError("InputChanged")
+        relative = path.relative_to(owned_run.root).as_posix()
+        if relative in frozen:
+            if frozen[relative] != expected:
+                raise evidence.ConformanceError("InputChanged")
+        else:
+            frozen[relative] = _write_owned_input(owned_run, path, data)
+
+    try:
+        stage(workspace / "feed" / logger_archive.name, logger_archive, logger["sha256"])
+        stage(output / logger_source.name, logger_source, logger["runtimeAssemblies"].get(
+            "lib/net10.0/Hoard.Conformance.TestLogger.dll"))
+        selected = [package for package in packages if package["packageId"].casefold() == logger["packageId"].casefold()]
+        if selected:
+            if len(selected) != 1 or selected[0] != logger:
+                raise evidence.ConformanceError("InputChanged")
+        else:
+            packages.append(logger)
+        indexed = {package["packageId"].casefold(): package for package in packages}
+        if len(indexed) != len(packages):
+            raise evidence.ConformanceError("BindingInvalid")
+        declaration = dict(binding.registration["declaration"])
+        provider = indexed.get(declaration["packageId"].casefold())
+        if provider is None or provider["version"].casefold() != declaration["packageVersion"].casefold():
+            raise evidence.ConformanceError("BindingInvalid")
+        declaration["packageSha256"] = provider["sha256"]
+        declaration = evidence.admit_binding_declaration(declaration)
+        ordered = {key: declaration[key] for key in (
+            "schemaVersion", "bindingId", "category", "packageId", "packageVersion",
+            "packageSha256", "capabilities", "faults")}
+        path = workspace / "declaration.json"
+        frozen[path.relative_to(owned_run.root).as_posix()] = _write_owned_input(
+            owned_run, path, json.dumps(ordered, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
+        runtime = _binding_consumer_images(owned_run)
+        for path in runtime:
+            (owned_run.root / path).chmod(0o400)
+        frozen.update(runtime)
+        controls_path = "proofs/contributor-build-controls.json"
+        controls_hash = _write_owned_input(owned_run, owned_run.root / controls_path, evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "bindingInputsSha256": binding.inputs_sha256,
+            "inputs": frozen, "runtimeAssemblies": runtime}))
+        frozen[controls_path] = controls_hash
+        arguments = {
+            "profile_id": declaration["category"], "mode": "diagnostic", "invocation_group_id": group_id,
+            "package_versions": tuple({"packageId": package["packageId"], "version": package["version"]}
+                                      for package in packages),
+            "feed": "binding-consumer/feed", "configuration": "binding-consumer/NuGet.Config",
+            "lock_paths": tuple(sorted(path for path in frozen if path.endswith(".lock.json"))),
+            "runtime_paths": tuple(sorted(runtime)),
+            "binding_sources": ({"path": "binding-consumer/declaration.json",
+                                 "adapterId": binding.registration["adapterPackage"]["packageId"]},),
+            "observed_environment": observed_environment, "budgets": budgets,
+            "invocation": ("binding-project", binding.inputs_sha256, controls_hash),
+            "ci_revision": ci_revision,
+            "frozen_archives": MappingProxyType({f"binding-consumer/feed/{path}": hashed
+                                                for path, hashed in evidence.proof_manifest(workspace / "feed").items()}),
+        }
+        inputs = evidence.capture_profile_inputs(owned_run, repository, candidate, **arguments)
+        return MappingProxyType({
+            "qualification": False, "inputs": inputs, "captureArguments": MappingProxyType(arguments),
+            "controlInputs": MappingProxyType(frozen)})
+    finally:
+        owned_run._check_ledger()
+        if (evidence.input_manifest(owned_run.root, sorted(frozen)) != frozen
+                or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+            raise evidence.ConformanceError("InputChanged")
+
+
+def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
+    from conformance_case_catalog import contributor_artifact_component_origin_counts, metadata_common_consumer_origin_counts
+
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    declaration = binding.registration["declaration"]
+    category, binding_id = declaration["category"], declaration["bindingId"]
+    if (inputs["profileId"] != category or inputs["mode"] != "diagnostic" or inputs["runId"] != owned_run.run_id
+            or len(inputs["bindings"]) != 1 or inputs["bindings"][0]["bindingId"] != binding_id
+            or tuple(inputs["invocation"][:2]) != ("binding-project", binding.inputs_sha256)
+            or len(inputs["invocation"]) != 3):
+        raise evidence.ConformanceError("BindingInvalid")
+    raw = read_binding_runtime_controls(owned_run, binding, inputs)
+    if hashlib.sha256(raw).hexdigest() != inputs["invocation"][2]:
+        raise evidence.ConformanceError("InputChanged")
+    captured = evidence.capture_binding(
+        owned_run.root, "binding-consumer/declaration.json", packages=inputs["packages"],
+        adapter_id=binding.registration["adapterPackage"]["packageId"])
+    if inputs["bindings"] != (captured,):
+        raise evidence.ConformanceError("BindingInvalid")
+    runtime = _binding_consumer_images(owned_run)
+    if runtime != inputs["runtimeAssemblies"]:
+        raise evidence.ConformanceError("InputChanged")
+    directory = "binding-consumer/bin/Release/net10.0"
+    components = binding_runtime_components(binding, inputs["packages"], runtime, directory)
+    for package in inputs["packages"]:
+        for member, hashed in package["runtimeAssemblies"].items():
+            if member.startswith("lib/net10.0/") and runtime.get(f"{directory}/{Path(member).name}") != hashed:
+                raise evidence.ConformanceError("InputChanged")
+    required = {path for path, _ in components.values()}
+    for name in ("Hoard.Testing.Conformance", "Hoard.Abstractions", "Hoard.Conformance.TestLogger"):
+        path = f"{directory}/{name}.dll"
+        hashed = runtime.get(path)
+        if hashed is None:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        evidence._runtime_bytes_correspondence(inputs, hashed, path, name)
+        required.add(path)
+    assembly = f"{directory}/Hoard.Fixtures.Conformance.Consumer.dll"
+    if assembly not in runtime:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    required.discard(assembly)
+    paths = (assembly, *sorted(required))
+    counts = (metadata_common_consumer_origin_counts(binding_ids=(binding_id,)) if category == "metadata"
+              else contributor_artifact_component_origin_counts(
+                  binding_id, profile=artifact_binding_profile(declaration)))
+    provider = inputs["bindings"][0]["package"]
+    return {
+        "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": evidence._uuid(attempt_id), "attemptSequence": 1, "purpose": "execution",
+        "inputSha256": evidence.digest(inputs), "runInputsPath": "proofs/contributor-inputs.json",
+        "assemblies": [{"id": f"contributor-component-{index}", "path": path, "sha256": runtime[path]}
+                       for index, path in enumerate(paths)],
+        "packages": [{"id": provider["packageId"],
+                      "path": f'binding-consumer/feed/{provider["packageId"]}.{provider["version"]}.nupkg',
+                      "sha256": provider["sha256"]}],
+        "expected": [{
+            "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+            "assemblyId": "contributor-component-0", "packageId": provider["packageId"],
+            "bindingId": binding_id, "matrixId": "none", "assertionSymbol": None,
+            "caseId": "full-metadata-binding" if category == "metadata" else "full-artifact-binding",
+        } for identity in sorted(counts)],
+    }
+
+
+def read_binding_runtime_controls(owned_run, binding, inputs):
+    from conformance_sdk_checks import read_bounded
+
+    raw = read_bounded(owned_run.root / "proofs/contributor-build-controls.json", 16 * 1024 * 1024)
+    controls = evidence._record({
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "bindingInputsSha256": evidence.sha256, "inputs": evidence._hash_map,
+        "runtimeAssemblies": evidence._hash_map})(evidence.load_json(raw))
+    if (controls["bindingInputsSha256"] != binding.inputs_sha256
+            or controls["runtimeAssemblies"] != inputs["runtimeAssemblies"]
+            or evidence.input_manifest(owned_run.root, sorted(controls["inputs"])) != controls["inputs"]
+            or _binding_consumer_images(owned_run) != inputs["runtimeAssemblies"]
+            or evidence.proof_manifest(binding.root) != binding.sources or _binding_writable(binding)):
+        raise evidence.ConformanceError("InputChanged")
+    evidence.verify_snapshot(owned_run.root / "snapshot", inputs["sourceManifest"])
+    return raw
 
 
 def binding_runtime_components(binding, packages, runtime_assemblies, consumer_directory):

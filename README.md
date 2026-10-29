@@ -668,6 +668,14 @@ lock graph is preserved; new packages still require complete archive closure.
 A real managed build passes, including reuse of a previously built baseline
 without compiling its generated sources again. Native replay of this increment
 and complete public contributor execution remain unfinished.
+The next internal runtime increment freezes the exact one-source archive feed,
+captures input-bound declaration/control/runtime bytes, and derives the manifest
+from the independent common catalog. Production discovery/execution transport
+now passes all76 metadata rows with86 independently admitted session origins.
+Controls reject shortened/duplicate/foreign rows, wrong binding/category/mode,
+and altered controls, runtime configuration or cached archives, including a late
+change after the child exits. This is managed diagnostic evidence, not native
+execution, complete artifact applicability, public dispatch or qualification.
 Complete native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the

@@ -2,12 +2,14 @@ import base64
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 import zipfile
@@ -1030,9 +1032,10 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):
         self.captured_build(native=True)
 
-    def package_consumer_build(self, *, native=False):
+    def package_consumer_build(self, *, native=False, runtime=False):
         import conformance_sdk_checks as sdk
-        from conformance_execution import project_build_line
+        import uuid
+        from conformance_execution import project_build_line, project_discovery_line, project_test_line
         from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 
         measured, _, _ = self.evaluation_request()
@@ -1064,26 +1067,32 @@ class NuGetContentToolTests(unittest.TestCase):
              "Hoard.Fixtures.Conformance.Bindings.ObjectSemantics"),
             ("tests/fixtures/conformance/Contributor/Contributor.csproj", "Hoard.Fixtures.Conformance.Contributor"),
         )
+        if runtime:
+            projects += ((sdk.LOGGER + "/Hoard.Conformance.TestLogger.csproj", "Hoard.Conformance.TestLogger"),)
         native_command, commands, deadline = owner.command, [], time.monotonic() + 600
 
-        def execute(arguments, *, cwd, cache_id, kind, timeout=600, env=None):
+        def execute(arguments, *, cwd, cache_id, kind, timeout=600, env=None,
+                    discovery_tests=frozenset(), **controls):
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise evidence.ConformanceError("DeadlineExceeded")
             timeout = min(timeout, remaining)
             if native:
                 result = native_command(
-                    arguments, cwd=cwd, cache_id=cache_id, kind=kind, timeout=timeout, env=env)
+                    arguments, cwd=cwd, cache_id=cache_id, kind=kind, timeout=timeout, env=env,
+                    **({"discovery_tests": discovery_tests} if kind == "discovery" else {}), **controls)
             else:
                 cache = owner.root / "cache" / cache_id
                 (cache / "tmp").mkdir(parents=True, exist_ok=True)
                 environment = command_environment(owner.root, cache, env)
                 code, raw = capture_control(
                     arguments, cwd=cwd, env=environment, limit=65536, timeout=min(timeout, 120))
+                project = (lambda line: project_discovery_line(line, discovery_tests)) if kind == "discovery" else (
+                    project_test_line if kind == "tests" else project_build_line)
                 events = ((evidence.load_json(raw),) if kind == "events" else
                           tuple(event for line in raw.splitlines() if line.strip()
-                                if (event := project_build_line(line)) is not None))
-                result = mock.Mock(exit_code=code, events=events)
+                                if (event := project(line)) is not None))
+                result = mock.Mock(exit_code=code, events=events, execution_record_sha256=None)
             commands.append(tuple(arguments))
             return result
 
@@ -1111,7 +1120,8 @@ class NuGetContentToolTests(unittest.TestCase):
                     archives.append(feed / filename if package_id.startswith("Hoard.") else
                                     owner.root / "cache/local-packages" / package_id.lower()
                                     / row["resolved"].lower() / filename.lower())
-                packages = [evidence.package_identity(feed, package_id, "0.1.0") for _, package_id in projects]
+                packages = [evidence.package_identity(feed, package_id, "0.1.0") for _, package_id in projects
+                            if package_id != "Hoard.Conformance.TestLogger"]
                 result = contributors.build_binding_consumer(
                     binding, owner, candidate, sources, tools / self.tool.name, Path(measured["toolchainRoot"]),
                     self.msbuild.parent.name, self.runtime_version,
@@ -1123,7 +1133,104 @@ class NuGetContentToolTests(unittest.TestCase):
                                 for path in result["runtimeAssemblies"]))
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["controlInputs"])), result["controlInputs"])
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["cachedArchives"])), result["cachedArchives"])
-            self.assertEqual(len(commands), 50)
+            self.assertEqual(len(commands), 53 if runtime else 50)
+            if runtime:
+                prepared = contributors.prepare_binding_consumer_runtime(
+                    binding, owner, ROOT, candidate, result, feed, {
+                        "os": sys.platform, "osVersion": os.uname().release, "architecture": os.uname().machine,
+                        "sdk": self.msbuild.parent.name, "runtime": self.runtime_version, "nativeSqlite": "not-used",
+                        "filesystem": "unobserved", "runnerImage": "none", "freeBytes": shutil.disk_usage(owner.root).free,
+                        "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0}},
+                    group_id=str(uuid.uuid4()), budgets=sdk.BUDGETS)
+                self.assertFalse(prepared["qualification"])
+                inputs = prepared["inputs"]
+                self.assertEqual(inputs, evidence.capture_profile_inputs(
+                    owner, ROOT, candidate, **prepared["captureArguments"]))
+                sdk.write_new(owner.root / "proofs/contributor-inputs.json", evidence.canonical_bytes(inputs))
+                sdk.write_new(owner.root / "runtime-owner.json", evidence.canonical_bytes({
+                    "schemaVersion": 1, "runId": owner.run_id, "invocationGroupId": inputs["invocationGroupId"],
+                    "rootId": owner.root_id, "rootPathSha256": hashlib.sha256(str(owner.root).encode()).hexdigest()}))
+                manifest = contributors.binding_consumer_manifest(
+                    binding, owner, inputs, attempt_id=str(uuid.uuid4()))
+                binding_id = binding.registration["declaration"]["bindingId"]
+                counts = catalog.metadata_common_consumer_origin_counts(binding_ids=(binding_id,))
+                expected = {identity: (binding_id, "none") for identity in counts}
+                runner = owner if native else SimpleNamespace(
+                    root=owner.root, run_id=owner.run_id, root_id=owner.root_id, command=execute)
+                for mutation in ("shortened", "duplicate", "foreign", "binding", "builtin-scope"):
+                    bad = copy.deepcopy(manifest)
+                    options = {"contributor_binding": binding}
+                    if mutation == "shortened":
+                        bad["expected"].pop()
+                    elif mutation == "duplicate":
+                        bad["expected"].append(dict(bad["expected"][0]))
+                    elif mutation == "foreign":
+                        bad["expected"][0]["testIdentity"] = "Foreign.Tests.Unrelated"
+                    elif mutation == "binding":
+                        bad["expected"][0]["bindingId"] = "foreign.binding"
+                    else:
+                        options["category_scope"] = ("metadata", "original-memory")
+                    with self.subTest(runtime_manifest=mutation), self.assertRaisesRegex(
+                            evidence.ConformanceError, "^WitnessMissing$"):
+                        sdk.runtime_command(runner, result["assemblyPath"], bad, **options)
+                for mutation in ("profileId", "mode"):
+                    bad = {**inputs, mutation: "artifacts" if mutation == "profileId" else "qualification"}
+                    with self.subTest(runtime_inputs=mutation), self.assertRaisesRegex(
+                            evidence.ConformanceError, "^BindingInvalid$"):
+                        contributors.binding_consumer_manifest(
+                            binding, owner, bad, attempt_id=str(uuid.uuid4()))
+                altered_paths = (
+                    "proofs/contributor-build-controls.json",
+                    "binding-consumer/bin/Release/net10.0/Hoard.Fixtures.Conformance.Consumer.runtimeconfig.json",
+                    next(iter(result["cachedArchives"])))
+                for relative in altered_paths:
+                    path = owner.root / relative
+                    original, mode = path.read_bytes(), path.stat().st_mode & 0o777
+                    try:
+                        path.chmod(0o600)
+                        path.write_bytes(original + b"\n")
+                        with self.subTest(runtime_changed=relative), self.assertRaisesRegex(
+                                evidence.ConformanceError, "^InputChanged$"):
+                            contributors.binding_consumer_manifest(
+                                binding, owner, inputs, attempt_id=str(uuid.uuid4()))
+                    finally:
+                        path.write_bytes(original)
+                        path.chmod(mode)
+                with mock.patch.object(owner, "command", side_effect=execute):
+                    observed_result, observed, transport, discovery_sha = sdk._execute_runtime_transport(
+                        runner, inputs, result["assemblyPath"], manifest, expected,
+                        {"contributor_binding": binding}, origin_inputs={binding_id: result["components"]})
+                sdk.validate_observation(
+                    observed, observed_result, tuple(counts), "None", "Passed", 0, transport["proofs"], "None")
+                sdk.validate_full_binding_origins(observed, inputs, counts)
+                self.assertEqual(len(observed["witnesses"]), 76)
+                self.assertEqual(sum(len(rows) for rows in observed["sessionOrigins"].values()), 86)
+                self.assertRegex(discovery_sha, r"^[0-9a-f]{64}$")
+                self.assertEqual(len(commands), 55)
+                self.assertEqual(evidence.input_manifest(
+                    owner.root, sorted(prepared["controlInputs"])), prepared["controlInputs"])
+                self.assertEqual(inputs, evidence.capture_profile_inputs(
+                    owner, ROOT, candidate, **prepared["captureArguments"]))
+                changed = owner.root / next(iter(result["cachedArchives"]))
+                original, mode = changed.read_bytes(), changed.stat().st_mode & 0o777
+
+                def late_change(arguments, **options):
+                    observed = execute(arguments, **options)
+                    changed.chmod(0o600)
+                    changed.write_bytes(original + b"\n")
+                    return observed
+
+                late = {**manifest, "attemptId": str(uuid.uuid4()), "purpose": "discovery"}
+                late_runner = owner if native else SimpleNamespace(
+                    root=owner.root, run_id=owner.run_id, root_id=owner.root_id, command=late_change)
+                try:
+                    with mock.patch.object(owner, "command", side_effect=late_change), self.assertRaisesRegex(
+                            evidence.ConformanceError, "^InputChanged$"):
+                        sdk.runtime_command(late_runner, result["assemblyPath"], late, contributor_binding=binding)
+                finally:
+                    changed.write_bytes(original)
+                    changed.chmod(mode)
+                self.assertEqual(len(commands), 56)
         finally:
             if owner.state == "Allocated":
                 owner.transition("Active")
@@ -1136,6 +1243,13 @@ class NuGetContentToolTests(unittest.TestCase):
     @unittest.skipUnless(native_execution_supported(), "Native package consumer build requires supported Linux containment")
     def test_native_package_only_consumer_build_uses_owned_commands_and_settles_resources(self):
         self.package_consumer_build(native=True)
+
+    def test_managed_contributor_runtime_executes_every_common_metadata_row_with_exact_origins(self):
+        self.package_consumer_build(runtime=True)
+
+    @unittest.skipUnless(native_execution_supported(), "Native contributor runtime requires supported Linux containment")
+    def test_native_contributor_runtime_uses_owned_common_suite_and_actual_component_origins(self):
+        self.package_consumer_build(native=True, runtime=True)
 
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()

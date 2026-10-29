@@ -3604,7 +3604,7 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
 def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None,
                     artifact_packages=None, metadata_packages=None, original_observations=False, inspection_literals=False,
                     inspection_cases=None, inspection_configurations=None, category_scope=None,
-                    architecture_preparation=None):
+                    architecture_preparation=None, contributor_binding=None):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
@@ -3627,6 +3627,25 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             raise evidence.ConformanceError("WitnessMissing")
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
+    if contributor_binding is not None:
+        from conformance_contributors import binding_consumer_manifest
+        if (category_scope is not None or metadata_provider is not None or artifact_runner is not None
+                or artifact_packages is not None or metadata_packages is not None or original_observations
+                or inspection_literals or inspection_cases is not None or inspection_configurations is not None
+                or architecture_preparation is not None
+                or manifest["runInputsPath"] != "proofs/contributor-inputs.json"):
+            raise evidence.ConformanceError("WitnessMissing")
+        inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+            read_bounded(run.root / manifest["runInputsPath"], 16 * 1024 * 1024)))
+        expected = binding_consumer_manifest(
+            contributor_binding, run, inputs, attempt_id=manifest["attemptId"])
+        expected["purpose"] = manifest["purpose"]
+        if (evidence.canonical_bytes(expected) != evidence.canonical_bytes(manifest)
+                or assembly != run.root / expected["assemblies"][0]["path"]):
+            raise evidence.ConformanceError("WitnessMissing")
+        origin_environment = (
+            "<EnvironmentVariables><HOARD_ORIGIN_RUN_ID>" + inputs["runId"]
+            + "</HOARD_ORIGIN_RUN_ID></EnvironmentVariables>")
     architecture_inputs = {}
     if (category_scope == ("compatibility", "architecture")) != (architecture_preparation is not None):
         raise evidence.ConformanceError("WitnessMissing")
@@ -3835,6 +3854,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     arguments = runtime_arguments(assembly, settings, identities, discovery=discovery)
     execution_inputs = []
     execution_outputs = ()
+    recorded = category_scope is not None or contributor_binding is not None
     if category_scope is not None:
         execution_inputs = [
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
@@ -3876,16 +3896,28 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
                 *(f"proofs/{transfer_namespace}/transfer-{provider}-{size}/proof.json"
                   for provider in ("local", "object") for size in (268435456, 4294967296))))
             execution_outputs = (f"proofs/artifact-source-seal-{attempt_id}.json",)
-    result = run.command(
-        arguments,
-        cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",
-        **({"record_execution": True, "execution_inputs": execution_inputs} if category_scope is not None else {}),
-        **({"execution_outputs": execution_outputs} if execution_outputs else {}),
-        **({"discovery_tests": frozenset(identities)} if discovery else {}))
+    if contributor_binding is not None:
+        execution_inputs = [
+            f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
+            settings.relative_to(run.root).as_posix(), "proofs/contributor-build-controls.json",
+            *(entry["path"] for entry in manifest["assemblies"])]
+    try:
+        result = run.command(
+            arguments,
+            cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",
+            **({"record_execution": True, "execution_inputs": execution_inputs} if recorded else {}),
+            **({"execution_outputs": execution_outputs} if execution_outputs else {}),
+            **({"discovery_tests": frozenset(identities)} if discovery else {}))
+    finally:
+        if contributor_binding is not None:
+            from conformance_contributors import read_binding_runtime_controls
+            controlled = read_binding_runtime_controls(run, contributor_binding, inputs)
+            if hashlib.sha256(controlled).hexdigest() != inputs["invocation"][2]:
+                raise evidence.ConformanceError("InputChanged")
     ended = time.monotonic() * 1000
     if architecture_inputs and dict(evidence.input_manifest(run.root, list(architecture_inputs))) != architecture_inputs:
         raise evidence.ConformanceError("InputChanged")
-    if category_scope is not None:
+    if recorded:
         category_command_proof(
             run, result, arguments=arguments, cwd=assembly.parent, manifest=manifest,
             settings_data=settings_data, started_ms=started, ended_ms=ended)

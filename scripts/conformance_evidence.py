@@ -829,6 +829,37 @@ def verify_synthetic_source_mapping(root, configuration, feed, *, local_package_
     })
 
 
+def frozen_nuget_configuration(feed):
+    local = escape(str(feed), {'"': "&quot;"})
+    result = ('<configuration><packageSources><clear />'
+              f'<add key="frozen" value="{local}" />'
+              '</packageSources></configuration>').encode("utf-8")
+    if len(result) > 64 * 1024:
+        raise ConformanceError("OutputLimitExceeded")
+    return result
+
+
+def verify_frozen_source_mapping(root, configuration, feed, *, archives):
+    configuration, feed = relative_path(configuration), relative_path(feed)
+    archives = _hash_map(archives)
+    if (len(archives) > 1024
+            or any(Path(path).parent.as_posix() != feed or not path.endswith(".nupkg") for path in archives)
+            or len({Path(path).name.casefold() for path in archives}) != len(archives)):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    selected = {Path(path).name: hashed for path, hashed in archives.items()}
+    captured = io.BytesIO()
+    with _input_root(root) as (root, descriptor):
+        _source_file(descriptor, configuration, remaining=64 * 1024,
+                     deadline=time.monotonic() + 5, target=captured)
+        if (captured.getvalue() != frozen_nuget_configuration(root / feed)
+                or proof_manifest(root / feed) != selected):
+            raise ConformanceError("InputChanged")
+    return MappingProxyType({
+        "packageSources": MappingProxyType({"frozen": "isolated-frozen-archives"}),
+        "archives": MappingProxyType(selected),
+    })
+
+
 def verify_input_recomputation(before, after):
     before, after = admit_entity("RunInputs", before), admit_entity("RunInputs", after)
     environment = dict(after["environment"])
@@ -964,7 +995,7 @@ def configuration_fingerprint(source_mapping, *, inspection_inputs=None):
 def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invocation_group_id,
                            package_versions, feed, configuration, lock_paths, runtime_paths,
                            binding_sources, observed_environment, budgets, invocation,
-                           baseline_sha256=None, ci_revision=None, inspection_inputs=None):
+                           baseline_sha256=None, ci_revision=None, inspection_inputs=None, frozen_archives=None):
     from conformance_case_catalog import CATEGORY_BINDING_SLOTS
     run._check_ledger()
     profile_id, mode = _one_of(*PROFILES)(profile_id), _one_of(
@@ -974,6 +1005,8 @@ def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invoc
     package_versions = _list(_record({"packageId": stable_id, "version": stable_id}),
                              1024, unique=True)(package_versions)
     binding_sources = _list(_binding_source, 128, minimum=0, unique=True)(binding_sources)
+    if frozen_archives is not None:
+        frozen_archives = _hash_map(frozen_archives)
     try:
         snapshot_relative = relative_path(Path(snapshot).relative_to(run.root).as_posix())
     except ValueError:
@@ -985,7 +1018,8 @@ def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invoc
     catalog = sdk + "Catalog/catalog.json"
     if catalog not in sources:
         raise ConformanceError("EvidenceIncomplete")
-    source_mapping = verify_synthetic_source_mapping(run.root, configuration, feed)
+    source_mapping = (verify_synthetic_source_mapping(run.root, configuration, feed) if frozen_archives is None
+                      else verify_frozen_source_mapping(run.root, configuration, feed, archives=frozen_archives))
     packages = [package_identity(run.root / feed, item["packageId"], item["version"])
                 for item in package_versions]
     bindings = [capture_binding(run.root, item["path"], packages=packages, adapter_id=item["adapterId"],
@@ -1025,6 +1059,8 @@ def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invoc
     if (source_manifest(repository) != sources
             or source_identity(repository, ci_revision=ci_revision) != identity):
         raise ConformanceError("InputChanged")
+    if frozen_archives is not None:
+        verify_frozen_source_mapping(run.root, configuration, feed, archives=frozen_archives)
     run._check_ledger()
     return inputs
 

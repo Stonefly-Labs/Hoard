@@ -6646,6 +6646,31 @@ generated files. Consumer default items now explicitly exclude its original
 remains an explicit local skip. No logger/runtime dispatch or public qualification
 is delivered by this preparation bridge.
 
+The following internal runtime increment uses the production contributor
+manifest/transport path rather than a session-only settings patch. It stages the
+exact logger archive/image, writes declaration properties/arrays in SDK snapshot
+order, captures diagnostic RunInputs with exact frozen-feed policy, and binds an
+immutable control-map hash into invocation inputs. The feed admits no remote,
+ambient, mapped, credential-bearing or extra archive source. Its serialized
+policy contains filenames/hashes rather than the private absolute feed path;
+capture rechecks policy after package admission.
+
+The managed regression passes all76 independently catalogued common metadata
+rows and86 exact session origins through real discovery/execution. Negative
+controls cover incomplete/duplicate/foreign identities, wrong binding/category/
+mode, incompatible builtin scope, changed control/runtime/cache bytes and late
+cache mutation after actual discovery. Source/runtime/build/cache inputs are
+rechecked even after failed commands. Native commands use existing command
+proofs and unchanged bounded pinning; the separately gated native test is not a
+local native pass. `python3 -m unittest discover -s tests/tooling -p
+test_conformance_contributors.py -v` passes108 tests with four native macOS skips;
+the23 ConformanceInputTests pass. Frozen `python3
+scripts/conformance_unit_checks.py --all-tooling` observes713 tests, zero failures/
+errors/expected failures/unexpected successes/unexpected diagnostic bytes,
+24 explicit native skips and expected incomplete exit2. Catalog/SDK and diff
+checks pass. This remains diagnostic-only: public dispatch, complete artifact
+applicability, good/red/corrected guide execution and T064..T086 remain open.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe

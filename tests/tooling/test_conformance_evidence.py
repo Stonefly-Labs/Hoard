@@ -1286,6 +1286,60 @@ class ConformanceInputTests(unittest.TestCase):
             evidence.synthetic_nuget_configuration(
                 feed, local_package_ids=tuple(f"Acme.{index}." + "a" * 110 for index in range(1024)))
 
+    def test_frozen_archive_source_policy_binds_exact_feed_bytes_without_remote_sources_or_private_paths(self):
+        package = self.package()
+        feed = self.parent / 'feed&"frozen'
+        package.parent.rename(feed)
+        package = feed / package.name
+        archives = {package.relative_to(self.parent).as_posix(): evidence.file_sha256(package)}
+        config = self.parent / "NuGet.Config"
+        config.write_bytes(evidence.frozen_nuget_configuration(feed))
+        document = ET.fromstring(config.read_bytes())
+        self.assertEqual([row.attrib for row in document.findall("./packageSources/add")],
+                         [{"key": "frozen", "value": str(feed)}])
+        policy = evidence.verify_frozen_source_mapping(
+            self.parent, config.name, feed.name, archives=archives)
+        self.assertEqual(policy["archives"], {package.name: archives[next(iter(archives))]})
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(policy))
+        changed = dict(archives)
+        changed[next(iter(changed))] = "1" * 64
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            evidence.verify_frozen_source_mapping(self.parent, config.name, feed.name, archives=changed)
+        extra = feed / "Unselected.1.0.0.nupkg"
+        extra.write_bytes(b"unexpected archive")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            evidence.verify_frozen_source_mapping(self.parent, config.name, feed.name, archives=archives)
+        extra.unlink()
+        package.write_bytes(b"changed selected archive")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            evidence.verify_frozen_source_mapping(self.parent, config.name, feed.name, archives=archives)
+
+    def test_frozen_archive_source_policy_rejects_remote_ambient_and_foreign_configuration(self):
+        package = self.package()
+        feed, config = package.parent, self.parent / "NuGet.Config"
+        archives = {package.relative_to(self.parent).as_posix(): evidence.file_sha256(package)}
+        original = evidence.frozen_nuget_configuration(feed)
+        for defect in ("remote", "ambient", "foreign", "credentials", "mapping"):
+            document = ET.fromstring(original)
+            sources = document.find("./packageSources")
+            if defect == "remote":
+                ET.SubElement(sources, "add", key="nuget.org", value="https://api.nuget.org/v3/index.json")
+            elif defect == "ambient":
+                sources.remove(sources.find("./clear"))
+            elif defect == "foreign":
+                sources.find("./add").set("value", str(self.parent))
+            elif defect == "credentials":
+                ET.SubElement(document, "packageSourceCredentials")
+            else:
+                ET.SubElement(document, "packageSourceMapping")
+            config.write_bytes(ET.tostring(document, encoding="utf-8"))
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                evidence.verify_frozen_source_mapping(self.parent, config.name, feed.name, archives=archives)
+        config.write_bytes(original)
+        for invalid in ({}, {"other/Acme.0.1.0.nupkg": "1" * 64}, {"feed/control.json": "1" * 64}):
+            with self.subTest(invalid=invalid), self.assertRaises(evidence.ConformanceError):
+                evidence.verify_frozen_source_mapping(self.parent, config.name, feed.name, archives=invalid)
+
     def test_binding_capture_binds_actual_declarations_to_selected_package_bytes(self):
         path = self.package()
         package = evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
@@ -1457,6 +1511,28 @@ class ConformanceInputTests(unittest.TestCase):
                         {identity: {"../foreign": "a" * 64}}):
             with self.subTest(invalid=invalid), self.assertRaises(evidence.ConformanceError):
                 capture(inspection_inputs=invalid)
+        archive = feed / "Hoard.Fixture.0.1.0.nupkg"
+        frozen_archives = {archive.relative_to(run.root).as_posix(): evidence.file_sha256(archive)}
+        config.write_bytes(evidence.frozen_nuget_configuration(feed))
+        frozen = capture(frozen_archives=frozen_archives)
+        self.assertNotEqual(before["configurationSha256"], frozen["configurationSha256"])
+        self.assertEqual(evidence.verify_input_recomputation(
+            frozen, capture(frozen_archives=frozen_archives)), evidence.digest(frozen))
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(frozen))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            capture()
+        original_package_identity, archive_bytes = evidence.package_identity, archive.read_bytes()
+
+        def mutate_after_package_capture(*args):
+            identity = original_package_identity(*args)
+            archive.write_bytes(b"changed after package capture")
+            return identity
+
+        with mock.patch.object(evidence, "package_identity", side_effect=mutate_after_package_capture), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            capture(frozen_archives=frozen_archives)
+        archive.write_bytes(archive_bytes)
+        config.write_bytes(evidence.synthetic_nuget_configuration(feed))
         package_id = "Hoard.Fixtures.Metadata.Memory"
         with zipfile.ZipFile(feed / (package_id + ".0.1.0.nupkg"), "w") as archive:
             archive.writestr(package_id + ".nuspec", (

@@ -2357,6 +2357,16 @@ registered binding ID; default builds still expand Memory and SQLite. No
 provider-supplied case list, built-in alias or inherited built-in exclusion may
 select or shorten the contributor dataset. Category-inconsistent or incomplete
 contributor build properties must fail before compilation/package collection.
+Internal contributor runtime preparation additionally freezes the complete
+single-source archive policy, exact logger archive/image, ordered SDK declaration
+bytes and immutable build/cache/source/runtime control map. Bind that map's hash
+into diagnostic RunInputs. The independent common catalog, not the provider,
+generates the complete manifest; validate it before creating runtime outputs and
+reuse existing logger discovery/execution and origin admission. Reject missing,
+duplicate, foreign or mismatched identities/scopes/bindings/categories/modes.
+Rehash the full control map and runtime inventory before and after commands,
+including failed children. Native commands retain existing bounded pinning and
+command proofs; managed diagnostics do not establish native provenance.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. The artifact component mode
 now compiles the same exact-package/generated-factory inputs and independently

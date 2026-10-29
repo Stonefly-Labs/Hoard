@@ -1101,6 +1101,14 @@ the implementation stage continues.
 
 ### Package-only contributor Consumer preparation (partial T064)
 
+Subsequent exact-source native ownership job123194362639 in
+[run40796568843](https://github.com/Stonefly-Labs/Hoard/actions/runs/40796568843)
+at86d28c4 passes all709 tooling tests with no failures/errors/skips/expected
+failures/unexpected successes/unexpected diagnostic bytes. This includes the
+owned package-only Consumer build and settlement. Other jobs are not treated as
+complete until their actual outcomes are observed; later runtime source is not
+covered by this709-test result.
+
 The new internal bridge compiles the fixed Consumer with the generated typed
 factory, exact adapter reference and independently admitted derived lock. Its
 own intermediate/output roots do not overwrite baseline builds. Selected frozen
@@ -1141,6 +1149,36 @@ PROVIDERS, DEVELOPMENT and harness contract are affected. Charter/product,
 architecture/ADR/diagrams, public examples, governance, predecessors, IaC,
 release and UI remain unaffected by this private preparation increment; the
 public reproduction guide is still a later task.
+
+The next internal runtime increment stages the exact logger archive/image,
+captures ordered declaration bytes matching the SDK snapshot, and freezes the
+one-source archive feed's complete filename/hash policy. Absolute private feed
+paths do not enter that serialized policy. Capture verifies it again after package
+admission. Diagnostic RunInputs bind an immutable build/cache/source/runtime
+control-map hash; complete independently catalogued manifests enter existing
+production discovery/execution and independent origin admission. No temporary
+runtime-settings patch is used.
+
+The actual managed metadata regression passes76 rows with86 exact session origins.
+It rejects shortened/duplicate/foreign identities, wrong binding/category/mode,
+builtin-scope mixing, altered control/runtime/cache bytes and late archive
+mutation after real discovery. Full controls, source snapshot and runtime
+inventory are rechecked before/after commands, including failed children.
+Native commands retain existing pin limits and command proofs; a separately
+gated native counterpart is included but not claimed locally. This remains
+diagnostic-only, not complete artifact applicability, public contributor dispatch,
+native qualification or the good/red/corrected journey. T064 remains unchecked.
+
+Focused contributors pass108 tests with four explicit native macOS skips;
+ConformanceInputTests pass23. Frozen `python3
+scripts/conformance_unit_checks.py --all-tooling` observes713 tests with zero
+failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,24 explicit native-only macOS skips and expected incomplete exit2.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. README, PROVIDERS, DEVELOPMENT and harness are synchronized;
+charter/product, architecture/ADR/diagrams, public examples, governance,
+predecessors, IaC, release and UI are unaffected by this private runtime increment.
+No checklist, task or flow marker changes.
 
 Validation: `python3 scripts/conformance_unit_checks.py --all-tooling` observes709
 tests with zero failures/errors/expected failures/unexpected successes/
