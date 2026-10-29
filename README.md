@@ -873,6 +873,12 @@ assignments, changed trusted pins and unsuccessful job/upload/download outcomes.
 It uses the same independent inventories locally and in CI, permits predeclared
 provider/environment differences, and always returns non-qualifying diagnostics.
 It does not implement full report aggregation or infer runtime origin.
+Inherited executable controller requests are now transient readonly owned
+inputs, not retained proof files. A fresh composition attempt still fails
+before runtime; a separate hash-only diagnosis identifies one exact benign SDK
+workload advisory, now narrowly recognized without admitting unknown output or
+failed commands. Full retained controller-result sanitation and a successful
+fresh composition observation remain pending.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

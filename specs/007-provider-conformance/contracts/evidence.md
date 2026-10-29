@@ -1039,6 +1039,11 @@ assembly-parent cwd, with adapter paths in hash-bound arguments rather than XML.
 The inherited controller resolves that relative root against the actual command
 cwd and still rejects foreign roots, symlinks and changed original inputs.
 No retained provenance is redacted or replaced after execution.
+Inherited controller executable requests likewise belong in owned `stores`;
+their original readonly bytes remain declared command inputs. Results and
+hash-only execution receipts stay in `proofs`. This does not make all other
+legacy controller outputs safe; their typed retained projections remain part
+of the unfinished sanitation gate.
 
 Delivered category diagnostic JSON/JUnit/Markdown/CI projections use closed
 catalog identities, counts and hashes. They independently verify the retained

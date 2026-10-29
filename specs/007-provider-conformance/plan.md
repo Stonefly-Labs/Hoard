@@ -3162,6 +3162,52 @@ and DEVELOPMENT describe the internal-only boundary; no examples, public
 command, provider/product/architecture contract, governance, release or
 infrastructure behavior changes.
 
+### Closed SDK advisory and transient controller requests
+
+Exact5e6a8b8 fresh composition stops during historical preparation, before any
+CP runtime, with a closed `UnknownDiagnostic` at the third controller command.
+A distinct non-qualifying instrumented diagnosis observes actual restore exit0
+and retains only safe classifications/lengths/hashes. The rejected line has97
+bytes and SHA-256
+`9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`,
+exactly matching the fixed SDK workload-verification advisory. Raw output is not
+retained. The projector now admits only that exact literal; private prefix/
+suffix/replacement/multiline variants reject, coded compiler errors remain
+failures and nonzero restore exits cannot be laundered into success.
+No workload installation/update, lock/dependency change or workload support
+claim is introduced. The new test first fails at `UnknownDiagnostic`.
+
+The first attempt and instrumented diagnosis retain their failed status and
+different wrapper provenance. Both original ledgers actually Released, with
+zero children/groups and one cleanup attempt. Safe coordinator/ownership
+packets, original drivers and bundle are retained. The exact stopped namespaces
+and volumes `dfa4dcfc676dfce190d411e1467a0c0572ecc355369adda79ad98f3b54f13036`
+and `f45c065c3b473eee75cd33d0efad937a09f71b01538fb468632d134ecdf3b17d`
+are removed after that verification.
+
+Executable inherited controller requests also contain private owner/repository
+paths. A second red test exposes their persistence in `proofs`; producer and
+child now agree on owned transient `stores`. The original readonly request
+bytes are still declared/bound by the actual command, with the original input
+hash retained; no cold original-request-byte requirement is removed and existing
+result verification is unchanged. Other legacy baseline/result path projections
+remain unfinished rather than being called sanitized.
+
+Affected six-module regression initially executes162 tests with three fixture
+failures/two fixture errors because modeled owners still use the former namespace.
+Three fixtures are corrected to include the actual owned directory and new
+request location, without weakening producer/child guards. The corrected exact
+command `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_execution test_conformance_legacy test_conformance_inherited
+test_conformance_sanitation test_conformance_ci test_conformance_composition -q`
+executes162 tests in6.175 seconds with zero failures/errors and25 explicit native
+macOS skips. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+executes767 tests with zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,28 explicit native macOS skips and
+expected non-qualifying exit2. SDK catalog consistency and diff checks pass.
+A new native composition observation remains pending; no earlier failed
+observation is relabeled, and no task or qualification gate is closed.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

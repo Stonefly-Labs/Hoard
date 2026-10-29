@@ -28,6 +28,34 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_requests_are_original_readonly_transient_inputs_not_retained_proofs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            owner, repository = parent / "private-owner", parent / "private-repository"
+            source = owner / "stores/candidate"
+            (source / "scripts").mkdir(parents=True)
+            (owner / "proofs").mkdir()
+            repository.mkdir()
+            (source / "scripts/conformance_inherited.py").write_bytes(b"controller")
+            run = SimpleNamespace(root=owner, run_id=str(uuid.uuid4()), root_id=uuid.uuid4().hex,
+                                  command_sequence=0)
+
+            def blocked(arguments, **kwargs):
+                request = Path(arguments[arguments.index("--request") + 1])
+                self.assertEqual(request.parent, owner / "stores")
+                self.assertEqual(request.stat().st_mode & 0o777, 0o400)
+                self.assertIn(request.relative_to(owner).as_posix(), kwargs["execution_inputs"])
+                self.assertTrue(kwargs["record_execution"])
+                packet = json.loads(request.read_bytes())
+                self.assertEqual(packet["owner"], str(owner))
+                self.assertEqual(packet["repository"], str(repository))
+                self.assertEqual(list((owner / "proofs").iterdir()), [])
+                raise ConformanceError("EvidenceIncomplete")
+
+            run.command = blocked
+            with redirect_stdout(io.StringIO()), self.assertRaisesRegex(ConformanceError, "^EvidenceIncomplete$"):
+                inherited.controller_phase(run, repository, source, "historical")
+
     def test_controller_runtime_inputs_bind_original_logger_descriptors_images_and_archives(self):
         from conformance_sources import runtime_arguments, runtime_settings
 
@@ -494,12 +522,13 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
                 owner = Path(temporary).resolve()
                 (owner / "proofs").mkdir()
+                (owner / "stores").mkdir()
                 (owner / "source").mkdir()
                 (owner / "ownership.json").write_bytes(canonical_bytes({
                     "schemaVersion": 2, "runId": run_id, "rootId": "root", "state": "Active"}))
                 (owner / "proofs/preflight.json").write_bytes(canonical_bytes({
                     "schemaVersion": 1, "qualification": False, "profileId": "composition"}))
-                request = owner / "proofs/request.json"
+                request = owner / "stores/request.json"
                 request.write_bytes(canonical_bytes({
                     "schemaVersion": 1, "phase": "historical", "owner": str(owner), "repository": str(ROOT),
                     "runId": run_id, "rootId": "root", "source": "source", "baselineSeal": None,

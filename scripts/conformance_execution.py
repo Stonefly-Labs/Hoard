@@ -283,7 +283,8 @@ def project_build_line(line):
     if text == "Build FAILED.":
         return MappingProxyType({"event": "build", "code": "CommandFailed", "value": 0})
     if (text in ("Build succeeded.", "Pack succeeded.", "Determining projects to restore...",
-                 "All projects are up-to-date for restore.")
+                 "All projects are up-to-date for restore.",
+                 'An issue was encountered verifying workloads. For more information, run "dotnet workload update".')
             or re.fullmatch(r"\d+ Warning\(s\)", text) or re.fullmatch(r"\d+ Error\(s\)", text)
             or re.fullmatch(r"Time Elapsed \d{2}:\d{2}:\d{2}(?:\.\d+)?", text)
             or re.fullmatch(r"Restored .+ \([0-9.]+ (?:ms|sec|min)\)\.", text)

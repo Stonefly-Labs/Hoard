@@ -30,6 +30,30 @@ class ConformanceExecutionTests(unittest.TestCase):
     def workspace(self):
         return execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
 
+    def test_exact_sdk_workload_notice_does_not_authorize_other_diagnostics(self):
+        import conformance_legacy as legacy
+
+        notice = (b'An issue was encountered verifying workloads. For more information, '
+                  b'run "dotnet workload update".')
+        self.assertIsNone(execution.project_build_line(notice))
+        for line in (notice + b" private-canary", b"private-canary " + notice,
+                     notice.replace(b"dotnet workload update", b"private-canary"),
+                     notice + b"\nprivate-canary"):
+            with self.subTest(line_sha256=hashlib.sha256(line).hexdigest()):
+                with self.assertRaisesRegex(ConformanceError, "^UnknownDiagnostic$"):
+                    execution.project_build_line(line)
+        failure = execution.project_build_line(b"fixture.cs(1,1): error CS1000: private-canary")
+        self.assertEqual(dict(failure), {"event": "build", "code": "CommandFailed", "value": 1000})
+        for exit_code in (0, 1):
+            with self.subTest(exit_code=exit_code), mock.patch.object(
+                    legacy, "capture", return_value=SimpleNamespace(returncode=exit_code, stdout=notice + b"\n")):
+                if exit_code:
+                    with self.assertRaisesRegex(RuntimeError, "^Legacy composition command CommandFailed\\.$"):
+                        legacy.composition_controller_command(("dotnet", "restore", "fixture.csproj"))
+                else:
+                    self.assertEqual(legacy.composition_controller_command(
+                        ("dotnet", "restore", "fixture.csproj")).stdout, "")
+
     def test_controller_directory_lease_requires_original_reference_and_counts_against_pin_budget(self):
         run = self.workspace()
         lease = run.lease_directory()

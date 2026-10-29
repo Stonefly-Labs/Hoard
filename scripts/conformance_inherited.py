@@ -62,7 +62,7 @@ def controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_
         raise ConformanceError("EvidenceSchemaInvalid")
     if phase == "historical" and (run.command_sequence != 0 or (run.root / "feed/candidate").exists()):
         raise ConformanceError("InputChanged")
-    request_path = run.root / f"proofs/inherited-{phase}-request.json"
+    request_path = run.root / f"stores/inherited-{phase}-request.json"
     output_path = run.root / f"proofs/inherited-{phase}-result.json"
     script = source / "scripts/conformance_inherited.py"
     request = {
@@ -1682,7 +1682,7 @@ def controller_child_main(argv=None):
             legacy.no_symlinks(path)
             if not path.is_absolute():
                 raise ConformanceError("OwnershipInvalid")
-        if (args.request.parent != owner / "proofs" or args.output.parent != owner / "proofs"
+        if (args.request.parent != owner / "stores" or args.output.parent != owner / "proofs"
                 or args.output.exists() or owner == repository or owner.is_relative_to(repository)):
             raise ConformanceError("OwnershipInvalid")
         header = load_json(read_bounded(owner / "ownership.json", 65536))

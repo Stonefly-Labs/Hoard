@@ -7710,6 +7710,39 @@ passes58 tests in1.683 seconds without skips. These fixture pins test consistenc
 not external runtime authority. No actual five-profile CI, upload/download or
 final verify/aggregate execution is claimed; T069 and later tasks remain open.
 
+Fresh exact5e6a8b8 composition stops during historical preparation, before CP
+runtime: the closed parent reports `UnknownDiagnostic` from its third command.
+A distinct instrumented diagnosis retains only closed codes/lengths/hashes,
+not raw child text. It observes successful `dotnet restore` with one97-byte SDK
+workload advisory, SHA-256
+`9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`.
+That exactly matches the fixed SDK message about verifying workloads. The
+build projector now admits only that exact literal; appended/replaced/private
+text still rejects, coded compiler failures remain failures and a nonzero
+restore exit still fails. No workload is installed/updated, no dependency
+or lock is changed and no workload support is claimed.
+The first failure and the distinct instrumented diagnosis remain failures,
+not frozen successful production-wrapper observations. Both actually Released
+with zero children/groups; safe failure/ownership packets and immutable drivers
+are retained, and only the exact stopped namespaces/volumes are removed.
+
+The same trace identifies executable controller requests containing private
+owner/repository paths in `proofs`. They now live as original readonly declared
+inputs in owned `stores`; the child requires that namespace. Hash-only command
+receipts and existing result-verifier requirements are unchanged. A new
+red/green test verifies placement and live input binding. Other legacy result/
+baseline path projections remain an explicit unfinished all-output obligation.
+After correcting three modeled fixtures to include the real owned `stores`
+directory/namespace, `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_execution test_conformance_legacy test_conformance_inherited
+test_conformance_sanitation test_conformance_ci test_conformance_composition -q`
+executes162 tests in6.175 seconds with zero failures/errors and25 native skips.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` executes767
+tests with zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,28 explicit native macOS skips and expected non-qualifying
+exit2. SDK catalog consistency and diff checks pass. Fresh native composition
+remains pending.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

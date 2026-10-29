@@ -374,13 +374,14 @@ class CompositionDiagnosticTests(unittest.TestCase):
             with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
+                (root / "stores").mkdir()
                 run_id = str(uuid.uuid4())
                 request = {
                     "schemaVersion": 1, "phase": "architecture", "owner": str(root), "repository": str(ROOT),
                     "runId": run_id, "rootId": "modeled-root", "source": "stores/source",
                     "baselineSeal": None, "sdkPackage": None, "loggerPath": None}
                 for path, value in (
-                        ("proofs/request.json", request),
+                        ("stores/request.json", request),
                         ("ownership.json", {"schemaVersion": 2, "state": "Active", "runId": run_id,
                                             "rootId": "modeled-root"}),
                         ("proofs/preflight.json", {"schemaVersion": 1, "qualification": False, "profileId": profile})):
@@ -392,7 +393,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                                           return_value={"qualification": False}) as prepare, \
                         contextlib.redirect_stdout(io.StringIO()):
                     status = inherited.controller_child_main([
-                        "--request", str(root / "proofs/request.json"), "--output", str(output)])
+                        "--request", str(root / "stores/request.json"), "--output", str(output)])
                 if profile == "compatibility":
                     self.assertEqual(status, 0)
                     prepare.assert_called_once_with(ROOT, root, root / "stores/source")
@@ -703,7 +704,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         for private in (False, True):
             with self.subTest(private=private), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
-                for directory in ("proofs", "diagnostics", "source/scripts"):
+                for directory in ("proofs", "stores", "diagnostics", "source/scripts"):
                     (root / directory).mkdir(parents=True, exist_ok=True)
                 (root / "source/scripts/conformance_inherited.py").write_bytes(b"controller")
                 run = SimpleNamespace(root=root, run_id="run", root_id="root", command_sequence=0)
