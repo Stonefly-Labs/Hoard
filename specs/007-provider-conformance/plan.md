@@ -2349,6 +2349,73 @@ governance/backlog/predecessor/IaC/release/UI are unaffected: no provider API,
 support scope, operator command, package graph or deployment behavior changes.
 Implementation remains running, with T068..T086 and reviewer checklists unchanged.
 
+### Native all-output canaries and generated-report prerequisite diagnosis
+
+Partial T070 adds `tests/tooling/test_conformance_sanitation.py`, using fresh
+synthetic secret/payload/connection/exception/private-path canaries, including
+the private scratch parent's name. Both actual native command controls inspect
+every retained owned file and filename before/after cleanup, not just upload
+text or diagnostic globs. Unknown raw provider output rejects UnknownDiagnostic;
+an oversized unterminated canary stream rejects OutputLimitExceeded, never a
+shortened pass. Native records identify genuinely exited groups; live-child
+queries are empty and both owners reach Released. No raw log/TRX persists.
+The public CLI control injects OSError/ValueError/RuntimeError into the actual
+compatibility dispatcher and verifies explicit incomplete closed-code JSON,
+empty stderr and no root allocation.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_sanitation -v`: macOS public projection passes, with two
+explicit native-only skips. An isolated pinned Linux-arm64 SDK container
+executes all three without skips in0.146 seconds, using UID10001, four CPUs,
+6GiB and512 PIDs. Test source SHA-256:
+`dc72c66f4f3cd32cd8d0f7e734932f7f1e6318fb0abae3589b5a25502ad73708`.
+Source is an isolated clone at117b0b2 plus only this test file. Session log:
+`linux-sanitation-and-sdk-probe.log`. This does not cover the still-undelivered
+public JSON/JUnit/Markdown report/CI summary surfaces. T070 remains unchecked;
+the earlier743-test replay predates these three tests and is not relabeled.
+
+Genuine generated-report control attempts at exact
+`117b0b2334d33267e19956474c721708e27a41e2` fail closed:
+
+- The first bundle contains only HEAD, lacking origin/main needed for genuine
+  historical ancestry admission. Native preflight admits52,460,666,880 free
+  btrfs bytes, then CLI returns Failed/InputChanged. No category report exists.
+  Run `c2e923bb-006b-48b8-b3cf-a11da1e75f80` remains Settling, not Released.
+- The corrected fresh bundle includes actual origin/main
+  `e75415fee07a5003c4cb40d869826c19fe0a2f36`, independently checked to contain
+  the required F-06 baseline. It admits52,460,789,760 free bytes and selected
+  SDK10.0.203/runtime10.0.7, then returns Incomplete/UnknownDiagnostic at its
+  first historical SDK command. No category report exists.
+  Run `ab8f32df-4b6b-4788-98de-94c0288608e7` remains Settling, not Released.
+
+The separate fresh SDK probe uses the actual first historical Abstractions
+restore recipe and the unchanged original build-output projector. Instrumentation
+only hashes an actually rejected line before rethrowing; it never admits it,
+retains raw text or counts as acceptance. The line is exactly97 bytes with
+SHA-256
+`9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`,
+matching the already independently verified SDK WorkloadIntegrityCheckError
+resource. Its actual run `efea9321-2c51-4c7e-bd8c-5b934c0dab82` observes
+UnknownDiagnostic, settles its child and reaches Released. Bounded packet:
+`native-sdk-probe-retained`. No SDK warning whitelist/suppression, host repair
+or generated-good report is claimed. The default historical restore/build
+backend remains an actionable prerequisite, unlike the already corrected
+explicit contributor MSBuild/VSTest routes.
+
+Both failed observations/packets remain in session storage. Only the exact
+stopped task containers are removed, with independent absence checks for volumes
+`6ff1c909fa78dd395743f1916a67725b23d5c5ae57100a7bbfaf104b074e0239`,
+`c2464f73c41d500446b2d29bb5daf9b4d860545b8c6255c742556b9b0d1ed2cf`
+and `ce34774ccdab04f337e123aaa369c94ca1ed7acdaa40818365a822f6a9858b13`.
+Shared cached SDK images remain. Removing private infrastructure after kernel
+namespace exit does not turn a failed controller ledger into successful release.
+
+README/DEVELOPMENT record the exact boundary. Other guides/examples, charter/
+product/architecture/ADR/diagrams/governance/backlog/predecessor/IaC/release/UI
+are unaffected: these test controls change no product/provider contract,
+operator command, support scope, package graph or deployment. T068..T086,
+implement/running and reviewer-owned checklist state remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

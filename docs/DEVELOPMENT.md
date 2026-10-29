@@ -7246,6 +7246,33 @@ errors/expected failures/unexpected successes/unexpected diagnostic bytes,
 and diff checks pass. T068..T086 remain unchecked; genuine generated-native
 mutation controls and final strict evaluation are still required.
 
+The new partial T070 `test_conformance_sanitation.py` uses distinct synthetic
+secret/payload/connection/exception/private-path canaries. It inspects all owned
+file contents and filenames, not just diagnostics or uploaded text. Actual
+native unknown-output and flood attempts reject with UnknownDiagnostic and
+OutputLimitExceeded, observe exited groups, retain no raw log/TRX, and reach
+Released without leaking canaries before or after cleanup. Public CLI OSError/
+ValueError/RuntimeError projections return safe incomplete JSON with empty
+stderr and no allocated root. Three actual Linux controls pass in0.146 seconds;
+macOS passes the public control and explicitly skips the two native controls.
+Public JSON/JUnit/Markdown reports and CI summaries remain unimplemented and
+uncovered by these new controls; T070 remains unchecked.
+
+The attempted genuine generated-native metadata report at exact117b0b2 fails
+closed before producing a category report. The initial isolated bundle lacks
+the actual origin/main ref and rejects InputChanged; the corrected fresh bundle
+includes genuine main `e75415fee07a5003c4cb40d869826c19fe0a2f36`, then rejects
+UnknownDiagnostic at its first historical restore. A separate bounded owned
+SDK probe delegates to the unchanged projector and records only97 bytes and
+SHA-256 `9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`.
+This matches the already verified SDK WorkloadIntegrityCheckError resource.
+No notice whitelist, warning suppression, profile pass or SDK repair is claimed.
+The probe genuinely releases; failed category ledgers remain failed/Settling,
+not relabeled Released. Safe packets are retained before exact stopped
+container/volume removal and independent volume absence checks. The default
+historical restore/build path still needs the selected explicit SDK backend;
+the contributor-specific MSBuild/VSTest routes do not establish that repair.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

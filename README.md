@@ -801,6 +801,10 @@ it checks captured-input identity, all catalog keys/exclusions, passed parameter
 sets and actual proof/completion bytes. Its explicit incomplete diagnostic
 result cannot turn modeled provenance into qualification; final origin
 evaluation, verification/aggregation and CI remain unfinished.
+All-output canary regressions additionally inspect every retained owned file
+and filename after native unknown-text/output-flood rejection and settled
+cleanup, plus public CLI error output. JSON/JUnit/Markdown report and CI-summary
+canary coverage remains unfinished with those report surfaces.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
