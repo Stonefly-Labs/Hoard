@@ -2645,6 +2645,111 @@ data. Catalog/SDK consistency and diff checks pass. No T068..T086 task is
 advanced. README/DEVELOPMENT show the current selector; other artifacts remain
 unaffected by this test-discovery correction.
 
+### Artifact generated-native control, retained failure and explicit replay
+
+The first actual artifact attempt uses exact389e6ce in the same pinned
+four-CPU/6-GiB/512-PID unprivileged private Linux environment. Namespace
+duration271.053 seconds, admission free scratch52,393,619,456 bytes.
+Actual run81017a5c-9129-44dd-b6f6-be4901614e0f passes preparation and both
+shared-consumer native commands216/217. Local256 MiB command218 passes.
+Local4 GiB command219 rejects UnknownDiagnostic after30,463.230 milliseconds,
+with actual Exited group, exit-9,16,928,768-byte peak RSS growth and no completed
+producer packet. No category report exists. The original owner remains
+Settling with no children/groups;56 bounded proof files and console packets
+are retained in `native-artifact-generated-control-retained`.
+
+Two fresh independent owned probes consume the unchanged readonly producer
+assembly, never adopting the dead original owner. Both write/read4 GiB and
+genuinely reach Released: c1f731ef-361f-4dbb-83bf-a8287245a0f1 observes
+28,656.148 milliseconds/21,413,888-byte RSS growth; the separately labeled
+one-CPU29efd0c2-eed9-4124-b6ae-fc8587b32e49 observes21,941.215 milliseconds/
+21,422,080-byte growth. Their strict original projector would retain only
+rejected-line byte count/hash and exact known-code equality before rethrowing;
+no rejection occurs in either probe. The original UnknownDiagnostic remains
+unexplained. Neither probe changes deadlines, whitelists text, rewrites the
+failed attempt or supplies missing category qualification.
+
+A distinct fresh invocation at exact6305356c4091c9475a5fd84bff69817928068439,
+without concurrent host tooling, then completes the actual artifact category
+diagnostic in326.593 seconds. Actual admission free scratch50,769,182,720
+bytes. Run c93ca9c0-0b27-4a5a-b508-7cc1ea21a517 produces103 cases,
+263 witnesses,99 Passed, four catalog NotApplicable and zero Failed/Incomplete.
+The original owner genuinely reaches Released, actual cleanup222.781832
+milliseconds, with stores/cache/feed absent. This is a separate source/run/
+invocation observation, not an erased retry or correction of the first owner.
+
+Raw report SHA-256:
+c12c489a7975454204251526527a996c566fbb55c0538a68b6d8638fed7c6b67.
+Original input digest:
+dbb271d0e91fa46e676a8e09e009bb28efe957b5cd59388144118595a98d1ca6.
+All622 proof files and actual completion inputs independently pass structural
+inspection in the native namespace and from unchanged retained bytes. Packet:
+`native-artifact-explicit-replay-retained`. Original source corroboration executes
+during generation, but the report remains Incomplete/qualification:false/
+category-runtime-diagnostic and the public CLI still returns expected exit2.
+
+The four complete actual transfer receipts cover both providers at268,435,456
+and4,294,967,296 bytes. Independently inspected retained fields confirm exact
+written/read byte counts; matching expected/source/sink hashes; actual paced,
+generated non-seekable streams; and measured OS RSS growth respectively
+2,744,320/21,512,192 bytes for Local and13,381,632/23,404,544 for ObjectSemantics.
+All remain below the unchanged64-MiB bound. No capacity, byte coverage or
+deadline is reduced.
+
+`HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT=<retained-native-artifact-root> PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence.retained_native_category_structure_tests -v`
+passes all six families/90 rejecting mutations in7.303 seconds. Untouched
+original and copied proof trees pass before mutation; original bytes remain
+unchanged and sentinels are preserved. The same controls have now actually
+executed against both generated-native category packets, rather than only
+modeled reports. Final runtime-origin/failed-retry qualification remains
+unimplemented, so T068/T071 do not advance.
+
+After native execution finishes, frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` at exact6305356
+observes751 tests, zero failures/errors/expected failures/unexpected successes/
+unexpected diagnostic bytes,27 explicit native macOS skips and expected
+incomplete exit2. Packet: `tooling-explicit-replay-scope.json`. This verifies
+default discovery no longer acquires the optional external-packet prerequisite;
+explicit native replay remains a separate mandatory full-profile obligation.
+
+All four stopped artifact/probe containers are removed after retention.
+The failed scratch volume survives initial container cleanup because the probes
+mounted it explicitly readonly. A separate exact reference inspection confirms
+no remaining containers, then that exact volume alone is removed. Independent
+successful listings verify all four exact volumes absent:
+211928295c51e8605a0fb0df713419dbd538da9fc2152e76677a46def564f4f1,
+4c0592f06c62a9b70dc65d6a29bb6b63a26665d9645316a4e380cf55c825d7d4,
+ac01413a56be89cba32f7ca750ef826104c0883d1fe577b72e95c85b3d0f0d4c,
+ac96f9d63c5402edd645298e0f4f1ed8f5a6e6c856b592afe6ebd3d146200129.
+No shared image or unrelated namespace is removed; the original failed ledger
+stays Settling in retained evidence, not fabricated Released.
+
+README/DEVELOPMENT record the native outcomes and limits. Other examples,
+guides/contracts/product/provider/architecture/ADR/diagrams/governance/IaC/
+release/UI documents are unaffected by this evidence-only checkpoint.
+The existing workflow is still non-qualifying foundations/diagnostics, not
+the planned mandatory five-profile/aggregate workflow; actual CI success is
+not inferred from these local Linux observations.
+
+### Remaining retained-origin authority decision
+
+The actual generated controls and mutations do not select a new trust policy.
+`OwnedRun.read_execution_record` still requires the original live Active owner
+and its in-memory original command bytes. After original process exit, neither
+rehashing a persisted receipt nor a structurally consistent report can replace
+that authority. The standalone verify/aggregate dispatcher remains explicitly
+incomplete. No persisted independently trusted origin anchor has been selected.
+
+The next evaluator step therefore needs a trust-model decision: independently
+trusted expected report digests supplied by a local coordinator/CI job outputs,
+with a corresponding standalone verification input, versus narrowing retained
+verification to non-qualifying diagnostics while keeping qualification within
+the original live controller. An anchor cannot come solely from the same
+untrusted report/artifact it purports to authenticate. No signing service,
+secret, external store, daemon, relaxed ownership read or new CLI trust semantic
+has been silently introduced. T068..T086 remain unchecked and implement/running
+is preserved pending that decision and the remaining acceptance obligations.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

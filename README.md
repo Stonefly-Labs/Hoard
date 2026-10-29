@@ -820,6 +820,11 @@ unchanged metadata control, challenging all23 input fields and actual proof
 bytes. Without an explicitly supplied retained category root, these tests
 report six prerequisite skips when explicitly selected; normal foundational
 discovery needs no external packet. Neither path establishes qualification.
+The separate exact6305356 artifact control also completes:103 cases/263
+witnesses,99 Passed/four frozen exclusions, including both actual256-MiB/4-GiB
+provider transfer pairs. Its622 retained proofs pass inspection and the same90
+mutations. The earlier artifact UnknownDiagnostic remains separately retained
+and unexplained; neither positive control erases it or completes qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

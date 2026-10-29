@@ -7384,12 +7384,51 @@ explicit replay against their freshly generated packets; foundational success
 does not satisfy them. The combined evidence suite and explicit metadata replay
 pass195 tests in75.284 seconds, while the explicit selector without a fixture
 reports six prerequisite skips. Catalog/SDK consistency and diff checks pass.
-Artifact fixture execution and final T068/T071 evaluation remain outstanding.
+Both category fixtures have now been replayed; final T068/T071 evaluation
+remains outstanding.
 
 After another independent retained-byte inspection, the stopped successful
 metadata container and its exact anonymous volume are removed. A separate
 successful Docker volume listing verifies that exact volume absent; no shared
 image or unrelated namespace is removed.
+
+The first artifact attempt at exact389e6ce remains an explicit failed observation.
+Run81017a5c-9129-44dd-b6f6-be4901614e0f completes native preparation, both
+shared-consumer commands and Local256 MiB, then rejects UnknownDiagnostic at
+Local4 GiB after30.463 seconds. No category report exists. Its actual owner
+remains Settling, without children/groups;56 bounded proof files are retained.
+Two separate fresh owned probes of the unchanged4-GiB producer then pass and
+genuinely release, including a one-CPU diagnostic. Neither reproduces/explains
+the original text rejection or changes the original owner's state. No text is
+whitelisted, no raw exception is retained and no deadline/RSS bound is relaxed.
+
+A distinct fresh exact6305356 artifact invocation, without concurrent host
+tooling, completes the full native diagnostic. Run
+c93ca9c0-0b27-4a5a-b508-7cc1ea21a517 produces103 cases/263 witnesses:
+99 Passed, four frozen NotApplicable, zero Failed/Incomplete. Admission
+free scratch is50,769,182,720 bytes; namespace duration326.593 seconds.
+The original owner genuinely reaches Released and disposable stores/cache/feed
+are absent. Report SHA-256:
+`c12c489a7975454204251526527a996c566fbb55c0538a68b6d8638fed7c6b67`.
+Input SHA-256:
+`dbb271d0e91fa46e676a8e09e009bb28efe957b5cd59388144118595a98d1ca6`.
+All622 referenced proof bytes pass independent retained structural inspection.
+Local and ObjectSemantics each actually write/read256 MiB and4 GiB, with
+matching expected/source/sink hashes, paced non-seekable streams and peak
+RSS growth below64 MiB. The same six-family explicit native selector then
+passes all90 mutation challenges against this unchanged artifact packet
+in7.303 seconds. Both actual category controls remain incomplete diagnostics,
+not independent retained-origin qualification.
+
+All four stopped artifact/probe namespaces are removed after evidence retention.
+The original failed volume is separately removed only after confirming no
+container references; all four exact scratch volumes are independently verified
+absent. The failed owner is not relabeled Released.
+After the native attempt finishes, exact6305356 default frozen tooling passes
+751 observations with zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,27 native macOS skips and expected
+incomplete exit2. The external fixture prerequisite does not enter ordinary
+discovery.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
