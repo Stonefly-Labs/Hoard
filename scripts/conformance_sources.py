@@ -1,6 +1,7 @@
 """Independent source corroboration; files or session claims alone cannot qualify."""
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 import ast
 import base64
 import hashlib
@@ -1953,6 +1954,53 @@ def native_metadata_inventory_controls(run, inputs, *, started_ms, ended_ms):
         "sourceProofs": MappingProxyType(proof_data)})
 
 
+def category_replay_packet(projection):
+    fields = {"inputsSha256", "planSha256", "resultsSha256", "witnessesSha256", "proofsSha256"}
+    if not isinstance(projection, Mapping) or set(projection) != fields:
+        raise evidence.ConformanceError("ProofMismatch")
+    for value in projection.values():
+        evidence.sha256(value)
+    return evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "scope": "live-native-ledger-replay-diagnostic",
+        **projection})
+
+
+@dataclass(frozen=True, repr=False)
+class NativeCategoryEvaluation:
+    _source: "NativeCategorySources"
+    inputs_sha256: str
+    history_sha256: str
+    replay: Mapping
+
+    def _verify_record(self, inputs, record):
+        prefix = f'proofs/category-{inputs["profileId"]}-qualification'
+        replay_path = prefix + "-native-replay.json"
+        replay_sha = hashlib.sha256(category_replay_packet(self.replay)).hexdigest()
+        if (evidence.digest(inputs) != self.inputs_sha256 or not isinstance(record, Mapping)
+                or not {"inputsSha256", "results", "witnesses", "proofs"} <= set(record)
+                or not isinstance(record["proofs"], Mapping)
+                or record["inputsSha256"] != self.inputs_sha256
+                or evidence.digest(record["results"]) != self.replay["resultsSha256"]
+                or evidence.digest(record["witnesses"]) != self.replay["witnessesSha256"]
+                or record["proofs"].get(replay_path) != replay_sha
+                or evidence.digest({path: sha for path, sha in record["proofs"].items() if path != replay_path})
+                != self.replay["proofsSha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
+
+    def verify_report_origin(self, run, inputs, record, summary, resources):
+        if (type(run) is not OwnedRun or type(self._source) is not NativeCategorySources
+                or self._source._run is not run
+                or self._source._category_evaluation is not self or run.state != "Released"):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        observed = run.resource_projection()
+        if (not observed or any(row["state"] != "Released" for row in observed)
+                or evidence.canonical_bytes(observed) != evidence.canonical_bytes(resources)):
+            raise evidence.ConformanceError("CleanupIncomplete")
+        if summary.get("historySha256") != self.history_sha256:
+            raise evidence.ConformanceError("ProofMismatch")
+        self._verify_record(inputs, record)
+
+
 class NativeCategorySources:
     def __init__(self, run, *, inspection_inputs, inspection_configurations):
         if type(run) is not OwnedRun:
@@ -1976,6 +2024,43 @@ class NativeCategorySources:
                 raise evidence.ConformanceError("OwnershipInvalid")
             configurations[family] = path
         self._configurations = MappingProxyType(configurations)
+        self._category_replay = None
+        self._category_evaluation = None
+
+    def retain_category_replay(self, history, projection):
+        if (type(self._run) is not OwnedRun or type(history) is not evidence.CategoryRuntimeHistory
+                or history._native_sources is not self or self._run.state != "Active"
+                or history._inputs["runId"] != self._run.run_id):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        self._run.read_execution_record(self._run.command_sequence)
+        category_replay_packet(projection)
+        expected = {
+            "inputsSha256": evidence.digest(history._inputs), "resultsSha256": evidence.digest(history.results()),
+            "witnessesSha256": evidence.digest(history.witnesses), "proofsSha256": evidence.digest(history.proofs)}
+        if (any(projection[key] != value for key, value in expected.items())
+                or self._category_replay is not None and self._category_replay != projection):
+            raise evidence.ConformanceError("ProofMismatch")
+        self._category_replay = MappingProxyType(dict(projection))
+
+    def capture_category_evaluation(self, inputs, summary):
+        if (type(self._run) is not OwnedRun or self._run.state != "Active"
+                or self._category_replay is None or self._category_evaluation is not None):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        self._run.read_execution_record(self._run.command_sequence)
+        inputs = evidence.admit_entity("RunInputs", inputs)
+        if inputs["mode"] != "qualification" or inputs["runId"] != self._run.run_id:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        if not isinstance(summary, Mapping) or "historySha256" not in summary:
+            raise evidence.ConformanceError("ProofMismatch")
+        path = f'proofs/category-{inputs["profileId"]}-qualification-history.json'
+        raw = _readonly(self._run.root / path, evidence.MAX_REPORT_BYTES)
+        hashed = hashlib.sha256(raw).hexdigest()
+        if hashed != evidence.sha256(summary["historySha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
+        evaluation = NativeCategoryEvaluation(self, evidence.digest(inputs), hashed, self._category_replay)
+        evaluation._verify_record(inputs, evidence.load_json(raw))
+        self._category_evaluation = evaluation
+        return evaluation
 
     def ingest_attempt(self, *, category_scope, **transport):
         original_metadata = category_scope in (("metadata", "original-memory"), ("metadata", "original-sqlite"))

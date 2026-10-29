@@ -4158,6 +4158,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     evidence.admit_entity("QualificationReport", changed)
 
     def test_native_replay_cannot_mint_origin_from_a_modeled_history(self):
+        from conformance_sources import NativeCategorySources
+        from types import SimpleNamespace
+
         history, finish = self.category_quality_fixture()
         finish()
         replay = getattr(history, "replay_joint", None)
@@ -4166,6 +4169,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             replay(plan={}, transports={})
         with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
             live_native_category_replay_tests(history, plan={}, transports={})
+        native = object.__new__(NativeCategorySources)
+        native._run = SimpleNamespace(state="Active")
+        capture = getattr(native, "capture_category_evaluation", None)
+        self.assertTrue(callable(capture), "Origin must remain bound in memory across genuine settlement.")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            capture(history._inputs, {})
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            released_native_category_evaluation_tests(
+                None, inputs=history._inputs, record={}, summary={}, resources=())
 
     def test_native_category_reports_recheck_original_history_inputs_and_proof_files(self):
         import conformance_sdk_checks as checks
@@ -4174,7 +4186,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         publish = getattr(checks, "_category_report", None)
         self.assertTrue(callable(publish), "Native category evidence must pass real public report admission.")
         for profile in ("metadata", "artifacts"):
-            for defect in (None, "free-space", "inputs", "history", "mutable-history", "proof", "shortened"):
+            for defect in (None, "free-space", "inputs", "history", "mutable-history", "proof", "shortened", "origin"):
                 with self.subTest(profile=profile, defect=defect), tempfile.TemporaryDirectory() as temporary:
                     self.setUp()
                     history, finish = self.category_quality_fixture(profile=profile, distinct_packages=True)
@@ -4219,7 +4231,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         path.write_bytes(b"replacement")
                     if defect not in (None, "free-space"):
                         with self.assertRaises(evidence.ConformanceError):
-                            publish(run, history._inputs, post, summary)
+                            publish(run, history._inputs, post, summary,
+                                    **({"native_evaluation": object()} if defect == "origin" else {}))
                         self.assertFalse(report_path.exists())
                     else:
                         observed = publish(run, history._inputs, post, summary)
@@ -8846,6 +8859,51 @@ def live_native_category_replay_tests(history, *, plan, transports):
             self.assertEqual(owner.read_execution_record(parent["commandSequence"]), original_command)
 
     return unittest.TestLoader().loadTestsFromTestCase(LiveNativeCategoryReplayTests)
+
+
+def released_native_category_evaluation_tests(evaluation, *, inputs, record, summary, resources):
+    """Challenge the original in-memory origin after actual native settlement."""
+    from dataclasses import replace
+    from conformance_sources import NativeCategoryEvaluation
+    if type(evaluation) is not NativeCategoryEvaluation:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    owner = evaluation._source._run
+    evaluation.verify_report_origin(owner, inputs, record, summary, resources)
+
+    class ReleasedNativeCategoryEvaluationTests(unittest.TestCase):
+        __qualname__ = "ReleasedNativeCategoryEvaluationTests"
+
+        def setUp(self):
+            evaluation.verify_report_origin(owner, inputs, record, summary, resources)
+
+        def test_copied_snapshot_cannot_replace_the_original_held_identity(self):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                replace(evaluation).verify_report_origin(owner, inputs, record, summary, resources)
+
+        def test_substituted_results_cannot_replace_the_verified_ledger(self):
+            changed = evidence.load_json(evidence.canonical_bytes(record))
+            changed["results"][0]["proofSha256"] = ["0" * 64]
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                evaluation.verify_report_origin(owner, inputs, changed, summary, resources)
+
+        def test_rehashed_history_summary_cannot_replace_the_live_capture(self):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                evaluation.verify_report_origin(
+                    owner, inputs, record, {**summary, "historySha256": "0" * 64}, resources)
+
+        def test_cached_resources_cannot_replace_actual_resource_projection(self):
+            changed = evidence.load_json(evidence.canonical_bytes(resources))
+            changed[0]["rootId"] = uuid.uuid4().hex
+            with self.assertRaisesRegex(evidence.ConformanceError, "^CleanupIncomplete$"):
+                evaluation.verify_report_origin(owner, inputs, record, summary, changed)
+
+        def test_snapshot_cannot_authorize_different_admission_inputs(self):
+            changed = evidence.load_json(evidence.canonical_bytes(inputs))
+            changed["runId"] = str(uuid.uuid4())
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                evaluation.verify_report_origin(owner, changed, record, summary, resources)
+
+    return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 
 
 if __name__ == "__main__":

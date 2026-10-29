@@ -150,7 +150,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         finish = getattr(checks, "_execute_selected_category", None)
         self.assertTrue(callable(finish), "Selected categories need their own bounded native execution path.")
         for profile in ("metadata", "artifacts"):
-            for defect in (None, "inputs", "cleanup"):
+            for defect in (None, "origin", "inputs", "cleanup"):
                 with self.subTest(profile=profile, defect=defect):
                     inputs = {"profileId": profile, "mode": "qualification", "invocationGroupId": str(uuid.uuid4())}
                     post = {"post": profile}
@@ -166,8 +166,20 @@ class SdkDiagnosticTests(unittest.TestCase):
                             order.append("release")
                             raise checks.evidence.ConformanceError("CleanupIncomplete")
                         run.release = release
+                    native_evaluation = object()
+
+                    def hold(actual_inputs, summary):
+                        self.assertIs(actual_inputs, inputs)
+                        self.assertEqual(summary, {"code": "None"})
+                        self.assertEqual(order, [])
+                        order.append("capture-origin")
+                        if defect == "origin":
+                            raise checks.evidence.ConformanceError("OwnershipInvalid")
+                        return native_evaluation
+
+                    sources = SimpleNamespace(capture_category_evaluation=hold)
                     with patch.object(checks, "category_diagnostics", return_value={"code": "None"}) as category, patch.object(
-                            checks, "NativeCategorySources", return_value="sources"), patch.object(
+                            checks, "NativeCategorySources", return_value=sources), patch.object(
                             checks, "environment", return_value=ENVIRONMENT), patch.object(
                             checks.evidence, "source_manifest", return_value={"source": "a" * 64}), patch.object(
                             checks.evidence, "source_identity", return_value={"identity": profile}), patch.object(
@@ -181,13 +193,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                                 order.append("report") or {"qualification": False, "reportState": "Incomplete"})) as publish:
                         if defect is not None:
                             with self.assertRaisesRegex(checks.evidence.ConformanceError,
-                                                        "InputChanged" if defect == "inputs" else "CleanupIncomplete"):
+                                                        {"origin": "OwnershipInvalid", "inputs": "InputChanged",
+                                                         "cleanup": "CleanupIncomplete"}[defect]):
                                 finish(run, ROOT, self.directory / "candidate", inputs,
                                        binding_sources=("binding",), inspection_cases={"original": "c" * 64},
                                        inspection_configurations={"metadata": "metadata", "artifacts": "artifacts"},
                                        baseline_sha256="d" * 64, ci_revision="e" * 40)
                             publish.assert_not_called()
-                            self.assertEqual(order, [] if defect == "inputs" else ["Settling", "release"])
+                            self.assertEqual(order, ["capture-origin"] + (
+                                ["Settling", "release"] if defect == "cleanup" else []))
                         else:
                             result = finish(run, ROOT, self.directory / "candidate", inputs,
                                             binding_sources=("binding",), inspection_cases={"original": "c" * 64},
@@ -195,13 +209,19 @@ class SdkDiagnosticTests(unittest.TestCase):
                                             baseline_sha256="d" * 64, ci_revision="e" * 40)
                             self.assertEqual(result["reportState"], "Incomplete")
                             self.assertFalse(result["qualification"])
-                            self.assertEqual(order, ["Settling", "release", "report"])
+                            self.assertEqual(order, ["capture-origin", "Settling", "release", "report"])
                             self.assertEqual(publish.call_args.kwargs["resources"], resources)
+                            self.assertIs(publish.call_args.kwargs["native_evaluation"], native_evaluation)
                         category.assert_called_once_with(
                             run, inputs, self.directory / "candidate",
                             inspection_cases={"original": "c" * 64},
                             inspection_configurations={"metadata": "metadata", "artifacts": "artifacts"},
-                            native_sources="sources")
+                            native_sources=sources)
+                        if defect == "origin":
+                            snapshot.assert_not_called()
+                            recompute.assert_not_called()
+                            capture.assert_not_called()
+                            continue
                         snapshot.assert_called_once_with(self.directory / "candidate", {"source": "a" * 64})
                         recompute.assert_called_once_with(inputs, post)
                         self.assertEqual(capture.call_args.kwargs["profile_id"], profile)

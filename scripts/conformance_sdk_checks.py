@@ -49,7 +49,8 @@ from conformance_sources import (
     COMMON_CONSUMER_NAMESPACES, category_common_consumer_sdk_images, category_common_consumer_sdk_paths,
     native_category_common_consumer_control,
     category_common_consumer_manifest,
-    NativeCategorySources, admit_owned_command, admit_recovery_barrier,
+    NativeCategoryEvaluation, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
+    category_replay_packet,
     admit_sqlite_noncooperation, admit_transfer_measurement, admit_artifact_transfer_producer,
     admit_artifact_noncooperation, admit_original_artifact_crash, admit_original_artifact_retention,
     artifact_original_child_sources, artifact_category_transfer_namespace, authority_integration_observations,
@@ -2993,13 +2994,10 @@ def _category_record(run, inputs, history, scopes, code=None, *, native_replay=N
                 or set(native_replay) != set(expected) | {"planSha256"}
                 or any(native_replay[key] != value for key, value in expected.items())):
             raise evidence.ConformanceError("ProofMismatch")
-        evidence.sha256(native_replay["planSha256"])
         replay_path = f'proofs/category-{inputs["profileId"]}-{history_mode}-native-replay.json'
         if replay_path in proofs:
             raise evidence.ConformanceError("ProofMismatch")
-        replay_raw = evidence.canonical_bytes({
-            "schemaVersion": 1, "qualification": False, "scope": "live-native-ledger-replay-diagnostic",
-            **native_replay})
+        replay_raw = category_replay_packet(native_replay)
         write_new(run.root / replay_path, replay_raw)
         proofs[replay_path] = hashlib.sha256(replay_raw).hexdigest()
         summary["nativeReplaySha256"] = proofs[replay_path]
@@ -3012,7 +3010,9 @@ def _category_record(run, inputs, history, scopes, code=None, *, native_replay=N
     return {**summary, "historySha256": hashlib.sha256(raw).hexdigest()}
 
 
-def _category_report(run, inputs, post_inputs, summary, *, resources=()):
+def _category_report(run, inputs, post_inputs, summary, *, resources=(), native_evaluation=None):
+    if native_evaluation is not None and type(native_evaluation) is not NativeCategoryEvaluation:
+        raise evidence.ConformanceError("OwnershipInvalid")
     inputs = evidence.admit_entity("RunInputs", inputs)
     post_inputs = evidence.admit_entity("RunInputs", post_inputs)
     evidence.verify_input_recomputation(inputs, post_inputs)
@@ -3034,6 +3034,8 @@ def _category_report(run, inputs, post_inputs, summary, *, resources=()):
             or record["inputsSha256"] != evidence.digest(inputs)
             or record["resultsSha256"] != evidence.digest(record["results"])):
         raise evidence.ConformanceError("ProofMismatch")
+    if native_evaluation is not None:
+        native_evaluation.verify_report_origin(run, inputs, record, summary, resources)
     completion_path = prefix + "-completion-inputs.json"
     completion_raw = evidence.canonical_bytes(post_inputs)
     if completion_path in record["proofs"]:
@@ -4220,11 +4222,13 @@ def execute_architecture_runtime(run, repository, candidate, sources, config, fe
 
 def _execute_selected_category(run, repository, candidate, inputs, *, binding_sources, inspection_cases,
                                inspection_configurations, baseline_sha256, ci_revision):
+    native_sources = NativeCategorySources(
+        run, inspection_inputs=inspection_cases, inspection_configurations=inspection_configurations)
     summary = category_diagnostics(
         run, inputs, candidate, inspection_cases=inspection_cases,
         inspection_configurations=inspection_configurations,
-        native_sources=NativeCategorySources(
-            run, inspection_inputs=inspection_cases, inspection_configurations=inspection_configurations))
+        native_sources=native_sources)
+    native_evaluation = native_sources.capture_category_evaluation(inputs, summary)
     sources = evidence.source_manifest(repository)
     identity = evidence.source_identity(repository, ci_revision=ci_revision)
     evidence.verify_snapshot(candidate, sources)
@@ -4237,7 +4241,8 @@ def _execute_selected_category(run, repository, candidate, inputs, *, binding_so
     evidence.verify_input_recomputation(inputs, post)
     run.transition("Settling")
     run.release()
-    return _category_report(run, inputs, post, summary, resources=run.resource_projection())
+    return _category_report(run, inputs, post, summary, resources=run.resource_projection(),
+                            native_evaluation=native_evaluation)
 
 
 def execute(repository, destination, *, category=None, compatibility_only=False):

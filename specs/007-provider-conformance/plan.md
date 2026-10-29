@@ -2811,6 +2811,51 @@ The separate immutable driver now projects only closed test/code/source-line
 failure observations rather than losing failure identity or retaining raw
 unittest exceptions. Modeled rejection, catalog/SDK, diff and driver syntax
 checks pass; fresh corrected native execution remains pending.
+Both corrected exact99bc8e1 native categories subsequently pass all four
+live families (11 mutations) with zero failures/errors/skips, and reject original
+record reads plus full replay after genuine release. Artifact run
+5a43a120-ab7a-44ed-8c2c-35ab1890dca2 retains103 cases/263 witnesses,
+99 Passed/four exclusions,623 proof files; namespace358.766 seconds, cleanup
+235.484 ms, admission free scratch49,234,337,792 bytes. Report SHA-256:
+`d204c23c2a7f824921d4008acba13fa9e52bdee5ec37c20e150c45f086c958be`;
+input SHA-256:
+`8b2a9f6cdb617feed1628f6a6b777137a95ce9bb349c376eaf87bda448eeeb1c`.
+Metadata run2554287d-8d4a-4639-95a9-fcb9ef930ce7 retains102/141,
+93 Passed/nine exclusions,471 proof files; namespace418.067 seconds, cleanup
+222.002 ms, admission free scratch48,133,484,544 bytes. Report SHA-256:
+`e948552f58887f48afd8e9198f26634fa7bed37b09e6020479ebb44982a42b94`;
+input SHA-256:
+`787db4f3f930b583ff45c12af4d57d7b40d018bd23a5cba4f00954accadacf48`.
+All proof bytes and exact replay bindings verify independently on the host
+using the separately retained trusted driver digests. Both seven-test explicit
+retained suites pass in12.009/6.514 seconds. The artifact post-release replay
+rejects InputChanged at removed inputs; metadata rejects OwnershipInvalid.
+Both actual held-record readers reject OwnershipInvalid. No dead authority is
+recreated. All three stopped probe namespaces/volumes are removed after retention
+and exact absence checks; the original failed owner stays Settling.
+
+The next origin-boundary increment captures an immutable in-memory evaluation
+while the original native owner remains Active. Original live replay retains
+only input/plan/results/witness/proof digests, not a qualification boolean.
+Capture binds that held source identity to exact readonly history bytes.
+Final publication after real release requires the same original evaluation
+identity and owner, exact ledger/history bindings and independently queried
+actual resource projection. Files, copied snapshots, optimistic cached resources
+or modeled owners cannot replace it; inactive command reads remain forbidden.
+The separate explicit post-release factory challenges copied snapshots, changed
+ledger/history, foreign inputs and cached resource claims, with a genuine
+unchanged positive before each of five cases. Neither factory enters default
+foundational discovery or establishes global qualification.
+
+The new red tests first fail with one missing-capture failure and two unsupported
+origin-parameter errors. The first combined347-test replay then finds six stale
+orchestration fixtures still modeling the native source as a string. Those
+fixtures now explicitly observe origin capture before recapture/settlement,
+pass the same held identity to publication, and require capture failure to
+prevent recapture/release/publication. Three focused tests pass in2.564 seconds;
+both complete evidence/SDK suites then pass347 tests in121.641 seconds.
+Catalog/SDK, diff and isolated-driver shell syntax checks pass. Fresh native
+confirmation of this snapshot increment remains pending.
 Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes753
 tests with zero failures/errors/expected failures/unexpected successes/
 unexpected diagnostic bytes,27 explicit native macOS skips and expected

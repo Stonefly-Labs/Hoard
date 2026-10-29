@@ -834,8 +834,13 @@ results, witnesses, proof maps and derived quality packets. Fresh exact893bcd9
 Linux execution confirms the artifact replay with103 cases/263 witnesses,
 623 verified proofs and genuine release; the same seven retained-control tests
 pass. In-executor origin challenges additionally require the original live
-owner and cannot run against modeled histories or external packets. Fresh
-execution of those new challenges is pending. The standalone
+owner and cannot run against modeled histories or external packets. Both
+exact99bc8e1 native categories pass those four families, including rehashed
+command/wrapper/parent substitution and genuine post-release rejection.
+The producer now also retains an immutable in-memory origin snapshot across
+cleanup, checking its original identity, exact ledger/history and actual released
+resource projection before publication. Modeled origins reject; fresh native
+confirmation of this snapshot increment is pending. The standalone
 qualification/aggregate CLI and all-output report/CI obligations remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs

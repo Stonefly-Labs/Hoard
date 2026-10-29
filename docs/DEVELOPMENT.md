@@ -7475,8 +7475,35 @@ then challenge exact partitions/scope identities, original transports, altered
 ledger/window/retry history, and a replaced command receipt with a correspondingly
 rehashed parent. Physical proof bytes are checked before/after each family and
 intentional mutations are restored without changing held command authority.
-Fresh execution of these new challenges is pending. Full qualification, report
-sanitation and standalone CLI/aggregate delivery remain unfinished.
+The first0317814 artifact control fails one test because its test harness uses
+the command-record hash field at the wrong level. Its original owner stays
+Settling and no report is produced; observations are retained. The corrected
+three-link mutation directly requires original held-record rejection and full
+replay rejection, restores all originals and verifies the held reader again.
+
+At exact99bc8e1 both native categories pass all four live families without
+failure/error/skip and reject reuse after genuine release. Artifact run
+5a43a120-ab7a-44ed-8c2c-35ab1890dca2 has103 cases/263 witnesses and623 verified
+proofs; metadata run2554287d-8d4a-4639-95a9-fcb9ef930ce7 has102/141 and471
+proofs. Each retains all earlier expected pass/exclusion counts, with zero
+Failed/Incomplete. Report SHA-256 values are respectively
+`d204c23c2a7f824921d4008acba13fa9e52bdee5ec37c20e150c45f086c958be`
+and `e948552f58887f48afd8e9198f26634fa7bed37b09e6020479ebb44982a42b94`.
+The same seven retained-control tests then pass in12.009/6.514 seconds.
+Both namespaces and exact volumes are removed after retention and absence checks;
+the failed earlier owner is not relabeled.
+
+The producer next retains an immutable in-memory native origin snapshot before
+completion-input recapture and cleanup. It binds the original source/owner,
+admitted inputs, live-replayed ledger and exact readonly history bytes. Final
+publication requires that same held snapshot identity and owner, matching
+results/witness/proof hashes, and independently queried actual released resources.
+A file, copied snapshot or modeled owner cannot replace it; no inactive
+execution-record reads are enabled. Five explicit post-release tests challenge
+snapshot copies, ledger/history substitution, cached resources and foreign inputs.
+Modeled admission/report rejection and both complete evidence/SDK suites pass;
+fresh native execution of this snapshot increment is pending. Full qualification,
+report sanitation and standalone CLI/aggregate delivery remain unfinished.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/

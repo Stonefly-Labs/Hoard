@@ -3292,10 +3292,12 @@ class CategoryRuntimeHistory:
                 (self.proofs, replay.proofs), (self.quality_proofs, replay.quality_proofs)):
             if original != reconstructed:
                 raise ConformanceError("ProofMismatch")
-        return MappingProxyType({
+        projection = MappingProxyType({
             "inputsSha256": digest(self._inputs), "planSha256": digest(plan),
             "resultsSha256": digest(replay.results()), "witnessesSha256": digest(replay.witnesses),
             "proofsSha256": digest(replay.proofs)})
+        self._native_sources.retain_category_replay(self, projection)
+        return projection
 
     def _finish_joint(self, *, transports, ended):
         plan = self.joint_partitions()
