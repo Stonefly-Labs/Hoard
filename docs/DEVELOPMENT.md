@@ -7761,6 +7761,37 @@ test_conformance_sdk_checks -q` executes157 tests in28.968 seconds with zero
 failures/errors/skips. Full tooling and a new native composition observation
 for this subsequent source change remain pending.
 
+Fresh exact6cceb83 native composition now completes genuine historical
+preparation:45 borrowed invocations,1314 sealed files and original successful
+parent output hashes agree with the retained version2 seal/result. The first
+pure CP runtime command then stops at `UnknownDiagnostic` before managed test
+evidence. The namespace exits after100.629 seconds; actual Released cleanup
+takes115.625 ms with zero children/groups. A distinct modified-observer
+diagnosis identifies the same97-byte SDK advisory/hash recorded above, now
+through `project_test_line`; it does not establish original-wrapper success.
+The test projector now shares only that exact literal with the build projector,
+while altered/private/multiline variants remain rejected.
+
+The original failed owned tree has1563 files. Plain/one-level-base64 inspection
+finds180 private-root-bearing files, all in its non-transient build `snapshot`;
+none are in `proofs`, `diagnostics` or other namespaces. This is an actual
+failed sanitation observation, not a clean tree or successful composition
+report. The original failed tree remains private diagnostic evidence, not an
+upload candidate. Composition and mutation snapshots now explicitly opt into
+owned `stores` through the original descriptor, preserving source and command
+hash checks before real cleanup. Other snapshot callers are unchanged.
+The separate diagnosis also actually Released with zero children/groups.
+Both exact stopped namespaces/volumes are removed and absence is verified.
+The exact seven-module command extending the six-module command above with
+`test_conformance_sdk_checks` executes321 tests in42.807 seconds, zero failures/
+errors and26 native macOS skips. The new native-only canary exercises generated
+snapshot metadata, actual input binding and real release; its Linux execution,
+and fresh full composition remain pending. Corrected frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` executes769 tests,
+zero failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,29 explicit native macOS skips and expected non-qualifying exit2.
+SDK catalog and diff checks pass.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

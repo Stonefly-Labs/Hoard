@@ -35,6 +35,8 @@ MAX_PROCESSES = 256
 PIDFD_SIGNAL_PROCESS_GROUP = 4
 # Synthetic hosts consume explicit immutable inputs, not framework appsettings reload.
 FIXTURE_HOST_ENVIRONMENT = MappingProxyType({"DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE": "false"})
+SDK_WORKLOAD_NOTICE = ('An issue was encountered verifying workloads. For more information, '
+                       'run "dotnet workload update".')
 
 
 def single_writer(operation):
@@ -283,8 +285,7 @@ def project_build_line(line):
     if text == "Build FAILED.":
         return MappingProxyType({"event": "build", "code": "CommandFailed", "value": 0})
     if (text in ("Build succeeded.", "Pack succeeded.", "Determining projects to restore...",
-                 "All projects are up-to-date for restore.",
-                 'An issue was encountered verifying workloads. For more information, run "dotnet workload update".')
+                 "All projects are up-to-date for restore.", SDK_WORKLOAD_NOTICE)
             or re.fullmatch(r"\d+ Warning\(s\)", text) or re.fullmatch(r"\d+ Error\(s\)", text)
             or re.fullmatch(r"Time Elapsed \d{2}:\d{2}:\d{2}(?:\.\d+)?", text)
             or re.fullmatch(r"Restored .+ \([0-9.]+ (?:ms|sec|min)\)\.", text)
@@ -311,7 +312,7 @@ def project_test_line(line):
         text = line.decode("utf-8", errors="strict").strip()
     except UnicodeError:
         raise ConformanceError("UnknownDiagnostic") from None
-    if (not text or text == "Starting test execution, please wait..."
+    if (not text or text in ("Starting test execution, please wait...", SDK_WORKLOAD_NOTICE)
             or re.fullmatch(r"VSTest version [0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4} \((?:x64|x86|arm64)\)", text)):
         return None
     try:

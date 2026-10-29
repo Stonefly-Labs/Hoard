@@ -1055,6 +1055,14 @@ execution settings containing private environment paths belong in `stores`;
 live command/settings validation and original settings hashes are unchanged.
 Pure CP settings remain retained and subject to their existing strict original
 byte replay. These distinctions do not close the all-output sanitation gate.
+Composition source/build and mutation snapshots also require transient
+placement: compiler/NuGet metadata may contain private paths even when source
+identities and all retained proof descriptors are safe. The opt-in snapshot
+role opens the original owned `stores` descriptor, retaining the existing
+create-new/no-symlink/original source pre/post checks. Source/command hashes
+remain bound while live; actual release removes these private build inputs.
+Other callers' original snapshot placement is unchanged and remains subject
+to the unfinished full all-output audit.
 
 Delivered category diagnostic JSON/JUnit/Markdown/CI projections use closed
 catalog identities, counts and hashes. They independently verify the retained

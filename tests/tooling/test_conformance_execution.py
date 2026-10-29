@@ -36,12 +36,15 @@ class ConformanceExecutionTests(unittest.TestCase):
         notice = (b'An issue was encountered verifying workloads. For more information, '
                   b'run "dotnet workload update".')
         self.assertIsNone(execution.project_build_line(notice))
+        self.assertIsNone(execution.project_test_line(notice))
         for line in (notice + b" private-canary", b"private-canary " + notice,
                      notice.replace(b"dotnet workload update", b"private-canary"),
                      notice + b"\nprivate-canary"):
             with self.subTest(line_sha256=hashlib.sha256(line).hexdigest()):
                 with self.assertRaisesRegex(ConformanceError, "^UnknownDiagnostic$"):
                     execution.project_build_line(line)
+                with self.assertRaisesRegex(ConformanceError, "^UnknownDiagnostic$"):
+                    execution.project_test_line(line)
         failure = execution.project_build_line(b"fixture.cs(1,1): error CS1000: private-canary")
         self.assertEqual(dict(failure), {"event": "build", "code": "CommandFailed", "value": 1000})
         for exit_code in (0, 1):

@@ -444,7 +444,8 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     from conformance_inherited import verify_discovery_materials, verify_discovery_mutation_membership
     materials = verify_discovery_materials(
         run.root, controllers["phases"]["discovery"], root / "performance/performance.json", run.run_id)
-    mutation_source, mutation_sources = evidence.snapshot_sources(repository, run, name="inherited-mutation-source")
+    mutation_source, mutation_sources = evidence.snapshot_sources(
+        repository, run, name="inherited-mutation-source", transient=True)
     if dict(mutation_sources) != dict(sources):
         raise evidence.ConformanceError("InputChanged")
     mutation_driver = mutation_source / Path(DISCOVERY_PROJECT).parent / "bin/Release/net10.0"
@@ -1042,7 +1043,7 @@ def execute(repository, destination):
     try:
         (run.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
         (run.root / "cache/.local").chmod(0o700)
-        source, sources = evidence.snapshot_sources(repository, run)
+        source, sources = evidence.snapshot_sources(repository, run, transient=True)
         print(json.dumps({"qualification": False, "phase": "inherited-historical-preparation"}), flush=True)
         baseline_seal, historical_parent, historical_invocations = _controller_phase(
             run, repository, source, "historical")

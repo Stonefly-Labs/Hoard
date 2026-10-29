@@ -1356,14 +1356,16 @@ def source_identity(root, *, ci_revision=None):
     return MappingProxyType({"sourceRevision": revision, "sourceState": state})
 
 
-def snapshot_sources(root, owned_run, *, name="snapshot", manifest=None):
+def snapshot_sources(root, owned_run, *, name="snapshot", manifest=None, transient=False):
     name = stable_id(name)
+    if type(transient) is not bool:
+        raise ConformanceError("EvidenceSchemaInvalid")
     before = source_manifest(root) if manifest is None else _hash_map(manifest)
     if manifest is not None and dict(input_manifest(root, list(before))) != dict(before):
         raise ConformanceError("InputChanged")
     owned_run._check_ledger()
-    snapshot = owned_run.root / name
-    owner = owned_run._root_descriptor()
+    snapshot = owned_run.root / "stores" / name if transient else owned_run.root / name
+    owner = owned_run._directory_descriptor("stores") if transient else owned_run._root_descriptor()
     try:
         os.mkdir(name, mode=0o700, dir_fd=owner)
         directory = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=owner)

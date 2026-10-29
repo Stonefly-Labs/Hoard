@@ -210,6 +210,40 @@ class ConformanceSanitationTests(unittest.TestCase):
         self.assertFalse(settings.exists())
         self.assert_clean(run.root, evidence.canonical_bytes(run.resource_projection()))
 
+    @unittest.skipUnless(execution.native_execution_supported(), "Build snapshot settlement requires native Linux.")
+    def test_build_snapshot_private_metadata_is_transient_without_weakening_source_binding(self):
+        run = execution.OwnedRun.allocate(self.parent / "evidence", ROOT, profile="harness")
+        author = self.parent / "author"
+        author.mkdir(mode=0o700)
+        project = author / "Fixture.csproj"
+        project.write_bytes(b"<Project/>")
+        original = {"Fixture.csproj": evidence.file_sha256(project)}
+        snapshot, files = evidence.snapshot_sources(
+            author, run, name="composition-source", manifest=original, transient=True)
+        self.assertEqual(snapshot.parent, run.root / "stores")
+        self.assertEqual(dict(files), original)
+        evidence.verify_snapshot(snapshot, original)
+        metadata = snapshot / "obj/project.assets.json"
+        metadata.parent.mkdir(mode=0o700)
+        payload = b";".join((*self.canaries, os.fsencode(run.root)))
+        raw = evidence.canonical_bytes({"path": payload.decode(), "encoded": base64.b64encode(payload).decode()})
+        metadata.write_bytes(raw)
+        metadata.chmod(0o400)
+        relative = metadata.relative_to(run.root).as_posix()
+        observed = run.command(
+            [sys.executable, "-I", "-S", "-c",
+             "import pathlib,sys;pathlib.Path(sys.argv[1]).read_bytes()", relative],
+            cwd=run.root, record_execution=True, execution_inputs=(relative,))
+        self.assertEqual(observed.exit_code, 0)
+        record = evidence.load_json(run.read_execution_record(run.command_sequence))
+        self.assertEqual(record["inputFiles"], {relative: hashlib.sha256(raw).hexdigest()})
+        self.assertEqual(metadata.read_bytes(), raw)
+        run.transition("Settling")
+        run.release()
+        self.assertEqual(run.state, "Released")
+        self.assertFalse(snapshot.exists())
+        self.assert_clean(run.root, evidence.canonical_bytes(run.resource_projection()))
+
     @unittest.skipUnless(execution.native_execution_supported(), "All-output flood inspection requires native Linux.")
     def test_output_flood_is_incomplete_without_spooling_or_truncating_into_success(self):
         run = execution.OwnedRun.allocate(self.parent / "evidence", ROOT, profile="harness")

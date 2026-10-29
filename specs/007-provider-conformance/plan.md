@@ -3239,6 +3239,58 @@ errors/skips. SDK catalog and diff checks pass. Full tooling and fresh native
 composition/all-output validation for these new bytes remain pending.
 T068--T086 and implement/running remain unchanged.
 
+### Native runtime advisory and transient build snapshots
+
+The fresh exact6cceb83 immutable bundle/genuine-main native attempt is distinct
+from both earlier failures. It completes actual historical preparation with45
+borrowed invocations and1314 sealed files. Original successful parent output
+hashes agree with the retained version2 baseline/result. It then fails at the
+first pure CP runtime command, sequence61, with `UnknownDiagnostic`; no managed
+CP report, inherited runtime, post-release report replay or29/2 controls pass.
+Namespace elapsed100.629 seconds, four CPUs/6 GiB/512 PIDs, UID10001, pinned SDK
+image and btrfs. Admission scratch is36,777,975,808 bytes. Actual cleanup is
+115.625 ms, Released with zero children/groups and stores/feed/cache absent.
+
+A separate modified-observer diagnosis at the same frozen source classifies
+only the actual rejected test line's fixed role/length/hash. It is the same97
+bytes and SHA-256
+`9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`
+as the earlier restore advisory, now rejected by the distinct test projector.
+The exact-message regression first fails there. Build and test projectors now
+share only that literal; no unknown text, changed variants, failed exits or
+workload update/install are authorized. The diagnosis's altered observer/parent
+argv is not original-wrapper qualification evidence. It separately Released
+with zero children/groups and133.868 ms cleanup.
+
+All1563 files in the original failed retained tree are inspected in plain and
+one-level-base64 values. The check fails:180 private-root-bearing files all
+belong to the original build `snapshot`, with zero in proofs/diagnostics/other
+namespaces. Keep that original failed tree private; it is not a safe upload
+candidate or successful all-output observation. Composition source and mutation
+snapshots now opt into descriptor-bound original owned `stores`, preserving
+create-new/no-symlink/source pre/post verification and live command input hashes
+until real release removes generated private build metadata. Other snapshot
+callers/default placement are unchanged, not silently called sanitized.
+
+The exact stopped original namespace/volume
+`939e60798ec2efff9eb788379ba04c508ec85352d733683c3c972412fde990fc`
+and separate diagnosis volume
+`f703a9e2753dda5b1baff1ed455b1db004a4a74f0b6732b39eeb0752edea189a`
+are removed after actual Released verification, with absence checked.
+Safe original receipts/closed diagnosis, original failed bytes and immutable
+drivers/bundle remain retained. The seven-module regression
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_execution
+test_conformance_legacy test_conformance_inherited test_conformance_sanitation
+test_conformance_ci test_conformance_composition test_conformance_sdk_checks -q`
+executes321 tests in42.807 seconds, zero failures/errors and26 native macOS skips.
+The new native-only snapshot canary verifies live source/input binding and real
+settlement; its actual Linux execution and new complete native composition
+attempt remain pending. Corrected frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` executes769 tests,
+zero failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,29 explicit native macOS skips and expected non-qualifying exit2.
+SDK catalog and diff checks pass. No task/qualification gate closes.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
