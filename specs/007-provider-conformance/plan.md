@@ -3767,6 +3767,31 @@ documents are unaffected. Fresh native publication and unresolved CI failures/
 budget limits remain outstanding. T068--T086, reviewer checklists and the
 implement/running checkpoint are unchanged.
 
+### Original closed proof rejection locations
+
+The new metadata trace identifies only the outer `proof_manifest` normalization
+line. The bounded static-source failure projector cannot recover whether an
+already closed `ProofMismatch` came from a size/time/identity/entry guard.
+Proof walking now rethrows that same closed exception unchanged, preserving
+its original guard location. Other evidence errors and filesystem exceptions
+still normalize to `ProofMismatch` without raw diagnostics. No proof byte/file/
+depth/entry/time limit, descriptor check or no-link policy is raised or relaxed.
+
+The over-size guard regression first loses its original `visit` frame. It now
+retains only allowlisted source/line output, and separate injected evidence/
+filesystem errors still produce exactly the original normalized code.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence.ConformanceInputTests test_conformance_cli
+test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_explicit_runtime_runner_rechecks_frozen_sdk_closure_and_rejects_missing_pins
+test_conformance_sdk_checks.SdkDiagnosticTests.test_category_failure_locations_are_bounded_static_source_roles_only`
+passes53 tests in3.766 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass. README and DEVELOPMENT describe the failure-only
+behavior; other guides/contracts/examples/product/architecture/ADR/diagrams/
+governance/backlog/predecessor/IaC/release/UI artifacts are unaffected.
+The cause of the earlier Linux runner capture failure remains unproven.
+T068--T086, checklists and implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

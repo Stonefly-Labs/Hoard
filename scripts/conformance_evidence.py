@@ -1548,7 +1548,11 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None):
                 raise ConformanceError("ProofMismatch")
         finally:
             os.close(root)
-    except (OSError, ConformanceError):
+    except ConformanceError as error:
+        if str(error) == "ProofMismatch":
+            raise
+        raise ConformanceError("ProofMismatch") from None
+    except OSError:
         raise ConformanceError("ProofMismatch") from None
     if not files:
         raise ConformanceError("ProofMismatch")

@@ -8477,6 +8477,15 @@ is cancelled; preparation, compatibility and artifacts pass. Metadata fails
 earlier at original SDK runner proof capture, not the repaired inventory reader;
 its cause remains unproven. No final regression or feature gate closes.
 
+Proof inventory rejection now preserves the original closed `ProofMismatch`
+guard's traceback for the existing static-source projection. It no longer
+collapses every such rejection to the outer normalization line. Other evidence
+errors and filesystem exceptions still normalize to `ProofMismatch`, without
+raw text. The five-second/256 MiB/file/depth/entry limits, descriptor and
+no-symlink guards are unchanged. The focused input/CLI/sanitation/SDK runner
+selection passes53 tests with four native-only skips. This enables precise
+future SDK capture diagnosis, not a claimed explanation or successful retry.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

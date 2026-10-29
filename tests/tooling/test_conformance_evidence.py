@@ -1810,6 +1810,33 @@ class ConformanceInputTests(unittest.TestCase):
         with self.assertRaises(evidence.ConformanceError):
             evidence.proof_manifest(actual)
 
+    def test_proof_walk_preserves_closed_guard_locations_without_private_diagnostics(self):
+        from conformance_sdk_checks import _category_failure_locations
+
+        actual = self.parent / "private-proof-canary"
+        actual.mkdir()
+        (actual / "proof.json").write_bytes(b"{}")
+        with mock.patch.object(evidence, "MAX_PROOF_BYTES", 1):
+            try:
+                evidence.proof_manifest(actual)
+            except evidence.ConformanceError as error:
+                self.assertEqual(str(error), "ProofMismatch")
+                names, trace = [], error.__traceback__
+                while trace is not None:
+                    names.append(trace.tb_frame.f_code.co_name)
+                    trace = trace.tb_next
+                self.assertIn("visit", names)
+                locations = _category_failure_locations(error)
+                self.assertTrue(locations)
+                self.assertTrue(all(row["source"] == "scripts/conformance_evidence.py" for row in locations))
+                self.assertNotIn("private-proof-canary", json.dumps(locations))
+            else:
+                self.fail("An oversized proof must reject.")
+        for error in (evidence.ConformanceError("InputChanged"), OSError("private-proof-canary")):
+            with self.subTest(error=type(error).__name__), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^ProofMismatch$"):
+                evidence.proof_manifest(actual, include_file=mock.Mock(side_effect=error))
+
     def test_snapshot_binds_actual_source_bytes_and_rejects_changed_and_extra_inputs(self):
         from conformance_execution import OwnedRun
         run = OwnedRun.allocate(self.parent / "run", self.repo, profile="harness")
