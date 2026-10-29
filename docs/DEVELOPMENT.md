@@ -8455,6 +8455,28 @@ origin, settlement or qualification check is bypassed. The CLI/composition/
 sanitation and two existing SDK diagnostic regressions pass51 tests with four
 explicit native-only skips. A new source-bound native observation is pending.
 
+At1f7db23, native SDK diagnostics reach qualification report publication, then
+fail at create-new diagnostic output: diagnostic and qualification-mode reports
+use the same four presentation filenames. A two-mode publication regression
+reproduces `FileExistsError`. Qualification-mode presentation now uses
+`category-<profile>-qualification-*`; ordinary diagnostic filenames remain
+unchanged. Both modes retain separate readonly JSON/JUnit/Markdown/CI summary
+outputs, still explicitly nonqualifying. The corrected CLI/CI/sanitation and
+original complete-catalog/proof-replay selection passes44 tests with four native
+macOS skips; original byte/hash and exclusive-create semantics are unchanged.
+
+Capacity subsequently recovers externally to126 GiB; no unrelated user data is
+removed. The original frozen `python3 scripts/conformance_unit_checks.py
+--all-tooling` at1f7db23 completes784 tests, zero failures/errors/expected failures/
+unexpected successes/diagnostic bytes,29 explicit native-only macOS skips and
+expected incomplete exit2. The earlier disk-full/empty-result failure remains
+a distinct failed observation. Latest native composition instead stops in its
+unchanged600-second tooling supervisor:227/784 tests in637954.396 ms, zero
+failures/errors/skips, incomplete rather than qualification. Native foundations
+is cancelled; preparation, compatibility and artifacts pass. Metadata fails
+earlier at original SDK runner proof capture, not the repaired inventory reader;
+its cause remains unproven. No final regression or feature gate closes.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

@@ -995,6 +995,12 @@ baseline artifacts are a different explicit entity, not current-run evidence.
 
 ### Delivered offline correspondence inspection
 
+Category presentation filenames preserve both execution modes: ordinary
+diagnostic files use `category-<profile>-diagnostic.{json,junit.xml,md}` and
+`category-<profile>-ci-summary.md`; qualification-mode diagnostics add
+`-qualification` after the profile. Both are explicitly nonqualifying.
+Exclusive-create publication must not overwrite one mode with the other.
+
 `--verify <report> --coordinator <trusted-manifest>` and
 `--aggregate <directory> --coordinator <trusted-manifest>` now inspect retained
 correspondence. They do not attest runtime origin or qualify a profile; valid

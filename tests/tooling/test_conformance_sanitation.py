@@ -117,6 +117,30 @@ class ConformanceSanitationTests(unittest.TestCase):
                        expected_report_sha256=expected)
         self.assertEqual(list(self.parent.iterdir()), [])
 
+    def test_diagnostic_and_qualification_mode_outputs_publish_without_overwriting_either_attempt(self):
+        from conformance_sdk_checks import write_new
+
+        published = {}
+        for mode in ("diagnostic", "qualification"):
+            report = self.diagnostic_presentation_fixture()
+            report["inputs"]["mode"] = mode
+            hashed_inputs = evidence.digest(report["inputs"])
+            report["witnesses"][0]["inputSha256"] = hashed_inputs
+            report["postInputSha256"] = hashed_inputs
+            raw = evidence.canonical_bytes(report)
+            expected = hashlib.sha256(raw).hexdigest()
+            with mock.patch.object(evidence, "verify_retained_category_report", return_value={
+                    "qualification": False, "reportSha256": expected}):
+                outputs = evidence.render_category_diagnostics(
+                    self.parent, raw, expected_inputs=report["inputs"], expected_report_sha256=expected)
+            for name, contents in outputs.items():
+                write_new(self.parent / name, contents)
+                published[name] = contents
+            self.assertEqual(evidence.proof_manifest(self.parent), {
+                name: hashlib.sha256(contents).hexdigest() for name, contents in published.items()})
+            self.assert_clean(self.parent, *outputs.values())
+        self.assertEqual(len(published), 8)
+
     def test_retained_composition_settings_keep_private_paths_only_in_held_command_arguments(self):
         import conformance_composition_checks as composition
         from conformance_sources import runtime_arguments

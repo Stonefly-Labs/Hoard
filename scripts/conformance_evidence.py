@@ -1075,6 +1075,8 @@ def render_category_diagnostics(root, report_data, *, expected_inputs, expected_
         "Only the catalogued fixture slots and frozen exclusions are described. "
         "No production, external-service, protocol, identity or HA support is inferred.\n").encode("utf-8")
     prefix = "category-" + profile
+    if inputs["mode"] == "qualification":
+        prefix += "-qualification"
     outputs = {
         prefix + "-diagnostic.json": canonical_bytes(summary),
         prefix + "-diagnostic.junit.xml": ET.tostring(suite, encoding="utf-8", xml_declaration=True),

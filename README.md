@@ -951,6 +951,10 @@ The managed metadata inventory verifier now matches the producer's owned
 Eleven focused inventory/recovery tests pass; fresh native CI remains required.
 Public native failures also retain bounded known-source locations and validated
 runtime counts/test hashes, never raw provider messages or private paths.
+Category presentation files now separate diagnostic and qualification-mode
+attempts instead of colliding at create-new publication. The recovered-capacity
+local tooling replay observes784 tests without failures/errors, with29 explicit
+native-only skips; native CI still has unresolved failures and budget limits.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

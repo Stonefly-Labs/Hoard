@@ -3713,6 +3713,60 @@ product/architecture/ADR/diagrams/governance/backlog/predecessor/IaC/release/UI
 documents are unaffected. Fresh native observation remains pending.
 No T068--T086, reviewer checklist or implement/running marker advances.
 
+### Current native outcomes and mode-separated presentation publication
+
+Latest1f7db23 native composition run40967296040/job123783271389 reaches the
+original inherited tooling supervisor, then records `EvidenceIncomplete`:
+227/784 observations, zero failures/errors/skips/expected failures/unexpected
+successes/diagnostic bytes,637954.396 ms against the unchanged600-second ceiling.
+No completed composition summary or full native tooling pass is inferred.
+The discovered227th test is the actual public metadata contributor runtime
+regression; that ordinal identifies the stopping boundary, not the sole cause
+or duration of the entire over-budget execution.
+
+Foundations run40967296107 passes preparation, compatibility and artifacts,
+cancels native foundations, and fails metadata and SDK diagnostics. Metadata's
+admitted trace stops in `runtime_runner_material`/`vstest_runner_inputs`/
+`proof_manifest` before runtime input capture; this is a new earlier
+`ProofMismatch`, not evidence against or successful exercise of the inventory
+reader repair. Its cause is not proven. The local actual selected runner closure
+separately measures367 files/88,618,492 bytes in165.453/75.587 ms; that observation
+does not explain or replace the failed Linux capture.
+
+SDK diagnostics reach qualification report publication, then reject at
+exclusive-create presentation output. Diagnostic and qualification-mode category
+reports previously return the same four filenames. A two-mode original
+`write_new` publication regression reproduces `FileExistsError`, without
+inventing native runtime evidence. Qualification-mode output filenames now add
+`-qualification` after the profile; ordinary diagnostic filenames are unchanged.
+Both readonly attempts survive, with their original report hashes and no
+overwrites; verification, applicability and qualification remain unchanged.
+
+The initial393-test evidence/SDK/CI/CLI/sanitation run has one presentation
+filename expectation failure and four native-only skips. Preserving ordinary
+diagnostic names corrects that compatibility issue. The corrected exact command
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sanitation test_conformance_cli test_conformance_ci
+test_conformance_evidence.ConformanceRuntimeIngestionTests.test_category_report_inspection_requires_all_catalog_keys_and_each_passed_parameter
+test_conformance_evidence.ConformanceRuntimeIngestionTests.test_category_report_inspection_rehashes_real_files_and_cannot_promote_model_origin`
+passes44 tests in7.032 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass.
+
+Before that publication change, available host scratch recovers externally
+to126 GiB. No unrelated data is removed. Frozen original
+`python3 scripts/conformance_unit_checks.py --all-tooling` at1f7db23 completes
+784 tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,29 explicit native-only macOS skips and expected
+nonqualifying exit2. The original safe packet is retained; the earlier disk-full
+exit120/empty packet remains a distinct unsuccessful observation.
+
+README, DEVELOPMENT and the evidence contract document current outcomes and
+the presentation namespace. Provider APIs, commands, remaining guides/examples,
+product/architecture/ADR/diagrams/governance/backlog/predecessor/IaC/release/UI
+documents are unaffected. Fresh native publication and unresolved CI failures/
+budget limits remain outstanding. T068--T086, reviewer checklists and the
+implement/running checkpoint are unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
