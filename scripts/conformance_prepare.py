@@ -153,12 +153,16 @@ def publish_locks(repository, sources, locks):
                         pass
 
 
-def _settle(run):
+def _settle(run, *, release=False):
     if run.state in ("Active", "Allocated"):
         run.transition("Settling")
     if run.state == "Settling" and run.live_children():
         run.transition("Retained")
         raise evidence.ConformanceError("CleanupIncomplete")
+    if run.state not in ("Settling", "Released"):
+        raise evidence.ConformanceError("CleanupIncomplete")
+    if release and run.state == "Settling":
+        run.release()
 
 
 def execute(repository, destination):
@@ -172,14 +176,14 @@ def execute(repository, destination):
         seal = baselines.prepare(repository, run, prepare_local_archives=True)
         seal_sha = evidence.file_sha256(seal)
         baselines.verify_prepared_baselines(run.root, seal_sha)
-        source, sources = evidence.snapshot_sources(repository, run)
+        source, sources = evidence.snapshot_sources(repository, run, transient=True)
         locks, packages, records = _graph(run, source, sources, update=True)
         _settle(run)
-        replay = OwnedRun.allocate(run.root / "stores/locked-replay", repository, profile="baseline")
+        replay = OwnedRun.allocate(run.root / "locked-replay", repository, profile="baseline")
         replay.deadline = min(replay.deadline, run.deadline)
         (replay.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
         (replay.root / "cache/.local").chmod(0o700)
-        fresh, fresh_sources = evidence.snapshot_sources(repository, replay)
+        fresh, fresh_sources = evidence.snapshot_sources(repository, replay, transient=True)
         if dict(fresh_sources) != dict(sources):
             raise evidence.ConformanceError("InputChanged")
         _write_locks(fresh, locks)
@@ -195,18 +199,32 @@ def execute(repository, destination):
             "packages": dict(packages), "lockedReplay": True,
             "prerequisiteLockDerivations": records, "replayPrerequisiteLockDerivations": replay_records,
         }
-        with (run.root / "proofs/lock-preparation.json").open("xb") as output:
-            output.write(evidence.canonical_bytes(summary) + b"\n")
-        publish_locks(repository, sources, locks)
-        print(json.dumps({"mode": "preparation", "qualification": False, "code": "None",
-                          "locks": len(locks), "packages": len(packages), "lockedReplay": True,
-                          "baselineSha256": seal_sha,
-                          "proofSha256": evidence.file_sha256(run.root / "proofs/lock-preparation.json")}))
-        return 0
     finally:
-        for owned in (replay, run):
-            if owned is not None:
-                _settle(owned)
+        try:
+            if replay is not None:
+                _settle(replay, release=True)
+        finally:
+            if replay is not None and replay.state != "Released":
+                _settle(run)
+                if run.state == "Settling":
+                    run.transition("Retained")
+            else:
+                _settle(run, release=True)
+    summary["resources"] = [*run.resource_projection(), *replay.resource_projection()]
+    publish_locks(repository, sources, locks)
+    directory = run._directory_descriptor("proofs")
+    try:
+        descriptor = os.open("lock-preparation.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                             0o400, dir_fd=directory)
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(evidence.canonical_bytes(summary) + b"\n")
+    finally:
+        os.close(directory)
+    print(json.dumps({"mode": "preparation", "qualification": False, "code": "None",
+                      "locks": len(locks), "packages": len(packages), "lockedReplay": True,
+                      "baselineSha256": seal_sha,
+                      "proofSha256": evidence.file_sha256(run.root / "proofs/lock-preparation.json")}))
+    return 0
 
 
 class Arguments(argparse.ArgumentParser):

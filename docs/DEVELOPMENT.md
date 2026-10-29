@@ -7878,6 +7878,48 @@ Hosting format verification passes. The original failed proof remains failed;
 fresh native repeated-observer and original composition transport checks remain
 required. Public lifecycle contracts, module graph and architecture are unchanged.
 
+The unchanged distinct native lifecycle observer against frozen5e35310 then
+observes40 successive class executions with exit0 and no failure source frames.
+This is bounded regression diagnosis, not replacement of the original failed
+proof or original-observer full composition acceptance. Its exact stopped
+namespace/volume are removed after the completion marker is retained.
+
+The same frozen source's actual public metadata contributor passes76 parameters/
+86 origins, actual Released settlement, zero unexpected output and whole-owned
+tree plain/one-level-base64 private-root inspection. The complete319 original
+retained files include124 hash-named original runtime images and are preserved
+with their original manifests/ledgers. The subsequent public artifact unit
+observes one CLI packet instead of its expected summary plus incomplete packet
+and fails; the native guide does not execute. That attempt's default fixture
+cleanup did not preserve the failed artifact tree. A distinct diagnostic must
+retain the original closed error/tree before cleanup; no success or cause is
+inferred from the managed consumers.
+
+The distinct artifact observer, with its own original root, then completes118
+parameters/128 origins, all B0/B1/B2/B3/D0/D1 crash/recovery pairs, source/
+destination/native retention and measured268435456/4294967296-byte transfers.
+Its455 original retained files contain125 original runtime-image hashes and
+pass whole-tree plain/one-level-base64 private-root inspection. Actual Released
+cleanup is197.612 ms, zero children/groups. This new diagnostic does not explain
+or erase the earlier failed attempt and is not qualification; the guide and
+original-observer full composition are still pending.
+
+Lock preparation's candidate and fresh locked replay now both snapshot into
+owned stores. The replay's original owner/closed diagnostic root is kept under
+`locked-replay`, outside the parent's disposable stores, rather than deleting
+its final ledger. Both original owners must actually release before lock
+publication or success output. Failure to release a replay keeps the parent
+Retained too; graph failures still settle the owned work without publishing
+locks or a success-shaped proof. The final nonqualifying proof records actual
+resource projections. The focused modeled graph/original-owner release and
+sanitation selection, including parent and replay cleanup failures, passes13
+tests in0.743 seconds with four native macOS skips. The frozen full safe tooling
+run observes771 tests, zero failures/errors/expected failures/unexpected
+successes/diagnostic bytes, and29 native macOS skips; exit2/EvidenceIncomplete
+remains nonqualifying. Native locked
+graph execution and complete native preparation all-output inspection remain
+required.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

@@ -902,12 +902,22 @@ consumer workspaces likewise move into stores; readonly hash-named original
 runtime copies preserve guide inspection after release. Private-root-bearing
 images reject before copying. Source and generated symbol paths use separate
 explicit mappings with original PDB/source checksum verification. Actual managed
-metadata/artifact consumers pass; native contributor all-output and preparation
-workspace audits remain pending.
+metadata/artifact consumers pass; native artifact and preparation all-output
+audits remain pending.
 An independent native diagnostic reproduces the inherited readiness-cancellation
 owner race. Cancellation now marks the original linked probe before shutdown
 can compete, retaining asynchronous callback supervision;21 focused lifecycle
-tests and formatting pass. Fresh native replay remains required.
+tests and formatting pass. Fresh original-observer composition replay is required.
+Frozen5e35310 additionally passes40 bounded native lifecycle class executions.
+Its public metadata contributor passes76 parameters/86 origins and a complete
+319-file retained-tree private-root scan with124 original runtime image copies.
+The first artifact public attempt fails before its summary; a distinct
+observation passes118 parameters, six real crash/recovery pairs, three retention
+scenarios, actual256 MiB/4 GiB transfers and a455-file private-root scan. That
+does not erase the first failure or qualify a profile; the guide remains pending.
+Lock preparation now
+uses transient candidate/replay inputs and publishes only after both original
+owners release; failed child cleanup retains the parent as well.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

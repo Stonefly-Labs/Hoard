@@ -3419,6 +3419,62 @@ and public lifecycle APIs remain unchanged.
 -v quiet` passes. Fresh native original-observer composition and repeated
 diagnostic reproduction remain pending; no inherited gate or task is closed.
 
+The unchanged private diagnostic observer of frozen5e35310 subsequently observes
+40 successive native class executions, all exit0 with no failure frames.
+Completion is retained; the exact stopped namespace and volume
+`f6b140e4367f7053d0dce8eb4c8d5fcdaf632a6b2839eb2dece46eb4d01b5d21`
+are removed afterward. Original composition transport acceptance remains open.
+
+### Frozen5e35310 native contributor retention observations
+
+The public metadata contributor test passes76 parameters/86 session origins,
+zero skips/errors/unexpected bytes, Released ownership and whole-retained-tree
+plain/one-level-base64 private-root inspection. The319 original files include
+124 original runtime-image hashes. Its retained manifest digest is
+`db6188fc7a4da2272d63c6e62de6152150d9ee9d22873d6287d43c28854683e7`;
+run `d2463b13-3a8f-4c45-9f09-6da17561bd47`. Original bytes/ledgers are retained.
+The subsequent actual public artifact attempt fails at the expected two-packet
+summary boundary with one packet, not success. Its default fixture cleanup does
+not preserve the failed artifact tree; no native completion or cause is
+inferred. The guide has not run. A separate observer retaining the original
+closed error/tree is required. These finite observations are not qualification.
+
+The distinct observer of the same frozen source then succeeds for run
+`da965850-b7b8-4e58-8dc3-77463a4fb6c1`:118 parameters/128 origins, six actual
+crash/recovery pairs, source/destination/native retention, and actual measured
+268435456/4294967296-byte transfers. All455 original retained files pass plain/
+one-level-base64 private-root inspection and retain125 original runtime images.
+Manifest digest:
+`0c1f565b0f1be63ce4d5cf1139cc09f278f06f40b4efd03a2aba8563946af404`.
+Actual Released cleanup is197.612 ms, zero children/groups. The closed
+EvidenceIncomplete CLI packet is expected for this successful diagnostic.
+The new run does not explain/erase the earlier failure; neither is full
+qualification. Original bytes/ledgers are retained; guide replay remains open.
+
+### Lock preparation release-before-publication boundary
+
+The candidate and fresh replay now use `stores/snapshot`. The replay's original
+owner/closed diagnostic root is retained at `locked-replay`, rather than inside
+parent stores where final cleanup would erase it. Original replay release must
+precede parent release; only after both succeed may lock publication and public
+success occur. Replay cleanup failure keeps the parent Retained, preserves
+private inputs and cannot publish locks or a success-shaped preparation proof.
+Graph errors still propagate after actual settlement. The final proof contains
+actual original-owner resource projections and remains nonqualifying.
+
+The first test setup incorrectly placed an owned root inside the repository and
+was rejected at admission; that is not the behavioral red. Corrected outside-
+repository owners reproduce Settling/Settling publication, nontransient source
+placement and missing failure retention against the old implementation.
+The corrected focused preparation/publication plus sanitation command, including
+both parent and replay cleanup failures, passes13 tests in0.743 seconds, with
+four native macOS skips and zero failures/errors. Frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` observes771 tests,
+zero failures/errors/expected failures/unexpected successes/diagnostic bytes
+and29 native macOS skips. Exit2/EvidenceIncomplete remains nonqualifying.
+Native preparation graph/full-tree inspection remains pending. T068--T086 and
+implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

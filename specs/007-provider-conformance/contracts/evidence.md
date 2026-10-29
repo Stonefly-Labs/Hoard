@@ -1073,7 +1073,13 @@ origin attestations. Generated symbols use the explicit `/_generated/` prefix,
 admitted only alongside `/_/` source mapping; every document must still resolve
 under its original disjoint owned source/generated root and match physical
 bytes, compiler observations and verified PE/PDB identity/checksum.
-Preparation workspaces and full native all-output validation remain open.
+Full native all-output validation remains open.
+Candidate lock preparation and its fresh locked replay now also use transient
+stores. The replay retains its original ownership/closed diagnostics under
+`locked-replay`; both owners must actually reach Released before publishing
+locks or success output. A retained replay forces its parent Retained, and the
+preparation proof includes actual post-release resource projections. Preparation
+remains nonqualifying; native all-output execution is still required.
 Discovery mutation observations likewise publish projection and input
 descriptors relative to the owned root before persistence. Live verification
 hydrates only that private view; membership admission requires the exact

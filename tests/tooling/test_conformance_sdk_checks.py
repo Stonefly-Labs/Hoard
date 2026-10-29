@@ -6530,6 +6530,88 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(foreign.read_bytes(), b"untouched")
         self.assertFalse(tuple(self.directory.rglob(".conformance-lock-*.tmp")))
 
+    def test_lock_preparation_releases_both_original_owners_before_publication(self):
+        import conformance_prepare as preparation
+        from conformance_execution import OwnedRun
+
+        allocate_owner = OwnedRun.allocate
+        for defect in ("none", "graph", "replay-cleanup", "parent-cleanup"):
+            with self.subTest(defect=defect):
+                owners, snapshots, publications = [], [], []
+                temporary = tempfile.TemporaryDirectory(prefix="hoard-preparation-" + defect + "-")
+                self.addCleanup(temporary.cleanup)
+                destination = Path(temporary.name).resolve() / "run"
+
+                def allocate(path, repository, *, profile):
+                    owner = allocate_owner(path, repository, profile=profile)
+                    owners.append(owner)
+                    if (len(owners), defect) in ((2, "replay-cleanup"), (1, "parent-cleanup")):
+                        def fail_release():
+                            owner.transition("Retained")
+                            raise checks.evidence.ConformanceError("CleanupIncomplete")
+                        owner.release = fail_release
+                    return owner
+
+                def baseline(repository, owner, **options):
+                    seal = owner.root / "proofs/baselines.json"
+                    seal.write_bytes(b"modeled baseline")
+                    return seal
+
+                def snapshot(repository, owner, **options):
+                    snapshots.append(options)
+                    target = owner.root / ("stores/snapshot" if options.get("transient") else "snapshot")
+                    target.mkdir(parents=True)
+                    (target / "private-source").write_bytes(str(owner.root).encode())
+                    return target, {}
+
+                def graph(owner, source, sources, *, update):
+                    if defect == "graph" and not update:
+                        raise checks.evidence.ConformanceError("CommandFailed")
+                    return {}, {}, []
+
+                def publish(repository, sources, locks):
+                    self.assertEqual(tuple(owner.state for owner in owners), ("Released", "Released"))
+                    self.assertFalse(any((owner.root / role).exists() for owner in owners
+                                         for role in ("stores", "cache", "feed", "snapshot")))
+                    self.assertEqual(output.getvalue(), "")
+                    publications.append(locks)
+
+                with patch.object(preparation, "native_execution_supported", return_value=True), \
+                        patch.object(preparation.OwnedRun, "allocate", side_effect=allocate), \
+                        patch.object(preparation.baselines, "prepare", side_effect=baseline), \
+                        patch.object(preparation.baselines, "verify_prepared_baselines"), \
+                        patch.object(preparation.evidence, "snapshot_sources", side_effect=snapshot), \
+                        patch.object(preparation, "_write_locks"), \
+                        patch.object(preparation, "_graph", side_effect=graph), \
+                        patch.object(preparation, "publish_locks", side_effect=publish), \
+                        contextlib.redirect_stdout(io.StringIO()) as output:
+                    if defect == "none":
+                        self.assertEqual(preparation.execute(ROOT, destination), 0)
+                    else:
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError,
+                                                    "^CommandFailed$" if defect == "graph" else "^CleanupIncomplete$"):
+                            preparation.execute(ROOT, destination)
+                self.assertEqual(snapshots, [{"transient": True}, {"transient": True}])
+                self.assertEqual(owners[1].root, owners[0].root / "locked-replay")
+                self.assertTrue((owners[1].root / "ownership.json").is_file())
+                if defect == "replay-cleanup":
+                    self.assertEqual(tuple(owner.state for owner in owners), ("Retained", "Retained"))
+                    self.assertTrue((owners[1].root / "stores/snapshot/private-source").is_file())
+                elif defect == "parent-cleanup":
+                    self.assertEqual(tuple(owner.state for owner in owners), ("Retained", "Released"))
+                    self.assertTrue((owners[0].root / "stores/snapshot/private-source").is_file())
+                else:
+                    self.assertEqual(tuple(owner.state for owner in owners), ("Released", "Released"))
+                if defect == "none":
+                    summary = checks.evidence.load_json((destination / "proofs/lock-preparation.json").read_bytes())
+                    self.assertTrue(summary["resources"])
+                    self.assertTrue(all(resource["state"] == "Released" for resource in summary["resources"]))
+                    self.assertEqual(len(publications), 1)
+                    self.assertEqual(checks.evidence.load_json(output.getvalue().encode())["code"], "None")
+                else:
+                    self.assertEqual(publications, [])
+                    self.assertEqual(output.getvalue(), "")
+
 
 if __name__ == "__main__":
     unittest.main()
