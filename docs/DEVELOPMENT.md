@@ -7501,8 +7501,30 @@ results/witness/proof hashes, and independently queried actual released resource
 A file, copied snapshot or modeled owner cannot replace it; no inactive
 execution-record reads are enabled. Five explicit post-release tests challenge
 snapshot copies, ledger/history substitution, cached resources and foreign inputs.
-Modeled admission/report rejection and both complete evidence/SDK suites pass;
-fresh native execution of this snapshot increment is pending. Full qualification,
+Modeled admission/report rejection and both complete evidence/SDK suites pass.
+Exact3f34aca metadata run04be5029-dede-4be8-9295-65951ca15f98 confirms original
+capture, genuine release and all four live/five post-release binding tests,
+without failures/errors/skips. It retains102 cases/141 witnesses/471 proofs,
+93 Passed/nine exclusions, zero Failed/Incomplete, and cleanup229.880 ms.
+Report SHA-256:
+`29e25b7dd68738bcfcd932c30811060d21d327539c900ebef7443262d7595a70`.
+
+A distinct four-CPU artifact run at that source fails before origin capture:
+ObjectSemantics4-GiB command221 rejects UnknownDiagnostic after72.586 seconds
+with exit-9/Exited. Its original owner stays Settling with no children/groups;
+the failure is retained, unexplained and never relabeled. A separately labeled
+one-CPU diagnostic, with the same source, real transfer coverage and unchanged
+budgets, then confirms the complete artifact snapshot path and all nine binding
+families. Rund1f50147-51e3-41bd-b3d1-dc616ba10e86 retains103 cases/263 witnesses/
+623 proofs,99 Passed/four exclusions, zero Failed/Incomplete, and genuinely
+releases with561.821-ms cleanup. Report SHA-256:
+`aad278d45ed14d91d08fba64598eefa2bef3c54bfcaa45140d7706e9421b8e7e`.
+This contrast does not diagnose the earlier rejection, repair the four-CPU
+observation or establish CI/capacity qualification. Both successful packets pass
+independent host proof/replay checks and all seven retained controls in5.018/
+8.226 seconds, using separately retained trusted driver digests. All three exact
+stopped containers/volumes are removed after retention and absence checks.
+Full qualification,
 report sanitation and standalone CLI/aggregate delivery remain unfinished.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713

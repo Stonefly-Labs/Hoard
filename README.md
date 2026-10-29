@@ -839,8 +839,11 @@ exact99bc8e1 native categories pass those four families, including rehashed
 command/wrapper/parent substitution and genuine post-release rejection.
 The producer now also retains an immutable in-memory origin snapshot across
 cleanup, checking its original identity, exact ledger/history and actual released
-resource projection before publication. Modeled origins reject; fresh native
-confirmation of this snapshot increment is pending. The standalone
+resource projection before publication. Modeled origins reject. Exact3f34aca
+metadata and a separately labeled one-CPU artifact diagnostic pass all four
+live and five post-release binding families. The separate four-CPU artifact
+attempt fails UnknownDiagnostic during ObjectSemantics4-GiB transfer, before
+origin capture; that failure remains retained and unexplained. The standalone
 qualification/aggregate CLI and all-output report/CI obligations remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs

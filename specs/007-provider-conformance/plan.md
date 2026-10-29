@@ -2856,6 +2856,43 @@ prevent recapture/release/publication. Three focused tests pass in2.564 seconds;
 both complete evidence/SDK suites then pass347 tests in121.641 seconds.
 Catalog/SDK, diff and isolated-driver shell syntax checks pass. Fresh native
 confirmation of this snapshot increment remains pending.
+Exact3f34aca metadata run04be5029-dede-4be8-9295-65951ca15f98 subsequently
+confirms original capture and post-release publication, all four live families
+and all five released binding tests, with zero failures/errors/skips. It retains
+102 cases/141 witnesses/471 proofs,93 Passed/nine frozen exclusions and no
+Failed/Incomplete. Namespace466.875 seconds; admission free scratch48,068,493,312
+bytes; actual cleanup229.880 ms. Report SHA-256
+`29e25b7dd68738bcfcd932c30811060d21d327539c900ebef7443262d7595a70`;
+input SHA-256
+`62d0c20fa972c11359a77d6a317489b3c9a29868c25c767104c345703751ea82`.
+
+The separate four-CPU artifact run ca1ca178-aa5b-41c4-aa14-49e2cc61dad0 rejects
+UnknownDiagnostic at ObjectSemantics4-GiB command221 before origin capture.
+The actual held command records72,586.200 ms, exit-9, Exited; owner stays
+Settling with no children/groups and no category report. This failed history
+is retained without text whitelisting, relaxed budgets or an invented cause.
+A distinctly labeled one-CPU capacity diagnostic at the same exact source
+then confirms the full artifact snapshot path, all real256-MiB/4-GiB transfer
+pairs and all four live/five released binding families with zero failures/
+errors/skips. This is not default four-CPU or CI success and does not diagnose
+or erase the earlier failure. Rund1f50147-51e3-41bd-b3d1-dc616ba10e86 retains
+103 cases/263 witnesses/623 proofs,99 Passed/four exclusions and no Failed/
+Incomplete. Namespace512.161 seconds; admission free scratch50,301,968,384 bytes;
+genuine cleanup561.821 ms. Report SHA-256
+`aad278d45ed14d91d08fba64598eefa2bef3c54bfcaa45140d7706e9421b8e7e`;
+input SHA-256
+`c598bfcacef18cd72263f6d815532dce58ec359f28d9bdf9c15fb5d03bc4a86d`.
+
+Both positive original snapshot-producing reports pass independent host proof/
+input/plan/results/witness/registry checks against separately retained trusted
+driver digests. All seven retained-control tests then pass in5.018/8.226 seconds.
+The original released metadata record/full replay reject OwnershipInvalid;
+artifact's released full replay rejects InputChanged at removed inputs while
+its actual held reader rejects OwnershipInvalid. All three exact stopped
+snapshot namespaces/volumes are removed after retention and independent
+absence checks. Source-origin bridging is implemented for these finite native
+diagnostics; independent full qualification, all-output reports and five-profile
+CLI/CI still remain unfinished. No spec task/checklist/flow marker is advanced.
 Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes753
 tests with zero failures/errors/expected failures/unexpected successes/
 unexpected diagnostic bytes,27 explicit native macOS skips and expected
