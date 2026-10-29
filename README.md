@@ -830,8 +830,12 @@ report digest before any proof reads; a digest obtained only from the same
 artifact is not an origin anchor. Pinning a diagnostic never expands its scope.
 Native category execution additionally reconstructs its entire first-attempt
 ledger against the original live source reader before cleanup, comparing exact
-results, witnesses, proof maps and derived quality packets. This new replay has
-modeled negative coverage; fresh native confirmation is pending. The standalone
+results, witnesses, proof maps and derived quality packets. Fresh exact893bcd9
+Linux execution confirms the artifact replay with103 cases/263 witnesses,
+623 verified proofs and genuine release; the same seven retained-control tests
+pass. In-executor origin challenges additionally require the original live
+owner and cannot run against modeled histories or external packets. Fresh
+execution of those new challenges is pending. The standalone
 qualification/aggregate CLI and all-output report/CI obligations remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs

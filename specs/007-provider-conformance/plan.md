@@ -2768,8 +2768,38 @@ plan identity and diagnostic-mode rejection. The combined explicit metadata
 suite and packet-persistence selector pass eight tests in4.854 seconds; an
 initial command used a nonexistent SDK test-class name and failed at discovery,
 then the corrected exact selector passes. Catalog/SDK and diff checks pass.
-Fresh native replay confirmation
-is pending. T068..T086 remain unchecked, implement/running is preserved, and no
+Fresh exact893bcd9 artifact execution subsequently confirms live replay at
+runfa010640-364f-4731-9d29-9d09d9723938:103 cases/263 witnesses,99 Passed,
+four frozen exclusions, zero Failed/Incomplete. Namespace duration313.490
+seconds; actual cleanup202.510 ms; admission free scratch48,090,071,040 bytes.
+The original owner is genuinely Released and disposable resources absent.
+All623 proof files and replay bindings to exact inputs/plan/results/witnesses/
+original-proof registry verify independently on the host. Report SHA-256
+`a320ec8f3084c4fbd5e5eae759cbf6214c965e6db024966b92e973fe5fa54690`;
+input SHA-256
+`b3f167aa32b9e0ab0e68d83c2f3c8eb16b73154d69fc801b75aa89f7ef30b730`;
+replay SHA-256
+`69904d54375a0e1e13157b68f9a8199b03a4ea1713da9f08c1d071531f16014f`.
+All seven explicit retained-control tests pass in7.637 seconds against this
+unchanged fresh packet. Its exact stopped Docker namespace and anonymous volume
+are removed, with independent absence checks; the image is retained.
+
+An additional explicit four-family test factory now requires the original live
+native history/source/Active owner. Each family first replays the original
+positive control, then challenges predeclared partitions/scope identities,
+original transport bytes, ledger/window/retry substitution and replaced/rehashed
+native command plus parent bytes. Original physical proofs must remain unchanged
+after each family; held original command authority is never replaced. Modeled
+factory admission rejects, as does modeled direct replay. That regression passes
+in0.049 seconds; catalog/SDK, diff and isolated-driver shell syntax checks pass.
+Fresh native execution of these new challenges remains pending.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes753
+tests with zero failures/errors/expected failures/unexpected successes/
+unexpected diagnostic bytes,27 explicit native macOS skips and expected
+incomplete exit2. The new in-executor factory does not become an external
+prerequisite in foundational discovery.
+
+T068..T086 remain unchecked, implement/running is preserved, and no
 standalone qualification/aggregation or all-output report gate is claimed.
 README and DEVELOPMENT are affected; provider contracts, product/architecture/
 ADR/diagrams, examples, governance, predecessor evidence, IaC, release and UI

@@ -7446,9 +7446,37 @@ and compares exact results, witnesses, proof registries and derived quality
 packet bytes. It does not launch a second provider execution, reconstruct a dead
 owner or broaden original ownership reads. A closed readonly replay packet is
 linked into the retained history/report. That packet is diagnostic, not portable
-origin authority on its own. Fresh native confirmation of this increment is
-pending; full qualification, report sanitation and standalone CLI/aggregate
-delivery remain unfinished.
+origin authority on its own.
+
+Fresh exact893bcd9 Linux artifact execution confirms this replay: run
+fa010640-364f-4731-9d29-9d09d9723938 produces103 cases/263 witnesses,
+99 Passed/four authorized exclusions and no Failed/Incomplete. All623 proofs
+and the exact input/plan/results/witness/proof-registry replay hashes are
+independently checked after retention. The original owner genuinely releases;
+cleanup is202.510 ms and its disposable stores/cache/feed are absent. Namespace
+duration is313.490 seconds; admission free scratch is48,090,071,040 bytes.
+Report SHA-256:
+`a320ec8f3084c4fbd5e5eae759cbf6214c965e6db024966b92e973fe5fa54690`.
+Input SHA-256:
+`b3f167aa32b9e0ab0e68d83c2f3c8eb16b73154d69fc801b75aa89f7ef30b730`.
+Replay packet SHA-256:
+`69904d54375a0e1e13157b68f9a8199b03a4ea1713da9f08c1d071531f16014f`.
+The trusted driver digest is supplied separately during host verification;
+reading a digest from an untrusted artifact would not provide that anchor.
+All seven retained-control tests pass in7.637 seconds against this fresh packet.
+The exact stopped container and anonymous volume are removed and their absence
+is independently checked. This remains incomplete diagnostic execution, exit2.
+
+The explicit in-executor factory
+`test_conformance_evidence.live_native_category_replay_tests` requires the
+actual original history/source/Active owner; it cannot reconstruct one from an
+external packet. Four test families first replay the unchanged positive control,
+then challenge exact partitions/scope identities, original transports, altered
+ledger/window/retry history, and a replaced command receipt with a correspondingly
+rehashed parent. Physical proof bytes are checked before/after each family and
+intentional mutations are restored without changing held command authority.
+Fresh execution of these new challenges is pending. Full qualification, report
+sanitation and standalone CLI/aggregate delivery remain unfinished.
 
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/

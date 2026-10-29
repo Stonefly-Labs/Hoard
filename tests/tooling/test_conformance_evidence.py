@@ -4164,6 +4164,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertTrue(callable(replay), "Native history needs independent original-owner replay.")
         with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
             replay(plan={}, transports={})
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            live_native_category_replay_tests(history, plan={}, transports={})
 
     def test_native_category_reports_recheck_original_history_inputs_and_proof_files(self):
         import conformance_sdk_checks as checks
@@ -8724,6 +8726,114 @@ def retained_native_category_structure_tests():
         __qualname__ = "RetainedNativeCategoryStructureTests"
 
     return unittest.TestLoader().loadTestsFromTestCase(RetainedNativeCategoryStructureTests)
+
+
+def live_native_category_replay_tests(history, *, plan, transports):
+    """Run origin challenges inside the original native executor before release."""
+    from conformance_execution import OwnedRun
+    from conformance_sources import NativeCategorySources
+
+    if (type(history) is not evidence.CategoryRuntimeHistory
+            or type(history._native_sources) is not NativeCategorySources
+            or type(history._native_sources._run) is not OwnedRun
+            or history._native_sources._run.state != "Active"):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    root = history._native_sources._run.root
+    source_scope = next(scope for scope in plan if scope != "hook-admission")
+    parent_path = root / f'proofs/category-source-{plan[source_scope]["attemptId"]}.json'
+    parent = evidence.load_json(parent_path.read_bytes())
+    command_path = root / f'proofs/execution-command-{parent["commandSequence"]:04}.json'
+    existing = {path: hashed for path, hashed in history.proofs.items() if (root / path).is_file()}
+    snapshot = evidence.input_manifest(root, list(existing))
+    if snapshot != existing:
+        raise evidence.ConformanceError("ProofMismatch")
+
+    class LiveNativeCategoryReplayTests(unittest.TestCase):
+        __qualname__ = "LiveNativeCategoryReplayTests"
+
+        def setUp(self):
+            self.assertEqual(evidence.input_manifest(root, list(snapshot)), snapshot)
+            self.assertEqual(history.replay_joint(plan=plan, transports=transports)["resultsSha256"],
+                             evidence.digest(history.results()))
+
+        def tearDown(self):
+            self.assertEqual(evidence.input_manifest(root, list(snapshot)), snapshot)
+
+        def test_predeclared_partitions_and_original_scope_identities(self):
+            for defect in ("missing", "extra", "tests", "identity"):
+                changed = dict(plan)
+                if defect == "missing":
+                    changed.pop(source_scope)
+                elif defect == "extra":
+                    changed["unselected"] = plan[source_scope]
+                else:
+                    changed[source_scope] = {
+                        **plan[source_scope],
+                        **({"tests": {}} if defect == "tests" else {"attemptId": str(uuid.uuid4())})}
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    history.replay_joint(plan=changed, transports=transports)
+
+        def test_original_transports_cannot_be_substituted(self):
+            for field in ("manifest_data", "owner_data", "proofs"):
+                changed = dict(transports[source_scope])
+                if field == "proofs":
+                    proofs = dict(changed["proofs"])
+                    path = next(iter(proofs))
+                    proofs[path] += b"\n"
+                    changed["proofs"] = proofs
+                else:
+                    payload = evidence.load_json(changed[field])
+                    payload["runId"] = str(uuid.uuid4())
+                    changed[field] = evidence.canonical_bytes(payload)
+                with self.subTest(field=field), self.assertRaises(evidence.ConformanceError):
+                    history.replay_joint(plan=plan, transports={**transports, source_scope: changed})
+
+        def test_optimistic_history_and_retimed_parent_cannot_replace_observation(self):
+            original_results, original_origin = history._results, history._joint_origin
+            original_sequences = history._sequences
+            try:
+                for defect in ("ledger", "window", "retry"):
+                    history._results, history._joint_origin = original_results, original_origin
+                    history._sequences = original_sequences
+                    if defect == "ledger":
+                        changed = dict(original_results)
+                        key = next(key for key, row in changed.items() if row["attempts"])
+                        row = evidence.load_json(evidence.canonical_bytes(changed[key]))
+                        row["proofSha256"] = []
+                        row["attempts"][0]["proofSha256"] = []
+                        changed[key] = row
+                        history._results = changed
+                    elif defect == "window":
+                        history._joint_origin = (original_origin[0], original_origin[1] + 1, original_origin[2])
+                    else:
+                        history._sequences = {binding: 2 for binding in original_sequences}
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        history.replay_joint(plan=plan, transports=transports)
+            finally:
+                history._results, history._joint_origin = original_results, original_origin
+                history._sequences = original_sequences
+
+        def test_rehashed_command_and_parent_cannot_replace_executor_held_bytes(self):
+            original_command, original_parent = command_path.read_bytes(), parent_path.read_bytes()
+            changed_command = original_command + b"\n"
+            changed_parent = evidence.load_json(original_parent)
+            self.assertIn("executionRecordSha256", changed_parent)
+            changed_parent["executionRecordSha256"] = hashlib.sha256(changed_command).hexdigest()
+            try:
+                for path, raw in ((command_path, changed_command),
+                                  (parent_path, evidence.canonical_bytes(changed_parent))):
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    history.replay_joint(plan=plan, transports=transports)
+            finally:
+                for path, raw in ((command_path, original_command), (parent_path, original_parent)):
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+
+    return unittest.TestLoader().loadTestsFromTestCase(LiveNativeCategoryReplayTests)
 
 
 if __name__ == "__main__":
