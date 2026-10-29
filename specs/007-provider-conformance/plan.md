@@ -3001,6 +3001,50 @@ promised settings retention or all-output sanitation. Product/provider contracts
 architecture/ADR/diagrams, governance, predecessor evidence, IaC, release and UI
 documents are unaffected by this runtime-resource classification change.
 
+### Actual transient-settings metadata observation and completion-link admission
+
+Fresh immutable exact3d2a38d metadata execution in the standard four-CPU/
+6-GiB/512-PID unprivileged pinned Linux namespace succeeds as a distinct run:
+a143512c-3ba3-4572-b495-68eeb7253510,102 cases/141 witnesses/468 proof files,
+93 Passed/nine frozen exclusions and zero Failed/Incomplete. All six actual
+sanitation tests pass without skips, including held configuration input hashes,
+real settlement and raw/base64 all-retained-file inspection. Four original-live
+and five post-release origin families also pass without failures/errors/skips.
+The actual owner reaches Released, cleanup277.890 ms, and stores/cache/feed are
+absent. Namespace463.217 seconds; admission free scratch47,003,258,880 bytes.
+
+Original report SHA-256
+`218439920b2b72a6ddd86c34bab5fabfd7bb31e2a2299f89113bccfb38d80388`;
+input SHA-256
+`81278496ae120ff0d475dc61869133de30c8e36f93ba5b2e103b1ee3f20a2255`.
+Those separately retained trusted driver digests anchor host re-verification of
+all proofs and exact reproduction of all four actual producer-written public
+surfaces. All eight retained controls pass in5.543 seconds; original packets
+remain unchanged. The retained root contains neither executable settings nor
+the original private root in plaintext or base64-decoded values. Packet:
+`native-transient-settings-metadata-retained`; original driver/bundle/log retained.
+The exact stopped namespace and volume3547bffc207dbd035f8580283ba9f18fbeacfa96bbb3c465a2236d2f9c29fa06
+are removed and independent listings confirm absence. No unrelated resource
+or cached image is removed. Four-CPU artifact execution is a separately labeled
+new-source observation, not erasure or diagnosis of earlier failed runs, and
+remains pending at this checkpoint.
+
+A separate T071 preparatory fix removes the schema's incorrect demand that a
+claimed-complete report's actual completion hash equal its admission-input hash.
+It instead requires the named completion packet's hash in the proof registry;
+the existing verifier still reads readonly actual bytes and permits only measured
+free-space variation. Missing/changed links, changed source inputs and changed
+physical packet bytes reject. The new five-case test first fails on the valid
+measured difference, then passes after the fix. All36 admission tests pass
+in1.141 seconds; catalog and diff checks pass. The modeled schema claim still
+rejects retained diagnostic verification, so no complete evaluator/origin/
+qualification assertion is introduced. T068..T086 and implement/running remain
+unchanged. DEVELOPMENT records these exact observations. README, quickstart and
+examples already describe the diagnostic/transient boundary and are unaffected
+by the internal schema correction; no new public command is delivered. Other
+product/provider/architecture/ADR/diagrams/governance/predecessor/IaC/release/UI
+documents remain unaffected.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -587,6 +587,40 @@ class ConformanceAdmissionTests(unittest.TestCase):
                     self.assertNotEqual(report["postInputSha256"], evidence.digest(report["inputs"]))
                     self.assertFalse(report["qualification"])
 
+    def test_claimed_qualification_binds_actual_completion_instead_of_falsifying_free_space(self):
+        for defect in (None, "missing-link", "different-link", "changed-input", "unreadable-bytes"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                report = self.report()
+                report["qualification"] = True
+                report["inputs"]["mode"] = "qualification"
+                report["witnesses"][0]["inputSha256"] = evidence.digest(report["inputs"])
+                completion = copy.deepcopy(report["inputs"])
+                completion["environment"]["freeBytes"] += 1
+                completion["environmentSha256"] = evidence.digest(completion["environment"])
+                if defect == "changed-input":
+                    completion["sourceRevision"] = "f" * 40
+                raw = evidence.canonical_bytes(completion)
+                relative = "proofs/category-metadata-qualification-completion-inputs.json"
+                path = root / relative
+                path.write_bytes(b"{}" if defect == "unreadable-bytes" else raw)
+                path.chmod(0o400)
+                report["postInputSha256"] = hashlib.sha256(raw).hexdigest()
+                if defect != "missing-link":
+                    report["proofs"][relative] = "f" * 64 if defect == "different-link" else report["postInputSha256"]
+                if defect is not None:
+                    with self.assertRaises(evidence.ConformanceError):
+                        evidence.verify_completion_inputs(root, report)
+                else:
+                    observed = evidence.verify_completion_inputs(root, report)
+                    self.assertEqual(evidence.canonical_bytes(observed), raw)
+                    self.assertNotEqual(report["postInputSha256"], evidence.digest(report["inputs"]))
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                        evidence.verify_retained_category_report(
+                            root, evidence.canonical_bytes(report), expected_inputs=report["inputs"],
+                            expected_report_sha256=evidence.digest(report))
+
     def test_exclusions_and_interruption_do_not_invent_runtime_executions(self):
         excluded = self.result()
         excluded.update(bindingId="memory", caseId="MP-36", status="NotApplicable",

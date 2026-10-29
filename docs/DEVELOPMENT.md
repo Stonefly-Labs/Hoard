@@ -7604,6 +7604,34 @@ passes353 tests in106.285 seconds, with three explicit Linux-only skips on macOS
 The fixed SDK catalog and diff checks pass. Fresh native category generation
 and the new native settlement control remain pending; T070/T071 do not advance.
 
+Exact3d2a38d metadata subsequently confirms this path in a fresh four-CPU,
+6-GiB, unprivileged Linux namespace: runa143512c-3ba3-4572-b495-68eeb7253510
+has102 cases/141 witnesses/468 verified proofs,93 Passed/nine exclusions,
+zero Failed/Incomplete, and genuine Released cleanup277.890 ms. All six
+sanitation tests execute without skips, including actual configuration cleanup;
+all four live and five released-origin families pass. Every retained filename/
+file is scanned for the original private root in plain or base64 form; it is
+absent, as are executable runsettings. Four actual producer-written public
+surfaces exactly reproduce on the host using separately retained trusted driver
+report/input digests. Report SHA-256:
+`218439920b2b72a6ddd86c34bab5fabfd7bb31e2a2299f89113bccfb38d80388`.
+All eight retained controls pass in5.543 seconds. Namespace463.217 seconds;
+admission free scratch47,003,258,880 bytes. The exact stopped container and
+anonymous volume are removed after retention and absence checks. This is
+metadata-only diagnostic sanitation/origin evidence, not all-profile or CI
+qualification; the distinct four-CPU artifact observation is still pending.
+
+Claimed-complete report schema admission now requires the named actual completion
+packet hash in the proof registry instead of equality with the admission-input
+hash. Free space can legitimately change during execution. Completion verification
+still reads the original readonly packet, checks its actual hash and rejects all
+immutable input changes; neither measurement is rewritten. Five focused
+schema/packet cases cover the valid measured difference and missing/changed
+links, changed inputs and changed physical bytes. All36 admission regressions
+pass in1.141 seconds; catalog/diff checks pass. These are schema controls only:
+the modeled claim still rejects retained diagnostic verification and establishes
+no runtime origin or qualification. Public CLI/aggregate behavior is unchanged.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

@@ -681,7 +681,8 @@ def _validate_report_links(report):
         _invalid()
     if report["qualification"] and (
             inputs["mode"] != "qualification" or report["state"] != "Complete"
-            or report["postInputSha256"] != input_sha
+            or report["postInputSha256"] != report["proofs"].get(
+                f'proofs/category-{inputs["profileId"]}-{inputs["mode"]}-completion-inputs.json')
             or any(result["status"] not in ("Passed", "NotApplicable") for result in report["results"])
             or any(attempt["status"] != "Passed" for result in report["results"] for attempt in result["attempts"])
             or any(resource["state"] != "Released" for resource in report["resources"])):
