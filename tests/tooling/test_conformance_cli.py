@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -383,6 +384,43 @@ class ConformanceCliTests(unittest.TestCase):
             value = json.loads(output.getvalue())
             self.assertEqual(value["mode"], "diagnostic")
             self.assertFalse(value["qualification"])
+
+    def test_public_native_failure_retains_closed_runtime_observations_without_private_text(self):
+        import conformance_cli
+        import conformance_sdk_checks as sdk
+
+        error = sdk._RuntimeObservationError({
+            "diagnosticCode": "UnknownDiagnostic", "witnesses": (
+                {"testIdentity": "private-canary-test", "status": "Failed"},)},
+            SimpleNamespace(exit_code=1), "Passed")
+        observed = error.runtime_diagnostic
+        for defect in ("none", "unsafe-code", "unknown-field"):
+            error.runtime_diagnostic = dict(observed)
+            if defect == "unsafe-code":
+                error.runtime_diagnostic["observedCode"] = "private-canary-value"
+            elif defect == "unknown-field":
+                error.runtime_diagnostic["providerError"] = "private-canary-value"
+            output = io.StringIO()
+            with self.subTest(defect=defect), contextlib.redirect_stdout(output), patch(
+                    "conformance_composition_checks.execute", side_effect=error):
+                code = conformance_cli.main([
+                    "--profile", "composition", "--evidence", str(self.destination)])
+            packet = json.loads(output.getvalue())
+            self.assertEqual(code, 2)
+            self.assertFalse(packet["qualification"])
+            self.assertEqual(packet["status"], "Incomplete")
+            locations = packet.pop("locations")
+            self.assertTrue(0 < len(locations) <= 4)
+            self.assertTrue(all(location["source"].startswith("scripts/")
+                                and location["line"] > 0 for location in locations))
+            if defect == "none":
+                self.assertEqual({key: packet[key] for key in observed}, observed)
+                self.assertEqual(packet["code"], "EvidenceIncomplete")
+            else:
+                self.assertEqual(packet["code"], "UnknownDiagnostic")
+                self.assertTrue(set(observed).isdisjoint(packet))
+            self.assertNotIn("private-canary", output.getvalue())
+            self.assertNotIn(str(self.parent), output.getvalue())
 
     def test_shell_entry_rejects_unknown_profiles_without_private_stderr(self):
         result = subprocess.run([

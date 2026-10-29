@@ -27,7 +27,7 @@ from conformance_inherited import (
 from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 from conformance_prepare import PREREQUISITES, Project, build_project
 from conformance_sdk_checks import (
-    BUDGETS, category_command_proof, environment, verify_category_command_proof, write_new,
+    BUDGETS, _RuntimeObservationError, category_command_proof, environment, verify_category_command_proof, write_new,
 )
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
 
@@ -968,7 +968,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
             for row in expected}},
     )
     if result.exit_code or admitted["diagnosticCode"] != "None":
-        raise evidence.ConformanceError("ProofMismatch")
+        raise _RuntimeObservationError(admitted, result, "Passed")
     if (len(admitted["witnesses"]) != len(expected)
             or any(row["status"] != "Passed" for row in admitted["witnesses"])
             or len(admitted["compositionObservations"]) != len(expected)

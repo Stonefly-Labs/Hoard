@@ -21,8 +21,20 @@ def main(arguments=None):
     except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
         status = evidence.failure_status(code) if admitted else "Incomplete"
-        print(json.dumps({"mode": mode, "qualification": False, "status": status, "code": code}))
-        return 2 if status == "Incomplete" else 1
+        failure = {"mode": mode, "qualification": False, "status": status, "code": code}
+        if admitted:
+            from conformance_sdk_checks import (
+                _RuntimeObservationError, _category_failure_locations, bounded_runtime_diagnostic)
+
+            failure["locations"] = _category_failure_locations(error)
+            if isinstance(error, _RuntimeObservationError):
+                try:
+                    failure.update(bounded_runtime_diagnostic(error.runtime_diagnostic))
+                except evidence.ConformanceError as diagnostic_error:
+                    failure.update(code=str(diagnostic_error),
+                                   status=evidence.failure_status(str(diagnostic_error)))
+        print(json.dumps(failure))
+        return 2 if failure["status"] == "Incomplete" else 1
 
 
 if __name__ == "__main__":

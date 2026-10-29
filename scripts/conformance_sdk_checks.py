@@ -3062,7 +3062,7 @@ def _category_failure_locations(error):
     sources = {str(folder / name): "scripts/" + name for name in (
         "conformance_sdk_checks.py", "conformance_evidence.py",
         "conformance_sources.py", "conformance_case_catalog.py",
-        "conformance_execution.py", "conformance_inherited.py")}
+        "conformance_execution.py", "conformance_inherited.py", "conformance_composition_checks.py")}
     trace, locations, count = error.__traceback__, [], 0
     while trace is not None and count < 1024:
         source = sources.get(trace.tb_frame.f_code.co_filename)

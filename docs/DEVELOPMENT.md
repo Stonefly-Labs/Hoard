@@ -8443,6 +8443,18 @@ and the two Python original-inventory/scope checks pass. Fresh native execution
 remains required; this does not repair or explain the separate composition
 runtime failure, advance T068--T086 or establish qualification.
 
+The public CLI now preserves the existing bounded native failure diagnostics
+instead of discarding them at dispatch. Admitted failures expose up to four
+static allowlisted script/line locations; runtime observation errors additionally
+expose independently validated code/exit/counts and at most four hashed test
+identities. Unknown fields or unsafe diagnostic values reject as
+`UnknownDiagnostic` without reflecting the values. Composition now carries its
+actual runtime observation into this same closed exception rather than
+collapsing every nonzero/diagnostic outcome to `ProofMismatch`. No assertion,
+origin, settlement or qualification check is bypassed. The CLI/composition/
+sanitation and two existing SDK diagnostic regressions pass51 tests with four
+explicit native-only skips. A new source-bound native observation is pending.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

@@ -3685,6 +3685,34 @@ documents are unaffected. This demonstrated managed-consumer correction does
 not diagnose composition's separate runtime failure or replace fresh native
 evidence. T068--T086, reviewer-owned checklists and implement/running remain.
 
+### Closed native runtime observations through public dispatch
+
+The public CLI previously discarded the SDK's already closed runtime failure
+observation and omitted composition source locations, preventing diagnosis of
+the actual CI composition failure. It now emits at most four allowlisted static
+script/line locations for admitted failures. Existing runtime observation
+exceptions additionally pass the strict bounded diagnostic validator before
+emitting code/exit/state counts and at most four hashed test identities.
+Invalid/unknown values fail explicitly as `UnknownDiagnostic`, without
+reflecting raw exception/provider/configuration/path text. Admission failures
+remain minimal. Composition carries runtime command/ingestion outcome failures
+through this existing observation exception instead of generic `ProofMismatch`;
+other proof/missing-witness checks are unchanged. This improves the next original
+failure observation; it does not invent a cause for prior failed evidence.
+
+The public diagnostic regression first fails for missing observations/locations,
+and the existing static-role test first rejects the composition source.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_cli test_conformance_composition test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_category_failure_locations_are_bounded_static_source_roles_only
+test_conformance_sdk_checks.SdkDiagnosticTests.test_unexpected_runtime_failure_retains_only_bounded_closed_observations`
+passes51 tests in2.430 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass. README and DEVELOPMENT document the new
+failure-only surface; provider/feature schemas, guides/examples,
+product/architecture/ADR/diagrams/governance/backlog/predecessor/IaC/release/UI
+documents are unaffected. Fresh native observation remains pending.
+No T068--T086, reviewer checklist or implement/running marker advances.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
