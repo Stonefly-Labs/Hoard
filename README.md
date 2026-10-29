@@ -939,6 +939,13 @@ contradictory empty-child identities, missing/duplicate owner inventories and
 mixed snapshots of one owner. The267 focused evidence/ownership/transport checks
 pass with21 explicit native-only skips. These schema guards do not attest
 runtime origin or turn diagnostic reports into qualification.
+The public offline `--verify`/`--aggregate` routes now accept a separate
+`--coordinator` manifest and inspect exact catalog/applicability/parameter,
+proof-byte and completion-input correspondence. Complete configuration
+preimages bind a common policy without requiring equal per-profile hashes.
+They remain explicitly nonqualifying; actual runtime-origin/settlement
+evaluation, trusted baseline/CI coordinator generation and qualification are
+unfinished. See [offline inspection](specs/007-provider-conformance/quickstart.md#offline-correspondence-inspection).
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

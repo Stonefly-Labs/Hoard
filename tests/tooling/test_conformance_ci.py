@@ -1,10 +1,14 @@
 """Transport controls are modeled diagnostics, not runtime qualification."""
 
 import copy
+import contextlib
 import hashlib
 import importlib
+import io
+import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 import uuid
 
@@ -165,6 +169,216 @@ class ConformanceProfileTransportTests(unittest.TestCase):
         self.reports["harness"]["results"][0]["runId"] = run_id
         with self.assertRaises(evidence.ConformanceError):
             self.inspect()
+
+    def coordinator(self):
+        configuration = {
+            "revision": evidence.CATALOG_REVISION, "stores": "fresh-owned-synthetic",
+            "restore": "locked", "runtimeLogger": "HoardSafe", "consoleLogger": False,
+            "sources": {"packageSources": {
+                "local": "isolated-current-archives", "nuget.org": "https://api.nuget.org/v3/index.json"},
+                "packageSourceMapping": {"local": ["Hoard.*"], "nuget.org": ["*"]}}}
+        profiles = {}
+        for profile in evidence.PROFILES:
+            selected = copy.deepcopy(configuration)
+            if profile == "harness":
+                selected["sources"] = {
+                    "packageSources": {"frozen": "isolated-frozen-archives"},
+                    "archives": {"Example.1.0.0.nupkg": "a" * 64}}
+            self.inputs[profile]["configurationSha256"] = evidence.digest(selected)
+            self.reports[profile]["inputs"]["configurationSha256"] = evidence.digest(selected)
+            self.reports[profile]["postInputSha256"] = evidence.digest(self.inputs[profile])
+            profiles[profile] = {
+                "inputs": copy.deepcopy(self.inputs[profile]),
+                "reportSha256": evidence.digest(self.reports[profile]),
+                "reportPath": f"proofs/category-{profile}-qualification-report.json",
+                "configuration": selected, "jobResults": copy.deepcopy(self.jobs[profile])}
+        return {"schemaVersion": 1, "profiles": profiles}
+
+    def test_coordinator_binds_configuration_preimages_without_equal_profile_fingerprints(self):
+        ci = importlib.import_module("conformance_ci")
+        context = self.coordinator()
+        admitted = ci.admit_coordinator(context)
+        self.assertNotEqual(admitted["profiles"]["metadata"]["inputs"]["configurationSha256"],
+                            admitted["profiles"]["harness"]["inputs"]["configurationSha256"])
+        self.assertEqual(admitted["configurationPolicySha256"], evidence.digest({
+            "revision": evidence.CATALOG_REVISION, "stores": "fresh-owned-synthetic",
+            "restore": "locked", "runtimeLogger": "HoardSafe", "consoleLogger": False}))
+        context["profiles"]["metadata"]["configuration"]["restore"] = "unlocked"
+        self.assertEqual(admitted["profiles"]["metadata"]["configuration"]["restore"], "locked")
+        with self.assertRaises(evidence.ConformanceError):
+            ci.admit_coordinator(context)
+
+    def test_coordinator_rejects_foreign_configuration_policy_and_changed_preimages(self):
+        ci = importlib.import_module("conformance_ci")
+        original = self.coordinator()
+        for defect in ("hash", "policy", "source", "field", "extra-profile", "duplicate-run", "version"):
+            context = copy.deepcopy(original)
+            entry = context["profiles"]["metadata"]
+            if defect == "hash":
+                entry["inputs"]["configurationSha256"] = "f" * 64
+            elif defect == "policy":
+                entry["configuration"]["consoleLogger"] = True
+                entry["inputs"]["configurationSha256"] = evidence.digest(entry["configuration"])
+            elif defect == "source":
+                entry["configuration"]["sources"]["packageSources"]["local"] = "/private/canary"
+                entry["inputs"]["configurationSha256"] = evidence.digest(entry["configuration"])
+            elif defect == "field":
+                entry["qualification"] = True
+            elif defect == "extra-profile":
+                context["profiles"]["service"] = copy.deepcopy(entry)
+            elif defect == "duplicate-run":
+                context["profiles"]["harness"]["inputs"]["runId"] = entry["inputs"]["runId"]
+            else:
+                context["schemaVersion"] = True
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                ci.admit_coordinator(context)
+
+    def test_coordinator_configuration_preimage_preserves_opaque_inspection_assignments(self):
+        ci = importlib.import_module("conformance_ci")
+        context = self.coordinator()
+        entry = context["profiles"]["metadata"]
+        private = "/private/connection-canary/inspection.json"
+        identity = next(iter(set(catalog.ORIGINAL_INSPECTION_WITNESSES)
+                             - set(catalog.ORIGINAL_INSPECTION_LITERAL_WITNESSES)))
+        configuration = evidence.configuration_record(
+            entry["configuration"]["sources"], inspection_inputs={identity: {private: "a" * 64}})
+        entry["configuration"] = configuration
+        entry["inputs"]["configurationSha256"] = evidence.digest(configuration)
+        admitted = ci.admit_coordinator(context)
+        self.assertNotIn(private.encode(), evidence.canonical_bytes(admitted))
+        files = configuration["inspectionInputs"][identity]
+        self.assertEqual(files, {hashlib.sha256(private.encode()).hexdigest(): "a" * 64})
+        configuration["inspectionInputs"][identity] = {private: "a" * 64}
+        entry["inputs"]["configurationSha256"] = evidence.digest(configuration)
+        with self.assertRaises(evidence.ConformanceError):
+            ci.admit_coordinator(context)
+
+    def test_coordinator_does_not_infer_missing_jobs_or_profiles_from_green_reports(self):
+        ci = importlib.import_module("conformance_ci")
+        original = self.coordinator()
+        for defect in ("missing-profile", "job", "upload", "download", "missing-status"):
+            context = copy.deepcopy(original)
+            if defect == "missing-profile":
+                del context["profiles"]["harness"]
+            elif defect == "missing-status":
+                del context["profiles"]["artifacts"]["jobResults"]["download"]
+            else:
+                context["profiles"]["artifacts"]["jobResults"][defect] = "cancelled"
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                ci.admit_coordinator(context, require_all=True)
+
+    def aggregate_fixture(self, parent):
+        context = self.coordinator()
+        directory = parent / "profiles"
+        directory.mkdir()
+        for profile in evidence.PROFILES:
+            root = directory / profile
+            (root / "proofs").mkdir(parents=True)
+            entry = context["profiles"][profile]
+            inputs = entry["inputs"]
+            completion = f"proofs/category-{profile}-qualification-completion-inputs.json"
+            (root / completion).write_bytes(evidence.canonical_bytes(inputs))
+            (root / completion).chmod(0o400)
+            attempt = {
+                "sequence": 1, "startedMs": 0, "endedMs": 1, "status": "Incomplete",
+                "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"}
+            report = {
+                **self.reports[profile], "inputs": inputs, "postInputSha256": evidence.digest(inputs),
+                "proofs": {completion: evidence.digest(inputs)},
+                "results": [evidence._catalog_case_result(
+                    inputs, case, "NotApplicable" if case.exclusion else "Incomplete",
+                    () if case.exclusion else (attempt,)) for case in catalog.expected_cases(profile)]}
+            raw = evidence.canonical_bytes(report)
+            (root / entry["reportPath"]).write_bytes(raw)
+            entry["reportSha256"] = hashlib.sha256(raw).hexdigest()
+        coordinator = parent / "trusted-coordinator.json"
+        coordinator.write_bytes(evidence.canonical_bytes(context))
+        return directory, coordinator, context
+
+    def test_public_aggregate_checks_all_five_complete_inventories_but_never_qualifies_empty_models(self):
+        import conformance_cli
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory, coordinator, context = self.aggregate_fixture(Path(temporary).resolve())
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = conformance_cli.main([
+                    "--aggregate", str(directory), "--coordinator", str(coordinator)])
+            self.assertEqual(result, 2)
+            packet, = (json.loads(row) for row in output.getvalue().splitlines())
+            self.assertFalse(packet["qualification"])
+            self.assertEqual(packet["scope"], "five-profile-structure-diagnostic")
+            self.assertEqual(set(packet["profiles"]), set(evidence.PROFILES))
+            for profile, observed in packet["profiles"].items():
+                self.assertEqual(observed["caseCount"], len(catalog.expected_cases(profile)))
+                self.assertEqual(observed["caseStates"]["Passed"], 0)
+                self.assertEqual(observed["reportSha256"], context["profiles"][profile]["reportSha256"])
+            self.assertNotIn(str(directory), output.getvalue())
+
+    def test_aggregate_rejects_resealed_missing_cases_in_each_profile(self):
+        import conformance_cli
+
+        for profile in evidence.PROFILES:
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+                directory, coordinator, context = self.aggregate_fixture(Path(temporary).resolve())
+                entry = context["profiles"][profile]
+                path = directory / profile / entry["reportPath"]
+                report = json.loads(path.read_bytes())
+                report["results"].pop()
+                path.write_bytes(evidence.canonical_bytes(report))
+                entry["reportSha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+                coordinator.write_bytes(evidence.canonical_bytes(context))
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    result = conformance_cli.main([
+                        "--aggregate", str(directory), "--coordinator", str(coordinator)])
+                self.assertEqual(result, 1)
+                packet, = (json.loads(row) for row in output.getvalue().splitlines())
+                self.assertEqual(packet["code"], "WitnessMissing")
+                self.assertFalse(packet["qualification"])
+                self.assertNotIn("profiles", packet)
+
+    def test_aggregate_keeps_failed_attempt_after_passing_modeled_retry(self):
+        import conformance_cli
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory, coordinator, context = self.aggregate_fixture(Path(temporary).resolve())
+            entry = context["profiles"]["harness"]
+            path = directory / "harness" / entry["reportPath"]
+            report = json.loads(path.read_bytes())
+            inputs = report["inputs"]
+            result = next(row for row in report["results"] if row["caseId"] == "QC-38")
+            result["attempts"][0].update(status="Failed", diagnosticCode="AssertionFailed")
+            execution = str(uuid.uuid4())
+            raw, relative = b"modeled-retry-proof", "proofs/modeled-retry.json"
+            proof = directory / "harness" / relative
+            proof.write_bytes(raw)
+            proof.chmod(0o400)
+            hashed = hashlib.sha256(raw).hexdigest()
+            report["proofs"][relative] = hashed
+            report["witnesses"] = [{
+                "executionId": execution, "runId": inputs["runId"],
+                "invocationGroupId": inputs["invocationGroupId"], "testIdentity": "Modeled.Retry",
+                "bindingId": "none", "matrixId": "none", "packageSha256": inputs["packages"][0]["sha256"],
+                "assemblySha256": next(iter(inputs["runtimeAssemblies"].values())),
+                "inputSha256": evidence.digest(inputs), "startedMs": 2, "endedMs": 3,
+                "status": "Passed", "proofSha256": hashed}]
+            result.update(status="Passed", proofSha256=[hashed])
+            result["attempts"].append({
+                "sequence": 2, "startedMs": 2, "endedMs": 3, "status": "Passed",
+                "witnessIds": [execution], "proofSha256": [hashed], "diagnosticCode": "None"})
+            path.write_bytes(evidence.canonical_bytes(report))
+            entry["reportSha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+            coordinator.write_bytes(evidence.canonical_bytes(context))
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = conformance_cli.main([
+                    "--aggregate", str(directory), "--coordinator", str(coordinator)])
+            self.assertEqual(result, 1)
+            packet, = (json.loads(row) for row in output.getvalue().splitlines())
+            self.assertEqual(packet["code"], "AssertionFailed")
+            self.assertEqual(packet["profiles"]["harness"]["failedAttemptCount"], 1)
+            self.assertFalse(packet["qualification"])
 
 
 if __name__ == "__main__":

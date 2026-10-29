@@ -70,6 +70,7 @@ class ConformanceInvocation:
     binding_project: Path | None = None
     input_path: Path | None = None
     binding_inputs_sha256: str | None = None
+    coordinator_path: Path | None = None
 
 
 class _Arguments(argparse.ArgumentParser):
@@ -81,7 +82,8 @@ def invocation_parser():
     parser = _Arguments(
         description="Conformance admission and native metadata/artifact/composition execution. "
                     "Reports remain non-qualifying; independent evaluation, full controller acceptance, "
-                    "focused/custom bindings, compatibility/harness and verify/aggregate remain incomplete.",
+                    "focused/custom bindings, compatibility/harness and qualifying verify/aggregate remain incomplete. "
+                    "Offline --verify/--aggregate with --coordinator inspect correspondence only.",
         add_help=False, allow_abbrev=False)
     parser.add_argument("--profile", metavar="PROFILE",
                         help="baseline (default), metadata, artifacts, composition, compatibility, harness")
@@ -91,6 +93,8 @@ def invocation_parser():
     parser.add_argument("--update-locks", action="store_true", help="non-qualifying preparation")
     parser.add_argument("--verify", type=Path, metavar="PUBLIC_REPORT")
     parser.add_argument("--aggregate", type=Path, metavar="REPORT_DIRECTORY")
+    parser.add_argument("--coordinator", type=Path, metavar="TRUSTED_MANIFEST",
+                        help="separate trusted input/report/configuration assignments for offline inspection")
     parser.add_argument("--help", action="store_true")
     return parser
 
@@ -137,7 +141,16 @@ def admit_invocation(repository, arguments):
                 raise ConformanceError()
         elif not path.is_dir():
             raise ConformanceError("PrerequisiteMissing")
-        return ConformanceInvocation(action, repository, "diagnostic", input_path=path)
+        coordinator = None
+        if options.coordinator is not None:
+            coordinator = _invocation_path(options.coordinator)
+            info = coordinator.stat()
+            if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_REPORT_BYTES:
+                raise ConformanceError()
+        return ConformanceInvocation(action, repository, "diagnostic", input_path=path,
+                                     coordinator_path=coordinator)
+    if options.coordinator is not None:
+        raise ConformanceError()
     profile = options.profile if options.profile is not None else "baseline"
     if profile not in ("baseline", *PROFILES):
         raise ConformanceError("UnsupportedProfile")
@@ -226,7 +239,10 @@ def dispatch_invocation(invocation):
             raise ConformanceError("CommandFailed")
         # Native history admission is not the independent qualification evaluator.
         raise ConformanceError("EvidenceIncomplete")
-    if invocation.action in ("run", "verify", "aggregate"):
+    if invocation.action in ("verify", "aggregate"):
+        from conformance_ci import inspect_offline
+        return inspect_offline(invocation)
+    if invocation.action == "run":
         raise ConformanceError("EvidenceIncomplete")
     raise ConformanceError()
 
@@ -939,8 +955,6 @@ def verify_retained_category_report(root, report_data, *, expected_inputs, expec
 
 def inspect_category_report(root, report_data, *, expected_inputs):
     """Inspect a complete category ledger without attesting runtime origin."""
-    from conformance_case_catalog import expected_cases
-
     report = admit_entity("QualificationReport", load_json(report_data))
     expected_inputs = admit_entity("RunInputs", expected_inputs)
     inputs = report["inputs"]
@@ -952,6 +966,27 @@ def inspect_category_report(root, report_data, *, expected_inputs):
     if (report["qualification"] or report["state"] != "Incomplete"
             or report["scope"] != ("category-runtime-diagnostic",)):
         raise ConformanceError("EvidenceIncomplete")
+    inspected = inspect_profile_report(root, report_data, expected_inputs=expected_inputs,
+                                       expected_report_sha256=hashlib.sha256(report_data).hexdigest())
+    return MappingProxyType({
+        "qualification": False, "scope": "category-report-structure-diagnostic",
+        "code": "EvidenceIncomplete", "reportSha256": inspected["reportSha256"],
+        "caseCount": inspected["caseCount"], "witnessCount": inspected["witnessCount"],
+    })
+
+
+def inspect_profile_report(root, report_data, *, expected_inputs, expected_report_sha256):
+    """Recompute catalog/file correspondence, never runtime-origin qualification."""
+    from conformance_case_catalog import CATEGORY_QUALITY_BASIS, expected_cases
+
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    if hashlib.sha256(report_data).hexdigest() != sha256(expected_report_sha256):
+        raise ConformanceError("ProofMismatch")
+    report = admit_entity("QualificationReport", load_json(report_data))
+    inputs = report["inputs"]
+    if digest(inputs) != digest(admit_entity("RunInputs", expected_inputs)):
+        raise ConformanceError("InputChanged")
     cases = {case.key: case for case in expected_cases(inputs["profileId"])}
     results = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row
                for row in report["results"]}
@@ -967,17 +1002,27 @@ def inspect_category_report(root, report_data, *, expected_inputs):
             if used.intersection(attempt["witnessIds"]):
                 raise ConformanceError("ProofMismatch")
             used.update(attempt["witnessIds"])
-            if case.binding_id != "none" and case.witnesses and attempt["status"] == "Passed":
+            composed_quality = case.binding_id == case.matrix_id == "none" and (
+                case.case_id in CATEGORY_QUALITY_BASIS.get(inputs["profileId"], {}))
+            if case.witnesses and attempt["status"] == "Passed" and not composed_quality:
                 identities = tuple(witnesses[identity]["testIdentity"] for identity in attempt["witnessIds"])
                 if len(identities) != len(set(identities)) or set(identities) != set(case.witnesses):
                     raise ConformanceError("WitnessMissing")
     if input_manifest(root, list(report["proofs"])) != report["proofs"]:
         raise ConformanceError("ProofMismatch")
     verify_completion_inputs(root, report)
+    failed_attempts = sum(attempt["status"] == "Failed" for result in report["results"]
+                          for attempt in result["attempts"])
+    if report["qualification"]:
+        raise ConformanceError("EvidenceIncomplete")
     return MappingProxyType({
-        "qualification": False, "scope": "category-report-structure-diagnostic",
-        "code": "EvidenceIncomplete", "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "qualification": False, "scope": "profile-report-structure-diagnostic",
+        "code": "AssertionFailed" if failed_attempts else "EvidenceIncomplete",
+        "profileId": inputs["profileId"], "reportSha256": hashlib.sha256(report_data).hexdigest(),
         "caseCount": len(results), "witnessCount": len(witnesses),
+        "caseStates": MappingProxyType({
+            state: sum(result["status"] == state for result in results.values()) for state in STATUSES}),
+        "failedAttemptCount": failed_attempts,
     })
 
 
@@ -1112,10 +1157,14 @@ def _binding_source(value):
     return _record(fields)(value)
 
 
-def configuration_fingerprint(source_mapping, *, inspection_inputs=None):
-    policy = {
-        "revision": CATALOG_REVISION, "stores": "fresh-owned-synthetic", "sources": source_mapping,
-        "restore": "locked", "runtimeLogger": "HoardSafe", "consoleLogger": False}
+def configuration_policy():
+    return MappingProxyType({
+        "revision": CATALOG_REVISION, "stores": "fresh-owned-synthetic",
+        "restore": "locked", "runtimeLogger": "HoardSafe", "consoleLogger": False})
+
+
+def configuration_record(source_mapping, *, inspection_inputs=None):
+    policy = {**configuration_policy(), "sources": source_mapping}
     if inspection_inputs is not None:
         from conformance_case_catalog import ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES
         expected = set(ORIGINAL_INSPECTION_WITNESSES) - set(ORIGINAL_INSPECTION_LITERAL_WITNESSES)
@@ -1135,7 +1184,11 @@ def configuration_fingerprint(source_mapping, *, inspection_inputs=None):
                 assignments[hashlib.sha256(path.encode("utf-8")).hexdigest()] = sha256(hashed)
             selected[identity] = assignments
         policy["inspectionInputs"] = selected
-    return digest(policy)
+    return load_json(canonical_bytes(policy))
+
+
+def configuration_fingerprint(source_mapping, *, inspection_inputs=None):
+    return digest(configuration_record(source_mapping, inspection_inputs=inspection_inputs))
 
 
 def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invocation_group_id,

@@ -993,6 +993,60 @@ baseline artifacts are a different explicit entity, not current-run evidence.
 
 ## Deterministic Evaluation
 
+### Delivered offline correspondence inspection
+
+`--verify <report> --coordinator <trusted-manifest>` and
+`--aggregate <directory> --coordinator <trusted-manifest>` now inspect retained
+correspondence. They do not attest runtime origin or qualify a profile; valid
+diagnostic inspection returns `qualification: false`, `EvidenceIncomplete`,
+exit2. A retained failed attempt returns `AssertionFailed`, exit1, even when its
+final result passes. Invalid packets return a closed error without private text.
+Claimed qualification cannot substitute for the unfinished native evaluator.
+
+The separately trusted coordinator manifest has exactly `schemaVersion: 1`
+and `profiles`. A profile entry has exactly:
+
+| Field | Admitted value |
+| --- | --- |
+| `inputs` | Original independently captured `RunInputs` |
+| `reportSha256` | Coordinator-observed digest of the original report bytes |
+| `reportPath` | Relative report path inside that profile's retained root |
+| `configuration` | Exact safe preimage of `inputs.configurationSha256` |
+| `jobResults` | Exactly `job`, `upload`, `download`, each observed `success` |
+
+Keep this manifest outside every inspected root; do not generate its assignments
+or hashes from the same downloaded artifact as supposed independent authority.
+Verification accepts a nonempty selected subset of profiles; aggregate requires
+exactly all five, distinct run IDs, qualification-mode clean inputs, matching
+invocation/source revision/state/full manifest/catalog/SDK and successful
+job/upload/download outcomes. Aggregate layout is
+`<directory>/<profile>/<reportPath>`; proof paths are relative to that profile's
+root. The verifier derives the retained root from the separately assigned
+`reportPath`, never from an untrusted report field. Symlinked/escaping paths,
+duplicate fields, unknown schema fields and oversized inputs reject.
+
+`configuration_record` exposes the same canonical preimage already used by
+`configuration_fingerprint`; existing fingerprints do not change. Common policy
+is catalog revision, fresh owned synthetic stores, locked restore, HoardSafe
+runtime logger and disabled console logging. Source assignments are either the
+exact synthetic local/NuGet mapping or an independently frozen archive map.
+Optional inspection assignments retain only known identities and opaque
+path-hash/content-hash pairs. Every complete preimage must recompute the assigned
+profile fingerprint. Thus different source/archive/inspection assignments can
+have different fingerprints while sharing one verified policy. This is
+correspondence to trusted assignments, not evidence that CI actually consumed
+them; coordinator production/CI attestation remains unfinished.
+
+Both routes expand catalog keys/applicability independently, check exact passed
+parameter families and append-only execution references, rehash every declared
+proof file and verify the original readonly completion-input packet. Their
+bounded output contains only closed profile IDs, counts, hashes and explicit
+nonqualification; no input filenames, configuration values or environment text
+are repeated. Existing category presentation reuses that common inspection
+without weakening its stricter diagnostic scope/state requirements.
+
+### Remaining qualification evaluator
+
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
    durations. Treat import exceptions as safe classified failures, not success.

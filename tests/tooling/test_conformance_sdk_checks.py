@@ -6577,6 +6577,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                     publications.append(locks)
 
                 with patch.object(preparation, "native_execution_supported", return_value=True), \
+                        patch("conformance_execution.shutil.disk_usage",
+                              return_value=SimpleNamespace(free=24 * 1024**3)), \
                         patch.object(preparation.OwnedRun, "allocate", side_effect=allocate), \
                         patch.object(preparation.baselines, "prepare", side_effect=baseline), \
                         patch.object(preparation.baselines, "verify_prepared_baselines"), \

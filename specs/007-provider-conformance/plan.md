@@ -3570,6 +3570,89 @@ updated; provider APIs, guide commands and other product/architecture/governance
 IaC/release/UI documents are unaffected by schema-only ownership admission.
 T068--T086, reviewer-owned checklists and implement/running remain unchanged.
 
+### Explicit trusted coordinator and offline correspondence inspection
+
+The cancelled interface question is resolved without further maintainer input:
+offline commands use `--coordinator <trusted-manifest>`. This separate input
+cannot live inside the retained root and is never inferred from a report.
+Its exact profile records bind original inputs, report path/hash, safe complete
+configuration preimage and actual job/upload/download outcomes. Unknown fields,
+unsafe/mismatched sources, changed preimages, foreign common context, duplicate
+run identities, missing/cancelled phases and reduced aggregate profiles reject.
+
+The shared configuration preimage preserves the prior canonical fingerprint.
+One exact common fresh-store/locked-restore/HoardSafe/no-console policy is
+independently admitted while synthetic/frozen sources and opaque inspection
+assignments may differ across profiles. Inspection paths remain hashed, never
+raw. This is correspondence to trusted assignments, not evidence that CI consumed
+them; full baseline coordinator production/attestation remains open.
+
+Public `--verify` and exact-five `--aggregate` now actually re-expand catalog
+keys/applicability/passed parameters, rehash every retained proof and verify the
+original readonly completion-input packet. The shared structural inspection
+also serves the existing stricter category renderer. All successful inspections
+remain `qualification: false`, `EvidenceIncomplete`, exit2; a retained failed
+attempt produces `AssertionFailed`, exit1, even after a modeled passing retry.
+Optimistic qualification cannot bypass the unfinished runtime-origin evaluator.
+No sample/model report can qualify; no case/control/proof requirement is waived.
+
+The missing-API coordinator tests and new public positive first fail before
+implementation. Tests then exercise actual generated model ledgers and the
+real shell entry point, all-five complete-but-incomplete model inventories,
+resealed missing catalog entries in every profile, retry history, outside-root
+context, changed report/proof bytes and unknown/link inputs. Outputs repeat no
+input paths/configuration/environment values and alter no original proof bytes.
+
+The wider389-test evidence/SDK/CI/CLI/sanitation selection initially hits the
+host's actual14 GiB free scratch in the earlier modeled preparation test; one
+error/three subcase failures are capacity admission, not accepting verification.
+That modeled-graph fixture now explicitly supplies its capacity measurement,
+while retaining actual owner allocation/release. The separate insufficient-
+capacity test still proves real admission rejects before allocation; no
+production capacity gate or native transfer is lowered/skipped. The corrected
+focused selection passes42 tests with four explicit native-only skips in4.624
+seconds. Catalog/SDK and diff checks pass.
+
+README, DEVELOPMENT, quickstart and the evidence contract document the new
+commands, exact trust/layout and current-versus-planned behavior. Provider APIs,
+contributor guide commands, CustomHost, product/architecture/ADR/diagrams,
+governance/backlog/predecessor/IaC/release/UI documents are unaffected by this
+offline/tooling change. T068--T086 and implement/running remain unchanged:
+strict runtime-origin/settlement qualification, full support/state-machine
+delivery, trusted full baseline/CI coordinator generation and actual five-profile
+CI acceptance still require implementation and fresh execution.
+
+The frozen full `python3 scripts/conformance_unit_checks.py --all-tooling`
+attempt cannot publish its final packet: the host volume fills and stdout flush
+fails `OSError: [Errno 28] No space left on device`, exit120. Its output file is
+empty, so no passing test total or full-suite result is inferred. Inspection
+finds only128--138 MiB free. Remove only the two inspected untracked task-local
+NuGet scratch caches under `.foundation/conformance-composition`, preserving
+their separate result/lock receipts and all original native evidence; free space
+then measures1.8 GiB. No global cache, unrelated data or production capacity
+policy is changed. Full local/native acceptance remains capacity-blocked;
+focused verified results above remain distinct from that unsuccessful attempt.
+
+After that cleanup, `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_lock_preparation_releases_both_original_owners_before_publication
+test_conformance_sdk_checks.SdkDiagnosticTests.test_insufficient_scratch_is_reported_as_incomplete_before_any_workspace_is_created`
+passes235 tests in77.136 seconds with four explicit native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. This does not substitute for the failed full-suite
+attempt or the >=24 GiB native prerequisite.
+
+Actual pushed `cc1c374` CI also remains incomplete: foundations run40928378773
+passes native ownership/evidence, compatibility, preparation and artifact
+diagnostics, but metadata and SDK diagnostics fail. Metadata reports
+`EvidenceIncomplete` after its qualification-recovery phase. Composition
+run40928378727/job123643319337 fails runtime ingestion with `ProofMismatch`,
+then `WitnessMissing`; no admitted source-line locations are available.
+These failures are distinct from the local disk failure and earlier frozen
+successes. Their causes are not inferred from scalar classifications; actual
+failure diagnosis and a new source-bound execution remain required.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -45,6 +45,7 @@ class ConformanceCliTests(unittest.TestCase):
             ["--profile", "composition", "--binding-project", str(report), "--evidence", str(self.destination)],
             ["--verify", str(report), "--aggregate", str(self.parent)],
             ["--verify", str(report), "--evidence", str(self.destination)],
+            ["--coordinator", str(report), "--profile", "metadata", "--evidence", str(self.destination)],
             ["--update-locks", "--filter", "QC-01", "--evidence", str(self.destination)],
             ["--filter", "unknown-case", "--evidence", str(self.destination)],
             ["--profile", "metadata", "--filter", "MP-0", "--evidence", str(self.destination)],
@@ -77,6 +78,93 @@ class ConformanceCliTests(unittest.TestCase):
             self.assertIsNone(invocation.evidence)
             with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
                 evidence.dispatch_invocation(invocation)
+
+    def offline_fixture(self):
+        from test_conformance_evidence import ConformanceRuntimeIngestionTests
+
+        model = ConformanceRuntimeIngestionTests()
+        model.setUp()
+        self.addCleanup(model.doCleanups)
+        sources = {
+            "packageSources": {
+                "local": "isolated-current-archives", "nuget.org": "https://api.nuget.org/v3/index.json"},
+            "packageSourceMapping": {"local": ["Hoard.*"], "nuget.org": ["*"]}}
+        configuration = {**evidence.configuration_policy(), "sources": sources}
+        model.inputs["configurationSha256"] = evidence.digest(configuration)
+        root = self.parent / "original"
+        root.mkdir()
+        report = model.generated_category_report(root, "metadata")
+        path = root / "proofs/category-metadata-qualification-report.json"
+        context = self.parent / "coordinator.json"
+        context.write_bytes(evidence.canonical_bytes({"schemaVersion": 1, "profiles": {"metadata": {
+            "inputs": report["inputs"], "reportSha256": evidence.digest(report),
+            "reportPath": path.relative_to(root).as_posix(), "configuration": configuration,
+            "jobResults": {"job": "success", "upload": "success", "download": "success"}}}}))
+        return root, path, context
+
+    def test_explicit_coordinator_verifies_original_generated_packet_without_qualifying_model_origin(self):
+        import conformance_cli
+
+        root, report, coordinator = self.offline_fixture()
+        before = evidence.proof_manifest(root)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            code = conformance_cli.main(["--verify", str(report), "--coordinator", str(coordinator)])
+        self.assertEqual(code, 2)
+        packet, = (json.loads(row) for row in output.getvalue().splitlines())
+        self.assertFalse(packet["qualification"])
+        self.assertEqual(packet["scope"], "profile-report-structure-diagnostic")
+        self.assertEqual(packet["code"], "EvidenceIncomplete")
+        self.assertEqual(packet["profileId"], "metadata")
+        self.assertGreater(packet["caseCount"], 96)
+        self.assertNotIn(str(self.parent), output.getvalue())
+        self.assertEqual(evidence.proof_manifest(root), before)
+        child = subprocess.run([
+            "bash", str(ROOT / "scripts/validate-conformance.sh"),
+            "--verify", str(report), "--coordinator", str(coordinator)],
+            cwd=self.parent, capture_output=True, timeout=15, check=False)
+        self.assertEqual(child.returncode, 2)
+        self.assertEqual(child.stderr, b"")
+        self.assertEqual(json.loads(child.stdout), packet)
+
+    def test_offline_verification_rejects_report_self_pins_changed_proofs_and_unknown_context(self):
+        import conformance_cli
+
+        for defect in ("self-context", "context-field", "changed-report", "changed-proof", "context-link"):
+            with self.subTest(defect=defect):
+                root, report, coordinator = self.offline_fixture()
+                if defect == "self-context":
+                    target = root / "coordinator.json"
+                    coordinator.rename(target)
+                    coordinator = target
+                elif defect == "context-field":
+                    value = json.loads(coordinator.read_bytes())
+                    value["providerError"] = "private-canary"
+                    coordinator.write_bytes(evidence.canonical_bytes(value))
+                elif defect == "changed-report":
+                    report.chmod(0o600)
+                    report.write_bytes(report.read_bytes() + b"\n")
+                elif defect == "changed-proof":
+                    value = json.loads(report.read_bytes())
+                    proof = root / next(iter(value["proofs"]))
+                    proof.chmod(0o600)
+                    proof.write_bytes(b"private-canary")
+                else:
+                    linked = self.parent / "linked-coordinator.json"
+                    linked.symlink_to(coordinator)
+                    coordinator = linked
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    code = conformance_cli.main(["--verify", str(report), "--coordinator", str(coordinator)])
+                self.assertIn(code, (1, 2))
+                packet, = (json.loads(row) for row in output.getvalue().splitlines())
+                self.assertNotIn("scope", packet)
+                self.assertFalse(packet["qualification"])
+                self.assertNotIn("private-canary", output.getvalue())
+                self.assertNotIn(str(self.parent), output.getvalue())
+                shutil.rmtree(root)
+                if coordinator.is_symlink():
+                    coordinator.unlink()
 
     def test_explicit_category_project_cannot_change_the_selected_common_agreement(self):
         project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"

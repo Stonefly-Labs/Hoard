@@ -7975,6 +7975,27 @@ retained diagnostic verification and establishes no actual runtime settlement.
 These guards preserve actual release/recovery behavior and do not replace the
 unfinished independent evaluator.
 
+Offline `--verify` and `--aggregate` now take an explicit separate
+`--coordinator <trusted-manifest>` and perform actual bounded retained-file
+inspection. The [quickstart](../specs/007-provider-conformance/quickstart.md#offline-correspondence-inspection)
+documents commands/layout, and the [evidence contract](../specs/007-provider-conformance/contracts/evidence.md#delivered-offline-correspondence-inspection)
+defines exact fields/trust. Coordinator assignments and report hashes cannot be
+inferred from the same artifact or stored inside an inspected root. Aggregate
+requires exact five-profile context and successful job/upload/download
+observations; verification accepts selected profiles. Both re-expand catalog
+keys/applicability/parameters, rehash actual proofs and verify the original
+readonly completion-input packet. Their summary is always nonqualifying:
+valid diagnostics exit2, while retained failed attempts exit1 even after retry.
+Neither cached qualification nor optimistic job status establishes runtime
+origin or actual resource settlement.
+
+The shared configuration preimage preserves existing fingerprint bytes. Its
+common fresh-store/locked-restore/HoardSafe/no-console policy is checked
+independently, while synthetic/frozen sources and opaque inspection assignments
+may differ per profile. No actual CI attestation is inferred from trusted
+assignment correspondence. Full baseline coordinator generation, native
+qualification evaluation and five-profile CI remain unfinished.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

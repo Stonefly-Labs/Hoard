@@ -13,7 +13,9 @@ They contain only closed identifiers, counts and hashes; JUnit always includes
 an explicit `EvidenceIncomplete` qualification error. These summaries are not
 portable verification reports or evidence of complete private-proof sanitation.
 They do not change the separate custom-contributor path or deliver the planned
-`--verify`, `--aggregate` or five-profile qualification workflow.
+qualifying `--verify`, `--aggregate` or five-profile qualification workflow.
+Offline correspondence inspection with a separate `--coordinator` manifest is
+now delivered; see [offline inspection](#offline-correspondence-inspection).
 Selected metadata/artifact settings are transient owned `stores/` resources;
 live replay checks their original bytes and held command hashes before genuine
 cleanup. They are no longer copied into shared/hook/mutation proof packets.
@@ -1108,6 +1110,38 @@ this work, not a repository directory or broad shared temp root. Run full
 acceptance serially unless each run has its own immutable input snapshot and
 independent stores/caches. Do not edit shared tooling during acceptance.
 
+## Offline Correspondence Inspection
+
+The current offline routes inspect existing complete retained ledgers without
+claiming qualification:
+
+```bash
+bash scripts/validate-conformance.sh \
+  --verify "$HOARD_PRIVATE_PARENT/profile/proofs/category-metadata-qualification-report.json" \
+  --coordinator "$HOARD_PRIVATE_PARENT/trusted-coordinator.json"
+bash scripts/validate-conformance.sh \
+  --aggregate "$HOARD_PRIVATE_PARENT/profiles" \
+  --coordinator "$HOARD_PRIVATE_PARENT/trusted-coordinator.json"
+```
+
+The coordinator manifest must come from the trusted observer, outside the
+retained roots, not from downloading the same report and copying its claims.
+Its exact [schema and trust boundary](contracts/evidence.md#delivered-offline-correspondence-inspection)
+include original inputs, external report pins, report paths, configuration
+preimages and successful job/upload/download outcomes. Aggregate layout is
+`profiles/<profile>/<reportPath>` for exactly all five profiles. Verification
+supports a selected profile; it derives that root from the assigned relative
+report path. No missing coordinator, job or profile is inferred from green
+summaries.
+
+Valid inspection returns `qualification: false`, `EvidenceIncomplete`, exit2.
+Failed attempts remain `AssertionFailed`, exit1, even after a passing retry.
+Malformed/stale/changed evidence rejects with a closed safe code. Exact catalog/
+applicability/parameter/proof/completion checks are delivered, but independent
+runtime-origin/settlement qualification and trusted coordinator generation for
+the full local/CI baseline are not. No sample-only manifest or these commands
+can promote incomplete observations into support.
+
 ## Planned Baseline and Verification
 
 After implementation, with a fresh destination:
@@ -1116,7 +1150,8 @@ After implementation, with a fresh destination:
 bash scripts/validate-conformance.sh \
   --profile baseline --evidence "$HOARD_PRIVATE_PARENT/f07-baseline"
 bash scripts/validate-conformance.sh \
-  --verify "$HOARD_PRIVATE_PARENT/f07-baseline/public/report.json"
+  --verify "$HOARD_PRIVATE_PARENT/f07-baseline/public/report.json" \
+  --coordinator "$HOARD_PRIVATE_PARENT/trusted-coordinator.json"
 ```
 
 Expected: complete category entries for all four bindings, every required
