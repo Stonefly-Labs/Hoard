@@ -7293,6 +7293,37 @@ tooling backend correction, not an SDK workload repair, successful native
 category report, runtime-origin attestation or qualification. Fresh isolated
 native generation, final evaluation and T068..T086 remain outstanding.
 
+The fresh exact2a8ed8e Linux observation passes all historical/candidate builds,
+locked replay, inspection preparation, SQLite admission and initial native
+recovery/noncooperation/ownership/package-consumer controls, then rejects
+UnknownDiagnostic at its first shared-consumer VSTest invocation. No category
+report is produced. Its ledger remains Settling with no live children/groups;
+this is not successful release. A separate bounded owned `dotnet vstest --help`
+probe executes no provider and reproduces the exact97-byte SDK notice hash
+`9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b`,
+delegating to the unchanged projector before rethrowing. It genuinely releases.
+
+Default metadata/artifact category VSTest now uses the selected SDK's
+`vstest.console.dll` through explicit measured runtime selection. The existing
+contributor runner-closure inventory supplies a read-only hash-only SDK packet,
+captured before runtime input admission and pinned in those inputs and every
+category command. Both launcher and independent native source reconstruction
+verify that original packet/current SDK closure and identical arguments;
+the launcher rechecks even when its child fails. Missing, changed or unfrozen
+pins reject, never fall back to ambient `dotnet vstest`. Existing standalone
+compatibility/diagnostic frontends are unchanged; this correction alone does
+not complete those profiles or T074.
+
+The new runner control first fails before implementation. Final affected
+SDK/admission/runtime-ingestion regressions pass304 tests in94.551 seconds.
+At the preceding exact2a8ed8e source, frozen safe tooling passes750 tests with
+zero failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes and27 explicit macOS native skips, returning expected incomplete exit2.
+That replay predates the new runner test. No native report success or
+qualification is inferred; a fresh corrected-source observation remains required.
+Safe packets precede removal of only the stopped task containers/volumes,
+with both exact volumes independently verified absent.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

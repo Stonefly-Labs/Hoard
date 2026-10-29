@@ -67,7 +67,7 @@ from conformance_sources import (
     native_artifact_transfer_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
-    read_bounded, runtime_arguments, runtime_settings,
+    read_bounded, runtime_arguments, runtime_runner, runtime_runner_material, runtime_settings,
     source_witnesses as _source_witnesses,
 )
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
@@ -2561,6 +2561,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     prefix = candidate.relative_to(run.root).as_posix()
     locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime = [f"{prefix}/{name}" for name in inventory if runtime_input(name)]
+    runtime.append("proofs/sdk-vstest-inputs.json")
     if not runtime or not locks:
         raise evidence.ConformanceError("EvidenceIncomplete")
     inputs = evidence.capture_profile_inputs(
@@ -2595,6 +2596,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "metadata-category", "artifact-category-transfers", "artifact-category"]
             if mode == "diagnostic" else ["profile", profile_id, "native-source-admission"]),
         baseline_sha256=seal_sha, ci_revision=ci_revision)
+    runtime_runner(run.root, inputs)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
         raise evidence.ConformanceError("InputChanged")
@@ -3853,7 +3855,13 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     settings_data = runtime_settings(run.root, assembly, attempt_id, manifest_sha, owner_sha, origin_environment)
     write_new(settings, settings_data)
     started = time.monotonic() * 1000
-    arguments = runtime_arguments(assembly, settings, identities, discovery=discovery)
+    runner, runner_inputs = None, None
+    if category_scope is not None and category_scope[0] in ("metadata", "artifacts"):
+        runner_inputs = manifest["runInputsPath"]
+        runner = runtime_runner(run.root, runner_inputs)
+    arguments = runtime_arguments(
+        assembly, settings, identities, discovery=discovery,
+        runner_prefix=None if runner is None else runner["prefix"])
     if contributor_binding is not None:
         toolchain = inspection_reference_roots()["Microsoft.NETCore.App"].parents[1]
         vstest = toolchain / "sdk" / inputs["environment"]["sdk"] / "vstest.console.dll"
@@ -3914,6 +3922,8 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
               if Path(entry["path"]).name in (
                   assembly.name, "Hoard.Testing.Conformance.dll", "Hoard.Abstractions.dll",
                   "Hoard.Conformance.TestLogger.dll"))]
+    if runner is not None:
+        execution_inputs.extend(runner["inputFiles"])
     try:
         result = run.command(
             arguments,
@@ -3922,6 +3932,8 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             **({"execution_outputs": execution_outputs} if execution_outputs else {}),
             **({"discovery_tests": frozenset(identities)} if discovery else {}))
     finally:
+        if runner is not None and runtime_runner(run.root, runner_inputs) != runner:
+            raise evidence.ConformanceError("InputChanged")
         if contributor_binding is not None:
             from conformance_contributors import read_binding_runtime_controls
             controlled = read_binding_runtime_controls(run, contributor_binding, inputs)
@@ -4444,6 +4456,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         admitted_environment = environment(run, candidate=candidate)
         if any(admitted_environment[name] != build_environment[name] for name in ("sdk", "runtime")):
             raise evidence.ConformanceError("InputChanged")
+        _, runner_material = runtime_runner_material(admitted_environment)
+        write_new(run.root / "proofs/sdk-vstest-inputs.json", runner_material)
         print(json.dumps({"qualification": False, "phase": "runtime-input-capture"}), flush=True)
         inputs = make_inputs(run, repository, candidate, sources, admitted_environment, identity, seal_sha,
                              ci_revision=ci_revision, binding_sources=binding_sources, inspection_inputs=inspection_inputs)

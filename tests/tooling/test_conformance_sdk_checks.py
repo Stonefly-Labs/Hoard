@@ -28,6 +28,47 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_explicit_runtime_runner_rechecks_frozen_sdk_closure_and_rejects_missing_pins(self):
+        import conformance_sources as sources
+        toolchain = self.directory / "dotnet"
+        sdk = toolchain / "sdk" / ENVIRONMENT["sdk"]
+        sdk.mkdir(parents=True)
+        for name in ("vstest.console.dll", "vstest.console.deps.json", "vstest.console.runtimeconfig.json"):
+            (sdk / name).write_bytes(name.encode())
+        root = self.directory / "run"
+        (root / "proofs").mkdir(parents=True)
+        path = root / "proofs/sdk-vstest-inputs.json"
+        with patch.object(checks, "inspection_reference_roots", return_value={
+                "Microsoft.NETCore.App": toolchain / "packs/Microsoft.NETCore.App.Ref"}):
+            prefix, raw = sources.runtime_runner_material(ENVIRONMENT)
+            path.write_bytes(raw)
+            path.chmod(0o400)
+            inputs = {"environment": ENVIRONMENT,
+                      "runtimeAssemblies": {"proofs/sdk-vstest-inputs.json": checks.evidence.file_sha256(path)}}
+            control = sources.runtime_runner(root, inputs)
+            self.assertEqual(control["prefix"], prefix)
+            self.assertEqual(prefix, (
+                "dotnet", "exec", "--fx-version", ENVIRONMENT["runtime"], str(sdk / "vstest.console.dll")))
+            self.assertEqual(control["inputFiles"], inputs["runtimeAssemblies"])
+            arguments = checks.runtime_arguments(
+                root / "Consumer.dll", root / "settings.runsettings", ("Consumer.Check",), runner_prefix=prefix)
+            self.assertEqual(arguments[:len(prefix)], list(prefix))
+            self.assertEqual(arguments[len(prefix)], str(root / "Consumer.dll"))
+            for defect in ("unfrozen", "changed-tool", "missing-pin"):
+                with self.subTest(defect=defect):
+                    if defect == "unfrozen":
+                        path.chmod(0o600)
+                    elif defect == "changed-tool":
+                        (sdk / "vstest.console.dll").write_bytes(b"changed tool bytes")
+                    else:
+                        inputs["runtimeAssemblies"].clear()
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        sources.runtime_runner(root, inputs)
+                    if defect == "unfrozen":
+                        path.chmod(0o400)
+                    elif defect == "changed-tool":
+                        (sdk / "vstest.console.dll").write_bytes(b"vstest.console.dll")
+
     def test_historical_and_candidate_builds_use_the_same_explicit_sdk_backend(self):
         project = self.directory / "Provider.csproj"
         config, feed = self.directory / "NuGet.Config", self.directory / "feed"
@@ -613,6 +654,10 @@ class SdkDiagnosticTests(unittest.TestCase):
     def setUp(self):
         self.directory = ROOT / ".foundation" / ("sdk-diagnostic-test-" + uuid.uuid4().hex)
         self.directory.mkdir(parents=True, mode=0o700)
+        # These transport models do not supply a real installed SDK closure.
+        runner = patch.object(checks, "runtime_runner", return_value={"prefix": None, "inputFiles": {}})
+        self.runner_control = runner.start()
+        self.addCleanup(runner.stop)
 
     def tearDown(self):
         shutil.rmtree(self.directory)
@@ -960,6 +1005,9 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_category_runtime_scopes_preserve_exact_catalog_binding_and_case_assignments(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+        prefix = ("dotnet", "exec", "--fx-version", ENVIRONMENT["runtime"], "/selected/sdk/vstest.console.dll")
+        control = {"prefix": prefix, "inputFiles": {"proofs/sdk-vstest-inputs.json": "c" * 64}}
+        self.runner_control.return_value = control
         (self.directory / "stores").mkdir(exist_ok=True)
         (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
@@ -1025,6 +1073,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                                      "Hoard.Fixtures.Metadata." + ("Memory" if pairs[0][0] == "memory" else "Sqlite")))
                 with self.subTest(profile=profile, scope=scope_id):
                     checks.runtime_command(run, assembly, manifest, **options)
+                    self.assertEqual(launches[-1][0][:len(prefix)], list(prefix))
+                    self.assertIn("proofs/sdk-vstest-inputs.json", launches[-1][1]["execution_inputs"])
                     if profile == "metadata" and scope_id.startswith("original-"):
                         self.assertTrue({entry["path"] for entry in manifest["assemblies"]} <= set(
                             launches[-1][1]["execution_inputs"]))
@@ -1062,6 +1112,12 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(len(launches), 18)
         self.assertTrue(all(options["record_execution"] is True for _, options in launches))
         self.assertEqual(len(tuple((self.directory / "proofs").glob("category-command-*.json"))), 18)
+        self.runner_control.reset_mock()
+        self.runner_control.side_effect = [control, checks.evidence.ConformanceError("InputChanged")]
+        with patch.object(run, "command", side_effect=checks.evidence.ConformanceError("CommandFailed")):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.runtime_command(run, assembly, {**manifest, "attemptId": str(uuid.uuid4())}, **options)
+        self.assertEqual(self.runner_control.call_count, 2)
 
     def test_category_inspection_receipts_join_only_the_exact_catalog_binding_scope(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases
@@ -5945,6 +6001,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         artifact_consumer.parent.mkdir(parents=True)
         artifact_consumer.write_bytes(b"owned-artifact-session")
         sources = checks.evidence.source_manifest(repository)
+        (run.root / "proofs").mkdir(exist_ok=True)
+        checks.write_new(run.root / "proofs/sdk-vstest-inputs.json", b"modeled-runner-inputs")
         environment = {
             "os": "linux", "osVersion": "test", "architecture": "x86_64",
             "sdk": "10.0.203", "runtime": "10.0.7", "nativeSqlite": "not-used",

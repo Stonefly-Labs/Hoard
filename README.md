@@ -807,7 +807,9 @@ cleanup, plus public CLI error output. JSON/JUnit/Markdown report and CI-summary
 canary coverage remains unfinished with those report surfaces.
 Default category preparation now measures its selected SDK/runtime before
 historical builds and uses explicit MSBuild for historical/candidate builds and
-inspection resolution. This does not whitelist SDK notices or repair workloads;
+inspection resolution. Category VSTest also pins the selected SDK runner closure,
+uses explicit runtime selection, and rechecks those bytes after failed children.
+This does not whitelist SDK notices or repair workloads;
 fresh native report generation and independent origin evaluation remain required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs

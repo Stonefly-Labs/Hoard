@@ -572,6 +572,7 @@ def _native_category_consumer_control(run, inputs, *, started_ms, ended_ms, hook
     native_path = f"proofs/execution-command-{sequence:04}.json"
     images = {row["path"]: row["sha256"] for row in manifest["assemblies"]}
     shared_sdk_images = {} if hooks else category_common_consumer_sdk_images(run, inputs)
+    runner = runtime_runner(run.root, inputs)
     if (run.live_children() or record["runId"] != run.run_id or record["rootId"] != run.root_id
             or not 1 < record["childPid"] <= 2**31 - 1
             or not started_ms <= record["startedMs"] <= record["endedMs"] <= ended_ms
@@ -580,13 +581,15 @@ def _native_category_consumer_control(run, inputs, *, started_ms, ended_ms, hook
             or settings_raw != runtime_settings(run.root, assembly, attempt, evidence.digest(manifest),
                                                 hashlib.sha256(owner_raw).hexdigest(), environment)
             or record["argvSha256"] != evidence.digest(runtime_arguments(
-                assembly, run.root / settings_path, [row["testIdentity"] for row in manifest["expected"]]))
+                assembly, run.root / settings_path, [row["testIdentity"] for row in manifest["expected"]],
+                runner_prefix=runner["prefix"]))
             or record["cwdSha256"] != hashlib.sha256(str(assembly.parent.absolute()).encode()).hexdigest()
             or record["inputFiles"] != {
                 manifest_path: hashlib.sha256(manifest_raw).hexdigest(),
                 owner_path: hashlib.sha256(owner_raw).hexdigest(),
                 manifest["runInputsPath"]: evidence.digest(inputs),
-                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images, **shared_sdk_images}
+                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images, **shared_sdk_images,
+                **runner["inputFiles"]}
             or any(hashlib.sha256(_readonly(run.root / path, 16 * 1024 * 1024)).hexdigest() != hashed
                    for path, hashed in images.items())
             or _readonly(run.root / native_path, 64 * 1024) != record_raw
@@ -720,18 +723,20 @@ def category_mutation_observations(run, inputs, manifest, observed, *, sequence,
         "manifestSha256": hashlib.sha256(faulty_manifest_raw).hexdigest(),
         "settingsSha256": hashlib.sha256(settings_raw).hexdigest()}
     native_path = f"proofs/execution-command-{faulty_sequence:04}.json"
+    runner = runtime_runner(run.root, inputs)
     if (settings_raw != runtime_settings(run.root, assembly, faulty_attempt,
                                         hashlib.sha256(faulty_manifest_raw).hexdigest(),
                                         hashlib.sha256(owner_raw).hexdigest(), environment)
             or execution_raw != evidence.canonical_bytes(execution)
             or _readonly(run.root / native_path, 64 * 1024) != record_raw
-            or record["argvSha256"] != evidence.digest(runtime_arguments(assembly, settings, tuple(expected)))
+            or record["argvSha256"] != evidence.digest(runtime_arguments(
+                assembly, settings, tuple(expected), runner_prefix=runner["prefix"]))
             or record["cwdSha256"] != hashlib.sha256(str(assembly.parent.absolute()).encode()).hexdigest()
             or record["inputFiles"] != {
                 manifest_path: hashlib.sha256(faulty_manifest_raw).hexdigest(),
                 "runtime-owner.json": hashlib.sha256(owner_raw).hexdigest(),
                 manifest["runInputsPath"]: evidence.digest(inputs),
-                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images}):
+                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images, **runner["inputFiles"]}):
         raise evidence.ConformanceError("ProofMismatch")
     failed = {row["bindingId"]: row for row in failure["witnesses"]}
     observations = [{
@@ -944,10 +949,41 @@ def runtime_settings(root, assembly, attempt, manifest_sha, owner_sha, environme
         '</Configuration></Logger></Loggers></LoggerRunSettings></RunSettings>').encode()
 
 
-def runtime_arguments(assembly, settings, identities, *, discovery=False):
+def runtime_runner_material(environment):
+    from conformance_contributors import vstest_runner_inputs
+    from conformance_sdk_checks import inspection_reference_roots
+
+    observed = evidence.admit_entity("Environment", environment)
+    root = inspection_reference_roots()["Microsoft.NETCore.App"].parents[1]
+    captured = evidence.canonical_bytes(vstest_runner_inputs(root, observed["sdk"]))
+    if len(captured) > evidence.MAX_REPORT_BYTES:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    prefix = ("dotnet", "exec", "--fx-version", observed["runtime"],
+              str(root / "sdk" / observed["sdk"] / "vstest.console.dll"))
+    return prefix, captured
+
+
+def runtime_runner(root, inputs):
+    if isinstance(inputs, str):
+        inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+            _readonly(Path(root) / evidence.relative_path(inputs), evidence.MAX_REPORT_BYTES)))
+    path = "proofs/sdk-vstest-inputs.json"
+    raw = _readonly(Path(root) / path, evidence.MAX_REPORT_BYTES)
+    hashed = hashlib.sha256(raw).hexdigest()
+    if inputs["runtimeAssemblies"].get(path) != hashed:
+        raise evidence.ConformanceError("InputChanged")
+    prefix, captured = runtime_runner_material(inputs["environment"])
+    if raw != captured:
+        raise evidence.ConformanceError("InputChanged")
+    return MappingProxyType({
+        "prefix": prefix, "inputFiles": MappingProxyType({path: hashed})})
+
+
+def runtime_arguments(assembly, settings, identities, *, discovery=False, runner_prefix=None):
     filter_text = "|".join("FullyQualifiedName=" + name
                            for name in dict.fromkeys(identity.split("(")[0] for identity in identities))
-    return ["dotnet", "vstest", str(assembly), *(["--ListTests"] if discovery else []),
+    prefix = ("dotnet", "vstest") if runner_prefix is None else runner_prefix
+    return [*prefix, str(assembly), *(["--ListTests"] if discovery else []),
             f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"]
 
 
@@ -2302,6 +2338,8 @@ class NativeCategorySources:
             if record.get("outputFiles") != {
                     seal_path: hashlib.sha256(material["sourceProofs"][seal_path]).hexdigest()}:
                 raise evidence.ConformanceError("ProofMismatch")
+        runner = runtime_runner(run.root, inputs)
+        input_files.update(runner["inputFiles"])
         if (not isinstance(record, dict) or set(record) != fields
                 or type(record["schemaVersion"]) is not int or record["schemaVersion"] != 1
                 or type(record["sequence"]) is not int or record["sequence"] != sequence
@@ -2313,7 +2351,8 @@ class NativeCategorySources:
                 or record["scope"] != "ordinary" or run.live_children()
                 or record["inputFiles"] != input_files
                 or record["argvSha256"] != evidence.digest(runtime_arguments(
-                    assembly, settings, [entry["testIdentity"] for entry in manifest["expected"]]))
+                    assembly, settings, [entry["testIdentity"] for entry in manifest["expected"]],
+                    runner_prefix=runner["prefix"]))
                 or record["cwdSha256"] != hashlib.sha256(str(assembly.parent.absolute()).encode()).hexdigest()):
             raise evidence.ConformanceError("OwnershipInvalid")
         times = (record["startedMs"], record["endedMs"])

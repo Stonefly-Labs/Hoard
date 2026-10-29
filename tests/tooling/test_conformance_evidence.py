@@ -2800,6 +2800,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     namespace="category-artifact-transfers")
 
     def setUp(self):
+        import conformance_sources as sources
+        # Synthetic source graphs isolate native ownership from installed SDK selection.
+        runner = mock.patch.object(sources, "runtime_runner", return_value={"prefix": None, "inputFiles": {}})
+        runner.start()
+        self.addCleanup(runner.stop)
         self.inputs = ConformanceAdmissionTests().inputs()
         self.inputs["mode"] = "diagnostic"
         self.attempt = str(uuid.uuid4())

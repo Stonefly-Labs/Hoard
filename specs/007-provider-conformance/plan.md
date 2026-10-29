@@ -2463,6 +2463,68 @@ operator command, support matrix, infrastructure or release policy; other
 guides/examples/architecture/ADR/diagrams/governance remain unaffected. The
 separate final T081 architecture review is still required.
 
+### Default category VSTest closure and second SDK-frontend diagnosis
+
+Fresh isolated source2a8ed8ede45170b78dad6de8c27eca54a78cb2cd, genuine
+origin/main e75415fee07a5003c4cb40d869826c19fe0a2f36, UID10001, pinned SDK
+image8a90a473da5205a16979de99d2fc20975e922c68304f5c79d564e666dc3982fc,
+four CPUs/6 GiB/512 PIDs and52,393,635,840 admission bytes executes for
+257.622 seconds. Its actual run e2377285-3bb1-4ad6-bf57-3cf79e5eb4d8 passes
+historical preparation, candidate build, locked replay, inspection preparation,
+SQLite admission/input capture and native recovery/noncooperation/ownership/
+package-consumer preparation. The shared-consumer invocation sequence252
+rejects UnknownDiagnostic after an actually exited owned group. CLI exit2
+retains an interrupted category history, not a category report. The ledger
+remains Settling with empty children/groups, never relabeled Released.
+Bounded packet: `native-category-measured-sdk-retained`.
+
+A separate bounded owned frontend-only `dotnet vstest --help` probe loads no
+provider or foreign ownership root. It delegates to the unchanged test-output
+projector, recording only97 rejected bytes and SHA-256
+9c2411c22976123ed949c8be3829ed2e4f8707d99bee71c594df653f2be1bb0b.
+This reproduces the already verified SDK workload-integrity notice; no notice
+whitelist, output suppression or SDK repair is introduced. Actual probe run
+3ee45fc5-f5fb-4c79-91ac-57bd8bb776aa genuinely settles and reaches Released.
+Packet: `native-vstest-probe-retained`. Both packets precede exact stopped
+container removal and independent absence checks for volumes
+ee2d376c5127e201c8b889479acda17ad6ebd60a49e06ec4824b6b30b13bf126 and
+00592f38039f9d95a85fcd1d8aaf129ceeb37fd6b403998e68652cb292f260f4.
+The first remains after anonymous cleanup because of its prior explicit
+read-only diagnostic mount; it is removed by exact ID only after independently
+observing no remaining container references. Shared SDK images are preserved.
+
+Default metadata/artifact category execution now uses explicit SDK
+vstest.console.dll/measured runtime selection. It reuses the contributor's
+closed runner/dependency/extension/resource byte inventory, writes a read-only
+hash-only SDK packet and pins that packet in captured runtime inputs and every
+category command's held input map. Missing/unfrozen/changed pins fail closed.
+Launcher and independent native source admission reconstruct the same prefix
+and rehash the actual SDK closure; launch rechecks run even after child failure.
+Input recapture checks the closure again. No additional provider-chosen
+inventory, cached passing flag, foreign-root adoption or ambient fallback is
+introduced. Standalone compatibility/diagnostic frontends remain unchanged;
+complete profile orchestration remains T074 work.
+
+The focused concrete SDK-closure control fails before the new implementation.
+It then covers explicit selected arguments, changed SDK bytes, writable packets
+and omitted pins. Existing synthetic source/transport graphs explicitly stub
+SDK selection rather than claim a real installed closure. Their all-scope
+launcher control also observes the selected prefix/held SDK-packet input and
+proves a failed child still triggers rejecting SDK-input revalidation.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_sdk_checks test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_evidence.ConformanceAdmissionTests -q`
+passes304 tests in94.551 seconds. Catalog/SDK consistency and diff checks pass.
+
+The frozen safe-tooling replay at exact2a8ed8e observes750 tests, zero failures/
+errors/expected failures/unexpected successes/unexpected diagnostic bytes,
+27 explicit native macOS skips and expected EvidenceIncomplete exit2. Packet:
+`tooling-measured-sdk.json`. This predates the new runner control and is not
+relabelled751. Fresh exact corrected-source native generation remains required.
+No generated-good report, runtime-origin attestation, verification/aggregation
+or qualification is claimed. T068..T086, implement/running and reviewer-owned
+checklists remain unchanged. Other guides/examples/product/provider contracts/
+architecture/ADR/diagrams/governance/IaC/release/UI are unaffected by this
+tooling-only command/byte-admission correction; T081 final review is outstanding.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
