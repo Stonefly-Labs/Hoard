@@ -1368,6 +1368,23 @@ public sealed class ArtifactFactory : IArtifactConformanceBinding
                     changed.write_bytes(original)
                     changed.chmod(mode)
                 self.assertEqual(len(commands), prepared_commands + 3)
+                if artifacts:
+                    identity = (sdk.ARTIFACT_CONSUMER_PREFIX
+                                + "Recovery_binding_reopens_exact_owned_state_with_fresh_factory_and_authority")
+                    package = next(row for row in inputs["packages"]
+                                   if row["packageId"] == "Hoard.Fixtures.Conformance.Bindings.Local")
+                    recovery = {
+                        **manifest, "attemptId": str(uuid.uuid4()),
+                        "packages": [{
+                            "id": package["packageId"], "sha256": package["sha256"],
+                            "path": f'binding-consumer/feed/{package["packageId"]}.{package["version"]}.nupkg'}],
+                        "expected": [{
+                            **manifest["expected"][0], "testIdentity": identity, "fullyQualifiedName": identity,
+                            "packageId": package["packageId"], "bindingId": "local", "caseId": "local-artifact-session"}]}
+                    checked, observed, transport, _ = sdk._execute_runtime_transport(
+                        runner, inputs, result["assemblyPath"], recovery, {identity: ("local", "none")}, {})
+                    sdk.validate_observation(
+                        observed, checked, (identity,), "None", "Passed", 0, transport["proofs"], "None")
         finally:
             if owner.state == "Allocated":
                 owner.transition("Active")

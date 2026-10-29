@@ -6745,6 +6745,24 @@ successes/unexpected diagnostic bytes,23 native macOS skips and expected
 incomplete exit2. Two-file C# whitespace formatting, catalog/SDK and diff checks
 pass. Full artifact applicability/dispatch and T064..T086 remain open.
 
+An additive test-only IArtifactRecoveryConformanceBinding facet now reopens an
+exact persisted identity without a live predecessor session. Local retains the
+owned directory and stored identity, creates a fresh authority, and uses
+ReopenCompatible. Foreign providers reject before allocation; failed recovery
+initialization rejects after actual shutdown is joined. The packaged artifact
+regression separately executes a Local setup check through the existing safe
+discovery/logger transport, preserving both settlements and the original
+physical directory owner. It checks receipt/content continuity, cancelled
+admission and incompatible epochs. This same-process fresh-factory setup is not
+native crash proof and is not included in contributor component origin counts.
+The independent Local diagnostic inventory includes the new setup row; its
+original live-session parent/factory admission remains unchanged.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes718
+tests with zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,23 native macOS skips and expected incomplete exit2. The focused
+production artifact regression, five-file whitespace formatting, catalog/SDK and
+diff checks pass. T064 and all later tasks remain open.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

@@ -16,6 +16,17 @@ public static class LocalArtifactAssertionSessions
         ArtifactAssertionOwnership.CreateAsync(context, "fixture.artifact.local", ArtifactAssertionRestart.Compatible, options,
             (ownership, generation) => new Session(ownership, generation, options.AdmissionProbe), cancellationToken);
 
+    public static ValueTask<IArtifactAssertionSession> ReopenAsync(
+        ConformanceRunContext context, ArtifactAssertionOptions options, ArtifactStoreIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        return ArtifactAssertionOwnership.CreateAsync(
+            context, "fixture.artifact.local", ArtifactAssertionRestart.Compatible, options,
+            (ownership, generation) => new Session(ownership, generation, options.AdmissionProbe),
+            cancellationToken, identity);
+    }
+
     private sealed class Session : ArtifactAssertionSession
     {
         private readonly LocalArtifactStore store;

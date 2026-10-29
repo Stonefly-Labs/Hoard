@@ -11,6 +11,79 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class LocalArtifactSessionTests
 {
     [Fact]
+    public async Task Recovery_binding_reopens_exact_owned_state_with_fresh_factory_and_authority()
+    {
+        await using var resources = new RecordingDirectories();
+        var context = Context(resources);
+        IArtifactRecoveryConformanceBinding binding = new LocalBinding(new string('0', 64));
+        var original = await binding.CreateSessionAsync(context, default);
+        ArtifactMutationReceipt receipt;
+        var identity = original.Identity;
+        var authority = original.Authority;
+        try { receipt = await ArtifactCompositionAssertions.ConfiguredPublicationAsync(original.Store, default); }
+        finally { await original.DisposeAsync(); }
+        var resource = Assert.Single(resources.Directories);
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        var allocator = new RecoveryDirectories(resource, resources.Settlements[resource]);
+        var recoveryContext = new ConformanceRunContext(
+            context.RunId, context.CaseId, context.Clock, allocator, context.Evidence);
+        IArtifactRecoveryConformanceBinding fresh = new LocalBinding(new string('0', 64));
+        Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<ArgumentException>(() => fresh.ReopenSessionAsync(
+            recoveryContext, new("foreign.provider", identity.InstanceId, identity.Epoch), default).AsTask())).Message);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fresh.ReopenSessionAsync(
+            recoveryContext, identity, new CancellationToken(true)).AsTask());
+        Assert.Equal(0, allocator.Allocations);
+        var recovered = await fresh.ReopenSessionAsync(recoveryContext, identity, default);
+        try
+        {
+            Assert.Equal(identity, recovered.Identity);
+            Assert.NotSame(authority, recovered.Authority);
+            Assert.NotSame(original.Store, recovered.Store);
+            Assert.True(recovered.Faults.ObserveInitialization().Ready);
+            await ArtifactCompositionAssertions.CompatibleReopenAsync(recovered.Store, identity, receipt, default);
+        }
+        finally { await recovered.DisposeAsync(); }
+        Assert.Equal(1, allocator.Allocations);
+        var settlement = Assert.IsAssignableFrom<Task>(allocator.Settlement);
+        Assert.True(settlement.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+        var rejected = new RecoveryDirectories(resource, settlement);
+        var rejectedContext = new ConformanceRunContext(
+            context.RunId, context.CaseId, context.Clock, rejected, context.Evidence);
+        Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(() => fresh.ReopenSessionAsync(
+            rejectedContext, new(identity.ProviderModuleId, identity.InstanceId, Guid.NewGuid()), default).AsTask())).Message);
+        Assert.True(Assert.IsAssignableFrom<Task>(rejected.Settlement).IsCompletedSuccessfully);
+    }
+
+    private sealed class RecoveryDirectories(ConformanceOwnedDirectory resource, Task previousSettlement)
+        : IConformanceResourceAllocator
+    {
+        public int Allocations { get; private set; }
+        public Task? Settlement { get; private set; }
+
+        public ValueTask<ConformanceOwnedDirectory> AllocateDirectoryAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Assert.True(previousSettlement.IsCompletedSuccessfully);
+            Assert.Equal(0, Allocations++);
+            return ValueTask.FromResult(resource);
+        }
+
+        public ValueTask<ConformanceCleanupObservation> ReleaseAsync(
+            ConformanceOwnedDirectory owned, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Actual settlement required.");
+
+        public async ValueTask<ConformanceCleanupObservation> ReleaseAsync(
+            ConformanceOwnedDirectory owned, Task actualSettlement, CancellationToken cancellationToken)
+        {
+            Assert.Same(resource, owned);
+            Assert.Same(actualSettlement, Settlement ??= actualSettlement);
+            await actualSettlement.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
+            return new(ConformanceOwnershipState.Settling, [resource.ResourceId]);
+        }
+    }
+
+    [Fact]
     public async Task All_typed_observation_points_can_be_registered_together_and_removed_without_overwrite()
     {
         await using var resources = new RecordingDirectories();

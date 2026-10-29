@@ -1333,12 +1333,63 @@ fresh-process recovery. The existing artifact binding contract exposes only
 CreateSessionAsync; compatible ReopenAsync is an operation on an existing live
 session. The Local setup creates fresh identity and CreateEmpty state, so it
 cannot silently stand in for reopening the exact crashed store in a fresh
-process. A test-only recovery contract decision is required before adding that
-seam; no product API or common expected outcome may change to work around it.
+process. The maintainer was unavailable for the recovery-contract question, so
+the autonomous default is an additive test-only recovery facet rather than
+changing the existing logical binding API. This is not explicit maintainer
+approval of that design. No product API or common expected outcome changes.
 README, PROVIDERS, DEVELOPMENT, harness and this plan are affected. Product/
 charter, architecture/ADR/diagrams, public examples, governance, predecessors,
 IaC, release and UI documents are unaffected by this partial test-only increment.
 T064 remains unchecked and implement/running is unchanged.
+
+### Exact-state fresh-factory recovery setup
+
+IArtifactRecoveryConformanceBinding now accepts an exact persisted identity and
+the owning recovery allocator's directory. Local creates a fresh authority and
+initializes ReopenCompatible rather than generating a new identity/CreateEmpty
+state. Foreign providers reject before allocation; incompatible initialization
+rejects with BindingInvalid after actual shutdown is joined. The original live
+ReopenAsync and its parent/factory origin equality remain unchanged. No observed
+recovery wrapper is added: it would mislabel a fresh factory as a live reopen
+without separate cross-process input/parent admission.
+
+The packaged artifact regression independently runs a Local setup diagnostic
+through the existing safe discovery/execution/logger transport. It publishes
+through one factory, settles that session, then checks exact identity,
+receipt/content continuity, fresh authority/store, cancelled admission, foreign
+provider rejection, incompatible epoch rejection and joined new settlement.
+The recovery allocator supplies only the exact existing directory, once and
+after prior settlement; the original owner alone deletes physical state.
+This same-process fresh-factory setup does not prove abrupt-process durability,
+native containment, complete artifact applicability or custom recovery origins.
+The independent Local diagnostic inventory includes this setup row separately
+from the114 contributor rows/125 component origins.
+
+The focused production artifact test passes. An initial full replay catches the
+independent Local inventory test's missing new row; that inventory is updated
+without changing assertions or scope admission. Frozen `python3
+scripts/conformance_unit_checks.py --all-tooling` then observes718 tests, zero
+failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,23 native macOS skips and expected incomplete exit2. Five-file C#
+whitespace formatting, catalog/SDK and diff checks pass. README, PROVIDERS,
+DEVELOPMENT, harness and this plan are affected; product/charter, architecture/
+ADR/diagrams, public examples, governance, predecessors, IaC, release and UI
+documents are unaffected by this partial test-only setup increment. T064 and
+T065..T086 remain unchecked; the stage stays implement/running.
+
+The bounded hoard-architecture-review of this facet reports no blocking
+architecture findings from the named files and nearby mechanisms. Its read-only
+tools cannot inspect Git diffs, and it does not rerun checks; this is incremental
+review, not final T081 acceptance. The API remains test-only, exact-state setup
+retains original cleanup ownership, and no logical-origin admission is relaxed.
+Exact earlier2ec1de1 foundations run40809976509 is not green: four jobs pass,
+SDK job123237998139 fails one of63 original-memory witnesses at MP37 incomplete
+cleanup/owned activity, and ownership job123237998143 is cancelled after printing
+718 observed tests with one artifact production runtime regression failure,
+zero skips/errors/unexpected diagnostics. Its sanitized tooling packet lacks the
+runtime mismatch projection, so the failing artifact row is not yet established.
+These failures predate this recovery facet, remain retained, and cannot be
+replaced by the clean managed replay. Current-source native acceptance is open.
 
 ### Retained composition failure diagnostics
 

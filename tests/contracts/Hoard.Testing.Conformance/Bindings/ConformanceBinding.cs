@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using Hoard.Abstractions.Storage;
 
 namespace Hoard.Testing.Conformance.Bindings;
 
@@ -79,6 +80,13 @@ public interface IArtifactConformanceBinding : IConformanceBinding
 {
     ValueTask<IArtifactConformanceSession> CreateSessionAsync(
         ConformanceRunContext context, CancellationToken cancellationToken);
+}
+
+public interface IArtifactRecoveryConformanceBinding : IArtifactConformanceBinding
+{
+    /// <summary>Reopens the exact persisted identity in the directory supplied by the owning recovery allocator.</summary>
+    ValueTask<IArtifactConformanceSession> ReopenSessionAsync(
+        ConformanceRunContext context, ArtifactStoreIdentity identity, CancellationToken cancellationToken);
 }
 
 public static class ConformanceBindingAdmission

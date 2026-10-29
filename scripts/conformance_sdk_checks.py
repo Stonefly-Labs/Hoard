@@ -1401,6 +1401,7 @@ def local_artifact_session_scenarios():
         for consumer in ("publication", "expectations", "private-staging")}
     identities.update(ARTIFACT_CONSUMER_PREFIX + method for method in (
         "All_typed_observation_points_can_be_registered_together_and_removed_without_overwrite",
+        "Recovery_binding_reopens_exact_owned_state_with_fresh_factory_and_authority",
         "Scoped_observation_cannot_overwrite_a_live_registration_or_remove_its_replacement",
         "Local_reopen_keeps_identity_authority_content_and_allocation_without_stale_disposal",
         "Physical_store_stop_cannot_release_a_live_authority_guard_or_erase_retained_observation",

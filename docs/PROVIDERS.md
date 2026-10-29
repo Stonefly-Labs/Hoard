@@ -613,6 +613,18 @@ reaches controller completion but fails when its test passes text to a bytes-onl
 JSON reader; the test now encodes that output before admission. Failed native
 evidence remains retained, and new-source native verification is still required.
 
+The additive `IArtifactRecoveryConformanceBinding` test-only facet accepts an
+exact persisted `ArtifactStoreIdentity` and a context whose allocator supplies
+the already owned directory. Local implements it without requiring a live
+previous session: it creates a fresh authority and uses ReopenCompatible,
+rejecting foreign identities and failed initialization while joining shutdown.
+The packaged setup regression proves persisted receipt/content continuity,
+cancellation, incompatible-epoch rejection and actual settlement. Its recovery
+allocator admits one exact directory only after prior settlement; the original
+owner alone performs physical deletion. This is a same-process setup check,
+not abrupt-process proof or complete contributor recovery admission. Existing
+parent-linked live-reopen origins still require the same factory component.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

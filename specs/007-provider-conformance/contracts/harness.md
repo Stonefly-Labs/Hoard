@@ -2423,6 +2423,17 @@ the actual context; they must not impersonate full-artifact-binding. An actual
 captured Acme package-to-Consumer production replay validates the durable
 snapshot component inventory and eight-role attribution. It is not complete
 artifact applicability, abrupt-process recovery or native transfer qualification.
+The additive test-only IArtifactRecoveryConformanceBinding facet may reopen an
+exact persisted identity through an allocator supplying the controller-owned
+directory, without retaining a live previous session. Local uses a new authority
+and ReopenCompatible, rejects foreign identities before allocation, and rejects
+failed initialization only after actual shutdown is joined. The setup test must
+join prior settlement before reacquisition, supply the directory once, retain
+new actual settlement and leave physical deletion to the original owner.
+Its same-process fresh-factory replay is a separate Local diagnostic, not a
+contributor component or abrupt-process witness. Do not emit it as a live
+logical-reopen origin or relax existing parent/factory equality. Cross-process
+input-bound origin and ownership admission remains required before qualification.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

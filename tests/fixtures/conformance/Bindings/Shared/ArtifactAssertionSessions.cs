@@ -65,19 +65,27 @@ internal sealed class ArtifactAssertionOwnership
     public static async ValueTask<IArtifactAssertionSession> CreateAsync(
         ConformanceRunContext context, string providerId, ArtifactAssertionRestart restart, ArtifactAssertionOptions options,
         Func<ArtifactAssertionOwnership, ArtifactAssertionGeneration, ArtifactAssertionSession> create,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, ArtifactStoreIdentity? recoveryIdentity = null)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(options);
+        if (recoveryIdentity is not null && (recoveryIdentity.ProviderModuleId != providerId
+                || restart != ArtifactAssertionRestart.Compatible || options.AdmissionProbe != ArtifactAdmissionProbe.None))
+        { throw new ArgumentException("BindingInvalid"); }
         var resource = await context.Resources.AllocateDirectoryAsync(cancellationToken);
         var ownership = new ArtifactAssertionOwnership(context, resource, providerId, restart, options, create);
         var handedOff = false;
         try
         {
-            var session = ownership.CreateSession(ownership.CreateGeneration("store"));
+            var session = ownership.CreateSession(ownership.CreateGeneration("store", recoveryIdentity));
             ownership.Current = session;
             if (options.AdmissionProbe == ArtifactAdmissionProbe.None)
-            { await session.InitializeAsync(ArtifactInitializationMode.CreateEmpty, cancellationToken); }
+            {
+                await session.InitializeAsync(recoveryIdentity is null
+                    ? ArtifactInitializationMode.CreateEmpty : ArtifactInitializationMode.ReopenCompatible, cancellationToken);
+                if (recoveryIdentity is not null && !session.Ready)
+                { throw new InvalidOperationException("BindingInvalid"); }
+            }
             cancellationToken.ThrowIfCancellationRequested();
             handedOff = true;
             return session;
@@ -88,9 +96,9 @@ internal sealed class ArtifactAssertionOwnership
         }
     }
 
-    private ArtifactAssertionGeneration CreateGeneration(string child)
+    private ArtifactAssertionGeneration CreateGeneration(string child, ArtifactStoreIdentity? recoveryIdentity = null)
     {
-        var identity = new ArtifactStoreIdentity(providerId, instanceId, Guid.NewGuid());
+        var identity = recoveryIdentity ?? new ArtifactStoreIdentity(providerId, instanceId, Guid.NewGuid());
         var scope = options.AdmissionProbe == ArtifactAdmissionProbe.ForeignAuthority
             ? new ArtifactStoreIdentity(providerId, Guid.NewGuid(), Guid.NewGuid()) : identity;
         var generation = new ArtifactAssertionGeneration(identity,

@@ -1,9 +1,10 @@
+using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Conformance.Bindings.Shared;
 using Hoard.Testing.Conformance.Bindings;
 
 namespace Hoard.Fixtures.Conformance.Bindings.Local;
 
-public sealed class LocalBinding : IArtifactConformanceBinding
+public sealed class LocalBinding : IArtifactRecoveryConformanceBinding
 {
     private readonly ArtifactAssertionOptions options;
 
@@ -23,4 +24,9 @@ public sealed class LocalBinding : IArtifactConformanceBinding
         ConformanceRunContext context, CancellationToken cancellationToken) =>
         new ArtifactConformanceSession(
             await LocalArtifactAssertionSessions.CreateAsync(context, options, cancellationToken), context);
+
+    public async ValueTask<IArtifactConformanceSession> ReopenSessionAsync(
+        ConformanceRunContext context, ArtifactStoreIdentity identity, CancellationToken cancellationToken) =>
+        new ArtifactConformanceSession(
+            await LocalArtifactAssertionSessions.ReopenAsync(context, options, identity, cancellationToken), context);
 }

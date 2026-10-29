@@ -713,6 +713,12 @@ found by the real replay is fixed without relabelling components as full coverag
 The native metadata entrypoint regression also fixes its bytes-only JSON reader
 call after earlier execution reached completion. Full native verification,
 complete artifact coverage and contributor qualification remain open.
+An additive test-only recovery binding now lets Local reopen an exact persisted
+identity through a fresh factory and authority. The packaged setup regression
+retains the original physical directory owner, joins both settlements, and
+rejects foreign identities, cancelled admission and incompatible epochs.
+This same-process setup check is separate from contributor component origins;
+it does not establish abrupt-process recovery or change live-reopen admission.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
