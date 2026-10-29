@@ -906,6 +906,50 @@ def verify_completion_inputs(root, report):
     return completion
 
 
+def inspect_category_report(root, report_data, *, expected_inputs):
+    """Inspect a complete category ledger without attesting runtime origin."""
+    from conformance_case_catalog import expected_cases
+
+    report = admit_entity("QualificationReport", load_json(report_data))
+    expected_inputs = admit_entity("RunInputs", expected_inputs)
+    inputs = report["inputs"]
+    if digest(inputs) != digest(expected_inputs):
+        raise ConformanceError("InputChanged")
+    if (inputs["profileId"] not in ("metadata", "artifacts")
+            or inputs["mode"] not in ("qualification", "diagnostic")):
+        raise ConformanceError("UnsupportedProfile")
+    if (report["qualification"] or report["state"] != "Incomplete"
+            or report["scope"] != ("category-runtime-diagnostic",)):
+        raise ConformanceError("EvidenceIncomplete")
+    cases = {case.key: case for case in expected_cases(inputs["profileId"])}
+    results = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row
+               for row in report["results"]}
+    if results.keys() != cases.keys():
+        raise ConformanceError("WitnessMissing")
+    witnesses = {row["executionId"]: row for row in report["witnesses"]}
+    for key, result in results.items():
+        case = cases[key]
+        if result != _catalog_case_result(inputs, case, result["status"], result["attempts"]):
+            raise ConformanceError("ProofMismatch")
+        used = set()
+        for attempt in result["attempts"]:
+            if used.intersection(attempt["witnessIds"]):
+                raise ConformanceError("ProofMismatch")
+            used.update(attempt["witnessIds"])
+            if case.binding_id != "none" and case.witnesses and attempt["status"] == "Passed":
+                identities = tuple(witnesses[identity]["testIdentity"] for identity in attempt["witnessIds"])
+                if len(identities) != len(set(identities)) or set(identities) != set(case.witnesses):
+                    raise ConformanceError("WitnessMissing")
+    if input_manifest(root, list(report["proofs"])) != report["proofs"]:
+        raise ConformanceError("ProofMismatch")
+    verify_completion_inputs(root, report)
+    return MappingProxyType({
+        "qualification": False, "scope": "category-report-structure-diagnostic",
+        "code": "EvidenceIncomplete", "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "caseCount": len(results), "witnessCount": len(witnesses),
+    })
+
+
 _BINDING_REQUIRED_FAULTS = {
     "metadata": frozenset((
         "IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",

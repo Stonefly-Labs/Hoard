@@ -7225,6 +7225,27 @@ T065..T067 are complete; T068..T086 and implement/running remain. The commands
 still end diagnostic EvidenceIncomplete exit2, never full qualification.
 There is no arbitrary persisted-root adoption or `--recover` CLI.
 
+The next partial T068/T071 increment extracts category report structural
+inspection from the native producer into `inspect_category_report`.
+An independently supplied admitted input packet must exactly match admission
+inputs (including their original free-space measurement); separately retained
+completion measurements still permit actual free-space variation. Exact frozen
+case keys/exclusions and every passed binding-local parameter set are checked,
+along with non-reused execution IDs across attempts, actual bounded proof-file
+hashes and the read-only completion packet. Unknown/duplicate fields, changed
+files/links and optimistic Complete/qualification claims reject. Returned scope
+is explicitly `category-report-structure-diagnostic`, qualification false and
+EvidenceIncomplete; this does not attest native origin or complete evaluation.
+
+Three new producer-generated model controls first fail before implementation,
+then pass with the existing publication control. These are models, not genuine
+runtime-origin controls. All299 affected admission/runtime-ingestion/SDK tests
+pass in93.297 seconds. Frozen safe tooling observes743 tests, zero failures/
+errors/expected failures/unexpected successes/unexpected diagnostic bytes,
+25 explicit native macOS skips and expected non-qualifying exit2. Catalog/SDK
+and diff checks pass. T068..T086 remain unchecked; genuine generated-native
+mutation controls and final strict evaluation are still required.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

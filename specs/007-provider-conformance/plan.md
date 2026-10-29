@@ -2302,6 +2302,53 @@ final evaluation, service support or five-profile CI qualification is claimed.
 T068..T086 remain unchecked; implement/running continues with reviewer
 checklists unchanged and no convergence, merge or release authorization.
 
+### Partial independent category report inspection
+
+The next T068/T071 increment extracts the existing producer's complete-key/
+exclusion/proof/completion checks into reusable `inspect_category_report`.
+It additionally binds exact independently supplied admission inputs and checks
+every passed binding-local case's whole parameter inventory, rejecting duplicate
+test identities and execution reuse across that case's attempts. Admission
+free-space bytes are exact; the retained actual completion packet preserves its
+separate measured value under the existing immutable-input comparison.
+The producer calls this inspector before publishing its unchanged incomplete
+report. No origin/session/native control policy, schema, budget or proof ceiling
+is relaxed.
+
+The inspector is deliberately structural. It rejects optimistic Complete/
+qualification flags and returns `category-report-structure-diagnostic`,
+qualification false and EvidenceIncomplete. Known-complete model ledgers are
+not runtime-origin evidence. Full independent qualification, retained native
+source re-admission, actual generated-good mutation controls, support projection
+and verify/aggregate remain required; T068 and T071 remain unchecked.
+
+Three focused controls first fail because the inspector is absent. Their first
+post-implementation fixture misses its proofs directory and fails before report
+creation; creating that owned directory corrects only the test setup.
+The three new controls plus existing publication regression then pass in4.761
+seconds. Both categories cover complete-key/parameter/exclusion mutation.
+Independent source/package/lock/configuration/capability/environment/catalog/
+SDK/runtime/invocation/group/budget/baseline input changes reject, as does a
+substituted admission free-space measurement. Actual changed proof bytes,
+symlinked proof, optimistic state/boolean and unknown/duplicate fields reject.
+An exploratory full two-batch model retry hits the unchanged128-proof union
+ceiling and is not admitted; the existing focused failed-attempt/retry controls
+remain. No full-category retry support or relaxed proof bound is claimed.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_evidence.ConformanceAdmissionTests
+test_conformance_evidence.ConformanceRuntimeIngestionTests
+test_conformance_sdk_checks.SdkDiagnosticTests -q`:299 pass in93.297 seconds.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`:743 tests,
+zero failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,25 explicit native macOS skips and expected EvidenceIncomplete exit2.
+Session result: `tooling-category-report-inspection.json`.
+Catalog/SDK and diff checks pass. README and DEVELOPMENT describe the exact
+boundary. PROVIDERS, examples, charter/product/architecture/ADR/diagrams,
+governance/backlog/predecessor/IaC/release/UI are unaffected: no provider API,
+support scope, operator command, package graph or deployment behavior changes.
+Implementation remains running, with T068..T086 and reviewer checklists unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

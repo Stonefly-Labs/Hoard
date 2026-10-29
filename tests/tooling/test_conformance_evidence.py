@@ -4004,6 +4004,138 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "state": "Incomplete", "qualification": False, "scope": ["common-logical"],
         }
 
+    def generated_category_report(self, root, profile):
+        """Generate a model ledger through the producer; this is not native origin."""
+        import conformance_sdk_checks as checks
+        from types import SimpleNamespace
+
+        (root / "proofs").mkdir()
+        history, finish = self.category_quality_fixture(profile=profile, distinct_packages=True)
+        finish()
+        originals = {hashlib.sha256(row["executionId"].encode()).hexdigest(): row["executionId"].encode()
+                     for row in history.witnesses}
+        originals[hashlib.sha256(b"original-parent-1").hexdigest()] = b"original-parent-1"
+        originals.update({hashlib.sha256(control.encode()).hexdigest(): control.encode()
+                          for case in history._cases for control in case.controls})
+        originals.update({hashlib.sha256(raw).hexdigest(): raw for raw in history.quality_proofs.values()})
+        for path, hashed in history.proofs.items():
+            checks.write_new(root / path, originals[hashed])
+        run = SimpleNamespace(root=root)
+        summary = checks._category_record(run, history._inputs, history, {}, "EvidenceIncomplete")
+        checks._category_report(run, history._inputs, history._inputs, summary)
+        raw = (root / f"proofs/category-{profile}-qualification-report.json").read_bytes()
+        return evidence.load_json(raw)
+
+    def test_category_report_inspection_requires_all_catalog_keys_and_each_passed_parameter(self):
+        inspect = getattr(evidence, "inspect_category_report", None)
+        self.assertTrue(callable(inspect), "Category reports need independent complete-ledger inspection.")
+        for profile in ("metadata", "artifacts"):
+            for defect in (None, "missing-case", "missing-parameter", "exclusion"):
+                with self.subTest(profile=profile, defect=defect), tempfile.TemporaryDirectory() as temporary:
+                    self.setUp()
+                    root = Path(temporary).resolve()
+                    report = self.generated_category_report(root, profile)
+                    original = copy.deepcopy(report)
+                    row = next(row for row in report["results"]
+                               if row["bindingId"] != "none" and row["status"] == "Passed"
+                               and len(row["attempts"][0]["witnessIds"]) > 1)
+                    if defect == "missing-case":
+                        report["results"].remove(row)
+                    elif defect == "missing-parameter":
+                        row["attempts"][0]["witnessIds"].pop()
+                    elif defect == "exclusion":
+                        row.update(status="NotApplicable", applicable=False,
+                                   exclusionRule="non-durable-fixture", attempts=[], proofSha256=[])
+                    if defect is not None:
+                        referenced = {identity for result in report["results"] for attempt in result["attempts"]
+                                      for identity in attempt["witnessIds"]}
+                        report["witnesses"] = [w for w in report["witnesses"] if w["executionId"] in referenced]
+                        with self.assertRaises(evidence.ConformanceError):
+                            inspect(root, evidence.canonical_bytes(report), expected_inputs=original["inputs"])
+                    else:
+                        observed = inspect(root, evidence.canonical_bytes(report), expected_inputs=original["inputs"])
+                        self.assertFalse(observed["qualification"])
+                        self.assertEqual(observed["scope"], "category-report-structure-diagnostic")
+                        self.assertEqual(observed["reportSha256"], evidence.digest(report))
+                        self.assertEqual(observed["caseCount"], len(report["results"]))
+                        self.assertEqual(observed["witnessCount"], len(report["witnesses"]))
+                        self.assertEqual(observed["code"], "EvidenceIncomplete")
+
+    def test_category_report_inspection_binds_independently_captured_input_classes(self):
+        inspect = getattr(evidence, "inspect_category_report", None)
+        self.assertTrue(callable(inspect), "Cached report inputs cannot replace independently captured inputs.")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            report = self.generated_category_report(root, "metadata")
+            for kind in ("source", "package", "lock", "configuration", "capability", "environment",
+                         "catalog", "sdk", "runtime", "invocation", "group", "budget", "baseline"):
+                changed = copy.deepcopy(report["inputs"])
+                if kind == "source":
+                    changed["sourceManifest"][next(iter(changed["sourceManifest"]))] = "0" * 64
+                    changed["sourceManifestSha256"] = evidence.digest(changed["sourceManifest"])
+                elif kind == "package":
+                    changed["packages"][0]["sha256"] = "0" * 64
+                    for binding in changed["bindings"]:
+                        if binding["package"]["packageId"] == changed["packages"][0]["packageId"]:
+                            binding["package"]["sha256"] = "0" * 64
+                elif kind == "lock":
+                    changed["locks"][next(iter(changed["locks"]))] = "0" * 64
+                elif kind == "environment":
+                    changed["environment"]["runtime"] = "10.0.8"
+                    changed["environmentSha256"] = evidence.digest(changed["environment"])
+                elif kind == "runtime":
+                    changed["runtimeAssemblies"][next(iter(changed["runtimeAssemblies"]))] = "0" * 64
+                elif kind == "invocation":
+                    changed["invocation"] = ["foreign-invocation"]
+                elif kind == "group":
+                    changed["invocationGroupId"] = str(uuid.uuid4())
+                elif kind == "budget":
+                    changed["budgets"]["childSeconds"] -= 1
+                elif kind == "baseline":
+                    changed["baselines"] = [{
+                        "revision": "a" * 40, "sourceSha256": "a" * 64, "lockSha256": "b" * 64,
+                        "recipeSha256": "c" * 64, "binarySha256": "d" * 64,
+                        "dependencySha256": {"dependency.dll": "e" * 64}, "apiScope": "foreign"}]
+                else:
+                    changed[kind + "Sha256"] = "0" * 64
+                with self.subTest(kind=kind), self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                    inspect(root, evidence.canonical_bytes(report), expected_inputs=changed)
+            measured = copy.deepcopy(report["inputs"])
+            measured["environment"]["freeBytes"] += 1
+            measured["environmentSha256"] = evidence.digest(measured["environment"])
+            with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                inspect(root, evidence.canonical_bytes(report), expected_inputs=measured)
+
+    def test_category_report_inspection_rehashes_real_files_and_cannot_promote_model_origin(self):
+        inspect = getattr(evidence, "inspect_category_report", None)
+        self.assertTrue(callable(inspect), "Proof bytes and optimistic report flags require independent checks.")
+        for defect in ("proof-bytes", "proof-link", "optimistic", "state", "unknown-field", "duplicate-field"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                self.setUp()
+                root = Path(temporary).resolve()
+                report = self.generated_category_report(root, "metadata")
+                if defect in ("proof-bytes", "proof-link"):
+                    packet = root / next(iter(report["proofs"]))
+                    packet.chmod(0o600)
+                    if defect == "proof-bytes":
+                        packet.write_bytes(b"changed")
+                        packet.chmod(0o400)
+                    else:
+                        outside = root / "outside-sentinel"
+                        packet.rename(outside)
+                        packet.symlink_to(outside)
+                elif defect == "optimistic":
+                    report["qualification"] = True
+                elif defect == "state":
+                    report["state"] = "Complete"
+                elif defect == "unknown-field":
+                    report["success"] = True
+                raw = evidence.canonical_bytes(report)
+                if defect == "duplicate-field":
+                    raw = b'{"schemaVersion":1,' + raw[1:]
+                with self.assertRaises(evidence.ConformanceError):
+                    inspect(root, raw, expected_inputs=report["inputs"])
+
     def test_category_quality_reports_preserve_distinct_provider_package_provenance(self):
         for profile in ("metadata", "artifacts"):
             with self.subTest(profile=profile):

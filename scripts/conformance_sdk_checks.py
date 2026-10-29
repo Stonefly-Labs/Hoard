@@ -3020,19 +3020,10 @@ def _category_report(run, inputs, post_inputs, summary, *, resources=()):
         "witnesses": record["witnesses"], "resources": resources,
         "proofs": {**record["proofs"], completion_path: hashlib.sha256(completion_raw).hexdigest()},
         "state": "Incomplete", "qualification": False, "scope": ["category-runtime-diagnostic"]})
-    cases = {case.key: case for case in expected_cases(inputs["profileId"])}
-    results = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row
-               for row in report["results"]}
-    if (results.keys() != cases.keys()
-            or any(row != evidence._catalog_case_result(inputs, cases[key], row["status"], row["attempts"])
-                   for key, row in results.items())):
-        raise evidence.ConformanceError("ProofMismatch")
-    if report["proofs"] and evidence.input_manifest(run.root, list(report["proofs"])) != report["proofs"]:
-        raise evidence.ConformanceError("ProofMismatch")
-    evidence.verify_completion_inputs(run.root, report)
     raw = evidence.canonical_bytes(report)
+    inspected = evidence.inspect_category_report(run.root, raw, expected_inputs=inputs)
     write_new(run.root / (prefix + "-report.json"), raw)
-    return {**summary, "reportState": "Incomplete", "reportSha256": hashlib.sha256(raw).hexdigest()}
+    return {**summary, "reportState": "Incomplete", "reportSha256": inspected["reportSha256"]}
 
 
 def _category_failure_locations(error):

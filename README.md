@@ -796,6 +796,11 @@ both concurrent runs each pass76 parameters/86 origins; adapter-only stale repla
 fails exactly three named common rows. All five owners release their resources;
 active-root duplication and unavailable-service scope explicitly reject.
 These observations remain diagnostic, not independent report verification.
+Category report publication also uses a reusable bounded structural inspector:
+it checks captured-input identity, all catalog keys/exclusions, passed parameter
+sets and actual proof/completion bytes. Its explicit incomplete diagnostic
+result cannot turn modeled provenance into qualification; final origin
+evaluation, verification/aggregation and CI remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
