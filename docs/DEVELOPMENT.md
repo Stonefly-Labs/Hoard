@@ -7361,7 +7361,7 @@ Supply one retained metadata **or** artifact category packet root explicitly:
 ```bash
 HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT="$RETAINED_CATEGORY_ROOT" \
 PYTHONPATH=scripts:tests/tooling python3 -m unittest \
-  test_conformance_evidence.RetainedNativeCategoryStructureTests -v
+  test_conformance_evidence.retained_native_category_structure_tests -v
 ```
 
 These are structural diagnostics, not final runtime-origin qualification.
@@ -7370,8 +7370,20 @@ Absent fixture configuration explicitly skips all six with
 rather than substitute modeled data. The ordinary unittest skip exit is not
 qualification; the safe full-tooling runner continues treating skips as
 incomplete. No native generation is recursively launched by test discovery.
-The complete evidence suite with the actual metadata fixture passes195 tests
-in73.749 seconds; catalog/SDK consistency and diff checks pass.
+The original automatic-discovery implementation with the actual metadata fixture
+passes195 tests in73.749 seconds. Its exact389e6ce frozen full-tooling replay
+passes757 observations with zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,27 explicit native macOS skips and expected
+incomplete exit2.
+
+The external-packet suite is subsequently separated into the explicit callable
+selector above: ordinary foundational discovery must not acquire an external
+artifact prerequisite. This does not accept skips, filter discovered tests or
+increase CI budgets. Full-profile native mutation obligations still require
+explicit replay against their freshly generated packets; foundational success
+does not satisfy them. The combined evidence suite and explicit metadata replay
+pass195 tests in75.284 seconds, while the explicit selector without a fixture
+reports six prerequisite skips. Catalog/SDK consistency and diff checks pass.
 Artifact fixture execution and final T068/T071 evaluation remain outstanding.
 
 After another independent retained-byte inspection, the stopped successful

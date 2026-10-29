@@ -8431,8 +8431,7 @@ class ConformanceBaselineTests(unittest.TestCase):
             self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
 
 
-@unittest.skipUnless(os.environ.get("HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT"), "PrerequisiteMissing")
-class RetainedNativeCategoryStructureTests(unittest.TestCase):
+class _RetainedNativeCategoryStructureControls:
     """Challenge retained actual generation, without promoting structural checks to origin."""
 
     @classmethod
@@ -8683,6 +8682,15 @@ class RetainedNativeCategoryStructureTests(unittest.TestCase):
                     report["proofs"]["oversize.json"] = "0" * 64
                 self.reject(report, root=root)
                 self.assertEqual(sentinel.read_bytes(), b"untouched")
+
+
+def retained_native_category_structure_tests():
+    """Explicit packet replay; foundational discovery needs no external fixture."""
+    @unittest.skipUnless(os.environ.get("HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT"), "PrerequisiteMissing")
+    class RetainedNativeCategoryStructureTests(_RetainedNativeCategoryStructureControls, unittest.TestCase):
+        __qualname__ = "RetainedNativeCategoryStructureTests"
+
+    return unittest.TestLoader().loadTestsFromTestCase(RetainedNativeCategoryStructureTests)
 
 
 if __name__ == "__main__":

@@ -2619,6 +2619,32 @@ IaC/release/UI artifacts remain unaffected: this adds opt-in test replay, not
 a public execution command, provider behavior or runtime-origin trust policy.
 The branch remains implement/running and the PR remains draft.
 
+### Explicit retained-packet replay versus foundational discovery
+
+The exact389e6ce frozen safe full-tooling replay includes the actual metadata
+fixture and observes757 tests, zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,27 explicit native macOS skips and expected
+incomplete exit2. Packet: `tooling-generated-native-mutations.json`.
+
+Inspection of the existing foundations workflow exposes a tightly coupled
+scope problem: an optional external-packet TestCase in ordinary discovery
+would add six missing-fixture prerequisites to every foundations job. Instead,
+the retained controls are now exposed through the explicit unittest callable
+`test_conformance_evidence.retained_native_category_structure_tests`.
+Its fixed TestCase exists only when that selector is invoked and preserves
+stable safe test identities. Ordinary discovery is unchanged; no discovered
+test is filtered, no skip becomes success and the15-minute foundation budget
+is untouched. Full-profile native mutation replay still must explicitly execute
+this suite against each required fresh packet in T074/T077, not infer completion
+from the foundational inventory.
+
+`HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT=<retained-native-metadata-root> PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence test_conformance_evidence.retained_native_category_structure_tests -q`
+passes195 tests in75.284 seconds. Explicit selector replay without fixture
+configuration reports six PrerequisiteMissing skips, never modeled replacement
+data. Catalog/SDK consistency and diff checks pass. No T068..T086 task is
+advanced. README/DEVELOPMENT show the current selector; other artifacts remain
+unaffected by this test-discovery correction.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
