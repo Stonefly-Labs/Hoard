@@ -54,7 +54,7 @@ internal static partial class Program
             var outputPath = OwnedPath(root, Text(request.RootElement, "outputPath"));
             Require(!File.Exists(outputPath) && !Directory.Exists(outputPath), "OwnershipInvalid");
             using var graph = JsonDocument.Parse(assetsBytes, new JsonDocumentOptions { MaxDepth = 32 });
-            Require(graph.RootElement.GetProperty("version").GetInt32() == 3, "EvidenceSchemaInvalid");
+            Require(graph.RootElement.GetProperty("version").GetInt32() is 3 or 4, "EvidenceSchemaInvalid");
             var libraries = graph.RootElement.GetProperty("libraries");
             Require(libraries.ValueKind == JsonValueKind.Object, "EvidenceSchemaInvalid");
             var rows = new List<object>();

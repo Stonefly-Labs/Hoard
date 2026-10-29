@@ -356,6 +356,18 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual((code, event["code"]), (2, "InputChanged"))
         self.assertFalse(self.output.exists())
 
+    def test_managed_content_tool_accepts_version_four_library_layout_but_not_unknown_assets_versions(self):
+        for version, expected in ((5, 2), (4, 0)):
+            with self.subTest(version=version):
+                self.graph["version"] = version
+                self.assets.write_bytes(evidence.canonical_bytes(self.graph))
+                self.value["assets"]["sha256"] = evidence.file_sha256(self.assets)
+                self.request.write_bytes(evidence.canonical_bytes(self.value))
+                code, event = self.invoke()
+                self.assertEqual(code, expected)
+                self.assertEqual(event["code"], "None" if expected == 0 else "EvidenceSchemaInvalid")
+                self.assertEqual(self.output.exists(), expected == 0)
+
     def test_managed_content_tool_rejects_duplicate_request_fields_and_foreign_paths(self):
         original = self.request.read_bytes()
         self.request.write_bytes(original[:-1] + b',"schemaVersion":1}')
@@ -896,23 +908,6 @@ class NuGetContentToolTests(unittest.TestCase):
         native_command = owner.command
 
         def execute(arguments, *, cwd, cache_id, kind, timeout=600, env=None):
-            if len(arguments) == 9 and arguments[5] == "content-hashes":
-                request = evidence.load_json((owner.root / arguments[7]).read_bytes())
-                self.assertEqual(set(request), {"schemaVersion", "qualification", "assets", "cachePath", "outputPath"})
-                self.assertEqual((request["schemaVersion"], request["qualification"]), (1, False))
-                self.assertEqual(set(request["assets"]), {"path", "sha256"})
-                self.assertRegex(request["assets"]["sha256"], r"\A[0-9a-f]{64}\Z")
-                graph = evidence.load_json((owner.root / request["assets"]["path"]).read_bytes())
-                self.assertEqual(graph["version"], 3)
-                self.assertIsInstance(graph["libraries"], dict)
-                for library in graph["libraries"].values():
-                    self.assertIn(library["type"], ("package", "project"))
-                    if library["type"] == "package":
-                        self.assertLessEqual(len(library["path"]), 1024)
-                        parts = library["path"].split("/")
-                        self.assertEqual(len(parts), 2)
-                        for part in parts:
-                            self.assertRegex(part, r"\A[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}\Z")
             if native:
                 result = native_command(
                     arguments, cwd=cwd, cache_id=cache_id, kind=kind, timeout=timeout, env=env)
@@ -1583,6 +1578,38 @@ class ContributorAdmissionTests(unittest.TestCase):
             contributors.binding_restore_graph(binding, raw, evidence.canonical_bytes(lock),
                                                binding.project, packages, expected_lock_sha256=evidence.digest(lock),
                                                content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+
+    def test_restore_graph_admits_version_four_only_with_exact_single_framework_alias_mapping(self):
+        binding, assets, lock, packages = self.restore_graph_fixture()
+        assets["version"] = 4
+        framework = {"framework": "net10.0", "targetAlias": "net10.0"}
+        assets["project"]["frameworks"] = {"net10.0": dict(framework)}
+        assets["project"]["restore"]["frameworks"] = {"net10.0": dict(framework)}
+
+        def admit(graph):
+            return contributors.binding_restore_graph(
+                binding, evidence.canonical_bytes(graph), evidence.canonical_bytes(lock), binding.project, packages,
+                expected_lock_sha256=evidence.digest(lock),
+                content_hashes_data=evidence.canonical_bytes(self.content_receipt))
+
+        self.assertIn("acme.dependency/2.4.0-preview.1", admit(assets)["packages"])
+        for location in ("project", "restore"):
+            for defect in ("missing", "extra", "framework", "alias"):
+                changed = copy.deepcopy(assets)
+                selected = changed["project"] if location == "project" else changed["project"]["restore"]
+                if defect == "missing":
+                    del selected["frameworks"]
+                elif defect == "extra":
+                    selected["frameworks"]["net9.0"] = dict(framework)
+                else:
+                    selected["frameworks"]["net10.0"]["framework" if defect == "framework" else "targetAlias"] = "net9.0"
+                with self.subTest(location=location, defect=defect), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^EvidenceIncomplete$"):
+                    admit(changed)
+        changed = copy.deepcopy(assets)
+        changed["version"] = 5
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            admit(changed)
 
     def test_restore_graph_rejects_missing_foreign_duplicate_or_changed_package_and_edge_rows(self):
         binding, original, original_lock, packages = self.restore_graph_fixture()

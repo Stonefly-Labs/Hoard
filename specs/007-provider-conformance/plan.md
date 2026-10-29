@@ -1044,6 +1044,47 @@ controls with one explicit Linux-only skip on macOS; `git diff --check` passes.
 README/provider/development claims remain accurate: the native failure is still
 unresolved and public contributor execution remains incomplete.
 
+### Bounded NuGet assets v4 support
+
+Native run40790413172 at08a31ad reports699 tests, six failures, zero errors,
+zero skips and zero unexpected diagnostic bytes. Every joined-build failure
+ends at the temporary fixture's distinct line906: graph.version must equal3.
+This identifies the rejected schema boundary, not a package hash or native
+containment failure. Already-failed superseded eff2e3b was requested cancelled
+to admit that replay; failed jobs remain retained and cancellation is not a pass.
+
+The authoritative NuGet
+[LockFileFormat](https://github.com/NuGet/NuGet.Client/blob/c6df45892bb99ea578036787ccbaf1d4c88155c0/src/NuGet.Core/NuGet.ProjectModel/LockFile/LockFileFormat.cs)
+documents assets v4 from SDK10.0.300 onward. Its library writer retains the
+same identity/path/hash layout; the
+[PackageSpecWriter](https://github.com/NuGet/NuGet.Client/blob/c6df45892bb99ea578036787ccbaf1d4c88155c0/src/NuGet.Core/NuGet.ProjectModel/PackageSpecWriter.cs)
+uses target aliases for v4 framework sections and writes the framework/alias
+correspondence explicitly. The finite net10.0 contributor reader now supports
+versions3/4, with v4 requiring exactly net10.0 in both project/restore framework
+maps and matching framework/targetAlias values. Other target keys, missing/
+extra/foreign mappings and unknown versions still reject. No package hash,
+graph edge, ownership, runtime or immutable-input checks are relaxed.
+
+The two new controls initially fail: the managed v4 content producer returns
+EvidenceSchemaInvalid and independent v4 graph admission returns
+EvidenceIncomplete. After implementation they pass, including rejection of
+version5 and all missing/extra/foreign alias mutations. Temporary boundary
+assertions are removed now that the gate is isolated.
+`python3 -m unittest discover -s tests/tooling -p
+test_conformance_contributors.py -v` passes98 controls with two explicit native
+macOS skips. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes701 tests, zero failures/errors/unexpected diagnostic bytes,22 explicit
+native skips and expected non-qualifying exit2. `dotnet format
+tests/fixtures/conformance/BuildInputs/BuildInputs.csproj --no-restore
+--verify-no-changes --verbosity quiet`,
+`python3 scripts/conformance_case_catalog.py --check`,
+`python3 scripts/conformance_evidence.py --check-sdk` and `git diff --check`
+pass. Fresh native replay is required to prove the actual joined builds and
+late-image rejection boundaries now complete. T064 stays unchecked; README,
+PROVIDERS, DEVELOPMENT and harness are synchronized. Product APIs,
+architecture/ADR/diagrams, public examples, governance, predecessors, IaC,
+release and UI remain unaffected by this private schema-compatibility repair.
+
 The next partial T064 compiled-document reader accepts only closed bounded
 receipts for the selected successful compiler project and exact DLL/PDB paths.
 Each document hash must equal a captured compiler source hash; the actual current

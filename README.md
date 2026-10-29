@@ -657,7 +657,11 @@ producer diagnostics are now preserved instead of masked as CommandFailed.
 Restore and pack now explicitly invoke the same measured MSBuild/runtime as
 evaluation and compilation, instead of selecting an ambient SDK. A managed
 regression passes with an unavailable SDK requested outside the owned source;
-fresh Linux replay is still required to establish whether this fixes its failure.
+native replay shows this separate repair does not resolve content capture.
+Safe native diagnosis identifies the v3-only assets-version gate.
+The internal reader now supports NuGet assets v3 and v4; v4 requires exact
+single-net10.0 framework/alias mappings. Unknown versions and mismatched aliases
+reject. The v4 correction passes local controls; its native replay is pending.
 Native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the

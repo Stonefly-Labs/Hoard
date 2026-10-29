@@ -933,7 +933,7 @@ def binding_restore_graph(binding, assets_data, lock_data, project, package_root
     if project not in binding.sources or not project.endswith(".csproj"):
         raise evidence.ConformanceError("BindingInvalid")
     assets, lock = evidence.load_json(assets_data), evidence.load_json(lock_data)
-    if (not isinstance(assets, dict) or type(assets.get("version")) is not int or assets["version"] != 3
+    if (not isinstance(assets, dict) or type(assets.get("version")) is not int or assets["version"] not in (3, 4)
             or not isinstance(lock, dict) or type(lock.get("version")) is not int or lock["version"] not in (1, 2)
             or not isinstance(assets.get("targets"), dict) or set(assets["targets"]) != {"net10.0"}
             or not isinstance(lock.get("dependencies"), dict) or set(lock["dependencies"]) != {"net10.0"}
@@ -941,6 +941,14 @@ def binding_restore_graph(binding, assets_data, lock_data, project, package_root
             or not isinstance(assets.get("project"), dict) or assets.get("logs")):
         raise evidence.ConformanceError("EvidenceIncomplete")
     restore = assets["project"].get("restore")
+    if assets["version"] == 4:
+        for owner in (assets["project"], restore):
+            frameworks = owner.get("frameworks") if isinstance(owner, dict) else None
+            if (not isinstance(frameworks, dict) or set(frameworks) != {"net10.0"}
+                    or not isinstance(frameworks["net10.0"], dict)
+                    or frameworks["net10.0"].get("framework") != "net10.0"
+                    or frameworks["net10.0"].get("targetAlias") != "net10.0"):
+                raise evidence.ConformanceError("EvidenceIncomplete")
     folders = assets.get("packageFolders")
     package_root = Path(package_root).absolute()
     if (not isinstance(restore, dict) or restore.get("projectPath") != str(binding.root / project)

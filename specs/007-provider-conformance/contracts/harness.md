@@ -2267,6 +2267,12 @@ and runtime already selected for evaluation/compilation. Do not select an
 ambient SDK through dotnet restore/pack, infer it from the caller's working
 directory, or repair a toolchain mismatch by accepting an unsupported graph
 schema. Preserve locked restore, no-build pack and all post-pack revalidation.
+The finite supported assets layouts are NuGet versions3 and4. The v4 library
+layout is read with the same archive ownership/hash rules, but independently
+require exactly one net10.0 framework entry in both project and restore maps,
+each with framework=net10.0 and targetAlias=net10.0. Reject missing/extra/foreign
+aliases, other target keys and unknown assets versions. Do not normalize
+arbitrary alias/framework combinations into the supported scope.
 Join every declared referenced project's restore graph, actual compiler DLL/PDB
 and portable documents; revalidate those images after pack too. Internal
 consumer-lock composition may only combine an existing frozen consumer graph

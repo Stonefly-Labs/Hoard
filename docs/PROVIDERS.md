@@ -514,6 +514,13 @@ an enclosing global.json requesting an unavailable SDK breaks the joined build.
 The captured path now invokes both targets through the exact measured
 MSBuild/runtime, retaining locked restore, no-build pack and input revalidation.
 The managed regression passes; Linux failure resolution remains unverified.
+Safe native schema-boundary assertions then identify the v3-only version check.
+NuGet assets v4, introduced with SDK10.0.300, retains the library archive layout
+but pivots framework sections by alias. The private producer/reader now accepts
+v3/v4 only, requiring both v4 framework maps to contain exactly net10.0 with
+matching framework and targetAlias values. Existing graph, edge, hash and
+ownership checks remain; unknown versions and foreign/extra aliases reject.
+Local controls pass; the corrected native pipeline remains unverified.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with

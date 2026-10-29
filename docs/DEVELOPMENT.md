@@ -6604,6 +6604,17 @@ explicit MSBuild DLL and exact runtime, not the SDK-selecting CLI. The control
 passes even with an enclosing unavailable SDK request. This closes the measured
 toolchain gap without accepting a different assets schema or weakening runtime
 selection; it is not yet proof that the Linux content-hash failure is resolved.
+Run40789296142 at eff2e3b still fails that boundary (699 tests, two failures,
+four errors). Safe request/graph assertions in run40790413172 at08a31ad isolate
+the failure to the v3-only assets version check, without retaining its raw data.
+NuGet's documented v4 format is used from SDK10.0.300 onward; its library layout
+is unchanged, while framework sections use aliases. The private content producer
+now reads versions3/4 only. Independent v4 graph admission additionally requires
+exact single-net10.0 maps with matching framework/targetAlias in both project
+and restore metadata. Unknown versions and missing/extra/foreign mappings
+reject; archive/hash/edge/ownership checks are unchanged. Dedicated v4 controls
+first failed, then pass locally. Fresh native verification is still required.
+The temporary schema-diagnosis assertions are removed after isolating the gate.
 
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
