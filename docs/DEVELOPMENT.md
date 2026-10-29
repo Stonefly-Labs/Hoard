@@ -7346,6 +7346,39 @@ The native positive control is still identified as1f69eaf, not relabeled as
 this later guard correction. Generated-native mutation controls and T068..T086
 remain unfinished.
 
+Retained-native structural mutation controls now use the actual unchanged
+1f69eaf metadata report, not a generated model substitute. Six test families
+exercise90 rejecting mutations: all23 missing/changed input classes; exact
+case/parameter inventories; runtime provenance/outcomes; exclusions/retries/
+optimistic flags; nested schema, Unicode, duration and path/size bounds; and
+actual changed/missing/symlinked proof bytes, writable completion and a sparse
+oversized proof. Every family first inspects the unchanged control. Each copied
+proof tree also passes before mutation; the original report/input/proof hashes
+are checked unchanged afterward. Outside sentinels remain untouched.
+
+Supply one retained metadata **or** artifact category packet root explicitly:
+
+```bash
+HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT="$RETAINED_CATEGORY_ROOT" \
+PYTHONPATH=scripts:tests/tooling python3 -m unittest \
+  test_conformance_evidence.RetainedNativeCategoryStructureTests -v
+```
+
+These are structural diagnostics, not final runtime-origin qualification.
+Absent fixture configuration explicitly skips all six with
+`PrerequisiteMissing`; configured missing/ambiguous/incomplete packets fail
+rather than substitute modeled data. The ordinary unittest skip exit is not
+qualification; the safe full-tooling runner continues treating skips as
+incomplete. No native generation is recursively launched by test discovery.
+The complete evidence suite with the actual metadata fixture passes195 tests
+in73.749 seconds; catalog/SDK consistency and diff checks pass.
+Artifact fixture execution and final T068/T071 evaluation remain outstanding.
+
+After another independent retained-byte inspection, the stopped successful
+metadata container and its exact anonymous volume are removed. A separate
+successful Docker volume listing verifies that exact volume absent; no shared
+image or unrelated namespace is removed.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

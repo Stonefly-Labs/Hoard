@@ -2574,6 +2574,51 @@ changes no public contract or operator command. Generated-native mutation
 coverage, final strict evaluation and T068..T086 remain outstanding, with
 implement/running and reviewer-owned checklist state preserved.
 
+### Retained generated-native structural mutation controls
+
+The existing evidence test file now accepts an explicit
+`HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT` for exactly one retained complete
+metadata or artifact category packet. Six structural-only families execute
+90 rejecting mutations against the unchanged actual1f69eaf metadata control:
+46 missing/changed checks across all23 RunInputs fields, six exact catalog/
+parameter checks,12 provenance/outcome checks, seven exclusion/retry/optimistic
+checks,14 nested schema/Unicode/duration/path/size checks and five actual-file
+checks. No source test mocks, copied success booleans or regenerated model
+transports replace this positive control.
+
+Each family independently inspects the untouched report first. Actual-file
+controls copy only the470 referenced proof files into private temporary roots,
+successfully inspect each unmodified copy, then challenge changed/missing/
+symlinked runtime proof bytes, writable completion or an oversized sparse
+proof. Outside sentinels are unchanged. Final original report/input/proof
+inventory hashes must equal the initial snapshot. Structural success remains
+qualification:false/EvidenceIncomplete; it does not establish retained runtime
+authority or promote any cached flag. Missing optional fixture configuration
+produces six explicit PrerequisiteMissing skips; configured invalid or ambiguous
+packets fail, and test discovery never recursively generates native profiles.
+
+`HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT=<retained-native-metadata-root> PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence -q`
+passes195 tests in73.749 seconds. The same six-family selector without the
+fixture explicitly reports six skips. Catalog/SDK consistency and diff checks
+pass. The actual generated control remains source1f69eaf, not the current
+test implementation. The artifact packet has not yet been executed through
+these controls. Final origin evaluation, failed-retry qualification, other
+profiles and T068/T071 remain incomplete; no task checkbox advances.
+
+Before native namespace cleanup, unchanged report/input SHA and all470
+referenced proof files pass another host-side structural inspection. The
+exact stopped exit-zero `hoard-conformance-9832011c-frozen-runner` container
+and anonymous volume
+`d9ca48d1496905ca0896bffa06e4594f033c4129e2b4b5b46ab72ca704490ec0`
+are then removed. A separate successful volume listing verifies absence;
+no shared image or unrelated resource is removed.
+
+README/DEVELOPMENT document the explicit fixture and scope. Other
+guides/examples/contracts/product/provider/architecture/ADR/diagrams/governance/
+IaC/release/UI artifacts remain unaffected: this adds opt-in test replay, not
+a public execution command, provider behavior or runtime-origin trust policy.
+The branch remains implement/running and the PR remains draft.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

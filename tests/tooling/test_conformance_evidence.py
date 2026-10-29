@@ -8431,5 +8431,259 @@ class ConformanceBaselineTests(unittest.TestCase):
             self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
 
 
+@unittest.skipUnless(os.environ.get("HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT"), "PrerequisiteMissing")
+class RetainedNativeCategoryStructureTests(unittest.TestCase):
+    """Challenge retained actual generation, without promoting structural checks to origin."""
+
+    @classmethod
+    def setUpClass(cls):
+        from conformance_sources import read_bounded
+
+        cls.root = Path(os.environ["HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT"]).absolute()
+        profiles = [profile for profile in ("metadata", "artifacts")
+                    if (cls.root / f"proofs/category-{profile}-qualification-report.json").exists()]
+        if len(profiles) != 1:
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        cls.profile = profiles[0]
+        report_path = f"proofs/category-{cls.profile}-qualification-report.json"
+        inputs_path = f"proofs/category-{cls.profile}-qualification-run-inputs.json"
+        cls.raw = read_bounded(cls.root / report_path, evidence.MAX_REPORT_BYTES)
+        cls.original = evidence.load_json(cls.raw)
+        cls.inputs = evidence.load_json(read_bounded(cls.root / inputs_path, evidence.MAX_REPORT_BYTES))
+        cls.paths = sorted({report_path, inputs_path, *cls.original["proofs"]})
+        cls.snapshot = evidence.input_manifest(cls.root, cls.paths)
+
+    @classmethod
+    def tearDownClass(cls):
+        if evidence.input_manifest(cls.root, cls.paths) != cls.snapshot:
+            raise AssertionError("Native positive-control bytes changed.")
+
+    def setUp(self):
+        self.report = copy.deepcopy(self.original)
+        observed = self.inspect()
+        self.assertFalse(observed["qualification"])
+        self.assertEqual(observed["scope"], "category-report-structure-diagnostic")
+        self.assertEqual(observed["code"], "EvidenceIncomplete")
+        self.assertEqual(self.inputs["profileId"], self.profile)
+        self.assertEqual(self.inputs["mode"], "qualification")
+        self.assertTrue(self.report["resources"])
+        self.assertTrue(all(row["state"] == "Released" for row in self.report["resources"]))
+        self.assertTrue(all(row["status"] in ("Passed", "NotApplicable") for row in self.report["results"]))
+
+    def inspect(self, report=None, *, root=None, inputs=None):
+        raw = self.raw if report is None else (
+            report if isinstance(report, bytes) else evidence.canonical_bytes(report))
+        return evidence.inspect_category_report(
+            self.root if root is None else root, raw,
+            expected_inputs=self.inputs if inputs is None else inputs)
+
+    def reject(self, report=None, **options):
+        with self.assertRaises(evidence.ConformanceError) as failure:
+            self.inspect(report, **options)
+        self.assertIn(str(failure.exception), evidence.DIAGNOSTIC_CODES)
+
+    @staticmethod
+    def changed_hash(value):
+        return ("0" if value[0] != "0" else "1") + value[1:]
+
+    def passed_row(self, report):
+        return next(row for row in report["results"]
+                    if row["bindingId"] != "none" and row["status"] == "Passed"
+                    and len(row["attempts"][0]["witnessIds"]) > 1)
+
+    def test_every_admission_field_is_required_and_independently_bound(self):
+        for field in sorted(self.inputs):
+            with self.subTest(field=field, mutation="missing"):
+                changed = copy.deepcopy(self.inputs)
+                del changed[field]
+                self.reject(inputs=changed)
+            changed = copy.deepcopy(self.inputs)
+            if field.endswith("Sha256") or field == "sourceRevision":
+                changed[field] = self.changed_hash(changed[field])
+            elif field in ("runId", "invocationGroupId"):
+                changed[field] = str(uuid.uuid4())
+            elif field in ("sourceManifest", "locks", "runtimeAssemblies"):
+                key = next(iter(changed[field]))
+                changed[field][key] = self.changed_hash(changed[field][key])
+                if field == "sourceManifest":
+                    changed["sourceManifestSha256"] = evidence.digest(changed[field])
+            elif field == "environment":
+                changed[field]["freeBytes"] += 1
+                changed["environmentSha256"] = evidence.digest(changed[field])
+            elif field == "packages":
+                package = changed[field][0]
+                package["nugetSha512"] = self.changed_hash(package["nugetSha512"])
+                for binding in changed["bindings"]:
+                    if evidence._package_key(binding["package"]) == evidence._package_key(package):
+                        binding["package"] = copy.deepcopy(package)
+            elif field == "bindings":
+                changed[field][0]["adapterId"] += ".changed"
+            elif field == "baselines":
+                changed[field][0]["recipeSha256"] = self.changed_hash(changed[field][0]["recipeSha256"])
+            elif field == "budgets":
+                changed[field]["childSeconds"] -= 1
+            elif field == "invocation":
+                changed[field] = ["foreign-invocation"]
+            elif field == "sourceState":
+                changed[field] = "dirty-local" if changed[field] != "dirty-local" else "clean-local"
+            elif field == "mode":
+                changed[field] = "diagnostic"
+            elif field == "profileId":
+                changed[field] = "artifacts" if self.profile == "metadata" else "metadata"
+            elif field == "catalogRevision":
+                changed[field] = "foreign-catalog"
+            elif field == "schemaVersion":
+                changed[field] += 1
+            else:
+                self.fail("An admission field lacks a native mutation control.")
+            with self.subTest(field=field, mutation="changed"):
+                self.reject(inputs=changed)
+
+    def test_exact_case_and_parameter_sets_reject_missing_duplicate_and_unknown_rows(self):
+        for defect in ("missing-case", "duplicate-case", "unknown-case", "missing-parameter",
+                       "duplicate-execution", "unknown-parameter"):
+            with self.subTest(defect=defect):
+                report = copy.deepcopy(self.original)
+                row = self.passed_row(report)
+                if defect == "missing-case":
+                    report["results"].remove(row)
+                    used = {identity for result in report["results"] for attempt in result["attempts"]
+                            for identity in attempt["witnessIds"]}
+                    report["witnesses"] = [w for w in report["witnesses"] if w["executionId"] in used]
+                elif defect == "duplicate-case":
+                    report["results"].append(copy.deepcopy(row))
+                elif defect == "unknown-case":
+                    row["caseId"] = "MP-999"
+                elif defect == "missing-parameter":
+                    row["attempts"][0]["witnessIds"].pop()
+                elif defect == "duplicate-execution":
+                    report["witnesses"].append(copy.deepcopy(report["witnesses"][0]))
+                else:
+                    report["witnesses"][0]["testIdentity"] += "(foreign-parameter)"
+                self.reject(report)
+
+    def test_runtime_provenance_and_unsupported_outcomes_cannot_be_substituted(self):
+        for field in ("runId", "invocationGroupId", "inputSha256", "packageSha256",
+                      "assemblySha256", "proofSha256", "bindingId", "matrixId", "status"):
+            with self.subTest(field=field):
+                report = copy.deepcopy(self.original)
+                witness = report["witnesses"][0]
+                if field.endswith("Sha256"):
+                    witness[field] = "0" * 64
+                elif field in ("runId", "invocationGroupId"):
+                    witness[field] = str(uuid.uuid4())
+                else:
+                    witness[field] = "Unknown"
+                self.reject(report)
+        for status in ("Skipped", "Unknown", "Cancelled"):
+            with self.subTest(status=status):
+                report = copy.deepcopy(self.original)
+                self.passed_row(report)["status"] = status
+                self.reject(report)
+
+    def test_exclusion_reclassification_retry_reuse_and_optimistic_flags_reject(self):
+        for defect in ("logical-exclusion", "wrong-exclusion", "reused-retry",
+                       "removed-prefix", "qualification", "complete", "optimistic-summary"):
+            with self.subTest(defect=defect):
+                report = copy.deepcopy(self.original)
+                row = self.passed_row(report)
+                if defect == "logical-exclusion":
+                    row.update(status="NotApplicable", applicable=False,
+                               exclusionRule="non-durable-fixture", attempts=[], proofSha256=[])
+                    used = {identity for result in report["results"] for attempt in result["attempts"]
+                            for identity in attempt["witnessIds"]}
+                    report["witnesses"] = [w for w in report["witnesses"] if w["executionId"] in used]
+                elif defect == "wrong-exclusion":
+                    excluded = next(r for r in report["results"] if not r["applicable"])
+                    excluded["exclusionRule"] = ("non-durable-fixture"
+                        if excluded["exclusionRule"] == "simulation-no-durable-restart"
+                        else "simulation-no-durable-restart")
+                elif defect == "reused-retry":
+                    retry = copy.deepcopy(row["attempts"][0])
+                    retry.update(sequence=2, startedMs=retry["endedMs"], endedMs=retry["endedMs"] + 1)
+                    row["attempts"].append(retry)
+                elif defect == "removed-prefix":
+                    row["attempts"][0]["sequence"] = 2
+                elif defect == "qualification":
+                    report["qualification"] = True
+                elif defect == "complete":
+                    report["state"] = "Complete"
+                else:
+                    report["allPassed"] = True
+                self.reject(report)
+
+    def test_nested_schema_unicode_duration_path_and_size_limits_reject_safely(self):
+        for defect in ("unknown-attempt-field", "unknown-witness-field", "duplicate-report-field",
+                       "duplicate-input-field", "invalid-utf8", "unpaired-surrogate", "nan-duration",
+                       "negative-duration", "reversed-duration", "escaping-proof", "absolute-proof",
+                       "oversized-report", "too-many-proofs", "too-many-results"):
+            with self.subTest(defect=defect):
+                report = copy.deepcopy(self.original)
+                witness = report["witnesses"][0]
+                if defect == "unknown-attempt-field":
+                    self.passed_row(report)["attempts"][0]["unknown"] = True
+                elif defect == "unknown-witness-field":
+                    witness["unknown"] = True
+                elif defect == "unpaired-surrogate":
+                    witness["testIdentity"] = "\ud800"
+                elif defect == "nan-duration":
+                    witness["endedMs"] = float("nan")
+                elif defect == "negative-duration":
+                    witness["startedMs"] = -1
+                elif defect == "reversed-duration":
+                    witness["endedMs"] = witness["startedMs"] - 1
+                elif defect in ("escaping-proof", "absolute-proof"):
+                    report["proofs"]["../outside.json" if defect == "escaping-proof" else "/outside.json"] = "0" * 64
+                elif defect == "too-many-proofs":
+                    report["proofs"].update({f"overflow/{i}.json": "0" * 64
+                                             for i in range(evidence.MAX_PROOF_FILES + 1)})
+                elif defect == "too-many-results":
+                    report["results"] = [report["results"][0]] * (evidence.MAX_RESULTS + 1)
+                raw = json.dumps(report, ensure_ascii=True).encode("ascii")
+                if defect == "duplicate-report-field":
+                    raw = b'{"schemaVersion":1,' + raw[1:]
+                elif defect == "duplicate-input-field":
+                    raw = raw.replace(b'"inputs": {', b'"inputs": {"schemaVersion":1,', 1)
+                elif defect == "invalid-utf8":
+                    raw += b"\xff"
+                elif defect == "oversized-report":
+                    raw += b" " * (evidence.MAX_REPORT_BYTES + 1 - len(raw))
+                self.reject(raw)
+
+    def test_real_proof_bytes_presence_links_completion_sealing_and_byte_budget(self):
+        witness_hash = self.original["witnesses"][0]["proofSha256"]
+        selected = next(path for path, hashed in self.original["proofs"].items() if hashed == witness_hash)
+        for defect in ("changed-bytes", "missing-proof", "symlink", "completion-writable", "oversize-proof"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve() / "retained"
+                root.mkdir()
+                report = copy.deepcopy(self.original)
+                for relative in report["proofs"]:
+                    destination = root / relative
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(self.root / relative, destination)
+                self.assertFalse(self.inspect(report, root=root)["qualification"])
+                packet = root / selected
+                sentinel = root.parent / "outside-sentinel"
+                sentinel.write_bytes(b"untouched")
+                if defect == "changed-bytes":
+                    packet.chmod(0o600)
+                    packet.write_bytes(b"changed")
+                    packet.chmod(0o400)
+                elif defect == "missing-proof":
+                    packet.unlink()
+                elif defect == "symlink":
+                    packet.unlink()
+                    packet.symlink_to(sentinel)
+                elif defect == "completion-writable":
+                    (root / f"proofs/category-{self.profile}-qualification-completion-inputs.json").chmod(0o600)
+                else:
+                    with (root / "oversize.json").open("xb") as output:
+                        output.truncate(evidence.MAX_PROOF_BYTES + 1)
+                    report["proofs"]["oversize.json"] = "0" * 64
+                self.reject(report, root=root)
+                self.assertEqual(sentinel.read_bytes(), b"untouched")
+
+
 if __name__ == "__main__":
     unittest.main()
