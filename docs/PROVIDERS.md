@@ -567,6 +567,17 @@ independent compiler-source correspondence still apply. The actual managed
 metadata/artifact consumers and malformed/missing/mapped-link controls pass;
 native complete-owned-tree validation of this change remains pending.
 
+Frozen5e35310 subsequently passes native metadata76/86 and artifact118/128
+parameter/origin diagnostics, including actual artifact crash/recovery and
+256 MiB/4 GiB transfers; both original retained trees pass the finite private-root
+plain/one-level-base64 scan. The first artifact attempt remains a separate
+unexplained failure. At frozenc7dc15b, all five guide blocks pass verbatim:
+good/faulty/corrected runs preserve unchanged common source/image/provider
+archive digests and the exact three intended faulty consumers. All five released
+roots, including both overlapping runs, retain124 original images each and pass
+whole-tree private-root inspection. This closes those named diagnostic replays,
+not independent profile qualification, general secret absence or service support.
+
 Exact-source native ownership job123205181349 atb49fa51 passes all713 controls,
 including native contributor discovery/execution and settlement, without skips
 or unexpected diagnostic bytes. The next supplied-project integration then

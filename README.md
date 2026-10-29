@@ -918,6 +918,22 @@ does not erase the first failure or qualify a profile; the guide remains pending
 Lock preparation now
 uses transient candidate/replay inputs and publishes only after both original
 owners release; failed child cleanup retains the parent as well.
+The unchanged original composition observer at frozen5e35310 now passes CP36/110,
+all525 inherited parameters/58 scopes,770 native tooling checks without skips,
+and original-settings post-release report replay with29 report/two semantic
+mutation controls. Its report remains41 Passed/9 Incomplete, nonqualifying;
+full controller acceptance/containment and module ownership remain false.
+At frozenc7dc15b, all five contributor guide blocks also pass verbatim: good/
+faulty/corrected and overlapping runs preserve unchanged common sources/images/
+provider archives, the intended three faulty rows,124 original images per root,
+and clean whole-retained-tree private-root scans. Fresh native preparation
+replays13 locks/18 packages and actually releases both owners before publication;
+249 retained files pass the same finite scan. These observations close the
+named pending diagnostics above, not full-profile or all-output qualification.
+Five-profile transport inspection additionally rejects a foreign evaluator
+source manifest even with matching revision/catalog/SDK and per-profile pins;
+eight modeled tests pass. Common configuration-policy attestation, independent
+evaluation and actual five-profile CI remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

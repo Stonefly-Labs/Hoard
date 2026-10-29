@@ -1080,6 +1080,10 @@ stores. The replay retains its original ownership/closed diagnostics under
 locks or success output. A retained replay forces its parent Retained, and the
 preparation proof includes actual post-release resource projections. Preparation
 remains nonqualifying; native all-output execution is still required.
+Subsequent frozen native observations verify the finite composition, contributor
+guide and preparation retained trees after actual release, including unchanged
+original CP settings/report replay. These private-root plain/one-level-base64
+checks are not all-profile sanitation, general secret absence or qualification.
 Discovery mutation observations likewise publish projection and input
 descriptors relative to the owned root before persistence. Live verification
 hydrates only that private view; membership admission requires the exact
@@ -1094,6 +1098,13 @@ when all runtime cases pass. They do not replace the full-profile evaluator or
 the planned CI/aggregate support statement below.
 
 ## CI Profiles and Aggregate Check
+
+Delivered modeled transport inspection requires a common full source-manifest
+digest as well as invocation/source revision/state/catalog/SDK context, with
+independently supplied per-profile assignments, report pins and successful job/
+upload/download outcomes. Per-profile configuration/package/environment hashes
+may differ; this is not common configuration-policy attestation, runtime-origin
+evaluation or a qualifying aggregate. The workflow below remains planned.
 
 Planned workflow `.github/workflows/conformance.yml`:
 

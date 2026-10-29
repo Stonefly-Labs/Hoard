@@ -30,6 +30,7 @@ class ConformanceProfileTransportTests(unittest.TestCase):
             inputs["environment"]["freeBytes"] = (24 + index) * 1024**3
             inputs["environment"]["runnerImage"] = "runner-" + profile
             inputs["environmentSha256"] = evidence.digest(inputs["environment"])
+            inputs["configurationSha256"] = hashlib.sha256(("configuration-" + profile).encode()).hexdigest()
             inputs["packages"][0]["sha256"] = hashlib.sha256(profile.encode()).hexdigest()
             case = catalog.expected_cases(profile)[0]
             report.update(state="Incomplete", qualification=False, witnesses=[], results=[{
@@ -60,6 +61,7 @@ class ConformanceProfileTransportTests(unittest.TestCase):
         self.assertEqual(set(observed["profiles"]), set(evidence.PROFILES))
         self.assertEqual(len({row["environmentSha256"] for row in self.inputs.values()}), 5)
         self.assertEqual(len({row["packages"][0]["sha256"] for row in self.inputs.values()}), 5)
+        self.assertEqual(len({row["configurationSha256"] for row in self.inputs.values()}), 5)
         self.assertNotIn(b"runner-", evidence.canonical_bytes(observed))
 
     def test_local_and_ci_use_the_same_independent_profile_inventories(self):
@@ -131,6 +133,15 @@ class ConformanceProfileTransportTests(unittest.TestCase):
                 with self.assertRaises(evidence.ConformanceError):
                     self.inspect()
                 self.reports["metadata"]["inputs"][field] = original
+
+    def test_foreign_evaluator_source_rejects_even_with_matching_revision_and_assignment(self):
+        inputs = self.reports["harness"]["inputs"]
+        inputs["sourceManifest"]["scripts/conformance_evidence.py"] = "f" * 64
+        inputs["sourceManifestSha256"] = evidence.digest(inputs["sourceManifest"])
+        self.inputs["harness"] = copy.deepcopy(inputs)
+        self.reports["harness"]["postInputSha256"] = evidence.digest(inputs)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.inspect()
 
     def test_external_report_pins_and_unique_run_identities_are_required(self):
         inspector = importlib.import_module("conformance_ci").inspect_profile_transports

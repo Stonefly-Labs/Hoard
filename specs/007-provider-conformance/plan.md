@@ -3475,6 +3475,79 @@ and29 native macOS skips. Exit2/EvidenceIncomplete remains nonqualifying.
 Native preparation graph/full-tree inspection remains pending. T068--T086 and
 implement/running remain unchanged.
 
+### Frozen native composition, verbatim guide and preparation closure
+
+The unchanged original composition observer against frozen5e35310 completes run
+`6fc01828-d2c3-4c9c-a170-b8a72807edda`. Eight native sanitation controls, all36 CP
+parameters/110 snapshots,525 inherited parameters/58 scopes and770 native tooling
+checks pass with zero failures/errors/skips/unexpected diagnostic bytes.
+Actual tooling duration493640.773 ms fits the unchanged600-second budget.
+Discovery controls retain12 mutations/29 negative and29 repaired parameters,
+137 scenario parameters/ten suites/four adapter scenarios and11 feed packages/
+18 graphs/nine journeys/three retained binaries. Prepared formatting and the
+actual six-module reference-consumer observation also pass.
+
+Original-settings post-release report replay,29 report mutations and two
+semantic mutations pass. Report digest
+`5df03ebae44a8f865abd3c90e784a4bb062b9f93df5d9b0e8f13afff57e272d8`
+retains41 Passed/9 Incomplete. `fullControllerAcceptance`,
+`controllerNativeContainment`, `moduleOwnershipQualification`, `profileComplete`
+and `qualification` remain false. Actual Released cleanup takes462.490 ms with
+zero children/groups; namespace elapsed1063.972 seconds and peak1,470,337,024
+bytes stay within the bounded diagnostic allocation, with zero OOM/max events.
+All1503 original retained files pass plain/one-level-base64 private-root
+inspection; the complete retained copy adds the separate console as file1504.
+The original failed ae0dd227 transport is neither replaced nor relabeled.
+
+At frozenc7dc15b, the five actual Bash blocks from the contributor guide pass
+verbatim with zero unexpected diagnostic bytes. The good/faulty/corrected runs
+are `3a51b133-c69d-4ad5-bcaf-722feb9a2769`,
+`639e13b1-c2c1-4562-b6d4-056626ca2d3b` and
+`6d7ca756-20ce-4768-b6e4-c3dd1c663acd`. Their common sources, common images and
+provider archive digests remain identical; only publication-replay, receipts
+and time-ticket fail in the intended faulty run. Four original recovery
+controls and overlapping-root/duplicate/service rejections pass. All five
+original roots are Released, retain124 original images each and pass whole-tree
+plain/one-level-base64 private-root inspection. File counts are319/315/319 for
+good/faulty/corrected and319 for each overlapping root. The guide source digest
+is `5b7392bbc4d77663d885b6974b4c5ffecc8cf4ae218e7fd845b43e34b87d4da8`;
+the bounded output digest is
+`7895cf63f97963a8e91fe4ace23f2e4b601439c7d7bca08d540723fba2162210`.
+
+The separate fresh native preparation on the same frozen source exits0 with
+one closed nonqualifying success packet. Historical/candidate and fresh-cache
+locked replay pass13 locks/18 packages; only ten declared locks change inside
+its isolated clone. Both original ledgers are Released with zero children/groups
+before publication, cleanup94.180/56.425 ms. All249 retained files pass whole-root
+plain/one-level-base64 private-root inspection; retained manifest digest
+`9e9ee92781a33c228e2f01ba1ac08617a332c926c65cd08001f565d23141843a`.
+No preparation locks are copied into the working checkout.
+
+Complete original trees/consoles are retained before removing only the inspected
+stopped namespaces and volumes `87bb74e273fa7a315d199f1a2c401361e1451612dd666cdb5f24c5bf9e8040bc`,
+`e46cdd31f0832fb09e94606d8de526d7d05800bc56b3d03531d2d5c09445d65a`
+and `585c96f00d81af126886d194cda52910f201c874801e36f85af59e7588da5821`.
+These close the named pending diagnostics, not all-output/five-profile
+qualification. T068--T086, reviewer-owned checklists and implement/running remain
+unchanged.
+
+### Complete evaluator-source context in modeled transport inspection
+
+The regression supplies a foreign evaluator source hash and matching manifest
+digest/assignment while retaining the same source revision, catalog and SDK.
+It genuinely passes the old inspector and fails the new rejecting assertion.
+The common transport tuple now also includes `sourceManifestSha256`; separately
+assigned provider/package/environment/configuration hashes remain distinct.
+`python3 -m unittest discover -s tests/tooling -p test_conformance_ci.py -v`
+passes eight tests; catalog/SDK and diff checks pass. This remains nonqualifying
+transport inspection, not common configuration-policy attestation, independent
+runtime-origin/settlement evaluation or actual five-profile CI acceptance.
+README, DEVELOPMENT, PROVIDERS and the evidence contract are updated for the
+observations and boundary. Existing guide commands are unchanged and verified
+verbatim; CustomHost/product/architecture/ADR/diagram/governance/backlog/
+predecessor/IaC/release/UI documents are unaffected by this diagnostic/transport
+batch. No task/checklist/flow markers or public product APIs change.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

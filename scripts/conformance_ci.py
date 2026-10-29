@@ -52,7 +52,7 @@ def inspect_profile_transports(reports, *, expected_inputs, expected_report_sha2
         if inputs["mode"] != "qualification" or inputs["sourceState"] not in ("clean-local", "clean-ci"):
             raise ConformanceError("EvidenceIncomplete")
         selected = tuple(inputs[key] for key in (
-            "invocationGroupId", "sourceRevision", "sourceState",
+            "invocationGroupId", "sourceRevision", "sourceState", "sourceManifestSha256",
             "catalogRevision", "catalogSha256", "sdkSha256"))
         if common is not None and selected != common or inputs["runId"] in run_ids:
             raise ConformanceError("InputChanged")

@@ -7920,6 +7920,46 @@ remains nonqualifying. Native locked
 graph execution and complete native preparation all-output inspection remain
 required.
 
+The subsequent unchanged original composition observer at frozen5e35310
+completes run `6fc01828-d2c3-4c9c-a170-b8a72807edda`: eight native sanitation
+controls, CP36/110, all525 inherited parameters/58 scopes and770 native tooling
+checks pass without failures/errors/skips/unexpected output. Actual tooling
+takes493640.773 ms, below the unchanged600-second ceiling. Original-settings
+post-release replay and29 report/two semantic mutations pass. The report hash is
+`5df03ebae44a8f865abd3c90e784a4bb062b9f93df5d9b0e8f13afff57e272d8`;
+41 Passed/9 Incomplete and qualification false remain deliberate. Full controller
+acceptance/containment, module ownership and profile completion remain false.
+Actual release takes462.490 ms with zero children/groups. All1503 original
+retained files pass plain/one-level-base64 private-root inspection; the complete
+copy also contains the separate console. No earlier failed attempt is erased.
+
+At frozenc7dc15b, all five Bash blocks in
+`examples/ProviderConformance/README.md` pass verbatim, including the four recovery
+controls and overlapping-root/duplicate/service rejections. Good/faulty/corrected
+runs preserve identical common source/image/provider-archive digests; only the
+three declared faulty consumers fail. All five original released roots retain
+124 original images each and pass whole-tree plain/one-level-base64 private-root
+inspection. The good/faulty/corrected file counts are319/315/319; both overlapping
+roots contain319 files.
+
+The separate fresh native `--update-locks` preparation at that same frozen source
+passes the historical/candidate graph and fresh-cache locked replay:13 locks/
+18 packages, ten changed declared locks in its isolated clone,249 retained files.
+Both original ownership ledgers are Released with zero children/groups before
+publication; their cleanup takes94.180/56.425 ms. Whole-root plain/one-level-base64
+private-root inspection passes. This is preparation, never qualification.
+Complete original evidence is copied before removing only the three inspected
+stopped diagnostic namespaces and their exact volumes.
+
+Modeled five-profile transport inspection now also requires a common complete
+`sourceManifestSha256`, preventing different evaluator/source bytes under the
+same revision/catalog/SDK pins even when each external assignment matches.
+Per-profile configuration/package/environment hashes may differ. The foreign
+evaluator regression fails before the fix; `python3 -m unittest discover -s
+tests/tooling -p test_conformance_ci.py -v` passes all eight tests afterward.
+This remains nonqualifying inspection: common configuration-policy attestation,
+runtime-origin/settlement evaluation and actual five-profile CI remain open.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification
