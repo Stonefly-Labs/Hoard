@@ -14,6 +14,13 @@ The faulty run must have an actual named failed assertion, not merely a nonzero
 exit. Independent qualification, `--verify`, `--aggregate` and five-profile CI
 acceptance are not delivered by this walkthrough.
 
+Built-in metadata/artifact runs without `--binding-project` additionally produce
+closed JSON/JUnit/Markdown/CI-summary projections under their owned
+`diagnostics/` directory. They remain Incomplete/NotQualified; even all-passing
+runtime JUnit includes an explicit qualification error. Those four summaries
+are not verification reports and are not yet wired into this separate contributor
+route. Do not infer complete private-file sanitation from a safe public summary.
+
 ## Prerequisites and private scratch
 
 Use an ordinary unprivileged user on native Linux x86_64 or arm64, with procfs,

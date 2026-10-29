@@ -7527,6 +7527,49 @@ stopped containers/volumes are removed after retention and absence checks.
 Full qualification,
 report sanitation and standalone CLI/aggregate delivery remain unfinished.
 
+Built-in metadata/artifact publication additionally renders four fixed diagnostic
+surfaces inside the existing owned `diagnostics/` directory:
+`category-<profile>-diagnostic.json`, `category-<profile>-diagnostic.junit.xml`,
+`category-<profile>-diagnostic.md` and `category-<profile>-ci-summary.md`.
+The renderer first calls the independently pinned retained verifier and strict
+report admission; unknown fields reject rather than disappear into a success.
+Its public projection contains only closed catalog slots/exclusions, actual
+counts, run/group identifiers and hashes. Package names, environment text,
+source/proof filenames, raw errors and private paths are not copied.
+JSON remains Incomplete/qualification:false/NotQualified. JUnit preserves
+case failures and frozen exclusions and always adds an EvidenceIncomplete
+qualification error, even when every actual runtime case passes. Markdown
+and CI text explicitly state that diagnostics are not qualification.
+
+The reusable API is `conformance_evidence.render_category_diagnostics(root,
+report_data, expected_inputs=predeclared_inputs,
+expected_report_sha256=trusted_digest)`. Supply the digest separately from a
+trusted coordinator, not solely from the artifact being checked. The returned
+immutable filename-to-bytes map does not write files itself and is not a
+standalone verification report. The native producer uses the existing create-new
+writer after original-origin and settlement checks. Custom contributor execution
+has its separate diagnostics; this increment does not wire these four surfaces
+into `--binding-project`, public verify/aggregate or the final CI workflow.
+
+Presentation canaries cover secrets, payloads, connections, exceptions and
+private paths in filenames and contents across all four new surfaces. They
+isolate presentation with an explicitly mocked verifier, not modeled origin
+authority. An eighth explicit retained-native control instead uses real pinned
+verification, rehashes actual proofs and recomputes exact rendered counts.
+All eight pass against the unchanged snapshot-producing metadata and separately
+labeled one-CPU artifact reports in7.040/9.515 seconds. Both complete evidence/
+SDK suites plus sanitation pass352 tests in107.615 seconds, with two explicit
+native Linux sanitation skips on macOS. This does not establish sanitation of
+every retained private proof/configuration file, especially encoded path values;
+T068..T086 and implement/running remain unchanged.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` also observes
+755 tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,27 explicit native macOS skips and expected incomplete exit2.
+Separately, both original snapshot reports render successfully using literal
+trusted original coordinator report/input digests, not artifact-derived anchors;
+their four readonly summaries retain the93/9 and99/4 pass/exclusion counts
+and remain NotQualified. The fixed SDK catalog and diff checks pass.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

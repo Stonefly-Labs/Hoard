@@ -2905,6 +2905,63 @@ README and DEVELOPMENT are affected; provider contracts, product/architecture/
 ADR/diagrams, examples, governance, predecessor evidence, IaC, release and UI
 documents are unaffected by this diagnostic-only tooling increment.
 
+### Closed public category diagnostic projections
+
+`render_category_diagnostics` requires independently supplied expected inputs
+and a trusted report digest, invokes the actual retained verifier, then performs
+strict report admission before returning four bounded fixed-name byte outputs.
+Only closed catalog case/binding/exclusion identifiers, actual counts, run/group
+identifiers and hashes enter JSON/JUnit/Markdown/CI text. Arbitrary package,
+environment, source/proof filename and provider error text is not copied.
+Unknown report fields reject. JSON is explicitly Incomplete/qualification:false/
+NotQualified; JUnit retains actual failures/exclusions and adds an explicit
+EvidenceIncomplete qualification error even for all-passing runtime cases.
+The native publisher writes these summaries into the existing owned diagnostics
+directory with the create-new writer after original-origin/settlement checks.
+They are not standalone verification reports or a contributor/CI/qualification
+completion, and no global support statement is inferred.
+
+The two initial canary/schema tests fail exactly at the missing renderer.
+They then pass after implementation. The first combined352-test replay exposes
+19 subtest errors in modeled producer fixtures missing the actual owned
+diagnostics directory. Fixtures now represent that existing directory explicitly;
+production allocation/writer policy is unchanged. The corrected command
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_sanitation test_conformance_sdk_checks test_conformance_evidence -q`
+passes352 tests in107.615 seconds with two explicit native Linux sanitation
+skips on macOS. Presentation deliberately mocks verification; it proves no
+native origin. An eighth explicit retained-native case instead invokes real
+pinned verification and independently compares JSON/JUnit counts and scope.
+The unchanged original snapshot-producing metadata and separately labeled
+one-CPU artifact reports each pass all eight retained controls in7.040/9.515
+seconds; actual proof bytes remain unchanged. No provider rerun is substituted.
+
+Two initially guessed consistency commands do not exist/support `--check`
+(`conformance_catalog.py` and `conformance_sdk_checks.py --check`); those failed
+invocations are not validation evidence. Relevant suite validation above passes.
+The actual fixed-catalog command
+`python3 scripts/conformance_case_catalog.py --check-sdk` and
+`git diff --check` pass. Frozen
+`python3 scripts/conformance_unit_checks.py --all-tooling` observes755 tests,
+zero failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,27 explicit native macOS skips and expected incomplete exit2. Packet:
+`tooling-public-diagnostic-surfaces.json`. Original fixture discovery remains
+independent of the optional external native packets.
+
+A separate host renderer invocation supplies literal trusted report/input
+digests retained by the original coordinator, rather than deriving its anchor
+solely from the inspected artifact. Both original snapshot reports pass and
+produce four readonly summaries each in `native-public-diagnostic-surfaces`:
+metadata93 Passed/nine exclusions and artifacts99 Passed/four exclusions,
+zero Failed/Incomplete, and qualification:false/NotQualified. Original native
+proofs are unchanged. This API execution is distinct from presentation mocks
+and from the structural fixture's self-computed digest consistency test.
+Complete private retained-proof/configuration sanitation, including encoded
+path values, remains open. T068..T086, reviewer-owned checklist markers and
+implement/running do not advance. README, DEVELOPMENT, quickstart and the
+contributor example describe the new diagnostic boundary; provider contracts,
+product/architecture/ADR/diagrams, governance, predecessor evidence, IaC,
+release and UI documents are unaffected by this presentation-only increment.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -4015,6 +4015,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         from types import SimpleNamespace
 
         (root / "proofs").mkdir()
+        (root / "diagnostics").mkdir(mode=0o700)
         history, finish = self.category_quality_fixture(profile=profile, distinct_packages=True)
         finish()
         originals = {hashlib.sha256(row["executionId"].encode()).hexdigest(): row["executionId"].encode()
@@ -4193,6 +4194,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     finish()
                     root = Path(temporary).resolve()
                     (root / "proofs").mkdir()
+                    (root / "diagnostics").mkdir(mode=0o700)
                     originals = {hashlib.sha256(row["executionId"].encode()).hexdigest(): row["executionId"].encode()
                                  for row in history.witnesses}
                     originals[hashlib.sha256(b"original-parent-1").hexdigest()] = b"original-parent-1"
@@ -8585,6 +8587,26 @@ class _RetainedNativeCategoryStructureControls:
         with self.assertRaises(evidence.ConformanceError):
             verify(self.root, evidence.canonical_bytes(changed), expected_inputs=self.inputs,
                    expected_report_sha256=evidence.digest(changed))
+
+    def test_public_diagnostic_surfaces_recompute_exact_counts_without_claiming_qualification(self):
+        outputs = evidence.render_category_diagnostics(
+            self.root, self.raw, expected_inputs=self.inputs,
+            expected_report_sha256=hashlib.sha256(self.raw).hexdigest())
+        prefix = "category-" + self.profile
+        summary = evidence.load_json(outputs[prefix + "-diagnostic.json"])
+        states = {state: sum(row["status"] == state for row in self.original["results"])
+                  for state in evidence.STATUSES}
+        self.assertEqual(summary["caseStates"], states)
+        self.assertEqual(summary["witnessCount"], len(self.original["witnesses"]))
+        self.assertEqual(summary["proofCount"], len(self.original["proofs"]))
+        self.assertFalse(summary["qualification"])
+        self.assertEqual(summary["support"]["status"], "NotQualified")
+        suite = ET.fromstring(outputs[prefix + "-diagnostic.junit.xml"])
+        self.assertEqual(int(suite.attrib["tests"]), len(self.original["results"]) + 1)
+        self.assertEqual(int(suite.attrib["skipped"]), states["NotApplicable"])
+        self.assertEqual(int(suite.attrib["errors"]), states["Incomplete"] + 1)
+        for contents in outputs.values():
+            self.assertNotIn(str(self.root).encode(), contents)
 
     def test_exact_case_and_parameter_sets_reject_missing_duplicate_and_unknown_rows(self):
         for defect in ("missing-case", "duplicate-case", "unknown-case", "missing-parameter",

@@ -1,4 +1,6 @@
 import contextlib
+import copy
+import hashlib
 import io
 import json
 import os
@@ -9,6 +11,7 @@ import tempfile
 import unittest
 from unittest import mock
 import uuid
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -38,6 +41,71 @@ class ConformanceSanitationTests(unittest.TestCase):
                 for canary in self.canaries:
                     self.assertNotIn(canary, contents)
         self.assertFalse(any(path.suffix in (".trx", ".log") for path in root.rglob("*")))
+
+    def diagnostic_presentation_fixture(self):
+        from test_conformance_evidence import ConformanceAdmissionTests
+        report = ConformanceAdmissionTests().report()
+        report.update(state="Incomplete", scope=["category-runtime-diagnostic"])
+        inputs = report["inputs"]
+        inputs["packages"][0]["packageId"] = self.canaries[0].decode()
+        inputs["bindings"][0]["package"] = copy.deepcopy(inputs["packages"][0])
+        inputs["environment"]["osVersion"] = self.canaries[2].decode()
+        inputs["environmentSha256"] = evidence.digest(inputs["environment"])
+        inputs["sourceManifest"] = {"src/" + self.canaries[4].decode() + ".cs": "a" * 64}
+        inputs["sourceManifestSha256"] = evidence.digest(inputs["sourceManifest"])
+        inputs["packages"][0]["runtimeAssemblies"] = {
+            "lib/net10.0/" + self.canaries[3].decode() + ".dll": "d" * 64}
+        inputs["bindings"][0]["package"] = copy.deepcopy(inputs["packages"][0])
+        report["proofs"] = {"runtime/" + self.canaries[1].decode() + ".json": "a" * 64}
+        report["witnesses"][0]["inputSha256"] = evidence.digest(inputs)
+        report["postInputSha256"] = evidence.digest(inputs)
+        return report
+
+    def test_diagnostic_json_junit_markdown_and_ci_surfaces_do_not_repeat_private_inputs(self):
+        render = getattr(evidence, "render_category_diagnostics", None)
+        self.assertTrue(callable(render), "Diagnostic output needs a closed safe public projection.")
+        report = self.diagnostic_presentation_fixture()
+        raw = evidence.canonical_bytes(report)
+        expected = hashlib.sha256(raw).hexdigest()
+        # Isolate presentation; real native packet verification has separate integration controls.
+        with mock.patch.object(evidence, "verify_retained_category_report", return_value={
+                "qualification": False, "reportSha256": expected}) as verify:
+            outputs = render(self.parent, raw, expected_inputs=report["inputs"],
+                             expected_report_sha256=expected)
+        verify.assert_called_once_with(
+            self.parent, raw, expected_inputs=report["inputs"], expected_report_sha256=expected)
+        self.assertEqual(set(outputs), {
+            "category-metadata-diagnostic.json", "category-metadata-diagnostic.junit.xml",
+            "category-metadata-diagnostic.md", "category-metadata-ci-summary.md"})
+        for name, contents in outputs.items():
+            path = self.parent / name
+            path.write_bytes(contents)
+            self.assert_clean(self.parent, contents)
+        summary = json.loads(outputs["category-metadata-diagnostic.json"])
+        self.assertFalse(summary["qualification"])
+        self.assertEqual(summary["state"], "Incomplete")
+        self.assertEqual(summary["reportSha256"], expected)
+        self.assertEqual(summary["caseStates"]["Passed"], 1)
+        self.assertEqual(summary["support"]["status"], "NotQualified")
+        xml = ET.fromstring(outputs["category-metadata-diagnostic.junit.xml"])
+        self.assertGreaterEqual(int(xml.attrib["errors"]), 1)
+        self.assertIsNotNone(xml.find("./testcase/error[@type='EvidenceIncomplete']"))
+        for name in ("category-metadata-diagnostic.md", "category-metadata-ci-summary.md"):
+            self.assertIn(b"not qualification", outputs[name])
+
+    def test_unknown_diagnostic_report_fields_reject_instead_of_disappearing_into_public_success(self):
+        render = getattr(evidence, "render_category_diagnostics", None)
+        self.assertTrue(callable(render), "Unknown report text must reject before rendering.")
+        report = self.diagnostic_presentation_fixture()
+        report["providerError"] = b";".join(self.canaries).decode()
+        raw = evidence.canonical_bytes(report)
+        expected = hashlib.sha256(raw).hexdigest()
+        with mock.patch.object(evidence, "verify_retained_category_report", return_value={
+                "qualification": False, "reportSha256": expected}):
+            with self.assertRaises(evidence.ConformanceError):
+                render(self.parent, raw, expected_inputs=report["inputs"],
+                       expected_report_sha256=expected)
+        self.assertEqual(list(self.parent.iterdir()), [])
 
     def test_public_failure_projection_never_renders_provider_errors_or_private_paths(self):
         destination = self.parent / "evidence"

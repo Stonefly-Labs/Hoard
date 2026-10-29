@@ -3049,7 +3049,11 @@ def _category_report(run, inputs, post_inputs, summary, *, resources=(), native_
         "state": "Incomplete", "qualification": False, "scope": ["category-runtime-diagnostic"]})
     raw = evidence.canonical_bytes(report)
     inspected = evidence.inspect_category_report(run.root, raw, expected_inputs=inputs)
+    outputs = evidence.render_category_diagnostics(
+        run.root, raw, expected_inputs=inputs, expected_report_sha256=inspected["reportSha256"])
     write_new(run.root / (prefix + "-report.json"), raw)
+    for name, contents in outputs.items():
+        write_new(run.root / "diagnostics" / name, contents)
     return {**summary, "reportState": "Incomplete", "reportSha256": inspected["reportSha256"]}
 
 

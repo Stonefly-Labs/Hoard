@@ -962,6 +962,64 @@ def inspect_category_report(root, report_data, *, expected_inputs):
     })
 
 
+def render_category_diagnostics(root, report_data, *, expected_inputs, expected_report_sha256):
+    """Render bounded public diagnostics, never qualification or private proof contents."""
+    inspected = verify_retained_category_report(
+        root, report_data, expected_inputs=expected_inputs, expected_report_sha256=expected_report_sha256)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    if (inspected["qualification"] or report["qualification"] or report["state"] != "Incomplete"
+            or report["scope"] != ("category-runtime-diagnostic",)):
+        raise ConformanceError("EvidenceIncomplete")
+    inputs = report["inputs"]
+    profile = inputs["profileId"]
+    states = {state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}
+    summary = {
+        "schemaVersion": 1, "kind": "category-diagnostic-summary",
+        "qualification": False, "state": "Incomplete", "code": "EvidenceIncomplete",
+        "scope": "category-report-structure-diagnostic", "profileId": profile,
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "sourceRevision": inputs["sourceRevision"], "inputsSha256": digest(inputs),
+        "reportSha256": inspected["reportSha256"], "caseStates": states,
+        "witnessCount": len(report["witnesses"]), "proofCount": len(report["proofs"]),
+        "support": {
+            "status": "NotQualified",
+            "bindingSlots": sorted({row["bindingId"] for row in report["results"] if row["bindingId"] != "none"}),
+            "exclusions": [{key: row[key] for key in ("bindingId", "matrixId", "caseId", "exclusionRule")}
+                           for row in report["results"] if row["status"] == "NotApplicable"]}}
+    suite = ET.Element("testsuite", {
+        "name": "conformance-" + profile + "-diagnostic", "tests": str(len(report["results"]) + 1),
+        "failures": str(states["Failed"]), "errors": str(states["Incomplete"] + 1),
+        "skipped": str(states["NotApplicable"])})
+    for row in report["results"]:
+        case = ET.SubElement(suite, "testcase", {
+            "classname": ".".join((profile, row["bindingId"], row["matrixId"])), "name": row["caseId"]})
+        if row["status"] == "NotApplicable":
+            ET.SubElement(case, "skipped", {"type": "NotApplicable", "message": row["exclusionRule"]})
+        elif row["status"] in ("Failed", "Incomplete"):
+            codes = [attempt["diagnosticCode"] for attempt in row["attempts"]
+                     if attempt["diagnosticCode"] != "None"]
+            code = codes[-1] if codes else "EvidenceIncomplete"
+            ET.SubElement(case, "failure" if row["status"] == "Failed" else "error", {"type": code})
+    ET.SubElement(ET.SubElement(suite, "testcase", {"classname": "conformance", "name": "qualification"}),
+                  "error", {"type": "EvidenceIncomplete", "message": "Diagnostic evidence is not qualification."})
+    markdown = (
+        f"## {profile} conformance diagnostics\n\n"
+        "**Incomplete: diagnostic evidence is not qualification.**\n\n"
+        "| Case state | Count |\n| --- | ---: |\n"
+        + "".join(f"| {state} | {count} |\n" for state, count in states.items())
+        + f"\nSource: `{inputs['sourceRevision']}`\n\nReport SHA-256: `{inspected['reportSha256']}`\n\n"
+        "Only the catalogued fixture slots and frozen exclusions are described. "
+        "No production, external-service, protocol, identity or HA support is inferred.\n").encode("utf-8")
+    prefix = "category-" + profile
+    outputs = {
+        prefix + "-diagnostic.json": canonical_bytes(summary),
+        prefix + "-diagnostic.junit.xml": ET.tostring(suite, encoding="utf-8", xml_declaration=True),
+        prefix + "-diagnostic.md": markdown, prefix + "-ci-summary.md": markdown}
+    if any(len(raw) > MAX_REPORT_BYTES for raw in outputs.values()):
+        raise ConformanceError("OutputLimitExceeded")
+    return MappingProxyType(outputs)
+
+
 _BINDING_REQUIRED_FAULTS = {
     "metadata": frozenset((
         "IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",

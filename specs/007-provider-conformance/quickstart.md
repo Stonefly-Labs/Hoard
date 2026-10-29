@@ -7,6 +7,13 @@ shared suites, complete adapters, contributor journey and CI qualification do no
 The current public metadata, artifacts and composition routes execute native
 observations on supported Linux hosts; they deliberately remain
 `Incomplete`/`EvidenceIncomplete` (exit 2) even after successful execution.
+Built-in metadata/artifact report publication now also creates four fixed
+JSON/JUnit/Markdown/CI-summary projections in the owned `diagnostics/` directory.
+They contain only closed identifiers, counts and hashes; JUnit always includes
+an explicit `EvidenceIncomplete` qualification error. These summaries are not
+portable verification reports or evidence of complete private-proof sanitation.
+They do not change the separate custom-contributor path or deliver the planned
+`--verify`, `--aggregate` or five-profile qualification workflow.
 `bash scripts/validate-conformance.sh --profile composition --evidence /fresh/private/path`
 now attempts CP36/110 and all 525 inherited parameters, not qualification.
 Exact standalone Linux run40451900182 at `f319b77` passes that native scope;

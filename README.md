@@ -845,6 +845,12 @@ live and five post-release binding families. The separate four-CPU artifact
 attempt fails UnknownDiagnostic during ObjectSemantics4-GiB transfer, before
 origin capture; that failure remains retained and unexplained. The standalone
 qualification/aggregate CLI and all-output report/CI obligations remain unfinished.
+Built-in category reports now also produce bounded JSON, JUnit, Markdown and
+CI-summary diagnostic projections under the owned `diagnostics/` directory.
+They expose only closed catalog identifiers, counts and hashes, not private
+input text or proof filenames. Even all-passing runtime JUnit has an explicit
+`EvidenceIncomplete` qualification error. These are safe summaries, not portable
+verification reports; complete private-proof sanitation and qualification remain open.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
