@@ -1539,6 +1539,67 @@ Actual input/controller/process-bound recovery admission, generic contributor
 crash/transfer execution and complete applicability remain open. T064..T086
 stay unchecked; implement/running continues.
 
+### Shared crash assertions and separate recovery leaf admission
+
+The six existing B0/B1/B2/B3/D0/D1 crash/recovery bodies move into the
+BCL/Abstractions-only ArtifactCrashAssertions SDK source. Callers supply actual
+store/maintenance/identity, typed boundary registration and owned pause; the
+helpers do not select a provider, initialize/stop it or claim physical/process
+ownership. Cancellation propagates through the operations. The original Local
+runner links the same source without a new SDK package dependency, retaining
+its own factory/authority, state save, raw/safe event formatting, four-minute
+parent-kill wait and joined recovery stop. Current artifact preparation copies
+the exact linked source, covered by the existing preparation regression.
+Continuation state contains an opaque staged handle, remains outside safe
+origin/diagnostic output and has sanitized ToString projections.
+
+The independent recovery leaf reader validates bounded closed declaration/
+source/recovery bytes against the exact descriptor/capability/package hashes,
+durable marker and independently selected eight-role images. It requires a
+source create observation and matching source/input/run/case/runtime/architecture;
+source component reuse, contradictory aliases, borrowed images and live-origin/
+unsafe fields reject. Its immutable return value stays separate from ordinary
+origin admission. It is not command authority, ownership or crash qualification.
+
+`PYTHONPATH=tests/tooling python3 -m unittest
+test_conformance_evidence.ConformanceRuntimeIngestionTests -q` passes110 cases.
+The targeted original preparation test passes. SDK `dotnet build
+tests/contracts/Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj
+--no-restore -v quiet -p:UseSharedCompilation=false -nodeReuse:false` reports zero
+warnings/errors. A direct original-runner no-restore build fails because its
+project.assets.json is absent; the subsequent isolated current-package
+preparations restore/build successfully. Two fresh `artifact.prepare_packages`
+plus `artifact.focused_tests(..., FullyQualifiedName~ArtifactCrashTests)` replays
+each pass all six real SIGKILL/fresh-process cases, the final replay after the
+callback point becomes a closed enum. These are focused current-package
+diagnostics, not full/baseline qualification. Inspection against44c2180 finds
+all23 original Require predicates and28 Need calls still present after
+whitespace/cancellation-token normalization; this is source corroboration,
+not independent runtime authority.
+
+The documented `bash scripts/validate-artifacts.sh --evidence
+/Users/christopherhouse/projects/hoard-artifact-crash-check.INR2ND/evidence
+--filter FullyQualifiedName~ArtifactCrashTests` attempt without an original
+HOARD_ARTIFACT_RETAINED_BASELINE fails during preparation, before current package/
+crash execution. Its failure receipt remains retained. The documented original
+baseline directory is unavailable; do not rebuild/relabel it as original.
+The bounded incremental hoard-architecture-review reports no actionable findings,
+with no test execution/Git-diff/historical-byte parity verification and no final
+T081 or native qualification claim. Final enum-based six-case replay passes
+after that review. Two-file whitespace, catalog/SDK and diff checks pass.
+README, PROVIDERS, DEVELOPMENT and harness are updated. Product/architecture/
+ADR/diagrams/examples, governance, predecessors' contracts, IaC, release and UI
+are unaffected by this test-only extraction/observation increment. Generic
+supplied-factory native orchestration, controller/input/process admission,
+transfer/retention/full applicability and T064..T086 remain open.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes721
+tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,23 native macOS skips and expected incomplete exit2. Its
+actual packaged artifact runtime/recovery setup also passes with the expanded
+SDK image. The final six-crash safe runtime/TRX and bounded crash observations
+are retained in the session artifacts; generated isolated package workspaces
+are disposable and are not baseline authority.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

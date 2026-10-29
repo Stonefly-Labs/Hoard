@@ -540,6 +540,9 @@ def prepare_packages(root, work, update):
     foundation.copy_source(root / "tests/fixtures/artifacts", current / "tests/fixtures/artifacts")
     foundation.copy_source(root / "tests/contracts/Hoard.Artifacts.Tests",
                            current / "tests/contracts/Hoard.Artifacts.Tests")
+    crash_assertions = Path("tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactCrashAssertions.cs")
+    (current / crash_assertions.parent).mkdir(parents=True, exist_ok=True)
+    shutil.copy2(root / crash_assertions, current / crash_assertions)
     environment = {"NUGET_PACKAGES": str(work / "cache")}
     config = work / "NuGet.Config"
     feed = work / "feed"

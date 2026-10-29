@@ -42,7 +42,8 @@ class ArtifactEvidenceTests(unittest.TestCase):
                 *(f"tests/fixtures/artifacts/{name}/{name}.csproj" for name in (
                     "Local", "ObjectSemantics", "HostAdapters", "Consumer",
                     "CrashRunner", "TransferRunner", "BoundaryLeak")),
-                "tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj"):
+                "tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj",
+                "tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactCrashAssertions.cs"):
             target = root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("tooling-only-current-source")
@@ -72,6 +73,9 @@ class ArtifactEvidenceTests(unittest.TestCase):
             commands.append(args)
             project = Path(args[2])
             self.assertTrue(project.is_file())
+            if project.stem == "CrashRunner":
+                shared = Path("tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactCrashAssertions.cs")
+                self.assertEqual((work / "current" / shared).read_bytes(), (root / shared).read_bytes())
             if project.stem == "Hoard.Artifacts.Tests":
                 self.assertEqual((work / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").read_bytes(),
                                  b"tooling-only-current-sdk")

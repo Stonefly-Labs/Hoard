@@ -7548,6 +7548,86 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             assignments[role] = assignments["store"]
         self.assertEqual(len(self.ingest_origin(origin, assignments)["components"]), 8)
 
+    def recovery_origins(self):
+        source, assignments = self.runtime_origin("artifact-recovery-setup")
+        self.inputs["bindings"][0]["category"] = "artifacts"
+        del source["components"]["schema"]
+        del assignments["schema"]
+        for role in ("validator", "maintenance", "lifetime"):
+            source["components"][role] = dict(source["components"]["store"])
+            assignments[role] = assignments["store"]
+        declaration = {
+            "schemaVersion": 1, "bindingId": "sqlite", "category": "artifacts",
+            "packageId": "Hoard.Fixture", "packageVersion": "0.1.0", "packageSha256": "b" * 64,
+            "capabilities": ["artifacts", "durable-local-process-crash"],
+            "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["artifacts"]),
+        }
+        source["descriptorSha256"] = self.inputs["bindings"][0]["descriptorSha256"] = evidence.digest(declaration)
+        self.inputs["bindings"][0]["capabilitySha256"] = evidence.digest({
+            field: declaration[field] for field in ("category", "capabilities", "faults")})
+        recovery = copy.deepcopy(source)
+        del recovery["parentSessionId"]
+        recovery.update(kind="artifact-recovery", sessionId=str(uuid.uuid4()),
+                        sourceSessionId=source["sessionId"], recoveryInputSha256="c" * 64,
+                        factoryOperation="recover")
+        replacements = {value["instanceId"]: str(uuid.uuid4()) for value in source["components"].values()}
+        for component in recovery["components"].values():
+            component["instanceId"] = replacements[component["instanceId"]]
+        options = {
+            "inputs": self.inputs, "binding_id": "sqlite", "case_id": "artifact-recovery-setup",
+            "component_inputs": assignments, "declaration_data": evidence.canonical_bytes(declaration),
+            "source_data": evidence.canonical_bytes(source), "recovery_input_sha256": "c" * 64,
+        }
+        return source, recovery, options
+
+    def test_separate_recovery_origin_admission_preserves_safe_components_without_ordinary_lineage(self):
+        source, recovery, options = self.recovery_origins()
+        observed = evidence.ingest_artifact_recovery_origin(data=evidence.canonical_bytes(recovery), **options)
+        self.assertEqual(observed, recovery)
+        self.assertEqual(observed["sourceSessionId"], source["sessionId"])
+        self.assertNotIn("parentSessionId", observed)
+        with self.assertRaises(TypeError):
+            observed["components"]["factory"]["instanceId"] = source["components"]["factory"]["instanceId"]
+        with self.assertRaises(evidence.ConformanceError):
+            evidence._ingest_runtime_origins(
+                self.inputs, [recovery], origin_inputs={"sqlite": options["component_inputs"]},
+                case_id=options["case_id"], prior_sessions={}, prior_instances={})
+
+    def test_recovery_origin_rejects_borrowed_sources_inputs_images_instances_and_unsafe_fields(self):
+        source, recovery, options = self.recovery_origins()
+        mutations = [
+            {"sourceSessionId": str(uuid.uuid4())}, {"sessionId": source["sessionId"]},
+            {"recoveryInputSha256": "d" * 64}, {"descriptorSha256": "a" * 64},
+            {"runId": str(uuid.uuid4())}, {"caseId": "other-case"}, {"runtimeVersion": "10.0.8"},
+            {"processArchitecture": "arm64"}, {"factoryOperation": "reopen"},
+            {"parentSessionId": source["sessionId"]}, {"privatePath": "/private/canary"},
+        ]
+        for changed in mutations:
+            with self.subTest(fields=tuple(changed)), self.assertRaises(evidence.ConformanceError):
+                evidence.ingest_artifact_recovery_origin(
+                    data=evidence.canonical_bytes({**recovery, **changed}), **options)
+        for role in recovery["components"]:
+            for field, value in (("assemblySha256", "0" * 64),
+                                 ("instanceId", source["components"]["factory"]["instanceId"])):
+                changed = copy.deepcopy(recovery)
+                changed["components"][role][field] = value
+                with self.subTest(role=role, field=field), self.assertRaises(evidence.ConformanceError):
+                    evidence.ingest_artifact_recovery_origin(data=evidence.canonical_bytes(changed), **options)
+        changed = copy.deepcopy(recovery)
+        changed["components"]["authority"]["instanceId"] = changed["components"]["store"]["instanceId"]
+        changed["components"]["authority"]["typeSha256"] = "0" * 64
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.ingest_artifact_recovery_origin(data=evidence.canonical_bytes(changed), **options)
+        for field in ("source_data", "declaration_data"):
+            for value in (b"{}", b"x" * (64 * 1024 + 1), "private-canary"):
+                with self.subTest(field=field, size=len(value)), self.assertRaises(evidence.ConformanceError):
+                    evidence.ingest_artifact_recovery_origin(
+                        data=evidence.canonical_bytes(recovery), **{**options, field: value})
+        changed_source = {**source, "parentSessionId": str(uuid.uuid4()), "factoryOperation": "reopen"}
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.ingest_artifact_recovery_origin(data=evidence.canonical_bytes(recovery), **{
+                **options, "source_data": evidence.canonical_bytes(changed_source)})
+
     def test_session_origin_cannot_borrow_factory_package_labels_or_changed_runtime_or_component_identity(self):
         for mutation in ("descriptor", "run", "case", "runtime", "architecture", "package", "missing",
                          "extra", "instance", "parent", "raw"):

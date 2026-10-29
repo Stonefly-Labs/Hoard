@@ -653,6 +653,25 @@ Live reopen remains functional but returns an unobserved session, so it cannot
 emit an ordinary observed descendant of the unpublished recovery root. This is
 not independent proof of a terminated predecessor or a distinct recovery process.
 
+The independent `ingest_artifact_recovery_origin` leaf reader checks bounded
+closed declaration/source/recovery bytes against the frozen binding/package and
+eight role-image assignments. It requires a durable declaration, a matching
+source create observation, exact source/input/run/case/runtime/architecture and
+fresh component IDs; contradictory aliases and ordinary live-lineage fields
+reject. Its return value is not a runtime witness, process/ownership proof or
+qualification. Actual controller-held command and input/output admission is
+still required.
+
+`ArtifactCrashAssertions` extracts the existing six B0/B1/B2/B3/D0/D1 operations
+and recovery assertions without selecting a provider. Callers supply actual
+store/maintenance/identity, typed boundary registration and the owned pause;
+callers retain initialization, shutdown, physical ownership and containment.
+The original Local crash runner links the same BCL/Abstractions-only source
+without referencing the SDK package; its setup and raw/safe event protocol stay
+local. Continuation state includes an opaque staged handle and must not enter
+safe diagnostics/origin payloads. Six actual original SIGKILL/fresh-process
+checks pass; complete supplied-factory native orchestration remains unfinished.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

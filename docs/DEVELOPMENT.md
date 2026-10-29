@@ -6824,6 +6824,30 @@ The existing ordinary-origin mutation control also rejects recovery payloads;
 its same-factory create/reopen rules are unchanged. Cross-process controller/
 input/termination admission still must be implemented before native qualification.
 
+The separate recovery leaf reader now validates the exact bounded declaration,
+its package/capability hashes, durable marker, source create observation and
+eight independent role images. It rejects borrowed source/input/context,
+reused source component IDs, contradictory aliases and live-lineage/unsafe
+fields. Its payload is not admitted as an ordinary origin or execution proof.
+All110 runtime-ingestion tests pass, including the new recovery controls.
+
+The six original crash assertions are extracted into SDK
+Artifacts/ArtifactCrashAssertions.cs with typed boundary callbacks and
+cancellation propagation. The original Local runner links that one
+BCL/Abstractions-only source without a new package edge; its Local factory,
+event formatting, owned four-minute pause and stop remain outside the helpers.
+Artifact preparation copies the exact linked source, covered by its existing
+preparation regression. SDK build reports zero warnings/errors and whitespace/
+catalog/diff checks pass. Two fresh current-package focused replays each pass
+all six real parent-SIGKILL/fresh-process tests, the latter after the callback
+was made a closed enum. These use artifact.prepare_packages/focused_tests,
+not full/baseline qualification. The documented validator attempt without an
+original HOARD_ARTIFACT_RETAINED_BASELINE rejects during preparation; its
+failure receipt remains retained. The documented original baseline directory
+is unavailable here and must not be reconstructed/relabelled as original.
+Generic supplied-factory native execution, process-bound recovery admission,
+transfer/retention/full applicability and T064..T086 remain open.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

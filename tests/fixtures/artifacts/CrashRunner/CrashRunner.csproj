@@ -5,6 +5,10 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../../contracts/Hoard.Testing.Conformance/Artifacts/ArtifactCrashAssertions.cs"
+             Link="ArtifactCrashAssertions.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Hoard.Abstractions" />
     <PackageReference Include="Hoard.Fixtures.Artifacts.HostAdapters" />
   </ItemGroup>

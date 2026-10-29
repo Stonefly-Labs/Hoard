@@ -736,6 +736,12 @@ Observed recovery uses a separate `artifact-recovery` payload with source-sessio
 and recovery-input hashes, never the ordinary parent-linked live-origin channel.
 Its live reopen returns an unobserved session; cross-process proof admission
 remains unfinished.
+The six existing crash-boundary assertion bodies are now shared through the SDK.
+The original Local runner links that same provider-neutral source and retains
+its own setup/event protocol; all six actual SIGKILL/fresh-process checks pass.
+A separate recovery-origin reader validates declaration, role images and source/
+input correspondence, but neither this leaf reader nor assertion extraction
+provides a generic contributor native runner or qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -1561,6 +1561,62 @@ def _ingest_runtime_origins(inputs, origins, *, origin_inputs, case_id, prior_se
     return tuple(observed)
 
 
+def ingest_artifact_recovery_origin(inputs, data, *, binding_id, case_id, component_inputs,
+                                    declaration_data, source_data, recovery_input_sha256):
+    """Admit a separate setup observation, not an execution witness or process/crash proof."""
+    inputs = admit_entity("RunInputs", inputs)
+    binding_id, case_id = stable_id(binding_id), stable_id(case_id)
+    recovery_input_sha256 = sha256(recovery_input_sha256)
+    binding = next((item for item in inputs["bindings"] if item["bindingId"] == binding_id), None)
+    if binding is None or binding["category"] != "artifacts":
+        raise ConformanceError("BindingInvalid")
+    if (not isinstance(declaration_data, bytes) or not 0 < len(declaration_data) <= 64 * 1024
+            or not isinstance(source_data, bytes) or not 0 < len(source_data) <= 64 * 1024):
+        raise ConformanceError("OutputLimitExceeded")
+    declaration = admit_binding_declaration(load_json(declaration_data))
+    if (hashlib.sha256(declaration_data).hexdigest() != binding["descriptorSha256"]
+            or declaration["category"] != "artifacts"
+            or "durable-local-process-crash" not in declaration["capabilities"]
+            or declaration["packageId"].casefold() != binding["package"]["packageId"].casefold()
+            or declaration["packageVersion"].casefold() != binding["package"]["version"].casefold()
+            or declaration["packageSha256"] != binding["package"]["sha256"]
+            or digest({field: declaration[field] for field in ("category", "capabilities", "faults")})
+            != binding["capabilitySha256"]):
+        raise ConformanceError("BindingInvalid")
+    prior_sessions, instances = {}, {}
+    source, = _ingest_runtime_origins(
+        inputs, [load_json(source_data)], origin_inputs={binding_id: component_inputs}, case_id=case_id,
+        prior_sessions=prior_sessions, prior_instances=instances)
+    if source["parentSessionId"] is not None or source["descriptorSha256"] != binding["descriptorSha256"]:
+        raise ConformanceError("ProofMismatch")
+    component = _record({
+        "instanceId": _uuid, "assemblySha256": sha256, "moduleVersionId": _uuid, "typeSha256": sha256,
+    })
+    observed = _runtime_json(data, {
+        "schemaVersion": _constant(1), "kind": _constant("artifact-recovery"),
+        "runId": _uuid, "caseId": stable_id, "sessionId": _uuid, "sourceSessionId": _uuid,
+        "recoveryInputSha256": sha256, "factoryOperation": _constant("recover"),
+        "descriptorSha256": sha256, "runtimeVersion": stable_id,
+        "processArchitecture": _one_of("x64", "arm64"),
+        "components": _record({role: component for role in _SESSION_ROLES["artifacts"]}),
+    }, limit=64 * 1024)
+    if (observed["runId"] != source["runId"] or observed["caseId"] != case_id
+            or observed["sourceSessionId"] != source["sessionId"]
+            or observed["sessionId"] == source["sessionId"]
+            or observed["recoveryInputSha256"] != recovery_input_sha256
+            or observed["descriptorSha256"] != source["descriptorSha256"]
+            or observed["runtimeVersion"] != source["runtimeVersion"]
+            or observed["processArchitecture"] != source["processArchitecture"]):
+        raise ConformanceError("ProofMismatch")
+    for role, captured in observed["components"].items():
+        if captured["instanceId"] in instances:
+            raise ConformanceError("ProofMismatch")
+        _runtime_bytes_correspondence(inputs, captured["assemblySha256"], *component_inputs[role])
+    for captured in observed["components"].values():
+        _observe_component_instance(instances, captured)
+    return observed
+
+
 def _runtime_manifest(inputs, manifest_data, owner_data, expected_tests,
                       manifest_sha256, owner_sha256, purpose):
     inputs = admit_entity("RunInputs", inputs)

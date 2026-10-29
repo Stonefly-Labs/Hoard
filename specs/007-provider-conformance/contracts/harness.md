@@ -2463,6 +2463,21 @@ ordinary observed descendant whose recovery parent cannot enter that channel.
 Reject invalid source IDs/input hashes, cancellation and non-durable declarations
 before invoking the recovery binding. These setup facts do not prove an actual
 terminated predecessor, frozen cross-process inputs or a new process.
+The separate recovery leaf reader must validate the exact closed declaration
+bytes/capability hash/provider package and durable marker, independently selected
+eight-role images and an ordinary source create observation. Recovery must
+match source/run/case/input/runtime/architecture and use fresh component IDs;
+contradictory aliases and ordinary parent-lineage fields reject. Leaf admission
+does not establish native command authority or ownership.
+The six shared ArtifactCrashAssertions boundary/recovery bodies accept supplied
+store/maintenance/identity and typed pause/observation callbacks. Initialization,
+stop, actual child containment and physical ownership remain caller-owned.
+The original Local runner links the same BCL/Abstractions-only source without a
+new SDK package dependency; preserve its original event schema and actual
+SIGKILL/readback assertions. Current preparation must copy that exact linked
+source. Continuations may contain opaque staged handles and must not be
+serialized into safe diagnostic/origin channels. Shared assertions and leaf
+origins alone cannot complete generic contributor native qualification.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing
