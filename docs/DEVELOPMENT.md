@@ -7621,6 +7621,54 @@ anonymous volume are removed after retention and absence checks. This is
 metadata-only diagnostic sanitation/origin evidence, not all-profile or CI
 qualification; the distinct four-CPU artifact observation is still pending.
 
+The distinct exact3d2a38d four-CPU/6-GiB artifact observation subsequently also
+passes: run91c859d5-6fc8-483c-a0d2-5ebe516540db has103 cases/263 witnesses/
+620 proof files,99 Passed/four exclusions, zero Failed/Incomplete, and genuine
+Released cleanup2,071.064 ms. All six sanitation, four live-origin and five
+released-origin controls pass without skips. All eight retained controls pass
+in10.264 seconds; host rendering with original trusted pins exactly reproduces
+all four producer-written surfaces. Report SHA-256:
+`a5288395e75ca454e3ea7294465cde438f7c2b22ef2656825ffc3ba46a792913`.
+Namespace477.828 seconds; admission free scratch50,273,640,448 bytes.
+Actual cgroup peak/max memory is6,442,450,944 bytes, with22,701 max-boundary
+events and zero oom/oom_kill/oom_group_kill. These are measurements of this
+invocation only: no cause is inferred for earlier failed runs, and no CI/capacity
+qualification is claimed. All retained filenames/files exclude the original
+private root in plain/base64 values, and no executable settings remain.
+The exact stopped container and volume are removed after retention and absence checks.
+
+The next template increment removes private path values from retained composition
+settings themselves, rather than rewriting retained provenance. Logger Root is
+relative to the actual assembly-parent working directory; adapter discovery moves
+to the explicit VSTest `--TestAdapterPath` argument. The installed SDK's help
+confirms that option. Native command records already bind the exact argv/cwd
+hashes; all live readers still reconstruct the original arguments/settings and
+the managed logger still checks the original root/owner/input hashes. Composition
+can retain and verify its original settings after cleanup without storing those
+private paths. Category executable environments remain transient because their
+other context values can still be private. No dead-owner read or provenance
+redaction is introduced.
+
+A two-depth private-path canary test first fails against the old template, then
+passes with root-relative settings and explicit adapter arguments.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_sanitation
+test_conformance_evidence test_conformance_sdk_checks test_conformance_composition -q`
+passes377 tests in134.106 seconds, with three explicit Linux-only skips.
+The subsequent frozen full tooling run executes758 tests with zero failures,
+one `OwnershipInvalid` error in inherited controller input binding and28 native
+macOS skips; exit1 is not accepted. That reader required an absolute logger root.
+It now resolves relative roots against the actual command cwd, preserving
+symlink/foreign-root and original-input checks. Its regression adds a foreign-cwd
+rejection; `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_inherited test_conformance_sanitation -q` passes35 tests
+in0.845 seconds with three explicit Linux-only skips.
+The corrected `python3 scripts/conformance_unit_checks.py --all-tooling`
+executes758 tests with zero failures/errors/expected failures/unexpected successes
+or diagnostic bytes and28 explicit native macOS skips. Its exit2 remains
+non-qualifying. The SDK catalog consistency check and `git diff --check` pass.
+Native verification of this subsequent template change remains pending; prior
+exact3d2a38d observations are not relabeled as testing these new source bytes.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

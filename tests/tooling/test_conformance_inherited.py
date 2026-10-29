@@ -32,7 +32,7 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
         from conformance_sources import runtime_arguments, runtime_settings
 
         for defect in (None, "manifest", "owner", "inputs", "image", "package", "foreign-root", "escaping-root",
-                       "foreign-image", "unknown-setting"):
+                       "foreign-cwd", "foreign-image", "unknown-setting"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 runtime = root / "stores/runtime"
@@ -70,14 +70,15 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     {"manifest": manifest, "owner": owner, "inputs": inputs,
                      "image": assembly, "package": package}[defect].write_bytes(b"changed")
                 arguments = runtime_arguments(assembly, settings, ["Fixture.Case"])
-                if defect in ("foreign-root", "escaping-root"):
+                directory = root if defect == "foreign-cwd" else assembly.parent
+                if defect in ("foreign-root", "escaping-root", "foreign-cwd"):
                     with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
-                        inherited.controller_command_read_inputs(root, arguments, env={})
+                        inherited.controller_command_read_inputs(root, arguments, cwd=directory, env={})
                 elif defect is not None:
                     with self.assertRaises(ConformanceError):
-                        inherited.controller_command_read_inputs(root, arguments, env={})
+                        inherited.controller_command_read_inputs(root, arguments, cwd=directory, env={})
                 else:
-                    files = inherited.controller_command_read_inputs(root, arguments, env={})
+                    files = inherited.controller_command_read_inputs(root, arguments, cwd=directory, env={})
                     for path in (manifest, owner, inputs, assembly, package, settings):
                         self.assertEqual(file_sha256(path), files[path.relative_to(root).as_posix()])
 

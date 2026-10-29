@@ -3045,6 +3045,65 @@ by the internal schema correction; no new public command is delivered. Other
 product/provider/architecture/ADR/diagrams/governance/predecessor/IaC/release/UI
 documents remain unaffected.
 
+### Standard artifact sanitation and root-relative settings
+
+Distinct immutable exact3d2a38d artifact execution at the standard four CPUs/
+6 GiB/512 PIDs also succeeds without reducing any256-MiB/4-GiB transfer pair:
+run91c859d5-6fc8-483c-a0d2-5ebe516540db,103 cases/263 witnesses/620 verified
+proof files,99 Passed/four frozen exclusions, zero Failed/Incomplete. Six
+actual sanitation, four live-origin and five released-origin families pass
+without failures/errors/skips; genuine owner cleanup is2,071.064 ms, Released,
+with stores/cache/feed absent. Namespace477.828 seconds; admission scratch
+50,273,640,448 bytes. Actual namespace cgroup peak/max memory6,442,450,944
+bytes,22,701 max events, and zero oom/oom_kill/oom_group_kill. These counters
+describe only this successful invocation; earlier failed observations remain
+unexplained and unchanged. No CI/runner capacity qualification is inferred.
+
+Report SHA-256
+`a5288395e75ca454e3ea7294465cde438f7c2b22ef2656825ffc3ba46a792913`;
+input SHA-256
+`85eb28551fb3a988afd3ac0cc9ce797950901c3a645c0c1e976853cb5fab5034`.
+The original trusted coordinator pins anchor host re-verification of all proofs
+and exact reproduction of all four actual public surfaces. All eight retained
+controls pass in10.264 seconds. Every retained filename/file passes the original
+private-root plain/base64 inspection, with executable settings absent. Packet,
+resource-counter driver, immutable bundle and log remain retained. The exact
+stopped namespace and volume6ba70b9a69a498537eb733dbba4c3a02b5e94c4bf14969a4706726f1b9df9e8e
+are removed and independent listings confirm absence.
+
+The subsequent settings-template change addresses retained composition settings
+without deleting proof bytes required by its post-cleanup verifier. Logger Root
+becomes relative to the actual assembly-parent cwd, and adapter discovery moves
+to a hash-bound CLI argument. Installed `dotnet vstest --help` confirms
+`--TestAdapterPath`. The same original readonly settings bytes still execute,
+are retained where required and are reconstructed by strict readers; native
+command argv/cwd hashes and managed root/owner/input checks remain unchanged
+in purpose. No captured artifact is redacted/rehashed as replacement authority.
+Other category execution context values remain transient in owned stores.
+
+The new two-depth composition canary test fails against the old template.
+After implementation, the complete evidence/SDK/sanitation/composition command
+passes377 tests in134.106 seconds, with three explicit Linux-only skips.
+Private canary assertions use closed messages instead of dumping whole provider
+packets on failure. Native confirmation of this newer template remains pending;
+the genuine exact3d2a38d observations are not attributed to later bytes.
+The first frozen full tooling run executes758 tests, with zero failures,
+one inherited-controller `OwnershipInvalid` error,28 explicit native macOS skips
+and no unexpected diagnostics; its exit1 is retained, not accepted. The controller
+reader still required an absolute logger root. It now resolves the supplied root
+against the actual command cwd before the unchanged symlink/ownership/hash checks.
+The test uses the real assembly-parent cwd and adds a foreign-cwd rejection.
+Complete inherited/sanitation suites pass35 tests in0.845 seconds with three
+explicit Linux-only skips. The corrected frozen full tooling run executes758
+tests with zero failures/errors/expected failures/unexpected successes or
+unexpected diagnostic bytes,28 explicit native macOS skips and expected
+non-qualifying exit2. `python3 scripts/conformance_case_catalog.py --check-sdk`
+and `git diff --check` pass.
+T068..T086/checklists/implement-running remain unchanged. README, DEVELOPMENT
+and quickstart document this boundary; examples/product/provider contracts/
+architecture/ADR/diagrams/governance/predecessor/IaC/release/UI documents are
+unaffected because no public command or support claim changes.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -35,14 +35,14 @@ class ConformanceSanitationTests(unittest.TestCase):
     def assert_clean(self, root, *outputs):
         def inspect(output):
             for canary in self.canaries:
-                self.assertNotIn(canary, output)
+                self.assertFalse(canary in output, "A synthetic private canary reached retained output.")
             for candidate in re.findall(rb"[A-Za-z0-9+/]{16,}={0,2}", output):
                 try:
                     decoded = base64.b64decode(candidate, validate=True)
                 except binascii.Error:
                     continue
                 for canary in self.canaries:
-                    self.assertNotIn(canary, decoded)
+                    self.assertFalse(canary in decoded, "An encoded private canary reached retained output.")
 
         for output in outputs:
             inspect(output)
@@ -116,6 +116,25 @@ class ConformanceSanitationTests(unittest.TestCase):
                 render(self.parent, raw, expected_inputs=report["inputs"],
                        expected_report_sha256=expected)
         self.assertEqual(list(self.parent.iterdir()), [])
+
+    def test_retained_composition_settings_keep_private_paths_only_in_held_command_arguments(self):
+        import conformance_composition_checks as composition
+        from conformance_sources import runtime_arguments
+
+        root = self.parent / "evidence"
+        for directory in ("stores/runtime", "snapshot/tests/Consumer/bin/Release/net10.0"):
+            with self.subTest(directory=directory):
+                assembly = root / directory / "Consumer.dll"
+                attempt = str(uuid.uuid4())
+                raw = composition._composition_settings(
+                    root, assembly, attempt, {"runId": str(uuid.uuid4())},
+                    {"rootPathSha256": hashlib.sha256(os.fsencode(root)).hexdigest()})
+                self.assert_clean(self.parent, raw)
+                relative = ET.fromstring(raw).findtext(".//Logger/Configuration/Root")
+                self.assertFalse(Path(relative).is_absolute())
+                self.assertEqual((assembly.parent / relative).resolve(), root)
+                arguments = runtime_arguments(assembly, root / "proofs/settings.runsettings", ("Tests.Case",))
+                self.assertIn("--TestAdapterPath:" + str(assembly.parent), arguments)
 
     def test_public_failure_projection_never_renders_provider_errors_or_private_paths(self):
         destination = self.parent / "evidence"

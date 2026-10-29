@@ -6,6 +6,7 @@ import ast
 import base64
 import hashlib
 import math
+import os
 from pathlib import Path
 import re
 import sys
@@ -939,13 +940,12 @@ def metadata_inventory_context(run, inputs, manifest, *, ended_ms):
 def runtime_settings(root, assembly, attempt, manifest_sha, owner_sha, environment):
     return (
         '<RunSettings><RunConfiguration>'
-        f'<TestAdaptersPaths>{escape(str(assembly.parent))}</TestAdaptersPaths>'
         '<MaxCpuCount>1</MaxCpuCount><TestSessionTimeout>120000</TestSessionTimeout>'
         + environment +
         '</RunConfiguration><LoggerRunSettings><Loggers>'
         '<Logger friendlyName="console" enabled="False"/>'
         '<Logger friendlyName="HoardSafe" enabled="True"><Configuration>'
-        f'<Root>{escape(str(root))}</Root><AttemptId>{attempt}</AttemptId>'
+        f'<Root>{escape(os.path.relpath(root, Path(assembly).parent))}</Root><AttemptId>{attempt}</AttemptId>'
         f'<ManifestSha256>{manifest_sha}</ManifestSha256><OwnerSha256>{owner_sha}</OwnerSha256>'
         '</Configuration></Logger></Loggers></LoggerRunSettings></RunSettings>').encode()
 
@@ -985,6 +985,7 @@ def runtime_arguments(assembly, settings, identities, *, discovery=False, runner
                            for name in dict.fromkeys(identity.split("(")[0] for identity in identities))
     prefix = ("dotnet", "vstest") if runner_prefix is None else runner_prefix
     return [*prefix, str(assembly), *(["--ListTests"] if discovery else []),
+            f"--TestAdapterPath:{Path(assembly).parent}",
             f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"]
 
 

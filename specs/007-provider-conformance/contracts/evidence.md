@@ -1030,6 +1030,23 @@ validation, emit a fixed safe failure code and withhold it, never retain/upload
 the raw source as fallback. Canary challenges inspect every retained diagnostic
 file and public output, including JUnit/Markdown, filenames and CI summaries.
 
+Selected metadata/artifact and contributor executable settings are transient
+owned resources in `stores`, not safe retained proof packets. Live verification
+still binds their original bytes and held command input hashes before genuine
+settlement removes them. Composition retains the exact original settings needed
+by its post-cleanup verifier; its logger root is relative to the actual bound
+assembly-parent cwd, with adapter paths in hash-bound arguments rather than XML.
+The inherited controller resolves that relative root against the actual command
+cwd and still rejects foreign roots, symlinks and changed original inputs.
+No retained provenance is redacted or replaced after execution.
+
+Delivered category diagnostic JSON/JUnit/Markdown/CI projections use closed
+catalog identities, counts and hashes. They independently verify the retained
+packet against separately trusted coordinator pins before rendering, explicitly
+remain Incomplete/non-qualifying, and include a JUnit qualification error even
+when all runtime cases pass. They do not replace the full-profile evaluator or
+the planned CI/aggregate support statement below.
+
 ## CI Profiles and Aggregate Check
 
 Planned workflow `.github/workflows/conformance.yml`:

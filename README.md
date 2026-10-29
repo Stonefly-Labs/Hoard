@@ -857,6 +857,15 @@ and command bindings before cleanup; held input/command digests remain in the
 safe receipts. Shared/hook/mutation packets no longer copy executable settings.
 Legacy/composition retention is unchanged and remains part of the unfinished
 all-output sanitation gate.
+Fresh exact3d2a38d runs confirm both native categories at four CPUs/6 GiB:
+metadata102/141 and artifacts103/263 cases/witnesses, with all six sanitation,
+four live-origin and five released-origin controls passing. Both retained trees
+exclude the original private root in plain/base64 values and contain no executable
+settings; all four actual public surfaces reproduce with trusted driver pins.
+These independent observations do not erase or explain earlier failed runs.
+Retained composition settings now also use a root-relative logger path and put
+adapter paths only in hash-bound command arguments. Local affected suites pass;
+fresh native confirmation of that subsequent template change remains pending.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

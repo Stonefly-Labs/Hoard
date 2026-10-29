@@ -1318,7 +1318,7 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
             "formatting": {"path": formatting.relative_to(owner).as_posix(), "sha256": legacy._hash(formatting)}}
 
 
-def controller_runtime_read_inputs(owner, settings):
+def controller_runtime_read_inputs(owner, settings, *, cwd):
     from conformance_evidence import _uuid, relative_path, sha256
     from conformance_sources import read_bounded
     import conformance_legacy as legacy
@@ -1336,9 +1336,9 @@ def controller_runtime_read_inputs(owner, settings):
         raise ConformanceError("EvidenceSchemaInvalid")
     values = {child.tag: child.text for child in configuration[0]}
     root = Path(values["Root"])
-    legacy.no_symlinks(root)
     if not root.is_absolute():
-        raise ConformanceError("OwnershipInvalid")
+        root = Path(cwd) / root
+    legacy.no_symlinks(root)
     root = root.resolve(strict=True)
     if not root.is_relative_to(owner) or not root.is_dir():
         raise ConformanceError("OwnershipInvalid")
@@ -1456,7 +1456,7 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
         elif path.suffix == ".dll":
             extra.update(item for item in path.parent.iterdir() if item.is_file())
         elif path.suffix == ".runsettings":
-            for item, hashed in controller_runtime_read_inputs(owner, path).items():
+            for item, hashed in controller_runtime_read_inputs(owner, path, cwd=directory).items():
                 if item in declared and declared[item] != hashed:
                     raise ConformanceError("ProofMismatch")
                 declared[item] = hashed

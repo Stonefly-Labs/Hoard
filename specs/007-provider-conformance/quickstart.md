@@ -18,6 +18,11 @@ Selected metadata/artifact settings are transient owned `stores/` resources;
 live replay checks their original bytes and held command hashes before genuine
 cleanup. They are no longer copied into shared/hook/mutation proof packets.
 Legacy/composition retention and complete private-proof sanitation remain open.
+The subsequent generic template uses a root-relative logger path and explicit
+hash-bound VSTest adapter arguments, so retained composition settings omit those
+private paths without provenance rewriting. Affected local suites pass; native
+confirmation of this later template change is still pending. This does not
+change the incomplete public qualification boundary.
 `bash scripts/validate-conformance.sh --profile composition --evidence /fresh/private/path`
 now attempts CP36/110 and all 525 inherited parameters, not qualification.
 Exact standalone Linux run40451900182 at `f319b77` passes that native scope;
