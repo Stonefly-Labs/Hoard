@@ -3104,6 +3104,37 @@ and quickstart document this boundary; examples/product/provider contracts/
 architecture/ADR/diagrams/governance/predecessor/IaC/release/UI documents are
 unaffected because no public command or support claim changes.
 
+### Partial five-profile transport controls
+
+T069 now has seven tests in `test_conformance_ci.py` and a pure internal
+`conformance_ci.inspect_profile_transports` boundary. The first run fails at the
+absent module. The first implementation run exposes a modeled empty proof map
+that violates the existing strict schema; the fixture is corrected, not admission.
+The corrected seven tests pass. Combined transport/admission/CLI regression:
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_ci
+test_conformance_evidence.ConformanceAdmissionTests test_conformance_cli -q`
+passes58 tests in1.683 seconds with no skips.
+
+The inspector requires exact five-profile maps of bounded report bytes, externally
+supplied original assignments, report pins and job/upload/download outcomes.
+It rejects every non-success/missing phase, absent/foreign/misassigned slots,
+changed inputs/pins, focused/preparation/dirty inputs, duplicate run IDs and
+inconsistent group/source/catalog/SDK/source-state context, while allowing exact
+predeclared provider/environment differences. Expected local/CI inventory counts
+come from the same independent catalog, not downloaded report outcomes.
+Returned immutable fields are closed identities/counts/hashes, always
+`qualification: false`/`EvidenceIncomplete`, scope
+`profile-transport-consistency-diagnostic`.
+
+These are modeled transport controls, not actual uploaded/downloaded jobs,
+runtime-origin proof, complete inventory evaluation, common configuration-policy
+acceptance or an implemented aggregate command. Fixture-computed pins are only
+consistency controls, not externally anchored runtime authority. The public CLI
+is unchanged; T069/T071..T079 and all other unchecked tasks stay open. README
+and DEVELOPMENT describe the internal-only boundary; no examples, public
+command, provider/product/architecture contract, governance, release or
+infrastructure behavior changes.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

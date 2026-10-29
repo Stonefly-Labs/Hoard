@@ -866,6 +866,11 @@ These independent observations do not erase or explain earlier failed runs.
 Retained composition settings now also use a root-relative logger path and put
 adapter paths only in hash-bound command arguments. Local affected suites pass;
 fresh native confirmation of that subsequent template change remains pending.
+An internal five-profile transport inspector now rejects missing/foreign
+assignments, changed trusted pins and unsuccessful job/upload/download outcomes.
+It uses the same independent inventories locally and in CI, permits predeclared
+provider/environment differences, and always returns non-qualifying diagnostics.
+It does not implement full report aggregation or infer runtime origin.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

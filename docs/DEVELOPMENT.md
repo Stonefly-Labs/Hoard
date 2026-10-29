@@ -7669,6 +7669,27 @@ non-qualifying. The SDK catalog consistency check and `git diff --check` pass.
 Native verification of this subsequent template change remains pending; prior
 exact3d2a38d observations are not relabeled as testing these new source bytes.
 
+The first T069 transport controls are now present in
+`tests/tooling/test_conformance_ci.py`, with an internal pure inspector in
+`scripts/conformance_ci.py`. It requires exactly five reports, separately
+supplied per-profile inputs/report pins and all three successful job/upload/
+download outcomes. Missing/foreign slots, changed inputs/pins, focused or
+preparation modes, dirty sources, reused run IDs and mixed invocation/source/
+catalog/SDK context reject. Legitimate predeclared provider/environment hashes
+can differ. Local and CI inventory counts come from the same independent catalog.
+Output is a closed immutable diagnostic with `qualification: false` and
+`EvidenceIncomplete`, never a full report evaluator, origin attestation or
+successful aggregate.
+
+Seven new modeled tests first fail because the inspector does not exist.
+The first implementation run exposes an invalid empty proof-map fixture; it is
+corrected rather than relaxing schema admission. All seven then pass.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_ci
+test_conformance_evidence.ConformanceAdmissionTests test_conformance_cli -q`
+passes58 tests in1.683 seconds without skips. These fixture pins test consistency,
+not external runtime authority. No actual five-profile CI, upload/download or
+final verify/aggregate execution is claimed; T069 and later tasks remain open.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification
