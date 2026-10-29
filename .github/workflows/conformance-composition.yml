@@ -47,14 +47,30 @@ jobs:
           import conformance_evidence as evidence
           from conformance_composition_checks import verify_composition_report_controls
           from conformance_inherited import (
-              BASELINE, CONTROLLER_BASELINES, verify_controller_tooling, verify_controller_invocations)
+              BASELINE, CONTROLLER_BASELINES, controller_tooling_observation,
+              verify_controller_tooling, verify_controller_invocations)
           from conformance_legacy import verify_borrowed_invocation
           from conformance_sources import read_bounded
           root = Path(sys.argv[1])
-          summary = evidence.load_json(read_bounded(root / "proofs/composition-diagnostic-summary.json", 65536))
           inputs = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
               root / "proofs/composition-inputs.json", 2 * 1024**2)))
           owner = evidence.load_json(read_bounded(root / "runtime-owner.json", 65536))
+          try:
+              summary = evidence.load_json(read_bounded(root / "proofs/composition-diagnostic-summary.json", 65536))
+          except evidence.ConformanceError as error:
+              failure = {"qualification": False, "status": "Incomplete", "code": "WitnessMissing"}
+              try:
+                  if (inputs["sourceRevision"] != sys.argv[2] or inputs["sourceState"] != "clean-ci"
+                          or inputs["mode"] != "diagnostic" or inputs["profileId"] != "composition"
+                          or owner["runId"] != inputs["runId"]):
+                      raise evidence.ConformanceError("ProofMismatch")
+                  failure["tooling"] = controller_tooling_observation(root, inputs, owner)
+                  failure["summaryCode"] = str(error)
+              except (evidence.ConformanceError, KeyError, TypeError) as tooling_error:
+                  failure["toolingCode"] = (str(tooling_error) if isinstance(
+                      tooling_error, evidence.ConformanceError) else "WitnessMissing")
+              print(evidence.canonical_bytes(failure).decode("utf-8"))
+              raise SystemExit("WitnessMissing") from None
           baseline_raw = read_bounded(root / CONTROLLER_BASELINES, 16 * 1024**2)
           baseline = evidence.load_json(baseline_raw)
           inherited = summary["inheritedRuntime"]

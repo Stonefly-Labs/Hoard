@@ -862,7 +862,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                          "native-invocation-omitted", "native-invocation-output",
                          "native-invocation-count", "native-invocation-closure", "native-input-digest",
                          "native-input-closure", "native-input-path",
-                         "missing-report-control", "missing-semantic-control"):
+                         "missing-report-control", "missing-semantic-control", "missing-summary",
+                         "missing-summary-incomplete-tooling", "missing-summary-foreign-tooling",
+                         "missing-summary-unsafe-tooling", "missing-summary-missing-tooling",
+                         "missing-summary-foreign-source"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -887,6 +890,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         else ["test_control.Case.test_assertion"],
                     },
                 }
+                if mutation == "missing-summary-incomplete-tooling":
+                    tooling["endedMs"] = 600002
+                    tooling["result"].update(code="EvidenceIncomplete", tests=0, observedTests=[])
+                elif mutation == "missing-summary-foreign-tooling":
+                    tooling["rootId"] = "foreign-root"
+                elif mutation == "missing-summary-unsafe-tooling":
+                    tooling["result"]["code"] = "private-tooling-canary"
+                elif mutation == "missing-summary-foreign-source":
+                    inputs["sourceRevision"] = "b" * 40
                 baseline = {"runId": "run", "rootId": "root", "qualification": False,
                             "nativeContainment": False, "mode": "preparation",
                             "schemaVersion": 1, "baselineRevision": inherited.BASELINE,
@@ -1039,6 +1051,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                                     ("proofs/inherited-controller-tooling.json", tooling),
                                     ("runtime-owner.json", {"runId": "run", "rootId": "root"})):
                     (root / path).write_bytes(evidence.canonical_bytes(value))
+                if mutation.startswith("missing-summary"):
+                    (root / "proofs/composition-diagnostic-summary.json").unlink()
+                    if mutation == "missing-summary-missing-tooling":
+                        (root / "proofs/inherited-controller-tooling.json").unlink()
                 output = io.StringIO()
                 with mock.patch.object(sys, "argv", ["workflow", str(root), "a" * 40]), mock.patch.object(
                         evidence, "admit_entity", side_effect=lambda kind, value: value), \
@@ -1057,6 +1073,23 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     else:
                         with self.assertRaisesRegex(SystemExit, "WitnessMissing"):
                             exec(code, {"__name__": "__main__"})
+                        if mutation.startswith("missing-summary"):
+                            failure = evidence.load_json(output.getvalue().encode())
+                            self.assertEqual("WitnessMissing", failure["code"])
+                            self.assertFalse(failure["qualification"])
+                            self.assertNotIn("private-tooling-canary", output.getvalue())
+                            if mutation in ("missing-summary", "missing-summary-incomplete-tooling"):
+                                self.assertEqual("OutputLimitExceeded", failure["summaryCode"])
+                                observed = failure["tooling"]
+                                self.assertFalse(observed["nativeContainment"])
+                                self.assertEqual(1, observed["expectedTests"])
+                                self.assertEqual(
+                                    ("EvidenceIncomplete", 0, 600001) if mutation.endswith("incomplete-tooling")
+                                    else ("None", 1, 1),
+                                    tuple(observed[key] for key in ("code", "observedTests", "elapsedMs")))
+                            else:
+                                self.assertNotIn("tooling", failure)
+                                self.assertIn("toolingCode", failure)
                 self.assertFalse((root / "stores").exists())
 
     def test_unsupported_native_host_rejects_before_allocating_or_building(self):

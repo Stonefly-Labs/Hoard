@@ -341,7 +341,7 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
 
         identity = "test_control.Case.test_assertion"
         sources = {"tests/tooling/test_control.py": "a" * 64}
-        for mutation in ("none", "changed-source", "missing-observation", "foreign-module", "skipped",
+        for mutation in ("none", "changed-source", "missing-observation", "foreign-module", "skipped", "deadline",
                          "borrowed-provider-group", "live-child"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
@@ -363,11 +363,15 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                                   observedTests=["foreign.Case.test_assertion"])
                 elif mutation == "skipped":
                     packet.update(skipped=1, code="EvidenceIncomplete")
+                elif mutation == "deadline":
+                    packet.update(expectedTests=[identity, "test_control.Case.test_unobserved"],
+                                  code="EvidenceIncomplete")
+                clock = patch.object(time, "monotonic", side_effect=[1, 602]) if mutation == "deadline" else nullcontext()
                 with patch.object(evidence, "source_manifest", side_effect=[
                         sources, {} if mutation == "changed-source" else sources]), \
                         patch.object(checks, "run_checks", return_value=packet) as execute, \
                         patch("conformance_legacy._borrowed_group",
-                              return_value=123 if mutation == "borrowed-provider-group" else None):
+                              return_value=123 if mutation == "borrowed-provider-group" else None), clock:
                     if mutation == "none":
                         result = inherited.run_controller_tooling(ROOT, run, sources)
                         self.assertFalse(result["qualification"])
@@ -376,11 +380,33 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                         self.assertEqual(file_sha256(root / "proofs/inherited-controller-tooling.json"), result["sha256"])
                         self.assertTrue(execute.call_args.kwargs["all_tooling"])
                         self.assertLessEqual(execute.call_args.kwargs["deadline"], run.deadline)
+                        inputs = {"runId": "run", "sourceManifest": sources,
+                                  "sourceManifestSha256": evidence.digest(sources)}
+                        owner = {"rootId": "root"}
+                        inherited.verify_controller_tooling(root, result, inputs, owner)
+                        observation = inherited.controller_tooling_observation(root, inputs, owner)
+                        self.assertEqual((1, 1, "None"), tuple(observation[key] for key in (
+                            "expectedTests", "observedTests", "code")))
                     else:
                         with self.assertRaises(ConformanceError):
                             inherited.run_controller_tooling(ROOT, run, sources)
                         if mutation in ("borrowed-provider-group", "live-child"):
                             execute.assert_not_called()
+                        if mutation in ("skipped", "deadline"):
+                            inputs = {"runId": "run", "sourceManifest": sources,
+                                      "sourceManifestSha256": evidence.digest(sources)}
+                            observation = inherited.controller_tooling_observation(root, inputs, {"rootId": "root"})
+                            self.assertEqual("EvidenceIncomplete", observation["code"])
+                            self.assertFalse(observation["qualification"])
+                            if mutation == "deadline":
+                                self.assertEqual((2, 1, 601000), tuple(observation[key] for key in (
+                                    "expectedTests", "observedTests", "elapsedMs")))
+                            summary = {"qualification": False, "nativeContainment": False,
+                                       "role": "trusted-tooling-supervisor", "tests": packet["tests"],
+                                       "sourceManifestSha256": inputs["sourceManifestSha256"],
+                                       "sha256": file_sha256(root / "proofs/inherited-controller-tooling.json")}
+                            with self.assertRaises(ConformanceError):
+                                inherited.verify_controller_tooling(root, summary, inputs, {"rootId": "root"})
 
     def test_selected_mutation_discovery_requires_actual_complete_unchanged_images(self):
         import conformance_legacy as legacy

@@ -1280,6 +1280,30 @@ are affected; product/charter, architecture/ADR/diagrams, public examples,
 governance, predecessors, IaC, release and UI are unchanged by this diagnostic
 metadata/tooling increment. No merge, finalization or release is authorized.
 
+### Retained composition failure diagnostics
+
+Exact55c94dc composition run40802490632/job123219196444 now fails after33
+minutes with EvidenceIncomplete and an unreadable final summary, while all six
+foundations jobs at that source pass. The composition logs do not expose an
+admitted tooling packet; the600-second supervisor ceiling versus the measured
+731-second dedicated native tooling run remains a lead, not a proven cause.
+
+The workflow now projects only validated, run/root/source-bound supervisor
+counts, code and elapsed time when final-summary admission fails. Unsafe,
+missing or foreign packets produce a closed explicit rejecting code, not raw
+diagnostics or a passing fallback. A shared bounded reader serves both this
+observation and existing strict verification; observing an over-budget or
+incomplete run does not relax its600-second admission ceiling. No summary read
+limit, assertion, applicability, retry policy or ownership rule changes.
+The existing inherited/composition regression files cover missing summaries,
+incomplete and over-budget packets, foreign source/root, missing packets and
+unsafe code suppression; all28 inherited and21 composition tests pass.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. README, DEVELOPMENT, harness and this plan are affected;
+PROVIDERS and other product/example/architecture/governance/IaC/release/UI
+documents are unaffected by diagnostic failure reporting. T064..T086 remain
+unchecked; implement/running continues with no qualification or merge authority.
+
 Validation: `python3 scripts/conformance_unit_checks.py --all-tooling` observes709
 tests with zero failures/errors/expected failures/unexpected successes/
 unexpected diagnostic bytes,23 explicit native-only macOS skips and the expected

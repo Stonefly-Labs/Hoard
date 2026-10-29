@@ -699,6 +699,10 @@ are bound into runtime controls, excluding volatile scratch/socket trees.
 The managed production preparation/runtime path passes76 rows with86 origins.
 Native replay at55c94dc passes712 controls without skips, including the earlier
 joined mapped-PDB path; that is not native verification of this new public entry.
+Composition diagnostics now expose only validated, input-bound tooling counts,
+codes and timing if the final summary cannot be read. Missing or invalid tooling
+still fails explicitly; incomplete execution never qualifies, and no budget or
+summary-size limit is relaxed. The earlier failed workflows remain retained.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

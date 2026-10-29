@@ -6708,6 +6708,21 @@ The separate b49fa51 composition workflow fails before a usable summary can be
 admitted; its reader reports OutputLimitExceeded, which can also mean a missing
 file. Do not infer an oversized summary or raise a limit from that code alone.
 
+The composition workflow now handles an unreadable final summary by projecting
+only validated supervisor code, finite counts and elapsed time from the retained
+tooling packet. The packet must match the run/root and captured source manifest,
+and CI source/profile identity must match before this projection is printed.
+Missing, foreign or unsafe tooling instead emits a closed rejecting code; raw
+test names, locations, exception text and private paths are not copied. This is
+failure observation only: the existing600-second full-tooling admission ceiling,
+summary byte limit and non-qualifying exit remain unchanged. Deadline-exhausted
+tooling can be observed but cannot pass verification. The28 inherited and21
+composition tooling tests pass, including missing-summary, incomplete-tooling,
+foreign-root/source and unsafe-code controls; catalog/SDK and diff checks pass.
+Exact earlier55c94dc composition run40802490632/job123219196444 has now failed
+after33 minutes with EvidenceIncomplete and no usable summary. It still supplies
+no admitted tooling packet in public logs, so its underlying cause is unproven.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

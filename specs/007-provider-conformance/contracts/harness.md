@@ -2291,6 +2291,12 @@ build/evaluation receipts, exact consumed cache members and original archives;
 do not recursively hash volatile scratch/socket trees. Public custom metadata
 execution remains diagnostic/incomplete, not a qualification route. The artifact
 component catalog must not become public complete artifact dispatch by omission.
+An unreadable composition summary may expose a bounded supervisor failure
+projection only after exact run/root/source and CI identity admission. Retain
+closed code, finite counts and elapsed time only; reject missing/unsafe packets
+without copying raw failures, names or paths. This observation does not admit
+incomplete tooling, change the600-second verification ceiling or relax summary
+read limits.
 Internal consumer-lock composition may only combine an existing frozen consumer graph
 with an explicit adapter archive and frozen archive dependency closure. Use
 NuGet's own framework/range/content-hash APIs; never resolve or widen versions.

@@ -824,7 +824,7 @@ def _admit_tooling_result(packet, sources):
         raise ConformanceError("EvidenceIncomplete")
 
 
-def verify_controller_tooling(root, summary, inputs, owner):
+def _read_controller_tooling(root, inputs, owner):
     import conformance_legacy as legacy
     from conformance_evidence import _number
     from conformance_sources import read_bounded
@@ -833,23 +833,46 @@ def verify_controller_tooling(root, summary, inputs, owner):
     legacy.no_symlinks(path)
     raw = read_bounded(path, 2 * 1024**2)
     document = load_json(raw)
-    if (not isinstance(summary, dict) or set(summary) != {
-            "qualification", "nativeContainment", "role", "sha256", "tests", "sourceManifestSha256"}
-            or not isinstance(document, dict) or set(document) != {
+    if (not isinstance(document, dict) or set(document) != {
                 "schemaVersion", "qualification", "nativeContainment", "role", "runId", "rootId",
                 "sourceManifestSha256", "startedMs", "endedMs", "result"}
             or type(document["schemaVersion"]) is not int or document["schemaVersion"] != 1
             or not isinstance(document["result"], dict)
-            or any(value["qualification"] is not False or value["nativeContainment"] is not False
-                   or value["role"] != "trusted-tooling-supervisor" for value in (summary, document))
-            or summary["sha256"] != hashlib.sha256(raw).hexdigest()
+            or document["qualification"] is not False or document["nativeContainment"] is not False
+            or document["role"] != "trusted-tooling-supervisor"
             or document["runId"] != inputs["runId"] or document["rootId"] != owner["rootId"]
-            or any(value["sourceManifestSha256"] != inputs["sourceManifestSha256"] for value in (summary, document))
+            or document["sourceManifestSha256"] != inputs["sourceManifestSha256"]
             or inputs["sourceManifestSha256"] != digest(inputs["sourceManifest"])
-            or type(summary["tests"]) is not int
-            or not 0 <= _number(document["endedMs"]) - _number(document["startedMs"]) <= 600000):
+            or not 0 <= _number(document["endedMs"]) - _number(document["startedMs"]) <= 2**63 - 1):
         raise ConformanceError("ProofMismatch")
     _admit_tooling_result(document["result"], inputs["sourceManifest"])
+    return raw, document
+
+
+def controller_tooling_observation(root, inputs, owner):
+    """Project only validated finite diagnostics, including an incomplete supervisor run."""
+    _, document = _read_controller_tooling(root, inputs, owner)
+    packet = document["result"]
+    return {
+        "qualification": False, "nativeContainment": False, "scope": "trusted-tooling-supervisor",
+        "code": packet["code"], "elapsedMs": document["endedMs"] - document["startedMs"],
+        "expectedTests": len(packet["expectedTests"]), "observedTests": packet["tests"],
+        **{key: packet[key] for key in (
+            "failures", "errors", "skipped", "expectedFailures", "unexpectedSuccesses", "unexpectedDiagnosticBytes")},
+    }
+
+
+def verify_controller_tooling(root, summary, inputs, owner):
+    raw, document = _read_controller_tooling(root, inputs, owner)
+    if (not isinstance(summary, dict) or set(summary) != {
+            "qualification", "nativeContainment", "role", "sha256", "tests", "sourceManifestSha256"}
+            or summary["qualification"] is not False or summary["nativeContainment"] is not False
+            or summary["role"] != "trusted-tooling-supervisor"
+            or summary["sha256"] != hashlib.sha256(raw).hexdigest()
+            or summary["sourceManifestSha256"] != inputs["sourceManifestSha256"]
+            or type(summary["tests"]) is not int
+            or document["endedMs"] - document["startedMs"] > 600000):
+        raise ConformanceError("ProofMismatch")
     if document["result"]["code"] != "None" or summary["tests"] != document["result"]["tests"]:
         raise ConformanceError("EvidenceIncomplete")
 
