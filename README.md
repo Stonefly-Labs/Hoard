@@ -786,8 +786,16 @@ and releases resources. VSTest uses the explicitly selected SDK/runtime rather
 than ambient SDK CLI setup, with its dependency/extension/resource bytes sealed
 and rechecked. A sealed full-component map avoids layout-dependent descriptor
 growth without raising the16-pin limit. Output remains diagnostic (`qualification:false`,
-`profileComplete:false`, `EvidenceIncomplete` exit2); guide journeys, independent
-evaluation, qualifying profiles and CI remain unfinished.
+`profileComplete:false`, `EvidenceIncomplete` exit2); independent evaluation,
+qualifying profiles and CI remain unfinished.
+The [contributor walkthrough](examples/ProviderConformance/README.md) documents
+private scratch, explicit package resolution, separate good/faulty/corrected
+runs, unchanged common-input inspection and original-owner recovery controls.
+All five guide blocks execute verbatim in isolated Linux: good/corrected and
+both concurrent runs each pass76 parameters/86 origins; adapter-only stale replay
+fails exactly three named common rows. All five owners release their resources;
+active-root duplication and unavailable-service scope explicitly reject.
+These observations remain diagnostic, not independent report verification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -7196,6 +7196,35 @@ diagnostic bytes,25 explicit native macOS skips and expected non-qualifying
 EvidenceIncomplete exit2. Affected C# whitespace verification and
 `git diff --check` pass. T064 is complete; T065..T086 and implement/running remain.
 
+The [separately packaged contributor guide](../examples/ProviderConformance/README.md)
+now reproduces actual public good/faulty/corrected commands, original-owner
+recovery controls, overlapping contributors and unavailable-service rejection.
+All five Bash blocks execute verbatim in a fresh isolated clone at
+`e5556e53f1479d55666f3ad68220dcfa848c914c` with only the guide overlaid.
+Guide hash:
+`a506a876893d1a5f067d7aef3e8461c8bb0c1b7e7236db8f6bb9ac7adbef9240`.
+Good/corrected and both actual concurrent runs each pass76 parameters/86 origins;
+faulty passes73 and fails exactly `publication-replay`, `receipts`, `time-ticket`.
+Only the external adapter constructor changes; common consumer/assertion sources,
+SDK/provider/Memory-binding images and provider archive hashes are identical
+across good/red/corrected. Per-run adapter-specific compiled drivers/PDB/packages
+are separately attributed, not claimed byte-identical.
+
+All five ownership ledgers reach Released with absent stores/cache/feed.
+Duplicate active-root reuse rejects OwnershipInvalid and the outside sentinel
+is unchanged. An unavailable `service-backed` profile explicitly rejects
+UnsupportedProfile without allocating a root or substituting Memory; this does
+not test a real external service. Four guide recovery/writer/sentinel controls
+pass in0.062 seconds; seven additional read-only-source Linux foreign-identity/
+ledger/missing-facility/post-spawn controls pass in0.191 seconds.
+The complete guide container exits0 after330.272 seconds. Bounded packets are
+retained before exact task container/volume removal, with independent anonymous
+volume absence verification. Bash/Python snippet syntax, guide links and diff
+checks pass. Detailed run identities/hashes are in the F-07 plan.
+T065..T067 are complete; T068..T086 and implement/running remain. The commands
+still end diagnostic EvidenceIncomplete exit2, never full qualification.
+There is no arbitrary persisted-root adoption or `--recover` CLI.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

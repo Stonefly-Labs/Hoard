@@ -2216,6 +2216,92 @@ deployment, release or executable example changes. The new contributor guide is
 the next task. T064 alone is checked; T065..T086 and implement/running remain.
 No checklist approval, convergence, readiness, merge or release advances.
 
+### Verbatim contributor guide and original-owner recovery
+
+T065..T067 are complete. The new
+`examples/ProviderConformance/README.md` documents the ten explicit registered
+source/import/lock inputs, controller-owned dependency restore and package-only
+resolution, private0700 scratch, good/faulty/corrected commands, safe finite
+diagnostics, changed-input reruns and supported original-owner recovery.
+It expressly forbids adopting an arbitrary old root from its PID/ledger and
+does not invent a `--recover` command. The forwarding example is not an
+independent provider or production support.
+
+All five fenced Bash blocks execute verbatim in a fresh isolated clone at
+`e5556e53f1479d55666f3ad68220dcfa848c914c`, with only the new guide overlaid.
+Guide SHA-256:
+`a506a876893d1a5f067d7aef3e8461c8bb0c1b7e7236db8f6bb9ac7adbef9240`;
+overlay SHA-256:
+`6df8b6b13c6539e7380b28ac9990cf84e82659949219630c84520475353ae5a7`.
+The pinned SDK image, unprivileged UID10001, Linux arm64/btrfs, four CPUs,
+6GiB and512-PID limits are unchanged; initial free scratch is52,527,849,472
+bytes. The complete container exits0 after330.272 seconds. Session log:
+`linux-contributor-guide-overlap-final.log`.
+
+| Actual run | Run ID | Observed outcome |
+| --- | --- | --- |
+| good | `bc20e611-60dd-4233-92da-2d3dffdf9980` | 76 passed parameters,86 origins |
+| faulty | `b142efaf-bba9-4b33-9944-61a02878c82c` | 73 passed, exactly3 failed parameters |
+| corrected | `af07d9b9-876c-4eb7-a56c-4290df73968c` | 76 passed parameters,86 origins |
+| overlap-one | `ffb7c51d-c60c-4afa-afce-786423e417f7` | 76 passed parameters,86 origins |
+| overlap-two | `14e4441b-391c-4f39-9a54-df05806952a5` | 76 passed parameters,86 origins |
+
+The faulty adapter changes only its external copied constructor body. Actual
+failed common rows are exactly `publication-replay`, `receipts` and `time-ticket`;
+the latter executes `MetadataTimeAssertions.TicketExpiryAndRollbackAsync`.
+Restoring only those adapter source bytes restores all76 unchanged common rows.
+The three good/red/corrected runs retain identical common consumer/assertion
+source digest
+`5c6662a63642ba3be044a53eb98ced494e5fc696e59531e44d815e804a539c8b`,
+SDK/provider/Memory-binding image digest
+`38d8b8da49a184115b2e7329cc081b3bbd400b102ebc276732072a0ae3258a05`
+and provider-package archive hash
+`386ede1fbad124110df07b9cb53ac94118ef7b037660009d6528ec40f096c3c8`.
+All four good runs bind source digest
+`5a6ef54f968d05fbcacd8d2db38b8008cc5c9894f08e5d6897889966ad6c5bce`;
+the faulty source digest is
+`d9a710827b4e48b571207ef03c77f71a920a5b481250ee27981e3dfca7e2a41d`.
+Adapter-specific packages and compiled Consumer/PDB artifacts remain separately
+bound per run and are not claimed byte-identical after source restoration.
+All five invocation groups differ. All five ledgers reach Released with absent
+stores/cache/feed. The faulty run has no successful runtime summary.
+
+The last block launches two actual contributors concurrently in distinct private
+roots/feeds/caches. Reusing the first active root rejects `OwnershipInvalid`;
+both original runs finish normally and the outside sentinel is unchanged.
+An explicit unavailable `service-backed` request rejects `UnsupportedProfile`,
+allocates no evidence root and remains unqualified. This is unsupported-profile
+admission, not an actual service connectivity test.
+
+The guide also executes four existing original-owner live-retention, failed
+release/retry, overlapping-writer and parent-swap/sentinel controls: four pass
+in0.062 seconds. Seven additional exact-ownership controls run against the same
+read-only retained source in a separate pinned Linux container: foreign process
+identity, kernel-start identity, ledger/link tampering, missing process handle,
+missing kernel group signaling and both post-spawn identity/ledger failures.
+All seven pass in0.191 seconds; exact command/output is retained in
+`linux-contributor-recovery-ownership-controls-final.log` and the session
+`run-native-contributor-ownership.sh`. An initial attempted exec finds the guide
+container already stopped and executes no tests; that observation is retained.
+
+Bounded proof/ownership/runtime packets are copied before removing only the
+stopped task container. Exact anonymous volume
+`b6b5e65cacd573b983e6e39a190054649c396e1b2c54969c6c46c4199346b42d`
+absence is independently observed afterward; shared SDK images remain.
+Five-block Bash syntax, all embedded Python snippets, local guide links and
+`git diff --check` pass. This increment changes documentation only; the frozen
+T064740-test/source-format checks remain applicable without another full replay.
+README and PROVIDERS link the guide; DEVELOPMENT records reproduction.
+Charter/product/architecture/ADR/diagrams/governance/backlog/predecessor/IaC/
+release/UI and CustomHost are unaffected: no product graph/API, deployment,
+release or host composition changes.
+
+Every runtime remains diagnostic EvidenceIncomplete exit2,
+`qualification:false` and `profileComplete:false`. No full baseline, independent
+final evaluation, service support or five-profile CI qualification is claimed.
+T068..T086 remain unchecked; implement/running continues with reviewer
+checklists unchanged and no convergence, merge or release authorization.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

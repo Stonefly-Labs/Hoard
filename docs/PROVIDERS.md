@@ -838,6 +838,17 @@ packaged macOS execution plus tampering controls passes in137.116 seconds.
 The summary remains explicitly non-qualifying
 and ends with `EvidenceIncomplete` exit2; guide red/green journeys, independent
 qualification/evaluation and CI are not established by this diagnostic run.
+Use the [contributor walkthrough](../examples/ProviderConformance/README.md)
+for clean-checkout commands, a separately copied forwarding project, deliberate
+adapter-only stale replay, safe finite inspection and owned-retention recovery.
+It explicitly distinguishes current diagnostic behavior from future independent
+qualification and never adopts an old directory through a fabricated owner.
+The isolated verbatim guide execution passes76 parameters/86 origins for
+good/corrected and both concurrent runs; adapter-only stale replay fails exactly
+`publication-replay`, `receipts` and `time-ticket`. Common consumer/assertion
+sources and SDK/provider/Memory-binding binaries remain unchanged. All five
+owners release their resources; active-root reuse rejects OwnershipInvalid and
+unavailable service scope rejects UnsupportedProfile without allocating a root.
 
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
