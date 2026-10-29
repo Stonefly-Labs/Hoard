@@ -30,6 +30,143 @@ class ConformanceExecutionTests(unittest.TestCase):
     def workspace(self):
         return execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
 
+    def test_controller_directory_lease_requires_original_reference_and_counts_against_pin_budget(self):
+        run = self.workspace()
+        lease = run.lease_directory()
+        snapshot = run._directory_lease_snapshot(lease)
+        self.assertEqual(set(snapshot), {"resourceId", "pathSha256", "identitySha256"})
+        self.assertNotIn(str(run.root), json.dumps(snapshot))
+        forged = execution._DirectoryLease(run, lease.resource_id, lease.descriptor)
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run._directory_lease_snapshot(forged)
+        foreign = execution.OwnedRun.allocate(self.parent / "foreign", ROOT, profile="harness")
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            foreign._directory_lease_snapshot(lease)
+        for options in ({}, {"record_execution": True},
+                        {"record_execution": True, "scope": "recovery",
+                         "execution_inputs": tuple(f"proofs/input-{index}" for index in range(16))}):
+            with self.subTest(options=options), mock.patch.object(execution.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    run.command([sys.executable], directory_lease=lease, **options)
+                launch.assert_not_called()
+        import fcntl
+        independent = os.open(run.root / lease.relative_path, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            with self.assertRaises(BlockingIOError):
+                fcntl.flock(independent, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        finally:
+            os.close(independent)
+        descriptor = lease.descriptor
+        for owner in (run, foreign):
+            owner.transition("Settling")
+            owner.release()
+        self.assertIsNone(lease.descriptor)
+        with self.assertRaises(OSError):
+            os.fstat(descriptor)
+
+    def test_directory_lease_failed_admission_retains_the_original_pin_until_actual_cleanup(self):
+        run = self.workspace()
+        for failure in (OSError(), ConformanceError("OwnershipInvalid")):
+            with self.subTest(failure=type(failure).__name__), mock.patch.object(
+                    run, "_directory_lease_snapshot", side_effect=failure):
+                with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    run.lease_directory()
+        self.assertEqual(len(run._directory_leases), 2)
+        for lease in run._directory_leases.values():
+            os.fstat(lease.descriptor)
+            run._directory_lease_snapshot(lease)
+        run.transition("Settling")
+        run.release()
+        self.assertTrue(all(lease.descriptor is None for lease in run._directory_leases.values()))
+
+    def test_directory_lease_swaps_links_and_changed_permissions_retain_cleanup_ownership(self):
+        run = self.workspace()
+        lease = run.lease_directory()
+        path = run.root / lease.relative_path
+        parked = path.with_name(path.name + "-parked")
+        outside = self.parent / "outside"
+        outside.mkdir(mode=0o700)
+        sentinel = outside / "sentinel"
+        sentinel.write_text("untouched")
+        path.rename(parked)
+        path.mkdir(mode=0o700)
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run._directory_lease_snapshot(lease)
+        path.rmdir()
+        path.symlink_to(outside, target_is_directory=True)
+        run.transition("Settling")
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run.release()
+        self.assertEqual(run.state, "Retained")
+        self.assertEqual(sentinel.read_text(), "untouched")
+        os.fstat(lease.descriptor)
+        path.unlink()
+        parked.rename(path)
+        path.chmod(0o750)
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run._directory_lease_snapshot(lease)
+        path.chmod(0o700)
+        run.transition("Settling")
+        run.release()
+        self.assertEqual([attempt["diagnosticCode"] for attempt in run.cleanup_attempts],
+                         ["OwnershipInvalid", "None"])
+        self.assertEqual(sentinel.read_text(), "untouched")
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Actual inherited-descriptor confinement requires Linux.")
+    def test_original_directory_descriptor_survives_killed_source_and_seals_distinct_recovery(self):
+        import conformance_sources as sources
+        run = self.workspace()
+        lease = run.lease_directory()
+        script = run.root / "proofs/directory-child.py"
+        script.write_text(
+            "import os,sys,time\n"
+            "descriptor=int(sys.argv[1])\n"
+            "if sys.argv[2]=='source':\n"
+            "    output=os.open('state',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600,dir_fd=descriptor)\n"
+            "    os.write(output,b'owned')\n"
+            "    os.close(output)\n"
+            "    print('{\"event\":\"barrier\",\"code\":\"None\",\"value\":40}',flush=True)\n"
+            "    time.sleep(60)\n"
+            "else:\n"
+            "    source=os.open('state',os.O_RDONLY,dir_fd=descriptor)\n"
+            "    assert os.read(source,16)==b'owned'\n"
+            "    os.close(source)\n"
+            "    print('{\"event\":\"test\",\"code\":\"None\",\"value\":1}',flush=True)\n")
+        script.chmod(0o400)
+        inputs = {"proofs/directory-child.py": hashlib.sha256(script.read_bytes()).hexdigest()}
+        records = []
+        for sequence, phase in enumerate(("source", "recovery"), 1):
+            arguments = [sys.executable, "-I", "-S", str(script), str(lease.descriptor), phase]
+            observed = run.command(
+                arguments, cwd=run.root, scope="recovery", record_execution=True,
+                execution_inputs=tuple(inputs), directory_lease=lease,
+                **({"stop_at_barrier": 40} if phase == "source" else {}))
+            self.assertEqual(observed.exit_code, -9 if phase == "source" else 0)
+            control = (run.root / f"proofs/recovery-command-{sequence:04}.json").read_bytes()
+            options = {"arguments": arguments, "cwd": run.root, "input_files": inputs}
+            with self.assertRaisesRegex(ConformanceError, "ProofMismatch"):
+                sources.native_control_record(run, sequence, control, **options)
+            raw = sources.native_control_record(run, sequence, control, directory_lease=lease, **options)
+            records.append(json.loads(raw))
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), observed.execution_record_sha256)
+            self.assertEqual(records[-1]["directoryLease"], run._directory_lease_snapshot(lease))
+            self.assertFalse(run.live_children())
+        self.assertNotEqual(records[0]["childPid"], records[1]["childPid"])
+        self.assertNotEqual(records[0]["childStartSha256"], records[1]["childStartSha256"])
+        self.assertLessEqual(records[0]["endedMs"], records[1]["startedMs"])
+        self.assertEqual(records[0]["directoryLease"], records[1]["directoryLease"])
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run.command(
+                [sys.executable, "-c", "import os,sys; os.fchmod(int(sys.argv[1]),0o750)",
+                 str(lease.descriptor)], scope="recovery", record_execution=True, directory_lease=lease)
+        changed = json.loads(run.read_execution_record(3))
+        self.assertEqual(changed["diagnosticCode"], "OwnershipInvalid")
+        self.assertEqual(changed["groupState"], "Exited")
+        os.fchmod(lease.descriptor, 0o700)
+        run.transition("Settling")
+        run.release()
+        self.assertIsNone(lease.descriptor)
+
     def test_source_break_projection_requires_the_exact_consumed_member_not_just_compiler_code(self):
         prefix = "/private/canary/Provider.cs(1,25): error CS0535: "
         suffix = " [/private/canary/RequiredConsumer.csproj]"
@@ -270,6 +407,7 @@ class ConformanceExecutionTests(unittest.TestCase):
 
     def test_failed_release_publication_cannot_claim_release_and_retry_keeps_evidence(self):
         run = self.workspace()
+        lease = run.lease_directory()
         proof = run.root / "proofs" / "result.json"
         proof.write_bytes(b'{"caseId":"MP-01"}')
         run.transition("Settling")
@@ -284,11 +422,37 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertEqual(run.state, "Retained")
         self.assertEqual(json.loads((run.root / "ownership.json").read_bytes())["state"], "Retained")
         self.assertEqual(proof.read_bytes(), b'{"caseId":"MP-01"}')
+        self.assertIsNone(lease.descriptor)
         run.transition("Settling")
         run.release()
         self.assertEqual([attempt["diagnosticCode"] for attempt in run.cleanup_attempts],
                          ["CleanupIncomplete", "None"])
         self.assertEqual(run.resource_projection()[0]["state"], "Released")
+
+    @unittest.skipUnless(sys.platform == "linux", "Unlinked-directory pin admission requires Linux native link counts.")
+    def test_partial_directory_cleanup_retries_only_unlinked_pins_and_preserves_retained_history(self):
+        run = self.workspace()
+        removed = run.lease_directory()
+        remaining = run.lease_directory()
+        run.transition("Settling")
+        def partial_cleanup(*args, **kwargs):
+            (run.root / removed.relative_path).rmdir()
+            raise ConformanceError("CleanupIncomplete")
+        with mock.patch.object(run, "command", side_effect=partial_cleanup):
+            with self.assertRaisesRegex(ConformanceError, "CleanupIncomplete"):
+                run.release()
+        self.assertEqual(run.state, "Retained")
+        self.assertEqual(os.fstat(removed.descriptor).st_nlink, 0)
+        run._directory_lease_snapshot(remaining)
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run._directory_lease_snapshot(removed)
+        run.transition("Settling")
+        run.release()
+        self.assertEqual([attempt["diagnosticCode"] for attempt in run.cleanup_attempts],
+                         ["CleanupIncomplete", "None"])
+        self.assertEqual(run.state, "Released")
+        self.assertIsNone(removed.descriptor)
+        self.assertIsNone(remaining.descriptor)
 
     def test_foreign_staging_marker_is_not_overwritten_or_removed_on_publication_failure(self):
         run = self.workspace()

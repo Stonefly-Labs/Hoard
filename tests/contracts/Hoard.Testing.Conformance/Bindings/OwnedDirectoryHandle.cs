@@ -31,9 +31,7 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
 
     internal static OwnedDirectoryHandle OpenPrivateParent(string path)
     {
-        if (!Mac && !OperatingSystem.IsLinux()) { throw new PlatformNotSupportedException("PrerequisiteMissing"); }
-        if (RuntimeInformation.ProcessArchitecture is not (Architecture.X64 or Architecture.Arm64))
-        { throw new PlatformNotSupportedException("PrerequisiteMissing"); }
+        RequirePlatform();
         var result = OpenChain(path);
         try
         {
@@ -41,6 +39,13 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
             return result;
         }
         catch { result.Dispose(); throw; }
+    }
+
+    private static void RequirePlatform()
+    {
+        if (!Mac && !OperatingSystem.IsLinux()) { throw new PlatformNotSupportedException("PrerequisiteMissing"); }
+        if (RuntimeInformation.ProcessArchitecture is not (Architecture.X64 or Architecture.Arm64))
+        { throw new PlatformNotSupportedException("PrerequisiteMissing"); }
     }
 
     private static OwnedDirectoryHandle OpenChain(string path)
@@ -70,6 +75,24 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
     internal void Lock()
     {
         if (Flock(Descriptor, 2 | 4) != 0) { throw new InvalidOperationException("OwnershipInvalid"); }
+    }
+
+    internal static OwnedDirectoryHandle Duplicate(int descriptor)
+    {
+        RequirePlatform();
+        if (descriptor < 3) { throw new InvalidOperationException("OwnershipInvalid"); }
+        var copy = Dup(descriptor);
+        if (copy < 0) { throw new InvalidOperationException("OwnershipInvalid"); }
+        var result = new OwnedDirectoryHandle(copy);
+        try
+        {
+            // FIOCLEX needs no variadic argument, including on Darwin arm64.
+            if (Ioctl(copy, Mac ? 0x20006601u : 0x5451u) != 0)
+            { throw new InvalidOperationException("OwnershipInvalid"); }
+            result.CheckPrivate();
+            return result;
+        }
+        catch { result.Dispose(); throw; }
     }
 
     internal OwnedDirectoryHandle CreateChild(string name)
@@ -149,4 +172,8 @@ internal sealed class OwnedDirectoryHandle : SafeHandleZeroOrMinusOneIsInvalid
     private static extern uint GetUid();
     [DllImport("libc", EntryPoint = "close", SetLastError = true)]
     private static extern int Close(int descriptor);
+    [DllImport("libc", EntryPoint = "dup", SetLastError = true)]
+    private static extern int Dup(int descriptor);
+    [DllImport("libc", EntryPoint = "ioctl", SetLastError = true)]
+    private static extern int Ioctl(int descriptor, nuint operation);
 }

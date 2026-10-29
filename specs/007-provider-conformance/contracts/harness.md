@@ -2478,6 +2478,22 @@ SIGKILL/readback assertions. Current preparation must copy that exact linked
 source. Continuations may contain opaque staged handles and must not be
 serialized into safe diagnostic/origin channels. Shared assertions and leaf
 origins alone cannot complete generic contributor native qualification.
+Cross-process resource handoff must be a separate original-controller-issued
+directory descriptor lease, not a relaxation of original C# OpenRecovery.
+Retain the original exclusive native pin through actual group exit, pass only
+that descriptor explicitly to recorded recovery-scope children and count it
+against the unchanged16 combined pins. Bind resource ID and path/native-identity
+hashes into the executor-held original receipt, recheck before/after execution
+and require the same lease when independently reconstructing that receipt.
+SDK duplication/close-on-exec and native directory identity checks belong in the
+central OwnedDirectoryHandle, not Consumer/provider P/Invoke. Allocate that
+exact resource once, retain genuine settlement and leave physical deletion/
+Released exclusively to the original controller. Failed admission cannot lose
+registered pins. Track completed physical cleanup separately from release
+publication so retries neither reopen deleted resources nor double-close pins.
+Partial cleanup may admit absence only with the original held unlinked inode;
+moving/replacing a directory is not cleanup. Where native unlink evidence is
+unavailable, retain explicitly rather than infer deletion or qualification.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

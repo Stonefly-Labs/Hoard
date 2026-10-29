@@ -672,6 +672,33 @@ local. Continuation state includes an opaque staged handle and must not enter
 safe diagnostics/origin payloads. Six actual original SIGKILL/fresh-process
 checks pass; complete supplied-factory native orchestration remains unfinished.
 
+`OwnedRun.lease_directory` issues a separate original-controller lease: an exact
+private directory with a retained native descriptor/exclusive lock. Only
+recovery-scope commands with executor-held receipts can inherit it. The lease
+counts against the unchanged combined16 input/output pin limit. Verify original
+object/owner, path/native identity, UID and0700 mode before and after the child;
+the safe receipt records resource ID and path/identity hashes, never the raw
+descriptor or directory path. `native_control_record` requires that exact lease
+when reconstructing the held receipt; ordinary callers still reject extra fields.
+
+`ConformanceResourceAllocator.OpenControllerLease` centrally duplicates an
+inherited descriptor with close-on-exec and checks it against one supplied
+resource. Fresh mode requires an empty directory; recovery reuses its exact
+identity. Allocation occurs once, settlement remains real and bounded, and SDK
+disposal cannot close the controller's original pin, delete state or report
+Released. This is a trusted-controller handoff, not proof that a path, descriptor
+number or caller-asserted task establishes original process ownership.
+
+The original controller retains pins through actual group settlement and
+physical cleanup. Failed admission keeps registered pins owned. A completed
+cleanup can retry failed release publication without revalidating deleted paths
+or closing descriptors twice. Partial cleanup retries require both path absence
+and a still-held original unlinked inode; a moved directory is not deletion.
+The latter admission relies on Linux native unlink counts. macOS does not supply
+that witness here and remains fail-closed after partial leased-directory removal;
+no macOS native qualification is claimed. Consumer crash orchestration and
+independent artifact proof admission are still unfinished.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

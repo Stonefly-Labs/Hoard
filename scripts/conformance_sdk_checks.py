@@ -146,6 +146,8 @@ PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
                        "Compiled_common_consumers_execute_against_the_independent_memory_store")
 OWNED = "Hoard.Conformance.Tests.OwnedResourceTests."
 OWNED_FACTS = (
+    "Original_controller_descriptor_supplies_one_exact_resource_without_releasing_its_pin",
+    "Controller_descriptor_cannot_admit_a_foreign_path_replaced_inode_or_standard_stream",
     "Fresh_private_leases_reject_forged_foreign_and_second_writer_authority",
     "Same_path_and_copied_marker_do_not_replace_native_directory_identity",
     "Symlink_ancestors_parent_swaps_and_permissions_cannot_redirect_ownership",

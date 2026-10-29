@@ -343,6 +343,19 @@ class CommandResult:
     execution_record_sha256: str | None = None
 
 
+class _DirectoryLease:
+    def __init__(self, owner, resource_id, descriptor):
+        self.owner = owner
+        self.resource_id = resource_id
+        self.descriptor = descriptor
+        info = os.fstat(descriptor)
+        self.identity = (info.st_dev, info.st_ino, info.st_uid, info.st_mode)
+
+    @property
+    def relative_path(self):
+        return "stores/" + self.resource_id
+
+
 class OwnedRun:
     @classmethod
     def allocate(cls, destination, repository, *, profile="baseline"):
@@ -419,6 +432,9 @@ class OwnedRun:
         self.command_sequence = 0
         self._execution_records = {}
         self._execution_record_bytes = 0
+        self._directory_leases = {}
+        self._directory_cleanup_started = False
+        self._directory_cleanup_complete = False
         self.cleanup_attempts = []
         self._writer = threading.RLock()
         self.started = time.monotonic()
@@ -454,6 +470,73 @@ class OwnedRun:
         finally:
             os.close(directory)
         return expected
+
+    @single_writer
+    def lease_directory(self):
+        try:
+            import fcntl
+        except ImportError:
+            raise ConformanceError("PrerequisiteMissing") from None
+        self._check_ledger()
+        if self.state not in ("Allocated", "Active") or self.live_children():
+            raise ConformanceError("OwnershipInvalid")
+        if len(self._directory_leases) >= 128:
+            raise ConformanceError("OutputLimitExceeded")
+        directory = self._directory_descriptor("stores")
+        descriptor = None
+        try:
+            resource_id = "resource-" + uuid.uuid4().hex
+            os.mkdir(resource_id, mode=0o700, dir_fd=directory)
+            descriptor = os.open(resource_id, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            lease = _DirectoryLease(self, resource_id, descriptor)
+            self._directory_leases[resource_id] = lease
+            descriptor = None
+            self._directory_lease_snapshot(lease)
+            return lease
+        except OSError:
+            if descriptor is not None:
+                os.close(descriptor)
+            raise ConformanceError("OwnershipInvalid") from None
+        finally:
+            os.close(directory)
+
+    def _directory_lease_snapshot(self, lease, *, allow_removed=False):
+        if (type(lease) is not _DirectoryLease or lease.owner is not self
+                or self._directory_leases.get(lease.resource_id) is not lease or lease.descriptor is None):
+            raise ConformanceError("OwnershipInvalid")
+        root = self._root_descriptor()
+        try:
+            pinned = os.fstat(lease.descriptor)
+            try:
+                os.stat("stores", dir_fd=root, follow_symlinks=False)
+            except FileNotFoundError:
+                current = None
+            else:
+                parent = self._directory_descriptor("stores")
+                try:
+                    try:
+                        current = os.stat(lease.resource_id, dir_fd=parent, follow_symlinks=False)
+                    except FileNotFoundError:
+                        current = None
+                finally:
+                    os.close(parent)
+            if current is None and not (
+                    allow_removed and self._directory_cleanup_started and pinned.st_nlink == 0):
+                raise ConformanceError("OwnershipInvalid")
+            for info in (pinned,) if current is None else (pinned, current):
+                if ((info.st_dev, info.st_ino, info.st_uid, info.st_mode) != lease.identity
+                        or info.st_uid != os.getuid() or info.st_mode != (stat.S_IFDIR | 0o700)):
+                    raise ConformanceError("OwnershipInvalid")
+        except OSError:
+            raise ConformanceError("OwnershipInvalid") from None
+        finally:
+            os.close(root)
+        return {
+            "resourceId": lease.resource_id,
+            "pathSha256": hashlib.sha256(str(self.root / lease.relative_path).encode()).hexdigest(),
+            "identitySha256": hashlib.sha256(canonical_bytes(lease.identity)).hexdigest(),
+        }
 
     def _capture_execution_inputs(self, paths, deadline):
         def identity(value):
@@ -685,10 +768,15 @@ class OwnedRun:
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
                 scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset(),
                 stop_at_barrier=None, measure_transfer_bytes=None, inspect_at_barrier=None, record_execution=False,
-                execution_inputs=(), execution_outputs=()):
+                execution_inputs=(), execution_outputs=(), directory_lease=None):
         started = time.monotonic()
         if type(record_execution) is not bool or record_execution and scope == "cleanup":
             raise ConformanceError("OwnershipInvalid")
+        lease_snapshot = None
+        if directory_lease is not None:
+            if not record_execution or scope != "recovery":
+                raise ConformanceError("OwnershipInvalid")
+            lease_snapshot = self._directory_lease_snapshot(directory_lease)
         if (not isinstance(execution_inputs, (tuple, list)) or len(execution_inputs) > 16
                 or execution_inputs and not record_execution):
             raise ConformanceError("OwnershipInvalid")
@@ -697,7 +785,8 @@ class OwnedRun:
             raise ConformanceError("OwnershipInvalid")
         if kind == "metadata-marker" and (not record_execution or scope != "recovery" or not execution_inputs):
             raise ConformanceError("OwnershipInvalid")
-        if (not isinstance(execution_outputs, (tuple, list)) or len(execution_inputs) + len(execution_outputs) > 16
+        if (not isinstance(execution_outputs, (tuple, list))
+                or len(execution_inputs) + len(execution_outputs) + (directory_lease is not None) > 16
                 or execution_outputs and (not record_execution or scope not in ("ordinary", "recovery", "transfer")
                                           or scope == "transfer" and measure_transfer_bytes is None)):
             raise ConformanceError("OwnershipInvalid")
@@ -816,7 +905,8 @@ class OwnedRun:
                 launch, cwd=cwd, env=environment,
                 stdin=subprocess.PIPE if measure_transfer_bytes is not None or inspect_at_barrier is not None else None,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
-                pass_fds=(() if scope == "cleanup" else (writer.fileno(),)))
+                pass_fds=(() if scope == "cleanup" else
+                          (writer.fileno(), *((directory_lease.descriptor,) if directory_lease is not None else ()))))
         except OSError:
             acknowledgement.close()
             raise ConformanceError("CommandFailed") from None
@@ -1015,6 +1105,12 @@ class OwnedRun:
                     failure = ConformanceError("InputChanged")
             except ConformanceError as error:
                 failure = error
+        if directory_lease is not None:
+            try:
+                if self._directory_lease_snapshot(directory_lease) != lease_snapshot:
+                    failure = ConformanceError("OwnershipInvalid")
+            except ConformanceError as error:
+                failure = error
         output_snapshot = {}
         if execution_outputs and exited and (failure is None or isinstance(failure, ConformanceError)
                                              and str(failure) == "DeadlineExceeded"):
@@ -1059,6 +1155,7 @@ class OwnedRun:
                 execution_receipt = canonical_bytes({
                     **observed, "runId": self.run_id, "rootId": self.root_id,
                     "argvSha256": argv_sha, "cwdSha256": cwd_sha,
+                    **({"directoryLease": lease_snapshot} if directory_lease is not None else {}),
                     **({"controlRecordSha256": hashlib.sha256(control_receipt).hexdigest()}
                        if control_receipt is not None else {}),
                     **({"inputFiles": {path: value[0] for path, value in input_snapshot.items()}}
@@ -1120,25 +1217,35 @@ class OwnedRun:
             self._check_ledger(deadline=deadline)
             if self.live_children(deadline=deadline):
                 raise ConformanceError("CleanupIncomplete")
+            if not self._directory_cleanup_complete:
+                for lease in self._directory_leases.values():
+                    self._directory_lease_snapshot(lease, allow_removed=self._directory_cleanup_started)
             self.children.clear()
             self.groups.clear()
             for handle in self._group_handles.values():
                 os.close(handle)
             self._group_handles.clear()
             self._persist(deadline=deadline)
-            result = self.command(
-                [sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_cleanup.py")),
-                 str(self.root), str(self.root_identity[0]), str(self.root_identity[1]),
-                 self.root_id, str(self.owner_pid), self.owner_start],
-                scope="cleanup", timeout=min(20, control_timeout(deadline) + 15), deadline=deadline - 10)
-            if (result.exit_code or len(result.events) != 1
-                    or dict(result.events[0]) != {"event": "cleanup", "code": "None", "value": 0}):
-                code = next((event["code"] for event in result.events if event["code"] != "None"), "CleanupIncomplete")
-                raise ConformanceError(code)
+            if not self._directory_cleanup_complete:
+                self._directory_cleanup_started = True
+                result = self.command(
+                    [sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_cleanup.py")),
+                     str(self.root), str(self.root_identity[0]), str(self.root_identity[1]),
+                     self.root_id, str(self.owner_pid), self.owner_start],
+                    scope="cleanup", timeout=min(20, control_timeout(deadline) + 15), deadline=deadline - 10)
+                if (result.exit_code or len(result.events) != 1
+                        or dict(result.events[0]) != {"event": "cleanup", "code": "None", "value": 0}):
+                    code = next((event["code"] for event in result.events if event["code"] != "None"), "CleanupIncomplete")
+                    raise ConformanceError(code)
             self._check_ledger(deadline=deadline)
             if self.live_children(deadline=deadline) or any(
                     os.path.lexists(self.root / name) for name in ("stores", "feed", "cache")):
                 raise ConformanceError("CleanupIncomplete")
+            self._directory_cleanup_complete = True
+            for lease in self._directory_leases.values():
+                if lease.descriptor is not None:
+                    os.close(lease.descriptor)
+                    lease.descriptor = None
             self._persist(state="Released", cleanup_attempt={
                 "sequence": len(self.cleanup_attempts) + 1, "startedMs": started,
                 "endedMs": time.monotonic() * 1000, "diagnosticCode": "None",

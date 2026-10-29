@@ -6,6 +6,70 @@ namespace Hoard.Conformance.Tests;
 public sealed class OwnedResourceTests
 {
     [Fact]
+    public async Task Original_controller_descriptor_supplies_one_exact_resource_without_releasing_its_pin()
+    {
+        using var fixture = new Fixture();
+        using var controller = OwnedDirectoryHandle.OpenPrivateParent(fixture.Root);
+        controller.Lock();
+        var descriptor = controller.DangerousGetHandle().ToInt32();
+        var resource = new ConformanceOwnedDirectory("controller-resource", fixture.Root);
+        using (var source = ConformanceResourceAllocator.OpenControllerLease(
+            resource, descriptor, fixture.Repository, recovery: false))
+        {
+            Assert.Same(resource, await source.AllocateDirectoryAsync(default));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => source.AllocateDirectoryAsync(default).AsTask());
+            File.WriteAllText(Path.Combine(resource.DirectoryPath, "state"), "owned");
+            await source.ReleaseAsync(resource, Task.CompletedTask, default);
+        }
+        controller.VerifyPath(fixture.Root);
+        Assert.Throws<InvalidOperationException>(() => ConformanceResourceAllocator.OpenControllerLease(
+            resource, descriptor, fixture.Repository, recovery: false));
+        using (var recovery = ConformanceResourceAllocator.OpenControllerLease(
+            resource, descriptor, fixture.Repository, recovery: true))
+        {
+            Assert.Same(resource, await recovery.AllocateDirectoryAsync(default));
+            var actual = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            Assert.Equal(ConformanceOwnershipState.Retained,
+                (await recovery.ReleaseAsync(resource, actual.Task, new CancellationToken(true))).State);
+            Assert.Throws<InvalidOperationException>(() => recovery.Dispose());
+            actual.SetResult();
+            await recovery.ReleaseAsync(resource, actual.Task, default);
+            Assert.DoesNotContain(recovery.ObserveLedger(), row => row.Observation.State == ConformanceOwnershipState.Released);
+        }
+        controller.VerifyPath(fixture.Root);
+        Assert.Equal("owned", File.ReadAllText(Path.Combine(resource.DirectoryPath, "state")));
+        File.Delete(Path.Combine(resource.DirectoryPath, "state"));
+    }
+
+    [Fact]
+    public void Controller_descriptor_cannot_admit_a_foreign_path_replaced_inode_or_standard_stream()
+    {
+        using var fixture = new Fixture();
+        using var foreign = new Fixture();
+        using var controller = OwnedDirectoryHandle.OpenPrivateParent(fixture.Root);
+        var descriptor = controller.DangerousGetHandle().ToInt32();
+        Assert.Throws<InvalidOperationException>(() => ConformanceResourceAllocator.OpenControllerLease(
+            new("foreign-resource", foreign.Root), descriptor, fixture.Repository, recovery: true));
+        Assert.Throws<InvalidOperationException>(() => ConformanceResourceAllocator.OpenControllerLease(
+            new("controller-resource", fixture.Root), 0, fixture.Repository, recovery: true));
+        var parked = fixture.Root + "-parked";
+        Directory.Move(fixture.Root, parked);
+        Directory.CreateDirectory(fixture.Root);
+        if (!OperatingSystem.IsWindows()) { File.SetUnixFileMode(fixture.Root, Fixture.PrivateMode); }
+        try
+        {
+            Assert.Throws<InvalidOperationException>(() => ConformanceResourceAllocator.OpenControllerLease(
+                new("controller-resource", fixture.Root), descriptor, fixture.Repository, recovery: true));
+        }
+        finally
+        {
+            Directory.Delete(fixture.Root);
+            Directory.Move(parked, fixture.Root);
+        }
+        controller.VerifyPath(fixture.Root);
+    }
+
+    [Fact]
     public async Task Fresh_private_leases_reject_forged_foreign_and_second_writer_authority()
     {
         using var fixture = new Fixture();

@@ -34,6 +34,35 @@ public sealed class ConformanceResourceAllocator : IConformanceResourceAllocator
         TimeSpan? cleanupBudget = null) => OpenCore(privateParent, repositoryRoot, cleanupBudget, null);
 
     /// <summary>
+    /// Uses an inherited original-controller descriptor for one exact resource. The controller
+    /// retains physical ownership and must independently join native children and admit their proofs.
+    /// </summary>
+    public static ConformanceResourceAllocator OpenControllerLease(
+        ConformanceOwnedDirectory resource, int descriptor, string repositoryRoot, bool recovery,
+        TimeSpan? cleanupBudget = null)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+        var budget = cleanupBudget ?? TimeSpan.FromSeconds(30);
+        if (budget <= TimeSpan.Zero || budget > TimeSpan.FromSeconds(30))
+        { throw new ArgumentOutOfRangeException(nameof(cleanupBudget), "OwnershipInvalid"); }
+        var path = OwnedDirectoryHandle.Normalize(resource.DirectoryPath);
+        var repository = OwnedDirectoryHandle.Normalize(repositoryRoot);
+        if (path == repository || path.StartsWith(repository + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        { throw new InvalidOperationException("OwnershipInvalid"); }
+        var handle = OwnedDirectoryHandle.Duplicate(descriptor);
+        try
+        {
+            handle.Lock();
+            handle.VerifyPath(path);
+            if (!recovery && Directory.EnumerateFileSystemEntries(path).Any())
+            { throw new InvalidOperationException("OwnershipInvalid"); }
+            handle.VerifyPath(path);
+            return new(path, handle, budget, resource, repository);
+        }
+        catch { handle.Dispose(); throw; }
+    }
+
+    /// <summary>
     /// Pins one existing controller-owned directory after prior work settles. The controller must
     /// join this allocator's new settlement before physical cleanup; this allocator never deletes.
     /// </summary>

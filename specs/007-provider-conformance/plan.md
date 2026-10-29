@@ -1600,6 +1600,93 @@ SDK image. The final six-crash safe runtime/TRX and bounded crash observations
 are retained in the session artifacts; generated isolated package workspaces
 are disposable and are not baseline authority.
 
+### Original-controller inherited directory pins
+
+The controller now issues exact private directory leases with native identity
+and an exclusive held descriptor. Only recorded recovery-scope commands inherit
+that descriptor, counted against the unchanged16 combined pins. Original
+owner/reference, path/native inode, UID and0700 mode are rechecked before/after
+the child. Safe resource/path/identity hashes enter the executor-held original
+receipt; native_control_record requires that same lease to reconstruct it.
+Failed admission retains every registered descriptor for original-owner cleanup.
+
+The SDK centralizes native dup and close-on-exec in OwnedDirectoryHandle.
+OpenControllerLease verifies an inherited descriptor against one exact resource,
+requires empty state in fresh mode and keeps one-resource allocation/actual
+settlement. It neither relaxes original-owner OpenRecovery nor transfers physical
+deletion/Released authority away from the original Python controller.
+
+The bounded incremental hoard-architecture-review found a real lifecycle defect:
+failed final release publication could leave closed pins/deleted paths that
+prevented retry. Physical cleanup completion is now separate from publication;
+retry rechecks actual absence and does not reopen paths or double-close pins.
+Partial cleanup retains original pins and requires a missing path plus an
+actually unlinked original inode. That witness is Linux-native: observed macOS
+rmdir keeps st_nlink2 on the held descriptor, so macOS partial removal stays
+fail-closed rather than accepting a moved directory. The explicit Linux-only
+partial-retry control is not a locally passed assertion.
+
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore --filter FullyQualifiedName~OwnedResourceTests -v quiet
+-p:UseSharedCompilation=false -nodeReuse:false`: passed8/8 without skips.
+Focused Python checks cover original/foreign/forged reference, exclusive lock,
+pin budget, failed admission, path replacement/link/permission change, original
+cleanup retention and failed final-publication retry. The native-only test
+actually kills a source at a barrier and starts distinct recovery using the
+same original descriptor, validating both held command seals and strict default
+reader rejection. Actual Linux execution remains pending, not supplied by
+macOS models. Review used read/search only, did not execute tests or verify a
+Git diff, and does not close T081.
+
+Exact36cf301 native foundations run40822378629 passes all six jobs, including
+ownership job123277543427:719 tests, zero failures/errors/skips/unexpected
+diagnostics. Its composition run40822378727/job123277543288 fails at
+601353.578469ms with WitnessMissing/OutputLimitExceeded, tooling EvidenceIncomplete
+and193/719 observed tests, zero observed failures/errors/skips/unexpected
+diagnostics. Preserve that over-budget/incomplete receipt and the unchanged
+600-second supervision bound; neither this older success nor pending later
+runs accepts the current lease source.
+
+Exact44c2180 composition run40823865275/job123287595151 also fails, but is
+not the same over-budget observation: its tooling packet observes all719
+tests in513682.25567700004ms with zero failures/skips/unexpected diagnostics
+and one error, code AssertionFailed. The enclosing failure projection remains
+WitnessMissing/OutputLimitExceeded. That receipt is retained; no underlying
+test/cause is exposed by this projection and none is assumed. Five foundations
+jobs at44c2180 have passed; SDK diagnostics is still running at this observation.
+Neither partial foundations success nor later queued runs erases this failure.
+
+An attempted atomic fcntl duplication fails the actual new SDK test on Darwin
+arm64 (one failed/seven passed). The native variadic third argument cannot be
+treated as an ordinary fixed-signature P/Invoke there. The final implementation
+uses dup plus the no-argument FIOCLEX ioctl to set close-on-exec centrally.
+The corrected eight SDK tests and focused whitespace/catalog/SDK/diff checks
+pass. Both new owned-resource facts are explicitly included in the independent
+native SDK scenario inventory. An attached local full-tooling replay was
+interrupted after that separate SDK failure was identified; its interruption
+receipt is retained and cannot count as acceptance. No GitHub workflow was
+cancelled. A fresh frozen replay follows the correction.
+
+The final corrected frozen `python3 scripts/conformance_unit_checks.py
+--all-tooling` observes726 tests, zero failures/errors/expected failures/
+unexpected successes/unexpected diagnostic bytes,25 explicit native macOS skips
+and expected incomplete exit2. The added skips are actual inherited-descriptor
+execution and Linux unlinked-inode partial cleanup. The actual packaged artifact
+and metadata regressions pass with the changed SDK bytes. Three-file
+`dotnet format whitespace --folder --verify-no-changes --include
+tests/contracts/Hoard.Conformance.Tests/OwnedResourceTests.cs
+tests/contracts/Hoard.Testing.Conformance/Bindings/ConformanceResourceAllocator.cs
+tests/contracts/Hoard.Testing.Conformance/Bindings/OwnedDirectoryHandle.cs
+-v quiet`, `python3 scripts/conformance_evidence.py --check-catalog --check-sdk`
+and `git diff --check` all pass. Native confirmation of this source remains open.
+
+README, PROVIDERS, DEVELOPMENT and harness document the delivered seam and
+limitations. Product/architecture/ADR/diagrams/examples, governance, predecessor
+contracts, IaC, release and UI are unaffected by this test-only ownership
+increment. Supplied-factory Consumer orchestration, independent crash/request/
+state/origin admission and full applicable artifact coverage remain unfinished.
+T064..T086 remain open; implement/running continues.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

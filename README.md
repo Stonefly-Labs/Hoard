@@ -742,6 +742,14 @@ its own setup/event protocol; all six actual SIGKILL/fresh-process checks pass.
 A separate recovery-origin reader validates declaration, role images and source/
 input correspondence, but neither this leaf reader nor assertion extraction
 provides a generic contributor native runner or qualification.
+A separate original-controller directory lease now retains the native
+descriptor/exclusive pin, explicitly passes it to recovery-scope children, and
+binds its identity into executor-held command receipts. The SDK duplicates that
+descriptor for one exact resource without weakening original-owner recovery or
+taking over physical cleanup. Failed admission and cleanup retain ownership;
+completed cleanup and release publication are tracked separately for safe retry.
+SDK ownership tests pass; actual Linux descriptor inheritance and partial-unlink
+retry remain native-only checks, not locally established qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

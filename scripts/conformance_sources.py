@@ -952,7 +952,7 @@ def runtime_arguments(assembly, settings, identities, *, discovery=False):
 
 
 def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_files, diagnostic_code="None",
-                          output_files=None):
+                          output_files=None, directory_lease=None):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
     control = evidence.load_json(control_raw)
@@ -972,6 +972,7 @@ def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_f
         **{key: control[key] for key in fields}, "runId": run.run_id, "rootId": run.root_id,
         "argvSha256": evidence.digest(arguments),
         "cwdSha256": hashlib.sha256(str(Path(cwd).absolute()).encode()).hexdigest(),
+        **({"directoryLease": run._directory_lease_snapshot(directory_lease)} if directory_lease is not None else {}),
         "controlRecordSha256": hashlib.sha256(control_raw).hexdigest(),
         **({"inputFiles": input_files} if input_files else {}),
         **({"outputFiles": output_files} if output_files else {}),

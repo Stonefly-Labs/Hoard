@@ -6848,6 +6848,67 @@ is unavailable here and must not be reconstructed/relabelled as original.
 Generic supplied-factory native execution, process-bound recovery admission,
 transfer/retention/full applicability and T064..T086 remain open.
 
+The next controller seam retains actual directory descriptors across children,
+passes only explicitly issued leases to recovery-scope recorded commands and
+adds a safe `directoryLease` seal to the original held execution receipt.
+Original reference/owner, inode/path, UID/mode and exclusive ownership are checked;
+the inherited directory counts as one of the unchanged16 combined pins. The
+SDK's separate OpenControllerLease duplicates centrally with close-on-exec,
+verifies exact private identity and allocates one resource, leaving the original
+controller descriptor and same-process OpenRecovery rules unchanged.
+
+Incremental architecture review found a cleanup-retry lifecycle defect: closing
+pins before a failed Released publication made retry impossible. Cleanup
+completion is now tracked separately; a retry checks actual absence without
+reopening deleted resources or closing pins twice. Partial cleanup retains pins
+and admits only missing paths whose original inode is actually unlinked. Linux
+native link counts provide this witness; the macOS filesystem keeps a nonzero
+count after rmdir, so that partial-retry case stays explicitly native-only and
+macOS fails closed rather than treating a moved pin as deleted.
+
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore --filter FullyQualifiedName~OwnedResourceTests -v quiet
+-p:UseSharedCompilation=false -nodeReuse:false` passes8 tests without skips.
+The Python controls cover foreign/forged references, pin limits, exclusive
+locking, failed-admission retention, inode/link/permission changes, retained
+cleanup history and failed final-publication retry. A native-only case joins an
+actual killed source and distinct recovery through the inherited descriptor and
+exact command seals. Local macOS skips that actual Linux execution; it cannot
+establish native qualification. Public artifact dispatch, full contributor
+native execution and T064..T086 remain unfinished.
+
+Exact36cf301 foundations run40822378629 passes all six jobs. Its ownership
+job123277543427 observes719 native tooling tests without failures/errors/skips
+or unexpected diagnostics. Composition run40822378727/job123277543288 fails
+with WitnessMissing/OutputLimitExceeded and tooling EvidenceIncomplete after
+601353.578469ms:193/719 tests observed, no observed failures/errors/skips or
+unexpected diagnostics. This is an over-budget incomplete supervision receipt,
+not an assertion failure or success; the600-second bound and failed receipt are
+preserved. Neither this older success nor later queued workflows accepts the
+current descriptor lease source.
+
+Exact44c2180 composition run40823865275/job123287595151 is a different failure:
+all719 tooling tests are observed in513682.25567700004ms with one error,
+zero failures/skips/unexpected diagnostics and code AssertionFailed. The
+enclosing projection is WitnessMissing/OutputLimitExceeded; no actual failing
+test/cause is exposed or assumed. Its failure receipt remains retained.
+
+The new SDK ownership tests also reject an attempted atomic fcntl duplication
+on Darwin arm64. Final duplication uses dup and the no-argument FIOCLEX ioctl
+for close-on-exec rather than incorrectly declaring the native variadic third
+argument as a fixed P/Invoke argument. Corrected ownership tests pass8/8; both
+new facts enter the exact native SDK diagnostic inventory. The attached local
+full-tooling replay interrupted for that known SDK defect is not acceptance;
+no GitHub workflow was cancelled.
+
+Final corrected frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes726 tests with zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,25 explicit native macOS skips and expected
+incomplete exit2. Actual packaged artifact and metadata regressions pass.
+Three-file SDK ownership whitespace, catalog/SDK and diff checks pass.
+Linux descriptor handoff/partial cleanup and current-source native verification
+remain pending; no task/checklist/flow markers advance.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.
