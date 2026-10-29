@@ -1123,7 +1123,7 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):
         self.captured_build(native=True)
 
-    def package_consumer_build(self, *, native=False, runtime=False, captured=False):
+    def package_consumer_build(self, *, native=False, runtime=False, captured=False, artifacts=False):
         import conformance_sdk_checks as sdk
         import uuid
         from conformance_execution import project_build_line, project_discovery_line, project_test_line
@@ -1132,9 +1132,78 @@ class NuGetContentToolTests(unittest.TestCase):
         measured, _, _ = self.evaluation_request()
         owner = OwnedRun.allocate(self.case / "package-consumer-run", ROOT, profile="harness")
         candidate, sources = evidence.snapshot_sources(ROOT, owner)
+        category = "artifacts" if artifacts else "metadata"
         project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"
-        admitted = contributors.admit_binding_project(project, "metadata")
-        binding = contributors.snapshot_binding_project(project, "metadata", admitted.inputs_sha256, owner)
+        if artifacts:
+            directory = self.case / "artifact-adapter"
+            directory.mkdir()
+            project = directory / "Adapter.csproj"
+            project.write_text(
+                '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>'
+                '<TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable>'
+                '<ImplicitUsings>enable</ImplicitUsings><PackageId>Acme.ArtifactAdapter</PackageId>'
+                '<AssemblyName>Acme.ArtifactAdapter</AssemblyName><PackageVersion>0.1.0</PackageVersion>'
+                '</PropertyGroup><ItemGroup>'
+                '<PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Local" Version="[0.1.0]" />'
+                '</ItemGroup></Project>')
+            (directory / "Binding.cs").write_text("""
+using Hoard.Testing.Conformance.Bindings;
+using Hoard.Fixtures.Conformance.Bindings.Local;
+namespace Acme;
+public sealed class ArtifactFactory : IArtifactConformanceBinding
+{
+    private readonly LocalBinding inner;
+    public ArtifactFactory(string sha) : this(sha, new ArtifactAssertionOptions()) { }
+    public ArtifactFactory(string sha, ArtifactAssertionOptions options)
+    {
+        inner = new LocalBinding(sha, options: options);
+        Declaration = new("acme.artifact.adapter", ConformanceCategory.Artifacts,
+            "Hoard.Fixtures.Artifacts.Local", "0.1.0", sha,
+            ["artifacts", "durable-local-process-crash", "enumeration-snapshot"],
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Artifacts)
+                .OrderBy(fault => fault.ToString(), StringComparer.Ordinal));
+    }
+    public ConformanceBindingDeclaration Declaration { get; }
+    public ValueTask<IArtifactConformanceSession> CreateSessionAsync(
+        ConformanceRunContext context, CancellationToken token) => inner.CreateSessionAsync(context, token);
+}
+""")
+            adapter = {"packageId": "Acme.ArtifactAdapter", "version": "0.1.0",
+                       "assemblyName": "Acme.ArtifactAdapter"}
+            local = {"packageId": "Hoard.Fixtures.Conformance.Bindings.Local", "version": "0.1.0",
+                     "assemblyName": "Hoard.Fixtures.Conformance.Bindings.Local"}
+            provider = {"packageId": "Hoard.Fixtures.Artifacts.Local", "version": "0.1.0",
+                        "assemblyName": "Hoard.Fixtures.Artifacts.Local"}
+            registration = {
+                "schemaVersion": 1, "project": "Adapter.csproj", "factoryType": "Acme.ArtifactFactory",
+                "adapterPackage": adapter,
+                "declaration": {
+                    "schemaVersion": 1, "bindingId": "acme.artifact.adapter", "category": "artifacts",
+                    "packageId": provider["packageId"], "packageVersion": "0.1.0",
+                    "capabilities": ["artifacts", "durable-local-process-crash", "enumeration-snapshot"],
+                    "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["artifacts"])},
+                "components": {"factory": adapter, **{role: local for role in ("session", "authority", "faults")},
+                               **{role: provider for role in ("store", "validator", "maintenance", "lifetime")}},
+                "sourceFiles": ["Adapter.csproj", "Adapter.conformance.json", "Binding.cs", "packages.lock.json"]}
+            baseline = json.loads(
+                (ROOT / "tests/fixtures/conformance/Consumer/packages.lock.json").read_text())["dependencies"]["net10.0"]
+            dependencies, pending = {}, [local["packageId"]]
+            while pending:
+                package = pending.pop()
+                if package in dependencies:
+                    continue
+                entry = copy.deepcopy(baseline[package])
+                entry.pop("requested", None)
+                entry["type"] = "Transitive"
+                if package == local["packageId"]:
+                    entry.update(type="Direct", requested="[0.1.0, 0.1.0]")
+                dependencies[package] = entry
+                pending.extend(entry.get("dependencies", {}))
+            (directory / "packages.lock.json").write_bytes(evidence.canonical_bytes({
+                "version": 1, "dependencies": {"net10.0": dependencies}}))
+            project.with_suffix(".conformance.json").write_bytes(evidence.canonical_bytes(registration))
+        admitted = contributors.admit_binding_project(project, category)
+        binding = contributors.snapshot_binding_project(project, category, admitted.inputs_sha256, owner)
         tools = owner.root / "tools"
         shutil.copytree(self.tool.parent, tools)
         config, feed = owner.root / "NuGet.Config", owner.root / "feed"
@@ -1180,13 +1249,13 @@ class NuGetContentToolTests(unittest.TestCase):
                 selected = candidate / "tests/fixtures/conformance/Consumer/Consumer.csproj"
                 self.assertTrue((selected.parent / "obj/Release/net10.0/Consumer.AssemblyInfo.cs").is_file())
             self.assertFalse(result["qualification"])
-            self.assertEqual(set(result["components"]), set(evidence._SESSION_ROLES["metadata"]))
+            self.assertEqual(set(result["components"]), set(evidence._SESSION_ROLES[category]))
             self.assertIn(result["assemblyPath"].relative_to(owner.root).as_posix(), result["runtimeAssemblies"])
             self.assertTrue(all(path.startswith("binding-consumer/bin/Release/net10.0/")
                                 for path in result["runtimeAssemblies"]))
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["controlInputs"])), result["controlInputs"])
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["cachedArchives"])), result["cachedArchives"])
-            prepared_commands = (53 if runtime else 50) + (3 if captured else 0)
+            prepared_commands = (53 if runtime else 50) + (3 if captured else 0) + (3 if artifacts else 0)
             self.assertEqual(len(commands), prepared_commands)
             if runtime:
                 prepared = contributors.prepare_binding_consumer_runtime(
@@ -1208,7 +1277,9 @@ class NuGetContentToolTests(unittest.TestCase):
                 manifest = contributors.binding_consumer_manifest(
                     binding, owner, inputs, attempt_id=str(uuid.uuid4()))
                 binding_id = binding.registration["declaration"]["bindingId"]
-                counts = catalog.metadata_common_consumer_origin_counts(binding_ids=(binding_id,))
+                counts = (catalog.contributor_artifact_component_origin_counts(
+                    binding_id, profile=contributors.artifact_binding_profile(binding.registration["declaration"]))
+                    if artifacts else catalog.metadata_common_consumer_origin_counts(binding_ids=(binding_id,)))
                 expected = {identity: (binding_id, "none") for identity in counts}
                 runner = owner if native else SimpleNamespace(
                     root=owner.root, run_id=owner.run_id, root_id=owner.root_id, command=execute)
@@ -1229,7 +1300,8 @@ class NuGetContentToolTests(unittest.TestCase):
                             evidence.ConformanceError, "^WitnessMissing$"):
                         sdk.runtime_command(runner, result["assemblyPath"], bad, **options)
                 for mutation in ("profileId", "mode"):
-                    bad = {**inputs, mutation: "artifacts" if mutation == "profileId" else "qualification"}
+                    bad = {**inputs, mutation: ("metadata" if artifacts else "artifacts")
+                           if mutation == "profileId" else "qualification"}
                     with self.subTest(runtime_inputs=mutation), self.assertRaisesRegex(
                             evidence.ConformanceError, "^BindingInvalid$"):
                         contributors.binding_consumer_manifest(
@@ -1258,11 +1330,18 @@ class NuGetContentToolTests(unittest.TestCase):
                     observed_result, observed, transport, discovery_sha = sdk._execute_runtime_transport(
                         runner, inputs, result["assemblyPath"], manifest, expected,
                         {"contributor_binding": binding}, origin_inputs={binding_id: result["components"]})
-                sdk.validate_observation(
-                    observed, observed_result, tuple(counts), "None", "Passed", 0, transport["proofs"], "None")
+                try:
+                    sdk.validate_observation(
+                        observed, observed_result, tuple(counts), "None", "Passed", 0, transport["proofs"], "None")
+                except sdk._RuntimeObservationError as error:
+                    failed = set(error.runtime_diagnostic["mismatchedTestsSha256"])
+                    self.fail({
+                        **error.runtime_diagnostic,
+                        "catalogRows": sorted(identity for identity in counts
+                                              if hashlib.sha256(identity.encode()).hexdigest() in failed)})
                 sdk.validate_full_binding_origins(observed, inputs, counts)
-                self.assertEqual(len(observed["witnesses"]), 76)
-                self.assertEqual(sum(len(rows) for rows in observed["sessionOrigins"].values()), 86)
+                self.assertEqual(len(observed["witnesses"]), len(counts))
+                self.assertEqual(sum(len(rows) for rows in observed["sessionOrigins"].values()), sum(counts.values()))
                 self.assertRegex(discovery_sha, r"^[0-9a-f]{64}$")
                 self.assertEqual(len(commands), prepared_commands + 2)
                 self.assertEqual(evidence.input_manifest(
@@ -1298,6 +1377,9 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_managed_contributor_runtime_executes_every_common_metadata_row_with_exact_origins(self):
         self.package_consumer_build(runtime=True, captured=True)
 
+    def test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins(self):
+        self.package_consumer_build(runtime=True, captured=True, artifacts=True)
+
     @unittest.skipUnless(native_execution_supported(), "Native contributor runtime requires supported Linux containment")
     def test_native_contributor_runtime_uses_owned_common_suite_and_actual_component_origins(self):
         project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"
@@ -1308,7 +1390,7 @@ class NuGetContentToolTests(unittest.TestCase):
                 ROOT, destination, project=project, category="metadata",
                 binding_inputs_sha256=binding.inputs_sha256)
         self.assertEqual(result, 0)
-        summary = evidence.load_json(output.getvalue())
+        summary = evidence.load_json(output.getvalue().encode("utf-8"))
         self.assertFalse(summary["qualification"])
         self.assertFalse(summary["profileComplete"])
         self.assertEqual(summary["passedParameters"], 76)
@@ -1575,13 +1657,15 @@ class ContributorAdmissionTests(unittest.TestCase):
             self.assertEqual(catalog.contributor_artifact_component_origin_counts("acme.artifacts", profile=profile), actual)
         snapshot = catalog.contributor_artifact_component_origin_counts(
             "acme.artifacts", profile={"durability": "LocalProcessCrash", "enumeration": "Snapshot"})
-        self.assertEqual(len(snapshot), 109)
-        self.assertEqual(sum(snapshot.values()), 117)
+        self.assertEqual(len(snapshot), 114)
+        self.assertEqual(sum(snapshot.values()), 125)
         self.assertEqual(set(actual) - set(snapshot), {
             'Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests.'
             'Observed_portable_consumers_preserve_actual_guarantees(provider: "acme.artifacts", consumer: "direct-availability")'})
+        self.assertEqual(len(set(snapshot) - set(actual)), 5)
+        self.assertTrue(all(".Observed_durable_" in identity for identity in set(snapshot) - set(actual)))
         for durability, enumeration, rows, origins in (
-                ("LocalProcessCrash", "Incomplete", 110, 118), ("SimulationOnly", "Snapshot", 109, 110)):
+                ("LocalProcessCrash", "Incomplete", 115, 126), ("SimulationOnly", "Snapshot", 109, 110)):
             crossed = catalog.contributor_artifact_component_origin_counts(
                 "acme.artifacts", profile={"durability": durability, "enumeration": enumeration})
             self.assertEqual(len(crossed), rows)

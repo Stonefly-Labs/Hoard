@@ -1280,6 +1280,66 @@ are affected; product/charter, architecture/ADR/diagrams, public examples,
 governance, predecessors, IaC, release and UI are unchanged by this diagnostic
 metadata/tooling increment. No merge, finalization or release is authorized.
 
+### Production artifact component and durable logical replay
+
+The existing production prerequisite/captured-build/Consumer/runtime path now
+has an actual separately packaged Acme artifact adapter regression. Its source
+lock is derived from the exact declared dependency closure in the tracked
+Consumer lock, then captured and actually replayed through locked restore; it
+does not guess dependency versions or use installed runtime assemblies as
+package provenance. Factory, session, store, validator, maintenance, lifetime,
+authority and faults retain independently attributed package images.
+
+The first actual runtime exposes a manifest case-ID defect: component contexts
+emit contributor-artifact-component, while the manifest incorrectly names
+full-artifact-binding. Correcting attribution preserves all assertions and
+does not promote components to complete category coverage. The fixture's ordered
+fault declaration also matches its registered SDK descriptor bytes rather than
+assuming set equality implies an equal descriptor hash.
+
+Five new durable logical rows reuse the unchanged builtin decision/receipt
+reopen, failed quarantine persistence, ordinary record callback and reconciliation
+quarantine assertions through typed helpers. Actual profile checks surround work
+and reopen. The independent durable snapshot catalog has114 rows/125 origins;
+durable incomplete enumeration has115/126, while simulation snapshot/incomplete
+remain109/110 rows and110/111 origins. Only the durable snapshot production
+path is newly executed. Its source/control/cache/feed mutations reject.
+`PYTHONPATH=tests/tooling python3 -m unittest
+test_conformance_contributors.NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins
+-v` passes after the durable additions. The metadata production runtime test
+also passes after generalizing the fixture. The catalog's crossed-profile
+regression passes without choosing builtin aliases or provider exclusions.
+`dotnet format whitespace --folder --verify-no-changes --include
+tests/fixtures/conformance/Consumer/ArtifactConformanceSessionTests.cs
+tests/fixtures/conformance/Consumer/ContributorArtifactSessionTests.cs -v quiet`,
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Frozen `python3
+scripts/conformance_unit_checks.py --all-tooling` observes718 tests, zero
+failures/errors/expected failures/unexpected successes/unexpected diagnostic
+bytes,23 native macOS skips and the expected incomplete exit2. This replay
+includes the production artifact adapter, added durable rows and metadata
+regression, not native execution of the bytes-boundary repair.
+
+Exact092925c native ownership job123229258610 observes717 tests with zero
+failures/skips/expected failures/unexpected successes/unexpected diagnostic
+bytes and one error. The public metadata controller returns success, but its
+regression then passes str to the strictly bytes-only load_json reader and
+raises EvidenceSchemaInvalid. The test now encodes captured stdout before
+admission; no production parser or native rule is relaxed. That failed native
+evidence remains retained. New-source native verification is required.
+
+Full artifact contributor coverage still requires native transfer/retention and
+fresh-process recovery. The existing artifact binding contract exposes only
+CreateSessionAsync; compatible ReopenAsync is an operation on an existing live
+session. The Local setup creates fresh identity and CreateEmpty state, so it
+cannot silently stand in for reopening the exact crashed store in a fresh
+process. A test-only recovery contract decision is required before adding that
+seam; no product API or common expected outcome may change to work around it.
+README, PROVIDERS, DEVELOPMENT, harness and this plan are affected. Product/
+charter, architecture/ADR/diagrams, public examples, governance, predecessors,
+IaC, release and UI documents are unaffected by this partial test-only increment.
+T064 remains unchecked and implement/running is unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

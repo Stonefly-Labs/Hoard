@@ -378,10 +378,18 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var current = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await QuarantinePersistenceConsumerAsync(Binding(provider), context, resources, output);
+    }
+
+    internal static async Task QuarantinePersistenceConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var current = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         IAsyncDisposable? restriction = null;
         try
         {
+            assertProfile?.Invoke(current);
             async ValueTask Damage(ArtifactStamp stamp, CancellationToken token)
             {
                 await current.Faults.ArmAsync(ConformanceFault.PayloadDamage, token);
@@ -400,6 +408,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             {
                 ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
                 current = Assert.IsType<ConformanceObservedArtifactSession>(await current.ReopenAsync(token));
+                assertProfile?.Invoke(current);
                 return current.Store;
             }
             await ArtifactEvidenceAssertions.FailedQuarantinePersistenceAsync(
@@ -411,6 +420,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
                 }, Deny, (stamp, bytes, token) => current.Faults.ReplacePayloadAsync(stamp, bytes, token),
                 RestorePermissions, default, Reopen);
+            assertProfile?.Invoke(current);
             ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
         }
         finally
@@ -754,8 +764,17 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var limits = consumer == "committed-decision"
             ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, liveTickets: 1, committedIdentities: 1)
             : new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024);
+        await DurableReopenConsumerAsync(Binding(provider, limits, admissionProbe: ArtifactAdmissionProbe.Complete),
+            context, resources, output, clock, limits, consumer);
+    }
+
+    internal static async Task DurableReopenConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        ControlledClock clock, ArtifactLimits limits, string consumer,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
         IArtifactConformanceSession current = await ConformanceObservedArtifactSession.OpenAsync(
-            Binding(provider, limits, admissionProbe: ArtifactAdmissionProbe.Complete), context, default);
+            binding, context, default);
         var origins = new List<ConformanceSessionOrigin>
         {
             Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin()
@@ -764,9 +783,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var cleanupAllowed = true;
         try
         {
+            assertProfile?.Invoke(current);
             async ValueTask<(IArtifactStore Store, IArtifactStoreLifetime Lifetime)> Reopen(CancellationToken token)
             {
                 current = await current.ReopenAsync(token);
+                assertProfile?.Invoke(current);
                 origins.Add(Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin());
                 return (current.Store, current.Lifetime);
             }
@@ -794,6 +815,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                     InjectRecordFailure, RemoveRecordFailure, Reopen, default);
                 Assert.Equal(3, (recordFailure ?? throw new InvalidOperationException("BindingInvalid")).ObservationCount);
             }
+            assertProfile?.Invoke(current);
             foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
         }
         finally
@@ -812,11 +834,19 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await RecordWriteFailureConsumerAsync(Binding(provider), context, resources, output);
+    }
+
+    internal static async Task RecordWriteFailureConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var failure = new IOException("Interrupted reservation release.");
         Exception? disposalFailure = null;
         try
         {
+            assertProfile?.Invoke(session);
             await session.Faults.ArmAsync(ConformanceFault.NativeNonCooperation, default);
             try
             {
@@ -834,6 +864,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 await session.Store.CommitAsync(staged, new(), default)).Code);
             Assert.Equal(3, injection.ObservationCount);
             await session.Faults.AwaitSettlementAsync(default);
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask()); }
@@ -851,7 +882,14 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        await ReconciliationQuarantineConsumerAsync(Binding(provider), context, resources, output);
+    }
+
+    internal static async Task ReconciliationQuarantineConsumerAsync(IArtifactConformanceBinding binding,
+        ConformanceRunContext context, RecordingDirectories resources, ITestOutputHelper output,
+        Action<IArtifactConformanceSession>? assertProfile = null)
+    {
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         var reading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var verifying = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseRead = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -861,6 +899,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         ArtifactStamp? stamp = null;
         try
         {
+            assertProfile?.Invoke(session);
             async ValueTask LoseAcknowledgment() => loss =
                 await session.Faults.InjectPublicationAcknowledgmentLossAsync(default);
             ValueTask RestoreAcknowledgment() =>
@@ -895,6 +934,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
                 token => reading.Task.WaitAsync(context.ControlBudget, token),
                 token => verifying.Task.WaitAsync(context.ControlBudget, token),
                 () => releaseRead.TrySetResult(), () => releaseReconciliation.TrySetResult(), Restore, default);
+            assertProfile?.Invoke(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally

@@ -2412,6 +2412,17 @@ setup helpers, not built-in provider aliases or applicability. All 71 selected
 built-in Local/Object boundary/budget/recovery/control/release rows still pass.
 Durability/enumeration-dependent applicability and full catalog/native acceptance
 remain separate open work.
+The current durable component catalog additionally includes five fixed logical
+decision/receipt reopen, quarantine-persistence, record-callback and reconciliation
+rows:114/115 snapshot/incomplete rows with125/126 origins. Simulation remains
+109/110 rows with110/111 origins. Select these rows only from the frozen durability
+profile and recheck actual capabilities before/after work and reopen. Reuse
+unchanged builtin assertions through typed helpers, not aliases or new expected
+outcomes. Component manifests must use contributor-artifact-component to match
+the actual context; they must not impersonate full-artifact-binding. An actual
+captured Acme package-to-Consumer production replay validates the durable
+snapshot component inventory and eight-role attribution. It is not complete
+artifact applicability, abrupt-process recovery or native transfer qualification.
 Artifact contributor registration requires exactly one durability classification
 (durable-local-process-crash or non-durable-simulation) and one enumeration
 classification (enumeration-snapshot or enumeration-incomplete) in its existing

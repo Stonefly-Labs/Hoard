@@ -1448,7 +1448,7 @@ def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
             "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
             "assemblyId": "contributor-component-0", "packageId": provider["packageId"],
             "bindingId": binding_id, "matrixId": "none", "assertionSymbol": None,
-            "caseId": "full-metadata-binding" if category == "metadata" else "full-artifact-binding",
+            "caseId": "full-metadata-binding" if category == "metadata" else "contributor-artifact-component",
         } for identity in sorted(counts)],
     }
 

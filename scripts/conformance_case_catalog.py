@@ -308,6 +308,18 @@ def contributor_artifact_component_origin_counts(binding_id, *, profile):
     admitted = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
                 "Observed_payload_admission_rechecks_actual_quarantine_before_handoff")
     identities[f'{admitted}(provider: "{binding}")'] = 1
+    if profile["durability"] == "LocalProcessCrash":
+        durable = ("Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests."
+                   "Observed_durable_reopen_preserves_actual_decisions_and_receipts")
+        identities.update({
+            f'{durable}(provider: "{binding}", consumer: "{consumer}")': 2
+            for consumer in ("committed-decision", "durable-receipt")})
+        identities.update({
+            f'Hoard.Fixtures.Conformance.Consumer.ContributorArtifactSessionTests.{method}(provider: "{binding}")': count
+            for method, count in (
+                ("Observed_durable_quarantine_persistence_preserves_actual_ownership_and_reopen", 2),
+                ("Observed_durable_record_callback_errors_preserve_actual_faulted_ownership", 1),
+                ("Observed_durable_reconciliation_preserves_actual_read_quarantine", 1))})
     return identities
 
 

@@ -703,6 +703,16 @@ Composition diagnostics now expose only validated, input-bound tooling counts,
 codes and timing if the final summary cannot be read. Missing or invalid tooling
 still fails explicitly; incomplete execution never qualifies, and no budget or
 summary-size limit is relaxed. The earlier failed workflows remain retained.
+A production-path artifact component regression now packs an explicitly
+registered Acme adapter, builds the frozen Consumer and admits all114 durable
+snapshot rows with125 exact session origins. Five new logical durable rows
+reuse unchanged reopen, quarantine-persistence, record-callback and reconciliation
+assertions. Applicability follows the frozen durability marker, not a provider ID;
+in-process reopen is not fresh-process crash proof. A case-attribution mismatch
+found by the real replay is fixed without relabelling components as full coverage.
+The native metadata entrypoint regression also fixes its bytes-only JSON reader
+call after earlier execution reached completion. Full native verification,
+complete artifact coverage and contributor qualification remain open.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

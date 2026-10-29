@@ -6723,6 +6723,28 @@ Exact earlier55c94dc composition run40802490632/job123219196444 has now failed
 after33 minutes with EvidenceIncomplete and no usable summary. It still supplies
 no admitted tooling packet in public logs, so its underlying cause is unproven.
 
+The next production artifact component regression creates a separately packaged
+Acme adapter and frozen source lock, then uses the same captured build, frozen
+Consumer and common discovery/execution/origin transport as metadata. Its first
+actual replay exposes a component/full-binding case-ID mismatch; the manifest
+now uses contributor-artifact-component. Five durable logical rows reuse the
+unchanged decision/receipt reopen, quarantine persistence, record callback and
+reconciliation assertions. The actual durable snapshot path passes114 rows with
+125 origins and all eight image roles; source/control/cache/feed changes still
+reject. The independently expanded durable incomplete-enumeration inventory is
+115/126, while simulation inventories remain109/110 rows and110/111 origins.
+These cross-inventory counts do not claim new runtime support or native recovery.
+Native092925c job123229258610 observes717 tests with one error, no failures or
+skips, and no unexpected diagnostics: the full public metadata controller returns
+success, but its test passes str to the strictly bytes-only load_json reader.
+Encoding the captured stdout fixes that test boundary, not a provider or native
+admission rule. The failed run is retained; new-source native acceptance remains
+pending. Frozen `python3 scripts/conformance_unit_checks.py --all-tooling`
+observes718 tests with zero failures/errors/expected failures/unexpected
+successes/unexpected diagnostic bytes,23 native macOS skips and expected
+incomplete exit2. Two-file C# whitespace formatting, catalog/SDK and diff checks
+pass. Full artifact applicability/dispatch and T064..T086 remain open.
+
 Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
 tests without failures/errors/skips/expected failures/unexpected successes/
 unexpected diagnostic bytes, including actual contributor runtime and settlement.

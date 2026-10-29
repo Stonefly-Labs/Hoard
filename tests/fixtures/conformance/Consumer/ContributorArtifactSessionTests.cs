@@ -13,8 +13,12 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 internal sealed class ContributorArtifactDataAttribute(params object[] arguments) : DataAttribute
 {
+    public bool DurableOnly { get; set; }
+
     public override IEnumerable<object[]> GetData(MethodInfo testMethod)
     {
+        if (DurableOnly && ContributorBindingFactory.ExpectedDurability != ArtifactDurability.LocalProcessCrash)
+        { yield break; }
         if (arguments is ["direct-availability"]
             && ContributorBindingFactory.ExpectedEnumeration != ArtifactEnumerationConsistency.Incomplete)
         { yield break; }
@@ -24,6 +28,68 @@ internal sealed class ContributorArtifactDataAttribute(params object[] arguments
 
 public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
 {
+    [Theory]
+    [ContributorArtifactData("committed-decision", DurableOnly = true)]
+    [ContributorArtifactData("durable-receipt", DurableOnly = true)]
+    public async Task Observed_durable_reopen_preserves_actual_decisions_and_receipts(string provider, string consumer)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var clock = new ArtifactConformanceSessionTests.ControlledClock();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            clock, resources, new ConformanceEvidenceBuffer());
+        var limits = consumer == "committed-decision"
+            ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, liveTickets: 1, committedIdentities: 1)
+            : new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024);
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(
+            ArtifactAdmissionProbe.Complete, limits, (_, _) =>
+                ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.DurableReopenConsumerAsync(
+            binding, context, resources, output, clock, limits, consumer, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(DurableOnly = true)]
+    public async Task Observed_durable_quarantine_persistence_preserves_actual_ownership_and_reopen(string provider)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.QuarantinePersistenceConsumerAsync(
+            binding, context, resources, output, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(DurableOnly = true)]
+    public async Task Observed_durable_record_callback_errors_preserve_actual_faulted_ownership(string provider)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.RecordWriteFailureConsumerAsync(
+            binding, context, resources, output, AssertProfile);
+    }
+
+    [Theory]
+    [ContributorArtifactData(DurableOnly = true)]
+    public async Task Observed_durable_reconciliation_preserves_actual_read_quarantine(string provider)
+    {
+        Assert.Equal(ContributorBindingFactory.BindingId, provider);
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component",
+            TimeProvider.System, resources, new ConformanceEvidenceBuffer());
+        var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        await ArtifactConformanceSessionTests.ReconciliationQuarantineConsumerAsync(
+            binding, context, resources, output, AssertProfile);
+    }
+
     [Theory]
     [ContributorArtifactData("empty")]
     [ContributorArtifactData("unknown-length")]

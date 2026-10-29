@@ -594,6 +594,25 @@ this later entrypoint. Public metadata success remains diagnostic/incomplete
 until independent qualification is implemented. Artifact dispatch, full artifact
 applicability and the good/red/corrected contributor guide remain unfinished.
 
+The production artifact component regression now uses an explicitly packaged
+Acme adapter over the Local fixture, including its frozen declared source lock,
+captured compiler/archive correspondence, generated factory and local-only
+Consumer restore. It admits114 durable snapshot rows with125 exact origins and
+eight-role package attribution. The manifest now uses the actual component case
+ID rather than falsely labelling these origins as a full artifact binding.
+Five additional durable logical rows reuse the unchanged builtin decision/
+receipt reopen, failed quarantine persistence, record callback and reconciliation
+quarantine assertions. Their fixed applicability comes from the frozen durability
+marker and actual capability checks, never the provider name or a supplied case
+list. The independently expanded durable incomplete-enumeration cross is115 rows/
+126 origins; simulation snapshot/incomplete inventories remain109/110 rows with
+110/111 origins. Only the durable snapshot production path is newly executed.
+This is not full artifact applicability, fresh-process recovery, native transfer
+or public artifact dispatch. The earlier native metadata entrypoint regression
+reaches controller completion but fails when its test passes text to a bytes-only
+JSON reader; the test now encodes that output before admission. Failed native
+evidence remains retained, and new-source native verification is still required.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output
