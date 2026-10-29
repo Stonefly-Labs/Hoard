@@ -3744,7 +3744,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.inputs["sourceManifest"] = {}
             for path in sources.METADATA_INVENTORY_SOURCE_FILES:
                 raw = (original / path).read_bytes()
-                target = root / "snapshot" / path
+                target = root / "stores/snapshot" / path
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(raw)
                 target.chmod(0o400)
@@ -3755,12 +3755,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             work = root / "stores" / namespace
             work.mkdir(parents=True)
             inputs_path = f"proofs/{namespace}-native-inputs.json"
-            source_files = {"snapshot/" + path: hashed for path, hashed in self.inputs["sourceManifest"].items()}
+            source_files = {"stores/snapshot/" + path: hashed for path, hashed in self.inputs["sourceManifest"].items()}
             records, commands = {}, []
             run = SimpleNamespace(root=root, run_id=self.inputs["runId"], root_id=str(uuid.uuid4()),
                                   live_children=lambda: (), read_execution_record=lambda sequence: records[sequence])
             for sequence, mode in enumerate(("baseline", "mutation", "repair"), 1):
-                packet = checks.metadata_inventory(root / "snapshot", mode, work / "metadata_evidence.py")
+                packet = checks.metadata_inventory(root / "stores/snapshot", mode, work / "metadata_evidence.py")
                 outputs = {
                     f"proofs/{namespace}-{mode}.json": evidence.canonical_bytes(packet),
                     f"proofs/{namespace}-{mode}.py": (work / "metadata_evidence.py").read_bytes()}
@@ -3773,13 +3773,13 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     "endedMs": sequence * 1000 + 100, "exitCode": packet["exitCode"],
                     "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery"}
                 arguments = [
-                    sys.executable, "-I", "-B", "-S", str(root / "snapshot/scripts/conformance_unit_checks.py"),
+                    sys.executable, "-I", "-B", "-S", str(root / "stores/snapshot/scripts/conformance_unit_checks.py"),
                     "--metadata-inventory", mode, str(work / "metadata_evidence.py"),
                     str(root / f"proofs/{namespace}-{mode}.json"), str(root / f"proofs/{namespace}-{mode}.py")]
                 native = {
                     **control, "runId": run.run_id, "rootId": run.root_id,
                     "argvSha256": evidence.digest(arguments),
-                    "cwdSha256": hashlib.sha256(str(root / "snapshot").encode()).hexdigest(),
+                    "cwdSha256": hashlib.sha256(str(root / "stores/snapshot").encode()).hexdigest(),
                     "controlRecordSha256": evidence.digest(control),
                     "inputFiles": {**source_files, inputs_path: evidence.digest(self.inputs)},
                     "outputFiles": {path: hashlib.sha256(raw).hexdigest() for path, raw in outputs.items()}}
@@ -3794,7 +3794,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             graph = {
                 "schemaVersion": 1, "qualification": False, "runId": run.run_id,
                 "invocationGroupId": self.inputs["invocationGroupId"], "inputsSha256": evidence.digest(self.inputs),
-                "scriptPath": "snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path,
+                "scriptPath": "stores/snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path,
                 "commands": commands}
             for path, value in ((inputs_path, self.inputs),
                                 (f"proofs/{namespace}-native-executions.json", graph)):

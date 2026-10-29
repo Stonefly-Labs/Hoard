@@ -1061,7 +1061,10 @@ identities and all retained proof descriptors are safe. The opt-in snapshot
 role opens the original owned `stores` descriptor, retaining the existing
 create-new/no-symlink/original source pre/post checks. Source/command hashes
 remain bound while live; actual release removes these private build inputs.
-Other callers' original snapshot placement is unchanged and remains subject
+The shared SDK metadata/artifact/compatibility snapshot also uses
+`stores/snapshot`; metadata inventory source/argv/cwd/script authority binds
+that exact role without weakening original-byte or red/repair checks.
+Contributor and preparation snapshot/workspace placement remains subject
 to the unfinished full all-output audit.
 Discovery mutation observations likewise publish projection and input
 descriptors relative to the owned root before persistence. Live verification

@@ -3311,6 +3311,25 @@ started (PID0/no start time), then removed with its inspected empty volume
 No native run or sanitation success is claimed for that source. A fresh immutable
 bundle/driver will test the subsequent bytes. T068--T086 remain open.
 
+### Transient shared SDK snapshots
+
+The shared SDK snapshot wrapper now selects original descriptor-bound owned
+`stores/snapshot` for metadata/artifact/compatibility build workspaces. The
+metadata inventory producer/verifier moves every exact source, argv, cwd and
+retained script descriptor to the same role. Original source hashes, negative/
+same-source repair bytes, command input maps and native receipt checks remain
+unchanged. Default snapshot placement and contributor/preparation workspaces
+are not globally changed or declared sanitized.
+
+Both focused cases first fail against the former paths. The combined command
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest
+test_conformance_sdk_checks.SdkDiagnosticTests.test_snapshot_preserves_solution_ancestry_but_rejects_symlinks
+test_conformance_evidence.ConformanceRuntimeIngestionTests.test_metadata_verifier_inventory_requires_original_native_red_and_same_source_repair
+-q` passes two tests in0.827 seconds, including actual snapshot release and the
+existing exact original/red/repair inventory checks. Catalog/SDK and diff checks
+pass. These source changes occur after the immutable06c3a16 native composition
+bundle; they require separate shared-SDK/native validation. No task gate closes.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

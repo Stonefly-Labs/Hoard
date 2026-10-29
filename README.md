@@ -895,6 +895,10 @@ Discovery mutation results now also publish root-relative projection/input
 descriptors, hydrating them only for live verification. Absolute and escaping
 projection descriptors reject. This closes another inspected publication gap,
 not the pending native all-output gate.
+The shared SDK metadata/artifact/compatibility build snapshot now also uses
+owned transient stores. Metadata inventory controls retain the exact new
+source/command authority; contributor and preparation workspaces still need
+their separate all-output audit.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -7806,6 +7806,18 @@ failures/errors and four native macOS skips. The allocated a6ff8ff namespace
 never starts and its empty volume is removed; it is not a native execution
 observation. Fresh native validation of these subsequent bytes remains pending.
 
+The shared SDK snapshot wrapper now opts into owned `stores/snapshot` for its
+metadata, artifact and compatibility workspaces. The metadata inventory
+producer/verifier moves its exact source, argv, cwd and retained script
+descriptors together; original source hashes, red/repair bytes and native
+execution receipts remain mandatory. Snapshot ancestry/symlink regression now
+also verifies the exact transient role and actual removal on release.
+The snapshot placement and inventory authority tests both first fail against
+their former paths. Their combined focused run passes two tests in0.827 seconds;
+catalog/SDK and diff checks pass. These subsequent bytes are not part of the
+already frozen06c3a16 composition attempt. Full shared-SDK/native validation and
+the contributor/preparation workspace audit remain pending.
+
 Claimed-complete report schema admission now requires the named actual completion
 packet hash in the proof registry instead of equality with the admission-input
 hash. Free space can legitimately change during execution. Completion verification

@@ -650,7 +650,7 @@ def write_new(path, data):
 
 
 def snapshot(repository, run):
-    target, hashes = evidence.snapshot_sources(repository, run)
+    target, hashes = evidence.snapshot_sources(repository, run, transient=True)
     if "Hoard.slnx" not in hashes:
         raise evidence.ConformanceError("PrerequisiteMissing")
     return target, hashes
@@ -1265,7 +1265,7 @@ def metadata_binary_diagnostics(run, inputs, candidate):
 
 def metadata_inventory_diagnostics(run, inputs, candidate):
     if (type(run) is not OwnedRun or inputs.get("profileId") != "metadata" or inputs.get("mode") != "qualification"
-            or candidate != run.root / "snapshot"):
+            or candidate != run.root / "stores/snapshot"):
         raise evidence.ConformanceError("UnsupportedProfile")
     namespace = "qualification-metadata-inventory"
     material = metadata_inventory_source_inputs(run, inputs)
@@ -1297,7 +1297,7 @@ def metadata_inventory_diagnostics(run, inputs, candidate):
     graph = {
         "schemaVersion": 1, "qualification": False, "runId": run.run_id,
         "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
-        "scriptPath": "snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path, "commands": commands}
+        "scriptPath": "stores/snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path, "commands": commands}
     write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph))
     native_metadata_inventory_controls(run, inputs, started_ms=0, ended_ms=time.monotonic() * 1000)
     return evidence.digest(graph)

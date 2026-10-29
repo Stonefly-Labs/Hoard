@@ -5949,6 +5949,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             (repository / inventory).write_text('{"entries":[]}')
             run = checks.OwnedRun.allocate(parent / "run", repository, profile="harness")
             candidate, sources = checks.snapshot(repository, run)
+            self.assertEqual(candidate, run.root / "stores/snapshot")
             self.assertEqual((candidate / "Hoard.slnx").read_bytes(), (repository / "Hoard.slnx").read_bytes())
             self.assertIn(contract, sources)
             self.assertEqual((candidate / contract).read_bytes(), (repository / contract).read_bytes())
@@ -5958,6 +5959,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertEqual((candidate / "src/file.cs").stat().st_mode & 0o222, 0)
             run.transition("Settling")
             run.release()
+            self.assertFalse(candidate.exists())
             (repository / "src/linked.cs").symlink_to(repository / "src/file.cs")
             second = checks.OwnedRun.allocate(parent / "second", repository, profile="harness")
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):

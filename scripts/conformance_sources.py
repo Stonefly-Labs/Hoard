@@ -1843,18 +1843,18 @@ def native_metadata_binary_control(run, inputs, *, started_ms, ended_ms):
 def metadata_inventory_source_inputs(run, inputs):
     material = {}
     for path in METADATA_INVENTORY_SOURCE_FILES:
-        raw = _readonly(run.root / "snapshot" / path, 1024 * 1024)
+        raw = _readonly(run.root / "stores/snapshot" / path, 1024 * 1024)
         hashed = hashlib.sha256(raw).hexdigest()
         if inputs["sourceManifest"].get(path) != hashed:
             raise evidence.ConformanceError("InputChanged")
-        material["snapshot/" + path] = hashed
+        material["stores/snapshot/" + path] = hashed
     return material
 
 
 def metadata_inventory_arguments(root, mode):
     namespace = "qualification-metadata-inventory"
     return [
-        sys.executable, "-I", "-B", "-S", str(root / "snapshot/scripts/conformance_unit_checks.py"),
+        sys.executable, "-I", "-B", "-S", str(root / "stores/snapshot/scripts/conformance_unit_checks.py"),
         "--metadata-inventory", mode, str(root / "stores" / namespace / "metadata_evidence.py"),
         str(root / f"proofs/{namespace}-{mode}.json"), str(root / f"proofs/{namespace}-{mode}.py")]
 
@@ -1868,8 +1868,8 @@ def native_metadata_inventory_controls(run, inputs, *, started_ms, ended_ms):
             or inputs["runId"] != run.run_id or ended_ms < started_ms):
         raise evidence.ConformanceError("InputChanged")
     material = metadata_inventory_source_inputs(run, inputs)
-    original = _readonly(run.root / "snapshot/scripts/metadata_evidence.py", 1024 * 1024)
-    suite_raw = _readonly(run.root / "snapshot/tests/tooling/test_metadata_evidence.py", 1024 * 1024)
+    original = _readonly(run.root / "stores/snapshot/scripts/metadata_evidence.py", 1024 * 1024)
+    suite_raw = _readonly(run.root / "stores/snapshot/tests/tooling/test_metadata_evidence.py", 1024 * 1024)
     try:
         syntax = ast.parse(suite_raw)
     except SyntaxError:
@@ -1929,7 +1929,7 @@ def native_metadata_inventory_controls(run, inputs, *, started_ms, ended_ms):
             raise evidence.ConformanceError("ProofMismatch")
         native_raw = native_control_record(
             run, sequence, control_raw, arguments=metadata_inventory_arguments(run.root, mode),
-            cwd=run.root / "snapshot", input_files={**material, inputs_path: evidence.digest(inputs)},
+            cwd=run.root / "stores/snapshot", input_files={**material, inputs_path: evidence.digest(inputs)},
             output_files={packet_path: hashlib.sha256(packet_raw).hexdigest(),
                           snapshot_path: hashlib.sha256(snapshot_raw).hexdigest()})
         if _readonly(run.root / native_path, 64 * 1024) != native_raw:
@@ -1943,7 +1943,7 @@ def native_metadata_inventory_controls(run, inputs, *, started_ms, ended_ms):
     expected_graph = {
         "schemaVersion": 1, "qualification": False, "runId": run.run_id,
         "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
-        "scriptPath": "snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path, "commands": commands}
+        "scriptPath": "stores/snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path, "commands": commands}
     if (graph_raw != evidence.canonical_bytes(expected_graph)
             or read_bounded(run.root / "stores" / namespace / "metadata_evidence.py", 1024 * 1024) != original):
         raise evidence.ConformanceError("ProofMismatch")
