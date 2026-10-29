@@ -556,6 +556,16 @@ manifests reject. The native executor retains its existing pin limits and comman
 proofs; managed adapters cannot substitute for native provenance. Native replay,
 complete artifact applicability and public contributor dispatch remain open.
 
+Exact-source native ownership job123205181349 atb49fa51 passes all713 controls,
+including native contributor discovery/execution and settlement, without skips
+or unexpected diagnostic bytes. The next supplied-project integration then
+finds a separate real boundary: Directory.Build.props maps source documents to
+`/_/`, which the PDB reader had rejected. An explicit optional prefix admits only
+that repository mapping into the owned source root; other prefixes, malformed
+values and links still reject. PE/PDB identity, document hashes and independent
+captured-Csc correspondence are unchanged. The actual joined managed case passes
+all76 metadata rows with86 origins; later-source native replay is still required.
+
 Compiled-document receipt admission now requires the selected successful
 compiler project, exact expected DLL/PDB paths, a source-document subset with
 matching captured source hashes, and independently rehashed current output

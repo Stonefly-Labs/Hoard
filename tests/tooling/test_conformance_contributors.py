@@ -726,6 +726,51 @@ class NuGetContentToolTests(unittest.TestCase):
         self.assertEqual(event["code"], "InputChanged")
         self.assertFalse(any((self.owner.root / path).exists() for path in value["outputs"].values()))
 
+    def test_managed_pdb_tool_maps_only_explicit_repository_prefix_to_owned_recorded_sources(self):
+        value, binding, generated, _ = self.compiler_request()
+        properties = ET.parse(self.compiler_properties)
+        ET.SubElement(properties.find(".//PropertyGroup"), "PathMap").text = str(binding.root) + "/=/_/"
+        properties.write(self.compiler_properties)
+        self.assertEqual(self.compile()[1]["code"], "None")
+        rows = contributors.binding_compilation_sources(
+            binding, (self.owner.root / value["outputs"]["sources"]).read_bytes(), generated)
+        row = next(item for item in rows["compilations"] if item["project"] == binding.project)
+        output = generated / "Adapter/bin/Release/net10.0"
+        request = {
+            "schemaVersion": 1, "qualification": False, "sourcePath": self.relative(binding.root),
+            "generatedPath": self.relative(generated), "project": binding.project,
+            "outputRoot": self.relative(output),
+            "assembly": {"path": "Adapter.dll", "sha256": evidence.file_sha256(output / "Adapter.dll")},
+            "pdb": {"path": "Adapter.pdb", "sha256": evidence.file_sha256(output / "Adapter.pdb")},
+            "outputPath": self.relative(self.output_receipt)}
+        self.request.write_bytes(evidence.canonical_bytes(request))
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
+        for prefix in ("/foreign/", "../", None, 1):
+            self.request.write_bytes(evidence.canonical_bytes({**request, "sourceDocumentPrefix": prefix}))
+            with self.subTest(prefix=prefix):
+                self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "EvidenceSchemaInvalid")
+                self.assertFalse(self.output_receipt.exists())
+        self.request.write_bytes(evidence.canonical_bytes({**request, "sourceDocumentPrefix": "/_/"}))
+        self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "None")
+        admitted = contributors.binding_compilation_documents(
+            row, self.output_receipt.read_bytes(), output, "Adapter.dll")
+        self.assertTrue(any(path.startswith("source/") for path in admitted["documents"]))
+        self.output_receipt.unlink()
+        path = binding.root / "Adapter/Binding.cs"
+        original = path.read_bytes()
+        outside = self.parent / "mapped-pdb-outside-canary"
+        outside.write_bytes(original)
+        path.unlink()
+        path.symlink_to(outside)
+        try:
+            self.assertEqual(self.invoke(operation="pdb-documents")[1]["code"], "OwnershipInvalid")
+            self.assertEqual(outside.read_bytes(), original)
+            self.assertFalse(self.output_receipt.exists())
+        finally:
+            path.unlink()
+            path.write_bytes(original)
+            outside.unlink()
+
     def test_managed_compiler_observer_rejects_output_image_changes_after_csc_completion(self):
         value, binding, _, _ = self.compiler_request()
         targets = ET.parse(binding.root / "Directory.Build.targets")
@@ -1032,7 +1077,7 @@ class NuGetContentToolTests(unittest.TestCase):
     def test_native_captured_build_joins_actual_owned_commands_and_releases_process_resources(self):
         self.captured_build(native=True)
 
-    def package_consumer_build(self, *, native=False, runtime=False):
+    def package_consumer_build(self, *, native=False, runtime=False, captured=False):
         import conformance_sdk_checks as sdk
         import uuid
         from conformance_execution import project_build_line, project_discovery_line, project_test_line
@@ -1100,6 +1145,14 @@ class NuGetContentToolTests(unittest.TestCase):
             with mock.patch.object(owner, "command", side_effect=execute):
                 for relative, package_id in projects:
                     selected = candidate / relative
+                    if captured and package_id == binding.registration["adapterPackage"]["packageId"]:
+                        supplied = contributors.build_captured_binding_project(
+                            binding, owner, config, feed, tools / self.tool.name, Path(measured["toolchainRoot"]),
+                            self.msbuild.parent.name, self.runtime_version)
+                        self.assertEqual(
+                            supplied["package"]["runtimeAssemblies"]["lib/net10.0/" + package_id + ".dll"],
+                            supplied["documents"][binding.project]["assembly"]["sha256"])
+                        continue
                     lock, receipt = prepare_project_lock(selected, candidate, feed, "candidate")
                     sdk.build(owner, selected, config, "local-packages", feed=feed,
                               lock=lock, package_id=package_id)
@@ -1133,7 +1186,8 @@ class NuGetContentToolTests(unittest.TestCase):
                                 for path in result["runtimeAssemblies"]))
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["controlInputs"])), result["controlInputs"])
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["cachedArchives"])), result["cachedArchives"])
-            self.assertEqual(len(commands), 53 if runtime else 50)
+            prepared_commands = (53 if runtime else 50) + (3 if captured else 0)
+            self.assertEqual(len(commands), prepared_commands)
             if runtime:
                 prepared = contributors.prepare_binding_consumer_runtime(
                     binding, owner, ROOT, candidate, result, feed, {
@@ -1206,7 +1260,7 @@ class NuGetContentToolTests(unittest.TestCase):
                 self.assertEqual(len(observed["witnesses"]), 76)
                 self.assertEqual(sum(len(rows) for rows in observed["sessionOrigins"].values()), 86)
                 self.assertRegex(discovery_sha, r"^[0-9a-f]{64}$")
-                self.assertEqual(len(commands), 55)
+                self.assertEqual(len(commands), prepared_commands + 2)
                 self.assertEqual(evidence.input_manifest(
                     owner.root, sorted(prepared["controlInputs"])), prepared["controlInputs"])
                 self.assertEqual(inputs, evidence.capture_profile_inputs(
@@ -1230,26 +1284,19 @@ class NuGetContentToolTests(unittest.TestCase):
                 finally:
                     changed.write_bytes(original)
                     changed.chmod(mode)
-                self.assertEqual(len(commands), 56)
+                self.assertEqual(len(commands), prepared_commands + 3)
         finally:
             if owner.state == "Allocated":
                 owner.transition("Active")
             owner.transition("Settling")
             owner.release()
 
-    def test_managed_package_only_consumer_build_preserves_baseline_and_isolates_generated_sources(self):
-        self.package_consumer_build()
-
-    @unittest.skipUnless(native_execution_supported(), "Native package consumer build requires supported Linux containment")
-    def test_native_package_only_consumer_build_uses_owned_commands_and_settles_resources(self):
-        self.package_consumer_build(native=True)
-
     def test_managed_contributor_runtime_executes_every_common_metadata_row_with_exact_origins(self):
-        self.package_consumer_build(runtime=True)
+        self.package_consumer_build(runtime=True, captured=True)
 
     @unittest.skipUnless(native_execution_supported(), "Native contributor runtime requires supported Linux containment")
     def test_native_contributor_runtime_uses_owned_common_suite_and_actual_component_origins(self):
-        self.package_consumer_build(native=True, runtime=True)
+        self.package_consumer_build(native=True, runtime=True, captured=True)
 
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()

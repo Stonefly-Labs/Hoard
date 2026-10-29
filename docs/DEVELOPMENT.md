@@ -6671,6 +6671,36 @@ errors/expected failures/unexpected successes/unexpected diagnostic bytes,
 checks pass. This remains diagnostic-only: public dispatch, complete artifact
 applicability, good/red/corrected guide execution and T064..T086 remain open.
 
+Native ownership/evidence job123205181349 in run40799886702 atb49fa51 passes713
+tests without failures/errors/skips/expected failures/unexpected successes/
+unexpected diagnostic bytes, including actual contributor runtime and settlement.
+It nearly consumes its15-minute budget. The next joined regression replaces the
+ordinary adapter build with captured evaluation/restore/Csc/PDB/pack, then runs
+the same complete metadata runtime. Redundant package-only preparations are
+consolidated into these stronger managed/native cases: all prior package,
+generated-source isolation, cache/control, manifest and late-change checks remain.
+No budget or coverage is reduced.
+
+That joined case first fails OwnershipInvalid at actual PDB capture:
+Directory.Build.props maps repository sources to `/_/`. The private PDB request
+now explicitly permits only this source-document prefix. Its relative suffix
+must resolve inside the owned source root, with the original no-link/path checks;
+PE/PDB identity, checksums and independent document-to-captured-Csc hashes still
+apply. Unknown/malformed prefixes and mapped links reject without touching an
+outside sentinel. The managed source-to-runtime join passes76 rows/86 origins.
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` now observes712
+tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,23 native macOS skips and expected incomplete exit2. The count
+reflects consolidated redundant full-build cases, not omitted assertions.
+BuildInputs Program.cs formatting, catalog/SDK and diff checks pass.
+
+The same b49fa51 foundations workflow is not wholly green: metadata extraction
+fails original-memory MP19 queue-capacity/deadline coverage (62 passed, one
+failed, UnknownDiagnostic). Its retained test digest resolves against the frozen
+inventory; the failure is not erased, retried into success or assumed caused by
+the separate PDB change. Other job successes do not replace this failed evidence.
+Public dispatch, complete applicability and qualification remain unfinished.
+
 The next compiled-document reader admits only closed bounded receipts matching
 the selected successful compiler project, expected DLL/PDB paths, observed
 compiler source hashes and independently rehashed current outputs. Unsafe

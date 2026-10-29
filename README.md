@@ -676,6 +676,13 @@ Controls reject shortened/duplicate/foreign rows, wrong binding/category/mode,
 and altered controls, runtime configuration or cached archives, including a late
 change after the child exits. This is managed diagnostic evidence, not native
 execution, complete artifact applicability, public dispatch or qualification.
+Native ownership/evidence replay atb49fa51 passes all713 controls without skips,
+including actual contributor discovery/execution and settlement. A subsequent
+joined supplied-project regression exposed the PDB reader rejecting this
+repository's deterministic `/_/` source prefix. Explicit prefix admission now
+resolves only into captured owned sources and still enforces document hashes,
+compiler-source correspondence and link protection. The managed joined
+source/pack/common-runtime case passes; this later change awaits native replay.
 Complete native acceptance and source-generator/tool-dependency closure remain unfinished;
 these components do not qualify a contributor and T064 stays open.
 A compiled-document reader also binds closed source-document receipts to the

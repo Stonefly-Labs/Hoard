@@ -583,6 +583,7 @@ def capture_binding_compilation_documents(binding, owned_run, built, tool, runti
         payload = evidence.canonical_bytes({
             "schemaVersion": 1, "qualification": False, "sourcePath": "binding-source",
             "generatedPath": "binding-build", "project": project,
+            "sourceDocumentPrefix": "/_/",
             "outputRoot": output_root.relative_to(owned_run.root).as_posix(),
             "assembly": {"path": assembly, "sha256": frozen[image_paths[0].relative_to(owned_run.root).as_posix()]},
             "pdb": {"path": assembly[:-4] + ".pdb",

@@ -2367,6 +2367,12 @@ duplicate, foreign or mismatched identities/scopes/bindings/categories/modes.
 Rehash the full control map and runtime inventory before and after commands,
 including failed children. Native commands retain existing bounded pinning and
 command proofs; managed diagnostics do not establish native provenance.
+Portable-PDB requests may explicitly select the repository's `/_/` source-document
+prefix. Resolve its suffix only inside the owned source root using the existing
+bounded relative-path/no-link checks; reject every other prefix and malformed
+value. Mapped documents must retain PE/PDB/checksum validation and independently
+match the actual captured compiler source/generated-document hashes. Mapping is
+not permission to admit foreign sources or infer arbitrary custom PathMap rules.
 This bridge alone does not establish full applicable catalog coverage, owned
 supplied-project build/pack or native provenance. The artifact component mode
 now compiles the same exact-package/generated-factory inputs and independently

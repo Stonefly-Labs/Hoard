@@ -1180,6 +1180,47 @@ charter/product, architecture/ADR/diagrams, public examples, governance,
 predecessors, IaC, release and UI are unaffected by this private runtime increment.
 No checklist, task or flow marker changes.
 
+Exact-source native ownership/evidence job123205181349 in
+[run40799886702](https://github.com/Stonefly-Labs/Hoard/actions/runs/40799886702)
+atb49fa51 passes713 tests without failures/errors/skips/expected failures/
+unexpected successes/unexpected diagnostic bytes. This includes actual owned
+contributor discovery/execution, independent76-row/86-origin admission and process
+settlement. It does not validate later source or establish full qualification.
+The same workflow's metadata extraction job123205181387 fails original-memory
+MP19 queue-capacity/deadline coverage:62 passed, one failed, UnknownDiagnostic;
+safe failed-test digest8761af132f080f40d5999df167d880f419587ca1418400246a283227e0f63d87
+matches that exact frozen identity. No underlying failure detail/cause is assumed.
+Failed evidence is retained, not erased by other successful jobs.
+
+The next actual regression joins captured supplied-project evaluation, locked
+restore, observed Csc DLL/PDB, packed image and unchanged common runtime. It first
+fails OwnershipInvalid in the PDB reader because Directory.Build.props maps
+source names to `/_/`. Explicit optional sourceDocumentPrefix now accepts only
+that repository mapping into the owned source root. Its suffix still passes
+bounded relative-path/no-link checks, and PE/PDB identity/checksums/document
+hashes still match independent captured compiler inputs. Unsupported/malformed
+prefixes and mapped links reject; the outside sentinel is unchanged.
+
+The managed joined case now passes all76 metadata rows/86 origins. Its native
+counterpart awaits fresh replay. Redundant standalone package-only preparations
+are consolidated into the stronger managed/native source-to-runtime cases,
+preserving all previous package provenance, generated-source isolation, cache/
+control, manifest and late-mutation assertions. This avoids multiplying full
+builds when the713-test native job already nearly exhausts15 minutes; no budget,
+assertion or applicability gate is relaxed.
+
+Frozen `python3 scripts/conformance_unit_checks.py --all-tooling` observes712
+tests, zero failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,23 explicit native macOS skips and expected incomplete exit2.
+`dotnet format tests/fixtures/conformance/BuildInputs/BuildInputs.csproj
+--verify-no-changes --no-restore --include
+tests/fixtures/conformance/BuildInputs/Program.cs -v quiet`,
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. README, PROVIDERS, DEVELOPMENT and harness are synchronized;
+other product/architecture/ADR/diagram/example/governance/predecessor/IaC/release/
+UI documents are unaffected by this private mapped-document repair. T064 stays
+unchecked and implement/running continues.
+
 Validation: `python3 scripts/conformance_unit_checks.py --all-tooling` observes709
 tests with zero failures/errors/expected failures/unexpected successes/
 unexpected diagnostic bytes,23 explicit native-only macOS skips and the expected

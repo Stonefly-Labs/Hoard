@@ -121,8 +121,19 @@ internal static partial class Program
 
     private static int CaptureDocuments(string root, JsonElement request, string requestPath, string requestHash)
     {
-        Keys(request, "schemaVersion", "qualification", "sourcePath", "generatedPath",
-            "outputRoot", "project", "assembly", "pdb", "outputPath");
+        string? sourceDocumentPrefix = null;
+        if (request.TryGetProperty("sourceDocumentPrefix", out var prefix))
+        {
+            Require(prefix.ValueKind == JsonValueKind.String && prefix.GetString() == "/_/", "EvidenceSchemaInvalid");
+            sourceDocumentPrefix = prefix.GetString();
+            Keys(request, "schemaVersion", "qualification", "sourcePath", "generatedPath",
+                "outputRoot", "project", "assembly", "pdb", "outputPath", "sourceDocumentPrefix");
+        }
+        else
+        {
+            Keys(request, "schemaVersion", "qualification", "sourcePath", "generatedPath",
+                "outputRoot", "project", "assembly", "pdb", "outputPath");
+        }
         Require(request.GetProperty("schemaVersion").GetInt32() == 1
             && request.GetProperty("qualification").ValueKind == JsonValueKind.False, "EvidenceSchemaInvalid");
         var source = OwnedPath(root, Text(request, "sourcePath"));
@@ -187,8 +198,19 @@ internal static partial class Program
             var path = Path.GetFullPath(name);
             var owner = path.StartsWith(source + Path.DirectorySeparatorChar, StringComparison.Ordinal) ? source
                 : path.StartsWith(generated + Path.DirectorySeparatorChar, StringComparison.Ordinal) ? generated : null;
-            Require(owner is not null, "OwnershipInvalid");
-            var relative = path[(owner!.Length + 1)..].Replace(Path.DirectorySeparatorChar, '/');
+            string relative;
+            if (owner is null && sourceDocumentPrefix is not null
+                && name.StartsWith(sourceDocumentPrefix, StringComparison.Ordinal))
+            {
+                owner = source;
+                relative = name[sourceDocumentPrefix.Length..];
+                _ = OwnedPath(owner, relative);
+            }
+            else
+            {
+                Require(owner is not null, "OwnershipInvalid");
+                relative = path[(owner!.Length + 1)..].Replace(Path.DirectorySeparatorChar, '/');
+            }
             var identity = (owner == source ? "source/" : "generated/") + relative;
             var hash = reader.GetBlobBytes(document.Hash);
             Require(reader.GetGuid(document.HashAlgorithm) == new Guid("8829d00f-11b8-4213-878b-770e8597ac16")
