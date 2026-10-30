@@ -20,10 +20,11 @@ public sealed class RuntimeLoggerTests
     [InlineData("invalid-line", 0)]
     [InlineData("oversized", 0)]
     [InlineData("named-assertion", 0)]
+    [InlineData("unqualified-symbol", 0)]
     public void Failed_test_locations_emit_only_a_bounded_line_of_the_admitted_mapped_test(
         string mutation, int expectedLine)
     {
-        using var owned = new OwnedInput();
+        using var owned = new OwnedInput(mutation == "unqualified-symbol" ? 2 : 1);
         if (mutation == "named-assertion")
         {
             owned.Input.Expected[0] = owned.Input.Expected[0] with
@@ -31,6 +32,11 @@ public sealed class RuntimeLoggerTests
                 TestIdentity = "Hoard.Testing.Conformance.FrozenAssertion.Check",
                 FullyQualifiedName = "Hoard.Testing.Conformance.FrozenAssertion.Check"
             };
+            owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        }
+        if (mutation == "unqualified-symbol")
+        {
+            owned.Input.Expected[0] = owned.Input.Expected[0] with { TestIdentity = "Check", FullyQualifiedName = "Check" };
             owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
         }
         var result = owned.Result(0);
@@ -46,19 +52,21 @@ public sealed class RuntimeLoggerTests
             "oversized" => new string('x', 65537),
             "named-assertion" => "at Hoard.Testing.Conformance.FrozenAssertion.Check()"
                 + " in /_/tests/fixtures/FrozenAssertion.cs:line 88",
+            "unqualified-symbol" => "at Check() in /_/tests/fixtures/Check.cs:line 88",
             _ => "at Hoard.Frozen.Check() in /_/tests/fixtures/Frozen.cs:line 88"
         };
         var locations = new List<int>();
         using (var recorder = owned.Open())
         {
             recorder.Observe(result, locations.Add);
+            if (mutation == "unqualified-symbol") { recorder.Observe(owned.Result(1), locations.Add); }
             recorder.Complete();
             Assert.Equal(mutation == "named-assertion" ? ConformanceDiagnosticCode.AssertionFailed
                 : ConformanceDiagnosticCode.UnknownDiagnostic, recorder.Diagnostic);
-            Assert.Equal(1, recorder.ObservedCount);
+            Assert.Equal(mutation == "unqualified-symbol" ? 2 : 1, recorder.ObservedCount);
         }
         Assert.Equal(expectedLine == 0 ? [] : new[] { expectedLine }, locations);
-        using var witness = JsonDocument.Parse(File.ReadAllText(Path.Combine(owned.Output, "witnesses.jsonl")));
+        using var witness = JsonDocument.Parse(File.ReadLines(Path.Combine(owned.Output, "witnesses.jsonl")).First());
         Assert.Equal("Failed", witness.RootElement.GetProperty("status").GetString());
         AssertSafe(owned.Output);
     }

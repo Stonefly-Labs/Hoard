@@ -89,7 +89,7 @@ Further full retries are paused pending an original-context assertion diagnosis.
 The maintainer authorizes resumption with that missing observability addressed:
 unknown failed tests now emit only a bounded mapped-test source-line number
 through the existing safe event stream, never raw errors, paths or stack text.
-All175 logger parameters and276 focused tooling checks pass (five native-only
+All176 logger parameters and276 focused tooling checks pass (five native-only
 skips). Known named assertion/guard protocols and every outcome remain unchanged.
 The next T071 increment captures inherited parents in the original active
 owner and independently checks the same runtime/tooling frame after release;

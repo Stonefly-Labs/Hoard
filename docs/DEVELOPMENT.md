@@ -9986,6 +9986,9 @@ at missing overload CS1501. Build, focused formatting and all175 logger
 parameters pass after implementation. The legacy/sanitation/inherited/
 composition/SDK/receipt selector passes276 tests in36.339 seconds with five
 native-only skips. Original-context native execution remains required.
+An additional unqualified-symbol guard verifies that unavailable location
+metadata cannot abort recording later actual results. Build, focused formatting
+and all176 logger parameters pass with that guard.
 
 The next T071 increment binds inherited replay to the original native owner.
 After successful tooling, while still Active, it re-admits the frozen runtime

@@ -373,6 +373,10 @@ test_conformance_evidence.ConformanceCommandProofReplayTests` passes276 tests
 in36.339 seconds with five native-only skips. The next native run can now
 retain an actionable assertion location if the original ownership case fails;
 its original failed evidence remains unchanged.
+An additional valid-but-unqualified symbol regression verifies that absent
+declaring-type metadata cannot throw during optional diagnostic projection or
+abort subsequent results. Build, focused formatting and all176 logger cases
+pass with that guard before freezing the next native source.
 
 ### Original-owner inherited runtime capture
 

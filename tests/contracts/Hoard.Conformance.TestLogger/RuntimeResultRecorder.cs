@@ -434,7 +434,9 @@ public sealed class RuntimeResultRecorder : IDisposable
     private static int? FailureSourceLine(TestResult result, RuntimeExpectedTest entry)
     {
         if (result.ErrorStackTrace is not { Length: > 0 and <= 65_536 }) { return null; }
-        var type = entry.FullyQualifiedName[..entry.FullyQualifiedName.LastIndexOf('.')];
+        var separator = entry.FullyQualifiedName.LastIndexOf('.');
+        if (separator <= 0) { return null; }
+        var type = entry.FullyQualifiedName[..separator];
         var fileName = "/" + type[(type.LastIndexOf('.') + 1)..] + ".cs";
         var frame = "at " + entry.FullyQualifiedName + "(";
         foreach (var span in result.ErrorStackTrace.AsSpan().EnumerateLines())
