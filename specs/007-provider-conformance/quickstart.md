@@ -1224,6 +1224,14 @@ also rejects missing/duplicate/foreign/failed/retimed runtime witnesses and
 changed derivations; it does not yet emit a complete compatibility report.
 The original `proofs/compatibility-runtime-active-summary.json` remains unchanged
 beside `proofs/compatibility-diagnostic-summary.json`.
+The separate immutable `61da227` execution passes all3 live/nine released
+controls, test-only exit0 in322117.071000 ms, with207389683712 free scratch bytes
+at admission and no extra SDK prewarming. The next increment adds the common
+`proofs/compatibility-runtime-report.json` and separate
+`proofs/compatibility-runtime-released-report.json`. Runtime-backed logical
+cases are reconstructed; baseline-only/QC rows remain explicitly Incomplete.
+A tenth released control rejects changed case/derivation/settlement material.
+Host checks pass; fresh native verification of that increment is still required.
 
 ## Offline Correspondence Inspection
 

@@ -1050,7 +1050,7 @@ def inspect_native_category_report(run, report_data, *, expected_inputs, native_
 def inspect_native_compatibility_report(run, report_data, *, expected_inputs, native_evaluation):
     """Replay compatibility runtimes only with their original released executor."""
     from conformance_execution import OwnedRun
-    from conformance_sdk_checks import inspect_compatibility_runtime_scope
+    from conformance_sdk_checks import inspect_compatibility_runtime_scope, verify_compatibility_case_report
     from conformance_sources import NativeCompatibilityEvaluation
 
     if type(run) is not OwnedRun or type(native_evaluation) is not NativeCompatibilityEvaluation:
@@ -1067,7 +1067,7 @@ def inspect_native_compatibility_report(run, report_data, *, expected_inputs, na
     for scope, key in (("architecture", "architectureRuntime"), ("version", "versionRuntime"),
                        ("binary", "binaryRuntime")):
         _, retained = _readonly_report_proof(run.root, f"proofs/compatibility-{scope}-runtime-summary.json")
-        observed, records = inspect_compatibility_runtime_scope(
+        observed, records, _ = inspect_compatibility_runtime_scope(
             run.root, inputs, scope, summary[key], summary["architecturePreparation"])
         if canonical_bytes(observed) != retained or retained != canonical_bytes(summary[key]):
             raise ConformanceError("ProofMismatch")
@@ -1075,12 +1075,25 @@ def inspect_native_compatibility_report(run, report_data, *, expected_inputs, na
         counts[scope] = observed["passedParameters"]
     if tuple(commands) != native_evaluation.command_hashes:
         raise ConformanceError("ProofMismatch")
+    _, active_data = _readonly_report_proof(run.root, "proofs/compatibility-runtime-report.json")
+    active = admit_entity("QualificationReport", load_json(active_data))
+    if summary.get("runtimeCases") != verify_compatibility_case_report(
+            run.root, inputs, summary, report_data=active_data):
+        raise ConformanceError("ProofMismatch")
+    _, released_data = _readonly_report_proof(run.root, "proofs/compatibility-runtime-released-report.json")
+    released = admit_entity("QualificationReport", load_json(released_data))
+    expected = admit_entity("QualificationReport", {**active, "resources": run.resource_projection()})
+    if released != expected:
+        raise ConformanceError("ProofMismatch")
+    cases = verify_compatibility_case_report(run.root, inputs, summary, report_data=released_data)
     return MappingProxyType({
         "qualification": False, "profileComplete": False, "runtimeOriginVerified": True,
         "scope": "native-compatibility-runtime-origin-diagnostic",
         "reportSha256": hashlib.sha256(report_data).hexdigest(),
         "architectureParameters": counts["architecture"], "versionParameters": counts["version"],
         "binaryParameters": counts["binary"],
+        "passedCases": cases["passedCases"], "incompleteCases": cases["incompleteCases"],
+        "runtimeCaseReportSha256": cases["reportSha256"],
     })
 
 

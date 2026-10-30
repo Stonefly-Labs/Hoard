@@ -2019,7 +2019,7 @@ class NativeCompatibilitySources:
                 or len(self._scopes) >= len(order) or scope != order[len(self._scopes)]
                 or self._inputs_sha256 is not None and self._inputs_sha256 != hashed):
             raise evidence.ConformanceError("OwnershipInvalid")
-        observed, commands = inspect_compatibility_runtime_scope(run.root, inputs, scope, summary, prepared)
+        observed, commands, _ = inspect_compatibility_runtime_scope(run.root, inputs, scope, summary, prepared)
         if evidence.canonical_bytes(observed) != evidence.canonical_bytes(summary):
             raise evidence.ConformanceError("ProofMismatch")
         previous = max((sequence for _, rows in self._scopes.values() for sequence, _ in rows), default=0)
@@ -2031,6 +2031,8 @@ class NativeCompatibilitySources:
         self._scopes[scope] = (evidence.canonical_bytes(summary), commands)
 
     def capture_evaluation(self, inputs, summary):
+        from conformance_sdk_checks import verify_compatibility_case_report
+
         if (self._run.state != "Active" or self._evaluation is not None
                 or tuple(self._scopes) != ("architecture", "version", "binary")
                 or evidence.digest(inputs) != self._inputs_sha256):
@@ -2044,6 +2046,10 @@ class NativeCompatibilitySources:
                            ("binary", "binaryRuntime")):
             if evidence.canonical_bytes(summary.get(key)) != self._scopes[scope][0]:
                 raise evidence.ConformanceError("ProofMismatch")
+        _, report_data = evidence._readonly_report_proof(self._run.root, "proofs/compatibility-runtime-report.json")
+        if summary.get("runtimeCases") != verify_compatibility_case_report(
+                self._run.root, inputs, summary, report_data=report_data):
+            raise evidence.ConformanceError("ProofMismatch")
         commands = tuple(row for _, rows in self._scopes.values() for row in rows)
         self._evaluation = NativeCompatibilityEvaluation(
             self, self._inputs_sha256, evidence.canonical_bytes(summary), commands)

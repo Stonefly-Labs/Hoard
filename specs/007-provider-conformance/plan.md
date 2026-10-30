@@ -4621,6 +4621,54 @@ Provider APIs, package/module graph, production architecture/ADR/diagrams,
 CustomHost, infrastructure, releases and UI guides are unchanged. T071 remains
 open at70/86; fresh immutable native verification and implementation continue.
 
+### Verified compatibility origin and common diagnostic case report
+
+The separate immutable `61da22783276d12e0af4b341516fefcfee904f68`
+Linux/aarch64 run passes all3 live/nine released controls, test-only exit0
+in322117.07099999697 ms. Initial free scratch207389683712 bytes; no extra SDK
+prewarming. All88 architecture/114 version/7 binary parameters, including170
+version observations, bind common input SHA-256
+`5f8c4523342f57e555a249a5c71ceba99afdead41a71a205b7ee409862a831c4`.
+The full retained-root fingerprint remains unchanged after controls. Original
+packet SHA-256:
+`5edbdfa7efc699caf3ccad162471ea3ac0f3cae6b72591f67df82ec10de48d9f`.
+The earlier wrapper launch cloned without selecting the bundled feature branch
+and failed at import, before runtime execution. That failed checkout is retained;
+the corrected diagnostic driver explicitly selects the branch, uses a fresh
+clone name and checks exact clean source before imports. It does not change
+product evidence or any execution/acceptance budget.
+
+The next increment retains verified scope material and projects the fixed
+logical catalog into the common QualificationReport schema. Every runtime-backed
+case requires its exact original witnesses/derivation. Baseline-only and QC rows
+retain explicit EvidenceIncomplete attempts. Complete physical scope selection
+is still mandatory, including binary/architecture witnesses not yet mapped to a
+passed logical case; their original proofs remain in the report registry.
+
+Original active report bytes and their digest are pinned before capture.
+Actual release produces a separate copy changing only resources. Independent
+released inspection checks original authority, exact original/copy correspondence,
+fresh scope/case reconstruction, readonly proof bytes and actual completion
+measurements. The native factory adds a tenth released test for missing/
+optimistic/changed case reports and derivation bytes. Diagnostic state and
+baseline/QC incompleteness still prevent qualification.
+
+The focused release test first exposes the missing separate released report.
+Initial models then expose the existing requirement for explicit Incomplete
+attempts/nonempty proof registries; models and producer now preserve that schema
+without weakening it. The first438-test run fails only the namespace model's
+missing newly retained SDK closure. Adding that already-mocked file preserves
+the original namespace assertions; the corrected exact command
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes438 tests in110.298 seconds, four native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Fresh source-pinned native report controls remain
+required. README, DEVELOPMENT, quickstart and evidence contract are affected;
+other guides/graphs/provider APIs/IaC/releases/UI remain unchanged.
+T071 remains open at70/86; implementation continues.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

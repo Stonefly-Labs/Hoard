@@ -4115,11 +4115,15 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
     }, limit=64 * 1024)
     assembly = root / "stores/snapshot" / folder / name
     inputs_path = "proofs/compatibility-runtime-inputs.json"
+    proof_hashes = {}
 
     def read(path, limit):
         hashed, raw = evidence._readonly_report_proof(root, path)
         if len(raw) > limit:
             raise evidence.ConformanceError("OutputLimitExceeded")
+        if path in proof_hashes and proof_hashes[path] != hashed:
+            raise evidence.ConformanceError("ProofMismatch")
+        proof_hashes[path] = hashed
         return hashed, raw
 
     _, owner_data = read("runtime-owner.json", 64 * 1024)
@@ -4148,8 +4152,10 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
                 "architectureInputs": selected})):
         raise evidence.ConformanceError("ProofMismatch")
     runner = runtime_runner(root, inputs)
+    read("proofs/sdk-vstest-inputs.json", evidence.MAX_REPORT_BYTES)
     observations, commands, manifests = {}, [], {}
     previous_end = 0
+    execution_started = None
     for purpose, field in (("discovery", "discoveryManifestPath"), ("execution", "manifestPath")):
         manifest_path = evidence.relative_path(summary[field])
         manifest_sha, manifest_data = read(manifest_path, 2 * 1024**2)
@@ -4225,6 +4231,7 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
                     or {row["testIdentity"] for row in observed["discoveries"]} != set(tests)):
                 raise evidence.ConformanceError("WitnessMissing")
         else:
+            execution_started = record["startedMs"]
             proof_names = {path for path in names if re.fullmatch(r"proof-[0-9a-f-]{36}\.json", path)}
             if names != {"witnesses.jsonl", "completion.json", *proof_names} or len(proof_names) != len(tests):
                 raise evidence.ConformanceError("ProofMismatch")
@@ -4256,7 +4263,97 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
         "runtimeProofsSha256": evidence.digest(dict(observed["proofs"])),
         "nativeParentSha256": commands[-1][1],
         "manifestPath": summary["manifestPath"], "discoveryManifestPath": summary["discoveryManifestPath"],
-    }, tuple(commands)
+    }, tuple(commands), MappingProxyType({
+        "witnesses": observed["witnesses"], "proofs": MappingProxyType(proof_hashes),
+        "startedMs": execution_started, "endedMs": previous_end, "postInputs": post,
+    })
+
+
+def _compatibility_report_material(root, inputs, summary, *, resources):
+    from conformance_case_catalog import (
+        architecture_runtime_tests, binary_runtime_tests, expected_cases, version_runtime_tests,
+    )
+
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    proofs, selected, scopes = {}, {}, []
+    for scope, key, tests in (
+            ("architecture", "architectureRuntime", architecture_runtime_tests()),
+            ("version", "versionRuntime", version_runtime_tests()),
+            ("binary", "binaryRuntime", binary_runtime_tests())):
+        observed, _, material = inspect_compatibility_runtime_scope(
+            root, inputs, scope, summary[key], summary["architecturePreparation"])
+        path = f"proofs/compatibility-{scope}-runtime-summary.json"
+        hashed, raw = evidence._readonly_report_proof(root, path)
+        if raw != evidence.canonical_bytes(observed):
+            raise evidence.ConformanceError("ProofMismatch")
+        witnesses = {row["testIdentity"]: row for row in material["witnesses"]}
+        if (len(witnesses) != len(material["witnesses"]) or witnesses.keys() != tests.keys()
+                or selected.keys() & witnesses.keys()
+                or any(row["status"] != "Passed" for row in witnesses.values())):
+            raise evidence.ConformanceError("WitnessMissing")
+        selected.update(witnesses)
+        for name, value in {**material["proofs"], path: hashed}.items():
+            if name in proofs and proofs[name] != value:
+                raise evidence.ConformanceError("ProofMismatch")
+            proofs[name] = value
+        scopes.append(material)
+    started_ms = min(row["startedMs"] for row in scopes)
+    ended_ms = max(row["endedMs"] for row in scopes)
+    source_proofs, results = {}, []
+    cases = expected_cases("compatibility")
+    for case in cases:
+        if not case.witnesses:
+            incomplete = evidence.admit_entity("Attempt", {
+                "sequence": 1, "startedMs": started_ms, "endedMs": ended_ms, "status": "Incomplete",
+                "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"})
+            results.append(evidence._catalog_case_result(inputs, case, "Incomplete", [incomplete]))
+            continue
+        material = evidence.compatibility_case_material(
+            inputs, case_id=case.case_id, matrix_id=case.matrix_id,
+            witnesses=[selected[identity] for identity in case.witnesses],
+            sequence=1, started_ms=started_ms, ended_ms=ended_ms)
+        source_proofs.update(material["sourceProofs"])
+        results.append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
+    post = scopes[-1]["postInputs"]
+    evidence.verify_input_recomputation(inputs, post)
+    source_proofs["proofs/category-compatibility-diagnostic-completion-inputs.json"] = evidence.canonical_bytes(post)
+    proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in source_proofs.items()})
+    identities = {identity for case in cases for identity in case.witnesses}
+    report = evidence.admit_entity("QualificationReport", {
+        "schemaVersion": 1, "catalogRevision": evidence.CATALOG_REVISION, "inputs": inputs,
+        "postInputSha256": evidence.digest(post), "results": results,
+        "witnesses": [selected[identity] for identity in sorted(identities)],
+        "resources": resources, "proofs": proofs, "state": "Incomplete", "qualification": False,
+        "scope": ["compatibility-runtime-diagnostic"]})
+    return report, MappingProxyType(source_proofs)
+
+
+def verify_compatibility_case_report(root, inputs, summary, *, report_data):
+    report = evidence.admit_entity("QualificationReport", evidence.load_json(report_data))
+    expected, _ = _compatibility_report_material(root, inputs, summary, resources=report["resources"])
+    if report != expected:
+        raise evidence.ConformanceError("ProofMismatch")
+    for path, hashed in report["proofs"].items():
+        actual, _ = evidence._readonly_report_proof(root, path)
+        if actual != hashed:
+            raise evidence.ConformanceError("ProofMismatch")
+    evidence.verify_completion_inputs(root, report)
+    return {
+        "qualification": False, "reportState": "Incomplete",
+        "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "passedCases": sum(row["status"] == "Passed" for row in report["results"]),
+        "incompleteCases": sum(row["status"] == "Incomplete" for row in report["results"]),
+    }
+
+
+def _compatibility_case_report(run, inputs, summary):
+    report, sources = _compatibility_report_material(
+        run.root, inputs, summary, resources=run.resource_projection())
+    for path, raw in sources.items():
+        write_new(run.root / path, raw)
+    raw = evidence.canonical_bytes(report)
+    write_new(run.root / "proofs/compatibility-runtime-report.json", raw)
+    return verify_compatibility_case_report(run.root, inputs, summary, report_data=raw)
 
 
 def prepare_version_runtime(run, candidate, config, feed, *, msbuild=None):
@@ -4442,6 +4539,10 @@ def _release_compatibility_runtime(run, inputs, compatibility_summary, native_ev
     summary = {**compatibility_summary, "phase": "compatibility-replay-released",
                "profileComplete": False, "processResourcesReleased": True,
                "resources": run.resource_projection()}
+    _, active = evidence._readonly_report_proof(run.root, "proofs/compatibility-runtime-report.json")
+    report = evidence.admit_entity("QualificationReport", evidence.load_json(active))
+    released = evidence.admit_entity("QualificationReport", {**report, "resources": summary["resources"]})
+    write_new(run.root / "proofs/compatibility-runtime-released-report.json", evidence.canonical_bytes(released))
     inspected = evidence.inspect_native_compatibility_report(
         run, evidence.canonical_bytes(summary), expected_inputs=inputs,
         native_evaluation=native_evaluation)
@@ -4666,6 +4767,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                     raise evidence.ConformanceError("InputChanged")
                 evidence.verify_snapshot(candidate, sources)
                 baselines.verify_prepared_baselines(run.root, seal_sha)
+                compatibility_summary["runtimeCases"] = _compatibility_case_report(
+                    run, frozen_inputs, compatibility_summary)
                 write_new(run.root / "proofs/compatibility-runtime-active-summary.json",
                           evidence.canonical_bytes(compatibility_summary))
                 native_evaluation = native_sources.capture_evaluation(frozen_inputs, compatibility_summary)

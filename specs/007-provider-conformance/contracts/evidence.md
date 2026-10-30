@@ -1126,6 +1126,17 @@ input/group/window and control/observation-policy digests. Both attempt material
 and registered derivation hashes must match. This explicitly mapped linkage
 does not permit arbitrary cross-matrix witnesses or attest model origin.
 Baseline-only/QC derivations and a complete compatibility producer remain unbuilt.
+The common diagnostic report now emits every logical catalog row: witnessed
+runtime rows use independently reconstructed attempts; baseline-only/QC rows
+retain explicit EvidenceIncomplete attempts, never synthesized passes.
+`proofs/compatibility-runtime-report.json` remains the immutable active original;
+`proofs/compatibility-runtime-released-report.json` may differ only by the actual
+resource projection. Original capture pins the active report's digest in the
+summary; released inspection reconstructs both reports, checks all original
+transport/derivation/proof bytes and actual completion inputs, and requires the
+original native token/owner. Neither complete case enumeration nor runtime
+origin changes diagnostic state into qualification. Host checks pass; fresh
+native report controls remain required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

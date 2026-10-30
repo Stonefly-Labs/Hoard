@@ -17,7 +17,77 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_compatibility_common_report_replays_complete_scopes_and_leaves_baseline_qc_incomplete(self):
+        import hashlib
+        import uuid
+        import conformance_case_catalog as catalog
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            fixture = ConformanceAdmissionTests()
+            inputs = fixture.inputs()
+            inputs.update(profileId="compatibility", bindings=[])
+            inputs["budgets"]["profileSeconds"] = 3600
+            summary, scopes = {"architecturePreparation": {}}, {}
+            for index, (scope, tests) in enumerate((
+                    ("architecture", catalog.architecture_runtime_tests()),
+                    ("version", catalog.version_runtime_tests()), ("binary", catalog.binary_runtime_tests()))):
+                summary[scope + "Runtime"] = {"qualification": False, "scope": scope + "-runtime-diagnostic"}
+                sdk.write_new(root / f"proofs/compatibility-{scope}-runtime-summary.json",
+                              evidence.canonical_bytes(summary[scope + "Runtime"]))
+                witnesses, proofs = [], {}
+                for identity in tests:
+                    execution = str(uuid.uuid4())
+                    raw = evidence.canonical_bytes({"qualification": False, "executionId": execution})
+                    hashed = hashlib.sha256(raw).hexdigest()
+                    path = "proofs/modeled-" + execution + ".json"
+                    sdk.write_new(root / path, raw)
+                    proofs[path] = hashed
+                    witnesses.append({
+                        **fixture.report()["witnesses"][0], "executionId": execution, "testIdentity": identity,
+                        "bindingId": "none", "matrixId": scope + "-runtime",
+                        "inputSha256": evidence.digest(inputs), "startedMs": index * 3 + 1,
+                        "endedMs": index * 3 + 2, "proofSha256": hashed})
+                scopes[scope] = {
+                    "witnesses": witnesses, "proofs": proofs,
+                    "startedMs": index * 3, "endedMs": index * 3 + 3, "postInputs": inputs}
+
+            def replay(selected_root, selected_inputs, scope, selected_summary, prepared):
+                self.assertEqual(selected_root, root)
+                self.assertEqual(selected_inputs, evidence.admit_entity("RunInputs", inputs))
+                return selected_summary, (), scopes[scope]
+
+            run = SimpleNamespace(root=root, resource_projection=lambda: ())
+            with mock.patch.object(sdk, "inspect_compatibility_runtime_scope", side_effect=replay):
+                observed = sdk._compatibility_case_report(run, inputs, summary)
+                raw = (root / "proofs/compatibility-runtime-report.json").read_bytes()
+                report = evidence.load_json(raw)
+                self.assertEqual(len(report["results"]), len(catalog.expected_cases("compatibility")))
+                self.assertEqual(observed["incompleteCases"],
+                                 sum(not case.witnesses for case in catalog.expected_cases("compatibility")))
+                self.assertFalse(report["qualification"])
+                self.assertEqual(report["state"], "Incomplete")
+                for defect in ("missing-case", "duplicate-case", "optimistic"):
+                    changed = evidence.load_json(raw)
+                    if defect == "missing-case":
+                        changed["results"].pop()
+                    elif defect == "duplicate-case":
+                        changed["results"].append(changed["results"][0])
+                    else:
+                        changed["qualification"] = True
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        sdk.verify_compatibility_case_report(
+                            root, inputs, summary, report_data=evidence.canonical_bytes(changed))
+                scopes["binary"]["witnesses"].pop()
+                with self.assertRaisesRegex(evidence.ConformanceError, "^WitnessMissing$"):
+                    sdk.verify_compatibility_case_report(root, inputs, summary, report_data=raw)
+
     def test_released_compatibility_presentation_keeps_native_readonly_resource_projection(self):
+        import conformance_case_catalog as catalog
         import conformance_evidence as evidence
         import conformance_sdk_checks as sdk
         from test_conformance_evidence import ConformanceAdmissionTests
@@ -28,6 +98,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
             original = b'{"qualification":false,"phase":"compatibility-replay-admitted"}'
             sdk.write_new(root / "proofs/compatibility-runtime-active-summary.json", original)
             inputs = ConformanceAdmissionTests().inputs()
+            inputs.update(profileId="compatibility", bindings=[])
+            inputs["budgets"]["profileSeconds"] = 3600
             resource = evidence.admit_entity("ResourceOwnership", {
                 "runId": inputs["runId"], "rootId": "modeled-root", "childPid": 0,
                 "childStartSha256": "0" * 64, "state": "Released",
@@ -35,6 +107,21 @@ class CompositionDiagnosticTests(unittest.TestCase):
             run = SimpleNamespace(
                 root=root, transition=mock.Mock(), release=mock.Mock(),
                 resource_projection=mock.Mock(return_value=(resource,)))
+            active_report = {
+                **ConformanceAdmissionTests().report(), "inputs": inputs,
+                "postInputSha256": evidence.digest(inputs),
+                "results": [evidence._catalog_case_result(
+                    inputs, catalog.expected_cases("compatibility")[0], "Incomplete", [
+                        evidence.admit_entity("Attempt", {
+                            "sequence": 1, "startedMs": 0, "endedMs": 1, "status": "Incomplete",
+                            "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"})])],
+                "witnesses": [], "proofs": {
+                    "proofs/compatibility-runtime-active-summary.json": evidence.file_sha256(
+                        root / "proofs/compatibility-runtime-active-summary.json")},
+                "resources": [{**resource, "state": "Active"}], "state": "Incomplete",
+                "scope": ["compatibility-runtime-diagnostic"]}
+            active_raw = evidence.canonical_bytes(active_report)
+            sdk.write_new(root / "proofs/compatibility-runtime-report.json", active_raw)
             token = object()
             output = io.StringIO()
             with contextlib.redirect_stdout(output), mock.patch.object(
@@ -53,6 +140,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
             self.assertFalse(shown["qualification"])
             self.assertFalse(shown["profileComplete"])
             self.assertEqual((root / "proofs/compatibility-runtime-active-summary.json").read_bytes(), original)
+            released_report = evidence.load_json(
+                (root / "proofs/compatibility-runtime-released-report.json").read_bytes())
+            self.assertEqual(released_report, {
+                **evidence.load_json(active_raw), "resources": [dict(resource)]})
+            self.assertEqual((root / "proofs/compatibility-runtime-report.json").read_bytes(), active_raw)
 
     def test_compatibility_replay_requires_actual_transient_snapshot_not_legacy_candidate_namespace(self):
         import hashlib
@@ -97,6 +189,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         "runtimeProofsSha256", "nativeParentSha256")}}
                 for path, raw in (
                         ("proofs/compatibility-runtime-inputs.json", evidence.canonical_bytes(inputs)),
+                        ("proofs/sdk-vstest-inputs.json", b"{}"),
                         (prepared["inputMapPath"], map_raw),
                         ("runtime-owner.json", evidence.canonical_bytes({
                             "schemaVersion": 1, "runId": inputs["runId"],
@@ -1731,6 +1824,34 @@ def native_compatibility_origin_tests(evaluation, *, released):
 
         def test_changed_completion_bytes_cannot_borrow_original_scope_summary(self):
             self.mutate_and_restore(owner.root / "proofs/compatibility-version-completion-inputs.json", "ProofMismatch")
+
+        def test_changed_common_case_report_and_derivations_cannot_borrow_original_transport(self):
+            path = owner.root / "proofs/compatibility-runtime-released-report.json"
+            raw = path.read_bytes()
+            report = evidence.load_json(raw)
+            for defect in ("missing-case", "optimistic", "resources", "derivation"):
+                changed = evidence.load_json(raw)
+                if defect == "missing-case":
+                    changed["results"].pop(0)
+                elif defect == "optimistic":
+                    changed["qualification"] = True
+                elif defect == "resources":
+                    changed["resources"] = []
+                else:
+                    name = next(name for name in changed["proofs"] if name.startswith("proofs/compatibility-VERSION-"))
+                    changed["proofs"][name] = "0" * 64
+                try:
+                    path.chmod(0o600)
+                    path.write_bytes(evidence.canonical_bytes(changed))
+                    path.chmod(0o400)
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        inspect()
+                finally:
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+            name = next(name for name in report["proofs"] if name.startswith("proofs/compatibility-VERSION-"))
+            self.mutate_and_restore(owner.root / name, "ProofMismatch")
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCompatibilityOriginTests)
 

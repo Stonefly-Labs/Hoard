@@ -1018,6 +1018,12 @@ the failed packet remains separate. Compatibility report admission now also
 reconstructs fixed logical runtime cases from their exact physical witnesses,
 rejecting missing, duplicated, failed, foreign or retimed evidence. This does
 not yet produce a complete compatibility report or baseline/QC qualification.
+Fresh immutable `61da227` native execution now passes all3 live/nine released
+compatibility origin controls, with shared inputs unchanged through actual
+release. The next increment emits the common diagnostic case report from
+independently replayed scopes and preserves a separate released report.
+Runtime-backed rows are derived; baseline-only and QC rows stay explicitly
+Incomplete. Host checks pass; new native report controls remain pending.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

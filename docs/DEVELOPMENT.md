@@ -8841,6 +8841,34 @@ passes437 tests, four native-only skips, in107.230 seconds.
 `python3 scripts/conformance_unit_checks.py --all-tooling` finishes804 tests with
 zero failures/errors and29 native-only skips, nonqualifying exit2. That command
 has no600-second acceptance deadline and does not cover subsequent repairs.
+Fresh immutable `61da227` Linux/aarch64 execution now passes all3 live/nine
+released origin controls, test-only exit0 in322117.071000 ms; initial free
+scratch207389683712 bytes, no extra SDK prewarming. All209 runtime parameters
+and170 version observations bind shared input SHA-256
+`5f8c4523342f57e555a249a5c71ceba99afdead41a71a205b7ee409862a831c4`.
+The original root fingerprint remains unchanged after controls. Original packet
+SHA-256: `5edbdfa7efc699caf3ccad162471ea3ac0f3cae6b72591f67df82ec10de48d9f`.
+An earlier wrapper launch did not check out the bundled branch and failed at
+import, before runtime execution; the corrected diagnostic driver explicitly
+selects the branch and checks the exact clean source before imports.
+
+The following increment projects independently replayed architecture/version/
+binary transports into the common QualificationReport schema. Exact runtime-backed
+logical cases pass only by reconstructed derivations; baseline-only and QC rows
+retain explicit EvidenceIncomplete attempts. The original active case report is
+preserved beside a released copy whose only change is the actual resource
+projection. Capture pins the original report through the immutable summary;
+released inspection independently replays all scopes, report/proof bytes and
+actual completion measurements, then checks the exact released copy. Diagnostic
+state cannot become qualification. The genuine factory adds a tenth released
+control for missing/optimistic/changed case reports and derivation bytes.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes438 tests, four native-only skips, in110.298 seconds.
+Catalog/SDK and diff checks pass. Fresh native case-report controls remain
+required; the earlier61da227 packet cannot cover this increment.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
