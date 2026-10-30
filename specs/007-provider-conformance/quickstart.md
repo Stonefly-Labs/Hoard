@@ -1429,6 +1429,17 @@ foundation authority are still required.
 The first original staging attempt fails before capture on an unnecessary
 readonly logger overwrite. That repair preserves and package-verifies the image;
 the failed attempt is retained and a fresh original acceptance is still needed.
+The fresh immutable `113b310` original passes14 live/15 released controls,
+142 logical cases/212 witnesses and all86 foundation parameters across nine
+scopes/three assemblies with actual release. Offline retained proof inspection
+matches, without granting native authority. Original `ba791bc` full-composition
+CI also succeeds with525 inherited parameters/58 scopes and833 trusted
+owning-controller tooling tests under600 seconds; earlier failures remain failed.
+The compatibility command now also runs original four-root fixture formatting
+and isolated-solution formatting, binding the required/binary original contract
+DLLs and freezing formatting descriptors into common runtime inputs. Its fresh
+native acceptance and independent executor-held settled foundation authority
+remain required; this is still diagnostic mode, not profile qualification.
 
 ## Offline Correspondence Inspection
 

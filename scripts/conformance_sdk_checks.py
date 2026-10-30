@@ -4107,6 +4107,49 @@ def prepare_foundation_runtime(run, repository, candidate, sources, config, feed
         if not logger.exists():
             shutil.copy2(candidate / LOGGER / "bin/Release/net10.0/Hoard.Conformance.TestLogger.dll", logger)
         verify_runtime_packages(runtime, feed, ("Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger"))
+    return source
+
+
+def format_foundation_runtime(run, source, sources, config, feed, prepared):
+    from conformance_composition_checks import _format_prepared_controllers, _prepare_solution_formatting
+    from conformance_inherited import admit_architecture_preparation, controller_read_inputs
+
+    admit_architecture_preparation(run.root, prepared)
+    target = run.root / "stores/compatibility-architecture"
+    projects, contracts = [], []
+    counts = {}
+    for base in ("providers", "architecture", "hosts", "compatibility"):
+        selected = sorted((target / base).rglob("*.csproj"))
+        if not 1 <= len(selected) <= 128:
+            raise evidence.ConformanceError("WitnessMissing")
+        counts[base] = len(selected)
+        projects.extend(selected)
+        for project in selected:
+            if project.stem in ("RequiredConsumer", "BinaryConsumer"):
+                name = "RequiredContract" if project.stem == "RequiredConsumer" else "BinaryContract"
+                contracts.append(project.parent.parent / f"Old/bin/Release/net10.0/{name}.dll")
+    _prepare_solution_formatting(run, source, config, feed)
+    evidence.verify_snapshot(source, sources)
+    descriptor = run.root / "proofs/foundation-formatting-projects.json"
+    write_new(descriptor, evidence.canonical_bytes({
+        "foundation": [project.relative_to(run.root).as_posix() for project in projects]}))
+    solution = source / "Hoard.slnx"
+    files = controller_read_inputs(run.root, {"foundation": run.root / prepared["manifestPath"]}, extra=(
+        descriptor, solution, run.root / "proofs/inherited-solution-lock-derivations.json",
+        *(source / name for name in sources), *projects, *contracts))
+    closure = run.root / "proofs/foundation-formatting-inputs.json"
+    write_new(closure, evidence.canonical_bytes(files))
+    observed = _format_prepared_controllers(
+        run, {"formatting": {"path": descriptor.relative_to(run.root).as_posix(),
+                             "sha256": evidence.file_sha256(descriptor)}},
+        files, closure, solution=solution, foundation_only=True)
+    evidence.verify_snapshot(source, sources)
+    summary = {
+        **observed, "fixtureProjects": counts, "inputMapPath": closure.relative_to(run.root).as_posix(),
+        "inputMapSha256": evidence.digest(files),
+    }
+    write_new(run.root / "proofs/foundation-formatting-summary.json", evidence.canonical_bytes(summary))
+    return summary
 
 
 def execute_foundation_runtime(run, repository, candidate, sources, config, feed, inputs, prepared, seal_sha, *,
@@ -4169,7 +4212,8 @@ def capture_compatibility_runtime_inputs(run, repository, candidate, config, fee
     from conformance_inherited import admit_architecture_preparation
 
     _, selected = admit_architecture_preparation(run.root, prepared)
-    paths = ["proofs/sdk-vstest-inputs.json"]
+    paths = ["proofs/sdk-vstest-inputs.json", "proofs/foundation-formatting-inputs.json",
+             "proofs/foundation-formatting-projects.json"]
     for folder, name in (
             (ARCHITECTURE_TESTS + "/bin/Release/net10.0", "Hoard.Architecture.Tests.dll"),
             (VERSION_TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0", "Hoard.Composition.Tests.dll"),
@@ -4893,7 +4937,10 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 verify_controller_invocations(run.root, invocations, "architecture", run.run_id, run.root_id)
                 compatibility_summary["architecturePreparation"] = {
                     **prepared, "parentSha256": parent_sha, "nativeInvocations": invocations}
-                prepare_foundation_runtime(run, repository, candidate, sources, config, feed, msbuild=msbuild)
+                foundation_source = prepare_foundation_runtime(
+                    run, repository, candidate, sources, config, feed, msbuild=msbuild)
+                compatibility_summary["foundationFormatting"] = format_foundation_runtime(
+                    run, foundation_source, sources, config, feed, prepared)
                 group = str(uuid.uuid4())
                 frozen_inputs = capture_compatibility_runtime_inputs(
                     run, repository, candidate, config, feed, prepared, seal_sha,

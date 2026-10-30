@@ -17,6 +17,60 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_foundation_formatting_requires_all_original_fixture_roots_and_isolated_solution(self):
+        import conformance_composition_checks as checks
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+        import conformance_sdk_checks as sdk
+
+        for defect in ("none", "omitted-fixture-root"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                source = root / "stores/foundation-source"
+                source.mkdir(parents=True)
+                (source / "Hoard.slnx").write_bytes(b"<Solution/>")
+                (source / "Original.cs").write_bytes(b"class Original {}")
+                sources = {path.name: evidence.file_sha256(path) for path in source.iterdir()}
+                target = root / "stores/compatibility-architecture"
+                for base in ("providers", "architecture", "hosts", "compatibility"):
+                    if defect == "omitted-fixture-root" and base == "compatibility":
+                        continue
+                    directory = target / base / "Fixture"
+                    (directory / "obj").mkdir(parents=True)
+                    (directory / "Fixture.csproj").write_bytes(b"<Project/>")
+                    (directory / "obj/project.assets.json").write_bytes(b'{"libraries":{}}')
+                manifest = target / "manifest.json"
+                manifest.write_bytes(b"{}")
+                prepared = {"manifestPath": manifest.relative_to(root).as_posix()}
+                run = SimpleNamespace(root=root)
+
+                def prepare(*args):
+                    (root / "proofs/inherited-solution-lock-derivations.json").write_bytes(b"[]")
+
+                with mock.patch.object(inherited, "admit_architecture_preparation"), \
+                        mock.patch.object(checks, "_prepare_solution_formatting", side_effect=prepare) as assets, \
+                        mock.patch.object(evidence, "verify_snapshot"), \
+                        mock.patch.object(checks, "_format_prepared_controllers", return_value={
+                            "qualification": False, "solutionFormatting": True, "commands": []}) as formatter:
+                    if defect != "none":
+                        with self.assertRaisesRegex(evidence.ConformanceError, "^WitnessMissing$"):
+                            sdk.format_foundation_runtime(run, source, sources, root / "config", root / "feed", prepared)
+                        assets.assert_not_called()
+                        formatter.assert_not_called()
+                        continue
+                    observed = sdk.format_foundation_runtime(
+                        run, source, sources, root / "config", root / "feed", prepared)
+                self.assertEqual(observed["fixtureProjects"], {
+                    "providers": 1, "architecture": 1, "hosts": 1, "compatibility": 1})
+                self.assertEqual(formatter.call_args.kwargs, {
+                    "solution": source / "Hoard.slnx", "foundation_only": True})
+                closure = evidence.load_json((root / observed["inputMapPath"]).read_bytes())
+                self.assertEqual(observed["inputMapSha256"], evidence.digest(closure))
+                self.assertTrue(all((source / name).relative_to(root).as_posix() in closure for name in sources))
+                projects = evidence.load_json((root / "proofs/foundation-formatting-projects.json").read_bytes())
+                self.assertEqual(len(projects["foundation"]), 4)
+
     def test_foundation_runtime_builds_do_not_overwrite_prepared_version_assets_or_pack_tests(self):
         import conformance_evidence as evidence
         import conformance_legacy as legacy
@@ -430,6 +484,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 runtime_paths.append(bundle.relative_to(root).as_posix())
             (root / "proofs").mkdir()
             (root / "proofs/sdk-vstest-inputs.json").write_bytes(b"selected-sdk")
+            for name in ("foundation-formatting-inputs.json", "foundation-formatting-projects.json"):
+                (root / "proofs" / name).write_bytes(b"frozen-formatting-input")
+                runtime_paths.append("proofs/" + name)
             lock = candidate / sdk.VERSION_TESTS / "packages.lock.json"
             lock.write_bytes(b"prepared-version-lock")
             base = ConformanceAdmissionTests().inputs()
@@ -1175,15 +1232,27 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_evidence as evidence
         for mutation in ("none", "solution", "unbound-solution", "foreign-root", "argv", "cwd", "inputs", "sequence", "hash",
                          "retained", "live-child", "failed", "changed-source", "changed-closure", "symlink",
-                         "duplicate", "missing-phase", "missing-assets"):
+                         "duplicate", "missing-phase", "missing-assets", "foundation-only", "foundation-contract",
+                         "missing-contract"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
                 projects, files = {}, {}
-                for phase in ("foundation", "lifecycle", "configuration", "discovery"):
-                    directory = root / "stores" / ("inherited-controller-" + phase)
+                foundation_only = mutation in ("foundation-only", "foundation-contract", "missing-contract")
+                phases = ("foundation",) if foundation_only else ("foundation", "lifecycle", "configuration", "discovery")
+                contract = None
+                for phase in phases:
+                    directory = root / "stores" / (
+                        "compatibility-architecture" if foundation_only else "inherited-controller-" + phase)
+                    if mutation in ("foundation-contract", "missing-contract"):
+                        directory /= "compatibility/BinaryMemberRemoval/Consumer"
+                        contract = directory.parent / "Old/bin/Release/net10.0/BinaryContract.dll"
+                        contract.parent.mkdir(parents=True)
+                        contract.write_bytes(b"actual original contract")
+                        if mutation != "missing-contract":
+                            files[contract.relative_to(root).as_posix()] = evidence.file_sha256(contract)
                     (directory / "obj").mkdir(parents=True)
-                    project = directory / "Example.csproj"
+                    project = directory / ("BinaryConsumer.csproj" if contract else "Example.csproj")
                     project.write_bytes(b"<Project/>")
                     assets = directory / "obj/project.assets.json"
                     assets.write_bytes(b"{}")
@@ -1223,7 +1292,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     self.assertEqual(["dotnet", "format"], arguments[:2])
                     self.assertEqual(["--verify-no-changes", "--no-restore", "-v", "quiet"], arguments[3:])
                     self.assertEqual(Path(arguments[2]).parent, kwargs["cwd"])
-                    self.assertEqual(3 if arguments[2].endswith(".slnx") else 4, len(kwargs["execution_inputs"]))
+                    self.assertEqual(3 if arguments[2].endswith(".slnx") else 5 if contract else 4,
+                                     len(kwargs["execution_inputs"]))
+                    if contract:
+                        self.assertEqual(kwargs["env"], {"ContractAssembly": str(contract)})
                     run.command_sequence += 1
                     now = time.monotonic() * 1000
                     record.update(
@@ -1253,11 +1325,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 run.command = mock.Mock(side_effect=command)
                 run.read_execution_record = mock.Mock(side_effect=lambda sequence: evidence.canonical_bytes(record))
                 run.live_children = mock.Mock(return_value=[1] if mutation == "live-child" else [])
-                if mutation in ("none", "solution"):
+                if mutation in ("none", "solution", "foundation-only", "foundation-contract"):
                     output = io.StringIO()
                     with contextlib.redirect_stdout(output):
                         observed = checks._format_prepared_controllers(
-                            run, controllers, files, closure, solution=solution)
+                            run, controllers, files, closure, solution=solution, foundation_only=foundation_only)
                     self.assertFalse(observed["qualification"])
                     self.assertEqual(solution is not None, observed["solutionFormatting"])
                     scopes = [*projects, *(("solution",) if solution else ())]
@@ -1274,8 +1346,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                             "EvidenceSchemaInvalid" if mutation == "missing-phase" else "ProofMismatch")
                     with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(
                             evidence.ConformanceError, code):
-                        checks._format_prepared_controllers(run, controllers, files, closure, solution=solution)
-                    if mutation in ("duplicate", "missing-phase", "missing-assets", "unbound-solution"):
+                        checks._format_prepared_controllers(
+                            run, controllers, files, closure, solution=solution, foundation_only=foundation_only)
+                    if mutation in ("duplicate", "missing-phase", "missing-assets", "unbound-solution", "missing-contract"):
                         run.command.assert_not_called()
 
     def test_solution_formatter_preparation_restores_missing_projects_with_locked_inputs(self):

@@ -1228,6 +1228,18 @@ complete formatting and independent settled foundation authority remain unfinish
 The first original run rejects a readonly architecture logger overwrite during
 staging. Staging now preserves that image and verifies its package bytes instead;
 this repair still needs a fresh original acceptance.
+The fresh immutable `113b310` original now passes14 live/15 released controls,
+142 logical cases/212 witnesses and all86 foundation parameters across nine
+scopes/three assemblies, with actual resource release. Independent retained
+proof inspection agrees; it does not mint settled foundation authority.
+Original `ba791bc` full-composition CI also succeeds with525 inherited parameters,
+58 scopes and833 trusted owning-controller tooling tests under the unchanged
+600-second gate; the earlier failed originals remain failed.
+Foundation formatting is now wired for every prepared project in all four
+original fixture roots plus the solution in its isolated source snapshot.
+Required/binary consumers bind their original contract DLLs; formatting receipts
+and closures enter the shared inputs. Fresh native formatting acceptance and
+executor-held independent settled foundation authority are still required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

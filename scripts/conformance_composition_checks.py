@@ -139,14 +139,14 @@ def _prepare_solution_formatting(run, source, config, feed):
     write_new(run.root / "proofs/inherited-solution-lock-derivations.json", evidence.canonical_bytes(records))
 
 
-def _format_prepared_controllers(run, controllers, files, closure_path, *, solution=None):
+def _format_prepared_controllers(run, controllers, files, closure_path, *, solution=None, foundation_only=False):
     descriptor = controllers["formatting"]
     path = run.root / evidence.relative_path(descriptor["path"])
     raw = read_bounded(path, 1024**2)
     if hashlib.sha256(raw).hexdigest() != descriptor["sha256"]:
         raise evidence.ConformanceError("InputChanged")
     projects = evidence.load_json(raw)
-    phases = ("foundation", "lifecycle", "configuration", "discovery")
+    phases = ("foundation",) if foundation_only else ("foundation", "lifecycle", "configuration", "discovery")
     if (not isinstance(projects, dict) or set(projects) != set(phases)
             or any(not isinstance(projects[phase], list) or not 1 <= len(projects[phase]) <= 200
                    for phase in phases)):
@@ -158,18 +158,27 @@ def _format_prepared_controllers(run, controllers, files, closure_path, *, solut
             project = run.root / evidence.relative_path(relative)
             legacy.no_symlinks(project)
             assets = project.parent / "obj/project.assets.json"
-            if (not project.is_relative_to(run.root / "stores" / ("inherited-controller-" + phase))
+            directory = run.root / "stores" / (
+                "compatibility-architecture" if foundation_only else "inherited-controller-" + phase)
+            if (not project.is_relative_to(directory)
                     or project.suffix != ".csproj" or relative in seen
                     or relative not in files or assets.relative_to(run.root).as_posix() not in files):
                 raise evidence.ConformanceError("ProofMismatch")
             seen.add(relative)
-            selected.append((phase, project, assets))
+            contract = None
+            if foundation_only and project.stem in ("RequiredConsumer", "BinaryConsumer"):
+                name = "RequiredContract" if project.stem == "RequiredConsumer" else "BinaryContract"
+                contract = project.parent.parent / f"Old/bin/Release/net10.0/{name}.dll"
+                legacy.no_symlinks(contract)
+                if contract.relative_to(run.root).as_posix() not in files:
+                    raise evidence.ConformanceError("ProofMismatch")
+            selected.append((phase, project, assets, contract))
     if solution is not None:
         legacy.no_symlinks(solution)
         if (not solution.is_absolute() or not solution.is_relative_to(run.root)
                 or solution.name != "Hoard.slnx" or solution.relative_to(run.root).as_posix() not in files):
             raise evidence.ConformanceError("ProofMismatch")
-        selected.append(("solution", solution, None))
+        selected.append(("solution", solution, None, None))
     frozen = {**files, path.relative_to(run.root).as_posix(): descriptor["sha256"],
               closure_path.relative_to(run.root).as_posix(): evidence.digest(files)}
     if read_bounded(closure_path, 2 * 1024**2) != evidence.canonical_bytes(files):
@@ -183,19 +192,21 @@ def _format_prepared_controllers(run, controllers, files, closure_path, *, solut
     for name in frozen:
         (run.root / name).chmod(0o400)
     commands = []
-    for phase, project, assets in selected:
+    for phase, project, assets, contract in selected:
         verify_inputs()
         print(json.dumps({"qualification": False, "phase": "inherited-prepared-formatting",
                           "controller": phase, "command": len(commands) + 1}), flush=True)
         bound = dict(evidence.input_manifest(run.root, [
             item.relative_to(run.root).as_posix()
-            for item in (path, closure_path, project, *((assets,) if assets is not None else ()))]))
+            for item in (path, closure_path, project, *((assets,) if assets is not None else ()),
+                         *((contract,) if contract is not None else ()))]))
         arguments = ["dotnet", "format", str(project), "--verify-no-changes", "--no-restore", "-v", "quiet"]
         sequence = run.command_sequence + 1
         started = time.monotonic() * 1000
         result = run.command(
             arguments, cwd=project.parent, kind="build", cache_id="inherited-format", timeout=180,
-            record_execution=True, execution_inputs=tuple(bound))
+            record_execution=True, execution_inputs=tuple(bound),
+            **({"env": {"ContractAssembly": str(contract)}} if contract is not None else {}))
         ended = time.monotonic() * 1000
         verify_inputs()
         if result.exit_code or any(event["code"] != "None" for event in result.events):

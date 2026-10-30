@@ -9622,6 +9622,28 @@ now copies the logger only when absent and always verifies both staged SDK/logge
 images against their actual packages; no readonly image is made writable.
 Affected composition/inherited/SDK/CI checks pass241 tests in33.456 seconds.
 The failed original is retained; fresh native acceptance remains required.
+Fresh immutable `113b3102c57dc42d04107fecaa00d4f917f30820`,
+attempt `fbebab0762e4482d82a91a49ab69f9cc`, exits0 after599466.297 ms:
+14 live/15 released controls,142 Passed/zero Incomplete/212 witnesses, plus86
+foundation parameters across nine scopes/three assemblies. Readonly exact-source
+inspection re-ingests all86 proofs after actual owner release and deleted stores;
+the original admission hash is
+`946e5225c7ee50668e7d65b401a842d979f9a369d991562fa85694433b9353ad`.
+That offline inspection explicitly has no native authority. Original `ba791bc`
+[full-composition run41042079850](https://github.com/Stonefly-Labs/Hoard/actions/runs/41042079850),
+job124022233248, also succeeds:36 components/110 snapshots,525 inherited
+parameters/58 scopes and833 trusted owning-controller tooling tests under the
+unchanged600-second gate. Earlier failed/cancelled originals are not relabeled.
+The new formatting integration preserves the original four fixture-root policy
+and solution check. It uses the separate source-identical foundation snapshot
+for solution assets so prepared version consumers remain unchanged. The exact
+original contract DLL is bound and passed through `ContractAssembly` for each
+required/binary consumer. Full readonly closures are rechecked around every
+actual180-second-bounded formatting command, and their descriptors enter the
+common runtime inputs. Composition/inherited/SDK/CI checks pass242 tests in
+39.562 seconds; `git diff --check` passes. Native formatting acceptance and
+executor-held independent settled foundation replay remain unfinished; no
+profile qualification is claimed.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

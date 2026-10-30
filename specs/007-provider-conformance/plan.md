@@ -5591,6 +5591,31 @@ The repair preserves an existing logger and independently validates its actual
 package hash, copying only an absent image; no proof mode/limit changes.
 Composition/inherited/SDK/CI checks pass241 tests in33.456 seconds. This original
 failure remains failed; fresh original native validation is still required.
+Fresh original `113b3102c57dc42d04107fecaa00d4f917f30820`,
+attempt `fbebab0762e4482d82a91a49ab69f9cc`, exits0/599466.297 ms with14
+live/15 released controls,142 Passed/zero Incomplete/212 witnesses and all86
+foundation parameters across nine scopes/three assemblies. Exact-source readonly
+inspection after actual release re-ingests every foundation proof and matches
+original scope admission
+`946e5225c7ee50668e7d65b401a842d979f9a369d991562fa85694433b9353ad`;
+this correspondence inspection explicitly does not mint native authority.
+Original `ba791bc` full-composition
+[run41042079850](https://github.com/Stonefly-Labs/Hoard/actions/runs/41042079850),
+job124022233248, succeeds with36 components/110 snapshots,525 inherited
+parameters/58 scopes and833 actual trusted owning-controller tooling tests.
+The original600-second tooling gate is unchanged; its exact elapsed time is
+not published in the closed summary. Prior failures remain failed.
+Foundation formatting is now integrated across all prepared projects under
+`providers`, `architecture`, `hosts`, `compatibility` and the isolated original
+solution. Missing root inventories reject. Required/binary consumers bind and
+use their original contract DLL environment; immutable closure/command receipts
+retain the existing source, timing, ownership, child-settlement and180-second
+checks. The isolated solution avoids mutating prepared version assets.
+Formatting descriptors/closures join shared runtime inputs before any scope.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_composition test_conformance_inherited test_conformance_sdk_checks test_conformance_ci`
+passes242 tests in39.562 seconds; `git diff --check` passes. Fresh native
+formatting acceptance and executor-held independent settled foundation replay
+remain required. T071..T086 remain open; no qualification or stage completion.
 
 ### Compatibility logical case linkage and released presentation
 
