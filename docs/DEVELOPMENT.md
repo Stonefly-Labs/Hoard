@@ -9178,6 +9178,15 @@ bottleneck; filesystem wait versus scheduling still needs attribution. Original
 metadata job123940942165 passes4 live/8 released/9 retained controls, finally
 exercising the frozen metadata PDB repair. Compatibility job123940942178 also
 passes. These diagnostic successes are not full profile qualification.
+The reader now also measures wall time inside its existing read calls as
+`readElapsedMs`, including a throwing read. It reuses the post-read clock for the
+unchanged deadline guard, adds no I/O/prewarming, and keeps all file/byte/entry/depth
+bounds. This distinguishes read-call delay from traversal/other elapsed time;
+descheduling inside a read remains included. The existing two-byte regression first
+fails for the absent measurement, then verifies5000ms read/wall and125ms CPU,
+original failure and safe SDK/public CLI projection. The focused SDK/CLI/input
+selection passes205 tests in34.021 seconds; actual new CI attribution is pending.
+This is diagnostic instrumentation, not a reader optimization or acceptance.
 
 Source-recipe builds now freeze a complete source/package input frame, configuration,
 project and selected lock, record original compiler parents and exact DLL/PDB output

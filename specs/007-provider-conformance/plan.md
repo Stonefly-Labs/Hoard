@@ -5058,6 +5058,18 @@ finally exercising the earlier frozen-PDB repair. Compatibility job123940942178
 passes too. Native/artifact jobs remain running at this observation; no successful
 workflow or full profile is inferred. Only strict closed/numeric log projections
 are reflected.
+To distinguish delay inside reads from traversal/other elapsed work, the reader
+now also retains `readElapsedMs`, using clocks around the original calls (including
+throwing reads) and reusing their end clock for the unchanged deadline guard.
+There is no extra I/O, prewarming, caching or bound change. Scheduling inside
+a read is included, not mislabeled as proven disk service time. The existing
+two-byte regression first reproduces the absent metric, then verifies5000ms
+read/wall against125ms CPU, unchanged ProofMismatch and safe SDK/public CLI.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_cli
+test_conformance_evidence.ConformanceInputTests` passes205 tests in34.021 seconds;
+catalog/SDK and diff checks pass. Original new CI read attribution remains pending;
+this is not the required reader repair or full acceptance.
 
 Source-recipe compiler authority is now being connected without promoting cases.
 The producer freezes complete historical/current source maps, recipe policy,

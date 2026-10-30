@@ -1289,6 +1289,8 @@ verification and logical source assertions remain unfinished.
 On a rejected proof read, `proofRead` now exposes original numeric file/byte/
 entry counts, elapsed milliseconds and process CPU milliseconds through
 SDK/category CLI diagnostics.
+`readElapsedMs` additionally measures wall time inside the original read calls,
+not an extra read; scheduling delay inside those calls is included.
 It contains no private names and performs no additional reads or prewarming.
 The existing five-second limit and failure outcome remain unchanged.
 Original `3589481` passes8/12 controls, but readonly inspection catches missing

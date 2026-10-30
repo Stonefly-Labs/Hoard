@@ -1648,18 +1648,20 @@ class _ProofReadObservation:
     entries_seen: int
     elapsed_ms: float
     cpu_elapsed_ms: float
+    read_elapsed_ms: float
 
     def __post_init__(self):
         for value in (self.files_hashed, self.bytes_read, self.entries_seen):
             _integer(value)
         _number(self.elapsed_ms)
         _number(self.cpu_elapsed_ms)
+        _number(self.read_elapsed_ms)
 
     def diagnostic(self):
         return {
             "filesHashed": self.files_hashed, "bytesRead": self.bytes_read,
             "entriesSeen": self.entries_seen, "elapsedMs": self.elapsed_ms,
-            "cpuElapsedMs": self.cpu_elapsed_ms}
+            "cpuElapsedMs": self.cpu_elapsed_ms, "readElapsedMs": self.read_elapsed_ms}
 
 
 def proof_read_diagnostic(error):
@@ -1677,12 +1679,13 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
     total = 0
     partial = 0
     entries_seen = 0
+    read_elapsed_ms = 0
     started = time.monotonic()
     cpu_started = time.process_time()
     deadline = started + 5
 
     def visit(descriptor, prefix="", depth=0):
-        nonlocal total, partial, entries_seen
+        nonlocal total, partial, entries_seen, read_elapsed_ms
         if depth > 32 or time.monotonic() >= deadline:
             raise ConformanceError("ProofMismatch")
         with os.scandir(descriptor) as entries:
@@ -1715,12 +1718,20 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
                             raise ConformanceError("ProofMismatch")
                         hashed = hashlib.sha256()
                         observed = 0
-                        while block := source.read(64 * 1024):
+                        while True:
+                            read_started = time.monotonic()
+                            try:
+                                block = source.read(64 * 1024)
+                            finally:
+                                read_ended = time.monotonic()
+                                read_elapsed_ms += (read_ended - read_started) * 1000
+                            if not block:
+                                break
                             observed += len(block)
                             partial = observed
                             if total + observed > MAX_PROOF_BYTES:
                                 raise ConformanceError("ProofMismatch")
-                            if time.monotonic() >= deadline:
+                            if read_ended >= deadline:
                                 raise ConformanceError("ProofMismatch")
                             hashed.update(block)
                         if observed != before.st_size:
@@ -1750,18 +1761,18 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
         if str(error) == "ProofMismatch":
             error._proof_read = _ProofReadObservation(
                 len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
-                (time.process_time() - cpu_started) * 1000)
+                (time.process_time() - cpu_started) * 1000, read_elapsed_ms)
             raise
         rejected = ConformanceError("ProofMismatch")
         rejected._proof_read = _ProofReadObservation(
             len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
-            (time.process_time() - cpu_started) * 1000)
+            (time.process_time() - cpu_started) * 1000, read_elapsed_ms)
         raise rejected from None
     except OSError:
         rejected = ConformanceError("ProofMismatch")
         rejected._proof_read = _ProofReadObservation(
             len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
-            (time.process_time() - cpu_started) * 1000)
+            (time.process_time() - cpu_started) * 1000, read_elapsed_ms)
         raise rejected from None
     if not files:
         raise ConformanceError("ProofMismatch")
