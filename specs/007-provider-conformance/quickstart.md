@@ -1388,6 +1388,12 @@ The next metadata-only retained ZIP freezes actual PE/PDB/loaded-MVID/original
 parent frames into both runtime roots and shared inputs.416 focused tests and
 managed build pass; fresh14/15 controls and ten physical binary witnesses are
 still required. QC-25 and full qualification remain incomplete.
+Immutable67be8bf now genuinely passes14/15 controls,88/114/10 physical parameters
+and141 Passed/one Incomplete/212 witnesses. Full host tooling passes831 tests,
+31 native skips. QC-25 independently derives from all source/binary/predecessor/
+break bases;253 focused tests pass. Fresh142-Passed native acceptance remains
+required, and diagnostic mode still cannot qualify. New CI full native830 passes,
+but independent environment-probe/proof-deadline failures remain unresolved.
 
 ## Offline Correspondence Inspection
 

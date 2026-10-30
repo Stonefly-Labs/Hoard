@@ -1190,6 +1190,11 @@ roots and common inputs: actual observer/old-consumer PE/PDB pairs, loaded-image
 assembly names/MVIDs and original execution/frame hashes are checked physically.
 416 focused checks and managed build pass; fresh14/15 native controls and the
 tenth binary witness remain unverified. QC-25/full qualification stay incomplete.
+Immutable67be8bf now passes all14 live/15 released controls and the ten-parameter
+binary scope:142 cases,141 Passed/one Incomplete,212 witnesses. Its full host suite
+passes831 tests,31 native skips. QC-25 now derives independently from the complete
+physical source/binary/predecessor/break bases;253 focused checks pass. Fresh
+142-Passed native acceptance is required; diagnostic mode still cannot qualify.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -5399,6 +5399,39 @@ passes with zero warnings/errors; catalog/diff checks pass. New14 live/15 releas
 controls,88/114/10 physical parameters and142 cases/141 Passed/one Incomplete/
 212 witnesses still require fresh actual native acceptance.
 
+Immutable67be8bf attempt0e934fab7eab45cea71ff156f3615e15 now genuinely passes14
+live/15 released controls, original exit0,564410.5652530051ms, initial scratch
+193141510144 bytes and no extra SDK prewarming. All88/114/10 physical parameters
+pass with170 version observations,142 cases/141 Passed/one Incomplete/212
+witnesses, runtimeOriginVerified true/profileComplete false. Packet SHA256:
+`4ec2b9801f6876e770fe6c3824365a80f748e8c517c43c9418d565c4371ec28e`.
+Exact-source `python3 -m unittest discover -s tests/tooling -q` passes831 tests
+in467.007 seconds with31 native-only skips.
+
+QC-25 now independently uses every complete binary-scope source/binary/predecessor/
+source-break/binary-break basis and all ten physical witnesses. The complete seal
+is frozen by original Active capture before the candidate snapshot; original
+retained execution and the physical old PE/PDB/loaded-candidate checks bind that
+unchanged old image set, without consumer rebuild during replay. Existing
+independent derivation checks input/scope/window/proof correspondence; modeled
+missing/failed/retried/retimed challenges now cover all five bases for QC-25/26.
+The regression first fails with one incomplete row.253 focused composition/
+admission/SDK/CI tests pass in33.701 seconds; new original14/15 controls with
+142 Passed/zero Incomplete remain required. Diagnostic mode still cannot qualify.
+
+Actual f711ffb native CI123988069378 passes830 tests, zero failures/errors/skips/
+expected failures/unexpected successes/unexpected diagnostic bytes, test-step
+590 seconds; catalog checks pass. Artifact123988069534 passes4/8/9 controls.
+Metadata123988069490 rejects DeadlineExceeded in the initial environment probe;
+compatibility123988069086 rejects the unchanged proof deadline at360 files/
+70422911 bytes/1170 entries,5053.735459000109ms wall/234.48790599999825ms CPU/
+10033.978533998612ms summed reads. No complete CI timing/qualification claim.
+Original0fd SDK123974955312 also succeeds, but that overall workflow remains failed.
+Separate current-source outer-only Linux/btrfs instrumentation selects all831
+tests, zero failures/errors/skips/unexpected bytes,484149.1196739953ms; it grants no
+native authority. The first globally instrumented run has21 synthetic result/clock
+failures in430946.4084880019ms and is retained as invalid acceptance instrumentation.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

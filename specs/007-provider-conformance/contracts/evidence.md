@@ -1356,6 +1356,14 @@ common parent owner/input/output/window bindings, without loading fixture DLLs.
 Both binary/predecessor derivations require the actual witness and ZIP binding.
 416 focused checks and managed build pass; fresh14/15 native controls, ten binary
 parameters and141 Passed/one Incomplete remain unverified. QC-25 stays incomplete.
+Immutable67be8bf now genuinely passes14/15 controls, ten binary parameters and
+141 Passed/one Incomplete/212 witnesses, actual Released resources and original
+authority retained. QC-25 now derives from all complete source/binary/predecessor/
+break bases and exact physical witnesses, independently reconstructing original
+input/window/proof correspondence and rejecting absent/failed/retried/retimed
+bases.253 focused checks pass; fresh142-Passed native acceptance is required.
+Even zero incomplete logical cases cannot override diagnostic mode or unmet
+full-profile obligations.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

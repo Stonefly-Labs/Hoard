@@ -9459,6 +9459,41 @@ New14 live/15 released controls, expected88/114/10 physical parameters and142
 cases/141 Passed/one Incomplete/212 witnesses require fresh actual native
 acceptance. No modeled fixture, build or expected count establishes that result.
 
+Immutable67be8bf original attempt0e934fab7eab45cea71ff156f3615e15 now passes all14
+live/15 released controls, exit0,564410.5652530051ms, initial scratch193141510144
+bytes and no extra SDK prewarming. All88/114/10 physical parameters pass, with
+170 version observations;142 cases/141 Passed/one Incomplete/212 witnesses,
+runtimeOriginVerified true/profileComplete false. Packet SHA256:
+`4ec2b9801f6876e770fe6c3824365a80f748e8c517c43c9418d565c4371ec28e`.
+Exact-source `python3 -m unittest discover -s tests/tooling -q` passes831 tests
+in467.007 seconds,31 native-only skips.
+
+QC-25 now uses the existing independent binary-scope derivation over every
+source/binary/predecessor/source-break/binary-break base and all ten exact
+physical witnesses. Pre-candidate original capture freezes the complete baseline
+seal before the candidate snapshot; retained capture checks those sealed old
+images against actual execution, and the physical witness checks old PE/PDB and
+loaded candidate identities. No old consumer is rebuilt during replay. Missing,
+failed, retried or retimed bases reject even with optimistic totals.253 focused
+composition/admission/SDK/CI tests pass in33.701 seconds; fresh actual14/15 controls
+with142 Passed/zero Incomplete remain required. Diagnostic mode/profileComplete
+false still prevent generic qualification.
+
+Actual f711ffb CI native123988069378 passes830 tests with zero failures/errors/
+skips/expected failures/unexpected successes/unexpected diagnostic bytes; the
+test step lasts590 seconds and catalog checks pass. Artifact123988069534 passes
+4/8/9 controls, but metadata123988069490 rejects DeadlineExceeded in its initial
+environment probe. Compatibility123988069086 still rejects the unchanged
+proof deadline:360 files/70422911 bytes/1170 entries,5053.735459000109ms wall,
+234.48790599999825ms CPU/10033.978533998612ms summed reads. Bounded completion
+refill is not complete CI timing acceptance. Original0fd SDK123974955312 now
+succeeds; its overall workflow remains failed. A separate outer-only timing
+diagnostic selects all831 current tests on Linux/btrfs, zero failures/errors/
+skips/unexpected bytes,484149.1196739953ms; its instrumentation grants no native
+authority or profile qualification. The first global timing instrumentation
+caused21 nested synthetic-result/clock failures and is preserved as an invalid
+acceptance attempt, not relabeled.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
