@@ -47,6 +47,9 @@ SOURCE_RECIPE_RUNTIME = "source-compatibility-fixture.zip"
 RETAINED_SCENARIOS = ("registration", "lifecycle", "configuration", "metadata-marker", "artifact-marker",
                       "memory", "sqlite", "local", "object")
 OBSERVER_PROJECT = "tests/fixtures/conformance/Compatibility/Observer/Observer.csproj"
+RETAINED_OBSERVER_INPUTS = "proofs/retained-observer-inputs.json"
+RETAINED_OBSERVER_IMAGES = "stores/retained-compatibility-observer"
+RETAINED_OBSERVER_ASSEMBLY = "Hoard.Conformance.Compatibility.Observer"
 BREAK_CONTROLS_PATH = "tests/fixtures/conformance/Compatibility/break-controls.json"
 HISTORICAL_BINARY_FIXTURE = "tests/fixtures/compatibility/BinaryMemberRemoval/"
 HISTORICAL_BINARY_PROJECTS = ("Old/BinaryContract.csproj", "Consumer/BinaryConsumer.csproj")
@@ -1082,14 +1085,41 @@ def execute_retained_consumers(run, candidate, candidate_sources, config, baseli
     if type(run) is not OwnedRun or run.state != "Active":
         raise ConformanceError("OwnershipInvalid")
     verify_snapshot(candidate, candidate_sources)
-    _build(run, candidate / OBSERVER_PROJECT, config, "compatibility-observer", msbuild=msbuild)
+    project = candidate / OBSERVER_PROJECT
+    observer_inputs = {
+        "schemaVersion": 1, "qualification": False, "mode": "retained-observer-inputs",
+        "baselineSealSha256": sha256(baseline_sha256),
+        "candidateSourceSha256": digest(candidate_sources), "sources": candidate_sources,
+        "configurationSha256": file_sha256(config),
+    }
+    with (run.root / RETAINED_OBSERVER_INPUTS).open("xb") as output:
+        output.write(canonical_bytes(observer_inputs))
+    output_root = "proofs/retained-observer-output"
+    output_paths = tuple(output_root + "/" + RETAINED_OBSERVER_ASSEMBLY + suffix for suffix in (".dll", ".pdb"))
+    _prepare_compiler_output(run, output_paths[0])
+    observer_commands = _build(
+        run, project, config, "compatibility-observer", msbuild=msbuild,
+        properties=("-p:OutputPath=" + str(run.root / output_root) + os.sep,
+                    "-p:AppendTargetFrameworkToOutputPath=false",
+                    "-p:PathMap=" + str(candidate) + os.sep + "=/_/"),
+        execution_inputs=_freeze_build_inputs(run, (
+            RETAINED_OBSERVER_INPUTS, Path(config).relative_to(run.root).as_posix(),
+            project.relative_to(run.root).as_posix(),
+            (project.parent / "packages.lock.json").relative_to(run.root).as_posix())),
+        execution_outputs=output_paths)
+    if not observer_commands:
+        raise ConformanceError("EvidenceIncomplete")
     verify_snapshot(candidate, candidate_sources)
-    observer = (candidate / OBSERVER_PROJECT).parent / (
-        "bin/Release/net10.0/Hoard.Conformance.Compatibility.Observer.dll")
-    no_symlinks(observer)
-    observer.chmod(0o400)
+    images = _stage_compiler_output(run, output_root, RETAINED_OBSERVER_IMAGES)
+    observer = images / (RETAINED_OBSERVER_ASSEMBLY + ".dll")
     observer_relative = observer.relative_to(run.root).as_posix()
     observer_sha = file_sha256(observer)
+    observer_preparation = {
+        "inputFrameSha256": file_sha256(run.root / RETAINED_OBSERVER_INPUTS),
+        "commands": list(observer_commands), "assemblyPath": observer_relative,
+        "assemblySha256": observer_sha,
+        "pdbSha256": file_sha256(images / (RETAINED_OBSERVER_ASSEMBLY + ".pdb")),
+    }
     records = []
     for scenario in RETAINED_SCENARIOS:
         staged = stage_retained_runtime(run, baseline_sha256, scenario)
@@ -1141,8 +1171,9 @@ def execute_retained_consumers(run, candidate, candidate_sources, config, baseli
             "observationSha256": hashlib.sha256(raw).hexdigest(), "loadedAssemblies": len(observed["loaded"]),
         })
     verify_snapshot(candidate, candidate_sources)
-    return {"schemaVersion": 1, "qualification": False, "mode": "retained-compatibility",
-            "baselineSealSha256": baseline_sha256, "observerSha256": observer_sha, "scenarios": records}
+    return {"schemaVersion": 2, "qualification": False, "mode": "retained-compatibility",
+            "baselineSealSha256": baseline_sha256, "observerSha256": observer_sha,
+            "observerPreparation": observer_preparation, "scenarios": records}
 
 
 def _command(run, args, *, cwd, cache_id, execution_inputs=(), execution_outputs=()):

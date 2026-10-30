@@ -1160,6 +1160,11 @@ acknowledgement, while target execution is still held; missing or foreign identi
 rejects before target release. All93 ownership/sanitation/CI checks pass on native
 Linux/btrfs without skips. The original CI UID failure was not independently
 reproduced, and fresh CI/full-profile acceptance is still required.
+Retained-consumer preparation now also records the observer compiler's exact
+source/configuration/lock inputs and DLL/PDB outputs, staged into transient owned
+storage before any consumer executes.237 focused checks pass. Independent
+retained-binary origin/physical assertions and fresh native replay remain pending;
+this producer increment does not promote the remaining three cases.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

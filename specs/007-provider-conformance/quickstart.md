@@ -1364,6 +1364,10 @@ and actual nonmissing UID/PID/start identity have been captured; foreign/missing
 identity still rejects with safe containment. All93 ownership/sanitation/CI
 checks pass on actual Linux/btrfs without skips. The original CI UID error was
 not reproduced independently; fresh CI/full-profile acceptance remains required.
+Retained preparation now declares original observer compiler inputs and DLL/PDB
+outputs and stages those exact images into transient owned storage before old
+consumers execute.237 focused checks pass; independent retained origin/physical
+assertions and fresh native replay remain required. No remaining case is promoted.
 
 ## Offline Correspondence Inspection
 

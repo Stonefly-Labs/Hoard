@@ -1318,6 +1318,13 @@ still held until that nonmissing identity is persisted. Original pidfd/provision
 ownership and all rejection/containment/deadline guards remain. Actual Linux/btrfs
 ownership/sanitation/CI checks pass93 tests without skips; full qualification and
 fresh CI acceptance remain open.
+Retained preparation schema2 additionally records the original observer compiler
+sequences/hashes, readonly source/configuration/project/lock inputs and exact
+DLL/PDB outputs. Compiler images move from bounded proof-only output slots into
+owned transient stores before old consumers run; raw compiler binaries are not
+retained as public proof files. This is producer provenance only: independent
+retained observation/origin/physical inspection is not yet complete and cannot
+qualify binary/predecessor/QC-25.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

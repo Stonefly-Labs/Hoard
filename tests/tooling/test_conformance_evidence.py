@@ -8980,13 +8980,29 @@ class ConformanceBaselineTests(unittest.TestCase):
             project = candidate / self.baselines.OBSERVER_PROJECT
             project.parent.mkdir(parents=True)
             project.write_text("<Project />")
+            (project.parent / "packages.lock.json").write_bytes(b"{}")
+            configuration = run.root / "config"
+            configuration.write_bytes(b"<configuration />")
             sources = self.baselines._hash_tree(candidate)
-            observer = project.parent / "bin/Release/net10.0/Hoard.Conformance.Compatibility.Observer.dll"
+            observer = run.root / (
+                "stores/retained-compatibility-observer/Hoard.Conformance.Compatibility.Observer.dll")
 
             def build(*args, **kwargs):
-                observer.parent.mkdir(parents=True)
-                observer.write_bytes(b"newly compiled observer bytes")
-                observer.chmod(0o644)
+                self.assertEqual(len(kwargs["execution_inputs"]), 4)
+                self.assertEqual(len(kwargs["execution_outputs"]), 2)
+                frame_path = kwargs["execution_inputs"][0]
+                frame = evidence.load_json((run.root / frame_path).read_bytes())
+                self.assertEqual(frame["sources"], sources)
+                self.assertEqual(frame["candidateSourceSha256"], evidence.digest(sources))
+                self.assertEqual(frame["baselineSealSha256"], "a" * 64)
+                self.assertEqual(frame["configurationSha256"], evidence.file_sha256(configuration))
+                for relative in kwargs["execution_inputs"]:
+                    self.assertEqual(stat.S_IMODE((run.root / relative).stat().st_mode), 0o400)
+                for relative in kwargs["execution_outputs"]:
+                    output = run.root / relative
+                    output.write_bytes(b"newly compiled observer bytes")
+                    output.chmod(0o400)
+                return ({"sequence": 1, "executionSha256": "b" * 64},)
 
             def native_boundary(*args, **kwargs):
                 captured = run._capture_execution_inputs(
@@ -8997,7 +9013,7 @@ class ConformanceBaselineTests(unittest.TestCase):
             with mock.patch.object(self.baselines, "_build", side_effect=build), \
                     mock.patch.object(self.baselines, "stage_retained_runtime", side_effect=native_boundary) as stage:
                 with self.assertRaisesRegex(evidence.ConformanceError, "DeadlineExceeded"):
-                    self.baselines.execute_retained_consumers(run, candidate, sources, run.root / "config", "a" * 64)
+                    self.baselines.execute_retained_consumers(run, candidate, sources, configuration, "a" * 64)
                 self.assertEqual(stage.call_count, 1)
         finally:
             run.transition("Settling")

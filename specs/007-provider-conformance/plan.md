@@ -5283,6 +5283,20 @@ original CI UID failure; its transient kernel cause is not proved. This repair
 eliminates the unready identity boundary, not the guard. Fresh CI/full tooling
 and all remaining binary/predecessor/QC-25/full-profile obligations remain open.
 
+Retained-consumer producer increment: observer compilation now freezes an exact
+source/configuration/baseline-seal frame, declares it with original project/lock/
+configuration as four readonly execution inputs, and declares actual DLL/PDB
+compiler outputs. Existing bounded proof-only output slots move atomically into
+`stores/retained-compatibility-observer` before any old consumer executes. Schema2
+retained preparation records source-frame and staged image hashes plus original
+compiler sequence/hashes. The existing observer admission regression first fails
+for absent compiler inputs, then verifies all four frozen inputs, both original
+outputs and exact source/configuration/seal correspondence before first admission.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceBaselineTests test_conformance_composition test_conformance_sdk_checks test_conformance_ci`
+passes237 tests in33.144 seconds. Native replay, independent retained inspection,
+executor-held authority and physical assertions are not yet established; the
+three remaining logical cases remain Incomplete.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

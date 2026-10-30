@@ -9344,6 +9344,20 @@ artifact/baseline prerequisite cases; it is not acceptance. Separately,16 origin
 flood samples pass without reproducing the CI UID error, so its transient kernel
 cause remains unproved. Fresh source CI and full-profile acceptance remain required.
 
+The next retained-consumer increment freezes a separate original observer source
+frame and declares the frame, configuration, project and lock as actual compiler
+inputs. Original DLL/PDB outputs use the existing bounded proof-only compiler
+slots, then move atomically into `stores/retained-compatibility-observer` before
+any old consumer runs. Schema2 retained preparation records exact compiler
+sequence/hashes, source-frame hash and staged image hashes; consumers still bind
+the actual observer bytes. The existing observer admission regression first fails
+for absent compiler inputs, then verifies all four readonly inputs, both outputs
+and source/configuration/seal correspondence before first consumer admission.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceBaselineTests test_conformance_composition test_conformance_sdk_checks test_conformance_ci`
+passes237 tests in33.144 seconds. Original retained observation inspection,
+executor-held authority and physical assertions remain unfinished; fresh native
+replay is required and binary/predecessor/QC-25 stay Incomplete.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
