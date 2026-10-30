@@ -199,7 +199,7 @@ jobs:
           PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_evidence.py \
             --native-category-controls \
             --profile "$CONFORMANCE_CATEGORY" --evidence "$private_parent/run" || status=$?
-          test "$status" -eq 2
+          test "$status" -eq 0
           python3 - "$private_parent/run" "$CONFORMANCE_CATEGORY" <<'PY'
           from pathlib import Path
           import sys

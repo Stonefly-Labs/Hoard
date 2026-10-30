@@ -8719,7 +8719,7 @@ class _RetainedNativeCategoryStructureControls:
         outputs = evidence.render_category_diagnostics(
             self.root, self.raw, expected_inputs=self.inputs,
             expected_report_sha256=hashlib.sha256(self.raw).hexdigest())
-        prefix = "category-" + self.profile
+        prefix = "category-" + self.profile + "-qualification"
         summary = evidence.load_json(outputs[prefix + "-diagnostic.json"])
         states = {state: sum(row["status"] == state for row in self.original["results"])
                   for state in evidence.STATUSES}
@@ -8882,6 +8882,73 @@ class _RetainedNativeCategoryStructureControls:
 
 
 class NativeCategoryControlRunnerTests(unittest.TestCase):
+    def test_control_success_is_distinct_from_the_underlying_nonqualifying_category_exit(self):
+        run = globals().get("run_native_category_controls")
+        self.assertTrue(callable(run))
+        import conformance_cli
+        import conformance_sdk_checks as checks
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        invocation = evidence.ConformanceInvocation(
+            "run", ROOT, "qualification", ("metadata",), evidence=ROOT.parent / "unused-native-controls")
+        inputs = {"profileId": "metadata"}
+        history, owner = SimpleNamespace(_inputs=inputs), SimpleNamespace(root=invocation.evidence)
+
+        class Control(unittest.TestCase):
+            def runTest(self):
+                pass
+
+        def suite(*args, **kwargs):
+            return unittest.TestSuite([Control()])
+
+        for status in (0, 1, 2):
+            def execute(arguments):
+                evidence.CategoryRuntimeHistory.replay_joint(history, plan={}, transports={})
+                checks._category_report(owner, inputs, inputs, {}, native_evaluation=object())
+                return status
+
+            with self.subTest(status=status), mock.patch.object(
+                    evidence, "admit_invocation", return_value=invocation), mock.patch(
+                    "conformance_execution.native_execution_supported", return_value=True), mock.patch.object(
+                    evidence.CategoryRuntimeHistory, "replay_joint", return_value={}), mock.patch.object(
+                    checks, "_category_report", return_value={}), mock.patch.object(
+                    sources, "read_bounded", return_value=b"{}"), mock.patch.dict(globals(), {
+                        "live_native_category_replay_tests": suite,
+                        "released_native_category_evaluation_tests": suite,
+                        "retained_native_category_structure_tests": suite}), mock.patch.object(
+                    conformance_cli, "main", side_effect=execute), contextlib.redirect_stdout(io.StringIO()) as output:
+                if status == 0:
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^CommandFailed$"):
+                        run([])
+                else:
+                    self.assertEqual(run([]), 0 if status == 2 else 1)
+                    if status == 2:
+                        packet = evidence.load_json(output.getvalue().encode())
+                        self.assertEqual(
+                            [packet[key] for key in ("liveOriginTests", "settlementOriginTests", "retainedReportTests")],
+                            [1, 1, 1])
+                        self.assertFalse(packet["qualification"])
+
+    def test_retained_presentation_control_uses_the_generated_qualification_mode_names(self):
+        producer = ConformanceRuntimeIngestionTests()
+        producer.setUp()
+        self.addCleanup(producer.doCleanups)
+
+        class PresentationControl(_RetainedNativeCategoryStructureControls, unittest.TestCase):
+            pass
+
+        for profile in ("metadata", "artifacts"):
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                report = producer.generated_category_report(root, profile)
+                control = PresentationControl(
+                    "test_public_diagnostic_surfaces_recompute_exact_counts_without_claiming_qualification")
+                control.root, control.profile = root, profile
+                control.original, control.inputs = report, report["inputs"]
+                control.raw = evidence.canonical_bytes(report)
+                control.test_public_diagnostic_surfaces_recompute_exact_counts_without_claiming_qualification()
+
     def test_explicit_native_control_cli_does_not_reflect_unavailable_private_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
             missing = Path(temporary).resolve() / "private-control-canary" / "missing.json"
@@ -9205,12 +9272,14 @@ def run_native_category_controls(arguments):
         raise evidence.ConformanceError("CommandFailed")
     if status == 1:
         return status
+    if status != 2:
+        raise evidence.ConformanceError("CommandFailed")
     if not all(counts.values()):
         raise evidence.ConformanceError("EvidenceIncomplete")
     print(evidence.canonical_bytes({
         "qualification": False, "scope": "native-category-control-diagnostic", "profileId": profile,
         "code": "None", **counts}).decode("ascii"))
-    return status
+    return 0
 
 
 if __name__ == "__main__":

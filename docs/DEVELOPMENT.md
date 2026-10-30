@@ -8568,7 +8568,9 @@ Ordinary foundational discovery does not acquire an external-packet dependency.
 Skipped, incomplete, failed, unexpectedly successful, noisy or flooded controls
 reject; private exceptions are not reflected. Missing callbacks cannot masquerade
 as success, and a failed underlying CLI remains failed. Successful controls
-still leave the category explicitly nonqualifying, exit2.
+return0 from the test-only runner; the underlying category must still return2
+and leave its report explicitly nonqualifying. CI requires the runner's0, so a
+missing/skipped control cannot pass by returning the category's expected2.
 
 `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
 test_conformance_evidence test_conformance_ci test_conformance_cli
@@ -8576,6 +8578,14 @@ test_conformance_sanitation` passes240 tests in101.217 seconds with four explici
 native-only skips. Catalog/SDK and diff checks pass. These host regressions
 verify orchestration and rejection, not genuine Linux mutation execution;
 that execution and the remaining T068/T077 obligations are still required.
+
+Two additional regressions first reproduce stale qualification-mode report
+filenames in retained controls and the ambiguous control/category exit status.
+The controls now use the actual qualification-mode presentation names and the
+distinct successful test-runner exit above. The same selection passes242 tests
+in107.512 seconds with four explicit native-only skips; catalog/SDK and diff
+checks pass. The original immutable `ae0a7fe` Linux attempt remains active and
+unchanged, not silently upgraded to these repaired control bytes.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

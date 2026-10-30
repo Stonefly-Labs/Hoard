@@ -3996,6 +3996,46 @@ diagrams/governance/backlog/predecessor/IaC/release/UI guides are unaffected
 because this connects test-only category controls without changing those
 contracts or operational surfaces.
 
+### Distinct native-control completion and current report names
+
+Two added regressions reproduce defects in the newly connected controls before
+their fixes. The retained presentation control still selects the old diagnostic
+filenames despite qualification-mode output names. It now selects the actual
+qualification-mode JSON/JUnit outputs for both profiles.
+The runner also returns the same2 for completed controls and some incomplete
+controls, so CI could accept a missing/skipped control if a valid report already
+exists. Successful test-only execution now returns0 only after all three
+factories run completely and the underlying nonqualifying CLI returns2.
+Underlying failure remains1; unexpected category success rejects. CI requires
+the runner's0 and still independently requires an `Incomplete`,
+`qualification: false` report with complete case/proof/resource checks.
+Incomplete control execution cannot satisfy that gate.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation` passes242 tests in107.512 seconds with four explicit
+native-only skips. Catalog/SDK and diff checks pass. These modeled orchestration
+and presentation regressions do not establish native origin. The immutable
+original `ae0a7fe` Linux metadata attempt remains active with its original
+bytes and209997721600 initially free scratch bytes; it is not relabeled as an
+execution of the repaired controls.
+
+The completed SDK diagnostic at `0e6af49` in CI run40988387716/job123848796514
+fails with `ProofMismatch` at the selected proof walk's distinct five-second
+read-deadline guard (`conformance_evidence.py:1531`), not its byte guard.
+Its preparation and artifact diagnostics succeed; other jobs remain active.
+That failed observation remains distinct from actual category-control
+execution, and neither proof limits nor acceptance coverage are relaxed.
+The `0e6af49` native timing hashes resolve to the managed artifact contributor,
+native public contributor and managed metadata contributor controls at
+185054.250,162698.360 and124698.045 ms respectively. The diagnosis is not
+reduced to the public contributor test alone.
+
+README/example commands need no change for this follow-up because they link to
+the updated quickstart and make no exit-code claim. DEVELOPMENT and quickstart
+are affected; all other unaffected-guide reasons above still hold.
+T068--T086 and implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -1137,8 +1137,12 @@ an unsuccessful attempt.
 
 The final closed control-count packet is emitted only after all three control
 stages pass. Even then the current category report remains `Incomplete`,
-`qualification: false`, exit2, not a five-profile qualification or independent
-runtime-origin verifier. Host orchestration regressions pass; genuine Linux
+`qualification: false`; its underlying production CLI returns2. The test-only
+runner instead returns0 only after all controls succeed, and category CI
+requires that0 before independently checking the nonqualifying report.
+An incomplete control therefore cannot masquerade as the expected category2.
+This is not a five-profile qualification or independent runtime-origin verifier.
+Host orchestration regressions pass; genuine Linux
 execution of these newly connected controls remains required.
 
 ## Offline Correspondence Inspection
