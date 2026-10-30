@@ -9157,6 +9157,38 @@ composition/admission/CI selection passes88 tests in6.113 seconds after the firs
 regression reproduces the unimplemented QC row. Fresh native execution remains
 required;138 Passed/four Incomplete is an expected criterion, not an observation.
 
+The separate immutable `9f10d1a` source-case attempt
+`17148304ec1d4e18bf50cbc2e6f34cbb` passes all8 live/13 released controls in
+458991.389447001ms, exit0, with199714336768 initial free scratch bytes and no
+extra SDK prewarming. The actual shared C# source-break assertion passes:
+142 cases/137 Passed/five Incomplete/210 witnesses. Separate readonly inspection
+confirms both13-file source scopes frozen, staged control bound to its original
+compiler receipt, and resources-only active/released differences. This does not
+verify the later QC-26 increment. The separate immutable `bba48b8` attempt
+`74faca16ebf04dea804f0e878e22aaee` subsequently passes all8 live/13 released
+controls, exit0, in463841.06184600026ms, initial scratch199487303680 bytes.
+Readonly independent report reconstruction verifies QC-26 Passed,142 cases/
+138 Passed/four Incomplete/210 witnesses, both13-file source scopes, the original
+control binding, Released resources and resources-only report differences.
+
+Original `bba48b8` CI SDK job123940941945 fails at the unchanged five-second
+reader guard after233 files/58371594 bytes/939 entries,5004.47748900001ms wall
+but only111.4042669999975ms process CPU. Hashing CPU is therefore not the elapsed
+bottleneck; filesystem wait versus scheduling still needs attribution. Original
+metadata job123940942165 passes4 live/8 released/9 retained controls, finally
+exercising the frozen metadata PDB repair. Compatibility job123940942178 also
+passes. These diagnostic successes are not full profile qualification.
+
+Source-recipe builds now freeze a complete source/package input frame, configuration,
+project and selected lock, record original compiler parents and exact DLL/PDB output
+hashes, and atomically stage images into transient stores using the same no-follow,
+no-overwrite helper as source-break controls. Prepared locks and source/feed checks
+are preserved. The new producer regression first reproduces missing native output
+declarations; `python3 -m unittest
+tests.tooling.test_conformance_evidence.ConformanceBaselineTests -q` passes26 tests.
+Independent source-recipe inspection, live ownership, runtime assertions and native
+acceptance are still required; no logical source/predecessor/QC-25 case is promoted.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

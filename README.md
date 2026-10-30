@@ -1099,11 +1099,18 @@ images against the unchanged128-image logger bound; the missing transport then
 masks that closed rejection. The assertion now compiles with the existing default
 binary controls and that complete runtime is selected, preserving all eight tests
 and both frozen source/historical image copies without raising bounds or pruning.
-Missing transports retain the original closed logger error. Fresh native execution
-remains required before claiming the additional logical case.
+Missing transports retain the original closed logger error. Immutable `9f10d1a`
+now passes all8 live/13 released controls, including the actual source-break
+assertion:142 cases/137 Passed/five Incomplete/210 witnesses. Readonly inspection
+confirms both13-file scopes frozen and resources-only report differences.
 QC-26 now independently derives from both complete source/binary break-and-repair
 bases and all eight physical witnesses, rejecting missing, failed, retried or
-retimed bases. Host88 checks pass; fresh native case/QC execution remains required.
+retimed bases. Immutable `bba48b8` passes all8 live/13 released controls; readonly
+inspection verifies QC-26 Passed and142 cases/138 Passed/four Incomplete/210
+witnesses, with only resources differing between reports.
+Source-recipe compilation now declares original parent inputs and DLL/PDB outputs,
+then atomically stages images outside retained proofs. Host26 baseline checks pass;
+independent source-recipe admission and native verification remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

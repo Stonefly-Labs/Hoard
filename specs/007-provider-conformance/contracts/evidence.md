@@ -1248,6 +1248,20 @@ bases and the entire eight-witness binary scope, including original input/group/
 window, controls and proof hashes. Missing, failed, retried or retimed bases reject.
 Released controls also challenge both derivation maps and actual retained proof
 bytes. Modeled checks do not replace fresh original native execution.
+Immutable `9f10d1a` subsequently passes the actual source-break assertion with all
+8 live/13 released controls:142 cases/137 Passed/five Incomplete/210 witnesses.
+The separate `bba48b8` run passes all8/13 controls and independently reconstructs
+QC-26 Passed:142 cases/138 Passed/four Incomplete/210 witnesses. Both inspections
+verify exact source inventories, original compiler-control binding and only actual
+resource differences between active/released reports; qualification remains false.
+
+Source-recipe producer schema2 additionally declares a readonly source/package/
+configuration frame, project and selected prepared/original lock as original
+compiler inputs, exact DLL/PDB native outputs and ordered parent-record hashes.
+Images are atomically moved from unique proof-only output slots to transient
+stores. Source/feed/lock checks remain unchanged. Producer tests pass; independent
+source-recipe admission, original live capture, retained replay and physical
+assertions remain unfinished, so no additional logical baseline case is claimed.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

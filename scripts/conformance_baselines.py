@@ -41,6 +41,7 @@ BASELINES = (
      "tests/fixtures/artifacts/RetainedMarker", "RetainedMarker.csproj"),
 )
 SOURCE_RECIPES_PATH = "tests/fixtures/conformance/baselines/source-consumers.json"
+SOURCE_COMPATIBILITY_INPUTS = "proofs/source-compatibility-inputs.json"
 RETAINED_SCENARIOS = ("registration", "lifecycle", "configuration", "metadata-marker", "artifact-marker",
                       "memory", "sqlite", "local", "object")
 OBSERVER_PROJECT = "tests/fixtures/conformance/Compatibility/Observer/Observer.csproj"
@@ -184,8 +185,16 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
     config = run.root / "stores/source-compatibility.NuGet.Config"
     with config.open("xb") as output:
         output.write(synthetic_nuget_configuration(feed))
+    input_frame = {
+        "schemaVersion": 1, "qualification": False, "baselineSealSha256": baseline_sha256,
+        "recipeSha256": digest(document), "candidatePackages": feed_hashes,
+        "configurationSha256": file_sha256(config),
+        "sources": {kind: manifest for kind, (_, manifest) in roots.items()}}
+    with (run.root / SOURCE_COMPATIBILITY_INPUTS).open("xb") as output:
+        output.write(canonical_bytes(input_frame))
+    (run.root / SOURCE_COMPATIBILITY_INPUTS).chmod(0o400)
     records = []
-    for recipe in document["recipes"]:
+    for index, recipe in enumerate(document["recipes"]):
         kind = recipe["sourceKind"]
         _, manifest = roots[kind]
         copied = copies[kind]
@@ -193,7 +202,6 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
         if recipe["project"] not in manifest:
             raise ConformanceError("InputChanged")
         verify_snapshot(copied, manifest)
-        preparations = []
         project_xml = ET.parse(project)
         references = project_xml.findall(".//PackageReference")
         explicit = [reference for reference in references if reference.get("Version") is not None]
@@ -201,20 +209,41 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
             raise ConformanceError("InputChanged")
         properties = ("-p:ManagePackageVersionsCentrally=false",) if explicit else ()
         baseline_lock = not (project.parent / "packages.lock.json").is_file()
-        _build(run, project, config, "candidate", source_root=copied, preparations=preparations,
-               properties=properties, baseline=baseline_lock, msbuild=msbuild)
+        alternate, preparation = prepare_project_lock(project, copied, feed, "candidate", baseline=baseline_lock)
+        preparations = [] if preparation is None else [preparation]
+        lock = alternate or project.parent / ("Baseline/packages.lock.json" if baseline_lock else "packages.lock.json")
+        lock_properties = (("-p:NuGetLockFilePath=" + str(lock),) if alternate is not None or baseline_lock else ())
+        assembly_name = project_xml.findtext(".//AssemblyName") or project.stem
+        relative_path(assembly_name + ".dll")
+        if "/" in assembly_name:
+            raise ConformanceError("InputChanged")
+        output = Path("proofs") / f"source-recipe-output-{index:02}"
+        output_paths = tuple((output / (assembly_name + suffix)).as_posix() for suffix in (".dll", ".pdb"))
+        _prepare_compiler_output(run, output_paths[0])
+        commands = _build(
+            run, project, config, "candidate", source_root=copied, msbuild=msbuild,
+            properties=(*lock_properties, *properties,
+                        "-p:OutputPath=" + str(run.root / output) + os.sep,
+                        "-p:AppendTargetFrameworkToOutputPath=false",
+                        "-p:PathMap=" + str(copied) + os.sep + "=/_/"),
+            execution_inputs=_freeze_build_inputs(run, (
+                SOURCE_COMPATIBILITY_INPUTS, config.relative_to(run.root).as_posix(),
+                project.relative_to(run.root).as_posix(), lock.relative_to(run.root).as_posix())),
+            execution_outputs=output_paths)
         verify_snapshot(copied, manifest)
         verify_snapshot(feed, feed_hashes)
         for preparation in preparations:
             verify_project_lock(preparation, copied, feed)
         packages, assets_sha = _source_recipe_packages(project, feed, baseline=baseline_lock)
-        assembly_name = project_xml.findtext(".//AssemblyName") or project.stem
-        assembly = project.parent / "bin/Release/net10.0" / (assembly_name + ".dll")
-        no_symlinks(assembly)
-        if not assembly.is_file():
+        if not commands:
             raise ConformanceError("EvidenceIncomplete")
+        staged = _stage_compiler_output(
+            run, output.as_posix(), f"stores/source-compatibility-images/recipe-{index:02}")
+        assembly = staged / (assembly_name + ".dll")
         records.append({
             **recipe, "sourceSha256": digest(manifest), "assemblySha256": file_sha256(assembly),
+            "assemblyName": assembly_name, "pdbSha256": file_sha256(assembly.with_suffix(".pdb")),
+            "outputDirectory": staged.relative_to(run.root).as_posix(), "commands": list(commands),
             "assetsSha256": assets_sha, "packages": packages, "lockPreparations": preparations,
             "properties": list(properties),
         })
@@ -222,8 +251,9 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
         verify_snapshot(copies[kind], manifest)
     verify_snapshot(candidate, candidate_sources)
     verify_prepared_baselines(run.root, baseline_sha256)
-    return {"schemaVersion": 1, "qualification": False, "mode": "source-compatibility",
+    return {"schemaVersion": 2, "qualification": False, "mode": "source-compatibility",
             "baselineSealSha256": baseline_sha256, "recipeSha256": digest(document),
+            "inputFrameSha256": file_sha256(run.root / SOURCE_COMPATIBILITY_INPUTS),
             "candidatePackages": feed_hashes, "recipes": records}
 
 
@@ -281,31 +311,33 @@ def source_break_output_paths(variant):
     return tuple("proofs/source-break-output-" + variant + "/" + name + suffix for suffix in (".dll", ".pdb"))
 
 
-def _prepare_source_break_outputs(run, variant):
+def _prepare_compiler_output(run, path):
     import conformance_evidence as evidence
 
     run._check_ledger()
     with evidence._input_root(run.root) as (_, root), evidence._input_parent(
-            root, source_break_output_paths(variant)[0], create=True):
+            root, path, create=True):
         pass
 
 
-def _stage_source_break_outputs(run, variant, *, repair=False):
+def _prepare_source_break_outputs(run, variant):
+    _prepare_compiler_output(run, source_break_output_paths(variant)[0])
+
+
+def _stage_compiler_output(run, source, target):
     import conformance_evidence as evidence
 
-    source = Path(source_break_output_paths(variant)[0]).parent
-    if repair and variant != "Consumer":
+    source, target = relative_path(source), relative_path(target)
+    if not source.startswith("proofs/") or not target.startswith("stores/"):
         raise ConformanceError("EvidenceIncomplete")
-    target = (Path("stores/compatibility-source-break") / BREAK_CONTROLS["source"]["fixture"]
-              / variant / "bin/Release" / ("net10.0-repair" if repair else "net10.0"))
     with evidence._input_root(run.root) as (_, root), evidence._input_parent(
-            root, source.as_posix()) as (parent, name):
+            root, source) as (parent, name):
         descriptor = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
         try:
             original = os.fstat(descriptor)
             if original.st_uid != os.getuid():
                 raise ConformanceError("InputChanged")
-            with evidence._input_parent(root, target.as_posix(), create=True) as (destination, target_name):
+            with evidence._input_parent(root, target, create=True) as (destination, target_name):
                 try:
                     os.stat(target_name, dir_fd=destination, follow_symlinks=False)
                 except FileNotFoundError:
@@ -319,6 +351,15 @@ def _stage_source_break_outputs(run, variant, *, repair=False):
         finally:
             os.close(descriptor)
     return run.root / target
+
+
+def _stage_source_break_outputs(run, variant, *, repair=False):
+    if repair and variant != "Consumer":
+        raise ConformanceError("EvidenceIncomplete")
+    source = Path(source_break_output_paths(variant)[0]).parent
+    target = (Path("stores/compatibility-source-break") / BREAK_CONTROLS["source"]["fixture"]
+              / variant / "bin/Release" / ("net10.0-repair" if repair else "net10.0"))
+    return _stage_compiler_output(run, source.as_posix(), target.as_posix())
 
 
 def execute_source_break(run, candidate, candidate_sources, config, baseline_sha256, *, msbuild=None):

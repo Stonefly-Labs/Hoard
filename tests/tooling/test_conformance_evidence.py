@@ -9001,6 +9001,75 @@ class ConformanceBaselineTests(unittest.TestCase):
         with self.assertRaises(evidence.ConformanceError):
             self.baselines._source_recipe_packages(project, feed)
 
+    def test_source_recipe_compiler_outputs_are_bound_to_original_parents_and_staged_out_of_proofs(self):
+        project, kind, role = self.baselines.SOURCE_RECIPE_POLICY[0]
+        historical = self.root / "stores/f06"
+        recipe = historical / project
+        recipe.parent.mkdir(parents=True)
+        recipe.write_text("<Project><PropertyGroup><AssemblyName>RecipeConsumer</AssemblyName></PropertyGroup></Project>")
+        (recipe.parent / "packages.lock.json").write_text("{}")
+        entry = self.manifest["entries"][-1]
+        entry["sources"] = self.baselines._hash_tree(historical, exclude_outputs=True)
+        entry["sourceSha256"] = evidence.digest(entry["sources"])
+        entry["locks"] = {path: value for path, value in entry["sources"].items()
+                          if path.endswith("packages.lock.json")}
+        entry["lockSha256"] = evidence.digest(entry["locks"])
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        candidate = self.root / "candidate"
+        candidate.mkdir()
+        (candidate / "source.cs").write_text("unchanged candidate source")
+        sources = self.baselines._hash_tree(candidate)
+        feed = self.root / "feed/candidate"
+        feed.mkdir()
+        package = feed / "Hoard.Example.0.1.0.nupkg"
+        package.write_bytes(b"candidate archive")
+        packages = {package.name: evidence.file_sha256(package)}
+        document = {"schemaVersion": 1, "qualification": False, "baselineRevision": self.baselines.BASELINE,
+                    "recipes": [{"project": project, "sourceKind": kind, "role": role}]}
+        run = mock.Mock(root=self.root, state="Active")
+        compiled = {}
+
+        def build(*args, **options):
+            inputs = options["execution_inputs"]
+            self.assertIn(self.baselines.SOURCE_COMPATIBILITY_INPUTS, inputs)
+            self.assertIn("stores/source-compatibility-historical-f06/" + project, inputs)
+            self.assertIn("stores/source-compatibility-historical-f06/"
+                          + str(Path(project).parent / "packages.lock.json"), inputs)
+            for path in inputs:
+                self.assertEqual((self.root / path).stat().st_mode & 0o777, 0o400)
+            self.assertIn("execution_outputs", options)
+            self.assertEqual(len(options["execution_outputs"]), 2)
+            output = next(value.removeprefix("-p:OutputPath=") for value in options["properties"]
+                          if value.startswith("-p:OutputPath="))
+            self.assertTrue(Path(output).is_dir())
+            for path in options["execution_outputs"]:
+                self.assertEqual((self.root / path).parent, Path(output))
+                raw = ("original compiler image " + Path(path).suffix).encode()
+                (self.root / path).write_bytes(raw)
+                (self.root / path).chmod(0o400)
+                compiled[Path(path).name] = hashlib.sha256(raw).hexdigest()
+            return ({"sequence": 1, "executionSha256": "a" * 64},)
+
+        with mock.patch.object(self.baselines, "source_recipes", return_value=document), mock.patch.object(
+                self.baselines, "_build", side_effect=build), mock.patch.object(
+                self.baselines, "prepare_project_lock", return_value=(None, None)), mock.patch.object(
+                self.baselines, "_source_recipe_packages", return_value=(packages, "b" * 64)):
+            observed = self.baselines.execute_source_recipes(
+                ROOT, run, candidate, sources, evidence.file_sha256(self.seal))
+        row, = observed["recipes"]
+        self.assertEqual(observed["inputFrameSha256"],
+                         evidence.file_sha256(self.root / self.baselines.SOURCE_COMPATIBILITY_INPUTS))
+        self.assertEqual(row["commands"], [{"sequence": 1, "executionSha256": "a" * 64}])
+        self.assertEqual(row["assemblySha256"], compiled["RecipeConsumer.dll"])
+        self.assertEqual(row["pdbSha256"], compiled["RecipeConsumer.pdb"])
+        staged = self.root / row["outputDirectory"]
+        self.assertTrue(staged.is_relative_to(self.root / "stores"))
+        self.assertEqual({path.name: evidence.file_sha256(path) for path in staged.iterdir()}, compiled)
+        self.assertFalse(any((self.root / "proofs").rglob("*.dll")))
+        self.assertFalse(any((self.root / "proofs").rglob("*.pdb")))
+        evidence.verify_snapshot(candidate, sources)
+        self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
+
     def test_source_recipes_reject_source_or_feed_mutation_by_the_build_without_touching_sealed_inputs(self):
         historical = self.root / "stores/f06"
         for project, kind, _ in self.baselines.SOURCE_RECIPE_POLICY:
@@ -9008,9 +9077,13 @@ class ConformanceBaselineTests(unittest.TestCase):
                 path = historical / project
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("<Project />")
+                (path.parent / "packages.lock.json").write_text("{}")
         entry = self.manifest["entries"][-1]
         entry["sources"] = self.baselines._hash_tree(historical, exclude_outputs=True)
         entry["sourceSha256"] = evidence.digest(entry["sources"])
+        entry["locks"] = {path: value for path, value in entry["sources"].items()
+                          if path.endswith("packages.lock.json")}
+        entry["lockSha256"] = evidence.digest(entry["locks"])
         self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
         seal_sha = evidence.file_sha256(self.seal)
         candidate = self.root / "candidate"
@@ -9029,7 +9102,8 @@ class ConformanceBaselineTests(unittest.TestCase):
                 changed.chmod(0o600)
                 changed.write_bytes(b"build changed an admitted input")
             with self.subTest(kind=changed_kind), \
-                    mock.patch.object(self.baselines, "_build", side_effect=mutate) as build:
+                    mock.patch.object(self.baselines, "_build", side_effect=mutate) as build, \
+                    mock.patch.object(self.baselines, "prepare_project_lock", return_value=(None, None)):
                 with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
                     self.baselines.execute_source_recipes(ROOT, run, candidate, sources, seal_sha)
                 self.assertEqual(build.call_count, 1)
@@ -9038,6 +9112,7 @@ class ConformanceBaselineTests(unittest.TestCase):
             for kind in ("historical-f06", "candidate-source-manifest"):
                 shutil.rmtree(self.root / "stores" / ("source-compatibility-" + kind))
             (self.root / "stores/source-compatibility.NuGet.Config").unlink()
+            (self.root / self.baselines.SOURCE_COMPATIBILITY_INPUTS).unlink()
             package.write_bytes(original_feed)
 
     def test_source_recipes_reject_omitted_binding_forged_history_and_changed_surface(self):

@@ -1304,6 +1304,9 @@ consumer alongside the seven binary controls. It checks original compiler
 diagnostics, actual DLL/PDB source provenance and compatible repair. Exact
 two-scope source/historical image bindings are required; fresh native execution
 must establish this additional logical case before it is reported passing.
+Immutable `9f10d1a` now establishes that actual assertion with all8 live/13
+released controls passing:142 cases/137 Passed/five Incomplete/210 witnesses.
+Readonly inspection confirms both13-file scopes and resources-only differences.
 The first package-runtime selection rejects139 images against the unchanged128
 logger cap; no bound is raised or selected inventory pruned. Sharing the source
 assertion with the existing default binary tests avoids that unnecessary runtime.
@@ -1312,6 +1315,12 @@ than a misleading missing-directory prerequisite failure.
 QC-26 also derives independently from both complete break/repair bases and all
 eight physical witnesses, rejecting failed/missing/retried/retimed bases. Fresh
 native acceptance is still required; modeled derivation is not qualification.
+The separate immutable `bba48b8` run now passes all8 live/13 released controls;
+independent readonly reconstruction verifies QC-26 Passed and142 cases/138 Passed/
+four Incomplete/210 witnesses, with resources-only report differences.
+Source-recipe compilation now records declared original compiler inputs/parents and
+DLL/PDB outputs, staging raw images into transient stores. Independent source-recipe
+admission and native execution remain unfinished; this is not source-case acceptance.
 
 ## Offline Correspondence Inspection
 

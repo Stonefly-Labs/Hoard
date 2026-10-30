@@ -5023,6 +5023,60 @@ checks pass. Fresh native execution is still required:138 Passed/four Incomplete
 210 witnesses are expected criteria, not verified observations. The separate
 immutable9f10d1a source-case run remains independent of this later QC increment.
 
+The immutable `9f10d1adb4208d653354eb649e5955de1c0f2460` attempt
+`17148304ec1d4e18bf50cbc2e6f34cbb` subsequently passes all8 live/13 released
+controls, exit0, in458991.389447001ms, initial scratch199714336768 bytes.
+No extra SDK prewarming occurs. Separate readonly inspection verifies the actual
+source-break logical row Passed, both exact13-file source inventories frozen,
+original staged compiler-control binding and resources-only active/released
+differences:142 cases/137 Passed/five Incomplete/210 witnesses.
+Original packet SHA256
+`10ae43d05fb8d32f67ec1003bd4d3bebb91b40fafe38c7b31e53b252825f99cc`;
+active/released report SHA256
+`c1b7a7452f4a9525799f62179b64bb032f97b51a6d78b00852e5f13a5200a5e4` /
+`0ffe547e6879fd31ed37c2e10f4cab4068bad7e7583a5ccaa4b723e463f2b904`.
+The separate original `bba48b8` QC-26 attempt
+`74faca16ebf04dea804f0e878e22aaee` then passes all8 live/13 released controls,
+exit0, in463841.06184600026ms, initial scratch199487303680 bytes, without
+extra SDK prewarming. A new readonly inspection container independently
+reconstructs the actual report and verifies QC-26 Passed,142 cases/138 Passed/
+four Incomplete/210 witnesses, both13-file source scopes, original compiler
+control binding, Released resources and resources-only report differences.
+Original packet SHA256
+`f713e1aed04c37aa556eb96b1096751856738c35aa3c0eb1711149dc4cd3e018`;
+active/released report SHA256
+`17b82c3816d38d43c2148e5b6a55d3e8eb5fd6a40ee14b34f2937b6abc5bd6f8` /
+`3119f82424f0cc94bd35a34b7e662bdf83f5a66a5f62802be7e860836c5bb9fc`.
+
+Original `bba48b8` foundations41018739498 SDK job123940941945 rejects at the
+unchanged five-second read guard after233 files/58371594 bytes/939 entries,
+5004.47748900001ms wall and111.4042669999975ms process CPU. The observed CPU
+is approximately2.2% of elapsed time: hashing CPU is not the elapsed bottleneck;
+filesystem/scheduling wait needs further attribution rather than a relaxed bound.
+Original metadata job123940942165 passes4 live/8 released/9 retained controls,
+finally exercising the earlier frozen-PDB repair. Compatibility job123940942178
+passes too. Native/artifact jobs remain running at this observation; no successful
+workflow or full profile is inferred. Only strict closed/numeric log projections
+are reflected.
+
+Source-recipe compiler authority is now being connected without promoting cases.
+The producer freezes complete historical/current source maps, recipe policy,
+candidate archives and configuration in a readonly input frame, then declares
+that frame, project, selected prepared/original lock and configuration for every
+actual compiler parent. Exact DLL/PDB outputs use unique existing proof-only slots
+and are atomically moved to transient stores with the extracted source-break
+no-follow/no-overwrite helper. Original source/feed/lock checks remain.
+The focused producer regression first fails for absent output declarations, then
+`python3 -m unittest tests.tooling.test_conformance_evidence.ConformanceBaselineTests
+-q` passes26 tests in0.933 seconds. Independent inspection, original live capture,
+retained replay and physical source witnesses are not yet implemented for these
+rows. Source, binary, predecessor-binaries and QC-25 remain incomplete.
+The dependent focused selection `PYTHONPATH=scripts:tests/tooling python3 -m
+unittest -q test_conformance_evidence.ConformanceBaselineTests
+test_conformance_composition test_conformance_sdk_checks test_conformance_ci`
+passes236 tests in34.139 seconds. `python3 scripts/conformance_case_catalog.py
+--check-sdk` and `git diff --check` pass.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`
