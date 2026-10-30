@@ -156,6 +156,33 @@ remain preserved. The subsequent output-sealing correction was not part of
 this frozen source. Next diagnosis is limited to the failed method, not a
 blind full-profile retry; this is the first observed native rejection of it.
 
+**Three-attempt stop for the inherited HTTP projection failure:** the original
+full run, a separate original-class run with explicit SDK10.0.203/runtime10.0.7,
+and one private diagnostic copy each produce7 Passed/2 Failed across the same
+nine parameters. Safe transient-output projection identifies
+`Assert.Equal() Failure` at original `DiscoveryBoundsTests.cs:64`: the module
+callback logs no longer match their pre-request snapshots. Both requested
+cancellation/deadline behaviors and the Running/admission assertions precede
+this guard; the subsequent fresh-capture assertion is not reached.
+
+The private copy preserves every assertion and adds only diagnostic capture
+code after that guard; no diagnostic capture event is reached. Raw errors,
+private paths and logs are neither printed nor retained. A preliminary
+`--no-restore` command rejects missing assets (`NETSDK1004`), then locked
+restore passes. Ordinary `dotnet test` returns0 without a positively captured
+test inventory and is not accepted as a passing comparison. The explicit
+VSTest runs positively confirm9 total/7 Passed/2 Failed.
+
+The best hypothesis is HTTP admission or asynchronous lifecycle work changing
+a live module callback log after its snapshot; the exact callback/cause is not
+established. This reproduces outside the conformance SDK staging path, so the
+catalog import and output sealing are not an established explanation.
+Implementation and further diagnostic attempts stop under the maintainer's
+three-attempt rule. The original frozen source/evidence, separate diagnostic
+volume and safe JSON observation summary remain preserved. No assertion,
+test selection for acceptance, product guarantee or budget is weakened.
+T071..T086 remain open and the stage remains `implement / running`.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

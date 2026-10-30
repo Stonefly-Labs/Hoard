@@ -9877,6 +9877,14 @@ projection cancellation/deadline method (7 Passed/2 Failed in that scope).
 Its settled original command and complete nine-witness failure remain
 preserved. The exception cause is not available in retained typed evidence;
 targeted diagnosis is required, not an automatic full-profile retry.
+Two bounded class comparisons reproduce7 Passed/2 Failed, positively observed
+through explicit VSTest execution. The failure is the module callback-log
+stability assertion at `DiscoveryBoundsTests.cs:64`, not its later fresh-capture
+assertion. Private diagnostic code preserves all assertions and is not reached
+after that guard. The exact callback/cause is not yet established; HTTP
+admission or asynchronous lifecycle work is the leading hypothesis. Work stops
+after the third observed failure as required; no further retry or repair is
+authorized by that checkpoint, and all original evidence remains preserved.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
