@@ -155,8 +155,12 @@ only a closed numeric first-failure category in its existing `UnknownDiagnostic`
 control event; ordinary/unclassified failures keep zero. The same unknown line
 still rejects and contains the child. No raw error or new successful event is
 admitted, and no deadline, parser or assertion is weakened. All 247 Linux
-execution/SDK/sanitation checks pass; one full native artifact replay remains
-pending.
+execution/SDK/sanitation checks pass. At exact `e5b9aec`, full native artifacts
+now qualify with 99 passed cases/four declared exclusions, 263 witnesses, all
+four real transfers, actual release and all 4 live/15 released/9 retained
+controls. Separate readonly replay verifies both external original receipts and
+eight rejecting mutations. Neither this result nor metadata at the different
+`c4e36cb` source qualifies the harness, common-source baseline or five-profile CI.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,

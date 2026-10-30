@@ -157,7 +157,12 @@ The bounded reproduction loop stops rather than retrying the profile until
 green. The existing rejected-transfer record now retains a closed numeric
 first-failure category, never raw errors; unknown output still rejects and
 contains the child. All 247 execution/SDK/sanitation checks pass on Linux.
-Native artifact replay of this observability correction remains pending.
+At exact `e5b9aec`, the complete native artifact replay now qualifies: 99 passed
+cases/four declared exclusions, 263 runtime witnesses, all four measured
+transfers and all 4 live/15 released/9 retained controls pass with actual release.
+A separate readonly process verifies both external receipts and rejects eight
+altered/missing/shortened controls. This does not establish a unique cause or
+repair for the earlier rejected run.
 No deadline, assertion or acceptance requirement changed. These control
 observations do not qualify the harness profile.
 These different-source fixture results do not establish a common baseline;

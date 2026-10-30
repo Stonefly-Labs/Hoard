@@ -15,7 +15,7 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
-### Native mutation-control custody: metadata verified, artifact rejection unresolved
+### Native mutation-control custody: metadata and artifacts independently verified
 
 The explicit `tests/tooling/test_conformance_evidence.py --native-category-controls`
 runner previously emitted only aggregate suite counts. It now captures exact
@@ -95,8 +95,34 @@ execution tests then pass, including actual known/unknown rejecting children,
 containment and no-raw-error retention. All 174 dependent SDK/sanitation tests
 pass with their required writable ignored `.foundation` scratch; an initial
 read-only scratch invocation is a setup rejection, not a pass. Frozen inventory,
-SDK/catalog and `git diff --check` pass. One fresh native artifact profile replay
-is pending; the old rejected profile is not repaired.
+SDK/catalog and `git diff --check` pass.
+
+The one fresh native artifact command
+`python3 -B tests/tooling/test_conformance_evidence.py --native-category-controls --profile artifacts --evidence /validation/work/native-controls-artifacts-e5b9aec/run`
+now passes at exact `e5b9aecaf1805ab639bfe7f220b6361bd5218c0d`: 103 cases
+(99 Passed/four declared exclusions), 263 runtime witnesses, all four real
+256-MiB/4-GiB transfers, and all 4 live/15 released/9 retained mutation controls.
+Actual release precedes separate category/control publication. A fresh process
+mounting source and evidence readonly independently verifies the full closure
+using both externally observed original stdout receipts; eight missing/altered/
+shortened receipt, input, source, phase and proof controls reject.
+
+| Retained artifact observation | SHA-256 |
+| --- | --- |
+| Original admitted inputs | `9764be4a8957f18b22d23c65c9e26ff47cb70b9193c8509d6f40c59979b40bcf` |
+| Original diagnostic report | `c446524de13edc16c329c44106d3b5570af46f3098c0b22aaaeb5a9a74f571a9` |
+| Separately qualified report | `038fb743c9e72925377b9032684a352f83b6dd0d497ba3b368f035d9e4ceb641` |
+| Actually released resources | `a5a45f48ea93418d76bfaf859b77bf559a8a7444a13d7d44b16d4c301dca059f` |
+| Native mutation-control proof | `1f72754a4f9de4547efdd5d00a8847c426a73ed8a4f46cfadb8f83cc8248445a` |
+| Retained original control source | `651c6d30690d427e06644fc4cae736ff2c8039abdfbdfe3afae78bfbf821f967` |
+
+This is genuine finite artifact qualification, not evidence that the earlier
+`c4e36cb` rejection has a uniquely established cause or repair. Its `Settling`
+root and both isolated diagnostic passes remain preserved. The bounded critical
+path's artifact prerequisite is now verified; remaining T071 evaluator
+obligations precede T072..T086. Metadata at `c4e36cb` and artifacts at `e5b9aec`
+still do not establish common-source harness/full-baseline or all-five CI
+qualification.
 
 README, DEVELOPMENT and harness guidance record the custody boundary. Provider
 guidance/examples and product architecture/ADR/charter/governance, infrastructure,

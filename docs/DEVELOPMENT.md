@@ -10278,8 +10278,14 @@ The regression fails before implementation. All 73 Linux execution checks and
 174 dependent SDK/sanitation checks pass, including actual known/unknown rejected
 children, original receipts, containment and raw-error canaries. The dependent
 checks require writable ignored `.foundation` scratch; an initial read-only
-layout rejects and is not passing evidence. One full native artifact replay of
-this correction remains pending. See the feature plan for exact commands, hashes
+layout rejects and is not passing evidence. The full native artifact replay at
+exact `e5b9aec` now qualifies: 99 passed cases/four declared exclusions, 263
+runtime witnesses, all four real transfers and all 4 live/15 released/9 retained
+controls, with actual release and separate category/control publication.
+A fresh readonly process independently verifies both external original stdout
+receipts and the complete closure; eight missing/altered/shortened controls
+reject. The earlier failed root remains preserved; this passing source does not
+establish that failure's unique cause or repair. See the feature plan for exact commands, hashes
 and critical path. T071..T086 remain open. README and feature plan/harness guidance are
 updated. Provider guidance/examples, product APIs,
 architecture/ADR/diagrams, governance, infrastructure, deployment/release and UI
