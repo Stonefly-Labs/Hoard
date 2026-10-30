@@ -1074,6 +1074,10 @@ Immutable `3c95c07` now passes all8 live/12 released native controls, including
 actual compiler rejection/repair:142 cases,136 Passed/six Incomplete and209
 witnesses, still nonqualifying. Source-only cases and full CI qualification
 remain unfinished.
+The next increment stages original source-control DLL/PDB pairs and five exact
+compiler/control frames into transient runtimes before input capture, with
+canonical PDB paths. Host514 checks pass; fresh native staging verification and
+logical source-case assertions remain required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

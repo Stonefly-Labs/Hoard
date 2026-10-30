@@ -1282,6 +1282,10 @@ Fresh immutable `3c95c07` now passes all8 live/12 released controls, including
 actual source compiler rejection/repair. Reports remain nonqualifying:
 142 cases,136 Passed/six Incomplete,209 witnesses; only resources differ.
 The remaining logical baseline/QC cases and full CI acceptance are not complete.
+Current source-case groundwork additionally stages eight canonical-path DLL/PDB
+images and five exact compiler/control frames into both transient runtimes,
+freezing them with common inputs. Host514 checks pass; fresh native staging
+verification and logical source assertions remain unfinished.
 
 ## Offline Correspondence Inspection
 

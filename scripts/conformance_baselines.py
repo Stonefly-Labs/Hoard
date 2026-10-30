@@ -67,6 +67,8 @@ BREAK_CONTROLS = {
 }
 SOURCE_BREAK_SOURCES = "proofs/compatibility-source-break-sources.json"
 SOURCE_BREAK_INPUTS = "proofs/compatibility-source-break-inputs.json"
+SOURCE_BREAK_RUNTIME = "source-break-fixtures"
+SOURCE_BREAK_RUNTIME_FRAMES = ("control.json", "sources.json", "inputs.json", "negative.json", "diagnostics.jsonl")
 SOURCE_RECIPE_POLICY = (
     *((project, "historical-f06", "api-consumer") for project in (
         "tests/fixtures/lifecycle/registration/RegistrationConsumer/RegistrationConsumer.csproj",
@@ -263,7 +265,8 @@ def source_break_output_properties(root, variant):
         raise ConformanceError("EvidenceIncomplete")
     return (
         "-p:OutputPath=" + str(Path(root) / "proofs" / ("source-break-output-" + variant)) + os.sep,
-        "-p:AppendTargetFrameworkToOutputPath=false")
+        "-p:AppendTargetFrameworkToOutputPath=false",
+        "-p:PathMap=" + str(Path(root) / "stores/compatibility-source-break") + os.sep + "=/_/")
 
 
 def source_break_output_paths(variant):
@@ -570,6 +573,66 @@ def inspect_source_break_control(root, packet_data, *, expected_baseline_sha256,
         "negativeDiagnosticsSha256": negative_sha, "runId": owner[0], "rootId": owner[1],
         "startedMs": started, "endedMs": previous_end, "commands": commands,
     }
+
+
+def stage_source_break_fixture(run, runtime, seal_sha256, *, msbuild=None):
+    import conformance_evidence as evidence
+
+    if run.state != "Active":
+        raise ConformanceError("OwnershipInvalid")
+    run._check_ledger()
+    control_sha, raw = evidence._readonly_report_proof(run.root, "proofs/source-break-control.json")
+    observed = inspect_source_break_control(
+        run.root, raw, expected_baseline_sha256=seal_sha256, msbuild=msbuild)
+    control = load_json(raw)
+    originals = {
+        "control.json": ("proofs/source-break-control.json", control_sha),
+        "sources.json": (SOURCE_BREAK_SOURCES, observed["sourceFrameSha256"]),
+        "inputs.json": (SOURCE_BREAK_INPUTS, observed["inputsSha256"]),
+        "negative.json": (f'proofs/execution-command-{control["negativeSequence"]:04}.json',
+                          control["negativeExecutionSha256"]),
+        "diagnostics.jsonl": (f'diagnostics/command-{control["negativeSequence"]:04}.jsonl',
+                              observed["negativeDiagnosticsSha256"]),
+    }
+    fixture = "stores/compatibility-source-break/" + BREAK_CONTROLS["source"]["fixture"] + "/"
+    for role, variant, directory in (
+            ("Old", "Old", "net10.0"), ("New", "New", "net10.0"),
+            ("Consumer", "Consumer", "net10.0"), ("repair", "Consumer", "net10.0-repair")):
+        name = "RequiredConsumer" if variant == "Consumer" else "RequiredContract"
+        hashes = ({"dll": control["consumerAssemblySha256"], "pdb": control["consumerPdbSha256"]}
+                  if variant == "Consumer" else
+                  {"dll": control["contracts"][variant], "pdb": control["contractPdbSha256"][variant]})
+        for suffix, hashed in hashes.items():
+            filename = name + "." + suffix
+            originals[role + "/" + filename] = (fixture + variant + "/bin/Release/" + directory + "/" + filename,
+                                                 hashed)
+    runtime = Path(runtime).absolute()
+    no_symlinks(runtime)
+    if (not runtime.is_dir() or not runtime.is_relative_to(run.root)
+            or not runtime.relative_to(run.root).as_posix().startswith("stores/snapshot/")):
+        raise ConformanceError("InputChanged")
+    prefix = runtime.relative_to(run.root).as_posix() + "/" + SOURCE_BREAK_RUNTIME + "/"
+    files = []
+    with evidence._input_root(run.root) as (_, root):
+        for target, (source, expected) in originals.items():
+            relative = prefix + target
+            with evidence._input_parent(root, relative, create=True) as (parent, name):
+                descriptor = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                     0o400, dir_fd=parent)
+                with os.fdopen(descriptor, "wb") as output:
+                    actual, _ = evidence._source_file(
+                        root, source, remaining=16 * 1024**2, deadline=time.monotonic() + 5, target=output)
+                    if actual != expected:
+                        raise ConformanceError("InputChanged")
+                    output.flush()
+                    os.fsync(output.fileno())
+            actual, _ = evidence._source_file(
+                root, relative, remaining=16 * 1024**2, deadline=time.monotonic() + 5)
+            if actual != expected:
+                raise ConformanceError("InputChanged")
+            files.append({"source": source, "runtime": relative, "sha256": actual})
+    return {"schemaVersion": 1, "qualification": False, "mode": "source-break-staging",
+            "baselineSealSha256": seal_sha256, "files": files}
 
 
 def retained_recipe(scenario):

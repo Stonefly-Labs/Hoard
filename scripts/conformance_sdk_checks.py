@@ -4051,7 +4051,9 @@ def validate_observation(ingested, result, identities, code, status, exit_code, 
 def compatibility_runtime_paths(run, runtime):
     paths = sorted(path.relative_to(run.root).as_posix() for path in runtime.rglob("*")
                    if path.is_file() and (path.suffix in (".dll", ".so", ".dylib", ".pdb")
-                                         or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
+                                         or path.name.endswith((".deps.json", ".runtimeconfig.json"))
+                                         or path.parent == runtime / baselines.SOURCE_BREAK_RUNTIME
+                                         and path.name in baselines.SOURCE_BREAK_RUNTIME_FRAMES))
     for path in paths:
         image = run.root / path
         no_symlinks(image)
@@ -4729,6 +4731,11 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 run, candidate, sources, config, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/source-break-control.json", evidence.canonical_bytes(source_break))
             source_break_origin = native_sources.capture_source_break() if native_sources is not None else None
+            source_break_staging = [
+                baselines.stage_source_break_fixture(run, candidate / folder, seal_sha, msbuild=msbuild)
+                for folder in (TESTS + "/bin/Release/net10.0",
+                               TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0")]
+            write_new(run.root / "proofs/source-break-staging.json", evidence.canonical_bytes(source_break_staging))
             historical_binary = [
                 baselines.stage_historical_binary_fixture(run, candidate / folder, seal_sha)
                 for folder in (TESTS + "/bin/Release/net10.0",

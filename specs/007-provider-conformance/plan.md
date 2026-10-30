@@ -4829,6 +4829,44 @@ Closed locations: contributors1435/1332 -> evidence1710/1693, the unchanged SDK
 proof-reader deadline, ProofMismatch. This reinforces the separate unfinished
 reader constraint; it is not acceptance or an environment-probe failure.
 
+### Frozen source compiler runtime groundwork
+
+The next increment adds explicit canonical PDB PathMap to the existing source
+compiler build policy, with unchanged exact native-argument reconstruction.
+Original/repaired contract/consumer DLL/PDB pairs and five exact readonly
+control/source/input/negative-receipt/diagnostic frames are staged into both
+transient test runtimes before common RunInputs capture. Each13-file scope is
+copied through descriptor-relative bounded reads, original expected hashes,
+readonly exclusive creation and no-follow traversal; existing targets and
+symlinked parents reject. Original PDB substitution rejects before destination
+publication. Only the five fixed sidecar filenames join runtime selection;
+unknown JSON is not admitted. Raw staged images remain under transient stores,
+not retained proofs, and no logical source case is promoted yet.
+
+The extended existing replay test first rejects the absent staging helper, then
+checks the exact13-file map/capture/readonly modes, no overwrite, no symlink
+escape and changed source symbols. An initial wider run has one test-only
+missing fixture attribute; corrected full selection
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks
+test_conformance_execution` passes514 tests with26 native-only skips in113.596
+seconds. `python3 scripts/conformance_evidence.py --check-catalog --check-sdk`
+and `git diff --check` pass. Fresh immutable native staging verification and
+actual logical source-case assertions remain required.
+Final staging also checks the live ledger and permits only transient
+`stores/snapshot/` runtimes, preventing raw-image publication under retained
+proofs. The focused baseline class passes25 tests in0.760 seconds after that
+restriction; catalog/SDK and diff checks pass.
+
+Current `3c95c07` foundations41011436828 passes native ownership/evidence and
+preparation; SDK123918979369, metadata123918979347 and artifacts123918979246
+all fail ProofMismatch at SDK4825 -> sources959 -> evidence1710/1693, the initial
+selected-runner proof-read deadline. Compatibility is still running at this
+observation. This metadata attempt never reaches the repaired PDB image-set
+guard and is not repair verification. No failure, bound or cold-input condition
+is discarded or relaxed.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

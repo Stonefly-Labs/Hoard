@@ -8497,6 +8497,43 @@ class ConformanceBaselineTests(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
                 replay(selected, changed, events=events)
         replay(records, packet)
+        control = self.root / "proofs/source-break-control.json"
+        control.write_bytes(evidence.canonical_bytes(packet))
+        control.chmod(0o400)
+        runtime = self.root / "stores/snapshot/source-runtime"
+        runtime.mkdir(parents=True)
+        run = mock.Mock(root=self.root, state="Active")
+        staged = self.baselines.stage_source_break_fixture(run, runtime, seal_sha, msbuild=prefix)
+        self.assertEqual(len(staged["files"]), 13)
+        self.assertEqual({row["runtime"]: row["sha256"] for row in staged["files"]},
+                         evidence.input_manifest(self.root, tuple(row["runtime"] for row in staged["files"])))
+        import conformance_sdk_checks as checks
+        self.assertEqual(set(checks.compatibility_runtime_paths(run, runtime)),
+                         {row["runtime"] for row in staged["files"]})
+        self.assertTrue(all(stat.S_IMODE((self.root / row["runtime"]).stat().st_mode) == 0o400
+                            for row in staged["files"]))
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines.stage_source_break_fixture(run, runtime, seal_sha, msbuild=prefix)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.baselines.stage_source_break_fixture(run, self.root / "proofs", seal_sha, msbuild=prefix)
+        self.assertFalse((self.root / "proofs" / self.baselines.SOURCE_BREAK_RUNTIME).exists())
+        outside = self.root / "outside-source-staging"
+        outside.mkdir()
+        linked_runtime = runtime.parent / "linked-source-runtime"
+        linked_runtime.mkdir()
+        (linked_runtime / self.baselines.SOURCE_BREAK_RUNTIME).symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines.stage_source_break_fixture(run, linked_runtime, seal_sha, msbuild=prefix)
+        self.assertFalse(any(outside.iterdir()))
+        pdb = copied / fixture / "Consumer/bin/Release/net10.0/RequiredConsumer.pdb"
+        pdb.chmod(0o600)
+        pdb.write_bytes(b"substituted source-control symbols")
+        pdb.chmod(0o400)
+        changed_runtime = runtime.parent / "changed-source-runtime"
+        changed_runtime.mkdir()
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.baselines.stage_source_break_fixture(run, changed_runtime, seal_sha, msbuild=prefix)
+        self.assertFalse(any(changed_runtime.iterdir()))
         shutil.rmtree(self.root / "stores")
         self.assertEqual(replay(records, packet, retained=True), observed)
 

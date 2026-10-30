@@ -9062,6 +9062,22 @@ This does not promote the remaining logical rows or qualify a profile.
 The completed `e82daf7` foundations unit job separately executes818 tests with
 zero skips/failures and one managed-artifact contributor error: ProofMismatch at
 the unchanged five-second SDK proof-reader guard. It is not a passing job.
+The next increment maps source-control PDB documents to `/_/`, then stages all
+eight original/repaired DLL/PDB images plus five exact control/source/input/
+negative-receipt/diagnostic frames into both transient test runtimes before
+common input capture. Only those named sidecar frames join runtime selection.
+Copying is bounded, readonly, descriptor-relative and no-follow/no-overwrite;
+source substitutions reject before publication. Raw images still disappear with
+actual transient-store cleanup. Host514 checks pass with26 native-only skips in
+113.596 seconds; an initial test-only fixture attribute error was corrected.
+Fresh immutable native verification is required. This is input groundwork,
+not an additional passing logical source case or qualification.
+
+At `3c95c07` foundations41011436828, native ownership/evidence and preparation
+jobs pass. SDK, metadata and artifacts all reject at the initial selected-runner
+proof-read deadline: SDK4825 -> sources959 -> evidence1710/1693, ProofMismatch.
+Thus this metadata attempt does not reach or verify the PDB integration repair.
+These original failures remain separate from successful local compiler controls.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

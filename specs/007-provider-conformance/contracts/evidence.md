@@ -1205,6 +1205,13 @@ controls passing. Original compiler rejection/repair, held receipt hashes and
 retained source/diagnostic frames survive actual cleanup. Original/released
 case reports differ only in actual resources and retain136 Passed/six Incomplete
 and209 witnesses; no additional logical case or qualification is inferred.
+The next input-groundwork increment stages eight original/repaired source-control
+DLL/PDB images and five exact control/source/input/negative/diagnostic frames in
+each transient test runtime. PDB documents use canonical `/_/` paths. Every
+selected byte is copied bounded/readonly without overwrite or symlink traversal
+and captured before runtime execution. Actual cleanup still removes all staged
+raw images. Host514 checks pass; native staging and logical case linkage remain
+required, with no case promotion inferred from copying or modeled tests.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
