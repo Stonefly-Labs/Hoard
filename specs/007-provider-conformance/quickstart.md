@@ -1416,6 +1416,9 @@ pass; these are not the missing original foundation runtime/formatting witnesses
 Actual preparation now checks the owned snapshot's frozen foundation sources
 and binds inventory bytes into runtime configuration before any native scope;
 altered inventory/snapshot bytes reject without granting qualification.
+Declaration and required-member/binary-break compiler recipes now run through
+closed transport as well. Both unchanged break controls pass offline Linux
+diagnosis; this does not establish full foundation execution or qualification.
 
 ## Offline Correspondence Inspection
 

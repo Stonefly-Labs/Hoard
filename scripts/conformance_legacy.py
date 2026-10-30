@@ -800,6 +800,16 @@ def composition_controller_command(args, *, cwd=None, env=None, expected=None, i
             raise RuntimeError("Legacy composition command PrerequisiteMissing.")
         tested = test_command(args, cwd=cwd, env=env, sdk_package=sdk_package, logger_path=logger_path)
         return subprocess.CompletedProcess(args, tested.returncode, tested.stdout.decode("utf-8", errors="strict"))
+    if args[0] == "dotnet" and Path(args[1]).name == "BinaryConsumer.dll":
+        if len(args) != 2 or input is not None or expected not in (None, "MissingMethodException"):
+            raise RuntimeError("Legacy composition command PrerequisiteMissing.")
+        result = capture(args, cwd=cwd, env=env)
+        code, marker = ((0, "Old binary operation") if expected is None else (1, "MissingMethodException"))
+        if result.returncode != code:
+            raise RuntimeError("Legacy composition command CommandFailed.")
+        if result.stdout not in ((marker + "\n").encode("ascii"), (marker + "\r\n").encode("ascii")):
+            raise RuntimeError("Legacy composition command UnknownDiagnostic.")
+        return subprocess.CompletedProcess(args, code, marker)
     reference = args[0] == "dotnet" and Path(args[1]).name == "ReferenceConsumer.dll"
     body = None
     if reference:

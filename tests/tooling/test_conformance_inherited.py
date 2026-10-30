@@ -112,7 +112,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
 
     def test_controller_command_read_inputs_bind_selected_sources_imports_runtime_and_configuration(self):
         for operation in ("build", "implicit-build", "restore", "runtime", "relative", "environment",
-                          "project-links", "package", "foreign", "foreign-link", "sdk-argument", "foreign-vstest"):
+                          "project-links", "package", "foreign", "foreign-link", "sdk-argument", "foreign-vstest",
+                          "contract-reference", "foreign-contract-reference", "missing-contract-reference"):
             with self.subTest(operation=operation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 project = root / "stores/project/Fixture.csproj"
@@ -169,6 +170,16 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     arguments = ["dotnet", "build", str(project), "--no-restore"]
                 elif operation in ("project-links", "package", "foreign-link"):
                     arguments = ["dotnet", "build", str(project), "--no-restore"]
+                if operation in ("contract-reference", "foreign-contract-reference", "missing-contract-reference"):
+                    reference = (assembly if operation == "contract-reference" else
+                                 root.parent / "Foreign.dll" if operation == "foreign-contract-reference"
+                                 else root / "stores/Missing.dll")
+                    arguments = ["dotnet", "build", str(project), "--no-restore",
+                                 "-p:ContractAssembly=" + str(reference)]
+                    if operation != "contract-reference":
+                        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid|InputChanged"):
+                            inherited.controller_command_read_inputs(root, arguments, env={})
+                        continue
                 if operation == "foreign-link":
                     project.write_bytes(b'<Project><ItemGroup><Compile Include="../../../Outside.cs" />'
                                         b'</ItemGroup></Project>')
@@ -192,6 +203,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 elif operation == "package":
                     self.assertEqual(file_sha256(package_image),
                                      observed[package_image.relative_to(root).as_posix()])
+                elif operation == "contract-reference":
+                    self.assertEqual(file_sha256(assembly), observed[assembly.relative_to(root).as_posix()])
                 self.assertEqual(observed, {
                     path: file_sha256(root / path) for path in observed})
                 if operation in ("runtime", "sdk-argument"):

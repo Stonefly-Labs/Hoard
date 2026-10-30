@@ -9571,6 +9571,19 @@ compatibility runtime configuration. Changed inventories, changed snapshot
 sources and inventory changes during preparation reject. The focused211-test
 suite passes in40.142 seconds. This is a pipeline prerequisite, not execution
 or formatting evidence.
+Preparation now also executes `foundation_evidence.declarations` and `breaking`
+through the existing borrowed controller transport. The original binary
+consumer's exact old-success marker and caught `MissingMethodException`/exit1
+are admitted separately; extra/private output, wrong exit codes and unsupported
+arguments reject without retaining arbitrary diagnostics. Compiler failures
+retain only the existing exact `CS` code. Physical `ContractAssembly` compiler
+references also enter the borrowed input snapshot; foreign/missing references
+reject rather than silently disappear. A fresh offline Linux container runs
+all five declaration checks and both unchanged contract-break fixtures,
+including migration builds, through23 actual commands and passes seven controls; it grants no
+native qualification authority. The affected five-module tooling suite passes
+272 tests in34.148 seconds, with one host platform prerequisite skip. Full
+foundation runtime/formatting and independent settled admission remain open.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

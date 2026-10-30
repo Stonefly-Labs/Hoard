@@ -5534,6 +5534,20 @@ Frozen runtime configuration therefore includes the inventory bytes. Focused
 controls reject changed inventory content, changed snapshot source and late
 inventory mutation;211 regression tests pass in40.142 seconds. Original
 foundation execution/formatting and settled qualification remain unbuilt.
+Original declaration and contract-break preparation now runs through the
+existing controller transport rather than being inferred from inventory.
+The binary adapter admits only the unchanged fixture's exact old marker/exit0
+or caught `MissingMethodException`/exit1, rejects extra/private output and
+unsupported arguments, and preserves closed compiler diagnostics. The
+regression first fails for unsupported binary transport and then for missing
+compiler preparation. A fresh offline Linux container executes16 original
+fixture commands, including required-member/binary migration builds, and passes
+both controls. Its expanded fresh run also executes all five declaration cases:
+seven controls/23 actual commands pass. Compiler `ContractAssembly` references
+are now physically included in borrowed command snapshots; foreign/missing
+references reject. Affected composition/inherited/legacy/SDK/CI tooling passes272
+tests in34.148 seconds, one platform prerequisite skip. These checks do not
+complete foundation runtime/formatting, settled replay or qualification.
 
 ### Compatibility logical case linkage and released presentation
 

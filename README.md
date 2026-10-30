@@ -1215,6 +1215,9 @@ and discovery admission are not those missing runtime witnesses.
 Compatibility preparation now admits that inventory against the actual owned
 snapshot before building fixtures and binds its bytes into the frozen runtime
 configuration; altered snapshot sources and inventory changes reject.
+It also runs the original declaration and required-member/binary-break compiler
+recipes through closed transport. Offline Linux checks pass both original break
+controls and migration builds; full foundation runtime/formatting is still open.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

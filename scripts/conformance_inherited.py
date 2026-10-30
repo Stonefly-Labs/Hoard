@@ -1277,6 +1277,7 @@ def prepare_architecture_evidence(repository, owner, source):
         core, providers, config = foundation.packages(source, target, False)
         document = {
             "core": core, "providers": providers, "localFeed": str(target / "feed"),
+            "declarations": foundation.declarations(source, target),
             "foundationInventory": {
                 "path": str(foundation_path), "sha256": hashlib.sha256(foundation_raw).hexdigest(),
                 "canonicalSha256": FOUNDATION_INVENTORY_SHA256,
@@ -1285,6 +1286,7 @@ def prepare_architecture_evidence(repository, owner, source):
             },
         }
         document["hosts"] = foundation.hosts(source, target, config, False)
+        document["breaking"] = foundation.breaking(source, target, config, False)
         document["architecture"], document["cycles"] = foundation.architecture(source, target, config, False)
         if controls["independentlyRestored"] != controls["independentRestores"]:
             raise ConformanceError("WitnessMissing")
@@ -1542,7 +1544,8 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
                             pending.append(item)
 
     for index, argument in enumerate(arguments[1:], 1):
-        for prefix in ("--Settings:", "-p:NuGetLockFilePath="):
+        contract_reference = argument.startswith("-p:ContractAssembly=")
+        for prefix in ("--Settings:", "-p:NuGetLockFilePath=", "-p:ContractAssembly="):
             if argument.startswith(prefix):
                 argument = argument[len(prefix):]
                 break
@@ -1554,12 +1557,16 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
         legacy.no_symlinks(path)
         path = path.resolve()
         if not path.is_relative_to(owner):
+            if contract_reference:
+                raise ConformanceError("OwnershipInvalid")
             target = index == 1 or index == 2 and arguments[1] in (
                 "build", "restore", "pack", "publish", "test", "vstest", "msbuild", "exec", "format")
             if dotnet and (path.suffix in (".csproj", ".slnx") or path.suffix == ".dll" and target):
                 raise ConformanceError("OwnershipInvalid")
             continue
         if not path.is_file():
+            if contract_reference:
+                raise ConformanceError("InputChanged")
             continue
         extra.add(path)
         if path.suffix == ".csproj":

@@ -873,6 +873,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                             {"source": "a"}, {"source": "b" if defect == "changed-source" else "a"}]), \
                         mock.patch.object(foundation, "packages", return_value=(
                             {}, [], target / "NuGet.Config")), \
+                        mock.patch.object(foundation, "declarations", return_value={
+                            "Valid": {"success": True, "output": ""}}) as declarations, \
+                        mock.patch.object(foundation, "breaking", return_value={
+                            "binary": {"oldSuccess": True, "newSuccess": False,
+                                       "output": "MissingMethodException"}}) as breaking, \
                         mock.patch.object(foundation, "hosts", return_value=[]), \
                         mock.patch.object(foundation, "architecture", side_effect=prepare_graphs) as architecture, \
                         mock.patch.object(foundation, "real_architecture", return_value=scans) as real_scans, \
@@ -889,6 +894,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     result = inherited.prepare_architecture_evidence(ROOT, root, source)
                 architecture.assert_called_once_with(source, target, target / "NuGet.Config", False)
                 real_scans.assert_called_once()
+                declarations.assert_called_once_with(source, target)
+                breaking.assert_called_once_with(source, target, target / "NuGet.Config", False)
                 self.assertFalse(result["qualification"])
                 self.assertFalse(result["profileComplete"])
                 selected = evidence.load_json((root / result["inputMapPath"]).read_bytes())
@@ -899,6 +906,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 document = evidence.load_json((root / result["manifestPath"]).read_bytes())
                 self.assertEqual(document["architecture"], graphs)
                 self.assertEqual(document["realArchitecture"], scans)
+                self.assertEqual(document["declarations"], declarations.return_value)
+                self.assertEqual(document["breaking"], breaking.return_value)
                 self.assertEqual(document["foundationInventory"]["canonicalSha256"],
                                  inherited.FOUNDATION_INVENTORY_SHA256)
                 self.assertEqual(

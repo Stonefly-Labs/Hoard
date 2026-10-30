@@ -192,6 +192,33 @@ assert legacy._borrowed_group() is None
             with self.assertRaisesRegex(RuntimeError, "CommandFailed"):
                 legacy.composition_controller_command(args)
 
+    def test_foundation_binary_controls_accept_only_the_original_closed_outcome(self):
+        args = ("dotnet", "/owned/BinaryConsumer.dll")
+        for expected, code, output, accepted in (
+                (None, 0, b"Old binary operation\n", True),
+                ("MissingMethodException", 1, b"MissingMethodException\n", True),
+                (None, 1, b"MissingMethodException\n", False),
+                ("MissingMethodException", 0, b"MissingMethodException\n", False),
+                ("MissingMethodException", 1, b"private-canary MissingMethodException\n", False),
+                ("MissingMethodException", 1, b"MissingMethodException\nprivate-canary\n", False),
+                (None, 0, b"private-canary\n", False)):
+            with self.subTest(expected=expected, code=code, output=output), patch.object(
+                    legacy, "capture", return_value=subprocess.CompletedProcess(args, code, output)):
+                if accepted:
+                    result = legacy.composition_controller_command(args, expected=expected)
+                    self.assertEqual(result.returncode, code)
+                    self.assertEqual(result.stdout, output.decode().strip())
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "CommandFailed|UnknownDiagnostic"):
+                        legacy.composition_controller_command(args, expected=expected)
+        for arguments, expected, body in (
+                ((*args, "foreign"), None, None), (args, "CS0535", None),
+                (args, None, "private-canary")):
+            with self.subTest(arguments=arguments, expected=expected), patch.object(
+                    legacy, "capture") as capture, self.assertRaisesRegex(RuntimeError, "PrerequisiteMissing"):
+                legacy.composition_controller_command(arguments, expected=expected, input=body)
+            capture.assert_not_called()
+
     def test_unadapted_controller_commands_reject_before_launch_or_diagnostic_persistence(self):
         for args in (("dotnet", "test", "Hoard.Composition.Tests.csproj"),
                      ("dotnet", "UnknownHost.dll"), ("python3", "-m", "unittest")):
