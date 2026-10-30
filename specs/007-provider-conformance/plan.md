@@ -37,6 +37,38 @@ five native-only skips, including qualification-mode transport and the unchanged
 diagnostic comparison. Actual fresh native qualification and readonly
 external-receipt confirmation remain required. T071..T086 stay open.
 
+### Selected-startup setup correction after the first qualification-mode run
+
+The immutable `68ef083` public run fails at original command171:
+`SelectedStartupTests` records4 Passed/1 Failed in endpoint-free startup.
+The preceding55 scopes/500 parameters pass, including all24 ownership cases.
+Overall504 of505 observed parameters pass; group Exited and owner Released.
+No full capture or qualified publication is reached. The original safe numeric
+events were discarded by the inherited rejection branch, so its original
+assertion location is unavailable; that branch now projects the existing
+bounded closed events before retaining `WitnessMissing`.
+
+A single private500-ms asynchronous worker-entry delay reproduces the unchanged
+callback equality failure at original line104. Startup guarantees worker
+dispatch, not entry before the caller resumes. The setup now installs explicit
+entry signals and awaits them only before examining callback history; both
+immediate readiness assertions and every original callback/cleanup assertion
+are preserved. The identical controlled case passes1/1. Normal fixture source
+is restored; build, focused project formatting and40 startup/bounds/concurrency/
+ownership parameters pass. No private delay or product scheduling change is
+tracked. This controlled defect is not claimed as the original failure's proven
+unique cause, and its original evidence remains rejected.
+
+The exact corrected selected-startup source SHA-256 is
+`92c3d97ff9271ca100c140b6f5343f21d01f974a13a62e289615668c12da89ea`;
+the frozen inventory remains unchanged. Both setup-source pins reject missing,
+unreviewed/cross-file sources and resealed baselines. The affected478-test
+selector passes in114.249 seconds with five native-only skips; frozen inventory,
+SDK/catalog and `git diff --check` pass. An initial private build only exposed
+an absent diagnostic `TMPDIR`; it was created before the actual red comparison
+and is not counted as assertion-level red evidence. Actual fresh complete
+qualification/readonly receipt confirmation remain pending; no task advances.
+
 ### Public category native qualification wiring
 
 The next T071 increment connects the existing strict native category evaluator

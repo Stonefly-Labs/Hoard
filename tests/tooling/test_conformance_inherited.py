@@ -379,8 +379,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
         import conformance_sources as sources
         from test_conformance_evidence import ConformanceAdmissionTests
 
-        for retain_settings in (False, True):
-            with self.subTest(retain_settings=retain_settings), tempfile.TemporaryDirectory() as temporary:
+        for retain_settings, failed in ((False, False), (True, False), (False, True)):
+            with self.subTest(retain_settings=retain_settings, failed=failed), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 runtime = root / "stores/runtime"
                 runtime.mkdir(parents=True)
@@ -427,25 +427,34 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                             ("proof-" + str(uuid.uuid4()) + ".json", b"{}")):
                         (output / name).write_bytes(data)
                         (output / name).chmod(0o600)
-                    return SimpleNamespace(exit_code=0)
+                    return SimpleNamespace(exit_code=int(failed), events=(
+                        {"event": "test", "code": "UnknownDiagnostic", "value": 105},) if failed else ())
 
                 def inspect(**transport):
                     output = root / ("runtime-" + json.loads(transport["manifest_data"])["attemptId"])
                     for path in output.iterdir():
                         self.assertEqual(path.stat().st_mode & 0o777, 0o400)
-                    return {"diagnosticCode": "None", "witnesses": []}
+                    return {"diagnosticCode": "UnknownDiagnostic" if failed else "None", "witnesses": []}
 
                 run = SimpleNamespace(root=root, run_id=prior["runId"], command=execute, command_sequence=1)
                 with patch.object(sources, "runtime_runner", return_value=runner) as resolve, \
                         patch("conformance_sdk_checks.category_command_proof", return_value="a" * 64), \
                         patch.object(evidence, "ingest_runtime_attempt", side_effect=inspect), \
-                        redirect_stdout(io.StringIO()):
-                    inherited.execute_inventory_scope(
-                        run, source, root / "feed", prior, {}, closure, "inventory.json",
-                        owner_raw,
-                        {"HOARD_FOUNDATION_EVIDENCE": str(root / "stores/private-manifest.json")},
-                        (runtime, request, discovery), [], assembly_name="Fixture", scope="Fixture.Tests",
-                        retain_settings=retain_settings)
+                        redirect_stdout(io.StringIO()) as output:
+                    def execute_scope():
+                        return inherited.execute_inventory_scope(
+                            run, source, root / "feed", prior, {}, closure, "inventory.json",
+                            owner_raw,
+                            {"HOARD_FOUNDATION_EVIDENCE": str(root / "stores/private-manifest.json")},
+                            (runtime, request, discovery), [], assembly_name="Fixture", scope="Fixture.Tests",
+                            retain_settings=retain_settings)
+                    if failed:
+                        with self.assertRaisesRegex(ConformanceError, "^WitnessMissing$"):
+                            execute_scope()
+                        self.assertEqual(json.loads(output.getvalue())["events"], [
+                            {"event": "test", "code": "UnknownDiagnostic", "value": 105}])
+                    else:
+                        execute_scope()
                 resolve.assert_called_once_with(root, prior)
 
     def test_controller_requests_are_original_readonly_transient_inputs_not_retained_proofs(self):
@@ -1528,23 +1537,23 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
     def test_inventory_accepts_exact_worker_setup_variant_without_resealing_the_baseline(self):
         data = (ROOT / inherited.INVENTORY_PATH).read_bytes()
         baseline = json.loads(data)
-        path = "tests/integration/Hoard.Composition.Tests/DiscoveryBoundsTests.cs"
-        sources = {**baseline["sourceFiles"], path: file_sha256(ROOT / path)}
-        self.assertEqual(inherited.inventory(data, sources),
-                         inherited.inventory(data, baseline["sourceFiles"]))
-        for defect in ("unreviewed-edit", "missing-source", "other-file", "resealed-baseline"):
-            altered, packet = dict(sources), copy.deepcopy(baseline)
-            if defect == "unreviewed-edit":
-                altered[path] = hashlib.sha256((ROOT / path).read_bytes() + b"\n").hexdigest()
-            elif defect == "missing-source":
-                altered.pop(path)
-            elif defect == "other-file":
-                other = next(name for name in altered if name != path)
-                altered[other] = altered[path]
-            else:
-                packet["sourceFiles"][path] = altered[path]
-            with self.subTest(defect=defect), self.assertRaises(ConformanceError):
-                inherited.inventory(canonical_bytes(packet), altered)
+        for path in inherited.EXECUTION_SOURCE_VARIANTS:
+            sources = {**baseline["sourceFiles"], path: file_sha256(ROOT / path)}
+            self.assertEqual(inherited.inventory(data, sources),
+                             inherited.inventory(data, baseline["sourceFiles"]))
+            for defect in ("unreviewed-edit", "missing-source", "other-file", "resealed-baseline"):
+                altered, packet = dict(sources), copy.deepcopy(baseline)
+                if defect == "unreviewed-edit":
+                    altered[path] = hashlib.sha256((ROOT / path).read_bytes() + b"\n").hexdigest()
+                elif defect == "missing-source":
+                    altered.pop(path)
+                elif defect == "other-file":
+                    other = next(name for name in altered if name not in inherited.EXECUTION_SOURCE_VARIANTS)
+                    altered[other] = altered[path]
+                else:
+                    packet["sourceFiles"][path] = altered[path]
+                with self.subTest(source=path, defect=defect), self.assertRaises(ConformanceError):
+                    inherited.inventory(canonical_bytes(packet), altered)
 
     def test_exact_discovery_rejects_missing_duplicate_foreign_and_misexpanded_parameters(self):
         value = json.loads((ROOT / inherited.INVENTORY_PATH).read_bytes())

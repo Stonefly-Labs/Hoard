@@ -23,12 +23,13 @@ different bytes are different tested inputs. No arbitrary commit label, empty
 hash map or hash of a filename counts as source/content proof.
 
 The inherited composition inventory retains its original frozen assertion
-identities and source hashes. Execution additionally admits one explicitly
-pinned setup-only `DiscoveryBoundsTests.cs` variant that awaits startup worker
-entry before its callback snapshot, preserving all original assertions.
+identities and source hashes. Execution additionally admits explicitly pinned
+setup-only `DiscoveryBoundsTests.cs` and `SelectedStartupTests.cs` variants that
+await startup worker entry before examining callback history, preserving all
+original assertions, including immediate selected-startup readiness.
 The actual source manifest binds its exact corrected bytes; no other source
 edit, cross-file substitution or resealed frozen inventory is accepted.
-This variant grants no exclusion or passing outcome and does not change
+These variants grant no exclusion or passing outcome and do not change
 product startup semantics.
 
 An explicit capture-time `catalogBindingId` assignment connects each known

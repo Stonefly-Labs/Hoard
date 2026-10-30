@@ -107,7 +107,14 @@ before execution, requires that original complete runtime/controller/tooling
 capture and actual release, and publishes a separate finite qualified report.
 An independent readonly reader requires an externally trusted original-owner
 receipt and reconstructs the same proof closure; CP-only success and diagnostic
-inputs cannot qualify. Real native confirmation of this new boundary is pending.
+inputs cannot qualify. Fresh `68ef083` passes55 inherited scopes/500 parameters
+before a selected-startup case fails (four of five class parameters pass);
+the owner actually releases. A private bounded worker-delay comparison proves
+its immediate worker-entry assumption invalid. Explicit entry signals preserve
+all assertions, including immediate readiness; the same comparison and40 normal
+startup/bounds/concurrency/ownership cases pass. The original failure stays
+rejected and is not retrospectively assigned a uniquely proven cause.
+Real native confirmation of the complete qualification boundary is still pending.
 The hosted composition diagnostic remains explicitly diagnostic.
 Compatibility/harness, qualifying coordinator/aggregate and the full baseline
 remain unfinished; T071..T086 remain open.

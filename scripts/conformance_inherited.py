@@ -24,10 +24,12 @@ from conformance_evidence import ConformanceError, DIAGNOSTIC_CODES, digest, loa
 INVENTORY_PATH = "tests/fixtures/conformance/baselines/composition-inventory.json"
 BASELINE = "9389016c0285c79f6f515f59805a5a41c69b0767"
 INVENTORY_SHA256 = "9b45196787d57b0437c14e73345b1a0ba4b1544a41d95f7fca3ea32b7635de50"
-# Keep the frozen assertions; admit only the exact worker-entry setup correction.
+# Keep the frozen assertions; admit only the exact worker-entry setup corrections.
 EXECUTION_SOURCE_VARIANTS = {
     "tests/integration/Hoard.Composition.Tests/DiscoveryBoundsTests.cs":
         "ef516b44d066f1f5a9667a9eb65aea8960d84ea8c889bd66be1535ffbbe5d4a4",
+    "tests/integration/Hoard.Composition.Tests/SelectedStartupTests.cs":
+        "92c3d97ff9271ca100c140b6f5343f21d01f974a13a62e289615668c12da89ea",
 }
 FOUNDATION_INVENTORY_PATH = "tests/fixtures/conformance/baselines/foundation-inventory.json"
 FOUNDATION_INVENTORY_SHA256 = "c8ba6c4d6ebe82c043ce22bb28dd65a6c1b0258d7490be74dbbc36499753bb5e"
@@ -847,6 +849,10 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
         raise ConformanceError("InputChanged")
     if (result.exit_code or observed["diagnosticCode"] != "None"
             or any(row["status"] != "Passed" for row in observed["witnesses"])):
+        print(json.dumps({
+            "qualification": False, "phase": "inherited-runtime-incomplete", "scope": scope,
+            "code": "WitnessMissing", "events": [dict(event) for event in result.events],
+        }), flush=True)
         raise ConformanceError("WitnessMissing")
     print(json.dumps({"qualification": False, "phase": "inherited-runtime", "scope": scope,
                       "passedParameters": len(observed["witnesses"])}), flush=True)

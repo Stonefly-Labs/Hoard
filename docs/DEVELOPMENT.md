@@ -10058,6 +10058,30 @@ and two semantic challenges. Actual native qualification/receipt confirmation is
 pending; the earlier successful32426be diagnostic cannot be relabeled. No
 general native I/O tracing or altered input-closure flag is introduced.
 
+Fresh immutable public execution at `68ef083` then rejects original command171:
+`SelectedStartupTests.Endpoint_free_selected_modules_initialize_then_become_ready_once`
+fails, while the other four class parameters pass. Before that class,55 scopes/
+500 inherited parameters pass, including all24 ownership cases; overall504 of
+505 observed parameters pass. The owner is genuinely Released. No complete
+capture, qualified publication or independent receipt acceptance is claimed.
+The original assertion location was not retained: the inherited failure branch
+discarded the safe numeric logger events, and now projects those existing closed
+events before preserving its rejecting `WitnessMissing` outcome.
+
+A private500-ms asynchronous delay before fixture worker entry makes the
+unchanged endpoint-startup test fail its original callback equality at line104.
+Startup queues workers, without guaranteeing entry before its caller resumes.
+The test now installs explicit entry signals and awaits them before examining
+callback history; both immediate readiness assertions and every original
+callback/cleanup assertion remain unchanged. The identical delayed comparison
+passes1/1. This proves the setup defect, not the unique original failure cause.
+After restoring the normal private fixture, build, focused project formatting
+and all40 selected-startup/bounds/concurrency/ownership parameters pass.
+The478-test affected tooling selector passes in114.249 seconds with five native
+skips, including red-first safe-event transport and both exact setup-source pins.
+Frozen inventory, SDK/catalog and whitespace checks pass. No private delay is
+tracked, no assertion/budget is weakened and the original failed run is unchanged.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
