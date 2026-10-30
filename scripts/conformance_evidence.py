@@ -1086,6 +1086,85 @@ def derive_native_category_qualification(run, report_data, *, expected_inputs, n
         **report, "state": "Complete", "qualification": True, "scope": ["category-fixture-qualification"]})
 
 
+def inspect_native_category_qualification(
+        run, report_data, *, original_report_data, expected_inputs, native_evaluation):
+    """Reconstruct serialized fixture qualification with its original authority."""
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    expected = derive_native_category_qualification(
+        run, original_report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    if report != expected:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "qualification": True, "scope": "native-category-fixture-qualification",
+        "profileId": report["inputs"]["profileId"], "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "caseCount": len(report["results"]), "witnessCount": len(report["witnesses"]),
+        "caseStates": MappingProxyType({
+            state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}),
+    })
+
+
+def render_native_category_qualification(
+        run, report_data, *, original_report_data, expected_inputs, native_evaluation):
+    """Render only verified finite fixture claims, never private proof contents."""
+    inspected = inspect_native_category_qualification(
+        run, report_data, original_report_data=original_report_data,
+        expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    inputs = report["inputs"]
+    profile = inputs["profileId"]
+    classes = {
+        "metadata": {"sqlite": "durable-local-fixture", "memory": "in-process-logical-fixture"},
+        "artifacts": {"local": "durable-local-fixture", "object": "object-semantics-fixture"},
+    }[profile]
+    bindings = sorted({row["bindingId"] for row in report["results"] if row["bindingId"] != "none"})
+    if set(bindings) != set(classes) or {row["bindingId"] for row in inputs["bindings"]} != set(classes):
+        raise ConformanceError("EvidenceIncomplete")
+    cases = [{key: row[key] for key in ("bindingId", "matrixId", "caseId", "status", "exclusionRule")}
+             for row in report["results"]]
+    summary = {
+        "schemaVersion": 1, "kind": "category-fixture-qualification-summary",
+        "qualification": True, "baselineQualification": False, "state": "Complete", "code": "None",
+        "scope": "category-fixture-qualification", "profileId": profile,
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "sourceRevision": inputs["sourceRevision"], "inputsSha256": digest(inputs),
+        "reportSha256": inspected["reportSha256"], "caseStates": inspected["caseStates"],
+        "witnessCount": len(report["witnesses"]), "proofCount": len(report["proofs"]), "cases": cases,
+        "support": {
+            "status": "QualifiedFixtureScope", "bindingSlots": bindings, "classes": classes,
+            "exclusions": [{key: row[key] for key in ("bindingId", "matrixId", "caseId", "exclusionRule")}
+                           for row in cases if row["status"] == "NotApplicable"]}}
+    prefix = f"category-{profile}-fixture-qualification"
+    suite = ET.Element("testsuite", {
+        "name": prefix, "tests": str(len(cases)), "failures": "0", "errors": "0",
+        "skipped": str(inspected["caseStates"]["NotApplicable"])})
+    for row in cases:
+        case = ET.SubElement(suite, "testcase", {
+            "classname": ".".join((profile, row["bindingId"], row["matrixId"])), "name": row["caseId"]})
+        if row["status"] == "NotApplicable":
+            ET.SubElement(case, "skipped", {"type": "NotApplicable", "message": row["exclusionRule"]})
+    markdown = (
+        f"## {profile} fixture qualification\n\n"
+        "**Only the exact catalogued fixture scope is qualified; this is not the full baseline.**\n\n"
+        "| Binding | Scope | Passed | Not applicable |\n| --- | --- | ---: | ---: |\n"
+        + "".join(
+            f"| {binding} | {classes[binding]} | "
+            f"{sum(row['bindingId'] == binding and row['status'] == 'Passed' for row in cases)} | "
+            f"{sum(row['bindingId'] == binding and row['status'] == 'NotApplicable' for row in cases)} |\n"
+            for binding in bindings)
+        + f"\nSource: `{inputs['sourceRevision']}`\n\nReport SHA-256: `{inspected['reportSha256']}`\n\n"
+        "Frozen exclusions confer no excluded guarantee. No production, external-service, protocol, "
+        "identity, HA, deployment or maintainer-support certification is inferred.\n").encode("utf-8")
+    outputs = {
+        prefix + ".json": canonical_bytes(summary),
+        prefix + ".junit.xml": ET.tostring(suite, encoding="utf-8", xml_declaration=True),
+        prefix + ".md": markdown, prefix + "-ci-summary.md": markdown}
+    if any(len(raw) > MAX_REPORT_BYTES for raw in outputs.values()):
+        raise ConformanceError("OutputLimitExceeded")
+    return MappingProxyType(outputs)
+
+
 def inspect_native_compatibility_report(run, report_data, *, expected_inputs, native_evaluation):
     """Replay compatibility runtimes only with their original released executor."""
     from conformance_execution import OwnedRun

@@ -76,6 +76,15 @@ passing/frozen-excluded cases and a clean source. Original diagnostic bytes are
 never rewritten; copied/modeled authority and optimistic original flags reject.
 Fresh native acceptance of this boundary is pending. This does not change public
 command/report/offline behavior or establish five-profile baseline qualification.
+Fresh `5086777` native originals now exercise derivation for both categories,
+with4 live/10 released/9 retained controls each and unchanged diagnostics.
+The subsequent internal qualified readback reconstructs the candidate against
+that original authority; scope/state/qualification flags are not authority.
+Safe JSON/JUnit/Markdown/CI summaries derive exact cases, exclusions and finite
+fixture classes while explicitly remaining outside full-baseline qualification.
+They do not expose private source/transport manifests or runtime paths. These
+readback/render controls still need fresh native acceptance; public behavior
+remains unchanged.
 
 QC-12 explicitly requires all 32 fully parameterized
 `AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority`

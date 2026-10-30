@@ -1278,6 +1278,12 @@ Released executor, complete catalog/proof correspondence and passing append-only
 history before deriving a separate finite fixture result. It cannot authorize
 modeled/copy-token evidence or rewrite the original diagnostic. Its fresh native
 acceptance is pending; public commands and published reports remain nonqualifying.
+Fresh immutable `5086777` now passes both category originals: each has4 live/
+10 released/9 retained controls, including actual derivation and original-byte
+mutations. Metadata has93 Passed/nine exclusions; artifacts99 Passed/four
+exclusions, with no Failed/Incomplete cases. Qualified readback and finite safe
+JSON/JUnit/Markdown rendering are now wired internally; their native acceptance
+and public/full-baseline integration remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

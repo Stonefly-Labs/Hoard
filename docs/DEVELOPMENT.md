@@ -9745,6 +9745,24 @@ offline verification and five-profile qualification remain unchanged.
 The corrected affected report/CLI/CI/sanitation selector passes211 tests in
 80.333 seconds, four host native-prerequisite skips; `git diff --check` passes.
 
+Fresh immutable `508677706249b770a88231654fac18536f4f2ea7` completes both
+category derivation originals. Metadata attempt
+`d294b70e9277472f8ca60f42a95ce685` exits0/411850.330 ms,4 live/10 released/
+9 retained controls,93 Passed/nine frozen exclusions and no Failed/Incomplete
+cases. Artifacts attempt `f9a7df86627946e187ca14807f7c149c` exits0/369752.484 ms
+with the same complete control counts,99 Passed/four exclusions and no
+Failed/Incomplete cases. The new finite qualification result is derived inside
+the actual released native control, not reconstructed offline; both original
+diagnostics remain unchanged and public CLI exit2 remains intentional.
+The next internal readback reconstructs that candidate under its original
+authority instead of trusting qualification/state/scope flags. Its renderer
+derives bounded JSON, JUnit, Markdown and CI summaries with exact case/exclusion
+inventory, fixed fixture classes and explicit non-baseline scope. It excludes
+private transport/source manifests and makes no service/production/protocol/
+identity/HA/deployment/support claim. Native readback/render acceptance remains
+pending; the corrected affected selector above passes211 tests in96.155 seconds,
+four host native-prerequisite skips; `git diff --check` passes.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

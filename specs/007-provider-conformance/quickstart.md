@@ -1479,6 +1479,10 @@ The new internal category qualification derivation is not a public command:
 it requires original released native authority and complete passing history,
 does not rewrite diagnostics and still needs fresh native acceptance. Existing
 public category commands and offline inspection remain nonqualifying, exit2.
+Fresh `5086777` originals now pass both categories'4 live/10 released/9 retained
+controls, including genuine derivation and mutation rejection, without changing
+those diagnostics or public exit2. Internal qualified readback and finite safe
+JSON/JUnit/Markdown rendering still need their own fresh native acceptance.
 
 ## Offline Correspondence Inspection
 

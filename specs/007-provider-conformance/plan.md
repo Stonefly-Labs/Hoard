@@ -5729,6 +5729,40 @@ Provider contracts, host examples, product/architecture/ADR/diagrams, governance
 IaC and release guides are unaffected by this internal evidence-only seam.
 T071..T086 and final architecture review remain open.
 
+Both original `508677706249b770a88231654fac18536f4f2ea7` category runs now
+pass4 live/10 released/9 retained controls, including genuine successful fixture
+derivation, original-token identity, append-only ledger checks and rejecting
+original proof/case/attempt/mode/resource mutations. Metadata attempt
+`d294b70e9277472f8ca60f42a95ce685` exits0/411850.330 ms:93 Passed/nine frozen
+exclusions, no Failed/Incomplete; inputs
+`1fa54ee3994a23bfe078f2986ad4c73c825c44df0b7c4ce24577eede3aed372c`,
+original diagnostic report
+`fe259a7251916872ae11718e20afac7bcb65b9a40e69acff44e8097ada20b5d1`.
+Artifacts attempt `f9a7df86627946e187ca14807f7c149c` exits0/369752.484 ms:
+99 Passed/four frozen exclusions, no Failed/Incomplete; inputs
+`1eb11b334f34671a45714f8151e9dd6c8135eafe1a7c2335e81f2a3fff1627dc`,
+original diagnostic report
+`abd1048660520999e4481aaea0e7f51aab1a864f30ca48df1d03505d1bb5f1d9`.
+Initial free scratch179749380096/179771510784 bytes; no extra prewarming or
+changed3900-second wrappers. Actual resources are Released. Public CLI remains
+exit2 and original diagnostics are not changed into qualified reports.
+
+The next T071/T072 increment independently reconstructs serialized candidate
+qualification using the same original native evaluation and diagnostic. Changed
+scope/state/flags/cases or copied tokens cannot borrow its authority. Internal
+JSON/JUnit/Markdown/CI-summary rendering requires that readback, derives every
+case/exclusion and fixed fixture class, and explicitly denies full-baseline and
+untested service/production/protocol/identity/HA/deployment/support claims.
+Only bounded public projections are rendered, not private proof contents,
+source manifests or runtime paths. New genuine native controls check readback,
+presentation totals/private-path exclusion and unchanged original diagnostics.
+Those new controls still require fresh native acceptance. The corrected affected
+selector above passes211 tests in96.155 seconds with four host native-prerequisite
+skips; `git diff --check` passes. These container originals use immutable cloned
+bundles and mount only their runner and scratch volume, not the host repository;
+independent host changes do not mutate their original source fingerprints.
+All T071..T086 remain open.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

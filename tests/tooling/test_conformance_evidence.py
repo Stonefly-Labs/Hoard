@@ -4773,6 +4773,19 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     evidence, "_input_root", side_effect=AssertionError("Unowned qualification must not read proofs")):
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     derive(owner, b"{}", expected_inputs=self.inputs, native_evaluation=token)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evidence.inspect_native_category_qualification(
+                        owner, b"{}", original_report_data=b"{}", expected_inputs=self.inputs, native_evaluation=token)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evidence.render_native_category_qualification(
+                        owner, b"{}", original_report_data=b"{}", expected_inputs=self.inputs, native_evaluation=token)
+        with mock.patch.object(
+                evidence, "derive_native_category_qualification", side_effect=AssertionError("Oversized input")):
+            for raw in (None, "{}", b"x" * (evidence.MAX_REPORT_BYTES + 1)):
+                with self.subTest(kind=type(raw).__name__), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                    evidence.inspect_native_category_qualification(
+                        None, raw, original_report_data=b"{}", expected_inputs=self.inputs, native_evaluation=None)
 
     def test_category_qualification_keeps_failed_attempt_history_after_a_passing_retry(self):
         history, finish = self.category_quality_fixture(profile="artifacts", max_attempts=2)
@@ -10875,6 +10888,70 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
                 selected.chmod(0o400)
             evidence.derive_native_category_qualification(
                 owner, raw, expected_inputs=inputs, native_evaluation=evaluation)
+
+        def test_qualified_category_readback_reconstructs_original_scope_instead_of_trusting_flags(self):
+            path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            original = path.read_bytes()
+            candidate = evidence.derive_native_category_qualification(
+                owner, original, expected_inputs=inputs, native_evaluation=evaluation)
+            raw = evidence.canonical_bytes(candidate)
+            inspected = evidence.inspect_native_category_qualification(
+                owner, raw, original_report_data=original, expected_inputs=inputs, native_evaluation=evaluation)
+            self.assertTrue(inspected["qualification"])
+            self.assertEqual(inspected["reportSha256"], hashlib.sha256(raw).hexdigest())
+            for defect in ("scope", "qualification", "state", "changed-case"):
+                changed = evidence.load_json(raw)
+                if defect == "scope":
+                    changed["scope"] = ["production"]
+                elif defect == "qualification":
+                    changed["qualification"] = False
+                elif defect == "state":
+                    changed["state"] = "Incomplete"
+                else:
+                    changed["results"].pop()
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    evidence.inspect_native_category_qualification(
+                        owner, evidence.canonical_bytes(changed), original_report_data=original,
+                        expected_inputs=inputs, native_evaluation=evaluation)
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.inspect_native_category_qualification(
+                    owner, raw, original_report_data=original, expected_inputs=inputs,
+                    native_evaluation=replace(evaluation))
+            self.assertEqual(path.read_bytes(), original)
+
+        def test_qualified_category_presentation_is_finite_and_excludes_private_transport(self):
+            import xml.etree.ElementTree as ET
+
+            path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            original = path.read_bytes()
+            candidate = evidence.derive_native_category_qualification(
+                owner, original, expected_inputs=inputs, native_evaluation=evaluation)
+            raw = evidence.canonical_bytes(candidate)
+            outputs = evidence.render_native_category_qualification(
+                owner, raw, original_report_data=original, expected_inputs=inputs, native_evaluation=evaluation)
+            prefix = f'category-{inputs["profileId"]}-fixture-qualification'
+            self.assertEqual(set(outputs), {prefix + suffix for suffix in (
+                ".json", ".junit.xml", ".md", "-ci-summary.md")})
+            summary = evidence.load_json(outputs[prefix + ".json"])
+            self.assertTrue(summary["qualification"])
+            self.assertFalse(summary["baselineQualification"])
+            self.assertEqual(summary["reportSha256"], hashlib.sha256(raw).hexdigest())
+            self.assertEqual(len(summary["cases"]), len(candidate["results"]))
+            self.assertEqual(summary["support"]["bindingSlots"], sorted(
+                {row["bindingId"] for row in candidate["results"] if row["bindingId"] != "none"}))
+            suite = ET.fromstring(outputs[prefix + ".junit.xml"])
+            self.assertEqual(int(suite.attrib["tests"]), len(candidate["results"]))
+            self.assertEqual(int(suite.attrib["skipped"]), summary["caseStates"]["NotApplicable"])
+            self.assertFalse(suite.findall(".//error") or suite.findall(".//failure"))
+            for contents in outputs.values():
+                self.assertLessEqual(len(contents), evidence.MAX_REPORT_BYTES)
+                for forbidden in (str(owner.root).encode(), b"stores/", b"runtimeAssemblies", b"sourceManifest"):
+                    self.assertNotIn(forbidden, contents)
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.render_native_category_qualification(
+                    owner, raw, original_report_data=original, expected_inputs=inputs,
+                    native_evaluation=replace(evaluation))
+            self.assertEqual(path.read_bytes(), original)
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 
