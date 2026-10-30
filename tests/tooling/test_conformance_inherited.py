@@ -28,6 +28,111 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_frame_replays_all_original_parents_and_rejects_resealed_or_missing_phases(self):
+        import conformance_evidence as evidence
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(profileId="composition", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        root_id = "modeled-controller-root"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            original = {}
+
+            def seal(path, raw):
+                path = root / path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            baseline = b"modeled historical baseline"
+            original[inherited.CONTROLLER_BASELINES] = baseline
+            summary = {
+                "inheritedRuntime": {
+                    "historicalBaselineSealSha256": hashlib.sha256(baseline).hexdigest(),
+                    "nativeInvocations": {}, "referenceConsumer": {}},
+            }
+            for sequence, phase in enumerate(("historical", "controllers", "reference", "mutations"), 1):
+                invocation = {
+                    "schemaVersion": 1, "qualification": False, "groupState": "Borrowed",
+                    "groupPid": 100 + sequence, "groupStartSha256": "a" * 64,
+                    "childPid": 200 + sequence, "childStartSha256": "b" * 64,
+                    "childState": "Exited", "exitCode": 0, "argvSha256": "c" * 64,
+                    "cwdSha256": "d" * 64, "stdinSha256": None}
+                snapshots = [{"qualification": False, "inputClosureComplete": False,
+                              "scope": "selected-declared-inputs", "files": {}, "sha256": evidence.digest({})}]
+                result = {"invocation": invocation} if phase == "reference" else (
+                    {"path": inherited.CONTROLLER_BASELINES, "sha256": hashlib.sha256(baseline).hexdigest()}
+                    if phase == "historical" else {})
+                output_path = f"proofs/inherited-{phase}-result.json"
+                output = canonical_bytes({
+                    "schemaVersion": 3, "qualification": False, "phase": phase,
+                    "runId": inputs["runId"], "rootId": root_id, "result": result,
+                    "invocations": [invocation], "inputSnapshots": snapshots})
+                record = canonical_bytes({
+                    "runId": inputs["runId"], "rootId": root_id, "sequence": sequence,
+                    "childPid": invocation["groupPid"], "childStartSha256": invocation["groupStartSha256"],
+                    "groupState": "Exited", "exitCode": 0, "diagnosticCode": "None",
+                    "outputFiles": {output_path: hashlib.sha256(output).hexdigest()}})
+                parent_path = f"proofs/execution-command-{sequence:04}.json"
+                original.update({output_path: output, parent_path: record})
+                observed = {
+                    "qualification": False, "nativeContainment": True, "inputClosureComplete": False,
+                    "scope": "borrowed-launch-observations", "count": 1,
+                    "sha256": evidence.digest([invocation]), "sequence": sequence,
+                    "inputSnapshotsSha256": evidence.digest(snapshots),
+                    "parentSha256": hashlib.sha256(record).hexdigest()}
+                if phase == "historical":
+                    summary["historicalNativeInvocations"] = observed
+                elif phase == "reference":
+                    summary["inheritedRuntime"]["referenceConsumer"]["nativeInvocations"] = observed
+                else:
+                    summary["inheritedRuntime"]["nativeInvocations"][phase] = observed
+            original["runtime-owner.json"] = canonical_bytes({
+                "runId": inputs["runId"], "rootId": root_id})
+            for path, raw in original.items():
+                seal(path, raw)
+            commands, proofs, count = inherited.read_controller_invocation_frame(root, inputs, summary)
+            self.assertEqual([sequence for sequence, _ in commands], [1, 2, 3, 4])
+            self.assertEqual(count, 4)
+            self.assertEqual(proofs, {path: hashlib.sha256(raw).hexdigest() for path, raw in original.items()})
+            for defect in ("omitted-phase", "reordered-parent", "wrong-inputs", "changed-baseline",
+                           "changed-output", "writable-output", "symlink-output", "resealed-parent"):
+                selected, frame = copy.deepcopy(summary), copy.deepcopy(inputs)
+                path = "proofs/inherited-controllers-result.json"
+                if defect == "omitted-phase":
+                    del selected["inheritedRuntime"]["nativeInvocations"]["mutations"]
+                elif defect == "reordered-parent":
+                    selected["inheritedRuntime"]["nativeInvocations"]["controllers"]["sequence"] = 4
+                elif defect == "wrong-inputs":
+                    frame["runId"] = str(uuid.uuid4())
+                elif defect == "changed-baseline":
+                    seal(inherited.CONTROLLER_BASELINES, b"changed")
+                elif defect == "changed-output":
+                    seal(path, original[path] + b"\n")
+                elif defect == "writable-output":
+                    (root / path).chmod(0o600)
+                elif defect == "symlink-output":
+                    (root / path).unlink()
+                    (root / path).symlink_to(root / "proofs/inherited-reference-result.json")
+                else:
+                    parent_path = "proofs/execution-command-0002.json"
+                    changed = evidence.load_json(original[parent_path])
+                    changed["rootId"] = "foreign-root"
+                    raw = canonical_bytes(changed)
+                    seal(parent_path, raw)
+                    selected["inheritedRuntime"]["nativeInvocations"]["controllers"][
+                        "parentSha256"] = hashlib.sha256(raw).hexdigest()
+                with self.subTest(defect=defect), self.assertRaises(ConformanceError):
+                    inherited.read_controller_invocation_frame(root, frame, selected)
+                if (root / path).is_symlink():
+                    (root / path).unlink()
+                for name, raw in original.items():
+                    seal(name, raw)
+
     def test_inventory_runtime_reader_rejects_resealed_partial_or_reordered_original_scopes(self):
         import conformance_evidence as evidence
         from test_conformance_evidence import ConformanceRuntimeIngestionTests

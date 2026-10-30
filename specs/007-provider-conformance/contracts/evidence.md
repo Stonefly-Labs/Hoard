@@ -1528,6 +1528,13 @@ The original capture/released-frame path is now confirmed unmocked at exact
 with actual release; a separate readonly process replays525 witnesses/58
 parents/882 proofs. Full controller/profile qualification remains distinct,
 and the earlier intermittent failed run is not repaired by that later pass.
+The same capture must also bind the readonly historical seal and all four
+historical/preparation/reference/mutation leader journals to original held
+command bytes, with strict chronology around CP and inherited execution.
+Released replay must retain identical controller proof hashes and invocation
+counts. Borrowed-child selected-declared input snapshots remain distinct from
+a general native I/O trace; their recorded limitation cannot be promoted by
+copying a journal or changing its closure flag.
 For unknown failed tests only, an existing safe `test/UnknownDiagnostic`
 event may additionally carry a positive source-line integer bounded to1000000,
 derived from the exact admitted method's mapped `/_/tests/` declaring-type

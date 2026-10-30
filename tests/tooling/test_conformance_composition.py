@@ -27,7 +27,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         inputs = ConformanceAdmissionTests().inputs()
         inputs.update(profileId="composition", bindings=[])
         inputs["budgets"]["profileSeconds"] = 3600
-        records = {index: ("modeled native record " + str(index)).encode() for index in (1, 2, 3)}
+        records = {index: ("modeled native record " + str(index)).encode() for index in range(1, 8)}
         hashes = {index: hashlib.sha256(raw).hexdigest() for index, raw in records.items()}
 
         class ModeledRun:
@@ -56,13 +56,16 @@ class CompositionDiagnosticTests(unittest.TestCase):
         receipts = {
             f'proofs/category-command-{row["attemptId"]}-execution.json': "a" * 64
             for row in observed["scopes"]}
-        commands = ((2, hashes[2]), (3, hashes[3]))
+        commands = ((5, hashes[5]), (6, hashes[6]))
+        controller_commands = tuple((index, hashes[index]) for index in (1, 3, 4, 7))
         summary = {
-            "scopeAdmissionSha256": evidence.digest(observed), "passedParameters": 2, "scopes": 2,
-            "commands": [{"attemptId": row["attemptId"],
-                          "parentSha256": receipts[f'proofs/category-command-{row["attemptId"]}-execution.json']}
-                         for row in observed["scopes"]],
-            "tooling": {"tests": 2},
+            "historicalNativeInvocations": {},
+            "inheritedRuntime": {
+                "scopeAdmissionSha256": evidence.digest(observed), "passedParameters": 2, "scopes": 2,
+                "commands": [{"attemptId": row["attemptId"],
+                              "parentSha256": receipts[f'proofs/category-command-{row["attemptId"]}-execution.json']}
+                             for row in observed["scopes"]],
+                "tooling": {"tests": 2}},
         }
         with tempfile.TemporaryDirectory() as temporary, mock.patch.object(sources, "OwnedRun", ModeledRun):
             root = Path(temporary).resolve()
@@ -77,33 +80,46 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 path.chmod(0o400)
 
             seal("runtime-owner.json", b"{}")
-            seal("proofs/execution-command-0001.json", records[1])
+            seal("proofs/execution-command-0002.json", records[2])
             seal("proofs/inherited-controller-tooling.json", b"{}")
             source = sources.NativeCompositionSources(run)
             original = {
                 "inputs": inputs, "resources": run.resource_projection(),
-                "proofs": {"proofs/execution-command-0001.json": hashes[1]}}
-            evaluation = sources.NativeCompositionEvaluation(source, evidence.canonical_bytes(original), 1, hashes[1])
+                "proofs": {"proofs/execution-command-0002.json": hashes[2]}}
+            evaluation = sources.NativeCompositionEvaluation(source, evidence.canonical_bytes(original), 2, hashes[2])
             source._evaluation = evaluation
             with mock.patch.object(inherited, "read_inventory_runtime",
                                    return_value=(observed, commands, receipts)) as reader, \
-                    mock.patch.object(inherited, "verify_controller_tooling") as tooling:
+                    mock.patch.object(inherited, "verify_controller_tooling") as tooling, \
+                    mock.patch.object(inherited, "read_controller_invocation_frame",
+                                      return_value=(controller_commands, {"proofs/controllers.json": "d" * 64}, 4)
+                                      ) as controller_reader:
                 run.state = "Released"
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     evaluation.verify_inherited_runtime(run, inputs, summary)
                 run.state = "Active"
-                for defect in ("unsettled-child", "foreign-parent", "changed-summary"):
+                for defect in ("unsettled-child", "foreign-parent", "changed-summary", "foreign-controller",
+                               "overlapping-controller"):
                     run.children = [123] if defect == "unsettled-child" else []
-                    selected = summary if defect != "changed-summary" else {**summary, "passedParameters": 3}
-                    native = commands if defect != "foreign-parent" else ((2, "f" * 64), commands[1])
+                    selected = summary if defect != "changed-summary" else {
+                        **summary, "inheritedRuntime": {**summary["inheritedRuntime"], "passedParameters": 3}}
+                    native = commands if defect != "foreign-parent" else ((5, "f" * 64), commands[1])
                     reader.return_value = observed, native, receipts
+                    controllers = controller_commands
+                    if defect == "foreign-controller":
+                        controllers = (*controller_commands[:-1], (7, "f" * 64))
+                    elif defect == "overlapping-controller":
+                        controllers = (*controller_commands[:-1], (6, hashes[6]))
+                    controller_reader.return_value = controllers, {"proofs/controllers.json": "d" * 64}, 4
                     with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
                         source.capture_inherited_runtime(inputs, selected)
                     self.assertIsNone(source._inherited_runtime)
                 run.children = []
                 reader.return_value = observed, commands, receipts
+                controller_reader.return_value = controller_commands, {"proofs/controllers.json": "d" * 64}, 4
                 source.capture_inherited_runtime(inputs, summary)
                 self.assertEqual(source._inherited_runtime["commands"], commands)
+                self.assertEqual(source._inherited_runtime["controllerCommands"], controller_commands)
                 self.assertTrue(tooling.called)
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     source.capture_inherited_runtime(inputs, summary)
@@ -113,17 +129,21 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 actual = evaluation.verify_inherited_runtime(run, inputs, summary)
                 self.assertTrue(actual["nativeContainment"])
                 self.assertEqual(actual["passedParameters"], 2)
+                self.assertEqual(actual["controllerParents"], 4)
+                self.assertEqual(actual["controllerInvocations"], 4)
                 self.assertFalse(actual["qualification"])
                 self.assertFalse(actual["profileComplete"])
                 self.assertFalse(actual["fullControllerAcceptance"])
-                forged = sources.NativeCompositionEvaluation(source, evaluation.report_data, 1, hashes[1])
+                forged = sources.NativeCompositionEvaluation(source, evaluation.report_data, 2, hashes[2])
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     forged.verify_inherited_runtime(run, inputs, summary)
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     evaluation.verify_inherited_runtime(ModeledRun(root), inputs, summary)
-                for defect in ("changed-proofs", "changed-summary", "changed-inputs", "changed-tooling", "retained"):
+                for defect in ("changed-proofs", "changed-summary", "changed-inputs", "changed-tooling",
+                               "changed-controller-proofs", "changed-controller-count", "retained"):
                     selected_inputs, selected = inputs, summary
                     reader.return_value = observed, commands, receipts
+                    controller_reader.return_value = controller_commands, {"proofs/controllers.json": "d" * 64}, 4
                     if defect == "changed-proofs":
                         reader.return_value = observed, commands, {**receipts, "proofs/foreign.json": "f" * 64}
                     elif defect == "changed-summary":
@@ -132,6 +152,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         selected_inputs = {**inputs, "sourceRevision": "f" * 40}
                     elif defect == "changed-tooling":
                         seal("proofs/inherited-controller-tooling.json", b'{"changed":true}')
+                    elif defect == "changed-controller-proofs":
+                        controller_reader.return_value = controller_commands, {"proofs/controllers.json": "f" * 64}, 4
+                    elif defect == "changed-controller-count":
+                        controller_reader.return_value = controller_commands, {"proofs/controllers.json": "d" * 64}, 5
                     else:
                         run.state = "Retained"
                     with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):

@@ -10014,6 +10014,24 @@ This is the first successful native confirmation of the new capture, not full
 controller/profile qualification or an established repair for the intermittent
 response-completion failure. Original rejected evidence stays unchanged.
 
+The next T071 change extends that same capture to the four historical,
+controller-preparation, reference and mutation leader receipts, without a new
+token or journal schema. It requires readonly exact output/baseline hashes,
+matching borrowed child journals and strict parent chronology around CP/runtime
+execution; all four parents must match original executor-held command bytes.
+Release replay includes the identical controller proof/count frame. Source/
+parent substitutions, omitted phases, overlapping parents and writable/symlinked
+journals reject. A fresh readonly process replays the actual32426be root's four
+parents/349 child observations/10 proofs;277 focused checks pass in36.360 seconds
+with five native-only skips. Unmocked native capture of these additional parents
+is pending. Selected-declared input snapshots are not a complete native I/O
+trace and remain explicitly so; no full-controller/profile flag is advanced.
+The unqualified-symbol logger regression is additionally verified against a
+forced rebuild of93e0e96:8/9 pass, one fails at the subsequent-result count.
+The unchanged nine cases all pass with the guard restored. An initial archive
+comparison reused newer build output because archived source timestamps were
+older; it is not counted as red evidence.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

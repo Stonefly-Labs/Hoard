@@ -427,6 +427,43 @@ failure, which remains rejected and preserved. Full controller input/origin
 evaluation, public complete-profile qualification and T071..T086 remain open;
 no task checkbox or qualification flag is advanced from this diagnostic pass.
 
+### Original controller-parent custody
+
+The remaining controller provenance cannot be inferred from525 passing runtime
+witnesses. The same inherited capture now independently replays all four
+historical/preparation/reference/mutation leader journals and requires their
+exact hashes to match the original Active owner's held command bytes. It binds
+the historical seal and every readonly result packet, checks the existing exact
+borrowed-child/input-snapshot contracts, and requires historical preparation
+before CP, controller/reference preparation before inherited execution, and
+mutations afterward. Release verification repeats the identical proof/count
+frame. No new persisted authority token, controller journal schema, retry or
+qualification flag is introduced.
+
+The new reader regression is initially red at its missing API; the enriched
+capture control is red before wiring. Controls reject omitted/reordered phases,
+foreign/resealed parents, changed/writable/symlinked journals, changed baseline,
+overlapping execution and changed released controller proofs/counts.
+The exact documented legacy/sanitation/inherited/composition/SDK/receipt selector
+passes277 tests in36.360 seconds with five native-only skips; frozen composition
+inventory, catalog/SDK and whitespace checks pass. Actual fresh readonly Linux
+replay of the unchanged successful32426be root verifies four original parents,
+349 child observations and10 proof hashes. That correspondence replay does not
+reconstruct native authority; unmocked capture of the additional four leaders
+remains pending.
+
+FR-018 requires outcomes bound to tested source/package/configuration/capability/
+version/environment inputs; it does not demand a general native filesystem I/O
+trace. Existing selected-declared snapshots remain explicitly incomplete as an
+I/O trace. Full-profile qualification still requires complete independent
+attribution and the original released owner; no such qualification is inferred
+from this increment. T071..T086 remain open.
+
+The unqualified-symbol guard also has a native assertion-level comparison:
+forced rebuild of93e0e96 yields8 Passed/one Failed across the unchanged nine
+location variants at `RuntimeLoggerTests.cs:64`; restoring the guard passes9/9.
+The first archive comparison used newer incremental output and is not red proof.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

@@ -98,6 +98,10 @@ original-owner capture and identical released-frame verification pass after
 actual release. A separate readonly process replays all525 witnesses/58 parents/
 882 proofs. The earlier failed run remains rejected; this pass does not
 establish a repair for its intermittent ownership failure.
+The next T071 boundary also checks the four original historical/preparation/
+reference/mutation parents against held native command bytes. Readonly replay
+confirms349 child observations/10 proofs from that successful root;277 focused
+checks pass. Native confirmation of this added custody check remains pending.
 Full inherited/controller profile evaluation remains unfinished.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).

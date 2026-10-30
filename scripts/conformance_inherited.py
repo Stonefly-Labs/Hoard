@@ -1,6 +1,7 @@
 """Owned original controller preparation and exact inherited runtime inventories."""
 
 from collections import Counter
+from collections.abc import Mapping
 from contextlib import contextmanager, redirect_stdout
 import argparse
 import hashlib
@@ -1939,6 +1940,56 @@ def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
     for path in mutable:
         files.pop(path.relative_to(owner).as_posix(), None)
     return files
+
+
+def read_controller_invocation_frame(root, inputs, summary):
+    """Replay retained controller journals without claiming complete native input closure."""
+    import conformance_evidence as evidence
+
+    root = Path(root)
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    inherited = summary.get("inheritedRuntime") if isinstance(summary, Mapping) else None
+    if inputs["profileId"] != "composition" or not isinstance(inherited, Mapping):
+        raise ConformanceError("OwnershipInvalid")
+    owner_path = "runtime-owner.json"
+    owner_sha, owner_raw = evidence._readonly_report_proof(root, owner_path)
+    owner = load_json(owner_raw)
+    if not isinstance(owner, dict) or owner.get("runId") != inputs["runId"]:
+        raise ConformanceError("OwnershipInvalid")
+    root_id = evidence.stable_id(owner.get("rootId"))
+    baseline_sha, _ = evidence._readonly_report_proof(root, CONTROLLER_BASELINES)
+    if baseline_sha != inherited.get("historicalBaselineSealSha256"):
+        raise ConformanceError("ProofMismatch")
+    native = inherited.get("nativeInvocations")
+    reference = inherited.get("referenceConsumer")
+    if not isinstance(native, Mapping) or not isinstance(reference, Mapping):
+        raise ConformanceError("ProofMismatch")
+    phases = (
+        ("historical", summary.get("historicalNativeInvocations")),
+        ("controllers", native.get("controllers")),
+        ("reference", reference.get("nativeInvocations")),
+        ("mutations", native.get("mutations")),
+    )
+    commands, count = [], 0
+    proofs = {owner_path: owner_sha, CONTROLLER_BASELINES: baseline_sha}
+    for phase, observed in phases:
+        if (not isinstance(observed, dict) or type(observed.get("sequence")) is not int
+                or not 1 <= observed["sequence"] <= 10000
+                or phase == "historical" and observed["sequence"] != 1
+                or commands and observed["sequence"] <= commands[-1][0]):
+            raise ConformanceError("ProofMismatch")
+        parent_path = f"proofs/execution-command-{observed['sequence']:04}.json"
+        output_path = f"proofs/inherited-{phase}-result.json"
+        parent_sha, _ = evidence._readonly_report_proof(root, parent_path)
+        output_sha, output_raw = evidence._readonly_report_proof(root, output_path)
+        verify_controller_invocations(root, observed, phase, inputs["runId"], root_id)
+        if phase == "historical" and load_json(output_raw)["result"] != {
+                "path": CONTROLLER_BASELINES, "sha256": baseline_sha}:
+            raise ConformanceError("ProofMismatch")
+        commands.append((observed["sequence"], parent_sha))
+        proofs.update({parent_path: parent_sha, output_path: output_sha})
+        count += observed["count"]
+    return tuple(commands), proofs, count
 
 
 def verify_controller_invocations(owner, summary, phase, run_id, root_id):
