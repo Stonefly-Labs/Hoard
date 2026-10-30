@@ -1347,6 +1347,15 @@ as metadata, without loading those images as runtime dependencies. The source
 logical row binds that witness and both frozen ZIPs. Host279 focused checks,
 managed compilation and formatting pass; fresh11/13 native verification remains
 required before claiming the expected139 Passed/three Incomplete/211 witnesses.
+The first original `c25be95` source run fails its generated-document boundary.
+The exact fixed compiler layout is now `obj/Release/`; only declared executable
+consumer roles additionally permit ASP.NET's exact PublicTopLevelProgram generated
+path. The repaired fact passes all24 original PE/PDB/compiler frames from the
+unchanged captured ZIP, without granting native authority. A stale eight-witness
+ingestion gate is also corrected to nine;116 focused ingestion checks pass.
+Actual CI metadata/artifact jobs each pass4/8/9 controls with the parallel reader;
+SDK completion, fresh source controls and native output-flood ownership failure
+remain open.
 
 ## Offline Correspondence Inspection
 

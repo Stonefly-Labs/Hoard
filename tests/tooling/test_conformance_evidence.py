@@ -2246,7 +2246,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 {row["testIdentity"]: ("none", "binary-runtime") for row in self.manifest["expected"]},
                 evidence.digest(self.manifest), evidence.digest(self.owner), "execution")
         observed = admit()
-        self.assertEqual(len(observed[2]), 8)
+        self.assertEqual(len(observed[2]), 9)
         original = self.manifest["expected"]
         row = original[0]
         for path in ("/private/Contract.cs", "../Contract.cs", "Old/../Contract.cs", "Old//Contract.cs",

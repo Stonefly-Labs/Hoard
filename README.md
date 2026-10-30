@@ -1139,6 +1139,18 @@ Source-case derivation binds that physical witness and both frozen bundles.
 Host279 focused checks, managed compilation and formatting pass; fresh11/13 native
 controls must establish the expected139 Passed/three Incomplete/211 witnesses.
 No new native source-case pass or full qualification is claimed yet.
+The first original `c25be95` execution fails that assertion: the fixed compiler's
+framework-subdirectory suppression also selects `obj/Release`, and executable
+recipes include ASP.NET's fixed PublicTopLevelProgram generated document.
+The assertion now uses that exact layout and permits that exact generator path
+only for the declared executable consumer roles. All24 original PE/PDB/compiler
+frames pass the repaired assertion against the unchanged captured ZIP; this
+separate metadata check supplies no native authority. The full host run also
+catches a stale eight-witness test gate, now corrected to nine.
+Actual `c25be95` CI metadata and artifact jobs each pass4 live/8 released/9 retained
+controls with the bounded parallel reader and unchanged budgets. SDK completion,
+fresh source controls and a separate native output-flood ownership rejection remain
+unresolved; no overall CI pass is claimed.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

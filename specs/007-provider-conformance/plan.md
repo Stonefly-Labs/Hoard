@@ -5224,6 +5224,32 @@ refreshed `python3 scripts/conformance_case_catalog.py --check-sdk` and
 `git diff --check` pass. Fresh11 live/13 released native verification is required:
 expected142 cases/139 Passed/three Incomplete/211 witnesses, not yet observed.
 
+Originalc25be95 attempt80ee0f8abbaf413693d52113cbda2742 instead fails, exit1,
+354572.6716079989ms, initial scratch196281024512 bytes. All three physical
+scopes execute, but the new source fact rejects the generated document boundary.
+Separate readonly execution of the unchanged original fixture projects only
+SourceRecipeRuntimeTests.cs89/117 and SourceImageProvenance.cs21, StartsWith.
+Original PDB inspection proves the fixed compiler output-path property also
+selects `obj/Release/`, and executable recipes emit ASP.NET's exact
+PublicTopLevelProgram generated document. The repair uses that exact layout and
+permits that exact generator path only in the fixed executable consumer roles;
+unknown generated paths still reject. A managed metadata replay first reproduces
+the original failure, then passes one actual test covering all24 original
+PE/PDB/compiler frames from the unchanged ZIP. It supplies no native authority.
+Original packet/ZIP SHA256:
+`a4c44ae39c47694d8d0ab064ccb6a330a1949afa69218ff8e41191497d8cd8c1` /
+`b9e4fe49e6b8f553e8fd2e668e3e1f56fe44774ad188c84b8f7cb4a3ca18f14d`.
+The original c25 host suite runs826 tests in442.126 seconds, one stale
+eight-versus-nine witness failure and30 native skips. The corrected gate passes
+all116 runtime-ingestion tests in71.174 seconds. Managed build and targeted
+format/catalog/diff checks pass; fresh full tooling/native source checks remain.
+Original CI metadata123962991518 and artifact123962991505 each pass4 live/
+8 released/9 retained controls with the bounded parallel reader and unchanged
+inventories/budgets. Native123962991325 has826 tests, zero skips, one count
+failure and one output-flood OwnershipInvalid error at the original process
+identity check; that ownership failure is not repaired or counted as success.
+SDK123962991499 remains running. Full source/profile/CI acceptance is not claimed.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

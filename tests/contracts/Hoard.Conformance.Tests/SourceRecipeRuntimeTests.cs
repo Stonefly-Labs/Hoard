@@ -92,13 +92,19 @@ public sealed class SourceRecipeRuntimeTests
                 Assert.Equal(name, assembly.GetString(assembly.GetAssemblyDefinition().Name));
                 var authored = new HashSet<string>(StringComparer.Ordinal);
                 var projectDirectory = project[..project.LastIndexOf('/')];
-                var generatedPrefix = projectDirectory + "/obj/Release/net10.0/";
-                var generated = new[]
+                var generatedPrefix = projectDirectory + "/obj/Release/";
+                var generated = new HashSet<string>(StringComparer.Ordinal)
                 {
                     ".NETCoreApp,Version=v10.0.AssemblyAttributes.cs",
                     Path.GetFileNameWithoutExtension(project) + ".AssemblyInfo.cs",
                     Path.GetFileNameWithoutExtension(project) + ".GlobalUsings.g.cs"
                 };
+                if (Text(row, "role") is "api-consumer" or "marker-consumer" or "operational-consumer")
+                {
+                    generated.Add("Microsoft.AspNetCore.App.SourceGenerators/"
+                        + "Microsoft.AspNetCore.SourceGenerators.PublicProgramSourceGenerator/"
+                        + "PublicTopLevelProgram.Generated.g.cs");
+                }
                 foreach (var handle in reader.Documents)
                 {
                     var document = reader.GetDocument(handle);

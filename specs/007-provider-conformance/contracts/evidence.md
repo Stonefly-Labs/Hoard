@@ -1301,6 +1301,14 @@ Source derivation includes both frozen bundle paths/hash and baseline/current
 source bindings; retained controls check its original transport and derivations.
 Host checks/build/format pass. Fresh11/13 native controls and actual139/3/211
 report counts remain unverified; binary/predecessor/QC-25 still lack completion.
+The first original source assertion rejects its generated-document boundary.
+The repaired boundary uses the fixed compiler's actual `obj/Release/` layout and
+permits the exact ASP.NET PublicTopLevelProgram generated path only for the fixed
+executable consumer roles. All authored documents still require their original
+source hashes; all other unknown generated paths still reject. The actual original
+24-recipe ZIP passes this repaired metadata assertion, but fresh native controls
+remain required. Separate CI metadata/artifact4/8/9 controls pass with the bounded
+parallel reader; no overall or full-profile acceptance is inferred.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

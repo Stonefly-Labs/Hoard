@@ -9290,6 +9290,31 @@ selection passes279 tests in36.702 seconds. Managed `dotnet build` with
 Fresh11 live/13 released native controls are required before claiming the new
 source case: expected142 cases/139 Passed/three Incomplete/211 witnesses.
 
+Original `c25be95` attempt80ee0f8abbaf413693d52113cbda2742 instead exits1 after
+354572.6716079989ms, initial scratch196281024512 bytes. The new source fact fails
+at its generated-document boundary, not a proof limit. A separate readonly
+replay projects only the original source locations; exact original PDB inspection
+shows `AppendTargetFrameworkToOutputPath=false` also selects `obj/Release/`,
+plus the fixed ASP.NET PublicTopLevelProgram generated document in executable
+consumer roles. The assertion now requires that exact layout and restricts that
+exact additional generator path to those fixed roles. Its actual original ZIP
+then passes all24 recipes in one managed test after reproducing the failure first;
+this is metadata correspondence, not new original native authority.
+Original packet/ZIP SHA256:
+`a4c44ae39c47694d8d0ab064ccb6a330a1949afa69218ff8e41191497d8cd8c1` /
+`b9e4fe49e6b8f553e8fd2e668e3e1f56fe44774ad188c84b8f7cb4a3ca18f14d`.
+The original host suite runs826 tests in442.126 seconds with one failure and30
+native skips: a directly dependent binary-manifest gate still expects eight
+witnesses. It now requires nine; all116 runtime-ingestion tests pass in71.174
+seconds. Fresh full tooling/source execution remains required.
+Actualc25be95 CI metadata123962991518 and artifact123962991505 both pass
+4 live/8 released/9 retained controls, exercising the repaired parallel reader
+with complete inventories and unchanged bounds. Native123962991325 runs826 tests,
+zero skips, one failure and one error: the same stale count, and output-flood
+sanitation rejecting OwnershipInvalid at the original process identity check.
+That ownership failure remains unresolved; SDK123962991499 is still running.
+No full CI/source/profile acceptance is inferred.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
