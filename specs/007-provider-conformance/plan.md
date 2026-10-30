@@ -60,6 +60,15 @@ three-attempt rule, with no further correction/rerun or test relaxation. All
 original roots/proofs remain retained; the stage stays `implement / running`,
 and T071..T086 remain unchecked pending maintainer direction.
 
+The maintainer authorizes resumption with the missing import fixed. The native
+public-completion method now imports `conformance_case_catalog` locally. A new
+ordinary tooling regression executes that exact generated test method for both
+metadata and artifacts, with native operations stubbed only for the wiring
+check; it reproduces the failure before correction in14 ms. After correction,
+the affected CLI/SDK/native-runner selector passes188 tests in31.819 seconds.
+No native assertion is removed or mocked in the actual native entry point.
+Fresh immutable Linux acceptance is pending, and no task is marked complete.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

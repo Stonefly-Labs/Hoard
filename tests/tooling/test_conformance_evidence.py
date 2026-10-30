@@ -10520,6 +10520,42 @@ class _RetainedNativeCategoryStructureControls:
 
 
 class NativeCategoryControlRunnerTests(unittest.TestCase):
+    def test_generated_public_completion_control_wiring_for_each_category(self):
+        import conformance_case_catalog as catalog
+        import conformance_sdk_checks as checks
+        from conformance_sources import NativeCategoryEvaluation
+        from conformance_unit_checks import SafeResult, failed_tests
+        from types import SimpleNamespace
+
+        for profile in ("metadata", "artifacts"):
+            inputs = {"profileId": profile}
+            owner = SimpleNamespace(root=ROOT.parent / "unused-native-control")
+            evaluation = NativeCategoryEvaluation(
+                SimpleNamespace(_run=owner), evidence.digest(inputs), "0" * 64, {})
+
+            def complete(invocation, observed):
+                if observed is not evaluation or invocation.evidence != owner.root:
+                    raise evidence.ConformanceError("OwnershipInvalid")
+                self.assertEqual(invocation.case_keys, tuple(case.key for case in catalog.expected_cases(profile)))
+                print(evidence.canonical_bytes({
+                    "qualification": True, "baselineQualification": False, "profileId": profile,
+                    "qualificationOrigin": {"inputsSha256": evidence.digest(inputs)}}).decode("ascii"))
+                return 0
+
+            with self.subTest(profile=profile), mock.patch.object(
+                    NativeCategoryEvaluation, "verify_report_origin"), mock.patch.object(
+                    checks, "_publish_category_fixture_qualification") as publish, mock.patch.object(
+                    evidence, "complete_native_category_invocation", side_effect=complete) as completion:
+                suite = released_native_category_evaluation_tests(
+                    evaluation, inputs=inputs, record={}, summary={}, resources=[])
+                control, = (test for test in suite if test._testMethodName
+                            == "test_public_dispatch_requires_original_authority_and_exact_retained_publication")
+                result = SafeResult()
+                control.run(result)
+                self.assertEqual(failed_tests(result), [])
+                publish.assert_called_once_with(owner, inputs, native_evaluation=evaluation)
+                self.assertEqual(completion.call_count, 3)
+
     def test_control_success_requires_the_underlying_verified_category_exit(self):
         run = globals().get("run_native_category_controls")
         self.assertTrue(callable(run))
@@ -11064,6 +11100,7 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
             self.assertEqual(original_path.read_bytes(), original)
 
         def test_public_dispatch_requires_original_authority_and_exact_retained_publication(self):
+            import conformance_case_catalog as catalog
             import conformance_sdk_checks as checks
 
             checks._publish_category_fixture_qualification(owner, inputs, native_evaluation=evaluation)

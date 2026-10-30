@@ -47,9 +47,10 @@ Both original 63-parameter metadata scenarios pass locally. The complete hosted
 foundations workflow, including full SDK diagnostics, passes at the exact
 correction commit `288542d` ([run](https://github.com/Stonefly-Labs/Hoard/actions/runs/41090253604)).
 The next T071 increment connects complete built-in category commands to original
-native-owner qualification and its receipt. Fresh Linux confirmation is blocked
-by a missing catalog import in its new native control; execution is paused under
-the maintainer's three-attempt rule, with all failed evidence retained.
+native-owner qualification and its receipt. The missing catalog import in its
+new native control is corrected, with a cheap regression exercising that exact
+generated control for both categories; fresh Linux confirmation remains pending.
+All earlier failed evidence remains retained.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

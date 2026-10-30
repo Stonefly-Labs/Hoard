@@ -9832,6 +9832,14 @@ is paused under the maintainer's three-attempt rule, preserving all three
 failed runs without weakening the control. Offline coordinator qualification
 and the other three profiles remain unfinished.
 
+The maintainer subsequently authorizes the import correction and resumption.
+The generated public-completion method now imports its own catalog. A focused
+wiring regression exercises that exact generated method for both profiles,
+stubbing native operations only for this cheap unit check: it fails before the
+import correction in14 ms and the188-test affected selector passes afterward
+in31.819 seconds. This is not native qualification; fresh immutable Linux runs
+must still exercise all original live/released/retained controls without mocks.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
