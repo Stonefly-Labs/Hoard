@@ -5630,6 +5630,26 @@ admission instead of merely checking mocked keyword arguments.
 passes311 tests in42.567 seconds,23 native-prerequisite skips;
 `git diff --check` passes. Failed original evidence is retained unchanged.
 Fresh native acceptance and independent settled foundation authority remain open.
+Dedicated foundation origin capture is now wired before common evaluation.
+It requires the original Active executor and all previously captured runtime
+scopes, independently re-expands foundation discovery/class inputs and exact
+86-parameter proofs, verifies original controller/formatting native commands
+against executor-held bytes, and pins the complete independently inspected
+material. Settings and original inventory bytes survive transient-store release;
+foundation commands use the already selected SDK runner closure. The independent
+Released boundary reconstructs the same semantic material and re-ingests every
+proof/receipt under the same actual owner/token, not an offline minted result.
+Formatting independently checks four-root project completeness while Active,
+source-identical isolated solution closure and all actual command receipts.
+Finite native controls now challenge foundation proof/discovery/inventory/
+settings/manifest and formatting closure/parent mutations, plus single-use
+capture. Their original native execution remains pending.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_execution test_conformance_composition test_conformance_inherited test_conformance_sdk_checks test_conformance_ci test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_evidence.ConformanceBaselineTests`
+passes457 tests in110.841 seconds with23 host native-prerequisite skips;
+`git diff --check` passes. An earlier selector included a nonexistent class and
+failed discovery; it is superseded only as a command-selection error by this
+corrected passing run, not erased. Fresh immutable native acceptance is required;
+diagnostic mode, full qualification and T071..T086 remain unchanged/open.
 
 ### Compatibility logical case linkage and released presentation
 

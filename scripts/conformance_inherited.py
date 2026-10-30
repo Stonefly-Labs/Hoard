@@ -751,11 +751,11 @@ def _execution_scopes(discoveries, methods, assemblies, admit):
 
 
 def execute_inventory_scope(run, source, feed, prior, files, closure_path, inventory_path, owner_raw, variables,
-                            discovered_runtime, expected, *, assembly_name, scope):
+                            discovered_runtime, expected, *, assembly_name, scope, retain_settings=False):
     import time
     import conformance_evidence as evidence
     from conformance_sdk_checks import category_command_proof, write_new
-    from conformance_sources import read_bounded, runtime_arguments, runtime_settings
+    from conformance_sources import read_bounded, runtime_arguments, runtime_runner, runtime_settings
     from xml.sax.saxutils import escape
 
     runtime, request_path, discovery_path = discovered_runtime
@@ -790,8 +790,10 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
     ) + "</EnvironmentVariables>"
     settings_data = runtime_settings(
         run.root, assembly, attempt, digest(manifest), digest(owner), environment_xml)
-    settings_path = run.root / f"stores/settings-{attempt}.runsettings"
+    settings_directory = "proofs" if retain_settings else "stores"
+    settings_path = run.root / settings_directory / f"settings-{attempt}.runsettings"
     write_new(settings_path, settings_data)
+    runner = runtime_runner(run.root, prior) if retain_settings else None
     bound_paths = (
         manifest_path, inputs_path, run.root / "runtime-owner.json", settings_path, closure_path,
         source / inventory_path, request_path, discovery_path, assembly,
@@ -801,9 +803,13 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
     for path in (*bound_paths, *(run.root / name for name in files)):
         path.chmod(0o400)
     bound = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in bound_paths}
+    if runner is not None:
+        bound.update(runner["inputFiles"])
     if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in files.items()):
         raise ConformanceError("InputChanged")
-    arguments = runtime_arguments(assembly, settings_path, [row["testIdentity"] for row in expected])
+    arguments = runtime_arguments(
+        assembly, settings_path, [row["testIdentity"] for row in expected],
+        runner_prefix=runner["prefix"] if runner is not None else None)
     started = time.monotonic() * 1000
     result = run.command(
         arguments, cwd=runtime, env=variables, kind="tests", cache_id="inherited-runtime", timeout=180,
@@ -811,11 +817,14 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
     ended = time.monotonic() * 1000
     parent_sha = category_command_proof(
         run, result, arguments=arguments, cwd=runtime, manifest=manifest,
-        settings_data=settings_data, started_ms=started, ended_ms=ended, settings_directory="stores")
+        settings_data=settings_data, started_ms=started, ended_ms=ended, settings_directory=settings_directory)
     record = load_json(run.read_execution_record(run.command_sequence))
     if parent_sha is None or record.get("inputFiles") != bound:
         raise ConformanceError("ProofMismatch")
     output = run.root / ("runtime-" + attempt)
+    if retain_settings:
+        for path in output.iterdir():
+            path.chmod(0o400)
     transport = {
         "inputs": inputs, "manifest_data": manifest_raw, "owner_data": owner_raw,
         "witnesses_data": read_bounded(output / "witnesses.jsonl", 2 * 1024**2),

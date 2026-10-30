@@ -9409,13 +9409,14 @@ class ConformanceBaselineTests(unittest.TestCase):
             "historicalPreparation": preparation, "sourceRecipeOrigin": recipes,
             "sourceSha256": recipes["summarySha256"], "retainedOrigin": retained,
             "retainedSha256": retained["summarySha256"], "sourceBreakOrigin": source_break,
-            "sourceBreakSha256": source_break["summarySha256"]}
+            "sourceBreakSha256": source_break["summarySha256"],
+            "foundationRuntime": {}, "foundationFormatting": {}, "architecturePreparation": {}}
         active_raw = evidence.canonical_bytes(active)
         evaluation = sources.NativeCompatibilityEvaluation(
             source, evidence.digest(inputs), active_raw,
             ((declarations[-1]["sequence"], declarations[-1]["executionSha256"]),),
             evidence.canonical_bytes(preparation), evidence.canonical_bytes(source_break),
-            evidence.canonical_bytes(recipes), evidence.canonical_bytes(retained))
+            evidence.canonical_bytes(recipes), evidence.canonical_bytes(retained), b"{}", ())
         source._evaluation = evaluation
         run.transition("Settling")
         run.release()
@@ -9433,6 +9434,7 @@ class ConformanceBaselineTests(unittest.TestCase):
 
         with mock.patch.object(evidence, "_readonly_report_proof", side_effect=proof) as read, \
                 mock.patch.object(checks, "selected_msbuild", return_value=None), \
+                mock.patch.object(checks, "inspect_foundation_runtime_scope", return_value=({}, (), ())), \
                 mock.patch.multiple(
                     self.baselines,
                     inspect_historical_binary_preparation=mock.Mock(return_value=preparation),

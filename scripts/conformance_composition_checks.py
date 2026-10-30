@@ -225,7 +225,9 @@ def _format_prepared_controllers(run, controllers, files, closure_path, *, solut
                 or run.live_children()):
             raise evidence.ConformanceError("ProofMismatch")
         commands.append({"controller": phase, "projectSha256": files[project.relative_to(run.root).as_posix()],
-                         "parentSha256": result.execution_record_sha256})
+                         "parentSha256": result.execution_record_sha256,
+                         **({"projectPath": project.relative_to(run.root).as_posix(),
+                             "sequence": sequence} if foundation_only else {})})
     return {"qualification": False, "solutionFormatting": solution is not None, "commands": commands}
 
 
@@ -287,6 +289,13 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
                   "Hoard.Fixtures.Conformance.Discovery.runtimeconfig.json",
                   "Hoard.Conformance.TestLogger.dll", "Microsoft.TestPlatform.VsTestConsole.TranslationLayer.dll",
                   "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll"))]
+    if foundation:
+        from conformance_sources import runtime_runner
+
+        runner = runtime_runner(run.root, "proofs/compatibility-runtime-inputs.json")
+        if Path(runner["prefix"][-1]) != vstest:
+            raise evidence.ConformanceError("InputChanged")
+        inputs.append(run.root / "proofs/sdk-vstest-inputs.json")
     for path in {*inputs, *images}:
         path.chmod(0o400)
     bound = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in inputs}
@@ -301,6 +310,8 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
         raise evidence.ConformanceError("WitnessMissing")
     record = evidence.load_json(run.read_execution_record(run.command_sequence))
     raw = read_bounded(output_path, 2 * 1024 * 1024)
+    if foundation:
+        output_path.chmod(0o400)
     rows = admit(raw, methods, assembly=assembly_name)
     if (record.get("inputFiles") != bound
             or record.get("outputFiles") != {
@@ -317,6 +328,7 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
         "inventorySha256": evidence.file_sha256(source / inventory_path),
         "discoverySha256": evidence.file_sha256(output_path),
         "commandSha256": evidence.digest(record),
+        **({"commandSequence": run.command_sequence} if foundation else {}),
         "boundarySuitesExecuted": False, "controllersExecuted": False,
     }
     return summary, raw, request_path, output_path, vstest

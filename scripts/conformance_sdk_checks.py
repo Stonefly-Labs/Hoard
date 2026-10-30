@@ -4146,7 +4146,7 @@ def format_foundation_runtime(run, source, sources, config, feed, prepared):
     evidence.verify_snapshot(source, sources)
     summary = {
         **observed, "fixtureProjects": counts, "inputMapPath": closure.relative_to(run.root).as_posix(),
-        "inputMapSha256": evidence.digest(files),
+        "inputMapSha256": evidence.digest(files), "solutionPath": solution.relative_to(run.root).as_posix(),
     }
     write_new(run.root / "proofs/foundation-formatting-summary.json", evidence.canonical_bytes(summary))
     return summary
@@ -4183,7 +4183,7 @@ def execute_foundation_runtime(run, repository, candidate, sources, config, feed
     for (assembly, scope), expected in foundation_execution_scopes(discoveries, methods).items():
         attempt, command = execute_inventory_scope(
             run, candidate, feed, inputs, files, closure_path, FOUNDATION_INVENTORY_PATH, owner_raw, variables,
-            runtimes[assembly], expected, assembly_name=assembly, scope=scope)
+            runtimes[assembly], expected, assembly_name=assembly, scope=scope, retain_settings=True)
         attempts.append(attempt)
         commands.append(command)
     admitted = evidence.inspect_foundation_runtime_attempts(
@@ -4212,7 +4212,7 @@ def capture_compatibility_runtime_inputs(run, repository, candidate, config, fee
     from conformance_inherited import admit_architecture_preparation
 
     _, selected = admit_architecture_preparation(run.root, prepared)
-    paths = ["proofs/sdk-vstest-inputs.json", "proofs/foundation-formatting-inputs.json",
+    paths = ["proofs/sdk-vstest-inputs.json", "proofs/foundation-inventory.json", "proofs/foundation-formatting-inputs.json",
              "proofs/foundation-formatting-projects.json"]
     for folder, name in (
             (ARCHITECTURE_TESTS + "/bin/Release/net10.0", "Hoard.Architecture.Tests.dll"),
@@ -4424,6 +4424,294 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
         "witnesses": observed["witnesses"], "proofs": MappingProxyType(proof_hashes),
         "startedMs": execution_started, "endedMs": previous_end, "postInputs": post,
     })
+
+
+def inspect_foundation_runtime_scope(root, inputs, runtime_summary, formatting_summary, prepared, *, retained=False):
+    from conformance_inherited import (
+        FOUNDATION_ASSEMBLIES, FOUNDATION_INVENTORY_PATH, admit_foundation_discovery,
+        foundation_execution_scopes, foundation_inventory,
+        verify_controller_invocations)
+
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    if inputs["profileId"] != "compatibility" or inputs["mode"] != "diagnostic":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    hashes = {}
+
+    def read(path, limit=2 * 1024**2):
+        hashed, raw = evidence._readonly_report_proof(root, path)
+        if len(raw) > limit:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        if path in hashes and hashes[path] != hashed:
+            raise evidence.ConformanceError("ProofMismatch")
+        hashes[path] = hashed
+        return hashed, raw
+
+    def frozen(path):
+        hashed, raw = read(path)
+        if inputs["runtimeAssemblies"].get(path) != hashed:
+            raise evidence.ConformanceError("ProofMismatch")
+        return hashed, raw
+
+    _, owner_raw = read("runtime-owner.json", 65536)
+    owner = evidence.load_json(owner_raw)
+    if (owner.get("runId") != inputs["runId"] or owner.get("invocationGroupId") != inputs["invocationGroupId"]
+            or owner.get("rootPathSha256") != hashlib.sha256(str(root).encode()).hexdigest()):
+        raise evidence.ConformanceError("ProofMismatch")
+    inventory_sha, inventory_raw = frozen("proofs/foundation-inventory.json")
+    if inputs["sourceManifest"].get(FOUNDATION_INVENTORY_PATH) != inventory_sha:
+        raise evidence.ConformanceError("ProofMismatch")
+    methods = foundation_inventory(inventory_raw, inputs["sourceManifest"])
+    map_sha, map_raw = read(prepared["inputMapPath"])
+    files = evidence._hash_map(evidence.load_json(map_raw))
+    if (map_sha != prepared["inputMapSha256"]
+            or files.get(prepared["manifestPath"]) != prepared["manifestSha256"]
+            or inputs["configurationSha256"] != evidence.digest({
+                "configuration": evidence.configuration_fingerprint(evidence.synthetic_source_mapping()),
+                "architectureInputs": files})):
+        raise evidence.ConformanceError("ProofMismatch")
+    verify_controller_invocations(root, prepared["nativeInvocations"], "architecture", inputs["runId"], owner["rootId"])
+    preparation_sequence = prepared["nativeInvocations"]["sequence"]
+    preparation_sha, _ = read(f"proofs/execution-command-{preparation_sequence:04}.json", 65536)
+    if preparation_sha != prepared["parentSha256"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    read("proofs/inherited-architecture-result.json", 16 * 1024**2)
+    runner = runtime_runner(root, inputs)
+    read("proofs/sdk-vstest-inputs.json", evidence.MAX_REPORT_BYTES)
+    commands, discoveries, requests = [], {}, {}
+    if set(runtime_summary["discoveries"]) != set(FOUNDATION_ASSEMBLIES):
+        raise evidence.ConformanceError("WitnessMissing")
+
+    def command(sequence, expected_sha, arguments, cwd, bound, outputs=None):
+        record_sha, raw = read(f"proofs/execution-command-{sequence:04}.json", 65536)
+        record = evidence.load_json(raw)
+        record = _category_command_record(
+            root, raw, record_sha=expected_sha, sequence=sequence, run_id=inputs["runId"], root_id=owner["rootId"],
+            exit_code=0, arguments=arguments, cwd=cwd,
+            started_ms=evidence._number(record.get("startedMs")), ended_ms=evidence._number(record.get("endedMs")))
+        if (record_sha != expected_sha or record.get("inputFiles") != bound
+                or record.get("outputFiles") != outputs or record["endedMs"] - record["startedMs"] > 180000):
+            raise evidence.ConformanceError("ProofMismatch")
+        return record
+
+    for assembly in sorted(FOUNDATION_ASSEMBLIES):
+        prefix = "proofs/foundation-" + assembly
+        method_path, request_path, case_path = (prefix + suffix for suffix in (
+            "-methods.json", "-request.json", "-cases.json"))
+        method_sha, method_raw = read(method_path)
+        request_sha, request_raw = read(request_path)
+        case_sha, case_raw = read(case_path)
+        selected = sorted(name for name in methods if name.startswith(assembly + "."))
+        request = evidence.load_json(request_raw)
+        runtime = root / FOUNDATION_RUNTIME_ROOT / assembly
+        driver = root / FOUNDATION_RUNTIME_ROOT / "driver"
+        image_paths = {
+            path: hashed for path, hashed in inputs["runtimeAssemblies"].items()
+            if any(path.startswith(folder.relative_to(root).as_posix() + "/") for folder in (runtime, driver))
+            and (Path(path).suffix in (".dll", ".so", ".dylib")
+                 or path.endswith((".deps.json", ".runtimeconfig.json")))}
+        image = runtime / (assembly + ".dll")
+        if (method_raw != evidence.canonical_bytes(selected) or not isinstance(request, dict)
+                or set(request) != {"methods", "assemblies"} or request["methods"] != selected
+                or not isinstance(request["assemblies"], list) or len(request["assemblies"]) != len(image_paths)
+                or {row["path"]: row["sha256"] for row in request["assemblies"]} != image_paths
+                or any(row != {"path": row["path"], "sha256": row["sha256"],
+                               "id": "test-assembly" if row["path"] == image.relative_to(root).as_posix()
+                               else f"discovery-image-{index}"}
+                       for index, row in enumerate(request["assemblies"]))):
+            raise evidence.ConformanceError("ProofMismatch")
+        summary = runtime_summary["discoveries"][assembly]
+        sequence = evidence._integer(summary.get("commandSequence"))
+        rows = admit_foundation_discovery(case_raw, methods, assembly=assembly)
+        if summary != {
+                "qualification": False, "profileComplete": False, "executionComplete": False,
+                "methods": len(selected), "exactParameters": len(rows),
+                "groups": {"foundation": len(rows)}, "inventorySha256": inventory_sha,
+                "discoverySha256": case_sha, "commandSha256": summary["commandSha256"],
+                "commandSequence": sequence, "boundarySuitesExecuted": False, "controllersExecuted": False}:
+            raise evidence.ConformanceError("ProofMismatch")
+        bound = {
+            "stores/snapshot/" + FOUNDATION_INVENTORY_PATH: inventory_sha,
+            method_path: method_sha, request_path: request_sha,
+            image.relative_to(root).as_posix(): inputs["runtimeAssemblies"][image.relative_to(root).as_posix()],
+            **{(driver / name).relative_to(root).as_posix():
+               inputs["runtimeAssemblies"][(driver / name).relative_to(root).as_posix()] for name in (
+                   "Hoard.Fixtures.Conformance.Discovery.dll", "Hoard.Fixtures.Conformance.Discovery.deps.json",
+                   "Hoard.Fixtures.Conformance.Discovery.runtimeconfig.json", "Hoard.Conformance.TestLogger.dll",
+                   "Microsoft.TestPlatform.VsTestConsole.TranslationLayer.dll",
+                   "Microsoft.VisualStudio.TestPlatform.ObjectModel.dll")},
+            **runner["inputFiles"],
+        }
+        record = command(sequence, summary["commandSha256"], [
+            "dotnet", str(driver / "Hoard.Fixtures.Conformance.Discovery.dll"), str(root), runner["prefix"][-1],
+            request_path, request_sha, case_path], runtime, bound, {case_path: case_sha})
+        if commands and (sequence <= commands[-1][0] or record["startedMs"] < previous_end):
+            raise evidence.ConformanceError("ProofMismatch")
+        previous_end = record["endedMs"]
+        commands.append((sequence, summary["commandSha256"]))
+        discoveries[assembly], requests[assembly] = case_raw, request
+    scopes = foundation_execution_scopes(discoveries, methods)
+    admission_sha, admission_raw = read("proofs/foundation-scope-admission.json")
+    admission = evidence.load_json(admission_raw)
+    if len(admission["scopes"]) != len(scopes) or len(runtime_summary["commands"]) != len(scopes):
+        raise evidence.ConformanceError("WitnessMissing")
+    attempts = []
+    for scope, parent in zip(admission["scopes"], runtime_summary["commands"], strict=True):
+        assembly, test_class = scope["assembly"], scope["testClass"]
+        expected = scopes.get((assembly, test_class))
+        if expected is None or parent["attemptId"] != scope["attemptId"]:
+            raise evidence.ConformanceError("ProofMismatch")
+        attempt = evidence._uuid(parent["attemptId"])
+        if set(parent) != {"attemptId", "parentSha256"}:
+            raise evidence.ConformanceError("ProofMismatch")
+        manifest_path = f"runtime-input-{attempt}.json"
+        manifest_sha, manifest_raw = read(manifest_path)
+        manifest = evidence.load_json(manifest_raw)
+        scope_inputs_sha, scope_inputs_raw = read(manifest["runInputsPath"], 16 * 1024**2)
+        local = evidence.admit_entity("RunInputs", evidence.load_json(scope_inputs_raw))
+        request = requests[assembly]
+        images = [row for row in request["assemblies"]
+                  if row["path"].startswith(f"{FOUNDATION_RUNTIME_ROOT}/{assembly}/")]
+        variables = {"HOARD_FOUNDATION_EVIDENCE": str(root / prepared["manifestPath"])}
+        expected_inputs = {
+            **inputs, "runtimeAssemblies": {row["path"]: row["sha256"] for row in images},
+            "configurationSha256": evidence.digest({
+                "configuration": inputs["configurationSha256"], "controllerReadInputs": files,
+                "environmentSha256": evidence.digest(variables), "discoveryRequestSha256": evidence.digest(request)}),
+            "invocation": ["component", "inherited", assembly, test_class],
+        }
+        if (local != expected_inputs or manifest["runInputsPath"] != f"proofs/inherited-inputs-{attempt}.json"
+                or manifest["assemblies"] != images or manifest["expected"] != list(expected)):
+            raise evidence.ConformanceError("ProofMismatch")
+        runtime = root / FOUNDATION_RUNTIME_ROOT / assembly
+        image = runtime / (assembly + ".dll")
+        environment_xml = ("<EnvironmentVariables><HOARD_FOUNDATION_EVIDENCE>"
+                           + escape(variables["HOARD_FOUNDATION_EVIDENCE"])
+                           + "</HOARD_FOUNDATION_EVIDENCE></EnvironmentVariables>")
+        settings = runtime_settings(root, image, attempt, manifest_sha, hashlib.sha256(owner_raw).hexdigest(),
+                                    environment_xml)
+        receipt_sha, receipt_raw = read(f"proofs/category-command-{attempt}-execution.json", 65536)
+        receipt = evidence.load_json(receipt_raw)
+        if receipt_sha != parent["parentSha256"]:
+            raise evidence.ConformanceError("ProofMismatch")
+        sequence = evidence._integer(receipt["commandSequence"])
+        record_sha, record_raw = read(f"proofs/execution-command-{sequence:04}.json", 65536)
+        record = evidence.load_json(record_raw)
+        _, record = verify_category_command_proof(
+            root, run_id=inputs["runId"], root_id=owner["rootId"], manifest=manifest,
+            arguments=runtime_arguments(image, root / f"proofs/settings-{attempt}.runsettings",
+                                        [row["testIdentity"] for row in expected], runner_prefix=runner["prefix"]),
+            cwd=runtime, settings_data=settings, started_ms=record["startedMs"], ended_ms=record["endedMs"])
+        read(f"proofs/settings-{attempt}.runsettings", 256 * 1024)
+        prefix = "proofs/foundation-" + assembly
+        bound = {
+            manifest_path: manifest_sha, manifest["runInputsPath"]: scope_inputs_sha,
+            "runtime-owner.json": hashlib.sha256(owner_raw).hexdigest(),
+            f"proofs/settings-{attempt}.runsettings": hashlib.sha256(settings).hexdigest(),
+            prepared["inputMapPath"]: map_sha, "stores/snapshot/" + FOUNDATION_INVENTORY_PATH: inventory_sha,
+            prefix + "-request.json": evidence.digest(request),
+            prefix + "-cases.json": hashlib.sha256(discoveries[assembly]).hexdigest(),
+            **{(runtime / name).relative_to(root).as_posix():
+               inputs["runtimeAssemblies"][(runtime / name).relative_to(root).as_posix()] for name in (
+                   assembly + ".dll", assembly + ".deps.json", assembly + ".runtimeconfig.json",
+                   "Hoard.Conformance.TestLogger.dll", "Hoard.Testing.Conformance.dll")},
+            **runner["inputFiles"],
+        }
+        if (record.get("inputFiles") != bound or sequence <= commands[-1][0]
+                or record["startedMs"] < previous_end or record["endedMs"] - record["startedMs"] > 180000):
+            raise evidence.ConformanceError("ProofMismatch")
+        previous_end = record["endedMs"]
+        commands.append((sequence, record_sha))
+        directory = root / f"runtime-{attempt}"
+        names = {path.name for path in directory.iterdir()}
+        proof_names = {name for name in names if re.fullmatch(r"proof-[0-9a-f-]{36}\.json", name)}
+        if names != {"witnesses.jsonl", "completion.json", *proof_names} or len(proof_names) != len(expected):
+            raise evidence.ConformanceError("ProofMismatch")
+        base = directory.relative_to(root).as_posix() + "/"
+        attempts.append({"assembly": assembly, "testClass": test_class, "transport": {
+            "inputs": local, "manifest_data": manifest_raw, "owner_data": owner_raw,
+            "witnesses_data": read(base + "witnesses.jsonl")[1],
+            "completion_data": read(base + "completion.json", 65536)[1],
+            "proofs": {name: read(base + name, 65536)[1] for name in proof_names},
+            "manifest_sha256": manifest_sha, "owner_sha256": hashlib.sha256(owner_raw).hexdigest(),
+            "started_ms": record["startedMs"], "ended_ms": record["endedMs"],
+        }})
+    observed = evidence.inspect_foundation_runtime_attempts(
+        inventory_data=inventory_raw, sources=inputs["sourceManifest"], discoveries=discoveries, attempts=attempts)
+    completion_sha, completion_raw = read("proofs/compatibility-foundation-completion-inputs.json", 16 * 1024**2)
+    evidence.verify_input_recomputation(inputs, evidence.load_json(completion_raw))
+    if (evidence.canonical_bytes(observed) != admission_raw or not observed["executionComplete"]
+            or runtime_summary != {
+                "qualification": False, "profileComplete": False, "executionComplete": True,
+                "fullFoundationAcceptance": False, "passedParameters": observed["passedParameters"],
+                "inputsSha256": evidence.digest(inputs), "postInputsSha256": completion_sha,
+                "scopeAdmissionSha256": admission_sha, "commands": runtime_summary["commands"],
+                "discoveries": runtime_summary["discoveries"]}):
+        raise evidence.ConformanceError("ProofMismatch")
+    formatting_commands = _inspect_foundation_formatting(root, inputs, formatting_summary, read, frozen, command,
+                                                        retained=retained)
+    return {
+        "foundationRuntime": runtime_summary, "foundationFormatting": formatting_summary,
+        "proofs": hashes,
+    }, tuple(commands), ((preparation_sequence, preparation_sha), *formatting_commands)
+
+
+def _inspect_foundation_formatting(root, inputs, summary, read, frozen, command, *, retained):
+    _, raw = read("proofs/foundation-formatting-summary.json")
+    if raw != evidence.canonical_bytes(summary):
+        raise evidence.ConformanceError("ProofMismatch")
+    closure_path, descriptor = "proofs/foundation-formatting-inputs.json", "proofs/foundation-formatting-projects.json"
+    closure_sha, closure_raw = frozen(closure_path)
+    descriptor_sha, descriptor_raw = frozen(descriptor)
+    files = evidence._hash_map(evidence.load_json(closure_raw))
+    fixture_root = "stores/compatibility-architecture/"
+    roots = ("providers", "architecture", "hosts", "compatibility")
+    projects, counts = [], {}
+    for base in roots:
+        selected = sorted(name for name in files if name.startswith(fixture_root + base + "/")
+                          and name.endswith(".csproj"))
+        if not 1 <= len(selected) <= 128:
+            raise evidence.ConformanceError("WitnessMissing")
+        if not retained and selected != sorted(
+                path.relative_to(root).as_posix() for path in (root / fixture_root / base).rglob("*.csproj")):
+            raise evidence.ConformanceError("ProofMismatch")
+        projects.extend(selected)
+        counts[base] = len(selected)
+    solution = "stores/foundation-runtime-source/Hoard.slnx"
+    if (descriptor_raw != evidence.canonical_bytes({"foundation": projects})
+            or files.get(descriptor) != descriptor_sha or closure_raw != evidence.canonical_bytes(files)
+            or any(files.get("stores/foundation-runtime-source/" + name) != hashed
+                   for name, hashed in inputs["sourceManifest"].items())
+            or summary != {"qualification": False, "solutionFormatting": True, "fixtureProjects": counts,
+                           "solutionPath": solution, "inputMapPath": closure_path, "inputMapSha256": closure_sha,
+                           "commands": summary["commands"]}
+            or len(summary["commands"]) != len(projects) + 1):
+        raise evidence.ConformanceError("ProofMismatch")
+    if not retained and dict(evidence.input_manifest(root, list(files))) != files:
+        raise evidence.ConformanceError("InputChanged")
+    commands = []
+    previous_end = 0
+    for project, observed in zip([*projects, solution], summary["commands"], strict=True):
+        phase = "solution" if project == solution else "foundation"
+        sequence = evidence._integer(observed.get("sequence"))
+        bound = {descriptor: descriptor_sha, closure_path: closure_sha, project: files[project]}
+        if project != solution:
+            assets = (Path(project).parent / "obj/project.assets.json").as_posix()
+            bound[assets] = files[assets]
+        if Path(project).stem in ("RequiredConsumer", "BinaryConsumer"):
+            name = "RequiredContract" if Path(project).stem == "RequiredConsumer" else "BinaryContract"
+            contract = (Path(project).parent.parent / f"Old/bin/Release/net10.0/{name}.dll").as_posix()
+            bound[contract] = files[contract]
+        if observed != {"controller": phase, "projectSha256": files[project], "projectPath": project,
+                        "sequence": sequence, "parentSha256": observed["parentSha256"]}:
+            raise evidence.ConformanceError("ProofMismatch")
+        record = command(sequence, observed["parentSha256"], [
+            "dotnet", "format", str(root / project), "--verify-no-changes", "--no-restore", "-v", "quiet"],
+            (root / project).parent, bound)
+        if (commands and sequence <= commands[-1][0] or record["startedMs"] < previous_end):
+            raise evidence.ConformanceError("ProofMismatch")
+        previous_end = record["endedMs"]
+        commands.append((sequence, observed["parentSha256"]))
+    return tuple(commands)
 
 
 def _compatibility_report_material(root, inputs, summary, *, resources):
@@ -4941,6 +5229,10 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                     run, repository, candidate, sources, config, feed, msbuild=msbuild)
                 compatibility_summary["foundationFormatting"] = format_foundation_runtime(
                     run, foundation_source, sources, config, feed, prepared)
+                from conformance_inherited import FOUNDATION_INVENTORY_PATH
+
+                write_new(run.root / "proofs/foundation-inventory.json",
+                          read_bounded(candidate / FOUNDATION_INVENTORY_PATH, 2 * 1024**2))
                 group = str(uuid.uuid4())
                 frozen_inputs = capture_compatibility_runtime_inputs(
                     run, repository, candidate, config, feed, prepared, seal_sha,
@@ -4964,6 +5256,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 compatibility_summary["foundationRuntime"] = execute_foundation_runtime(
                     run, repository, candidate, sources, config, feed, frozen_inputs, prepared, seal_sha,
                     ci_revision=ci_revision)
+                native_sources.capture_foundation(frozen_inputs, compatibility_summary)
                 admit_architecture_preparation(run.root, prepared)
                 if (dict(evidence.source_manifest(repository)) != dict(sources)
                         or evidence.source_identity(repository, ci_revision=ci_revision) != identity):

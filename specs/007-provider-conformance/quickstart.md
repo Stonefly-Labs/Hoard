@@ -1445,6 +1445,13 @@ launch. The narrow repair admits only the two actual original owned contract
 DLL paths, verifying bytes without following symlinks. Its311 affected tests
 pass with23 host native-prerequisite skips; fresh immutable native acceptance
 is still required and the failed original is retained.
+The command now also captures foundation origin against original Active
+executor-held controller/discovery/class/formatting records, retaining settings
+and inventory outside deleted stores. Released inspection independently
+reconstructs scopes, inputs, formatting and original proofs using the same
+held token and actual owner. The new native mutation controls and this combined
+path still need fresh immutable Linux acceptance;457 affected host checks pass
+with23 native-prerequisite skips. Qualification remains false.
 
 ## Offline Correspondence Inspection
 

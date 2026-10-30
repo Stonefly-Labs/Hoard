@@ -484,7 +484,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 runtime_paths.append(bundle.relative_to(root).as_posix())
             (root / "proofs").mkdir()
             (root / "proofs/sdk-vstest-inputs.json").write_bytes(b"selected-sdk")
-            for name in ("foundation-formatting-inputs.json", "foundation-formatting-projects.json"):
+            for name in ("foundation-inventory.json", "foundation-formatting-inputs.json",
+                         "foundation-formatting-projects.json"):
                 (root / "proofs" / name).write_bytes(b"frozen-formatting-input")
                 runtime_paths.append("proofs/" + name)
             lock = candidate / sdk.VERSION_TESTS / "packages.lock.json"
@@ -2173,6 +2174,10 @@ def native_compatibility_origin_tests(evaluation, *, released):
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     evaluation._source.capture_evaluation(inputs, original)
 
+            def test_foundation_origin_capture_is_single_use(self):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evaluation._source.capture_foundation(inputs, original)
+
             def test_preparation_cannot_be_captured_after_candidate_snapshot_exists(self):
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     sources.NativeCompatibilitySources(owner).capture_preparation(original["baselineSealSha256"])
@@ -2414,6 +2419,28 @@ def native_compatibility_origin_tests(evaluation, *, released):
             directory = owner.root / f'runtime-{manifest["attemptId"]}'
             path = next(iter(sorted(directory.glob("proof-*.json"))))
             self.mutate_and_restore(path, "ProofMismatch")
+
+        def test_changed_foundation_proofs_discovery_inventory_or_settings_cannot_borrow_authority(self):
+            admitted = evidence.load_json((owner.root / "proofs/foundation-scope-admission.json").read_bytes())
+            attempt = admitted["scopes"][0]["attemptId"]
+            assembly = admitted["scopes"][0]["assembly"]
+            proof = next(iter(sorted((owner.root / f"runtime-{attempt}").glob("proof-*.json"))))
+            for path in (
+                    "proofs/foundation-scope-admission.json", "proofs/foundation-inventory.json",
+                    f"proofs/foundation-{assembly}-cases.json",
+                    f"proofs/settings-{attempt}.runsettings", f"runtime-input-{attempt}.json",
+                    proof.relative_to(owner.root).as_posix()):
+                with self.subTest(path=path):
+                    self.mutate_and_restore(owner.root / path, "ProofMismatch")
+
+        def test_changed_foundation_formatting_closure_or_native_parent_cannot_borrow_authority(self):
+            self.mutate_and_restore(owner.root / "proofs/foundation-formatting-summary.json", "ProofMismatch")
+            for path in ("proofs/foundation-formatting-inputs.json", "proofs/foundation-formatting-projects.json"):
+                with self.subTest(path=path):
+                    self.mutate_and_restore(owner.root / path, "ProofMismatch")
+            formatting = original["foundationFormatting"]["commands"][0]
+            self.mutate_and_restore(
+                owner.root / f'proofs/execution-command-{formatting["sequence"]:04}.json', "ProofMismatch")
 
         def test_changed_selected_sdk_closure_cannot_borrow_original_inputs(self):
             self.mutate_and_restore(owner.root / "proofs/sdk-vstest-inputs.json", "InputChanged")

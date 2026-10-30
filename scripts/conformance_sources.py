@@ -1976,6 +1976,8 @@ class NativeCompatibilityEvaluation:
     source_break_data: bytes
     source_recipes_data: bytes
     retained_data: bytes
+    foundation_data: bytes
+    foundation_command_hashes: tuple[tuple[int, str], ...]
 
     def verify_report_origin(self, run, inputs, summary):
         if (type(run) is not OwnedRun or type(self._source) is not NativeCompatibilitySources
@@ -1990,7 +1992,14 @@ class NativeCompatibilityEvaluation:
         from conformance_baselines import (
             inspect_historical_binary_preparation, inspect_retained_consumers,
             inspect_source_break_control, inspect_source_recipes)
-        from conformance_sdk_checks import selected_msbuild
+        from conformance_sdk_checks import inspect_foundation_runtime_scope, selected_msbuild
+
+        foundation, runtime_commands, preparation_commands = inspect_foundation_runtime_scope(
+            run.root, inputs, original["foundationRuntime"], original["foundationFormatting"],
+            original["architecturePreparation"], retained=True)
+        if (evidence.canonical_bytes(foundation) != self.foundation_data
+                or tuple(sorted((*runtime_commands, *preparation_commands))) != self.foundation_command_hashes):
+            raise evidence.ConformanceError("ProofMismatch")
 
         preparation = inspect_historical_binary_preparation(
             run.root, original["baselineSealSha256"], msbuild=selected_msbuild(inputs["environment"]),
@@ -2044,7 +2053,7 @@ class NativeCompatibilityEvaluation:
         retained_commands = tuple((row["sequence"], row["executionSha256"]) for row in retained["commands"])
         for sequence, expected in (
                 *preparation_commands, *recipe_commands, *retained_commands,
-                *source_break_commands, *self.command_hashes):
+                *source_break_commands, *self.command_hashes, *self.foundation_command_hashes):
             hashed, _ = evidence._readonly_report_proof(run.root, f"proofs/execution-command-{sequence:04}.json")
             if hashed != expected:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2067,6 +2076,8 @@ class NativeCompatibilitySources:
         self._source_recipe_commands = ()
         self._retained = None
         self._retained_commands = ()
+        self._foundation = None
+        self._foundation_commands = ()
 
     def capture_preparation(self, seal_sha256, *, msbuild=None):
         from conformance_baselines import inspect_historical_binary_preparation
@@ -2204,6 +2215,29 @@ class NativeCompatibilitySources:
         self._inputs_sha256 = hashed
         self._scopes[scope] = (evidence.canonical_bytes(summary), commands)
 
+    def capture_foundation(self, inputs, summary):
+        from conformance_sdk_checks import inspect_foundation_runtime_scope
+
+        run = self._run
+        if (run.state != "Active" or self._evaluation is not None or self._foundation is not None
+                or tuple(self._scopes) != ("architecture", "version", "binary")
+                or evidence.digest(inputs) != self._inputs_sha256 or run.live_children()):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        observed, runtime_commands, preparation_commands = inspect_foundation_runtime_scope(
+            run.root, inputs, summary["foundationRuntime"], summary["foundationFormatting"],
+            summary["architecturePreparation"])
+        if (runtime_commands[0][0] <= self._scopes["binary"][1][-1][0]
+                or preparation_commands[-1][0] >= self._scopes["architecture"][1][0][0]):
+            raise evidence.ConformanceError("ProofMismatch")
+        commands = tuple(sorted((*runtime_commands, *preparation_commands)))
+        if len({sequence for sequence, _ in commands}) != len(commands):
+            raise evidence.ConformanceError("ProofMismatch")
+        for sequence, hashed in commands:
+            if hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != hashed:
+                raise evidence.ConformanceError("ProofMismatch")
+        self._foundation = evidence.canonical_bytes(observed)
+        self._foundation_commands = commands
+
     def capture_evaluation(self, inputs, summary):
         from conformance_baselines import (
             inspect_historical_binary_preparation, inspect_retained_consumers,
@@ -2213,6 +2247,7 @@ class NativeCompatibilitySources:
         if (self._run.state != "Active" or self._evaluation is not None
                 or self._preparation is None or self._source_break is None
                 or self._source_recipes is None or self._retained is None
+                or self._foundation is None
                 or tuple(self._scopes) != ("architecture", "version", "binary")
                 or evidence.digest(inputs) != self._inputs_sha256):
             raise evidence.ConformanceError("OwnershipInvalid")
@@ -2221,6 +2256,9 @@ class NativeCompatibilitySources:
         if (original != evidence.canonical_bytes(summary) or summary.get("qualification") is not False
                 or summary.get("phase") != "compatibility-replay-admitted"
                 or evidence.canonical_bytes(summary.get("historicalPreparation")) != self._preparation):
+            raise evidence.ConformanceError("ProofMismatch")
+        foundation = evidence.load_json(self._foundation)
+        if any(summary.get(name) != foundation[name] for name in ("foundationRuntime", "foundationFormatting")):
             raise evidence.ConformanceError("ProofMismatch")
         observed_preparation = inspect_historical_binary_preparation(
             self._run.root, summary["baselineSealSha256"], msbuild=self._preparation_msbuild)
@@ -2266,11 +2304,11 @@ class NativeCompatibilitySources:
         if any(hashlib.sha256(self._run.read_execution_record(sequence)).hexdigest() != hashed
                for sequence, hashed in (
                    *self._preparation_commands, *self._source_recipe_commands,
-                   *self._retained_commands, *self._source_break_commands)):
+                   *self._retained_commands, *self._source_break_commands, *self._foundation_commands)):
             raise evidence.ConformanceError("ProofMismatch")
         self._evaluation = NativeCompatibilityEvaluation(
             self, self._inputs_sha256, evidence.canonical_bytes(summary), commands, self._preparation,
-            self._source_break, self._source_recipes, self._retained)
+            self._source_break, self._source_recipes, self._retained, self._foundation, self._foundation_commands)
         return self._evaluation
 
 

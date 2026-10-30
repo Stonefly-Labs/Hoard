@@ -1245,6 +1245,12 @@ environment allowlist rejects `ContractAssembly`. The repair admits only the
 two original owned contract paths with no-follow input verification, not
 arbitrary environment variables or external assemblies. Fresh native validation
 is still required; the failed original remains failed.
+Dedicated foundation origin capture is now wired to the actual Active executor:
+it re-expands discoveries/scopes/formatting, verifies original controller and
+command bytes, and retains settings/inventory outside transient stores.
+Released evaluation re-ingests every foundation witness/proof and formatting
+receipt under the same held token. Focused checks pass457 tests,23 host native
+skips. Fresh immutable native validation is pending; this is not qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

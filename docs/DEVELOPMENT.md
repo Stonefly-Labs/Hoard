@@ -9657,6 +9657,25 @@ the actual environment admission too.
 passes311 tests in42.567 seconds with23 host native-prerequisite skips;
 `git diff --check` passes. No deadline or evidence guard changes. The failed
 original remains failed; fresh immutable native validation is required.
+Foundation origin now has its own Active capture and Released semantic replay.
+The actual owning executor must supply every original discovery/class command,
+the original architecture-preparation controller and all formatting commands.
+Independent inspection re-expands the frozen86-parameter inventory and nine
+scopes, reconstructs exact per-scope inputs/settings/arguments/read closures,
+checks the selected SDK runner closure, and re-ingests original witnesses,
+completions and proof bytes rather than accepting admission booleans. Formatting
+re-expands all four actual fixture inventories while Active and checks isolated
+solution/source correspondence and every original receipt. Original settings
+and inventory bytes are retained readonly outside deleted stores. The same
+held object and actual Released owner are required for settled replay.
+New native mutation controls cover changed foundation proofs, discovery,
+inventory, settings, manifests, formatting closures and original parents; these
+controls still need their fresh immutable Linux execution.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_execution test_conformance_composition test_conformance_inherited test_conformance_sdk_checks test_conformance_ci test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_evidence.ConformanceBaselineTests`
+passes457 tests in110.841 seconds,23 host native-prerequisite skips;
+`git diff --check` passes. A preceding selector misspelled a test class and
+failed discovery; the corrected complete command above passes. No original
+runtime/formatting acceptance, qualification or T071 completion is inferred.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
