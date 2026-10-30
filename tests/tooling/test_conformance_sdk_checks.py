@@ -112,17 +112,19 @@ class SdkDiagnosticTests(unittest.TestCase):
             checks.baselines._build(
                 None, project, config, "historical", pack=True, feed=feed, msbuild=prefix)
             checks.build(None, project, config, "candidate", feed=feed, msbuild=prefix)
-        self.assertEqual(len(commands), 6)
-        self.assertEqual(commands[:3], commands[3:])
-        for command, target in zip(commands[:3], ("Restore", "Build", "Pack")):
+        self.assertEqual(len(commands), 2)
+        self.assertEqual(commands[0], commands[1])
+        for command in commands:
             self.assertEqual(command[:len(prefix)], list(prefix))
-            self.assertIn("-target:" + target, command)
+            self.assertIn("-target:Pack", command)
+            self.assertIn("-restore", command)
             self.assertIn("-p:UseSharedCompilation=false", command)
             self.assertIn("-nodeReuse:false", command)
-        self.assertIn("-p:RestoreLockedMode=true", commands[0])
-        self.assertIn("-p:RestoreConfigFile=" + str(config), commands[0])
-        self.assertIn("-p:NoBuild=true", commands[2])
-        self.assertIn("-p:PackageOutputPath=" + str(feed), commands[2])
+            self.assertIn("-restoreProperty:RestoreLockedMode=true", command)
+            self.assertIn("-restoreProperty:RestoreConfigFile=" + str(config), command)
+            self.assertNotIn("-restoreProperty:Configuration=Release", command)
+            self.assertNotIn("-p:NoBuild=true", command)
+            self.assertIn("-p:PackageOutputPath=" + str(feed), command)
 
     def test_selected_msbuild_uses_measured_sdk_and_runtime_without_fallback(self):
         root = self.directory / "dotnet"

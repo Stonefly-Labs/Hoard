@@ -665,21 +665,20 @@ def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()
         identity = evidence.stable_id(project.stem if package_id is None else package_id)
         version = evidence.stable_id(package_version)
         archive = feed / f"{identity}.{version}.nupkg"
-    restore, compile_command, pack = baselines.project_build_commands(
-        project, config, feed=feed, lock=lock, properties=properties, msbuild=msbuild)
-    baselines._command(
-        run, restore,
-        cwd=project.parent, cache_id=cache_id)
     if compile_action is None:
-        baselines._command(
-            run, compile_command,
-            cwd=project.parent, cache_id=cache_id)
+        for command in baselines.project_build_steps(
+                project, config, feed=feed, lock=lock, properties=properties, msbuild=msbuild):
+            baselines._command(run, command, cwd=project.parent, cache_id=cache_id)
     else:
-        compile_action()
-    if feed is not None:
+        restore, _, pack = baselines.project_build_commands(
+            project, config, feed=feed, lock=lock, properties=properties, msbuild=msbuild)
         baselines._command(
-            run, pack,
+            run, restore,
             cwd=project.parent, cache_id=cache_id)
+        compile_action()
+        if feed is not None:
+            baselines._command(run, pack, cwd=project.parent, cache_id=cache_id)
+    if feed is not None:
         canonicalize_acceptance_archive(archive, expected_package_id=identity)
 
 

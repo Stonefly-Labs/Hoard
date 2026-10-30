@@ -8525,6 +8525,34 @@ remain intact. Both internal child modes share one result check, while public
 failures retain the existing safe presentation. The SDK/CLI/sanitation selection
 passes188 tests with four explicit native-only skips.
 
+Ordinary exact-SDK historical/candidate project builds now use one
+`-restore -target:Build` or `-restore -target:Pack` process, rather than separate
+restore/build/pack processes. `-restore` performs fresh build evaluation after
+restoring imported props; a `Restore,Build` target list is not equivalent.
+Because `-restoreProperty` replaces build globals, the helper transfers the
+entire original restore property set, including prepared-lock paths, caller
+properties and the original restore configuration. Locked restore, private
+caches/feeds, archive canonicalization and disabled compiler/node reuse remain.
+Captured compiler callbacks and lock-preparation commands retain their separate
+proof boundaries; the unselected-backend fallback is unchanged.
+
+A cold private build-only package requires its newly restored import; the
+separate and combined recipes emit identical DLL, PDB and canonical archive
+bytes. A readonly invalid lock rejects before compilation/packing, without
+rewriting that lock. Both complete managed contributor runtime/origin/mutation
+controls pass, with24 metadata and25 artifact preparation commands instead of
+56 and59. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_contributors
+test_conformance_evidence.ConformanceInputTests test_conformance_legacy
+test_conformance_inherited` passes372 tests in534.231 seconds with four explicit
+native-only skips. This is not a native performance/qualification result.
+
+At `b227e45`, five CI diagnostics pass (SDK, metadata, artifacts, preparation
+and compatibility), while native ownership/evidence is cancelled. Composition
+observes664/788 tooling tests in601817.908 ms, zero failures/errors/skips/
+diagnostic bytes, and remains incomplete against the unchanged600-second
+ceiling. The source-pinned combined-build native replay remains required.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

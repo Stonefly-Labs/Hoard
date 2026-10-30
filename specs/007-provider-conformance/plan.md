@@ -3895,6 +3895,59 @@ combined SDK read guard. Fresh `b227e45` CI remains active. All outcomes remain
 nonqualifying; native timing/runner-capture investigation and T068--T086
 continue without changing limits, coverage, checklists or implement/running.
 
+### Single-process exact-SDK project builds
+
+The original cold contributor preparations launch56 metadata or59 artifact
+commands, including separate restore/build/pack processes for each ordinary
+prerequisite. Historical and candidate ordinary builds now share a single
+explicitly selected MSBuild invocation using `-restore -target:Build` or
+`-restore -target:Pack`. The latter builds before packing; it does not set
+`NoBuild=true`. SDK/runtime selection, locked inputs, private caches/feeds,
+canonicalization and disabled compiler/node reuse are unchanged.
+Captured compiler callbacks and lock-preparation stages retain their original
+separate evaluations/proof boundaries; the default CLI backend is unchanged.
+
+The new cold package control first reproduces three calls rather than one.
+Its build-only package contributes a required compiler definition through newly
+restored props, so a stale initial evaluation cannot pass. Both recipes must
+emit identical actual DLL, portable PDB and canonical archive bytes.
+An invalid readonly lock must reject before any build/package output and retain
+its original bytes. Restore also requires the original configuration and an
+explicit caller property.
+
+The first wider attempt exposes `NU1403`: supplying `-restoreProperty` replaces
+the restore globals rather than merging the build property set, losing the
+prepared lock. The helper now transfers every original restore property,
+including prepared-lock paths and long/short property-switch forms, instead of
+copying only locked-mode/configuration-file flags. It preserves the original
+restore evaluation separately from Release build/pack properties.
+The initial wider run also contains an invalid test-module selector; that is a
+validation invocation error, not a missing repository module to implement.
+Corrected actual preparations observe24/25 commands, preserving every
+contributor runtime origin and mutation assertion. Captured compiler success
+and failure controls now cover both default and explicit MSBuild backends.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_contributors
+test_conformance_evidence.ConformanceInputTests test_conformance_legacy
+test_conformance_inherited` passes372 tests in534.231 seconds with four explicit
+native-only skips. Catalog/SDK and diff checks pass. No600-second deadline,
+proof budget, assertion, native/managed distinction or task/checklist gate is
+relaxed; native performance acceptance remains open.
+
+Completed `cdb998b` composition observes396/787 tooling tests in604416.586 ms,
+one error, zero failures/skips, `AssertionFailed`, and no final summary.
+At `b227e45`, SDK, metadata, artifacts, preparation and compatibility CI
+diagnostics pass; native ownership/evidence is cancelled. Composition observes
+664/788 tests in601817.908 ms, zero failures/errors/skips/diagnostic bytes,
+and is explicitly incomplete against600 seconds. The distinct unsuccessful
+local `b227e45` timing packet is retained unchanged with SHA-256
+`7acb70e072a7c89fabf15084d534f0fbf1ee952615d0eb33b1d7ba52cb6b5655`.
+Fresh combined-build native replay is required, not inferred from host timing.
+README and DEVELOPMENT are affected; provider/product/example/architecture/
+ADR/diagram/governance/backlog/predecessor/IaC/release/UI guides are unaffected
+by this private process-startup optimization. T068--T086 remain open.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

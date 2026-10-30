@@ -574,6 +574,24 @@ def project_build_commands(project, config, *, feed=None, lock=None, properties=
     return restore, compile_command, pack
 
 
+def project_build_steps(project, config, *, feed=None, lock=None, properties=(), msbuild=None):
+    restore, compile_command, pack = project_build_commands(
+        project, config, feed=feed, lock=lock, properties=properties, msbuild=msbuild)
+    if msbuild is None:
+        return (restore, compile_command, pack) if feed is not None else (restore, compile_command)
+    command = list(compile_command)
+    command.append("-restore")
+    # Restore properties replace build globals; preserve the entire original restore evaluation.
+    for argument in restore[len(msbuild) + 2:]:
+        switch, separator, value = argument.partition(":")
+        if separator and switch.casefold() in ("-p", "-property", "/p", "/property"):
+            command.append("-restoreProperty:" + value)
+    if feed is not None:
+        command[len(msbuild) + 1] = "-target:Pack"
+        command.append("-p:PackageOutputPath=" + str(feed))
+    return (command,)
+
+
 def _build(run, project, config, name, *, pack=False, feed=None, source_root=None, preparations=None,
            properties=(), baseline=False, msbuild=None):
     lock_args = []
@@ -585,12 +603,10 @@ def _build(run, project, config, name, *, pack=False, feed=None, source_root=Non
             lock_args = [f"-p:NuGetLockFilePath={alternate}"]
         elif baseline:
             lock_args = [f"-p:NuGetLockFilePath={project.parent / 'Baseline/packages.lock.json'}"]
-    restore, compile_command, pack_command = project_build_commands(
-        project, config, feed=feed, properties=(*lock_args, *properties), msbuild=msbuild)
-    _command(run, restore, cwd=project.parent, cache_id=name)
-    _command(run, compile_command, cwd=project.parent, cache_id=name)
+    for command in project_build_steps(
+            project, config, feed=feed if pack else None, properties=(*lock_args, *properties), msbuild=msbuild):
+        _command(run, command, cwd=project.parent, cache_id=name)
     if pack:
-        _command(run, pack_command, cwd=project.parent, cache_id=name)
         for package in feed.glob("*.nupkg"):
             canonicalize_acceptance_archive(package)
 

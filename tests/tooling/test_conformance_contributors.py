@@ -611,6 +611,93 @@ class NuGetContentToolTests(unittest.TestCase):
     def relative(self, path):
         return path.relative_to(self.owner.root).as_posix()
 
+    def test_managed_build_batch_preserves_cold_restore_imports_images_and_locked_failure(self):
+        import conformance_sdk_checks as checks
+        from conformance_execution import project_build_line
+
+        self.evaluation_request()
+        prefix = ("dotnet", "exec", "--fx-version", self.runtime_version, str(self.msbuild))
+        dependency_feed = self.case / "dependencies"
+        dependency_feed.mkdir()
+        dependency = dependency_feed / "Acme.BuildInputs.1.0.0.nupkg"
+        with zipfile.ZipFile(dependency, "w") as archive:
+            archive.writestr("Acme.BuildInputs.nuspec", (
+                "<package><metadata><id>Acme.BuildInputs</id><version>1.0.0</version>"
+                "<authors>Fixture</authors><description>Cold import control</description></metadata></package>"))
+            archive.writestr("build/Acme.BuildInputs.props", (
+                "<Project><PropertyGroup><DefineConstants>$(DefineConstants);RESTORED_IMPORT"
+                "</DefineConstants></PropertyGroup></Project>"))
+        config = self.case / "NuGet.Config"
+        configuration = ET.Element("configuration")
+        sources = ET.SubElement(configuration, "packageSources")
+        ET.SubElement(sources, "clear")
+        ET.SubElement(sources, "add", key="local", value=str(dependency_feed))
+        config.write_bytes(ET.tostring(configuration, encoding="utf-8"))
+        locked = evidence.canonical_bytes({"version": 2, "dependencies": {"net10.0": {
+            "Acme.BuildInputs": {
+                "type": "Direct", "requested": "[1.0.0, 1.0.0]", "resolved": "1.0.0",
+                "contentHash": base64.b64encode(hashlib.sha512(dependency.read_bytes()).digest()).decode()}}}})
+        commands, archives, images = [], [], []
+
+        def execute(run, arguments, *, cwd, cache_id):
+            cache = self.case / cache_id / "packages"
+            (cache / "tmp").mkdir(parents=True, exist_ok=True)
+            environment = command_environment(self.owner.root, cache, {"DOTNET_ROLL_FORWARD": "Disable"})
+            code, raw = capture_control(arguments, cwd=cwd, env=environment, limit=65536, timeout=120)
+            commands.append(tuple(arguments))
+            events = tuple(event for line in raw.splitlines() if line.strip()
+                           if (event := project_build_line(line)) is not None)
+            if code or events:
+                raise evidence.ConformanceError("CommandFailed")
+
+        with mock.patch.object(checks.baselines, "_command", side_effect=execute):
+            for mode in ("separate", "batched", "invalid-lock"):
+                directory = self.case / mode
+                directory.mkdir()
+                project, lock, feed = directory / "Fixture.csproj", directory / "packages.lock.json", directory / "feed"
+                feed.mkdir()
+                project.write_text(
+                    '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework>'
+                    '<PackageId>Acme.Batch</PackageId><AssemblyName>Acme.Batch</AssemblyName>'
+                    '<Version>0.1.0</Version><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>'
+                    '</PropertyGroup><ItemGroup><PackageReference Include="Acme.BuildInputs" Version="[1.0.0]" />'
+                    '</ItemGroup><Target Name="CheckRestoreProperties" BeforeTargets="Restore" '
+                    'Condition="\'$(Configuration)\' != \'Debug\' Or \'$(ColdRestoreControl)\' != \'preserved\'">'
+                    '<Error Text="Original restore properties were not preserved." /></Target></Project>')
+                (directory / "Marker.cs").write_text(
+                    "#if !RESTORED_IMPORT\n#error The freshly restored props must be imported.\n#endif\n"
+                    "namespace Acme { public sealed class Marker { } }\n")
+                lock.write_bytes(locked if mode != "invalid-lock" else evidence.canonical_bytes(
+                    {"version": 2, "dependencies": {"net9.0": {}}}))
+                lock.chmod(0o400)
+                before, start = lock.read_bytes(), len(commands)
+                properties = ("-p:PathMap=" + str(directory) + "=/_/", "-property:ColdRestoreControl=preserved")
+                if mode == "separate":
+                    for command in checks.baselines.project_build_commands(
+                            project, config, feed=feed, lock=lock, properties=properties, msbuild=prefix):
+                        checks.baselines._command(None, command, cwd=directory, cache_id=mode)
+                    checks.canonicalize_acceptance_archive(feed / "Acme.Batch.0.1.0.nupkg",
+                                                          expected_package_id="Acme.Batch")
+                    self.assertEqual(len(commands) - start, 3)
+                elif mode == "batched":
+                    checks.build(None, project, config, mode, feed=feed, lock=lock,
+                                 properties=properties, package_id="Acme.Batch", msbuild=prefix)
+                    self.assertEqual(len(commands) - start, 1)
+                else:
+                    with self.assertRaisesRegex(evidence.ConformanceError, "CommandFailed"):
+                        checks.build(None, project, config, mode, feed=feed, lock=lock,
+                                     properties=properties, package_id="Acme.Batch", msbuild=prefix)
+                    self.assertEqual(len(commands) - start, 1)
+                    self.assertFalse((directory / "bin").exists())
+                    self.assertEqual(list(feed.iterdir()), [])
+                self.assertEqual(lock.read_bytes(), before)
+                if mode != "invalid-lock":
+                    archives.append((feed / "Acme.Batch.0.1.0.nupkg").read_bytes())
+                    images.append(tuple((directory / "bin/Release/net10.0" / ("Acme.Batch" + suffix)).read_bytes()
+                                        for suffix in (".dll", ".pdb")))
+            self.assertEqual(archives[0], archives[1])
+            self.assertEqual(images[0], images[1])
+
     def invoke(self, *, digest=None, operation="content-hashes"):
         code, raw = capture_control(
             ["dotnet", str(self.tool), operation, str(self.owner.root), self.relative(self.request),
@@ -1859,7 +1946,7 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
                         "value": 0})
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["controlInputs"])), result["controlInputs"])
             self.assertEqual(evidence.input_manifest(owner.root, sorted(result["cachedArchives"])), result["cachedArchives"])
-            prepared_commands = (53 if runtime else 50) + (3 if captured else 0) + (3 if artifacts else 0)
+            prepared_commands = (21 if runtime else 18) + (3 if captured else 0) + (1 if artifacts else 0)
             self.assertEqual(len(commands), prepared_commands)
             if runtime:
                 prepared = contributors.prepare_binding_consumer_runtime(
@@ -2688,35 +2775,42 @@ class ContributorAdmissionTests(unittest.TestCase):
         from conformance_sdk_checks import build
 
         binding, owner, configuration = self.build_fixture()
-        events = []
+        for prefix in (None, ("dotnet", "exec", "/selected/MSBuild.dll")):
+            with self.subTest(msbuild=prefix):
+                events = []
 
-        def command(run, arguments, **options):
-            self.assertIs(run, owner)
-            events.append(arguments[1])
+                def command(run, arguments, **options):
+                    self.assertIs(run, owner)
+                    events.append(arguments[1] if prefix is None else arguments[len(prefix) + 1])
 
-        def compile_action():
-            events.append("observed-compile")
+                def compile_action():
+                    events.append("observed-compile")
 
-        with mock.patch("conformance_sdk_checks.baselines._command", side_effect=command), \
-                mock.patch("conformance_sdk_checks.canonicalize_acceptance_archive"):
-            build(owner, binding.root / binding.project, configuration, "binding-build", feed=owner.root / "feed",
-                  compile_action=compile_action)
-        self.assertEqual(events, ["restore", "observed-compile", "pack"])
+                with mock.patch("conformance_sdk_checks.baselines._command", side_effect=command), \
+                        mock.patch("conformance_sdk_checks.canonicalize_acceptance_archive"):
+                    build(owner, binding.root / binding.project, configuration, "binding-build", feed=owner.root / "feed",
+                          compile_action=compile_action, msbuild=prefix)
+                self.assertEqual(events, (["restore", "observed-compile", "pack"] if prefix is None else
+                                          ["-target:Restore", "observed-compile", "-target:Pack"]))
 
     def test_shared_build_does_not_pack_or_fallback_after_observed_compile_failure(self):
         from conformance_sdk_checks import build
 
         binding, owner, configuration = self.build_fixture()
-        compile_action = mock.Mock(side_effect=evidence.ConformanceError("InputChanged"))
-        with mock.patch("conformance_sdk_checks.baselines._command") as command, \
-                mock.patch("conformance_sdk_checks.canonicalize_acceptance_archive") as canonicalize, \
-                self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
-            build(owner, binding.root / binding.project, configuration, "binding-build", feed=owner.root / "feed",
-                  compile_action=compile_action)
-        self.assertEqual(command.call_count, 1)
-        self.assertEqual(command.call_args.args[1][1], "restore")
-        compile_action.assert_called_once_with()
-        canonicalize.assert_not_called()
+        for prefix in (None, ("dotnet", "exec", "/selected/MSBuild.dll")):
+            with self.subTest(msbuild=prefix):
+                compile_action = mock.Mock(side_effect=evidence.ConformanceError("InputChanged"))
+                with mock.patch("conformance_sdk_checks.baselines._command") as command, \
+                        mock.patch("conformance_sdk_checks.canonicalize_acceptance_archive") as canonicalize, \
+                        self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                    build(owner, binding.root / binding.project, configuration, "binding-build", feed=owner.root / "feed",
+                          compile_action=compile_action, msbuild=prefix)
+                self.assertEqual(command.call_count, 1)
+                arguments = command.call_args.args[1]
+                self.assertEqual(arguments[1] if prefix is None else arguments[len(prefix) + 1],
+                                 "restore" if prefix is None else "-target:Restore")
+                compile_action.assert_called_once_with()
+                canonicalize.assert_not_called()
 
     def test_registered_build_forwards_frozen_prepared_controls_to_its_observed_compile_stage(self):
         binding, owner, configuration = self.build_fixture()

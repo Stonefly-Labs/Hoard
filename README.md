@@ -961,6 +961,11 @@ build output, preserving actual prerequisite, deadline and schema failures witho
 This does not bypass admission or establish successful native execution.
 SDK runner capture now prunes unselected deep SDK tool subtrees, preserving
 the exact selected runner/extension/resource hashes and unchanged proof limits.
+Ordinary exact-SDK historical/candidate builds now combine locked restore and
+build/pack in one MSBuild process, retaining original restore properties,
+fresh import evaluation, private inputs and captured-compiler boundaries.
+Managed DLL/PDB/archive equivalence and both contributor runtimes pass;
+native full-tooling deadline acceptance remains unverified.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
