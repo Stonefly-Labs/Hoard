@@ -9027,6 +9027,24 @@ controls reject overwrites and source/destination symlinks before touching targe
 The final descriptor-relative staging rerun passes those25 tests in0.835 seconds;
 it reuses the bounded no-follow input-parent helper and verifies the moved inode.
 The six remaining baseline/QC logical rows are not promoted by this increment.
+Current `c8d8e30` foundations CI passes compatibility, preparation and artifacts;
+the workflow still fails. Its SDK error is ProofMismatch at the five-second
+proof-reader guard (`conformance_sources.py:959`,
+`conformance_evidence.py:1710 -> :1674 -> :1693`), not the earlier environment
+probe. Metadata instead reaches frozen-binary control and rejects InputChanged
+at `conformance_sources.py:1803`: schema3 adds original PDBs to staged/sealed
+dependencies, while category runtime capture omitted those same PDBs.
+The repair captures PDB hashes only for that already-selected frozen metadata
+runtime. It preserves the exact image-set and readonly-byte assertions; other
+unselected debug symbols remain outside the scope. Focused runtime-capture/
+frozen-image regressions pass two tests in1.269 seconds, including changed PDB
+rejection. This does not resolve or change the separate SDK reader deadline.
+Fresh metadata CI verification remains required; cancelled native regressions
+and prior attempts never count as qualification.
+The original `e82daf7`8/12 attempt also fails before source compiler launch:
+InputChanged at execution's output-parent preflight, because the new proof
+output directory is absent. Its original packet is preserved; producer slot
+creation and a fresh genuine run are still required. No8/12 pass is claimed.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

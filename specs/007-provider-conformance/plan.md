@@ -4752,6 +4752,43 @@ Final staging reuses descriptor-relative no-follow parent creation and verifies
 the moved directory identity; focused25 tests pass in0.835 seconds. Its collision
 failure follows the input-root helper's existing InputChanged classification.
 
+### Current CI metadata symbols and separate SDK reader guard
+
+The completed `c8d8e30` foundations run41008087895 passes compatibility,
+preparation and artifacts. SDK123907445672 fails ProofMismatch in
+`conformance_sources.py:959 -> conformance_evidence.py:1710 -> :1674 -> :1693`,
+the existing five-second proof-reader guard, not the earlier environment probe.
+Metadata123907445689 instead fails InputChanged at
+`conformance_sources.py:1803`, reached from SDK1262/3117/4520; this is a distinct
+schema3 image-set integration regression. Native123907445584 is cancelled and
+does not supply passing evidence. Only closed codes/static locations are
+projected from the original CI logs.
+
+Schema3 retains original PDB inventory entries. Metadata staging correctly copies
+those files, and frozen-binary inspection correctly requires exact dependency
+equality. Category runtime capture still selected only DLL/runtime JSON files.
+The repair captures the staged PDBs only for the already-selected frozen metadata
+runtime; no PDB/image assertion is dropped and unselected test symbols stay out
+of scope. The capture regression first fails on a missing actual PDB hash.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks.SdkDiagnosticTests.test_capture_recomputes_added_runtime_and_locks_and_rejects_remapped_sources
+test_conformance_evidence.ConformanceRuntimeIngestionTests.test_frozen_metadata_binary_requires_original_marker_current_platform_and_owned_execution`
+passes two tests in1.269 seconds, including source/PDB mutation rejection.
+The initial test selector named the wrong evidence test class; the corrected
+selector above executes the intended control. Catalog/SDK and diff checks pass.
+Fresh metadata CI verification remains required; no deadline, count, byte budget,
+cold-input condition or assertion is relaxed. The distinct SDK reader deadline
+and full-tooling600-second acceptance remain unfinished.
+
+The original immutable `e82daf7`8/12 attempt
+`da27772d455f49f29f534c3ee92bd97f` fails before source compiler launch:
+InputChanged at SDK4727 -> execution48/897,235295.7992479969ms. Its original
+packet SHA256 is
+`bfae72d6848c2b4a5fd9cf0104c27688996186fab176dea0503ee3a00a1d005c`.
+The execution-output preflight cannot traverse the uncreated proof output
+directory. This is separate from the metadata repair; source compiler origin
+remains unverified until producer slot creation and a fresh genuine run succeed.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

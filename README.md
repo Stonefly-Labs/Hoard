@@ -1061,6 +1061,11 @@ build outputs, binds the intended compiler diagnostics to the held parent and
 captures the compatible repair. Its original owner/data are replayed through
 release; host514 checks pass with26 native-only skips. Fresh8/12 native controls
 remain required, and the six baseline/QC report rows stay Incomplete.
+Current CI diagnosis also finds a schema3 integration mismatch: frozen metadata
+PDBs are staged/sealed but omitted from runtime inputs. Their exact hashes are
+now captured for that frozen runtime only; symbol mutation rejects. Focused
+checks pass; fresh metadata CI verification is still required. The separate
+SDK runner proof-reader deadline remains unresolved.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

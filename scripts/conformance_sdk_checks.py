@@ -2559,7 +2559,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     if native_rid is None:
         raise evidence.ConformanceError("PrerequisiteMissing")
     def runtime_input(name):
-        return (name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
+        return ((name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
+                 or name.endswith(".pdb") and Path(name).parent.as_posix() == METADATA_BINARY_RUNTIME)
                 and Path(name).parent.as_posix() in runtime_folders) or (
                     name.endswith((".so", ".dylib", ".dll"))
                     and any(name.startswith(folder + "/runtimes/" + native_rid + "/") for folder in runtime_folders))

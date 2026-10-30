@@ -1270,6 +1270,10 @@ source-break contract/consumer DLL/PDB outputs, the original held compiler
 diagnostic digest and compatible repair, retaining original owner authority
 through release. Host514 checks pass with26 native-only skips. Fresh8/12 native
 controls remain required; six baseline/QC logical rows still remain Incomplete.
+The latest CI metadata guard also exposes staged schema3 PDBs missing from
+runtime capture. Their exact hashes are now admitted for the frozen metadata
+runtime only, with mutation rejection; focused checks pass. Fresh CI remains
+required, and the distinct SDK proof-reader deadline is not relaxed or resolved.
 
 ## Offline Correspondence Inspection
 

@@ -3914,7 +3914,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             current = "candidate/tests/fixtures/metadata/Consumer/bin/Release/net10.0/"
             old = "retained/bin/Release/net10.0/"
             files = {"RetainedMarker.dll": b"explicit-frozen-model-not-native",
-                     "RetainedMarker.deps.json": b"{}", "RetainedMarker.runtimeconfig.json": b"{}"}
+                     "RetainedMarker.deps.json": b"{}", "RetainedMarker.runtimeconfig.json": b"{}",
+                     "RetainedMarker.pdb": b"sealed historical debug symbols"}
             binaries = {old + name: hashlib.sha256(raw).hexdigest() for name, raw in files.items()}
             for name in ("Hoard.Abstractions.dll", "Hoard.Core.dll", "Hoard.Hosting.dll"):
                 binaries[old + name] = hashlib.sha256(b"old-" + name.encode()).hexdigest()
@@ -3966,7 +3967,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 admitted = sources.native_metadata_binary_control(run, self.inputs, started_ms=999, ended_ms=1101)
                 self.assertEqual(set(admitted["controls"]), {"frozen-pre-F05-binary"})
                 self.assertEqual(len(admitted["sourceProofs"]), 4)
-                for name in ("RetainedMarker.dll", "Hoard.Hosting.dll"):
+                for name in ("RetainedMarker.dll", "RetainedMarker.pdb", "Hoard.Hosting.dll"):
                     target = root / (runtime + name)
                     target.chmod(0o600)
                     target.write_bytes(b"substituted-image")

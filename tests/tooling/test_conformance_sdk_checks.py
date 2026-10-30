@@ -6147,6 +6147,11 @@ class SdkDiagnosticTests(unittest.TestCase):
             "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
         artifact_consumer.parent.mkdir(parents=True)
         artifact_consumer.write_bytes(b"owned-artifact-session")
+        frozen_pdb = candidate / checks.METADATA_BINARY_RUNTIME / "RetainedMarker.pdb"
+        frozen_pdb.parent.mkdir(parents=True)
+        frozen_pdb.write_bytes(b"sealed historical marker debug symbols")
+        unconsumed_pdb = runtime / "unconsumed.pdb"
+        unconsumed_pdb.write_bytes(b"unselected test debug symbols")
         sources = checks.evidence.source_manifest(repository)
         (run.root / "proofs").mkdir(exist_ok=True)
         checks.write_new(run.root / "proofs/sdk-vstest-inputs.json", b"modeled-runner-inputs")
@@ -6179,6 +6184,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                 capture()
         admit.assert_not_called()
         before = capture()
+        frozen_pdb_path = frozen_pdb.relative_to(run.root).as_posix()
+        self.assertEqual(before["runtimeAssemblies"].get(frozen_pdb_path), checks.evidence.file_sha256(frozen_pdb))
+        self.assertNotIn(unconsumed_pdb.relative_to(run.root).as_posix(), before["runtimeAssemblies"])
+        original_pdb = frozen_pdb.read_bytes()
+        frozen_pdb.write_bytes(b"changed sealed debug symbols")
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "^InputChanged$"):
+            checks.evidence.verify_input_recomputation(before, capture(before["invocationGroupId"]))
+        frozen_pdb.write_bytes(original_pdb)
         for profile in ("metadata", "artifacts"):
             category_inputs = capture(profile_id=profile)
             self.assertEqual(category_inputs["profileId"], profile)

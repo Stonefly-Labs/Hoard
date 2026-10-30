@@ -1190,6 +1190,11 @@ hashes are retained separately from the six runtime hashes and independently
 replay through release without transient trees. Rehashed metadata alone still
 cannot mint native origin or promote the six remaining logical rows.
 Host checks pass; fresh immutable8 live/12 released controls remain required.
+Category runtime capture additionally includes PDBs from the already-selected
+frozen metadata runtime so schema3's complete dependency map and actual runtime
+image set agree. Original symbols remain readonly and hash-bound; substitutions
+reject. This adds no unselected symbol scope and relaxes no exact-image, byte,
+file-count or deadline guard. Focused checks pass; fresh native CI is required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
