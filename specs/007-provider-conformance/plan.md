@@ -5526,6 +5526,14 @@ and `--check-foundation`, embedded SDK catalog and `git diff --check` pass.
 No foundation runtime, formatting, native origin or profile qualification is
 claimed from this admission work; actual owner-bound execution and settled
 replay remain the next implementation prerequisite. T071-T086 stay open.
+The inventory is now also an actual compatibility preparation prerequisite:
+admission hashes the owned snapshot's execution-source files before fixture
+commands, then binds the original inventory path/byte hash and canonical
+identity/counts into the manifest and existing controller input closure.
+Frozen runtime configuration therefore includes the inventory bytes. Focused
+controls reject changed inventory content, changed snapshot source and late
+inventory mutation;211 regression tests pass in40.142 seconds. Original
+foundation execution/formatting and settled qualification remain unbuilt.
 
 ### Compatibility logical case linkage and released presentation
 

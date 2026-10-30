@@ -9562,6 +9562,15 @@ passes211 tests in37.915 seconds; both inventory checks, embedded catalog and
 diff checks pass. This is inventory/discovery admission only. Original
 foundation execution/formatting capture and independent settled replay are
 still required before a compatibility-only qualified result can be derived.
+Actual compatibility architecture preparation now admits the inventory before
+fixture commands against hashes of the owned snapshot's execution sources,
+not merely the live repository. Its manifest records the inventory's actual
+path/byte hash, canonical identity and17-method/86-parameter counts. The existing
+controller read closure includes those bytes, binding them into frozen
+compatibility runtime configuration. Changed inventories, changed snapshot
+sources and inventory changes during preparation reject. The focused211-test
+suite passes in40.142 seconds. This is a pipeline prerequisite, not execution
+or formatting evidence.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

@@ -1413,6 +1413,9 @@ The required compatibility foundation-gate inventory is also now independently
 frozen:17 original methods/86 parameters, separate historical/current source
 hashes and the complete formatting policy. Inventory/discovery mutation checks
 pass; these are not the missing original foundation runtime/formatting witnesses.
+Actual preparation now checks the owned snapshot's frozen foundation sources
+and binds inventory bytes into runtime configuration before any native scope;
+altered inventory/snapshot bytes reject without granting qualification.
 
 ## Offline Correspondence Inspection
 

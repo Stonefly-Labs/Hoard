@@ -1232,6 +1232,7 @@ def prepare_architecture_evidence(repository, owner, source):
     import foundation_evidence as foundation
     import conformance_legacy as legacy
     from conformance_case_catalog import ARCHITECTURE_RUNTIME_ROWS
+    from conformance_evidence import input_manifest
     from conformance_sources import read_bounded
 
     owner, source = Path(owner), Path(source)
@@ -1240,6 +1241,17 @@ def prepare_architecture_evidence(repository, owner, source):
     owner, source = owner.resolve(strict=True), source.resolve(strict=True)
     if source == owner or not source.is_relative_to(owner):
         raise ConformanceError("OwnershipInvalid")
+    foundation_path = source / FOUNDATION_INVENTORY_PATH
+    legacy.no_symlinks(foundation_path)
+    foundation_raw = read_bounded(foundation_path, 2 * 1024**2)
+    foundation_sources = load_json(foundation_raw)
+    if digest(foundation_sources) != FOUNDATION_INVENTORY_SHA256:
+        raise ConformanceError("ProofMismatch")
+    foundation_sources = foundation_sources["executionSourceFiles"]
+    prefix = source.relative_to(owner).as_posix() + "/"
+    captured_sources = input_manifest(owner, [prefix + path for path in foundation_sources])
+    foundation_methods = foundation_inventory(
+        foundation_raw, {path: captured_sources[prefix + path] for path in foundation_sources})
     target = owner / "stores/compatibility-architecture"
     target.mkdir(mode=0o700)
     with controller_transport(repository, owner) as controls:
@@ -1263,13 +1275,22 @@ def prepare_architecture_evidence(repository, owner, source):
                           "controller": "foundation"}), flush=True)
         before = foundation.source_hashes(source)
         core, providers, config = foundation.packages(source, target, False)
-        document = {"core": core, "providers": providers, "localFeed": str(target / "feed")}
+        document = {
+            "core": core, "providers": providers, "localFeed": str(target / "feed"),
+            "foundationInventory": {
+                "path": str(foundation_path), "sha256": hashlib.sha256(foundation_raw).hexdigest(),
+                "canonicalSha256": FOUNDATION_INVENTORY_SHA256,
+                "methods": len(foundation_methods),
+                "parameters": sum(row["parameterCount"] for row in foundation_methods.values()),
+            },
+        }
         document["hosts"] = foundation.hosts(source, target, config, False)
         document["architecture"], document["cycles"] = foundation.architecture(source, target, config, False)
         if controls["independentlyRestored"] != controls["independentRestores"]:
             raise ConformanceError("WitnessMissing")
         document["realArchitecture"] = foundation.real_architecture(source, target, document)
-        if foundation.source_hashes(source) != before:
+        if (foundation.source_hashes(source) != before
+                or read_bounded(foundation_path, 2 * 1024**2) != foundation_raw):
             raise ConformanceError("InputChanged")
         expected = {"permitted", "identity-hosting", *(name for rows in ARCHITECTURE_RUNTIME_ROWS.values()
                                                       for name in rows)}

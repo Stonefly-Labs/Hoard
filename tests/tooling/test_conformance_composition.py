@@ -813,7 +813,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import foundation_evidence as foundation
 
         for defect in ("none", "missing-fixture", "missing-scan", "duplicate-scan", "changed-source",
-                       "missing-restored-project", "foreign-reference"):
+                       "missing-restored-project", "foreign-reference", "changed-foundation-inventory",
+                       "changed-foundation-snapshot", "late-foundation-change"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -827,6 +828,21 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     '<Project><ItemGroup><ProjectReference Include="'
                     + ("../Foreign.csproj" if defect == "foreign-reference" else "Helper.csproj")
                     + '"/></ItemGroup></Project>')
+                foundation_inventory_path = source / inherited.FOUNDATION_INVENTORY_PATH
+                foundation_inventory_path.parent.mkdir(parents=True, exist_ok=True)
+                foundation_inventory_raw = (ROOT / inherited.FOUNDATION_INVENTORY_PATH).read_bytes()
+                foundation_sources = evidence.load_json(foundation_inventory_raw)["executionSourceFiles"]
+                for relative in foundation_sources:
+                    original = source / relative
+                    original.parent.mkdir(parents=True, exist_ok=True)
+                    original.write_bytes((ROOT / relative).read_bytes())
+                if defect == "changed-foundation-inventory":
+                    changed = evidence.load_json(foundation_inventory_raw)
+                    changed["entries"].pop()
+                    foundation_inventory_raw = evidence.canonical_bytes(changed)
+                foundation_inventory_path.write_bytes(foundation_inventory_raw)
+                if defect == "changed-foundation-snapshot":
+                    (source / next(iter(foundation_sources))).write_bytes(b"changed snapshot")
                 graphs = {name: {"projects": []} for name in (
                     "permitted", "identity-hosting", *(name for rows in catalog.ARCHITECTURE_RUNTIME_ROWS.values()
                                                       for name in rows))}
@@ -844,6 +860,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 state = {"lockDerivations": []}
 
                 def prepare_graphs(*args):
+                    if defect == "late-foundation-change":
+                        foundation_inventory_path.write_bytes(b"{}")
                     restored = set(state.get("independentRestores", ()))
                     if defect == "missing-restored-project" and restored:
                         restored.pop()
@@ -861,7 +879,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         contextlib.redirect_stdout(io.StringIO()):
                     if defect != "none":
                         with self.assertRaisesRegex(evidence.ConformanceError,
-                                                    "InputChanged" if defect == "changed-source" else "WitnessMissing"):
+                                                    "InputChanged" if defect in (
+                                                        "changed-source", "changed-foundation-snapshot",
+                                                        "late-foundation-change") else
+                                                    "ProofMismatch" if defect == "changed-foundation-inventory"
+                                                    else "WitnessMissing"):
                             inherited.prepare_architecture_evidence(ROOT, root, source)
                         continue
                     result = inherited.prepare_architecture_evidence(ROOT, root, source)
@@ -877,6 +899,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 document = evidence.load_json((root / result["manifestPath"]).read_bytes())
                 self.assertEqual(document["architecture"], graphs)
                 self.assertEqual(document["realArchitecture"], scans)
+                self.assertEqual(document["foundationInventory"]["canonicalSha256"],
+                                 inherited.FOUNDATION_INVENTORY_SHA256)
+                self.assertEqual(
+                    selected[foundation_inventory_path.relative_to(root).as_posix()],
+                    document["foundationInventory"]["sha256"])
 
     def test_architecture_child_requires_explicit_compatibility_profile_before_preparation(self):
         import uuid
