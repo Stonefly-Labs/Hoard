@@ -9807,8 +9807,11 @@ Every original shutdown/readiness/admission assertion and the separate deadline
 tests remain intact; the host application is asynchronously disposed.
 The identical delay now passes. Normal-worker package-only Memory and SQLite
 scenarios each pass their exact63 native parameters with two logical processors,
-and focused formatting passes. These local diagnostics do not replace fresh
-Linux acceptance or change the historical failed receipt.
+and focused formatting passes. The complete hosted foundations workflow at exact
+`288542d` passes all six jobs, including the full Linux SDK diagnostics
+([run41090253604](https://github.com/Stonefly-Labs/Hoard/actions/runs/41090253604)).
+This confirms the corrected test on hosted Linux without changing the historical
+failed receipt or claiming profile/baseline qualification.
 
 The following T071 wiring makes the complete built-in metadata/artifact public
 command request original-native qualification, while the standalone SDK diagnostic
@@ -9821,8 +9824,13 @@ readonly bytes, never overwrite a failed/different report. Full categories use
 their existing90/180-minute profile budgets; the diagnostic-only60-minute cap is
 unchanged. The native control runner now requires that verified public exit0.
 The affected eight-module selector passes411 tests with four native-only skips;
-fresh Linux execution is pending. Offline coordinator qualification and the other
-three profiles remain unfinished.
+fresh Linux execution is not accepted. Metadata at `5cf1a1a`, followed by
+metadata and artifacts at `9d06f64`, each reaches14 passing released controls
+and one failing public-completion test. Its catalog name remains unimported in
+the factory scope; the first namespace-only correction was incomplete. Execution
+is paused under the maintainer's three-attempt rule, preserving all three
+failed runs without weakening the control. Offline coordinator qualification
+and the other three profiles remain unfinished.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

@@ -40,13 +40,25 @@ five-profile qualification.
 
 The first immutable Linux execution at `5cf1a1a` reaches the released native
 controls, where14 of15 pass. The new public-completion control fails before
-calling completion: its catalog lookup references unimported `expected_cases`
-instead of the module's existing `catalog.expected_cases`. This is a native-only
+calling completion: its catalog lookup references unimported `expected_cases`.
+This is a native-only
 test wiring defect, not permission to skip that control or accept the run.
 The failed run and its original proofs remain retained. The namespace correction
 passes the same187 focused checks in30.816 seconds; fresh native execution is
 still required. An earlier separate attempt rejected stale clone `origin/main`
 ancestry before execution; its evidence also remains preserved.
+
+**Three-attempt stop:** fresh metadata and artifact executions at `9d06f64`
+both reach the same failing lookup at line11072. The attempted namespace
+correction was incomplete: `catalog` is imported locally in other tests, not in
+this factory or its module scope. Thus three actual native executions have
+rejected the same public-completion control: metadata at `5cf1a1a`, then metadata
+and artifacts at `9d06f64`. Each passes14 of15 released controls; none is accepted
+as qualification. The best diagnosis is the missing local catalog import in
+the new test, not a provider failure. Implementation stops under the maintainer's
+three-attempt rule, with no further correction/rerun or test relaxation. All
+original roots/proofs remain retained; the stage stays `implement / running`,
+and T071..T086 remain unchecked pending maintainer direction.
 
 ### MP46 lifecycle setup race
 
@@ -70,9 +82,11 @@ The same250 ms controlled delay now passes MP46. With the unmodified worker
 restored, both exact original Memory and SQLite scenario inventories pass
 63 parameters each through the existing safe package-only transport, with
 `DOTNET_PROCESSOR_COUNT=2`; focused `dotnet format --verify-no-changes
---no-restore` passes. These macOS diagnostics are not Linux profile qualification
-or proof of the earlier hosted exception's exact cause; hosted confirmation
-and T071..T086 remain required.
+--no-restore` passes. The complete hosted foundations workflow passes at exact
+`288542d`, including all six jobs and full Linux SDK diagnostics
+([run41090253604](https://github.com/Stonefly-Labs/Hoard/actions/runs/41090253604)).
+This confirms the correction on hosted Linux, not the earlier exception's precise
+cause or full profile/baseline qualification. T071..T086 remain required.
 
 ### Authorized whole-suite timeout correction
 
