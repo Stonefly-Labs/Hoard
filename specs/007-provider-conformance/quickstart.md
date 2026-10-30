@@ -1323,6 +1323,10 @@ four Incomplete/210 witnesses, with resources-only report differences.
 Source-recipe compilation now records declared original compiler inputs/parents and
 DLL/PDB outputs, staging raw images into transient stores. Independent source-recipe
 admission and native execution remain unfinished; this is not source-case acceptance.
+The separate immutable `babad47` execution now passes all8/13 controls, and readonly
+replay verifies24 original compiler records/current-source binding. Independent
+source-recipe inspection and original live/released authority are now implemented;
+fresh10/13 controls and physical source-case assertions remain required.
 
 ## Offline Correspondence Inspection
 

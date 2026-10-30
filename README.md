@@ -1113,6 +1113,10 @@ witnesses, with only resources differing between reports.
 Source-recipe compilation now declares original parent inputs and DLL/PDB outputs,
 then atomically stages images outside retained proofs. Host26 baseline checks pass;
 independent source-recipe admission and native verification remain unfinished.
+Immutable `babad47` now passes all8/13 native controls; separate readonly replay
+verifies all24 original compiler records and current-source binding. Independent
+source-recipe inspection and original live-to-released ownership are implemented
+with237 focused checks passing; fresh10/13 native controls remain required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

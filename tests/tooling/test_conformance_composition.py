@@ -1812,6 +1812,43 @@ def native_compatibility_preparation_tests(source, seal_sha256, msbuild, capture
     return unittest.TestLoader().loadTestsFromTestCase(NativeCompatibilityPreparationTests)
 
 
+def native_compatibility_source_recipe_tests(source, capture):
+    import hashlib
+    import conformance_evidence as evidence
+
+    owner = source._run
+
+    class NativeSourceRecipeTests(unittest.TestCase):
+        def test_original_source_recipe_capture_is_single_use(self):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                capture(source)
+
+        def test_resealed_source_recipe_cannot_replace_the_original_held_compiler_parent(self):
+            sequence, _ = source._source_recipe_commands[0]
+            record_path = owner.root / f"proofs/execution-command-{sequence:04}.json"
+            packet_path = owner.root / "proofs/source-compatibility.json"
+            originals = {path: path.read_bytes() for path in (record_path, packet_path)}
+            try:
+                changed = originals[record_path] + b"\n"
+                packet = evidence.load_json(originals[packet_path])
+                packet["recipes"][0]["commands"][0]["executionSha256"] = hashlib.sha256(changed).hexdigest()
+                for path, raw in ((record_path, changed), (packet_path, evidence.canonical_bytes(packet))):
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+                with mock.patch.object(source, "_source_recipes", None), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^OwnershipInvalid$"):
+                    capture(source)
+            finally:
+                for path, raw in originals.items():
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+            self.assertEqual(owner.read_execution_record(sequence), originals[record_path])
+
+    return unittest.TestLoader().loadTestsFromTestCase(NativeSourceRecipeTests)
+
+
 def native_compatibility_source_break_tests(source, capture):
     import hashlib
     import conformance_evidence as evidence
@@ -2002,6 +2039,11 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.mutate_and_restore(owner.root / f"proofs/execution-command-{sequence:04}.json", "ProofMismatch")
 
         def test_changed_source_compiler_diagnostics_or_control_cannot_borrow_original_authority(self):
+            self.mutate_and_restore(owner.root / "proofs/source-compatibility.json", "ProofMismatch")
+            self.mutate_and_restore(owner.root / "proofs/source-compatibility-inputs.json", "ProofMismatch")
+            recipe = evidence.load_json(evaluation.source_recipes_data)["commands"][0]
+            self.mutate_and_restore(
+                owner.root / f'proofs/execution-command-{recipe["sequence"]:04}.json', "ProofMismatch")
             self.mutate_and_restore(owner.root / "proofs/source-break-control.json", "ProofMismatch")
             self.mutate_and_restore(owner.root / "proofs/compatibility-source-break-sources.json", "ProofMismatch")
             packet = evidence.load_json((owner.root / "proofs/source-break-control.json").read_bytes())
@@ -2077,6 +2119,7 @@ def run_native_compatibility_controls(arguments):
     counts = {"liveOriginTests": 0, "settlementOriginTests": 0}
     original_capture = NativeCompatibilitySources.capture_evaluation
     original_preparation_capture = NativeCompatibilitySources.capture_preparation
+    original_source_recipe_capture = NativeCompatibilitySources.capture_source_recipes
     original_source_break_capture = NativeCompatibilitySources.capture_source_break
 
     def capture_preparation(source, seal_sha256, *, msbuild=None):
@@ -2101,8 +2144,15 @@ def run_native_compatibility_controls(arguments):
             lambda: native_compatibility_source_break_tests(source, original_source_break_capture))
         return observed
 
+    def capture_source_recipes(source):
+        observed = original_source_recipe_capture(source)
+        counts["liveOriginTests"] += _run_native_control_suite(
+            lambda: native_compatibility_source_recipe_tests(source, original_source_recipe_capture))
+        return observed
+
     with mock.patch.object(NativeCompatibilitySources, "capture_evaluation", capture), mock.patch.object(
             NativeCompatibilitySources, "capture_preparation", capture_preparation), mock.patch.object(
+            NativeCompatibilitySources, "capture_source_recipes", capture_source_recipes), mock.patch.object(
             NativeCompatibilitySources, "capture_source_break", capture_source_break):
         status = sdk.execute(ROOT, Path(arguments[1]).resolve(), compatibility_only=True)
     if status != 0 or len(captured) != 1 or not counts["liveOriginTests"]:

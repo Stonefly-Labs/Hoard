@@ -1262,6 +1262,21 @@ Images are atomically moved from unique proof-only output slots to transient
 stores. Source/feed/lock checks remain unchanged. Producer tests pass; independent
 source-recipe admission, original live capture, retained replay and physical
 assertions remain unfinished, so no additional logical baseline case is claimed.
+The independent source-recipe inspector now reconstructs exactly24 ordered recipes,
+fixed source/package/configuration frames, selected original/prepared locks,
+properties and original compiler argv/cwd/input/output/exit/group/owner/time
+correspondence. Active inspection additionally rechecks actual sources, assets,
+archives and staged DLL/PDBs. Retained inspection requires the same closed material
+after transient cleanup, not new runtime authority.
+Original capture must occur before retained-consumer execution and match the actual
+Active executor's held records. Its frozen observation survives into the original
+evaluation; Released inspection replays it, checks every command hash and binds
+the current-source map to common RunInputs. Two new live controls challenge
+single-use capture and resealed original compiler records; existing released
+controls now challenge recipe packets, input frames and parent bytes too.
+Host237 checks and actual readonly replay of the prior producer's24 compiler rows
+pass; fresh10/13 native acceptance remains required. Logical source/binary/
+predecessor/QC-25 rows remain incomplete.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

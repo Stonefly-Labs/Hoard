@@ -5089,6 +5089,45 @@ test_conformance_composition test_conformance_sdk_checks test_conformance_ci`
 passes236 tests in34.139 seconds. `python3 scripts/conformance_case_catalog.py
 --check-sdk` and `git diff --check` pass.
 
+The immutable `babad47397e0caba2c6f8b4a0eeccb6593256775` producer attempt
+`5bbd9252c8e94ffc9865a6e81333b003` passes all8 live/13 released controls,
+exit0, in456378.2896740013ms, initial scratch199619416064 bytes, no extra
+SDK prewarming. Original packet SHA256
+`0599b239f7d4a70b318f78d2016b7d35104291b6cd609a3adef7f8491e154314`.
+Separate readonly replay using the new inspector verifies24 source recipes/
+24 original compiler records, exact reconstructed inputs/outputs/locks/commands
+and candidate-source equality with common RunInputs after cleanup.
+Source summary/input-frame SHA256
+`a14f184ec324ff47070eb4db0558ec93b8580410cdafc4db729f4739a1094503` /
+`ae3fb17cbbdbe8b8848ad761915faf6a9baf1b5cc14f0b0e9e490fcafd659052`.
+This is original-byte correspondence, not authority minted from an offline packet.
+
+Independent source-recipe inspection now enforces the fixed24-row policy and
+source/package/configuration frame, selected original/prepared lock hashes,
+allowed properties and exact ordered compiler argv/cwd/input/output/exit/group/
+owner/time correspondence. Active inspection rechecks source trees, archives,
+assets and staged DLL/PDB bytes; retained replay uses the same closed inputs after
+cleanup. The new baseline regression first fails for the absent inspector, then
+passes active/released good controls and11 resealed mutation families.
+Original Active capture additionally requires actual executor-held records before
+retained execution, holds the immutable correspondence through evaluation, binds
+candidate-source equality to common RunInputs, and independently replays all
+original records after actual release. Two new live controls challenge duplicate
+capture and resealed compiler parents; the existing released method now also
+mutates recipe packets, source frames and compiler-parent bytes.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence.ConformanceBaselineTests test_conformance_composition
+test_conformance_sdk_checks test_conformance_ci` passes237 tests in34.565 seconds;
+catalog/SDK and diff checks pass. Fresh original10 live/13 released native controls
+remain required; no additional logical case or full qualification is promoted.
+
+Original `bba48b8` foundations run41018739498 finishes failure only at SDK's
+reader guard: preparation/compatibility/metadata/artifacts/native jobs pass.
+Native job123940941906 passes821 tests with zero skips, failures, errors,
+expected/unexpected successes or diagnostic bytes. Artifact123940941988 also
+passes4 live/8 released/9 retained controls. This foundations job does not apply
+the full-profile600-second tooling wrapper, so that acceptance remains open.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

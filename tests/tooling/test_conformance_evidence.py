@@ -9070,6 +9070,121 @@ class ConformanceBaselineTests(unittest.TestCase):
         evidence.verify_snapshot(candidate, sources)
         self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
 
+    def test_source_recipe_inspection_reconstructs_parents_and_rejects_resealed_mutations_after_release(self):
+        historical = self.root / "stores/f06"
+        candidate = self.root / "candidate"
+        candidate.mkdir()
+        feed = self.root / "feed/candidate"
+        feed.mkdir()
+        package = feed / "Hoard.Example.0.1.0.nupkg"
+        package.write_bytes(b"modeled candidate archive")
+        for index, (relative, kind, _) in enumerate(self.baselines.SOURCE_RECIPE_POLICY):
+            source = historical if kind == "historical-f06" else candidate
+            project = source / relative
+            project.parent.mkdir(parents=True, exist_ok=True)
+            project.write_text(
+                f"<Project><PropertyGroup><AssemblyName>Recipe{index}</AssemblyName></PropertyGroup>"
+                '<ItemGroup><PackageReference Include="Hoard.Example" Version="0.1.0" /></ItemGroup></Project>')
+            (project.parent / "packages.lock.json").write_bytes(evidence.canonical_bytes({
+                "version": 1, "dependencies": {"net10.0": {
+                    "Hoard.Example": {"resolved": "0.1.0", "contentHash": "historical"}}}}))
+        entry = self.manifest["entries"][-1]
+        entry["sources"] = self.baselines._hash_tree(historical, exclude_outputs=True)
+        entry["sourceSha256"] = evidence.digest(entry["sources"])
+        entry["locks"] = {path: value for path, value in entry["sources"].items()
+                          if path.endswith("packages.lock.json")}
+        entry["lockSha256"] = evidence.digest(entry["locks"])
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        seal_sha = evidence.file_sha256(self.seal)
+        sources = self.baselines._hash_tree(candidate)
+        prefix = ("dotnet", "exec", "MSBuild.dll")
+        run = mock.Mock(root=self.root, state="Active", command_sequence=0)
+        run_id = str(uuid.uuid4())
+        originals = []
+
+        def build(_, project, config, name, **options):
+            arguments, = self.baselines.project_build_steps(
+                project, config, properties=options["properties"], msbuild=options["msbuild"])
+            outputs = {}
+            for path in options["execution_outputs"]:
+                target = self.root / path
+                target.write_bytes(("modeled compiler image " + path).encode())
+                target.chmod(0o400)
+                outputs[path] = evidence.file_sha256(target)
+            assets = project.parent / "obj/project.assets.json"
+            assets.parent.mkdir(exist_ok=True)
+            assets.write_bytes(evidence.canonical_bytes({"libraries": {"Hoard.Example/0.1.0": {
+                "type": "package", "sha512": base64.b64encode(
+                    hashlib.sha512(package.read_bytes()).digest()).decode()}}}))
+            run.command_sequence += 1
+            sequence = run.command_sequence
+            record = {
+                "schemaVersion": 1, "sequence": sequence, "childPid": sequence + 100,
+                "childStartSha256": "f" * 64, "startedMs": sequence * 10, "endedMs": sequence * 10 + 1,
+                "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "ordinary",
+                "runId": run_id, "rootId": "modeled-source-recipe-root",
+                "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(project.parent).encode()).hexdigest(),
+                "inputFiles": dict(evidence.input_manifest(self.root, options["execution_inputs"])),
+                "outputFiles": outputs}
+            target = self.root / f"proofs/execution-command-{sequence:04}.json"
+            target.write_bytes(evidence.canonical_bytes(record))
+            target.chmod(0o400)
+            originals.append(record)
+            return ({"sequence": sequence, "executionSha256": evidence.digest(record)},)
+
+        with mock.patch.object(self.baselines, "_build", side_effect=build):
+            packet = self.baselines.execute_source_recipes(
+                ROOT, run, candidate, sources, seal_sha, msbuild=prefix)
+        raw = evidence.canonical_bytes(packet)
+        observed = self.baselines.inspect_source_recipes(
+            self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix)
+        self.assertEqual(len(observed["commands"]), 24)
+        self.assertEqual(observed["runId"], run_id)
+        self.assertFalse(observed["qualification"])
+        shutil.rmtree(self.root / "stores")
+        self.assertEqual(self.baselines.inspect_source_recipes(
+            self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix, retained=True), observed)
+        for mutation in ("argv", "source-frame", "output", "failed", "owner", "order", "omitted", "recipe",
+                         "lock", "properties", "directory"):
+            records, changed = copy.deepcopy(originals), copy.deepcopy(packet)
+            if mutation == "argv":
+                records[0]["argvSha256"] = "0" * 64
+            elif mutation == "source-frame":
+                records[0]["inputFiles"][self.baselines.SOURCE_COMPATIBILITY_INPUTS] = "0" * 64
+            elif mutation == "output":
+                path = next(iter(records[0]["outputFiles"]))
+                records[0]["outputFiles"][path] = "0" * 64
+            elif mutation == "failed":
+                records[0]["exitCode"] = 1
+            elif mutation == "owner":
+                records[1]["rootId"] = "foreign-root"
+            elif mutation == "order":
+                changed["recipes"][0]["commands"].reverse()
+                records[1]["startedMs"] = 0
+            elif mutation == "omitted":
+                changed["recipes"].pop()
+                records.pop()
+            elif mutation == "recipe":
+                changed["recipes"][0]["role"] = "sdk-binding-current"
+            elif mutation == "lock":
+                changed["recipes"][0]["lockPreparations"][0]["originalSha256"] = "0" * 64
+            elif mutation == "properties":
+                changed["recipes"][0]["properties"] = ["-p:Unreviewed=true"]
+            else:
+                changed["recipes"][0]["outputDirectory"] = "stores/source-compatibility-images/recipe-01"
+            for row, record in zip(changed["recipes"], records):
+                row["commands"][0]["executionSha256"] = evidence.digest(record)
+            for record in records:
+                path = self.root / f'proofs/execution-command-{record["sequence"]:04}.json'
+                path.chmod(0o600)
+                path.write_bytes(evidence.canonical_bytes(record))
+                path.chmod(0o400)
+            with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                self.baselines.inspect_source_recipes(
+                    self.root, evidence.canonical_bytes(changed),
+                    expected_baseline_sha256=seal_sha, msbuild=prefix, retained=True)
+
     def test_source_recipes_reject_source_or_feed_mutation_by_the_build_without_touching_sealed_inputs(self):
         historical = self.root / "stores/f06"
         for project, kind, _ in self.baselines.SOURCE_RECIPE_POLICY:

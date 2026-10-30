@@ -9197,6 +9197,30 @@ declarations; `python3 -m unittest
 tests.tooling.test_conformance_evidence.ConformanceBaselineTests -q` passes26 tests.
 Independent source-recipe inspection, live ownership, runtime assertions and native
 acceptance are still required; no logical source/predecessor/QC-25 case is promoted.
+The immutable `babad47` producer attempt
+`5bbd9252c8e94ffc9865a6e81333b003` now passes all8 live/13 released controls,
+exit0, in456378.2896740013ms, initial scratch199619416064 bytes, without
+extra SDK prewarming. A separate readonly inspector reconstructs all24 original
+compiler commands, their selected locks, declared inputs and DLL/PDB outputs
+after cleanup, and confirms the current source map matches common RunInputs.
+This correspondence inspection alone supplies no native authority.
+
+The new source-recipe inspector independently requires the exact24-recipe policy,
+source/package/configuration frame, selected original/prepared locks, properties,
+ordered original compiler inputs/outputs, exit/group/time/owner correspondence
+and active physical source/assets/images. Retained replay uses the same fixed
+frames after transient cleanup. Original live capture additionally requires the
+actual executor-held records before any retained execution; evaluation preserves
+those original bytes through actual release and checks the common source hash.
+Eleven resealed mutation families reject in the existing baseline tests, and the
+dependent selection passes237 tests in34.565 seconds. New original native10/13
+controls are still required. Four logical baseline/QC rows remain incomplete.
+
+Original `bba48b8` foundations native job also passes821 tests, zero skips,
+failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
+8 released/9 retained controls too. The overall workflow fails only SDK's reader
+guard. That successful foundations job does not apply the full-profile600-second
+tooling wrapper and does not qualify any full profile.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

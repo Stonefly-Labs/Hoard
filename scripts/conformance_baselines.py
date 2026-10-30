@@ -257,6 +257,167 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
             "candidatePackages": feed_hashes, "recipes": records}
 
 
+def inspect_source_recipes(root, packet_data, *, expected_baseline_sha256, msbuild=None, retained=False):
+    """Reconstruct compiler correspondence without supplying native-origin authority."""
+    import conformance_evidence as evidence
+
+    root = Path(root).absolute()
+    baseline = (_prepared_baseline_document(root, expected_baseline_sha256) if retained
+                else verify_prepared_baselines(root, expected_baseline_sha256))
+    historical = next(row for row in baseline["entries"] if row["id"] == "f06")
+    declaration = evidence._record({"sequence": evidence._integer, "executionSha256": sha256})
+    preparation = evidence._record({
+        "schemaVersion": evidence._constant(1), "mode": evidence._constant("preparation"),
+        "qualification": evidence._constant(False), "project": relative_path,
+        "originalLock": relative_path, "originalSha256": sha256,
+        "preparedLock": relative_path, "preparedSha256": sha256,
+        "feedId": evidence._constant("candidate"), "packages": evidence._hash_map})
+    packet = evidence._runtime_json(packet_data, {
+        "schemaVersion": evidence._constant(2), "qualification": evidence._constant(False),
+        "mode": evidence._constant("source-compatibility"),
+        "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+        "recipeSha256": sha256, "inputFrameSha256": sha256, "candidatePackages": evidence._hash_map,
+        "recipes": evidence._list(evidence._record({
+            "project": relative_path, "sourceKind": evidence._one_of(
+                "historical-f06", "candidate-source-manifest"),
+            "role": evidence._one_of("api-consumer", "marker-consumer", "provider-implementer",
+                                    "operational-consumer", "sdk-binding-current"),
+            "sourceSha256": sha256, "assemblySha256": sha256, "assemblyName": evidence.stable_id,
+            "pdbSha256": sha256, "outputDirectory": relative_path,
+            "commands": evidence._list(declaration, 3, minimum=1),
+            "assetsSha256": sha256, "packages": evidence._hash_map,
+            "lockPreparations": evidence._list(preparation, 1, minimum=0),
+            "properties": evidence._list(
+                evidence._constant("-p:ManagePackageVersionsCentrally=false"), 1, minimum=0),
+        }), len(SOURCE_RECIPE_POLICY), minimum=len(SOURCE_RECIPE_POLICY)),
+    }, limit=MAX_REPORT_BYTES)
+    frame_sha, frame_raw = evidence._readonly_report_proof(root, SOURCE_COMPATIBILITY_INPUTS)
+    frame = evidence._runtime_json(frame_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+        "recipeSha256": sha256, "candidatePackages": evidence._hash_map,
+        "configurationSha256": sha256, "sources": evidence._record({
+            "historical-f06": evidence._hash_map, "candidate-source-manifest": evidence._hash_map}),
+    }, limit=MAX_REPORT_BYTES)
+    policy = {
+        "schemaVersion": 1, "qualification": False, "baselineRevision": BASELINE,
+        "recipes": [{"project": project, "sourceKind": kind, "role": role}
+                    for project, kind, role in SOURCE_RECIPE_POLICY]}
+    config = root / "stores/source-compatibility.NuGet.Config"
+    config_sha = hashlib.sha256(synthetic_nuget_configuration(root / "feed/candidate")).hexdigest()
+    if (frame_sha != packet["inputFrameSha256"] or frame["recipeSha256"] != digest(policy)
+            or packet["recipeSha256"] != frame["recipeSha256"]
+            or packet["candidatePackages"] != frame["candidatePackages"]
+            or frame["configurationSha256"] != config_sha
+            or frame["sources"]["historical-f06"] != historical["sources"]
+            or tuple((row["project"], row["sourceKind"], row["role"]) for row in packet["recipes"])
+            != SOURCE_RECIPE_POLICY):
+        raise ConformanceError("ProofMismatch")
+    if not retained:
+        for kind, sources in frame["sources"].items():
+            verify_snapshot(root / "stores" / ("source-compatibility-" + kind), sources)
+        verify_snapshot(root / "feed/candidate", frame["candidatePackages"])
+    previous_sequence, previous_end, started, owner = 0, 0, None, None
+    commands = []
+    for index, row in enumerate(packet["recipes"]):
+        sources = frame["sources"][row["sourceKind"]]
+        copied = root / "stores" / ("source-compatibility-" + row["sourceKind"])
+        project = copied / row["project"]
+        ordinary = (Path(row["project"]).parent / "packages.lock.json").as_posix()
+        baseline_lock = ordinary not in sources
+        original_lock = ((Path(row["project"]).parent / "Baseline/packages.lock.json").as_posix()
+                         if baseline_lock else ordinary)
+        if (row["project"] not in sources or original_lock not in sources
+                or row["sourceSha256"] != digest(sources)
+                or row["outputDirectory"] != f"stores/source-compatibility-images/recipe-{index:02}"
+                or any(not re.fullmatch(r"Hoard\.[A-Za-z0-9.]+\.0\.1\.0\.nupkg", name)
+                       or packet["candidatePackages"].get(name) != value
+                       for name, value in row["packages"].items())):
+            raise ConformanceError("ProofMismatch")
+        selected_lock, lock_sha = original_lock, sources[original_lock]
+        if row["lockPreparations"]:
+            prepared, = row["lockPreparations"]
+            filename = ("F07.preparation.baseline.packages.lock.json" if baseline_lock
+                        else "F07.preparation.packages.lock.json")
+            if (prepared["project"] != row["project"] or prepared["originalLock"] != original_lock
+                    or prepared["originalSha256"] != sources[original_lock]
+                    or prepared["preparedLock"] != (Path(row["project"]).parent / "obj" / filename).as_posix()
+                    or prepared["packages"] != row["packages"]):
+                raise ConformanceError("ProofMismatch")
+            selected_lock, lock_sha = prepared["preparedLock"], prepared["preparedSha256"]
+            if not retained:
+                verify_project_lock(dict(prepared), copied, root / "feed/candidate")
+        output = f"proofs/source-recipe-output-{index:02}"
+        lock_properties = (("-p:NuGetLockFilePath=" + str(copied / selected_lock),)
+                           if row["lockPreparations"] or baseline_lock else ())
+        properties = (
+            *lock_properties, *row["properties"], "-p:OutputPath=" + str(root / output) + os.sep,
+            "-p:AppendTargetFrameworkToOutputPath=false", "-p:PathMap=" + str(copied) + os.sep + "=/_/")
+        input_files = {
+            SOURCE_COMPATIBILITY_INPUTS: frame_sha,
+            config.relative_to(root).as_posix(): config_sha,
+            project.relative_to(root).as_posix(): sources[row["project"]],
+            (copied / selected_lock).relative_to(root).as_posix(): lock_sha}
+        output_files = {output + "/" + row["assemblyName"] + suffix: row[field]
+                        for suffix, field in ((".dll", "assemblySha256"), (".pdb", "pdbSha256"))}
+        if not retained:
+            xml = ET.parse(project)
+            references = xml.findall(".//PackageReference")
+            explicit = [reference for reference in references if reference.get("Version") is not None]
+            expected_properties = ("-p:ManagePackageVersionsCentrally=false",) if explicit else ()
+            if (explicit and len(explicit) != len(references) or row["properties"] != expected_properties
+                    or row["assemblyName"] != (xml.findtext(".//AssemblyName") or project.stem)
+                    or evidence.input_manifest(root, tuple(input_files)) != input_files
+                    or _source_recipe_packages(project, root / "feed/candidate", baseline=baseline_lock)
+                    != (row["packages"], row["assetsSha256"])):
+                raise ConformanceError("ProofMismatch")
+            for path, hashed in output_files.items():
+                actual, _ = evidence._readonly_report_proof(
+                    root, row["outputDirectory"] + "/" + Path(path).name)
+                if actual != hashed:
+                    raise ConformanceError("InputChanged")
+        steps = project_build_steps(project, config, properties=properties, msbuild=msbuild)
+        if len(steps) != len(row["commands"]):
+            raise ConformanceError("ProofMismatch")
+        for step, (arguments, declared) in enumerate(zip(steps, row["commands"])):
+            sequence = declared["sequence"]
+            if sequence <= previous_sequence:
+                raise ConformanceError("ProofMismatch")
+            outputs = output_files if step == len(steps) - 1 else {}
+            hashed, raw = evidence._readonly_report_proof(root, f"proofs/execution-command-{sequence:04}.json")
+            record = evidence._runtime_json(raw, {
+                "schemaVersion": evidence._constant(1), "sequence": evidence._constant(sequence),
+                "childPid": evidence._integer, "childStartSha256": sha256,
+                "startedMs": evidence._number, "endedMs": evidence._number,
+                "exitCode": evidence._constant(0), "diagnosticCode": evidence._constant("None"),
+                "groupState": evidence._constant("Exited"), "scope": evidence._constant("ordinary"),
+                "runId": evidence._uuid, "rootId": evidence.stable_id,
+                "argvSha256": sha256, "cwdSha256": sha256, "inputFiles": evidence._hash_map,
+                **({"outputFiles": evidence._hash_map} if outputs else {}),
+            }, limit=64 * 1024)
+            identity = (record["runId"], record["rootId"])
+            if (hashed != declared["executionSha256"] or record["childPid"] == 0
+                    or record["childStartSha256"] == "0" * 64 or record["argvSha256"] != digest(arguments)
+                    or record["cwdSha256"] != hashlib.sha256(str(project.parent).encode()).hexdigest()
+                    or record["inputFiles"] != input_files or record.get("outputFiles", {}) != outputs
+                    or record["startedMs"] < previous_end or record["endedMs"] < record["startedMs"]
+                    or owner is not None and owner != identity):
+                raise ConformanceError("ProofMismatch")
+            owner = identity
+            started = record["startedMs"] if started is None else started
+            previous_sequence, previous_end = sequence, record["endedMs"]
+            commands.append({"sequence": sequence, "executionSha256": hashed})
+    return {
+        "schemaVersion": 1, "qualification": False, "mode": "source-compatibility-native-correspondence",
+        "baselineSealSha256": expected_baseline_sha256,
+        "summarySha256": hashlib.sha256(packet_data).hexdigest(),
+        "inputFrameSha256": frame_sha,
+        "candidateSourceSha256": digest(frame["sources"]["candidate-source-manifest"]),
+        "runId": owner[0], "rootId": owner[1], "startedMs": started, "endedMs": previous_end,
+        "commands": commands,
+    }
+
+
 def verify_source_break_result(result):
     _verify_source_break_events(result.exit_code, result.events)
 
