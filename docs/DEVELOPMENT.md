@@ -9215,6 +9215,21 @@ those original bytes through actual release and checks the common source hash.
 Eleven resealed mutation families reject in the existing baseline tests, and the
 dependent selection passes237 tests in34.565 seconds. New original native10/13
 controls are still required. Four logical baseline/QC rows remain incomplete.
+The first immutable `6b44f97` attempt exits1 at final Active source replay after
+341360.3080200009ms. It reaches all three runtime scopes, but version preparation
+has added `Hoard.Fixtures.Conformance.Host.0.1.0.nupkg` after the original source
+feed frame was frozen. Readonly comparison confirms shared archive hashes unchanged;
+Application is outside the runtime's selected package set. Version preparation now
+runs before source compilation. Exact whole-feed checks remain strict; an added
+archive still rejects. This is not a successful10/13 observation.
+
+The next physical source fixture stage now copies exact original compiler records,
+input/control frames and24 DLL/PDB pairs into a bounded metadata-only ZIP under
+transient runtimes. Entries are stored, fixed-name/timestamp and hash-checked,
+limited to128 entries/16MiB; no existing selected runtime inventory or bound changes.
+The images will be inspected as PE/PDB streams, not loaded as runtime dependencies.
+Host staging/strict-feed/dependent checks pass237 tests in33.149 seconds.
+Runtime assertions, common capture and logical source-case promotion remain pending.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

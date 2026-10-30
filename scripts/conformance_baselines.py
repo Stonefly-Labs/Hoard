@@ -8,6 +8,7 @@ the resulting sealed bytes.
 import argparse
 import base64
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -42,6 +43,7 @@ BASELINES = (
 )
 SOURCE_RECIPES_PATH = "tests/fixtures/conformance/baselines/source-consumers.json"
 SOURCE_COMPATIBILITY_INPUTS = "proofs/source-compatibility-inputs.json"
+SOURCE_RECIPE_RUNTIME = "source-compatibility-fixture.zip"
 RETAINED_SCENARIOS = ("registration", "lifecycle", "configuration", "metadata-marker", "artifact-marker",
                       "memory", "sqlite", "local", "object")
 OBSERVER_PROJECT = "tests/fixtures/conformance/Compatibility/Observer/Observer.csproj"
@@ -416,6 +418,68 @@ def inspect_source_recipes(root, packet_data, *, expected_baseline_sha256, msbui
         "runId": owner[0], "rootId": owner[1], "startedMs": started, "endedMs": previous_end,
         "commands": commands,
     }
+
+
+def _source_recipe_fixture_files(packet, observed):
+    files = {
+        "control.json": ("proofs/source-compatibility.json", observed["summarySha256"]),
+        "inputs.json": (SOURCE_COMPATIBILITY_INPUTS, observed["inputFrameSha256"])}
+    for index, row in enumerate(packet["recipes"]):
+        for suffix, field in ((".dll", "assemblySha256"), (".pdb", "pdbSha256")):
+            name = row["assemblyName"] + suffix
+            files[f"images/{index:02}/{name}"] = (row["outputDirectory"] + "/" + name, row[field])
+        for command in row["commands"]:
+            name = f'execution-command-{command["sequence"]:04}.json'
+            files["commands/" + name] = ("proofs/" + name, command["executionSha256"])
+    return files
+
+
+def stage_source_recipe_fixture(run, runtime, seal_sha256, *, msbuild=None):
+    import conformance_evidence as evidence
+
+    if run.state != "Active":
+        raise ConformanceError("OwnershipInvalid")
+    run._check_ledger()
+    _, raw = evidence._readonly_report_proof(run.root, "proofs/source-compatibility.json")
+    observed = inspect_source_recipes(
+        run.root, raw, expected_baseline_sha256=seal_sha256, msbuild=msbuild)
+    files = _source_recipe_fixture_files(load_json(raw), observed)
+    if len(files) > 128:
+        raise ConformanceError("OutputLimitExceeded")
+    runtime = Path(runtime).absolute()
+    no_symlinks(runtime)
+    if (not runtime.is_dir() or not runtime.is_relative_to(run.root)
+            or not runtime.relative_to(run.root).as_posix().startswith("stores/snapshot/")):
+        raise ConformanceError("InputChanged")
+    target = runtime.relative_to(run.root).as_posix() + "/" + SOURCE_RECIPE_RUNTIME
+    with evidence._input_root(run.root) as (_, root), evidence._input_parent(
+            root, target) as (parent, name):
+        try:
+            descriptor = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                 0o400, dir_fd=parent)
+        except FileExistsError:
+            raise ConformanceError("InputChanged") from None
+        with os.fdopen(descriptor, "wb") as output:
+            with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_STORED, allowZip64=False) as archive:
+                for name, (source, expected) in sorted(files.items()):
+                    content = io.BytesIO()
+                    actual, _ = evidence._source_file(
+                        root, source, remaining=16 * 1024**2, deadline=time.monotonic() + 5, target=content)
+                    if actual != expected:
+                        raise ConformanceError("InputChanged")
+                    entry = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+                    entry.create_system = 3
+                    entry.external_attr = (stat.S_IFREG | 0o400) << 16
+                    archive.writestr(entry, content.getvalue())
+                    if output.tell() > 16 * 1024**2:
+                        raise ConformanceError("OutputLimitExceeded")
+            output.flush()
+            os.fsync(output.fileno())
+        hashed, _ = evidence._source_file(root, target, remaining=16 * 1024**2, deadline=time.monotonic() + 5)
+    return {
+        "schemaVersion": 1, "qualification": False, "mode": "source-compatibility-staging",
+        "baselineSealSha256": seal_sha256, "sourceSummarySha256": observed["summarySha256"],
+        "inputFrameSha256": observed["inputFrameSha256"], "runtime": target, "sha256": hashed}
 
 
 def verify_source_break_result(result):

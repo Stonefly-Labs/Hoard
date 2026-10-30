@@ -1117,6 +1117,10 @@ Immutable `babad47` now passes all8/13 native controls; separate readonly replay
 verifies all24 original compiler records and current-source binding. Independent
 source-recipe inspection and original live-to-released ownership are implemented
 with237 focused checks passing; fresh10/13 native controls remain required.
+Their first original run rejects a later Host archive added after the source feed
+was frozen. Version preparation now occurs before source compilation; the exact
+feed invariant is preserved. Bounded metadata-only fixture staging is implemented,
+but its physical source-case assertion and native acceptance remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

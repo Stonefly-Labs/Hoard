@@ -5128,6 +5128,41 @@ expected/unexpected successes or diagnostic bytes. Artifact123940941988 also
 passes4 live/8 released/9 retained controls. This foundations job does not apply
 the full-profile600-second tooling wrapper, so that acceptance remains open.
 
+The original immutable `6b44f97f3bff21408bff0429865fe558e7c656ad` attempt
+`ec8a6d7c445b405f8105deb8855f341a` exits1 after341360.3080200009ms,
+initial scratch199553933312 bytes, no extra SDK prewarming. All three physical
+runtime scopes execute, but final Active source inspection rejects InputChanged.
+Readonly phase comparison identifies the later
+`Hoard.Fixtures.Conformance.Host.0.1.0.nupkg` archive. All shared frozen/source
+archive hashes match; `Hoard.Application` was not selected by the runtime package
+set. Original packet SHA256
+`1508cdb72d3a6d624a3f22eb3f452aa92efa12db490d4186fc5cc4617aaea574`.
+Version runtime preparation now occurs before source compilation freezes its exact
+feed, rather than allowing later additions or weakening whole-feed equality.
+The extended regression explicitly rejects a late archive.
+
+Metadata-only source fixture staging now packages original control/input frames,
+compiler-record bytes and24 exact DLL/PDB pairs as stored ZIP entries with fixed
+names/timestamps,128-entry/16MiB bounds, no overwrite and actual hash checks.
+Images are metadata data read as PE/PDB streams, not loaded runtime dependencies;
+all existing runtime closures and bounds remain unchanged. The producer staging
+regression first fails for the absent helper, then verifies every byte/entry and
+no-overwrite behavior. The same dependent237-test selection passes in33.149
+seconds; catalog/SDK and diff checks pass. Physical source assertions/common
+capture and native10/13 verification remain pending.
+
+Original6b44f97 CI41021147002 finally measures original read-call wall attribution:
+SDK123948657611 rejects at326 files/67702638 bytes/1093 entries,
+5049.102004000019ms wall/103.46833899999552ms CPU/4928.665038000523ms
+inside read calls. Metadata123948657834 rejects149/41909551/655,
+5000.544142000024ms wall/67.20465299999923ms CPU/4950.233398000926ms reads.
+Artifacts123948658017 rejects227/58227482/919,
+5037.119473999951ms wall/89.79752699999999ms CPU/4965.3571590001775ms reads.
+Approximately98-99% of elapsed time is inside sequential read calls, not hashing
+or traversal. This supports bounded concurrent proof reads with all original
+paths/bytes/consistency checks and the same five-second budget, not SDK prewarming,
+inventory pruning or larger bounds. That reader repair is next and not yet delivered.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

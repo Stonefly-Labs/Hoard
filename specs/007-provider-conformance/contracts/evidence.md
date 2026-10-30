@@ -1277,6 +1277,15 @@ controls now challenge recipe packets, input frames and parent bytes too.
 Host237 checks and actual readonly replay of the prior producer's24 compiler rows
 pass; fresh10/13 native acceptance remains required. Logical source/binary/
 predecessor/QC-25 rows remain incomplete.
+The initial original10/13 attempt rejects version preparation adding a Host archive
+after source-feed capture. Version preparation now precedes source compilation;
+exact original feed equality is not weakened. Bounded metadata-only source fixture
+staging additionally packages exact original control/input/compiler records and
+DLL/PDB bytes into stored ZIP entries, capped at128 entries/16MiB with fixed names/
+timestamps, no overwrite and per-entry hash verification. The ZIP is transient
+fixture data, not loaded code. It does not prune any existing runtime closure or
+raise its limits. Physical stream assertions/common capture and native verification
+remain unfinished; no logical case is promoted.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

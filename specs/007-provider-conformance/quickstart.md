@@ -1327,6 +1327,10 @@ The separate immutable `babad47` execution now passes all8/13 controls, and read
 replay verifies24 original compiler records/current-source binding. Independent
 source-recipe inspection and original live/released authority are now implemented;
 fresh10/13 controls and physical source-case assertions remain required.
+The first original10/13 attempt rejects later Host packing against the exact
+source-feed frame. Version preparation is now moved before source compilation,
+without relaxing that invariant. Bounded metadata-only fixture staging is delivered;
+its physical assertion/common capture/native acceptance remain unfinished.
 
 ## Offline Correspondence Inspection
 

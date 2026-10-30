@@ -9142,6 +9142,38 @@ class ConformanceBaselineTests(unittest.TestCase):
         self.assertEqual(len(observed["commands"]), 24)
         self.assertEqual(observed["runId"], run_id)
         self.assertFalse(observed["qualification"])
+        packet_path = self.root / "proofs/source-compatibility.json"
+        packet_path.write_bytes(raw)
+        packet_path.chmod(0o400)
+        runtime = self.root / "stores/snapshot/runtime"
+        runtime.mkdir(parents=True)
+        staged = self.baselines.stage_source_recipe_fixture(run, runtime, seal_sha, msbuild=prefix)
+        bundle = self.root / staged["runtime"]
+        self.assertEqual(staged["sourceSummarySha256"], observed["summarySha256"])
+        self.assertEqual(staged["sha256"], evidence.file_sha256(bundle))
+        with zipfile.ZipFile(bundle) as archive:
+            expected = {"control.json": raw, "inputs.json": (
+                self.root / self.baselines.SOURCE_COMPATIBILITY_INPUTS).read_bytes()}
+            for index, row in enumerate(packet["recipes"]):
+                for suffix in (".dll", ".pdb"):
+                    name = row["assemblyName"] + suffix
+                    expected[f"images/{index:02}/{name}"] = (
+                        self.root / row["outputDirectory"] / name).read_bytes()
+                for command in row["commands"]:
+                    name = f'execution-command-{command["sequence"]:04}.json'
+                    expected["commands/" + name] = (self.root / "proofs" / name).read_bytes()
+            self.assertEqual(set(archive.namelist()), set(expected))
+            self.assertEqual(len(archive.infolist()), len(expected))
+            self.assertTrue(all(info.compress_type == zipfile.ZIP_STORED for info in archive.infolist()))
+            self.assertEqual({name: archive.read(name) for name in archive.namelist()}, expected)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.baselines.stage_source_recipe_fixture(run, runtime, seal_sha, msbuild=prefix)
+        self.assertEqual(staged["sha256"], evidence.file_sha256(bundle))
+        (feed / "Hoard.LaterRuntime.0.1.0.nupkg").write_bytes(b"later isolated runtime preparation")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.baselines.inspect_source_recipes(
+                self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix)
+        (feed / "Hoard.LaterRuntime.0.1.0.nupkg").unlink()
         shutil.rmtree(self.root / "stores")
         self.assertEqual(self.baselines.inspect_source_recipes(
             self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix, retained=True), observed)

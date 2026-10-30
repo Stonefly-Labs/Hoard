@@ -4739,6 +4739,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             print(json.dumps({"qualification": False, "phase": "compatibility-replay"}), flush=True)
             build(run, candidate / "src/Hoard.Application/Hoard.Application.csproj", config,
                   "compatibility-application", feed=feed, msbuild=msbuild)
+            version_runtime = prepare_version_runtime(
+                run, candidate, config, feed, msbuild=msbuild) if compatibility_only else None
             source_compatibility = baselines.execute_source_recipes(
                 repository, run, candidate, sources, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/source-compatibility.json", evidence.canonical_bytes(source_compatibility))
@@ -4779,7 +4781,6 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             if compatibility_only:
                 _, runner_material = runtime_runner_material(build_environment)
                 write_new(run.root / "proofs/sdk-vstest-inputs.json", runner_material)
-                version_runtime = prepare_version_runtime(run, candidate, config, feed, msbuild=msbuild)
                 from conformance_inherited import (
                     admit_architecture_preparation, controller_phase, verify_controller_invocations)
                 prepared, parent_sha, invocations = controller_phase(
