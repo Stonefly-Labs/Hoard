@@ -1218,6 +1218,9 @@ configuration; altered snapshot sources and inventory changes reject.
 It also runs the original declaration and required-member/binary-break compiler
 recipes through closed transport. Offline Linux checks pass both original break
 controls and migration builds; full foundation runtime/formatting is still open.
+Independent foundation runtime admission now reuses the strict per-parameter
+proof inspector across all three assemblies; model mutations reject omitted,
+duplicated, changed and failed scopes. This does not supply their native execution.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

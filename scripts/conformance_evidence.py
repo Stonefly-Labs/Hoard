@@ -2369,16 +2369,7 @@ def inspect_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data
         "qualification": False, "inputs": captured, "inputsSha256": digest(captured), "observation": observed})
 
 
-def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, attempts):
-    """Re-admit the complete frozen inventories across disjoint class scopes."""
-    from conformance_inherited import execution_scopes, inventory
-
-    sources = _hash_map(sources)
-    methods = inventory(inventory_data, sources)
-    scopes = execution_scopes(discoveries, methods)
-    inventory_sha = hashlib.sha256(inventory_data).hexdigest()
-    discovery_hashes = MappingProxyType({
-        assembly: hashlib.sha256(raw).hexdigest() for assembly, raw in discoveries.items()})
+def _inspect_inventory_runtime_attempts(*, sources, scopes, attempts, profile_id):
     admitted = []
     seen_scopes, seen_attempts, seen_executions = set(), set(), set()
     common_inputs = owner_sha = None
@@ -2409,7 +2400,7 @@ def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, 
         })
         inputs, observation = inspected["inputs"], inspected["observation"]
         manifest = load_json(transport["manifest_data"])
-        if (inputs["profileId"] != "composition" or inputs["sourceManifest"] != sources
+        if (inputs["profileId"] != profile_id or inputs["sourceManifest"] != sources
                 or inputs["sourceManifestSha256"] != digest(sources)
                 or {row["testIdentity"]: row for row in manifest["expected"]} != expected
                 or manifest["attemptId"] in seen_attempts):
@@ -2442,6 +2433,39 @@ def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, 
     if seen_scopes != scopes.keys():
         raise ConformanceError("WitnessMissing")
     expected_count = sum(map(len, scopes.values()))
+    return MappingProxyType({
+        "qualification": False, "profileComplete": False,
+        "executionComplete": observed_count == passed_count == expected_count
+        and all(row["observation"]["diagnosticCode"] == "None" for row in admitted),
+        "expectedParameters": expected_count, "observedParameters": observed_count,
+        "passedParameters": passed_count, "scopes": tuple(admitted),
+    })
+
+
+def inspect_foundation_runtime_attempts(*, inventory_data, sources, discoveries, attempts):
+    from conformance_inherited import foundation_execution_scopes, foundation_inventory
+
+    sources = _hash_map(sources)
+    methods = foundation_inventory(inventory_data, sources)
+    inspected = _inspect_inventory_runtime_attempts(
+        sources=sources, scopes=foundation_execution_scopes(discoveries, methods),
+        attempts=attempts, profile_id="compatibility")
+    return MappingProxyType({
+        **inspected, "inventorySha256": hashlib.sha256(inventory_data).hexdigest(),
+        "discoverySha256": MappingProxyType({
+            assembly: hashlib.sha256(raw).hexdigest() for assembly, raw in discoveries.items()}),
+    })
+
+
+def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, attempts):
+    """Re-admit the complete frozen inventories across disjoint class scopes."""
+    from conformance_inherited import execution_scopes, inventory
+
+    sources = _hash_map(sources)
+    methods = inventory(inventory_data, sources)
+    inspected = _inspect_inventory_runtime_attempts(
+        sources=sources, scopes=execution_scopes(discoveries, methods), attempts=attempts, profile_id="composition")
+    admitted = inspected["scopes"]
     witnesses = {row["testIdentity"]: (row["status"], scope["observation"]["diagnosticCode"])
                  for scope in admitted for row in scope["observation"]["witnesses"]}
     coverage = {}
@@ -2482,15 +2506,13 @@ def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, 
         except RuntimeError:
             raise ConformanceError("WitnessMissing") from None
     return MappingProxyType({
-        "qualification": False, "profileComplete": False,
-        "executionComplete": observed_count == passed_count == expected_count
-        and all(row["observation"]["diagnosticCode"] == "None" for row in admitted),
-        "expectedParameters": expected_count, "observedParameters": observed_count,
-        "passedParameters": passed_count, "scopes": tuple(admitted),
+        **inspected,
         "caseCoverage": MappingProxyType(coverage),
         "discoveryCoverage": MappingProxyType({
             "scenarios": scenarios, "adapterScenarios": tuple(adapters), "suites": tuple(suites)}),
-        "inventorySha256": inventory_sha, "discoverySha256": discovery_hashes,
+        "inventorySha256": hashlib.sha256(inventory_data).hexdigest(),
+        "discoverySha256": MappingProxyType({
+            assembly: hashlib.sha256(raw).hexdigest() for assembly, raw in discoveries.items()}),
     })
 
 

@@ -1419,6 +1419,9 @@ altered inventory/snapshot bytes reject without granting qualification.
 Declaration and required-member/binary-break compiler recipes now run through
 closed transport as well. Both unchanged break controls pass offline Linux
 diagnosis; this does not establish full foundation execution or qualification.
+Independent foundation runtime admission now requires every parameter and class
+scope across all three assemblies using the shared strict proof reader; modeled
+controls pass, but its actual native execution/settlement integration remains open.
 
 ## Offline Correspondence Inspection
 

@@ -5548,6 +5548,23 @@ are now physically included in borrowed command snapshots; foreign/missing
 references reject. Affected composition/inherited/legacy/SDK/CI tooling passes272
 tests in34.148 seconds, one platform prerequisite skip. These checks do not
 complete foundation runtime/formatting, settled replay or qualification.
+Exact immutable `ba791bc1d69e43e0625e45f0eefaedef0aa80831` additionally passes
+the unmodified standard Linux full tooling command:833 tests, zero failures/
+errors/skips/unexpected bytes,424198.035 ms under the unchanged600-second bound.
+The standalone original has no native authority and does not repair failed CI
+owning-controller tooling attempts.
+
+The foundation runtime reader now reuses the existing strict inherited
+per-parameter inspection core, independently selecting the foundation inventory,
+compatibility profile and all three required assemblies. Model acceptance covers
+all86 parameters; mutations reject omitted assemblies/scopes, duplicate scopes,
+partial theories, wrong source/configuration/owner/cases, reused attempt/execution
+IDs and missing proofs. Failed/incomplete scopes remain nonqualifying. Existing
+inherited coverage/scenario derivation remains unchanged.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_composition test_conformance_inherited test_conformance_legacy test_conformance_sdk_checks test_conformance_ci`
+passes389 tests in103.086 seconds, one platform prerequisite skip.
+Native foundation execution/formatting and independent settlement remain open;
+this reader and modeled proof data do not establish original runtime authority.
 
 ### Compatibility logical case linkage and released presentation
 

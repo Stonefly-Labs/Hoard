@@ -5743,17 +5743,18 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                             with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
                                 self.ingest(**options)
 
-    def inherited_transports(self, defect=None):
+    def inherited_transports(self, defect=None, *, foundation=False):
         import conformance_inherited as inherited
         import discovery_evidence as discovery
 
-        raw = (ROOT / inherited.INVENTORY_PATH).read_bytes()
+        raw = (ROOT / (inherited.FOUNDATION_INVENTORY_PATH if foundation else inherited.INVENTORY_PATH)).read_bytes()
         frozen = evidence.load_json(raw)
-        sources = frozen["sourceFiles"]
+        sources = frozen["executionSourceFiles" if foundation else "sourceFiles"]
         discoveries = {}
         scopes = {}
-        groups = {row["fullyQualifiedName"]: row["group"] for row in frozen["entries"]}
-        for assembly in sorted(inherited.ASSEMBLIES):
+        groups = {row["fullyQualifiedName"]: "foundation" if foundation else row["group"]
+                  for row in frozen["entries"]}
+        for assembly in sorted(frozen["assemblyParameters"] if foundation else inherited.ASSEMBLIES):
             discovered = []
             for entry in frozen["entries"]:
                 name = entry["fullyQualifiedName"]
@@ -5763,7 +5764,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         "testIdentity": name + '(testCaseSha256: "' + f"{index:064x}" + '")',
                     } for index in range(entry["parameterCount"]))
             for name in {scenario.split("(")[0] for scenario in discovery.REQUIRED_ADAPTER_SCENARIOS}:
-                if not name.startswith(assembly + "."):
+                if not name.startswith(assembly + ".") or name not in groups:
                     continue
                 selected = [row for row in discovered if row["fullyQualifiedName"] == name]
                 scenarios = [scenario for scenario in discovery.REQUIRED_ADAPTER_SCENARIOS
@@ -5781,7 +5782,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     "caseId": "inherited-" + groups[row["fullyQualifiedName"]], "assertionSymbol": None,
                 })
         inputs = copy.deepcopy(self.inputs)
-        inputs.update(profileId="composition", sourceManifest=sources, sourceManifestSha256=evidence.digest(sources))
+        inputs.update(profileId="compatibility" if foundation else "composition",
+                      sourceManifest=sources, sourceManifestSha256=evidence.digest(sources))
         inputs["packages"][0]["packageId"] = "Hoard.Testing.Conformance"
         inputs["bindings"] = []
         inputs["budgets"]["profileSeconds"] = 3600
@@ -5849,6 +5851,39 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 },
             })
         return {"inventory_data": raw, "sources": sources, "discoveries": discoveries, "attempts": attempts}
+
+    def test_foundation_runtime_replays_every_original_parameter_in_all_three_assemblies(self):
+        options = self.inherited_transports(foundation=True)
+        inspected = evidence.inspect_foundation_runtime_attempts(**options)
+        self.assertTrue(inspected["executionComplete"])
+        self.assertFalse(inspected["qualification"])
+        self.assertFalse(inspected["profileComplete"])
+        self.assertEqual(inspected["passedParameters"], 86)
+        self.assertEqual(
+            {scope["assembly"] for scope in inspected["scopes"]},
+            {"Hoard.Foundation.Tests", "Hoard.Composition.Tests", "Hoard.Architecture.Tests"})
+        for defect in ("mixed-configuration", "mixed-source", "wrong-source", "mixed-owner",
+                       "partial-theory", "wrong-case", "reused-attempt", "reused-execution"):
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.inspect_foundation_runtime_attempts(**self.inherited_transports(defect, foundation=True))
+        for defect in ("omitted-assembly", "omitted-scope", "duplicate-scope", "missing-proof"):
+            options = self.inherited_transports(foundation=True)
+            if defect == "omitted-assembly":
+                options["discoveries"].pop("Hoard.Foundation.Tests")
+            elif defect == "omitted-scope":
+                options["attempts"].pop()
+            elif defect == "duplicate-scope":
+                options["attempts"].append(options["attempts"][0])
+            else:
+                options["attempts"][0]["transport"]["proofs"].popitem()
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.inspect_foundation_runtime_attempts(**options)
+        for defect in ("failed", "incomplete-scope"):
+            with self.subTest(defect=defect):
+                rejected = evidence.inspect_foundation_runtime_attempts(
+                    **self.inherited_transports(defect, foundation=True))
+                self.assertFalse(rejected["executionComplete"])
+                self.assertFalse(rejected["qualification"])
 
     def test_inherited_class_scopes_re_admit_every_parameter_without_qualifying_controllers(self):
         options = self.inherited_transports()

@@ -9584,6 +9584,22 @@ including migration builds, through23 actual commands and passes seven controls;
 native qualification authority. The affected five-module tooling suite passes
 272 tests in34.148 seconds, with one host platform prerequisite skip. Full
 foundation runtime/formatting and independent settled admission remain open.
+Exact immutable `ba791bc1d69e43e0625e45f0eefaedef0aa80831` also passes the
+unmodified standard Linux `python3 scripts/conformance_unit_checks.py --all-tooling`:
+833 tests, zero failures/errors/skips/unexpected bytes,424198.035 ms under the
+unchanged600-second bound. This standalone original is not the failed CI owning
+controller's tooling proof. Its retained packet explicitly has no native authority.
+
+The foundation runtime reader now shares the existing inherited per-parameter
+proof inspector, with its own immutable inventory, required three-assembly set
+and compatibility profile. It independently re-expands every class scope and
+rejects omitted/duplicate scopes or assemblies, partial theories, changed
+source/configuration/owner, foreign cases, reused attempts/executions and missing
+proofs. Failed/incomplete original attempts remain nonqualifying. The modeled
+86-parameter acceptance and these mutations pass alongside inherited behavior:
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_composition test_conformance_inherited test_conformance_legacy test_conformance_sdk_checks test_conformance_ci`
+passes389 tests in103.086 seconds, one host prerequisite skip. This reader is
+not yet wired to actual native foundation execution or independent settlement.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

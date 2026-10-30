@@ -27,6 +27,7 @@ FOUNDATION_INVENTORY_PATH = "tests/fixtures/conformance/baselines/foundation-inv
 FOUNDATION_INVENTORY_SHA256 = "c8ba6c4d6ebe82c043ce22bb28dd65a6c1b0258d7490be74dbbc36499753bb5e"
 GROUPS = frozenset(("lifecycle", "configuration", "discovery"))
 ASSEMBLIES = frozenset(("Hoard.Composition.Tests", "Hoard.Architecture.Tests"))
+FOUNDATION_ASSEMBLIES = ASSEMBLIES | {"Hoard.Foundation.Tests"}
 CONTROLLER_ERROR_SOURCES = (
     "conformance_inherited.py", "conformance_legacy.py", "conformance_lock_preparation.py",
     "conformance_evidence.py", "conformance_sources.py", "foundation_evidence.py",
@@ -428,7 +429,7 @@ def admit_discovery(data, methods, *, assembly):
 def admit_foundation_discovery(data, methods, *, assembly):
     return _admit_discovery(
         data, methods, assembly=assembly,
-        assemblies=frozenset(("Hoard.Foundation.Tests", "Hoard.Composition.Tests", "Hoard.Architecture.Tests")),
+        assemblies=FOUNDATION_ASSEMBLIES,
         group="foundation")
 
 
@@ -731,11 +732,19 @@ def verify_discovery_mutation_membership(owner, mutations, scenarios):
 
 
 def execution_scopes(discoveries, methods):
-    if not isinstance(discoveries, dict) or set(discoveries) != ASSEMBLIES:
+    return _execution_scopes(discoveries, methods, ASSEMBLIES, admit_discovery)
+
+
+def foundation_execution_scopes(discoveries, methods):
+    return _execution_scopes(discoveries, methods, FOUNDATION_ASSEMBLIES, admit_foundation_discovery)
+
+
+def _execution_scopes(discoveries, methods, assemblies, admit):
+    if not isinstance(discoveries, dict) or set(discoveries) != assemblies:
         raise ConformanceError("WitnessMissing")
     scopes = {}
-    for assembly in sorted(ASSEMBLIES):
-        for row in admit_discovery(discoveries[assembly], methods, assembly=assembly):
+    for assembly in sorted(assemblies):
+        for row in admit(discoveries[assembly], methods, assembly=assembly):
             key = (assembly, row["fullyQualifiedName"].rsplit(".", 1)[0])
             scopes.setdefault(key, []).append(row)
     return {key: tuple(rows) for key, rows in sorted(scopes.items())}
