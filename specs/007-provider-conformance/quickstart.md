@@ -1142,8 +1142,11 @@ runner instead returns0 only after all controls succeed, and category CI
 requires that0 before independently checking the nonqualifying report.
 An incomplete control therefore cannot masquerade as the expected category2.
 This is not a five-profile qualification or independent runtime-origin verifier.
-Host orchestration regressions pass; genuine Linux
-execution of these newly connected controls remains required.
+Host orchestration regressions and source-pinned Linux metadata/artifact
+executions pass: each category runs four live-origin, six released-origin and
+eight retained-report controls. These complete T068's mutation-test task, not
+the remaining generic evaluator or five-profile qualification. The original
+unsuccessful source-bound attempt is preserved separately in the plan.
 
 ## Offline Correspondence Inspection
 

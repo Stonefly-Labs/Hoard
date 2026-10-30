@@ -254,8 +254,9 @@ The separate [native generated-report controls](../../specs/007-provider-conform
 exercise the standard metadata/artifact executors before and after actual
 settlement, plus their retained reports, through the same explicit test-only
 command as category CI. They do not accept contributor bindings or qualify a
-provider. Their host orchestration regressions pass; newly connected genuine
-Linux control execution remains required.
+provider. Their host orchestration regressions and genuine Linux executions
+pass for both standard categories; generic/five-profile qualification remains
+unfinished.
 
 For actual overlapping contributors, keep the restored adapter unchanged and
 use different roots. The duplicate path must fail without disturbing either

@@ -968,8 +968,8 @@ Managed DLL/PDB/archive equivalence and both contributor runtimes pass;
 native full-tooling deadline acceptance remains unverified.
 Native metadata/artifact diagnostics now explicitly run live-origin,
 settled-origin and retained-report mutation controls through the same local/CI
-test-only entry point. Its orchestration regressions pass; actual Linux control
-execution remains required and does not promote these reports to qualification.
+test-only entry point. Its orchestration and genuine Linux controls pass for
+both categories without promoting their reports to qualification.
 See [native report controls](specs/007-provider-conformance/quickstart.md#native-generated-report-controls).
 The held native evaluation also binds the entire original history record,
 not only its results/witness/proof projections; borrowed summary fields reject.

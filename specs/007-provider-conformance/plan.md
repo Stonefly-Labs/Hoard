@@ -4146,6 +4146,61 @@ provider/product/architecture/ADR/diagram/governance/backlog/predecessor/IaC/
 release/UI guides need no command/API changes for these test-only controls.
 Reviewer-owned checklists and implement/running remain unchanged.
 
+### T068 genuine generated-good mutation verification
+
+The immutable `bddb2a8f88e226b8bcc2bbde6eef2fc689e5872a` Linux/aarch64
+attempt completes both exact standard category commands:
+
+```bash
+PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_evidence.py \
+  --native-category-controls --profile metadata --evidence <fresh-private-metadata-path>
+PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_evidence.py \
+  --native-category-controls --profile artifacts --evidence <fresh-private-artifact-path>
+```
+
+Both pass with test-runner exit0: metadata423654.078 ms, artifacts313455.500 ms.
+Each executes four live-origin, six released-origin and eight retained-report
+controls, rejecting skips, missing selections and diagnostic output. Their
+positive controls require every actual catalog case Passed/NotApplicable,
+actual Released resources, exact original inputs/proofs and unchanged original
+file snapshots after mutation. No modeled owner/sample packet substitutes for
+the original in-memory source/evaluation authority.
+
+The controls challenge every admission-input class (including capability
+fingerprints), exact case/parameter/execution sets, borrowed runtime provenance,
+changed/resealed parent bytes versus executor-held bytes, optimistic ledger/
+window/retry history, substituted transports, copied evaluation identity,
+changed whole history/counts, substituted resources/inputs, exclusions, unknown
+outcomes/fields/schema/Unicode/durations, escaped/missing/linked/oversized proof
+bytes, mutable completion inputs, external pins and public finite presentation.
+Additional rejection and failed-retry preservation tests are explicitly
+modeled; those do not establish native authority or a qualifying profile.
+
+Original metadata packet SHA-256:
+`122cc339014425fe3cb355b0c4b42d6459ff744d407bf20fbca408199a95c481`.
+Original artifact packet SHA-256:
+`71fe5a62a30154a86345dcf13905ef45796ba00ba293715704d0f405e1711073`.
+The original `ae0a7fe` failed packet remains unchanged and is not relabeled.
+Production reports remain `Incomplete`, `qualification: false`, exit2.
+T068's test task is now checked, completing the US5 tests-first tasks and
+advancing implementation to70/86. T071 generic runtime evaluation, T077
+integrated acceptance and full five-profile qualification remain unfinished.
+
+Actual `0e6af49` composition CI run40988387829/job123846714327 also finishes:
+244/790 tooling observations in600175.675 ms, zero failures/errors/skips/
+expected failures/unexpected successes/diagnostic bytes, and
+`EvidenceIncomplete` against the unchanged600-second boundary. Its final
+summary is unavailable; the following safe projection reports WitnessMissing
+and summaryCode OutputLimitExceeded, not evidence that proof bytes exceed a
+limit. This distinct unsuccessful scheduling observation remains unresolved.
+
+README, DEVELOPMENT, quickstart and the provider-conformance example are
+updated with the actual control outcome. PROVIDERS, CustomHost and product/
+architecture/ADR/diagram/governance/backlog/predecessor/IaC/release/UI guides
+need no API/command changes for this finite test checkpoint. No reviewer-owned
+checklist, flow-stage, source-failure, proof budget or qualification claim is
+advanced.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

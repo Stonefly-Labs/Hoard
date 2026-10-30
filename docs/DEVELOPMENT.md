@@ -8629,6 +8629,25 @@ configuration-policy preimages, full modeled CLI aggregation and preserved
 failed retries. These are finite modeled transport tests, not actual CI
 attestation, successful generic qualification or T078 execution.
 
+T068's generated-good mutation-test task now also verifies on immutable
+`bddb2a8`: metadata completes in423654.078 ms and artifacts in313455.500 ms.
+Each executes four original-live-owner, six original-released-token and eight
+retained actual-report controls, with test-runner exit0 and no skipped/noisy
+controls. Positive report checks require all catalogued cases Passed or
+NotApplicable, actual Released resources, exact input/proof bytes and original
+file snapshots unchanged by the mutations. Production reports remain
+`Incomplete`, `qualification: false`, exit2.
+The metadata/artifact closed packet SHA-256 values are respectively
+`122cc339014425fe3cb355b0c4b42d6459ff744d407bf20fbca408199a95c481` and
+`71fe5a62a30154a86345dcf13905ef45796ba00ba293715704d0f405e1711073`.
+This advances implementation to70/86 tasks without completing T071 or T077.
+The earlier `ae0a7fe` stale-filename failure remains a separate failed attempt.
+
+The completed `0e6af49` composition CI instead remains incomplete:244/790
+tooling observations in600175.675 ms, zero failures/errors/skips/diagnostic
+bytes, against600 seconds. Its missing final summary does not turn a deadline
+failure into acceptance. That independent scheduling issue remains unresolved.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently
