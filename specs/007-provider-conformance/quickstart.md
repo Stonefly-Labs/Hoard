@@ -1151,6 +1151,33 @@ The following independent report-boundary/failure-classification changes add
 two released-origin controls and a failed-retry retained-report control;
 execution of that expanded native suite remains required.
 
+## Native Composition Origin Controls
+
+On the supported native Linux host, with an immutable clean checkout and a
+fresh root under an existing owner-private physical directory:
+
+```bash
+PYTHONPATH=scripts:tests/tooling \
+python3 tests/tooling/test_conformance_composition.py \
+  --native-origin-controls --evidence "$HOARD_PRIVATE_PARENT/composition-origin"
+```
+
+This test-only command executes the actual packaged composition runtime and
+captures its original executor-held authority. It then deliberately stops
+before inherited acceptance/tooling, releases through the real owner's cleanup
+path, and runs three live and seven released-origin controls. Copied authority,
+modeled owners, stale/missing settlement, changed observations, extra authentic
+proofs and resealed execution bytes must reject; the original released transport
+must pass independent replay while remaining Incomplete/nonqualifying.
+The original active diagnostic is retained unchanged beside the new
+`proofs/composition-runtime-released-report.json`.
+
+Exit0 means only that these finite controls passed. It is not complete
+composition/inherited/tooling acceptance, an offline attestation, a replacement
+for the full CI job or qualification. Host orchestration/rejection checks pass;
+genuine execution remains pending. Ordinary unittest discovery needs no retained
+packet. Preserve unsuccessful roots and do not edit the frozen checkout.
+
 ## Offline Correspondence Inspection
 
 The current offline routes inspect existing complete retained ledgers without

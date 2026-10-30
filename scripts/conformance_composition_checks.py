@@ -29,7 +29,9 @@ from conformance_prepare import PREREQUISITES, Project, build_project
 from conformance_sdk_checks import (
     BUDGETS, _RuntimeObservationError, category_command_proof, environment, verify_category_command_proof, write_new,
 )
-from conformance_sources import read_bounded, runtime_arguments, runtime_settings
+from conformance_sources import (
+    NativeCompositionEvaluation, NativeCompositionSources, read_bounded, runtime_arguments, runtime_settings,
+)
 
 
 PROJECT = "tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj"
@@ -38,6 +40,18 @@ HOST = "Hoard.Fixtures.Conformance.Host"
 SDK = "Hoard.Testing.Conformance"
 LOGGER = "Hoard.Conformance.TestLogger"
 DISCOVERY_PROJECT = "tests/fixtures/conformance/Discovery/Discovery.csproj"
+
+
+def _released_composition_report(run, evaluation):
+    if type(evaluation) is not NativeCompositionEvaluation:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    report = evidence.load_json(evaluation.report_data)
+    report["resources"] = run.resource_projection()
+    raw = evidence.canonical_bytes(report)
+    inspected = evidence.inspect_native_composition_report(
+        run, raw, expected_inputs=report["inputs"], native_evaluation=evaluation)
+    write_new(run.root / "proofs/composition-runtime-released-report.json", raw)
+    return dict(inspected)
 
 
 def _native_reference_consumer(run, repository, source, controllers, baseline_seal):
@@ -855,7 +869,7 @@ def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_dire
     }
 
 
-def _runtime(run, repository, source, sources, config, feed, records, replay):
+def _runtime(run, repository, source, sources, config, feed, records, replay, *, native_sources=None):
     print(json.dumps({"qualification": False, "phase": "runtime-staging"}), flush=True)
     project = replay / PROJECT
     runtime = project.parent / "bin/Release/net10.0"
@@ -1007,6 +1021,10 @@ def _runtime(run, repository, source, sources, config, feed, records, replay):
                 output.relative_to(run.root).as_posix() + "/completion.json"))
         if verify_composition_case_report(run.root, inputs, owner) != case_report:
             raise evidence.ConformanceError("ProofMismatch")
+        if native_sources is not None:
+            if type(native_sources) is not NativeCompositionSources or native_sources._run is not run:
+                raise evidence.ConformanceError("OwnershipInvalid")
+            native_sources.capture_evaluation(inputs, owner, case_report, record["sequence"])
     except evidence.ConformanceError as error:
         sources = {str(Path(__file__).with_name(name)): name for name in (
             "conformance_composition_checks.py", "conformance_sdk_checks.py", "conformance_evidence.py")}
@@ -1087,7 +1105,9 @@ def execute(repository, destination):
             baselines._command(run, [*arguments, *properties], cwd=replay, cache_id="composition-fresh-replay")
         evidence.verify_snapshot(replay, prepared_sources)
         write_new(run.root / "proofs/composition-lock-derivations.json", evidence.canonical_bytes(records))
-        summary = _runtime(run, repository, source, sources, config, feed, records, replay)
+        native_sources = NativeCompositionSources(run)
+        summary = _runtime(
+            run, repository, source, sources, config, feed, records, replay, native_sources=native_sources)
         summary["historicalPreparationParentSha256"] = historical_parent
         summary["historicalNativeInvocations"] = historical_invocations
         summary["inheritedRuntime"] = _inherited_runtime(
@@ -1104,6 +1124,7 @@ def execute(repository, destination):
         resources = run.resource_projection()
         if not resources or any(row["state"] != "Released" for row in resources):
             raise evidence.ConformanceError("CleanupIncomplete")
+        summary["releasedCaseReport"] = _released_composition_report(run, native_sources._evaluation)
         summary["processResourcesReleased"] = True
         write_new(run.root / "proofs/composition-diagnostic-summary.json", evidence.canonical_bytes(summary))
         print(json.dumps(summary, sort_keys=True), flush=True)

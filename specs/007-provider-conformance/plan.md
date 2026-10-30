@@ -4270,6 +4270,55 @@ product/architecture/ADR/diagram/governance/backlog/predecessor/IaC/release/UI
 guides need no changes. T071 remains running/unchecked;70/86 tasks remain
 verified, with no stage, qualification, proof-budget or checklist change.
 
+### Original composition authority across actual release (partial T071)
+
+The composition producer previously retains only an Active-resource diagnostic
+and replays serialized transport against an owner mapping. It now captures a
+single-use `NativeCompositionEvaluation` through the actual Active `OwnedRun`,
+its executor-held descriptor-checked command record and an independently
+replayed original report. The evaluation retains immutable original report
+bytes and the actual execution hash; an identical dataclass copy is not the
+source's original token.
+
+After actual release, a new independent
+`conformance_evidence.inspect_native_composition_report` requires the original
+owner/token identities, unchanged report material and current Released resources,
+rechecks the held execution hash and independently replays all existing
+composition catalog/transport/proof/completion checks. The original active
+report is preserved unchanged. The separate readonly
+`proofs/composition-runtime-released-report.json` carries the real settled
+projection, and the diagnostic summary adds `releasedCaseReport` without
+relabeling its original `caseReport` or weakening its existing29+2 controls.
+Both remain Incomplete/nonqualifying.
+
+The explicit test-only `test_conformance_composition.py --native-origin-controls
+--evidence <fresh-private-path>` runs actual packaged composition preparation/
+runtime, three live-origin controls, actual finally-path release, and seven
+released-origin controls. It deliberately does not execute inherited runtime or
+tooling and cannot replace full-profile acceptance. The factories cover original
+positive replay, capture single-use, original active-owner rejection, executor
+byte substitution, copied tokens/modeled owners, stale/empty resources, changed
+observations and extra correctly hashed proofs. Ordinary discovery remains
+independent of retained packets. A missing runtime callback or underlying
+production failure cannot become a successful control run.
+
+The modeled-owner regression first fails because no independent composition
+boundary exists. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
+passes271 tests in80.320 seconds with four explicit native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Genuine frozen native execution of the new composition
+authority/control path remains pending; previous category controls are not
+reused as evidence for it.
+
+README, DEVELOPMENT, quickstart and the evidence contract are affected.
+Provider/contributor commands and public APIs, package/module graph, production
+architecture/ADR/diagrams, CustomHost, governance/backlog/predecessor, IaC,
+release and UI guides are unchanged. No reviewer checklist, proof/budget limit,
+failed packet or driver stage is modified. T071 remains open at70/86.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

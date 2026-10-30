@@ -8684,6 +8684,27 @@ The same246-test selection passes in83.216 seconds with four explicit native
 skips; catalog/SDK and diff checks pass. Expanded native execution remains
 required, now including this ninth retained-report control.
 
+Composition's original native command/report now has a separate held evaluation.
+Capture requires the actual Active `OwnedRun`, its descriptor-checked execution
+record, the exact original report and independent transport replay. After actual
+release, `inspect_native_composition_report` checks that same token/owner identity,
+unchanged inputs/results/witnesses/proofs and the current Released projection,
+then independently replays the retained composition transport. The original
+`composition-runtime-report.json` remains unchanged; a new readonly
+`composition-runtime-released-report.json` contains the settled projection.
+The diagnostic summary retains `caseReport` for the original finite transport
+controls and adds `releasedCaseReport` for the new independent observation.
+Neither is qualifying or an offline authority.
+
+The explicit test-only [composition-origin command](../specs/007-provider-conformance/quickstart.md#native-composition-origin-controls)
+stops deliberately after the actual composition runtime, releases in the real
+owner's cleanup path, and runs live/released authority controls. It does not run
+inherited acceptance or tooling, so it cannot replace the full composition job.
+Ordinary discovery does not require external evidence. The focused report/
+composition selection passes271 tests in80.320 seconds with four explicit
+native-only skips; catalog/SDK and diff checks pass. Genuine execution of this
+new composition control remains pending; T071 stays unchecked at70/86.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

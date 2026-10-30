@@ -984,6 +984,11 @@ A separate report boundary now checks the constructed category report against
 the original native evaluation, exact captured ledger/proofs and actual
 settlement. Host regressions pass; its expanded native controls still need
 execution. Generic five-profile qualification remains unfinished.
+Composition now also captures its original executor-held command and report
+before cleanup. A separate independent boundary verifies a new released report
+against that held identity and actual Released resources; the original active
+diagnostic is preserved. Host regressions pass; genuine composition-origin
+controls remain pending. Neither report qualifies the composition profile.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

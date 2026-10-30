@@ -1070,6 +1070,18 @@ Host rejection/completion regressions pass; expanded genuine native execution
 remains required. This is a category-only T071 component, not completion of the
 generic evaluator below.
 
+Composition additionally holds the original Active owner's descriptor-checked
+execution hash and exact report bytes in a single-use native evaluation.
+`inspect_native_composition_report` requires that same owner and held token after
+actual release, permits only replacement of the original Active resource
+projection with the current actual Released projection, and independently
+replays the retained transport. Original report bytes remain unchanged; the
+settled report is published separately. Copied tokens and merely matching
+serialized owner maps cannot supply authority. This remains diagnostic with
+incomplete non-runtime cases; neither a cached verification flag nor the finite
+test-only runtime boundary qualifies the composition profile. Genuine native
+origin-control execution remains pending.
+
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
    durations. Treat import exceptions as safe classified failures, not success.

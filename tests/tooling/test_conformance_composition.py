@@ -17,6 +17,29 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_native_report_inspection_rejects_modeled_ownership_before_reading_proofs(self):
+        import conformance_composition_checks as composition
+        import conformance_evidence as evidence
+
+        with mock.patch.object(composition, "verify_composition_case_report") as verify:
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.inspect_native_composition_report(
+                    SimpleNamespace(state="Released"), b"{}", expected_inputs={},
+                    native_evaluation=SimpleNamespace(report_data=b"{}"))
+        verify.assert_not_called()
+
+    def test_native_origin_controls_require_the_actual_runtime_callback_and_preserve_failures(self):
+        import conformance_composition_checks as composition
+        import conformance_evidence as evidence
+
+        for failure in (None, evidence.ConformanceError("InputChanged")):
+            with self.subTest(failure=failure), mock.patch.object(
+                    composition, "native_execution_supported", return_value=True), \
+                    mock.patch.object(composition, "execute", side_effect=failure):
+                with self.assertRaisesRegex(
+                        evidence.ConformanceError, "^WitnessMissing$" if failure is None else "^InputChanged$"):
+                    run_native_composition_controls(["--evidence", "/unallocated/test-only"])
+
     def test_inherited_runtime_hydrates_relative_manifest_paths_only_for_live_consumers(self):
         import conformance_composition_checks as composition
 
@@ -1191,5 +1214,176 @@ class CompositionDiagnosticTests(unittest.TestCase):
         self.assertTrue(all(row["bindingId"] == "none" for row in rows))
 
 
+def native_composition_origin_tests(evaluation, *, released):
+    from dataclasses import replace
+    import conformance_evidence as evidence
+    from conformance_sources import NativeCompositionEvaluation
+
+    if type(evaluation) is not NativeCompositionEvaluation:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    owner = evaluation._source._run
+    original = evidence.load_json(evaluation.report_data)
+
+    def inspect(report, token=evaluation, run=owner):
+        return evidence.inspect_native_composition_report(
+            run, evidence.canonical_bytes(report), expected_inputs=original["inputs"], native_evaluation=token)
+
+    if not released:
+        class LiveNativeCompositionOriginTests(unittest.TestCase):
+            __qualname__ = "LiveNativeCompositionOriginTests"
+
+            def test_unsettled_original_owner_cannot_publish_released_authority(self):
+                self.assertEqual(owner.state, "Active")
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    inspect(original)
+
+            def test_capture_is_single_use_even_with_the_original_inputs(self):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evaluation._source.capture_evaluation(original["inputs"], {}, {}, evaluation.command_sequence)
+
+            def test_rehashed_execution_cannot_replace_the_actual_executor_record(self):
+                path = owner.root / f"proofs/execution-command-{evaluation.command_sequence:04}.json"
+                raw = owner.read_execution_record(evaluation.command_sequence)
+                try:
+                    path.chmod(0o600)
+                    path.write_bytes(raw + b"\n")
+                    path.chmod(0o400)
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                        owner.read_execution_record(evaluation.command_sequence)
+                finally:
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+                self.assertEqual(owner.read_execution_record(evaluation.command_sequence), raw)
+
+        return unittest.TestLoader().loadTestsFromTestCase(LiveNativeCompositionOriginTests)
+
+    report = evidence.load_json(evaluation.report_data)
+    report["resources"] = owner.resource_projection()
+
+    class ReleasedNativeCompositionOriginTests(unittest.TestCase):
+        __qualname__ = "ReleasedNativeCompositionOriginTests"
+
+        def setUp(self):
+            self.assertTrue(inspect(report)["runtimeOriginVerified"])
+
+        def test_original_runtime_is_independently_replayed_after_actual_release(self):
+            inspected = inspect(report)
+            self.assertEqual(owner.state, "Released")
+            self.assertFalse(inspected["qualification"])
+            self.assertEqual(inspected["reportState"], "Incomplete")
+            self.assertGreater(inspected["passedCases"], 0)
+            self.assertGreater(inspected["incompleteCases"], 0)
+
+        def test_equal_token_copy_cannot_replace_the_original_held_identity(self):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                inspect(report, token=replace(evaluation))
+
+        def test_modeled_owner_cannot_borrow_the_original_token(self):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                inspect(report, run=SimpleNamespace(state="Released", root=owner.root))
+
+        def test_captured_active_and_missing_resources_cannot_claim_actual_settlement(self):
+            for resources in (original["resources"], []):
+                with self.subTest(resources=bool(resources)):
+                    changed = evidence.load_json(evidence.canonical_bytes(report))
+                    changed["resources"] = resources
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^CleanupIncomplete$"):
+                        inspect(changed)
+
+        def test_changed_observations_cannot_borrow_the_original_runtime_authority(self):
+            for collection in ("results", "witnesses"):
+                changed = evidence.load_json(evidence.canonical_bytes(report))
+                changed[collection].pop()
+                with self.subTest(collection=collection), self.assertRaises(evidence.ConformanceError):
+                    inspect(changed)
+
+        def test_correctly_hashed_extra_proof_was_not_observed_by_the_original_runtime(self):
+            changed = evidence.load_json(evidence.canonical_bytes(report))
+            path = "proofs/composition-runtime-report.json"
+            changed["proofs"][path] = evidence.file_sha256(owner.root / path)
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                inspect(changed)
+
+        def test_resealed_execution_bytes_cannot_replace_the_held_command_hash(self):
+            path = owner.root / f"proofs/execution-command-{evaluation.command_sequence:04}.json"
+            raw = path.read_bytes()
+            try:
+                path.chmod(0o600)
+                path.write_bytes(raw + b"\n")
+                path.chmod(0o400)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    inspect(report)
+            finally:
+                path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+            self.assertTrue(inspect(report)["runtimeOriginVerified"])
+
+    return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCompositionOriginTests)
+
+
+def run_native_composition_controls(arguments):
+    import conformance_composition_checks as composition
+    import conformance_evidence as evidence
+    from test_conformance_evidence import _run_native_control_suite
+
+    if len(arguments) != 2 or arguments[0] != "--evidence":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    if not composition.native_execution_supported():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    captured = []
+    counts = {"liveOriginTests": 0, "settlementOriginTests": 0}
+    original_runtime = composition._runtime
+
+    class RuntimeControlBoundary(Exception):
+        pass
+
+    def runtime(*args, **kwargs):
+        if captured:
+            raise evidence.ConformanceError("ProofMismatch")
+        original_runtime(*args, **kwargs)
+        evaluation = kwargs["native_sources"]._evaluation
+        counts["liveOriginTests"] = _run_native_control_suite(
+            lambda: native_composition_origin_tests(evaluation, released=False))
+        captured.append(evaluation)
+        raise RuntimeControlBoundary
+
+    with mock.patch.object(composition, "_runtime", runtime):
+        try:
+            composition.execute(ROOT, Path(arguments[1]).resolve())
+        except RuntimeControlBoundary:
+            pass
+        else:
+            raise evidence.ConformanceError("WitnessMissing")
+    if len(captured) != 1 or not counts["liveOriginTests"]:
+        raise evidence.ConformanceError("WitnessMissing")
+    evaluation, = captured
+    owner = evaluation._source._run
+    released = composition._released_composition_report(owner, evaluation)
+    paths = [path.relative_to(owner.root).as_posix()
+             for path in owner.root.rglob("*") if path.is_file()]
+    before = evidence.input_manifest(owner.root, paths)
+    counts["settlementOriginTests"] = _run_native_control_suite(
+        lambda: native_composition_origin_tests(evaluation, released=True))
+    if before != evidence.input_manifest(owner.root, paths):
+        raise evidence.ConformanceError("InputChanged")
+    print(evidence.canonical_bytes({
+        "qualification": False, "scope": "native-composition-origin-control-diagnostic",
+        "profileComplete": False, "inheritedRuntimeExecuted": False, **counts,
+        "runtimeOriginVerified": released["runtimeOriginVerified"]}).decode("ascii"))
+    return 0
+
+
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["--native-origin-controls"]:
+        import conformance_evidence as evidence
+        try:
+            raise SystemExit(run_native_composition_controls(sys.argv[2:]))
+        except (evidence.ConformanceError, OSError) as error:
+            code = str(error) if isinstance(error, evidence.ConformanceError) else "EvidenceIncomplete"
+            print(evidence.canonical_bytes({
+                "qualification": False, "scope": "native-composition-origin-control-diagnostic",
+                "code": code}).decode("ascii"))
+            raise SystemExit(1) from None
     unittest.main()

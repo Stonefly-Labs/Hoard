@@ -1967,6 +1967,59 @@ def category_replay_packet(projection):
 
 
 @dataclass(frozen=True, repr=False)
+class NativeCompositionEvaluation:
+    _source: "NativeCompositionSources"
+    report_data: bytes
+    command_sequence: int
+    execution_sha256: str
+
+    def verify_report_origin(self, run, inputs, report):
+        if (type(run) is not OwnedRun or type(self._source) is not NativeCompositionSources
+                or self._source._run is not run or self._source._evaluation is not self
+                or run.state != "Released"):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        resources = run.resource_projection()
+        if (not resources or any(row["state"] != "Released" for row in resources)
+                or evidence.canonical_bytes(resources) != evidence.canonical_bytes(report["resources"])):
+            raise evidence.ConformanceError("CleanupIncomplete")
+        original = evidence.load_json(self.report_data)
+        if (evidence.digest(inputs) != evidence.digest(original["inputs"])
+                or evidence.digest({key: value for key, value in report.items() if key != "resources"})
+                != evidence.digest({key: value for key, value in original.items() if key != "resources"})):
+            raise evidence.ConformanceError("ProofMismatch")
+        path = f"proofs/execution-command-{self.command_sequence:04}.json"
+        hashed, _ = evidence._readonly_report_proof(run.root, path)
+        if hashed != self.execution_sha256 or report["proofs"].get(path) != hashed:
+            raise evidence.ConformanceError("ProofMismatch")
+
+
+class NativeCompositionSources:
+    def __init__(self, run):
+        if type(run) is not OwnedRun or run.state != "Active":
+            raise evidence.ConformanceError("OwnershipInvalid")
+        self._run = run
+        self._evaluation = None
+
+    def capture_evaluation(self, inputs, owner, summary, command_sequence):
+        from conformance_composition_checks import verify_composition_case_report
+
+        run = self._run
+        if type(run) is not OwnedRun or run.state != "Active" or self._evaluation is not None:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        record = run.read_execution_record(command_sequence)
+        execution_sha = hashlib.sha256(record).hexdigest()
+        _, raw = evidence._readonly_report_proof(run.root, "proofs/composition-runtime-report.json")
+        report = evidence.admit_entity("QualificationReport", evidence.load_json(raw))
+        if (report["proofs"].get(f"proofs/execution-command-{command_sequence:04}.json") != execution_sha
+                or evidence.canonical_bytes(report["resources"])
+                != evidence.canonical_bytes(run.resource_projection())
+                or verify_composition_case_report(run.root, inputs, owner, report_data=raw) != summary):
+            raise evidence.ConformanceError("ProofMismatch")
+        self._evaluation = NativeCompositionEvaluation(self, raw, command_sequence, execution_sha)
+        return self._evaluation
+
+
+@dataclass(frozen=True, repr=False)
 class NativeCategoryEvaluation:
     _source: "NativeCategorySources"
     inputs_sha256: str

@@ -1010,6 +1010,26 @@ def inspect_native_category_report(run, report_data, *, expected_inputs, native_
         **inspected, "scope": "native-category-runtime-origin-diagnostic", "runtimeOriginVerified": True})
 
 
+def inspect_native_composition_report(run, report_data, *, expected_inputs, native_evaluation):
+    """Inspect original composition transport only after its actual owner releases."""
+    from conformance_composition_checks import verify_composition_case_report
+    from conformance_execution import OwnedRun
+    from conformance_sources import NativeCompositionEvaluation
+
+    if type(run) is not OwnedRun or type(native_evaluation) is not NativeCompositionEvaluation:
+        raise ConformanceError("OwnershipInvalid")
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    inputs = admit_entity("RunInputs", expected_inputs)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    native_evaluation.verify_report_origin(run, inputs, report)
+    _, owner_data = _readonly_report_proof(run.root, "runtime-owner.json")
+    inspected = verify_composition_case_report(
+        run.root, inputs, load_json(owner_data), report_data=report_data)
+    return MappingProxyType({
+        **inspected, "scope": "native-composition-runtime-origin-diagnostic", "runtimeOriginVerified": True})
+
+
 def inspect_profile_report(root, report_data, *, expected_inputs, expected_report_sha256):
     """Recompute catalog/file correspondence, never runtime-origin qualification."""
     from conformance_case_catalog import CATEGORY_QUALITY_BASIS, expected_cases
