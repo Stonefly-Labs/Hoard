@@ -1514,6 +1514,15 @@ membership and original parent chronology, reject conflicting proof identities,
 and exactly reproduce the original admission bytes. This is runtime evidence
 replay, not reconstructed native authority or full controller/tooling
 qualification; a failed owning run remains failed.
+Original-owner inherited authority additionally requires live capture: the
+existing finite composition evaluator must compare all re-admitted scope
+parents with its original Active owner's held command bytes, after successful
+trusted tooling and with no live children. Capture is single-use. The same
+evaluation identity may verify the exact captured input, summary, parent and
+readonly runtime/tooling proof frame only after actual resource release.
+Offline reconstruction, a copied evaluator or a later successful comparison
+cannot supply that missing capture. Inherited native containment remains
+distinct from full controller acceptance and profile qualification.
 Pure CP settings remain retained and subject to their existing strict original
 byte replay. These distinctions do not close the all-output sanitation gate.
 Composition source/build and mutation snapshots also require transient

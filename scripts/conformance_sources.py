@@ -2344,6 +2344,24 @@ class NativeCompositionEvaluation:
         if hashed != self.execution_sha256 or report["proofs"].get(path) != hashed:
             raise evidence.ConformanceError("ProofMismatch")
 
+    def verify_inherited_runtime(self, run, inputs, summary):
+        if type(run) is not OwnedRun:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        original = evidence.load_json(self.report_data)
+        self.verify_report_origin(run, inputs, {**original, "resources": run.resource_projection()})
+        captured = self._source._inherited_runtime
+        if captured is None:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        observed = self._source._read_inherited_frame(inputs, summary)
+        if observed != captured:
+            raise evidence.ConformanceError("ProofMismatch")
+        return {
+            "qualification": False, "profileComplete": False, "executionComplete": True,
+            "nativeContainment": True, "fullControllerAcceptance": False,
+            "passedParameters": captured["passedParameters"], "scopes": len(captured["commands"]),
+            "toolingTests": captured["toolingTests"],
+        }
+
 
 class NativeCompositionSources:
     def __init__(self, run):
@@ -2351,6 +2369,7 @@ class NativeCompositionSources:
             raise evidence.ConformanceError("OwnershipInvalid")
         self._run = run
         self._evaluation = None
+        self._inherited_runtime = None
 
     def capture_evaluation(self, inputs, owner, summary, command_sequence):
         from conformance_composition_checks import verify_composition_case_report
@@ -2369,6 +2388,46 @@ class NativeCompositionSources:
             raise evidence.ConformanceError("ProofMismatch")
         self._evaluation = NativeCompositionEvaluation(self, raw, command_sequence, execution_sha)
         return self._evaluation
+
+    def _read_inherited_frame(self, inputs, summary):
+        from conformance_inherited import read_inventory_runtime, verify_controller_tooling
+
+        inputs = evidence.admit_entity("RunInputs", inputs)
+        if (type(self._evaluation) is not NativeCompositionEvaluation or self._evaluation._source is not self
+                or inputs["runId"] != self._run.run_id or not isinstance(summary, Mapping)
+                or evidence.digest(inputs)
+                != evidence.digest(evidence.load_json(self._evaluation.report_data)["inputs"])):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        observed, commands, proofs = read_inventory_runtime(self._run.root, inputs)
+        receipts = [{
+            "attemptId": row["attemptId"],
+            "parentSha256": proofs[f'proofs/category-command-{row["attemptId"]}-execution.json'],
+        } for row in observed["scopes"]]
+        if (summary.get("scopeAdmissionSha256") != evidence.digest(observed)
+                or summary.get("passedParameters") != observed["passedParameters"]
+                or summary.get("scopes") != len(commands) or summary.get("commands") != receipts):
+            raise evidence.ConformanceError("ProofMismatch")
+        owner = evidence.load_json(_readonly(self._run.root / "runtime-owner.json", 65536))
+        tooling = summary.get("tooling")
+        verify_controller_tooling(self._run.root, tooling, inputs, owner)
+        path = "proofs/inherited-controller-tooling.json"
+        proofs = {**proofs, path: evidence._readonly_report_proof(self._run.root, path)[0]}
+        return MappingProxyType({
+            "inputsSha256": evidence.digest(inputs), "summarySha256": evidence.digest(summary),
+            "commands": commands, "proofs": MappingProxyType(dict(proofs)),
+            "passedParameters": observed["passedParameters"], "toolingTests": tooling["tests"],
+        })
+
+    def capture_inherited_runtime(self, inputs, summary):
+        run = self._run
+        if (type(run) is not OwnedRun or run.state != "Active" or self._inherited_runtime is not None
+                or run.live_children()):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        frame = self._read_inherited_frame(inputs, summary)
+        for sequence, expected_sha in frame["commands"]:
+            if hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != expected_sha:
+                raise evidence.ConformanceError("ProofMismatch")
+        self._inherited_runtime = frame
 
 
 @dataclass(frozen=True, repr=False)

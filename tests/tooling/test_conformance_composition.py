@@ -17,6 +17,128 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_inherited_origin_requires_live_capture_and_identical_released_runtime_frame(self):
+        import hashlib
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+        import conformance_sources as sources
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(profileId="composition", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        records = {index: ("modeled native record " + str(index)).encode() for index in (1, 2, 3)}
+        hashes = {index: hashlib.sha256(raw).hexdigest() for index, raw in records.items()}
+
+        class ModeledRun:
+            state = "Active"
+            run_id = inputs["runId"]
+            children = []
+
+            def __init__(self, root):
+                self.root = root
+
+            def live_children(self):
+                return self.children
+
+            def read_execution_record(self, sequence):
+                if self.state != "Active":
+                    raise evidence.ConformanceError("OwnershipInvalid")
+                return records[sequence]
+
+            def resource_projection(self):
+                return [{"state": "Released" if self.state == "Released" else "Leased"}]
+
+        observed = {
+            "passedParameters": 2,
+            "scopes": [{"attemptId": "modeled-first"}, {"attemptId": "modeled-second"}],
+        }
+        receipts = {
+            f'proofs/category-command-{row["attemptId"]}-execution.json': "a" * 64
+            for row in observed["scopes"]}
+        commands = ((2, hashes[2]), (3, hashes[3]))
+        summary = {
+            "scopeAdmissionSha256": evidence.digest(observed), "passedParameters": 2, "scopes": 2,
+            "commands": [{"attemptId": row["attemptId"],
+                          "parentSha256": receipts[f'proofs/category-command-{row["attemptId"]}-execution.json']}
+                         for row in observed["scopes"]],
+            "tooling": {"tests": 2},
+        }
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(sources, "OwnedRun", ModeledRun):
+            root = Path(temporary).resolve()
+            run = ModeledRun(root)
+            (root / "proofs").mkdir()
+
+            def seal(path, raw):
+                path = root / path
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            seal("runtime-owner.json", b"{}")
+            seal("proofs/execution-command-0001.json", records[1])
+            seal("proofs/inherited-controller-tooling.json", b"{}")
+            source = sources.NativeCompositionSources(run)
+            original = {
+                "inputs": inputs, "resources": run.resource_projection(),
+                "proofs": {"proofs/execution-command-0001.json": hashes[1]}}
+            evaluation = sources.NativeCompositionEvaluation(source, evidence.canonical_bytes(original), 1, hashes[1])
+            source._evaluation = evaluation
+            with mock.patch.object(inherited, "read_inventory_runtime",
+                                   return_value=(observed, commands, receipts)) as reader, \
+                    mock.patch.object(inherited, "verify_controller_tooling") as tooling:
+                run.state = "Released"
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evaluation.verify_inherited_runtime(run, inputs, summary)
+                run.state = "Active"
+                for defect in ("unsettled-child", "foreign-parent", "changed-summary"):
+                    run.children = [123] if defect == "unsettled-child" else []
+                    selected = summary if defect != "changed-summary" else {**summary, "passedParameters": 3}
+                    native = commands if defect != "foreign-parent" else ((2, "f" * 64), commands[1])
+                    reader.return_value = observed, native, receipts
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        source.capture_inherited_runtime(inputs, selected)
+                    self.assertIsNone(source._inherited_runtime)
+                run.children = []
+                reader.return_value = observed, commands, receipts
+                source.capture_inherited_runtime(inputs, summary)
+                self.assertEqual(source._inherited_runtime["commands"], commands)
+                self.assertTrue(tooling.called)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    source.capture_inherited_runtime(inputs, summary)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evaluation.verify_inherited_runtime(run, inputs, summary)
+                run.state = "Released"
+                actual = evaluation.verify_inherited_runtime(run, inputs, summary)
+                self.assertTrue(actual["nativeContainment"])
+                self.assertEqual(actual["passedParameters"], 2)
+                self.assertFalse(actual["qualification"])
+                self.assertFalse(actual["profileComplete"])
+                self.assertFalse(actual["fullControllerAcceptance"])
+                forged = sources.NativeCompositionEvaluation(source, evaluation.report_data, 1, hashes[1])
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    forged.verify_inherited_runtime(run, inputs, summary)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evaluation.verify_inherited_runtime(ModeledRun(root), inputs, summary)
+                for defect in ("changed-proofs", "changed-summary", "changed-inputs", "changed-tooling", "retained"):
+                    selected_inputs, selected = inputs, summary
+                    reader.return_value = observed, commands, receipts
+                    if defect == "changed-proofs":
+                        reader.return_value = observed, commands, {**receipts, "proofs/foreign.json": "f" * 64}
+                    elif defect == "changed-summary":
+                        selected = {**summary, "optimistic": True}
+                    elif defect == "changed-inputs":
+                        selected_inputs = {**inputs, "sourceRevision": "f" * 40}
+                    elif defect == "changed-tooling":
+                        seal("proofs/inherited-controller-tooling.json", b'{"changed":true}')
+                    else:
+                        run.state = "Retained"
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        evaluation.verify_inherited_runtime(run, selected_inputs, selected)
+                    run.state = "Released"
+                    seal("proofs/inherited-controller-tooling.json", b"{}")
+
     def test_foundation_scope_inputs_reconstruct_original_frame_and_reject_changed_preimages(self):
         import copy
         import conformance_evidence as evidence

@@ -1089,6 +1089,8 @@ def execute(repository, destination):
         evidence.verify_snapshot(replay, prepared_sources)
         for record in records:
             verify_project_lock(record, source, feed)
+        inputs = evidence.load_json(read_bounded(run.root / "proofs/composition-inputs.json", 2 * 1024**2))
+        native_sources.capture_inherited_runtime(inputs, summary["inheritedRuntime"])
         print(json.dumps({"qualification": False, "phase": "process-release"}), flush=True)
         run.transition("Settling")
         run.release()
@@ -1096,6 +1098,8 @@ def execute(repository, destination):
         if not resources or any(row["state"] != "Released" for row in resources):
             raise evidence.ConformanceError("CleanupIncomplete")
         summary["releasedCaseReport"] = _released_composition_report(run, native_sources._evaluation)
+        summary["releasedInheritedRuntime"] = native_sources._evaluation.verify_inherited_runtime(
+            run, inputs, summary["inheritedRuntime"])
         summary["processResourcesReleased"] = True
         write_new(run.root / "proofs/composition-diagnostic-summary.json", evidence.canonical_bytes(summary))
         print(json.dumps(summary, sort_keys=True), flush=True)

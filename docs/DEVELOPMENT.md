@@ -9952,10 +9952,37 @@ readonly, mount a separate owned writable directory at its ignored
 `.foundation`, locate the repository beneath a writable owned parent, and set
 `TMPDIR` to an owned supported-volume directory. The corrected layout measures
 `btrfs` and passes three original setup-path regressions. A complete unchanged
-847-test comparison is pending; a later pass cannot be grafted onto the failed
-original owner. No test, assertion, filesystem requirement or budget changes.
+847-test comparison passes with zero failures/errors/skips/unexpected diagnostics
+in453.940 seconds. A fresh complete `035bcce` run starts with this layout; the
+comparison cannot be grafted onto the failed original owner. No test, assertion,
+filesystem requirement or budget changes.
 Provider examples, public architecture/ADR diagrams, infrastructure and release
 instructions are unaffected by this reader and local diagnostic mount correction.
+
+That fresh run passes47 scopes, including original bounds/concurrency/restart,
+then command163 rejects one response-completion parameter in
+`LifecycleOwnershipTests`:23 Passed/one Failed in that class,419 Passed/one
+Failed across420 observed inherited parameters. The parent exits1 in1793.015 ms
+and its group settles; the owner genuinely releases. No exception/failed
+assertion location was retained. An unchanged original class passes24/24.
+One bounded private diagnostic invokes all three unchanged original method
+variants50 times each, stops on first error, and passes150 invocations.
+These comparisons establish intermittency, not repair. With the original
+failure and two bounded comparisons preserved, further full retries stop
+pending an original-context assertion diagnosis. A completion/shutdown
+scheduling race is only a hypothesis; no specific cause is established.
+
+The next T071 increment binds inherited replay to the original native owner.
+After successful tooling, while still Active, it re-admits the frozen runtime
+and checks every scope parent against the owner's original held command bytes.
+Capture is single-use and rejects live children, wrong inputs/summary or foreign
+parents. After actual release, the same finite evaluation identity independently
+replays the unchanged runtime/tooling proof frame; absent/forged capture,
+changed proofs/summary/inputs/tooling or retained ownership reject. No new proof
+schema or persisted native token is introduced. This derives native containment
+for inherited runtime only, not full controller acceptance or profile
+qualification. The focused selector passes236 tests in34.704 seconds;
+unmocked native confirmation of this new capture remains required.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

@@ -79,7 +79,16 @@ inherited command without retaining its private settings. The complete reader
 also independently re-admits all525 original witnesses/58 settled parents from
 readonly released evidence, with882 proof hashes. It does not confer native
 authority or repair the rejected run. Corrected container scratch mounts pass
-three original setup checks; a complete tooling comparison is pending.
+three original setup checks; the complete unchanged847-test comparison also
+passes, with zero failures/errors/skips in453.940 seconds. A fresh complete
+composition run at `035bcce` rejects a later response-completion ownership
+parameter:419 Passed/one Failed across420 observed parameters, with47 passing
+scopes. The original owner is Released. An unchanged24-case class comparison
+and150 original-method invocations pass; neither repairs the failed run.
+Further full retries are paused pending an original-context assertion diagnosis.
+The next T071 increment captures inherited parents in the original active
+owner and independently checks the same runtime/tooling frame after release;
+236 focused checks pass, with fresh native confirmation still required.
 Full inherited/controller profile evaluation remains unfinished.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).

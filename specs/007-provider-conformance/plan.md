@@ -324,9 +324,52 @@ The corrected comparison retains readonly tracked source, mounts only ignored
 `.foundation` writable, uses an owned writable source parent and sets `TMPDIR`
 to owned supported-volume scratch. Actual scratch measures `btrfs`; three
 original setup-path checks pass without changing source tests. A bounded full
-847-test comparison is pending. Its result cannot repair the original run;
+847-test comparison passes in453.940 seconds with zero failures/errors/skips/
+unexpected diagnostics and253672714240 free scratch bytes. Its result cannot repair the original run;
 fresh full execution must start with the correct environment. All acceptance
 budgets/assertions remain unchanged; T071..T086 remain open.
+
+Fresh immutable `035bcce` full composition with that corrected layout passes47
+scopes, including original bounds/concurrency/restart, then rejects one
+`Cooperative_response_completion_releases_one_request_only_after_all_host_and_handler_callbacks`
+parameter in `LifecycleOwnershipTests`. That class has23 Passed/one Failed;
+the run has419 Passed/one Failed across420 observed inherited parameters.
+Original command163 exits1 in1793.015 ms with actual group settlement; its
+owner is Released. No assertion location or exception was retained. This
+source includes the complete inherited reader but not the following live
+native capture increment, so that new code did not cause this rejection.
+
+**Bounded diagnostic stop:** one unchanged original-class comparison passes
+all24 parameters. One private finite diagnostic then invokes each of the
+three unchanged original completion variants50 times, stops on its first
+error, and passes all150 invocations. Every original assertion is preserved;
+no private diagnostic method enters tracked source. The failed full run and
+both bounded comparisons remain distinct. Neither positive comparison repairs
+or qualifies that run. Further full retries stop rather than continue grinding
+without an original-context assertion diagnosis. A completion/shutdown
+scheduling race is the best current hypothesis, not an established cause.
+No product/test correction is guessed, and T071..T086 remain open.
+
+### Original-owner inherited runtime capture
+
+The next T071 increment uses the existing finite composition evaluation identity,
+without introducing a persisted token or proof schema. Once all inherited
+runtime and trusted tooling checks pass, the original Active native owner
+re-admits the runtime and compares all scope parent hashes against its protected
+in-memory command bytes. Capture rejects live children, foreign input/parent
+frames and repeated capture. After genuine release, independent re-admission
+must exactly match those captured input, summary, parent and runtime/tooling
+proof identities. The original finite CP evaluation and actual Released
+resources remain mandatory.
+
+Modeled controls reject absent/forged authority, retained/active or foreign
+owners, changed inputs/summary/proofs/tooling and parent substitution. These
+are wiring/authority controls, not synthetic native acceptance. The focused
+reader/composition/SDK/receipt selector passes236 tests in34.704 seconds.
+Unmocked fresh native execution of this increment remains required. Its
+derived result explicitly keeps `qualification:false`, `profileComplete:false`
+and `fullControllerAcceptance:false`; original inherited containment is not
+complete controller qualification. No task checkbox advances.
 
 ### MP46 lifecycle setup race
 
