@@ -9384,6 +9384,30 @@ class ConformanceBaselineTests(unittest.TestCase):
                 elif touched is not None:
                     write(touched, evidence.canonical_bytes(records[2]))
 
+    def test_released_foundation_rejects_changed_held_bytes_before_parsing_their_new_meaning(self):
+        import conformance_execution as execution
+        import conformance_sdk_checks as checks
+        import conformance_sources as sources
+
+        run = execution.OwnedRun.allocate(self.root / "transport", ROOT, profile="harness")
+        run.transition("Active")
+        source = sources.NativeCompatibilitySources(run)
+        path = run.root / "proofs/foundation-manifest.json"
+        original = b'{"original":"frozen manifest bytes"}'
+        path.write_bytes(original + b"\n")
+        path.chmod(0o400)
+        evaluation = sources.NativeCompatibilityEvaluation(
+            source, "a" * 64, b"{}", (), b"{}", b"{}", b"{}", b"{}",
+            evidence.canonical_bytes({"proofs": {
+                path.relative_to(run.root).as_posix(): hashlib.sha256(original).hexdigest()}}), ())
+        source._evaluation = evaluation
+        run.transition("Settling")
+        run.release()
+        with mock.patch.object(checks, "inspect_foundation_runtime_scope") as semantic_reader:
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                evaluation.verify_report_origin(run, {}, {"resources": run.resource_projection()})
+            semantic_reader.assert_not_called()
+
     def test_released_compatibility_origin_keeps_retained_records_separate_from_active_summary_bytes(self):
         import conformance_execution as execution
         import conformance_sdk_checks as checks
@@ -9412,11 +9436,13 @@ class ConformanceBaselineTests(unittest.TestCase):
             "sourceBreakSha256": source_break["summarySha256"],
             "foundationRuntime": {}, "foundationFormatting": {}, "architecturePreparation": {}}
         active_raw = evidence.canonical_bytes(active)
+        foundation = {"proofs": {"proofs/modeled-foundation.json": "0" * 64}}
         evaluation = sources.NativeCompatibilityEvaluation(
             source, evidence.digest(inputs), active_raw,
             ((declarations[-1]["sequence"], declarations[-1]["executionSha256"]),),
             evidence.canonical_bytes(preparation), evidence.canonical_bytes(source_break),
-            evidence.canonical_bytes(recipes), evidence.canonical_bytes(retained), b"{}", ())
+            evidence.canonical_bytes(recipes), evidence.canonical_bytes(retained),
+            evidence.canonical_bytes(foundation), ())
         source._evaluation = evaluation
         run.transition("Settling")
         run.release()
@@ -9433,8 +9459,9 @@ class ConformanceBaselineTests(unittest.TestCase):
             return "0" * 64, b"modeled transport, not native execution"
 
         with mock.patch.object(evidence, "_readonly_report_proof", side_effect=proof) as read, \
+                mock.patch.object(evidence, "input_manifest", return_value=foundation["proofs"]), \
                 mock.patch.object(checks, "selected_msbuild", return_value=None), \
-                mock.patch.object(checks, "inspect_foundation_runtime_scope", return_value=({}, (), ())), \
+                mock.patch.object(checks, "inspect_foundation_runtime_scope", return_value=(foundation, (), ())), \
                 mock.patch.multiple(
                     self.baselines,
                     inspect_historical_binary_preparation=mock.Mock(return_value=preparation),

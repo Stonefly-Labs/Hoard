@@ -1257,6 +1257,13 @@ reader compares a normalized tuple with its unnormalized list preimage.
 The repair admits both through the existing RunInputs schema. Offline readonly
 replay now reconstructs220 proof files/61 commands without minting authority;
 the failed original remains failed and fresh native controls are required.
+Original `9ec148f` reaches genuine held capture, actual release and independent
+released replay, then one of17 released mutation controls rejects a changed
+manifest as `EvidenceSchemaInvalid` rather than the expected `ProofMismatch`.
+The original is retained as failed. Released evaluation now verifies original
+held proof bytes before parsing their new meaning; native subtest failures also
+retain safe identities/locations without private parameters.459 affected tests
+pass with23 host skips. Fresh full native controls are still required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

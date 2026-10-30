@@ -1994,6 +1994,12 @@ class NativeCompatibilityEvaluation:
             inspect_source_break_control, inspect_source_recipes)
         from conformance_sdk_checks import inspect_foundation_runtime_scope, selected_msbuild
 
+        captured = evidence.load_json(self.foundation_data)
+        # Preserve the selected runner's independent InputChanged diagnostic.
+        pinned = {path: hashed for path, hashed in evidence._hash_map(captured["proofs"]).items()
+                  if path != "proofs/sdk-vstest-inputs.json"}
+        if dict(evidence.input_manifest(run.root, list(pinned))) != pinned:
+            raise evidence.ConformanceError("ProofMismatch")
         foundation, runtime_commands, preparation_commands = inspect_foundation_runtime_scope(
             run.root, inputs, original["foundationRuntime"], original["foundationFormatting"],
             original["architecturePreparation"], retained=True)

@@ -298,19 +298,26 @@ class ConformanceExecutionTests(unittest.TestCase):
 
         class FailingCase(unittest.TestCase):
             def runTest(self):
-                secret = "synthetic-secret-canary/private/path"
-                raise ConformanceError(secret)
+                with self.subTest(private="synthetic-secret-canary/private/path"):
+                    raise ConformanceError("synthetic-secret-canary/private/path")
+                with self.subTest(private="synthetic-secret-canary/second"):
+                    raise ConformanceError("InputChanged")
 
-        result = checks.SafeResult()
-        FailingCase().run(result)
-        failures = checks.failed_tests(result)
-        encoded = json.dumps(failures)
-        self.assertNotIn("synthetic-secret-canary", encoded)
-        self.assertNotIn(str(ROOT), encoded)
-        self.assertEqual(failures[0]["code"], "EvidenceSchemaInvalid")
-        self.assertEqual(failures[0]["locations"][-1]["source"], "tests/tooling/test_conformance_execution.py")
-        self.assertIs(type(failures[0]["locations"][-1]["line"]), int)
-        self.assertLessEqual(len(failures[0]["locations"]), 4)
+        for filename in (__file__, "tests/tooling/test_conformance_execution.py"):
+            FailingCase.runTest.__code__ = FailingCase.runTest.__code__.replace(co_filename=filename)
+            result = checks.SafeResult()
+            FailingCase().run(result)
+            failures = checks.failed_tests(result)
+            encoded = json.dumps(failures)
+            self.assertNotIn("synthetic-secret-canary", encoded)
+            self.assertNotIn(str(ROOT), encoded)
+            self.assertEqual([row["code"] for row in failures], ["EvidenceSchemaInvalid", "InputChanged"])
+            self.assertEqual(len({row["locations"][-1]["line"] for row in failures}), 2)
+            for failure in failures:
+                self.assertTrue(failure["test"].endswith(".FailingCase.runTest"))
+                self.assertEqual(failure["locations"][-1]["source"], "tests/tooling/test_conformance_execution.py")
+                self.assertIs(type(failure["locations"][-1]["line"]), int)
+                self.assertLessEqual(len(failure["locations"]), 4)
 
     def test_projected_tooling_runner_selects_full_suite_without_accepting_skips_or_output(self):
         import contextlib

@@ -5670,6 +5670,24 @@ failures/errors/skips/unexpected bytes. Its outcome remains failed; the earlier
 successful `ba791bc` original does not repair it. The exact subsequent838-test
 source still needs an original standard native tooling run under600 seconds;
 no limit, test inventory or original failure is relaxed.
+Original `9ec148f` attempt `b1f3e9b588d348ad93e920b95176fe05` exits1/
+820462.197 ms after completing full formatting, foundation execution, actual
+held capture/release and independent released origin inspection. One of17
+released controls fails the closed-code assertion: changed manifest bytes
+produce `EvidenceSchemaInvalid` during settings-receipt parsing rather than
+the expected original-byte `ProofMismatch`. Readonly diagnosis confirms this
+without changing or relabeling original evidence.
+Released evaluation now compares held original proof-byte pins before semantic
+interpretation, then still reconstructs every proof/command. The selected SDK
+guard preserves `InputChanged`. A focused regression rejects changed bytes
+before the semantic reader. SafeResult also preserves per-subtest closed source
+locations/runtime diagnostics and safe nested identities for relative native
+script filenames; private parameters/paths/text/locals remain excluded.
+Two failures prove distinct original lines/codes survive projection. No native
+clock, deadline, inventory or assertion is altered. The corrected full affected
+selector passes459 tests in113.153 seconds,23 host skips;
+`git diff --check` passes. A fresh immutable original remains required; the
+unsuccessful original and T071..T086 remain failed/open respectively.
 
 ### Compatibility logical case linkage and released presentation
 

@@ -9691,6 +9691,26 @@ preparation/formatting commands. It explicitly has no native authority and does
 not relabel the failed original. The corrected affected selector above passes
 458 tests in111.797 seconds,23 host skips; `git diff --check` passes. Fresh
 original executor-held capture/released mutation validation remains required.
+Original `9ec148f` attempt `b1f3e9b588d348ad93e920b95176fe05` exits1 after
+820462.197 ms. All original formatting/foundation execution, actual held capture,
+owner release and independent released replay complete. One of17 released
+mutation controls fails its expected diagnostic: changed manifest bytes reach
+settings-receipt parsing and return `EvidenceSchemaInvalid`, not `ProofMismatch`.
+Readonly diagnosis reproduces that exact code without mutating original proof
+files or minting authority. The unsuccessful original remains failed.
+Released evaluation now checks the original held proof-byte pins before semantic
+parsing; the selected SDK closure retains its independent `InputChanged` guard.
+Semantic reconstruction is still rerun after those pins match. A focused
+regression proves changed bytes never reach the semantic reader.
+The same run exposed missing closed diagnostics for nested native subtests.
+The standard SafeResult now keeps per-subtest locations/runtime projections,
+admits only known relative source-role aliases and normalizes the literal
+`.<locals>.` marker in safe parent identities. Canary-bearing subtest parameters,
+raw paths, exception text and locals remain absent; distinct failures keep
+distinct locations/codes. No clock, deadline, test inventory or assertion changes.
+The full affected selector above passes459 tests in113.153 seconds,23 host
+native-prerequisite skips; `git diff --check` passes. Fresh immutable full native
+controls remain required; qualification and T071..T086 remain open.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

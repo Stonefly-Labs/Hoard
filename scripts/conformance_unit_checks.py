@@ -24,9 +24,10 @@ class SafeResult(unittest.TestResult):
         self.deadline = deadline
         root = Path(__file__).resolve().parents[1]
         self.source_roles = {
-            str(path): path.relative_to(root).as_posix()
+            name: path.relative_to(root).as_posix()
             for folder, pattern in (("scripts", "*.py"), ("tests/tooling", "test_*.py"))
-            for path in (root / folder).glob(pattern)}
+            for path in (root / folder).glob(pattern)
+            for name in (str(path), path.relative_to(root).as_posix())}
         self.locations = {}
         self.runtime_diagnostics = {}
 
@@ -40,8 +41,16 @@ class SafeResult(unittest.TestResult):
         if self.deadline is not None and time.monotonic() >= self.deadline:
             self.stop()
 
+    def addSubTest(self, test, subtest, error):
+        super().addSubTest(test, subtest, error)
+        if error is not None:
+            for observations in (self.locations, self.runtime_diagnostics):
+                if id(test) in observations:
+                    observations[id(subtest)] = observations[id(test)]
+
     def _exc_info_to_string(self, error, test):
         from conformance_evidence import ConformanceError
+        self.runtime_diagnostics.pop(id(test), None)
         trace, locations, count = error[2], [], 0
         while trace is not None and count < 1024:
             source = self.source_roles.get(trace.tb_frame.f_code.co_filename)
@@ -62,7 +71,7 @@ class SafeResult(unittest.TestResult):
 def failed_tests(result):
     failures = []
     for test, code in (*result.failures, *result.errors):
-        identity = getattr(test, "test_case", test).id()
+        identity = getattr(test, "test_case", test).id().replace(".<locals>.", ".")
         if len(identity) > 512 or not re.fullmatch(r"[a-zA-Z0-9_.]+", identity):
             identity = "UnknownDiagnostic"
         failures.append({

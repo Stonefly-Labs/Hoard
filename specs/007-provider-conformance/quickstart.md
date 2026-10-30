@@ -1459,6 +1459,12 @@ all preimage mutation rejections;458 affected tests pass with23 host skips.
 Offline readonly replay checks220 retained proofs/61 commands without granting
 authority. The original remains failed; fresh original native controls remain
 required.
+Original `9ec148f` now reaches actual held foundation origin and Released replay,
+but one released mutation fails the expected rejection code. The byte guard now
+checks original held proofs before interpreting changed bytes, and native
+subtests retain closed identities/locations without private parameters.459
+affected tests pass with23 host skips. The failed original is preserved and
+fresh full native controls remain required.
 
 ## Offline Correspondence Inspection
 
