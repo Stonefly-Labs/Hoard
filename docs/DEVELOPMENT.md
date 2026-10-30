@@ -8805,6 +8805,14 @@ Host validation passes434 tests, four native-only skips, in113.699 seconds;
 catalog/SDK and diff checks pass. Three live/nine released genuine controls are
 connected but their new native execution remains pending. They do not cover
 complete compatibility catalog/QC derivation, baseline attestation or qualification.
+The first immutable `b32f8a7` native attempt fails before origin-control execution,
+ProofMismatch in364622.542850 ms: replay expects legacy `stores/candidate` rather
+than the actual owned `stores/snapshot`. Its original failed packet SHA-256 is
+`c2dc30d8e778be3a71f217e74291eb08ac8727e3eeccc9e6e1415ea94fba88ea`.
+The repaired namespace regression now admits the actual snapshot and rejects
+the legacy alias. The live resealed-record challenge also expects the real
+executor's OwnershipInvalid rejection. All29 composition/compatibility host
+tests pass in1.237 seconds; fresh native origin controls remain required.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

@@ -17,6 +17,72 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_compatibility_replay_requires_actual_transient_snapshot_not_legacy_candidate_namespace(self):
+        import hashlib
+        import conformance_case_catalog as catalog
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        for namespace in ("stores/snapshot", "stores/candidate"):
+            with self.subTest(namespace=namespace), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                inputs = ConformanceAdmissionTests().inputs()
+                inputs.update(profileId="compatibility", bindings=[])
+                inputs["budgets"]["profileSeconds"] = 3600
+                assembly = namespace + "/" + sdk.ARCHITECTURE_TESTS + "/bin/Release/net10.0/Hoard.Architecture.Tests.dll"
+                inputs["runtimeAssemblies"] = {assembly: "c" * 64}
+                selected = {"stores/compatibility-architecture/manifest.json": "d" * 64}
+                map_raw = evidence.canonical_bytes(selected)
+                prepared = {
+                    "manifestPath": "stores/compatibility-architecture/manifest.json", "manifestSha256": "d" * 64,
+                    "inputMapPath": "proofs/compatibility-architecture-inputs.json",
+                    "inputMapSha256": hashlib.sha256(map_raw).hexdigest()}
+                inputs["configurationSha256"] = evidence.digest({
+                    "configuration": evidence.configuration_fingerprint(evidence.synthetic_source_mapping()),
+                    "architectureInputs": selected})
+                inputs_sha = evidence.digest(inputs)
+                attempt = "8d6a86d3-68e9-4ad9-8069-5b35447c4f23"
+                manifest = {
+                    "attemptId": attempt, "purpose": "discovery", "attemptSequence": 1,
+                    "inputSha256": inputs_sha, "runInputsPath": "proofs/compatibility-runtime-inputs.json",
+                    "assemblies": [{"id": "test-assembly", "path": assembly}],
+                    "expected": [{"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                                  "bindingId": binding, "caseId": case}
+                                 for identity, (binding, case) in catalog.architecture_runtime_tests().items()]}
+                manifest_path = f"runtime-input-{attempt}.json"
+                summary = {
+                    "qualification": False, "profileComplete": False, "scope": "architecture-runtime-diagnostic",
+                    "passedParameters": 88, "manifestPath": manifest_path, "discoveryManifestPath": manifest_path,
+                    **{field: "e" * 64 for field in (
+                        "inputsSha256", "postInputsSha256", "discoverySha256", "completionSha256",
+                        "runtimeProofsSha256", "nativeParentSha256")}}
+                for path, raw in (
+                        ("proofs/compatibility-runtime-inputs.json", evidence.canonical_bytes(inputs)),
+                        (prepared["inputMapPath"], map_raw),
+                        ("runtime-owner.json", evidence.canonical_bytes({
+                            "schemaVersion": 1, "runId": inputs["runId"],
+                            "invocationGroupId": inputs["invocationGroupId"], "rootId": "modeled-root",
+                            "rootPathSha256": hashlib.sha256(str(root).encode()).hexdigest()})),
+                        (manifest_path, evidence.canonical_bytes(manifest)),
+                        (f"proofs/category-command-{attempt}-discovery.json", b'{"commandSequence":1}'),
+                        ("proofs/execution-command-0001.json", b'{"startedMs":1,"endedMs":2}')):
+                    sdk.write_new(root / path, raw)
+                with mock.patch.object(sdk, "runtime_runner", return_value={"prefix": (), "inputFiles": {}}), \
+                        mock.patch.object(evidence, "_runtime_manifest",
+                                          return_value=(inputs, manifest, None, None, None, None)), \
+                        mock.patch.object(sdk, "verify_category_command_proof",
+                                          side_effect=RuntimeError("runtime-boundary")) as verify:
+                    if namespace == "stores/snapshot":
+                        with self.assertRaisesRegex(RuntimeError, "^runtime-boundary$"):
+                            sdk.inspect_compatibility_runtime_scope(root, inputs, "architecture", summary, prepared)
+                        verify.assert_called_once()
+                    else:
+                        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                            sdk.inspect_compatibility_runtime_scope(root, inputs, "architecture", summary, prepared)
+                        verify.assert_not_called()
+
     def test_native_compatibility_inspection_rejects_modeled_ownership_before_reading_proofs(self):
         import conformance_evidence as evidence
         import conformance_sources as sources
@@ -1548,7 +1614,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
                     receipt_path.chmod(0o600)
                     receipt_path.write_bytes(evidence.canonical_bytes(receipt))
                     receipt_path.chmod(0o400)
-                    with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                         sources.NativeCompatibilitySources(owner).capture_scope(
                             inputs, "architecture", summary, original["architecturePreparation"])
                 finally:

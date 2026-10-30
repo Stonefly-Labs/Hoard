@@ -4113,7 +4113,7 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
             "runtimeProofsSha256", "nativeParentSha256")},
         "manifestPath": evidence.relative_path, "discoveryManifestPath": evidence.relative_path,
     }, limit=64 * 1024)
-    assembly = root / "stores/candidate" / folder / name
+    assembly = root / "stores/snapshot" / folder / name
     inputs_path = "proofs/compatibility-runtime-inputs.json"
 
     def read(path, limit):

@@ -1008,7 +1008,8 @@ All209 native compatibility parameters pass at `6c2ee88`, including170 version
 observations, with shared inputs unchanged through actual release.
 The next increment retains original compatibility command authority across
 release and independently replays all three runtime transports. Host regressions
-pass; its new native controls remain pending. Neither increment qualifies the
+pass; its first native attempt rejects a stale replay namespace, now repaired.
+Fresh native origin-control verification remains pending. Neither increment qualifies the
 full compatibility profile.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs

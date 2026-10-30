@@ -1214,6 +1214,8 @@ copied tokens, modeled owners, stale/missing settlement, changed scope summaries
 runtime proofs, SDK closure and actual completion bytes. Host checks pass;
 fresh native execution remains pending. Exit0 means finite controls passed,
 not complete compatibility/QC/baseline attestation or profile qualification.
+The first `b32f8a7` attempt fails at a stale replay namespace before controls;
+that guard is repaired and its failed packet is retained separately.
 The original `proofs/compatibility-runtime-active-summary.json` remains unchanged
 beside `proofs/compatibility-diagnostic-summary.json`.
 

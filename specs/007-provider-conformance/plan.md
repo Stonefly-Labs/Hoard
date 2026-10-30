@@ -4548,6 +4548,33 @@ contracts are affected; provider APIs, package/module graph, production
 architecture/ADR/diagrams, CustomHost, infrastructure, releases and UI guides
 are unchanged. T071 remains open; implementation continues at70/86.
 
+### Original compatibility replay namespace repair
+
+The immutable `b32f8a7195116653fd3ce5ab5fa83bc03ef63b24`
+Linux/aarch64 attempt fails before original scope capture/control execution:
+ProofMismatch at the replay namespace guard, test-only exit1 in364622.54284999834
+ms. Initial free scratch212155334656 bytes, no extra SDK prewarming.
+Its exact original closed packet SHA-256 is
+`c2dc30d8e778be3a71f217e74291eb08ac8727e3eeccc9e6e1415ea94fba88ea`.
+The genuine source/root/failed packet remain unchanged; there is no control pass.
+
+Replay incorrectly reconstructs `stores/candidate` even though the actual owned
+snapshot builder uses `stores/snapshot`. A focused model reproduces both errors:
+the real namespace rejects before the command boundary and the legacy alias
+incorrectly reaches it. The repair fixes the independent reconstruction, not the
+actual producer, input hashes, command provenance or failure guard.
+The live resealed-record control also now expects OwnershipInvalid, the real
+`OwnedRun.read_execution_record` rejection for changed held bytes, rather than a
+different outer ProofMismatch classification. No rejection is weakened.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition` passes29 tests in1.237 seconds.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Fresh immutable native origin-control execution remains
+required. README, DEVELOPMENT and quickstart record the unsuccessful attempt;
+evidence/matrix contracts and other guides/diagrams remain accurate and unchanged.
+T071 stays open at70/86; implementation continues.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
