@@ -19,7 +19,13 @@ Complete public composition execution now has the same original-owner
 qualification boundary, additionally requiring all58 inherited runtime parents,
 four controller leaders and complete trusted tooling before actual release.
 Its separate finite qualified report and independent readonly external-receipt
-reader are wired; actual native qualification confirmation remains pending.
+reader now both pass unmocked at exact `48faeec`:50 cases/36 witnesses,
+525 inherited parameters/58 scopes,4 controller leaders/349 child observations,
+12 mutation pairs and855 tooling tests. Four altered/missing receipt controls
+reject. The qualified report SHA-256 is
+`cd4a44c3f370f21f62c1acdfe732a9b51ff25c3af4882657d223a0e48211a582`.
+This explicitly denies full-baseline qualification; old different-source
+metadata/artifact results cannot form a common baseline with it.
 The older successful diagnostic cannot qualify under changed input mode.
 Built-in metadata/artifact report publication now also creates four fixed
 JSON/JUnit/Markdown/CI-summary projections in the owned `diagnostics/` directory.

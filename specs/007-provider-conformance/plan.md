@@ -5,12 +5,56 @@
 **Input**: Feature specification from `specs/007-provider-conformance/spec.md`
 
 **Status**: The authorized implementation continues `implement / running`, with
-the resolved CP-11 timing clarification recorded below. No completed harness, shared
-assertion extraction, five-profile workflow, custom checklist approval or qualification
-result is delivered. Public product contracts and required outcomes remain
-unchanged; necessary fixture-private controls are extended as recorded below.
+the resolved CP-11 timing clarification recorded below. Finite native metadata/
+artifact fixture qualifications at `984bb2e` and composition at `48faeec` have
+separate readonly external-receipt verification. These different-source results
+do not establish a common baseline. Complete harness, qualifying coordinator/
+five-profile CI, custom checklist approval and full-baseline qualification remain
+unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
+
+### First complete composition fixture qualification and independent verification
+
+Exact immutable `48faeec38041c7561f0f0542604d6f442adb18f4` executes
+`bash scripts/validate-conformance.sh --profile composition --evidence /validation/work/run-7`
+on Linux arm64 with two CPUs/6 GiB and unchanged assertions/budgets: **passed,
+exit0**. All50 logical composition cases,36 actual CP parameters/110 snapshots,
+525 inherited parameters/58 scopes, four original controller leaders/349 child
+observations,12 mutation pairs (29 negative/29 repaired parameters) and855
+trusted tooling tests pass. Original complete capture, actual Released resources,
+identical released-frame verification, separate qualified bytes and strict public
+completion execute unmocked.
+
+The qualified report SHA-256 is
+`cd4a44c3f370f21f62c1acdfe732a9b51ff25c3af4882657d223a0e48211a582`;
+the unchanged original released CP report SHA-256 is
+`7c8b5970b4382e1a2f0a02d29607b47b5c68d79e01225437738f7654c63299f9`.
+A fresh readonly Linux process importing the exact frozen source and using
+the receipt observed directly from the original command's stdout independently
+passes `inspect_receipted_composition_qualification`, reproducing50 cases/
+36 witnesses,525 parameters/58 scopes,4 leaders/349 children and855 tooling
+tests. All four missing/altered receipt/input/report controls reject. It does
+not reconstruct a native token or trust a receipt from the inspected artifact.
+Both processes explicitly report `baselineQualification:false`; earlier failed
+roots remain unchanged and rejected.
+
+The reader initially leaked the original diagnostic's `reportState:Incomplete`
+into its otherwise verified qualified summary. A focused regression first
+reproduces that presentation mismatch; projection now takes the separate
+qualified report's actual Complete state, without changing either report's
+bytes or qualification predicates. The91-test focused boundary selector passes
+in7.062 seconds. Another fresh readonly process with the corrected reader
+verifies the same pinned report and all four controls with `reportState:Complete`.
+
+Hosted acceptance remains distinct. In foundations run41121871588 at `68ef083`,
+lock-preparation job124295403930 rejects `InsufficientCapacity`: baseline/artifact
+admission requires24 GiB free scratch. No exact free-byte measurement is retained;
+do not invent one, lower the gate or remove unrelated runner software.
+SDK job124295404063 separately rejects an expected Failed/UnknownDiagnostic
+observation at `validate_observation`: one actual failed witness, exit1 and
+zero status mismatches. Its strict response-event guard needs bounded diagnosis,
+not a blanket retry. Other profiles and T071..T086 remain open.
 
 ### Complete composition qualification boundary
 

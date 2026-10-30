@@ -114,7 +114,16 @@ its immediate worker-entry assumption invalid. Explicit entry signals preserve
 all assertions, including immediate readiness; the same comparison and40 normal
 startup/bounds/concurrency/ownership cases pass. The original failure stays
 rejected and is not retrospectively assigned a uniquely proven cause.
-Real native confirmation of the complete qualification boundary is still pending.
+Fresh immutable `48faeec` now completes the public qualification path with
+50/50 passing composition cases,36 CP witnesses/110 snapshots,525 inherited
+parameters/58 scopes, four original controller leaders/349 child observations,
+12 mutation pairs and all855 tooling tests. Capture, actual release and separate
+qualified publication pass unmocked. A fresh readonly process independently
+verifies the same report using the original external receipt and rejects four
+altered/missing-receipt controls. This is finite fixture qualification, explicitly
+not full-baseline qualification. Hosted lock preparation remains blocked by
+its24 GiB capacity gate; hosted SDK diagnostics have a separate rejecting
+observation guard.
 The hosted composition diagnostic remains explicitly diagnostic.
 Compatibility/harness, qualifying coordinator/aggregate and the full baseline
 remain unfinished; T071..T086 remain open.

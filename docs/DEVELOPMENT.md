@@ -10082,6 +10082,30 @@ skips, including red-first safe-event transport and both exact setup-source pins
 Frozen inventory, SDK/catalog and whitespace checks pass. No private delay is
 tracked, no assertion/budget is weakened and the original failed run is unchanged.
 
+Exact immutable `48faeec` then passes the complete public composition invocation
+with exit0 and finite fixture qualification:50 logical cases,36 CP parameters/
+110 snapshots,525 inherited parameters/58 scopes, four original controller
+leaders/349 child observations,12 mutation pairs (29 negative/29 repaired
+parameters) and all855 tooling tests. Original capture and actual release
+precede separate qualified publication and strict public completion.
+A fresh readonly Linux process importing that exact source and consuming only
+the separately observed original stdout receipt independently reconstructs the
+same qualified closure; four missing/altered receipt/input/report controls reject.
+The qualified report SHA-256 is
+`cd4a44c3f370f21f62c1acdfe732a9b51ff25c3af4882657d223a0e48211a582`.
+Both processes explicitly deny full-baseline qualification.
+
+The independent summary now projects the separate qualified report's Complete
+state rather than leaking the original diagnostic's Incomplete state. Its
+regression is first red;91 focused boundary checks pass in7.062 seconds, and a
+fresh readonly process verifies the same unchanged qualified/original bytes
+and all four receipt controls using the corrected reader.
+Hosted foundations run41121871588 remains unsuccessful: lock preparation
+rejects `InsufficientCapacity` against its unchanged24 GiB gate, while SDK
+diagnostics separately reject an expected Failed/UnknownDiagnostic observation
+at the response-event guard. No unrecorded free-byte count or full hosted
+acceptance is inferred. Other profiles/coordinator/full-baseline work remains open.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

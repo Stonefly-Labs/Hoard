@@ -1506,7 +1506,7 @@ def inspect_receipted_composition_qualification(
     return MappingProxyType({
         **inspected, "qualification": True, "baselineQualification": False, "code": "None",
         "scope": "trusted-native-composition-fixture-qualification", "profileId": "composition",
-        "reportSha256": origin["reportSha256"], "caseCount": len(report["results"]),
+        "reportSha256": origin["reportSha256"], "reportState": report["state"], "caseCount": len(report["results"]),
         "witnessCount": len(report["witnesses"]), "passedParameters": frame["passedParameters"],
         "scopes": len(frame["commands"]), "controllerParents": len(frame["controllerCommands"]),
         "controllerInvocations": frame["controllerInvocations"], "toolingTests": frame["toolingTests"],

@@ -1548,6 +1548,13 @@ receipt pinning inputs, original/qualified bytes and released resources; an
 artifact cannot supply its own authority. It reuses the same pure complete-frame
 reader, preserves original parent chronology and reproduces the exact proof
 closure. This finite fixture result explicitly denies full-baseline authority.
+That path is confirmed unmocked at exact `48faeec`:50 qualifying cases,
+36 CP witnesses,525 inherited parameters/58 scopes,4 original controller leaders/
+349 child observations and855 tooling tests, with actual release and independent
+readonly external-receipt verification. Four altered/missing receipt controls
+reject. Original diagnostic reports and earlier rejected runs remain unchanged.
+Qualified reader summaries must project state from the separate qualified
+report, not the original diagnostic's intentionally Incomplete state.
 For unknown failed tests only, an existing safe `test/UnknownDiagnostic`
 event may additionally carry a positive source-line integer bounded to1000000,
 derived from the exact admitted method's mapped `/_/tests/` declaring-type

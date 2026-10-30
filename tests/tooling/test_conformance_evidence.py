@@ -4974,13 +4974,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 "originalReportPath": original_path, "originalReportSha256": hashlib.sha256(raw).hexdigest(),
                 "resourcesSha256": evidence.digest(report["resources"]),
             }
-            with mock.patch("conformance_composition_checks.verify_composition_case_report", return_value={}), \
+            with mock.patch("conformance_composition_checks.verify_composition_case_report",
+                            return_value={"reportState": "Incomplete"}), \
                     mock.patch("conformance_sources.read_composition_inherited_frame",
                                return_value=source._inherited_runtime) as read_frame:
                 inspected = evidence.inspect_receipted_composition_qualification(
                     root, qualified_data, expected_inputs=inputs, expected_report_sha256=qualified_sha,
                     qualification_origin=origin)
                 self.assertTrue(inspected["qualification"])
+                self.assertEqual(inspected["reportState"], "Complete")
                 self.assertFalse(inspected["baselineQualification"])
                 read_frame.assert_called_once_with(
                     root, evidence.admit_entity("RunInputs", inputs), context, 2)
