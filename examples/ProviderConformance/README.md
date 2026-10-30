@@ -16,10 +16,14 @@ acceptance are not delivered by this walkthrough.
 
 Built-in metadata/artifact runs without `--binding-project` additionally produce
 closed JSON/JUnit/Markdown/CI-summary projections under their owned
-`diagnostics/` directory. They remain Incomplete/NotQualified; even all-passing
-runtime JUnit includes an explicit qualification error. Those four summaries
-are not verification reports and are not yet wired into this separate contributor
-route. Do not infer complete private-file sanitation from a safe public summary.
+`diagnostics/` directory. Original diagnostic summaries remain
+Incomplete/NotQualified, including their explicit JUnit qualification error.
+Complete built-in runs now additionally require their original Released native
+owner/evaluation to publish finite fixture-qualified projections and return0;
+fresh Linux confirmation of that wiring is pending. They explicitly deny full
+baseline qualification. Neither the qualified projections nor the native-owner
+receipt are wired into this separate contributor route or qualifying offline
+verification. Do not infer complete private-file sanitation from a safe summary.
 
 ## Prerequisites and private scratch
 

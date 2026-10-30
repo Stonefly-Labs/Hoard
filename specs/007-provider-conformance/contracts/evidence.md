@@ -1072,8 +1072,16 @@ without weakening its stricter diagnostic scope/state requirements.
 
 ### Remaining qualification evaluator
 
-The acceptance-reset increment introduces an internal category receipt boundary;
-it does not change the public coordinator schema or enable qualifying CLI exits.
+The acceptance-reset increment introduces a category receipt boundary.
+Complete built-in public categories now request native qualification explicitly;
+the standalone SDK diagnostic entry point retains its nonqualifying default.
+The public category command accepts only the original `NativeCategoryEvaluation`,
+checks its exact owned destination/profile/catalog and current clean source,
+rechecks the retained original/qualified reports and every rendered public byte,
+then emits a finite qualification receipt and exit0. A successful integer exit,
+copied token, modeled owner, changed source/publication or retained live resource
+cannot qualify. Fresh native confirmation of this wiring remains pending.
+The coordinator schema and offline qualification remain unchanged.
 `native_category_qualification_receipt` first verifies the exact qualified
 derivation under its original Released owner/evaluation. Its closed record
 contains `kind: native-category-fixture-qualification`, `inputsSha256`,
@@ -1097,7 +1105,8 @@ with that originally replayed capture plus the completion-input proof.
 It then runs the shared catalog/parameter/proof/completion inspection.
 The result's `runtimeOriginVerified: true` is a diagnostic observation from
 that original in-memory authority, not a transferable credential or permission
-for offline verification to trust a boolean. Reports remain nonqualifying.
+for offline verification to trust a boolean. Original reports remain nonqualifying;
+the separately derived fixture report requires that original authority.
 Category inspection and public JSON preserve the independently derived
 `AssertionFailed` code for a failed attempt even after a passing retry; an
 Incomplete qualification state must not downgrade that failure classification.

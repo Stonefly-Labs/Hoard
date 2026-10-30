@@ -12,6 +12,32 @@ unchanged; necessary fixture-private controls are extended as recorded below.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### Public category native qualification wiring
+
+The next T071 increment connects the existing strict native category evaluator
+to the full built-in public metadata/artifact commands. The native executor
+captures while Active, recomputes inputs, actually releases resources and
+publishes the unchanged original diagnostic before deriving the separate
+fixture-qualified report. It returns the original in-memory evaluation, not
+an optimistic exit/status record. Public completion requires that exact owner,
+destination/profile/catalog, current source revision/state/manifest, original
+and qualified bytes, and exact JSON/JUnit/Markdown output readback. Its safe
+receipt explicitly denies baseline qualification. Already-published artifacts
+may only be reused when readonly and byte-identical; no overwrite, retry history
+deletion or reconstructed native authority is permitted.
+
+The standalone SDK diagnostic mode remains unchanged. Full category qualification
+uses the existing90/180-minute profile budgets instead of the diagnostic-only
+60-minute cap. The native control runner now requires verified public exit0,
+not the old diagnostic exit2; its original live/released/retained challenges
+remain intact, with additional publication reentry/original-authority controls.
+Focused CLI/SDK/control checks pass187 tests in31.932 seconds. The affected
+evaluator/composition/CLI/coordinator/sanitation/SDK selector passes411 tests in
+108.648 seconds with four native-prerequisite skips. Catalog/SDK, frozen baseline
+inventory and whitespace checks pass. Fresh Linux execution is pending; this
+does not close T071 or supply composition/compatibility/harness, offline or
+five-profile qualification.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

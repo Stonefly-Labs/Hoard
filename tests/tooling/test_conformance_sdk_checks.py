@@ -183,9 +183,10 @@ class SdkDiagnosticTests(unittest.TestCase):
     def test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting(self):
         finish = getattr(checks, "_execute_selected_category", None)
         self.assertTrue(callable(finish), "Selected categories need their own bounded native execution path.")
-        for profile in ("metadata", "artifacts"):
+        for profile, qualify in ((profile, qualify) for profile in ("metadata", "artifacts")
+                                 for qualify in (False, True)):
             for defect in (None, "origin", "inputs", "cleanup"):
-                with self.subTest(profile=profile, defect=defect):
+                with self.subTest(profile=profile, qualify=qualify, defect=defect):
                     inputs = {"profileId": profile, "mode": "qualification", "invocationGroupId": str(uuid.uuid4())}
                     post = {"post": profile}
                     order = []
@@ -224,7 +225,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                             side_effect=checks.evidence.ConformanceError("InputChanged")
                             if defect == "inputs" else None) as recompute, patch.object(
                             checks, "_category_report", side_effect=lambda *args, **kwargs: (
-                                order.append("report") or {"qualification": False, "reportState": "Incomplete"})) as publish:
+                                order.append("report") or {"qualification": False, "reportState": "Incomplete"})) as publish, patch.object(
+                            checks, "_publish_category_fixture_qualification",
+                            side_effect=lambda *args, **kwargs: order.append("qualify")) as qualify_report:
                         if defect is not None:
                             with self.assertRaisesRegex(checks.evidence.ConformanceError,
                                                         {"origin": "OwnershipInvalid", "inputs": "InputChanged",
@@ -232,18 +235,26 @@ class SdkDiagnosticTests(unittest.TestCase):
                                 finish(run, ROOT, self.directory / "candidate", inputs,
                                        binding_sources=("binding",), inspection_cases={"original": "c" * 64},
                                        inspection_configurations={"metadata": "metadata", "artifacts": "artifacts"},
-                                       baseline_sha256="d" * 64, ci_revision="e" * 40)
+                                       baseline_sha256="d" * 64, ci_revision="e" * 40, qualify=qualify)
                             publish.assert_not_called()
+                            qualify_report.assert_not_called()
                             self.assertEqual(order, ["capture-origin"] + (
                                 ["Settling", "release"] if defect == "cleanup" else []))
                         else:
                             result = finish(run, ROOT, self.directory / "candidate", inputs,
                                             binding_sources=("binding",), inspection_cases={"original": "c" * 64},
                                             inspection_configurations={"metadata": "metadata", "artifacts": "artifacts"},
-                                            baseline_sha256="d" * 64, ci_revision="e" * 40)
-                            self.assertEqual(result["reportState"], "Incomplete")
-                            self.assertFalse(result["qualification"])
-                            self.assertEqual(order, ["capture-origin", "Settling", "release", "report"])
+                                            baseline_sha256="d" * 64, ci_revision="e" * 40, qualify=qualify)
+                            if qualify:
+                                self.assertIs(result, native_evaluation)
+                                qualify_report.assert_called_once_with(
+                                    run, inputs, native_evaluation=native_evaluation)
+                            else:
+                                self.assertEqual(result["reportState"], "Incomplete")
+                                self.assertFalse(result["qualification"])
+                                qualify_report.assert_not_called()
+                            self.assertEqual(order, ["capture-origin", "Settling", "release", "report"]
+                                             + (["qualify"] if qualify else []))
                             self.assertEqual(publish.call_args.kwargs["resources"], resources)
                             self.assertIs(publish.call_args.kwargs["native_evaluation"], native_evaluation)
                         category.assert_called_once_with(

@@ -191,7 +191,7 @@ class ConformanceCliTests(unittest.TestCase):
                     "conformance_sdk_checks.execute", return_value=0) as execute:
                 with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
                     evidence.dispatch_invocation(invocation)
-                execute.assert_called_once_with(ROOT, self.destination, category=profile)
+                execute.assert_called_once_with(ROOT, self.destination, category=profile, qualify=True)
             self.assertFalse(self.destination.exists())
 
     def test_composition_dispatch_runs_complete_native_observations_without_qualification(self):
@@ -290,11 +290,17 @@ class ConformanceCliTests(unittest.TestCase):
                     "conformance_sdk_checks.execute", side_effect=evidence.ConformanceError(code)) as execute:
                 with self.assertRaisesRegex(evidence.ConformanceError, code):
                     evidence.dispatch_invocation(invocation)
-                execute.assert_called_once_with(ROOT, self.destination, category="metadata")
-        for result in (1, 2, None, False):
+                execute.assert_called_once_with(ROOT, self.destination, category="metadata", qualify=True)
+        for result in (1, 2, None, False, {"qualification": True}, SimpleNamespace(qualification=True)):
             with self.subTest(result=result), patch("conformance_sdk_checks.execute", return_value=result):
                 with self.assertRaisesRegex(evidence.ConformanceError, "CommandFailed"):
                     evidence.dispatch_invocation(invocation)
+        from conformance_sources import NativeCategoryEvaluation
+
+        modeled = NativeCategoryEvaluation(object(), "a" * 64, "b" * 64, {})
+        with patch("conformance_sdk_checks.execute", return_value=modeled):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.dispatch_invocation(invocation)
 
     def test_explicit_metadata_dispatch_runs_only_the_admitted_contributor_and_never_qualifies(self):
         project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"

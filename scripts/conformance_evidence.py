@@ -84,8 +84,9 @@ class _Arguments(argparse.ArgumentParser):
 def invocation_parser():
     parser = _Arguments(
         description="Conformance admission and native metadata/artifact/composition execution. "
-                    "Reports remain non-qualifying; independent evaluation, full controller acceptance, "
-                    "focused/custom bindings, compatibility/harness and qualifying verify/aggregate remain incomplete. "
+                    "Complete built-in metadata/artifact runs require original native authority for finite fixture "
+                    "qualification; full baseline, focused/custom bindings, composition/compatibility/harness "
+                    "qualification and qualifying verify/aggregate remain incomplete. "
                     "Offline --verify/--aggregate with --coordinator inspect correspondence only.",
         add_help=False, allow_abbrev=False)
     parser.add_argument("--profile", metavar="PROFILE",
@@ -237,7 +238,8 @@ def dispatch_invocation(invocation):
                 raise ConformanceError("EvidenceIncomplete") from None
         else:
             from conformance_sdk_checks import execute
-            result = execute(invocation.repository, invocation.evidence, category=profile)
+            result = execute(invocation.repository, invocation.evidence, category=profile, qualify=True)
+            return complete_native_category_invocation(invocation, result)
         if type(result) is not int or result != 0:
             raise ConformanceError("CommandFailed")
         # Native history admission is not the independent qualification evaluator.
@@ -248,6 +250,55 @@ def dispatch_invocation(invocation):
     if invocation.action == "run":
         raise ConformanceError("EvidenceIncomplete")
     raise ConformanceError()
+
+
+def complete_native_category_invocation(invocation, native_evaluation):
+    from conformance_case_catalog import expected_cases
+    from conformance_execution import OwnedRun
+    from conformance_sources import NativeCategoryEvaluation, NativeCategorySources
+
+    if type(native_evaluation) is not NativeCategoryEvaluation:
+        raise ConformanceError(
+            "EvidenceIncomplete" if type(native_evaluation) is int and native_evaluation == 0 else "CommandFailed")
+    if (type(invocation) is not ConformanceInvocation or invocation.action != "run"
+            or invocation.mode != "qualification" or invocation.profiles not in (("metadata",), ("artifacts",))
+            or invocation.binding_project is not None
+            or type(native_evaluation._source) is not NativeCategorySources):
+        raise ConformanceError("OwnershipInvalid")
+    profile, = invocation.profiles
+    run = native_evaluation._source._run
+    if (type(run) is not OwnedRun or run.root != invocation.evidence
+            or invocation.case_keys != tuple(case.key for case in expected_cases(profile))):
+        raise ConformanceError("OwnershipInvalid")
+    prefix = f"proofs/category-{profile}"
+    _, inputs_data = _readonly_report_proof(run.root, prefix + "-qualification-run-inputs.json")
+    inputs = admit_entity("RunInputs", load_json(inputs_data))
+    ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+    if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
+        raise ConformanceError("InputChanged")
+    identity = source_identity(invocation.repository, ci_revision=ci_revision)
+    if (inputs["profileId"] != profile or inputs["runId"] != run.run_id
+            or any(inputs[key] != value for key, value in identity.items())
+            or digest(inputs["sourceManifest"]) != digest(source_manifest(invocation.repository))):
+        raise ConformanceError("InputChanged")
+    _, original = _readonly_report_proof(run.root, prefix + "-qualification-report.json")
+    _, qualified = _readonly_report_proof(run.root, prefix + "-fixture-qualification-report.json")
+    inspected = inspect_native_category_qualification(
+        run, qualified, original_report_data=original, expected_inputs=inputs,
+        native_evaluation=native_evaluation)
+    outputs = render_native_category_qualification(
+        run, qualified, original_report_data=original, expected_inputs=inputs,
+        native_evaluation=native_evaluation)
+    for name, contents in outputs.items():
+        _, observed = _readonly_report_proof(run.root, "diagnostics/" + name)
+        if observed != contents:
+            raise ConformanceError("ProofMismatch")
+    origin = native_category_qualification_receipt(
+        run, qualified, original_report_data=original, expected_inputs=inputs,
+        native_evaluation=native_evaluation)
+    print(canonical_bytes({
+        **inspected, "baselineQualification": False, "code": "None", "qualificationOrigin": origin}).decode("ascii"))
+    return 0
 
 
 def _invalid():

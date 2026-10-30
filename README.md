@@ -45,8 +45,9 @@ delay reproduces a lifecycle setup race; the correction preserves every shutdown
 assertion and additionally verifies cancellation while native work remains held.
 Both original 63-parameter metadata scenarios pass locally; hosted confirmation
 of that correction remains required.
-Internal evaluator/receipt work is preserved, but public commands remain
-nonqualifying and T071..T086 remain open.
+The next T071 increment connects complete built-in category commands to original
+native-owner qualification and its receipt; fresh Linux confirmation is pending.
+Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group
@@ -63,8 +64,10 @@ It wraps Memory and is not a third provider; the full CLI contributor journey
 and complete applicable-suite acceptance remain unfinished.
 The public `--profile metadata` and `--profile artifacts` commands now execute
 their complete built-in native category batches on supported Linux hosts.
-Reports remain non-qualifying and the CLI returns `EvidenceIncomplete` (exit 2)
-until independent evaluation is delivered. Focused/custom-binding runs and the
+Complete built-in runs now publish finite fixture qualification and exit 0 only
+after strict original-owner evaluation, actual release and exact public-output
+readback. Original diagnostic reports stay unchanged; fresh native confirmation
+of this public wiring is pending. Focused/custom-binding runs and the
 other profiles remain guarded; neither a reduced inventory nor another provider
 is substituted.
 At `ef82218`, both isolated Linux public-category jobs pass their complete

@@ -3103,9 +3103,13 @@ def _publish_category_fixture_qualification(run, inputs, *, native_evaluation):
     outputs = evidence.render_native_category_qualification(
         run, raw, original_report_data=original, expected_inputs=inputs, native_evaluation=native_evaluation)
     path = prefix + "-fixture-qualification-report.json"
-    write_new(run.root / path, raw)
-    for name, contents in outputs.items():
-        write_new(run.root / "diagnostics" / name, contents)
+    for relative, contents in {path: raw, **{"diagnostics/" + name: data for name, data in outputs.items()}}.items():
+        if (run.root / relative).exists() or (run.root / relative).is_symlink():
+            _, observed = evidence._readonly_report_proof(run.root, relative)
+            if observed != contents:
+                raise evidence.ConformanceError("ProofMismatch")
+        else:
+            write_new(run.root / relative, contents)
     _, retained = evidence._readonly_report_proof(run.root, path)
     if retained != raw:
         raise evidence.ConformanceError("ProofMismatch")
@@ -4996,7 +5000,9 @@ def execute_architecture_runtime(run, repository, candidate, sources, config, fe
 
 
 def _execute_selected_category(run, repository, candidate, inputs, *, binding_sources, inspection_cases,
-                               inspection_configurations, baseline_sha256, ci_revision):
+                               inspection_configurations, baseline_sha256, ci_revision, qualify=False):
+    if type(qualify) is not bool:
+        raise evidence.ConformanceError("UnsupportedProfile")
     native_sources = NativeCategorySources(
         run, inspection_inputs=inspection_cases, inspection_configurations=inspection_configurations)
     summary = category_diagnostics(
@@ -5016,8 +5022,12 @@ def _execute_selected_category(run, repository, candidate, inputs, *, binding_so
     evidence.verify_input_recomputation(inputs, post)
     run.transition("Settling")
     run.release()
-    return _category_report(run, inputs, post, summary, resources=run.resource_projection(),
-                            native_evaluation=native_evaluation)
+    reported = _category_report(run, inputs, post, summary, resources=run.resource_projection(),
+                                native_evaluation=native_evaluation)
+    if qualify:
+        _publish_category_fixture_qualification(run, inputs, native_evaluation=native_evaluation)
+        return native_evaluation
+    return reported
 
 
 def _release_compatibility_runtime(run, inputs, compatibility_summary, native_evaluation):
@@ -5042,15 +5052,17 @@ def _release_compatibility_runtime(run, inputs, compatibility_summary, native_ev
     return 0
 
 
-def execute(repository, destination, *, category=None, compatibility_only=False):
-    if category not in (None, "metadata", "artifacts") or compatibility_only and category is not None:
+def execute(repository, destination, *, category=None, compatibility_only=False, qualify=False):
+    if (category not in (None, "metadata", "artifacts") or compatibility_only and category is not None
+            or type(qualify) is not bool or qualify and (category is None or compatibility_only)):
         raise evidence.ConformanceError("UnsupportedProfile")
     if not native_execution_supported() or not callable(getattr(evidence, "ingest_runtime_attempt", None)):
         raise evidence.ConformanceError("PrerequisiteMissing")
     run = OwnedRun.allocate(
         destination, repository, profile="compatibility" if compatibility_only else category or "baseline")
-    minutes = 30 if compatibility_only else 60 if category is not None else 100
-    run.deadline = min(run.deadline, time.monotonic() + minutes * 60)
+    if not qualify:
+        minutes = 30 if compatibility_only else 60 if category is not None else 100
+        run.deadline = min(run.deadline, time.monotonic() + minutes * 60)
     try:
         home = run.root / "cache"
         home.mkdir(exist_ok=True, mode=0o700)
@@ -5387,7 +5399,10 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             summary = _execute_selected_category(
                 run, repository, candidate, qualification_inputs[category],
                 binding_sources=category_binding_sources[category], inspection_cases=inspection_inputs,
-                inspection_configurations=inspection_configurations, baseline_sha256=seal_sha, ci_revision=ci_revision)
+                inspection_configurations=inspection_configurations, baseline_sha256=seal_sha, ci_revision=ci_revision,
+                qualify=qualify)
+            if qualify:
+                return summary
             print(json.dumps(summary, sort_keys=True))
             return 0
         observations = []

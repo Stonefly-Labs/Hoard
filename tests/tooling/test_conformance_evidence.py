@@ -10520,7 +10520,7 @@ class _RetainedNativeCategoryStructureControls:
 
 
 class NativeCategoryControlRunnerTests(unittest.TestCase):
-    def test_control_success_is_distinct_from_the_underlying_nonqualifying_category_exit(self):
+    def test_control_success_requires_the_underlying_verified_category_exit(self):
         run = globals().get("run_native_category_controls")
         self.assertTrue(callable(run))
         import conformance_cli
@@ -10556,12 +10556,12 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
                         "released_native_category_evaluation_tests": suite,
                         "retained_native_category_structure_tests": suite}), mock.patch.object(
                     conformance_cli, "main", side_effect=execute), contextlib.redirect_stdout(io.StringIO()) as output:
-                if status == 0:
+                if status == 2:
                     with self.assertRaisesRegex(evidence.ConformanceError, "^CommandFailed$"):
                         run([])
                 else:
-                    self.assertEqual(run([]), 0 if status == 2 else 1)
-                    if status == 2:
+                    self.assertEqual(run([]), status)
+                    if status == 0:
                         packet = evidence.load_json(output.getvalue().encode())
                         self.assertEqual(
                             [packet[key] for key in ("liveOriginTests", "settlementOriginTests", "retainedReportTests")],
@@ -10655,7 +10655,7 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
             "run", ROOT, "qualification", ("metadata",), evidence=ROOT.parent / "unused-native-controls")
         with mock.patch.object(evidence, "admit_invocation", return_value=invocation), mock.patch(
                 "conformance_execution.native_execution_supported", return_value=True), mock.patch(
-                "conformance_cli.main", return_value=2) as execute:
+                "conformance_cli.main", return_value=0) as execute:
             with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
                 run([])
             execute.assert_called_once_with([])
@@ -11000,6 +11000,8 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
             original = original_path.read_bytes()
             published = checks._publish_category_fixture_qualification(
                 owner, inputs, native_evaluation=evaluation)
+            self.assertEqual(published, checks._publish_category_fixture_qualification(
+                owner, inputs, native_evaluation=evaluation))
             path = owner.root / f'proofs/category-{inputs["profileId"]}-fixture-qualification-report.json'
             raw = path.read_bytes()
             self.assertTrue(published["qualification"])
@@ -11060,6 +11062,25 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
                     owner, raw, original_report_data=original, expected_inputs=inputs,
                     native_evaluation=replace(evaluation))
             self.assertEqual(original_path.read_bytes(), original)
+
+        def test_public_dispatch_requires_original_authority_and_exact_retained_publication(self):
+            import conformance_sdk_checks as checks
+
+            checks._publish_category_fixture_qualification(owner, inputs, native_evaluation=evaluation)
+            invocation = evidence.ConformanceInvocation(
+                "run", ROOT, "qualification", (inputs["profileId"],),
+                tuple(case.key for case in expected_cases(inputs["profileId"])), owner.root)
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(evidence.complete_native_category_invocation(invocation, evaluation), 0)
+            observed = evidence.load_json(output.getvalue().encode())
+            self.assertTrue(observed["qualification"])
+            self.assertFalse(observed["baselineQualification"])
+            self.assertEqual(observed["profileId"], inputs["profileId"])
+            self.assertEqual(observed["qualificationOrigin"]["inputsSha256"], evidence.digest(inputs))
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.complete_native_category_invocation(invocation, replace(evaluation))
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.complete_native_category_invocation(replace(invocation, evidence=owner.root.parent), evaluation)
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 
@@ -11138,7 +11159,7 @@ def run_native_category_controls(arguments):
         raise evidence.ConformanceError("CommandFailed")
     if status == 1:
         return status
-    if status != 2:
+    if status != 0:
         raise evidence.ConformanceError("CommandFailed")
     if not all(counts.values()):
         raise evidence.ConformanceError("EvidenceIncomplete")

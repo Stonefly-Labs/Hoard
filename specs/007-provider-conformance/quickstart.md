@@ -4,13 +4,21 @@
 The SDK, focused tests, fixture project manifests, preparation command and
 CLI admission and fifty-three initial executable metadata consumers now exist; complete profile execution,
 shared suites, complete adapters, contributor journey and CI qualification do not.
-The current public metadata, artifacts and composition routes execute native
-observations on supported Linux hosts; they deliberately remain
-`Incomplete`/`EvidenceIncomplete` (exit 2) even after successful execution.
+Complete built-in metadata/artifact runs on supported Linux hosts now connect
+original native execution to strict finite fixture qualification: exit0 requires
+the original Released owner/evaluation, unchanged source, complete immutable
+catalog/results/proofs and exact retained qualified JSON/JUnit/Markdown outputs.
+Fresh Linux confirmation of this public wiring is pending. Original diagnostic
+reports remain unchanged. Composition, compatibility, focused/custom bindings,
+harness and the full baseline remain nonqualifying; offline correspondence does
+not yet consume the separately trusted native-owner receipt.
 Built-in metadata/artifact report publication now also creates four fixed
 JSON/JUnit/Markdown/CI-summary projections in the owned `diagnostics/` directory.
-They contain only closed identifiers, counts and hashes; JUnit always includes
-an explicit `EvidenceIncomplete` qualification error. These summaries are not
+Original diagnostic projections contain only closed identifiers, counts and
+hashes; their JUnit includes an explicit `EvidenceIncomplete` qualification
+error. Additional `category-*-fixture-qualification.*` projections require the
+original native evaluator, report exact fixture exclusions, and explicitly deny
+baseline qualification. Diagnostic summaries are not
 portable verification reports or evidence of complete private-proof sanitation.
 They do not change the separate custom-contributor path or deliver the planned
 qualifying `--verify`, `--aggregate` or five-profile qualification workflow.

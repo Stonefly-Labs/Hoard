@@ -9810,6 +9810,20 @@ scenarios each pass their exact63 native parameters with two logical processors,
 and focused formatting passes. These local diagnostics do not replace fresh
 Linux acceptance or change the historical failed receipt.
 
+The following T071 wiring makes the complete built-in metadata/artifact public
+command request original-native qualification, while the standalone SDK diagnostic
+entry point retains its old default. A successful integer exit is still rejected.
+The public command requires the actual Released owner/evaluation, exact current
+source/profile/catalog, original and derived reports, and identical readonly
+JSON/JUnit/Markdown outputs before emitting a finite fixture receipt and exit0.
+It explicitly denies full-baseline qualification. Reentry may reuse only exact
+readonly bytes, never overwrite a failed/different report. Full categories use
+their existing90/180-minute profile budgets; the diagnostic-only60-minute cap is
+unchanged. The native control runner now requires that verified public exit0.
+The affected eight-module selector passes411 tests with four native-only skips;
+fresh Linux execution is pending. Offline coordinator qualification and the other
+three profiles remain unfinished.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
