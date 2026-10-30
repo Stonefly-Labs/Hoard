@@ -17,6 +17,49 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_foundation_runtime_builds_do_not_overwrite_prepared_version_assets_or_pack_tests(self):
+        import conformance_evidence as evidence
+        import conformance_legacy as legacy
+        import conformance_sdk_checks as sdk
+        from conformance_composition_checks import ARCHITECTURE_PROJECT, DISCOVERY_PROJECT, PROJECT
+
+        for defect in ("none", "foreign-source"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "stores").mkdir()
+                source, candidate = root / "stores/foundation-source", root / "stores/snapshot"
+                sources = {"source.cs": "a" * 64}
+                captured = sources if defect == "none" else {"source.cs": "b" * 64}
+                run = SimpleNamespace(root=root)
+
+                def copy_runtime(original, destination):
+                    destination.mkdir()
+
+                with mock.patch.object(evidence, "snapshot_sources", return_value=(source, captured)), \
+                        mock.patch.object(evidence, "verify_snapshot") as verify, \
+                        mock.patch.object(sdk, "build") as build, \
+                        mock.patch.object(legacy, "_copy_runtime", side_effect=copy_runtime) as copies, \
+                        mock.patch.object(legacy, "stage_sdk"), mock.patch.object(sdk.shutil, "copy2"), \
+                        mock.patch.object(sdk, "verify_runtime_packages"):
+                    if defect != "none":
+                        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                            sdk.prepare_foundation_runtime(run, ROOT, candidate, sources, root / "config", root / "feed")
+                        build.assert_not_called()
+                        copies.assert_not_called()
+                        continue
+                    sdk.prepare_foundation_runtime(run, ROOT, candidate, sources, root / "config", root / "feed")
+                self.assertEqual(
+                    [call.args[1] for call in build.call_args_list],
+                    [source / path for path in (
+                        "tests/unit/Hoard.Foundation.Tests/Hoard.Foundation.Tests.csproj", PROJECT, DISCOVERY_PROJECT)])
+                self.assertTrue(all("feed" not in call.kwargs for call in build.call_args_list))
+                verify.assert_called_once_with(source, sources)
+                self.assertEqual(
+                    copies.call_args_list[-1].args[0],
+                    (candidate / ARCHITECTURE_PROJECT).parent / "bin/Release/net10.0")
+                self.assertTrue(all(not call.args[0].is_relative_to(candidate)
+                                    for call in copies.call_args_list[:-1]))
+
     def test_foundation_gate_inventory_preserves_original_surface_and_rejects_resealed_omissions(self):
         import importlib.util
         import conformance_evidence as evidence
@@ -360,6 +403,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     (sdk.TESTS + "/" + sdk.PACKAGE_TEST_OUTPUT + "/Release/net10.0",
                      "Hoard.Conformance.Tests.dll")):
                 path = candidate / folder / name
+                path.parent.mkdir(parents=True)
+                path.write_bytes(name.encode("ascii"))
+                runtime_paths.append(path.relative_to(root).as_posix())
+            for name in ("Hoard.Foundation.Tests", "Hoard.Composition.Tests", "Hoard.Architecture.Tests", "driver"):
+                path = root / sdk.FOUNDATION_RUNTIME_ROOT / name / (name + ".dll")
                 path.parent.mkdir(parents=True)
                 path.write_bytes(name.encode("ascii"))
                 runtime_paths.append(path.relative_to(root).as_posix())

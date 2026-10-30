@@ -4080,6 +4080,89 @@ def compatibility_runtime_paths(run, runtime):
     return paths
 
 
+FOUNDATION_RUNTIME_ROOT = "stores/compatibility-foundation-runtime"
+
+
+def prepare_foundation_runtime(run, repository, candidate, sources, config, feed, *, msbuild=None):
+    import conformance_legacy as legacy
+    from conformance_composition_checks import ARCHITECTURE_PROJECT, DISCOVERY_PROJECT, PROJECT
+
+    source, captured = evidence.snapshot_sources(repository, run, name="foundation-runtime-source", transient=True)
+    if dict(captured) != dict(sources):
+        raise evidence.ConformanceError("InputChanged")
+    foundation_project = "tests/unit/Hoard.Foundation.Tests/Hoard.Foundation.Tests.csproj"
+    for relative in (foundation_project, PROJECT, DISCOVERY_PROJECT):
+        build(run, source / relative, config, "foundation-runtime-build", msbuild=msbuild)
+    evidence.verify_snapshot(source, captured)
+    root = run.root / FOUNDATION_RUNTIME_ROOT
+    root.mkdir(mode=0o700)
+    legacy._copy_runtime((source / DISCOVERY_PROJECT).parent / "bin/Release/net10.0", root / "driver")
+    for relative in (foundation_project, PROJECT, ARCHITECTURE_PROJECT):
+        runtime = root / Path(relative).stem
+        original = candidate if relative == ARCHITECTURE_PROJECT else source
+        legacy._copy_runtime((original / relative).parent / "bin/Release/net10.0", runtime)
+        legacy.stage_sdk(feed / "Hoard.Testing.Conformance.0.1.0.nupkg",
+                         runtime / "Hoard.Testing.Conformance.dll")
+        shutil.copy2(candidate / LOGGER / "bin/Release/net10.0/Hoard.Conformance.TestLogger.dll",
+                     runtime / "Hoard.Conformance.TestLogger.dll")
+        verify_runtime_packages(runtime, feed, ("Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger"))
+
+
+def execute_foundation_runtime(run, repository, candidate, sources, config, feed, inputs, prepared, seal_sha, *,
+                               ci_revision=None):
+    from conformance_composition_checks import _inherited_discovery
+    from conformance_inherited import (
+        FOUNDATION_ASSEMBLIES, FOUNDATION_INVENTORY_PATH, admit_architecture_preparation,
+        execute_inventory_scope, foundation_execution_scopes, foundation_inventory)
+
+    _, files = admit_architecture_preparation(run.root, prepared)
+    current = capture_compatibility_runtime_inputs(
+        run, repository, candidate, config, feed, prepared, seal_sha,
+        invocation_group_id=inputs["invocationGroupId"],
+        observed_environment=environment(run, scope="compatibility-foundation"), ci_revision=ci_revision)
+    evidence.verify_input_recomputation(inputs, current)
+    closure_path = run.root / prepared["inputMapPath"]
+    root = run.root / FOUNDATION_RUNTIME_ROOT
+    owner_raw = read_bounded(run.root / "runtime-owner.json", 65536)
+    variables = {"HOARD_FOUNDATION_EVIDENCE": str(run.root / prepared["manifestPath"])}
+    methods = foundation_inventory(read_bounded(candidate / FOUNDATION_INVENTORY_PATH, 2 * 1024**2), sources)
+    discoveries, discovered, runtimes = {}, {}, {}
+    for assembly in sorted(FOUNDATION_ASSEMBLIES):
+        runtime = root / assembly
+        summary, raw, request, output, _ = _inherited_discovery(
+            run, candidate, sources, feed, inputs["environment"], assembly_name=assembly,
+            runtime=runtime, driver=root / "driver", foundation=True)
+        discoveries[assembly] = raw
+        discovered[assembly] = summary
+        runtimes[assembly] = runtime, request, output
+    attempts, commands = [], []
+    for (assembly, scope), expected in foundation_execution_scopes(discoveries, methods).items():
+        attempt, command = execute_inventory_scope(
+            run, candidate, feed, inputs, files, closure_path, FOUNDATION_INVENTORY_PATH, owner_raw, variables,
+            runtimes[assembly], expected, assembly_name=assembly, scope=scope)
+        attempts.append(attempt)
+        commands.append(command)
+    admitted = evidence.inspect_foundation_runtime_attempts(
+        inventory_data=read_bounded(candidate / FOUNDATION_INVENTORY_PATH, 2 * 1024**2),
+        sources=sources, discoveries=discoveries, attempts=attempts)
+    if not admitted["executionComplete"]:
+        raise evidence.ConformanceError("WitnessMissing")
+    post = capture_compatibility_runtime_inputs(
+        run, repository, candidate, config, feed, prepared, seal_sha,
+        invocation_group_id=inputs["invocationGroupId"],
+        observed_environment=environment(run, phase="completion", scope="compatibility-foundation"),
+        ci_revision=ci_revision)
+    evidence.verify_input_recomputation(inputs, post)
+    write_new(run.root / "proofs/compatibility-foundation-completion-inputs.json", evidence.canonical_bytes(post))
+    write_new(run.root / "proofs/foundation-scope-admission.json", evidence.canonical_bytes(admitted))
+    return {
+        "qualification": False, "profileComplete": False, "executionComplete": True,
+        "fullFoundationAcceptance": False, "passedParameters": admitted["passedParameters"],
+        "inputsSha256": evidence.digest(inputs), "postInputsSha256": evidence.digest(post),
+        "scopeAdmissionSha256": evidence.digest(admitted), "commands": commands, "discoveries": discovered,
+    }
+
+
 def capture_compatibility_runtime_inputs(run, repository, candidate, config, feed, prepared, seal_sha, *,
                                          invocation_group_id, observed_environment, ci_revision=None):
     from conformance_inherited import admit_architecture_preparation
@@ -4096,6 +4179,12 @@ def capture_compatibility_runtime_inputs(run, repository, candidate, config, fee
         if not (runtime / name).is_file():
             raise evidence.ConformanceError("PrerequisiteMissing")
         paths.extend(compatibility_runtime_paths(run, runtime))
+    for name in ("Hoard.Foundation.Tests", "Hoard.Composition.Tests", "Hoard.Architecture.Tests"):
+        runtime = run.root / FOUNDATION_RUNTIME_ROOT / name
+        if not (runtime / (name + ".dll")).is_file():
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        paths.extend(compatibility_runtime_paths(run, runtime))
+    paths.extend(compatibility_runtime_paths(run, run.root / FOUNDATION_RUNTIME_ROOT / "driver"))
     base = evidence.capture_profile_inputs(
         run, repository, candidate, profile_id="compatibility", mode="diagnostic",
         invocation_group_id=invocation_group_id,
@@ -4803,6 +4892,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 verify_controller_invocations(run.root, invocations, "architecture", run.run_id, run.root_id)
                 compatibility_summary["architecturePreparation"] = {
                     **prepared, "parentSha256": parent_sha, "nativeInvocations": invocations}
+                prepare_foundation_runtime(run, repository, candidate, sources, config, feed, msbuild=msbuild)
                 group = str(uuid.uuid4())
                 frozen_inputs = capture_compatibility_runtime_inputs(
                     run, repository, candidate, config, feed, prepared, seal_sha,
@@ -4823,6 +4913,9 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 compatibility_summary["binaryRuntime"] = execute_binary_runtime(
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
                     frozen_inputs=frozen_inputs, native_sources=native_sources, ci_revision=ci_revision)
+                compatibility_summary["foundationRuntime"] = execute_foundation_runtime(
+                    run, repository, candidate, sources, config, feed, frozen_inputs, prepared, seal_sha,
+                    ci_revision=ci_revision)
                 admit_architecture_preparation(run.root, prepared)
                 if (dict(evidence.source_manifest(repository)) != dict(sources)
                         or evidence.source_identity(repository, ci_revision=ci_revision) != identity):

@@ -750,6 +750,97 @@ def _execution_scopes(discoveries, methods, assemblies, admit):
     return {key: tuple(rows) for key, rows in sorted(scopes.items())}
 
 
+def execute_inventory_scope(run, source, feed, prior, files, closure_path, inventory_path, owner_raw, variables,
+                            discovered_runtime, expected, *, assembly_name, scope):
+    import time
+    import conformance_evidence as evidence
+    from conformance_sdk_checks import category_command_proof, write_new
+    from conformance_sources import read_bounded, runtime_arguments, runtime_settings
+    from xml.sax.saxutils import escape
+
+    runtime, request_path, discovery_path = discovered_runtime
+    request = load_json(read_bounded(request_path, 2 * 1024**2))
+    owner = load_json(owner_raw)
+    images = [row for row in request["assemblies"] if (run.root / row["path"]).is_relative_to(runtime)]
+    assembly = runtime / (assembly_name + ".dll")
+    attempt = str(uuid.uuid4())
+    inputs = evidence.admit_entity("RunInputs", {
+        **prior, "runtimeAssemblies": {row["path"]: row["sha256"] for row in images},
+        "configurationSha256": digest({
+            "configuration": prior["configurationSha256"], "controllerReadInputs": files,
+            "environmentSha256": digest(variables), "discoveryRequestSha256": digest(request)}),
+        "invocation": ["component", "inherited", assembly_name, scope],
+    })
+    inputs_path = run.root / f"proofs/inherited-inputs-{attempt}.json"
+    write_new(inputs_path, evidence.canonical_bytes(inputs))
+    manifest = {
+        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": attempt, "attemptSequence": 1, "purpose": "execution",
+        "inputSha256": digest(inputs), "runInputsPath": inputs_path.relative_to(run.root).as_posix(),
+        "assemblies": images, "packages": [{
+            "id": package["packageId"],
+            "path": (feed / (package["packageId"] + ".0.1.0.nupkg")).relative_to(run.root).as_posix(),
+            "sha256": package["sha256"]} for package in inputs["packages"]], "expected": expected,
+    }
+    manifest_raw = evidence.canonical_bytes(manifest)
+    manifest_path = run.root / f"runtime-input-{attempt}.json"
+    write_new(manifest_path, manifest_raw)
+    environment_xml = "<EnvironmentVariables>" + "".join(
+        "<" + key + ">" + escape(value) + "</" + key + ">" for key, value in variables.items()
+    ) + "</EnvironmentVariables>"
+    settings_data = runtime_settings(
+        run.root, assembly, attempt, digest(manifest), digest(owner), environment_xml)
+    settings_path = run.root / f"stores/settings-{attempt}.runsettings"
+    write_new(settings_path, settings_data)
+    bound_paths = (
+        manifest_path, inputs_path, run.root / "runtime-owner.json", settings_path, closure_path,
+        source / inventory_path, request_path, discovery_path, assembly,
+        runtime / (assembly_name + ".deps.json"), runtime / (assembly_name + ".runtimeconfig.json"),
+        runtime / "Hoard.Conformance.TestLogger.dll", runtime / "Hoard.Testing.Conformance.dll",
+    )
+    for path in (*bound_paths, *(run.root / name for name in files)):
+        path.chmod(0o400)
+    bound = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in bound_paths}
+    if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in files.items()):
+        raise ConformanceError("InputChanged")
+    arguments = runtime_arguments(assembly, settings_path, [row["testIdentity"] for row in expected])
+    started = time.monotonic() * 1000
+    result = run.command(
+        arguments, cwd=runtime, env=variables, kind="tests", cache_id="inherited-runtime", timeout=180,
+        record_execution=True, execution_inputs=tuple(bound))
+    ended = time.monotonic() * 1000
+    parent_sha = category_command_proof(
+        run, result, arguments=arguments, cwd=runtime, manifest=manifest,
+        settings_data=settings_data, started_ms=started, ended_ms=ended, settings_directory="stores")
+    record = load_json(run.read_execution_record(run.command_sequence))
+    if parent_sha is None or record.get("inputFiles") != bound:
+        raise ConformanceError("ProofMismatch")
+    output = run.root / ("runtime-" + attempt)
+    transport = {
+        "inputs": inputs, "manifest_data": manifest_raw, "owner_data": owner_raw,
+        "witnesses_data": read_bounded(output / "witnesses.jsonl", 2 * 1024**2),
+        "completion_data": read_bounded(output / "completion.json", 65536),
+        "proofs": {path.name: read_bounded(path, 65536) for path in output.glob("proof-*.json")},
+        "expected_tests": {row["testIdentity"]: ("none", row["matrixId"]) for row in expected},
+        "manifest_sha256": digest(manifest), "owner_sha256": digest(owner),
+        "started_ms": started, "ended_ms": ended,
+    }
+    observed = evidence.ingest_runtime_attempt(**transport)
+    if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in {
+            **files, **bound, **inputs["runtimeAssemblies"],
+    }.items()):
+        raise ConformanceError("InputChanged")
+    if (result.exit_code or observed["diagnosticCode"] != "None"
+            or any(row["status"] != "Passed" for row in observed["witnesses"])):
+        raise ConformanceError("WitnessMissing")
+    print(json.dumps({"qualification": False, "phase": "inherited-runtime", "scope": scope,
+                      "passedParameters": len(observed["witnesses"])}), flush=True)
+    return (
+        {"assembly": assembly_name, "testClass": scope, "transport": transport},
+        {"attemptId": attempt, "parentSha256": parent_sha},
+    )
+
+
 def replay_reference_consumer(owner, descriptor):
     import conformance_legacy as legacy
     from conformance_evidence import input_manifest, relative_path, sha256
@@ -1287,6 +1378,7 @@ def prepare_architecture_evidence(repository, owner, source):
         document = {
             "core": core, "providers": providers, "localFeed": str(target / "feed"),
             "declarations": foundation.declarations(source, target),
+            "sourceHashesBefore": before,
             "foundationInventory": {
                 "path": str(foundation_path), "sha256": hashlib.sha256(foundation_raw).hexdigest(),
                 "canonicalSha256": FOUNDATION_INVENTORY_SHA256,
@@ -1300,7 +1392,8 @@ def prepare_architecture_evidence(repository, owner, source):
         if controls["independentlyRestored"] != controls["independentRestores"]:
             raise ConformanceError("WitnessMissing")
         document["realArchitecture"] = foundation.real_architecture(source, target, document)
-        if (foundation.source_hashes(source) != before
+        document["sourceHashesAfter"] = foundation.source_hashes(source)
+        if (document["sourceHashesAfter"] != before
                 or read_bounded(foundation_path, 2 * 1024**2) != foundation_raw):
             raise ConformanceError("InputChanged")
         expected = {"permitted", "identity-hosting", *(name for rows in ARCHITECTURE_RUNTIME_ROWS.values()

@@ -5565,6 +5565,24 @@ inherited coverage/scenario derivation remains unchanged.
 passes389 tests in103.086 seconds, one platform prerequisite skip.
 Native foundation execution/formatting and independent settlement remain open;
 this reader and modeled proof data do not establish original runtime authority.
+Native compatibility execution now wires the foundation reader through the
+existing actual managed discovery and inherited execution mechanisms. The latter
+is extracted without changing its manifest, proof, input or180-second command
+checks; both callers use it. A separate source-identical owned snapshot builds
+foundation/composition test projects and the discovery driver without packing
+tests or overwriting prepared version-consumer assets. All staged runtimes/driver
+bytes enter shared inputs before any runtime scope. Native discovery re-admits
+the exact frozen foundation methods/parameter counts; each class executes with
+its own original command/proofs, then the complete scope set is independently
+admitted. Before/after shared inputs are recomputed. The host manifest now also
+includes its actual source-hash equality evidence.
+The isolated-build regression rejects changed source and checks that every new
+build uses the separate snapshot, while architecture reuses the already built
+runtime. Focused ingestion/composition/inherited/legacy/SDK/CI validation passes
+390 tests in112.756 seconds, one host prerequisite skip; inventory/catalog/diff
+checks pass. Original native acceptance is pending. Full foundation formatting
+and independent settled foundation authority remain open; no qualification is
+derived from the new diagnostic execution path.
 
 ### Compatibility logical case linkage and released presentation
 

@@ -21,7 +21,7 @@ from conformance_case_catalog import composition_execution_cases, composition_sn
 from conformance_execution import OwnedRun, capture_control, native_execution_supported
 from conformance_inherited import (
     INVENTORY_PATH, _controller_incomplete, admit_discovery, controller_phase as _controller_phase,
-    controller_read_inputs, execution_scopes, inventory,
+    controller_read_inputs, execute_inventory_scope, execution_scopes, inventory,
     verify_controller_baselines,
 )
 from conformance_lock_preparation import prepare_project_lock, verify_project_lock
@@ -227,8 +227,15 @@ def expected_rows():
     return rows
 
 
-def _inherited_discovery(run, source, sources, feed, observed_environment, *, assembly_name, runtime, driver):
-    methods = inventory(read_bounded(source / INVENTORY_PATH, 2 * 1024 * 1024), sources)
+def _inherited_discovery(run, source, sources, feed, observed_environment, *, assembly_name, runtime, driver,
+                         foundation=False):
+    from conformance_inherited import (
+        FOUNDATION_INVENTORY_PATH, admit_foundation_discovery, foundation_inventory)
+
+    inventory_path = FOUNDATION_INVENTORY_PATH if foundation else INVENTORY_PATH
+    reader = foundation_inventory if foundation else inventory
+    admit = admit_foundation_discovery if foundation else admit_discovery
+    methods = reader(read_bounded(source / inventory_path, 2 * 1024 * 1024), sources)
     for name in ("Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Application"):
         package = evidence.package_identity(feed, name, "0.1.0")
         image = runtime / f"{name}.dll"
@@ -245,7 +252,7 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
     if not vstest.is_file():
         raise evidence.ConformanceError("PrerequisiteMissing")
     selected = sorted(name for name in methods if name.startswith(assembly_name + "."))
-    prefix = "proofs/inherited-" + assembly_name
+    prefix = "proofs/" + ("foundation-" if foundation else "inherited-") + assembly_name
     methods_path = run.root / (prefix + "-methods.json")
     output_path = run.root / (prefix + "-cases.json")
     write_new(methods_path, evidence.canonical_bytes(selected))
@@ -263,7 +270,7 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
         } for index, path in enumerate(images)],
     }
     write_new(request_path, evidence.canonical_bytes(request))
-    inputs = [source / INVENTORY_PATH, methods_path, request_path, assembly,
+    inputs = [source / inventory_path, methods_path, request_path, assembly,
               *(driver / name for name in (
                   "Hoard.Fixtures.Conformance.Discovery.dll", "Hoard.Fixtures.Conformance.Discovery.deps.json",
                   "Hoard.Fixtures.Conformance.Discovery.runtimeconfig.json",
@@ -283,7 +290,7 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
         raise evidence.ConformanceError("WitnessMissing")
     record = evidence.load_json(run.read_execution_record(run.command_sequence))
     raw = read_bounded(output_path, 2 * 1024 * 1024)
-    rows = admit_discovery(raw, methods, assembly=assembly_name)
+    rows = admit(raw, methods, assembly=assembly_name)
     if (record.get("inputFiles") != bound
             or record.get("outputFiles") != {
                 output_path.relative_to(run.root).as_posix(): hashlib.sha256(raw).hexdigest()}
@@ -295,8 +302,8 @@ def _inherited_discovery(run, source, sources, feed, observed_environment, *, as
         "qualification": False, "profileComplete": False, "executionComplete": False,
         "methods": len(selected), "exactParameters": len(rows),
         "groups": {group: sum(row["matrixId"] == "inherited." + group for row in rows)
-                   for group in ("lifecycle", "configuration", "discovery")},
-        "inventorySha256": evidence.file_sha256(source / INVENTORY_PATH),
+                   for group in (("foundation",) if foundation else ("lifecycle", "configuration", "discovery"))},
+        "inventorySha256": evidence.file_sha256(source / inventory_path),
         "discoverySha256": evidence.file_sha256(output_path),
         "commandSha256": evidence.digest(record),
         "boundarySuitesExecuted": False, "controllersExecuted": False,
@@ -342,16 +349,12 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     formatting = _format_prepared_controllers(run, controllers, files, closure_path, solution=source / "Hoard.slnx")
     prior = evidence.load_json(read_bounded(run.root / "proofs/composition-inputs.json", 2 * 1024**2))
     owner_raw = read_bounded(run.root / "runtime-owner.json", 65536)
-    owner = evidence.load_json(owner_raw)
     variables = {
         **manifest_paths, "HOARD_DISCOVERY_RUN_ID": run.run_id,
         "HOARD_DISCOVERY_SDK": prior["environment"]["sdk"],
         "HOARD_DISCOVERY_OUTPUT": str(root / "performance"),
     }
     (root / "performance").mkdir(mode=0o700)
-    environment_xml = "<EnvironmentVariables>" + "".join(
-        "<" + key + ">" + escape(value) + "</" + key + ">" for key, value in variables.items()
-    ) + "</EnvironmentVariables>"
     methods = inventory(read_bounded(source / INVENTORY_PATH, 2 * 1024**2), sources)
     discoveries, discovered, runtimes = {}, {}, {}
     for relative in (PROJECT, ARCHITECTURE_PROJECT):
@@ -374,82 +377,11 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         runtimes[assembly_name] = runtime, request, output
     attempts, commands = [], []
     for (assembly_name, scope), expected in execution_scopes(discoveries, methods).items():
-        runtime, request_path, discovery_path = runtimes[assembly_name]
-        request = evidence.load_json(read_bounded(request_path, 2 * 1024**2))
-        images = [row for row in request["assemblies"]
-                  if (run.root / row["path"]).is_relative_to(runtime)]
-        assembly = runtime / (assembly_name + ".dll")
-        attempt = str(uuid.uuid4())
-        inputs = evidence.admit_entity("RunInputs", {
-            **prior, "runtimeAssemblies": {row["path"]: row["sha256"] for row in images},
-            "configurationSha256": evidence.digest({
-                "configuration": prior["configurationSha256"], "controllerReadInputs": files,
-                "environmentSha256": evidence.digest(variables), "discoveryRequestSha256": evidence.digest(request)}),
-            "invocation": ["component", "inherited", assembly_name, scope],
-        })
-        inputs_path = run.root / f"proofs/inherited-inputs-{attempt}.json"
-        write_new(inputs_path, evidence.canonical_bytes(inputs))
-        manifest = {
-            "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": inputs["invocationGroupId"],
-            "attemptId": attempt, "attemptSequence": 1, "purpose": "execution",
-            "inputSha256": evidence.digest(inputs), "runInputsPath": inputs_path.relative_to(run.root).as_posix(),
-            "assemblies": images, "packages": [{
-                "id": package["packageId"],
-                "path": (feed / (package["packageId"] + ".0.1.0.nupkg")).relative_to(run.root).as_posix(),
-                "sha256": package["sha256"]} for package in inputs["packages"]], "expected": expected,
-        }
-        manifest_raw = evidence.canonical_bytes(manifest)
-        manifest_path = run.root / f"runtime-input-{attempt}.json"
-        write_new(manifest_path, manifest_raw)
-        settings_data = runtime_settings(
-            run.root, assembly, attempt, evidence.digest(manifest), evidence.digest(owner), environment_xml)
-        settings_path = run.root / f"stores/settings-{attempt}.runsettings"
-        write_new(settings_path, settings_data)
-        bound_paths = (
-            manifest_path, inputs_path, run.root / "runtime-owner.json", settings_path, closure_path,
-            source / INVENTORY_PATH, request_path, discovery_path, assembly,
-            runtime / (assembly_name + ".deps.json"), runtime / (assembly_name + ".runtimeconfig.json"),
-            runtime / (LOGGER + ".dll"), runtime / (SDK + ".dll"),
-        )
-        for path in (*bound_paths, *(run.root / name for name in files)):
-            path.chmod(0o400)
-        bound = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in bound_paths}
-        if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in files.items()):
-            raise evidence.ConformanceError("InputChanged")
-        arguments = runtime_arguments(assembly, settings_path, [row["testIdentity"] for row in expected])
-        started = time.monotonic() * 1000
-        result = run.command(
-            arguments, cwd=runtime, env=variables, kind="tests", cache_id="inherited-runtime", timeout=180,
-            record_execution=True, execution_inputs=tuple(bound))
-        ended = time.monotonic() * 1000
-        parent_sha = category_command_proof(
-            run, result, arguments=arguments, cwd=runtime, manifest=manifest,
-            settings_data=settings_data, started_ms=started, ended_ms=ended, settings_directory="stores")
-        record = evidence.load_json(run.read_execution_record(run.command_sequence))
-        if parent_sha is None or record.get("inputFiles") != bound:
-            raise evidence.ConformanceError("ProofMismatch")
-        output = run.root / ("runtime-" + attempt)
-        transport = {
-            "inputs": inputs, "manifest_data": manifest_raw, "owner_data": owner_raw,
-            "witnesses_data": read_bounded(output / "witnesses.jsonl", 2 * 1024**2),
-            "completion_data": read_bounded(output / "completion.json", 65536),
-            "proofs": {path.name: read_bounded(path, 65536) for path in output.glob("proof-*.json")},
-            "expected_tests": {row["testIdentity"]: ("none", row["matrixId"]) for row in expected},
-            "manifest_sha256": evidence.digest(manifest), "owner_sha256": evidence.digest(owner),
-            "started_ms": started, "ended_ms": ended,
-        }
-        observed = evidence.ingest_runtime_attempt(**transport)
-        attempts.append({"assembly": assembly_name, "testClass": scope, "transport": transport})
-        commands.append({"attemptId": attempt, "parentSha256": parent_sha})
-        if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in {
-                **files, **bound, **inputs["runtimeAssemblies"],
-        }.items()):
-            raise evidence.ConformanceError("InputChanged")
-        if (result.exit_code or observed["diagnosticCode"] != "None"
-                or any(row["status"] != "Passed" for row in observed["witnesses"])):
-            raise evidence.ConformanceError("WitnessMissing")
-        print(json.dumps({"qualification": False, "phase": "inherited-runtime", "scope": scope,
-                          "passedParameters": len(observed["witnesses"])}), flush=True)
+        attempt, command = execute_inventory_scope(
+            run, source, feed, prior, files, closure_path, INVENTORY_PATH, owner_raw, variables,
+            runtimes[assembly_name], expected, assembly_name=assembly_name, scope=scope)
+        attempts.append(attempt)
+        commands.append(command)
     admitted = evidence.inspect_inherited_runtime_attempts(
         inventory_data=read_bounded(source / INVENTORY_PATH, 2 * 1024**2), sources=sources,
         discoveries=discoveries, attempts=attempts)

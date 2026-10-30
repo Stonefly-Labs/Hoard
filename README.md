@@ -1221,6 +1221,10 @@ controls and migration builds; full foundation runtime/formatting is still open.
 Independent foundation runtime admission now reuses the strict per-parameter
 proof inspector across all three assemblies; model mutations reject omitted,
 duplicated, changed and failed scopes. This does not supply their native execution.
+The native compatibility path now builds isolated foundation runtimes, freezes
+all three assemblies and the discovery driver, and executes the complete admitted
+scopes through the shared inherited executor. Original native validation is pending;
+complete formatting and independent settled foundation authority remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

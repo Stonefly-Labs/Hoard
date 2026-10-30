@@ -1422,6 +1422,10 @@ diagnosis; this does not establish full foundation execution or qualification.
 Independent foundation runtime admission now requires every parameter and class
 scope across all three assemblies using the shared strict proof reader; modeled
 controls pass, but its actual native execution/settlement integration remains open.
+Native execution is now wired using isolated test builds, the managed discovery
+driver and shared inherited executor, with all runtime bytes frozen up front.
+Original native acceptance is pending; complete formatting and independent settled
+foundation authority are still required.
 
 ## Offline Correspondence Inspection
 

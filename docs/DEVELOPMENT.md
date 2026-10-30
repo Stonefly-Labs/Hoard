@@ -9600,6 +9600,20 @@ proofs. Failed/incomplete original attempts remain nonqualifying. The modeled
 `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_composition test_conformance_inherited test_conformance_legacy test_conformance_sdk_checks test_conformance_ci`
 passes389 tests in103.086 seconds, one host prerequisite skip. This reader is
 not yet wired to actual native foundation execution or independent settlement.
+The subsequent integration wires that reader into native compatibility execution:
+foundation/composition tests and the discovery driver build in a separate,
+source-identical owned snapshot, leaving prepared version-consumer assets intact.
+Test projects are built, not packed. The existing architecture runtime is reused;
+all three staged assemblies and the actual discovery driver enter the shared
+frozen runtime inputs before the first scope. Foundation discovery uses the same
+managed collector and exact inventory admission. Class execution shares the
+unchanged inherited transport/proof mechanism, with before/after common input
+recomputation and a separate readonly scope admission. The host-swap manifest
+also records actual before/after source hashes required by its original assertion.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_composition test_conformance_inherited test_conformance_legacy test_conformance_sdk_checks test_conformance_ci`
+passes390 tests in112.756 seconds, one platform prerequisite skip. Original
+native acceptance of this integration is pending; full formatting and independent
+settled foundation authority are still unfinished.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
