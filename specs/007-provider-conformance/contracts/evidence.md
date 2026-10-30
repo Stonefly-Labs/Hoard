@@ -1037,6 +1037,46 @@ baseline artifacts are a different explicit entity, not current-run evidence.
 
 ## Deterministic Evaluation
 
+### Trusted original-receipt verification
+
+Public `--verify` now replays finite native metadata/artifact/composition/
+compatibility qualification through their existing independent readers.
+Successful verification returns 0, `qualification:true` and
+`baselineQualification:false`; it does not execute providers or recreate a
+native owner. Harness receipt admission/production and a successful five-profile
+aggregate remain unfinished; T073 remains unchecked.
+
+The separately trusted manifest has exactly `schemaVersion:2`,
+`configurationPolicy` and `profiles`. Policy is the exact current
+`configuration_policy()` record: catalog revision, fresh owned synthetic stores,
+locked restore, HoardSafe logger and disabled console logging. Each profile has
+exactly `inputs`, `reportSha256`, `reportPath`, `jobResults` and
+`qualificationOrigin`. Inputs are the predeclared complete assignment;
+receipt input/report digests must match it. Do not copy a bundled receipt or
+optimistic report flag to manufacture this independent authority.
+
+The receipt comes from independently observed original command stdout:
+`kind`, `inputsSha256`, `reportSha256`, `originalReportPath`,
+`originalReportSha256`, `resourcesSha256`; compatibility additionally requires
+`summaryPath` and `summarySha256`. Kinds are
+`native-category-fixture-qualification` for metadata/artifacts,
+`native-composition-fixture-qualification` and
+`native-compatibility-fixture-qualification`. The corresponding native reader
+reconstructs the exact qualified candidate from original readonly evidence and
+checks actual settlement, inputs, catalog, witnesses, proof bytes and failed
+history before accepting it.
+
+`jobResults` is exactly `job`, `upload`, `download`. Clean-ci requires three
+observed `success` values. Clean-local may instead record successful original
+execution with upload/download `not-required`; it must not invent CI transfer
+success. Common source/invocation/catalog/SDK policy and unique run IDs remain
+mandatory without requiring equal provider/configuration/environment hashes.
+Per-profile native configuration fingerprints are pinned by the original input
+receipt and checked during native proof replay; they are not falsely treated
+as hashes of one common JSON policy (composition fingerprints its actual XML).
+Keep the manifest outside the evidence; existing path/size/closed-schema gates
+apply. Schema 1 below remains strictly diagnostic and unchanged.
+
 ### Delivered offline correspondence inspection
 
 Category presentation filenames preserve both execution modes: ordinary
@@ -1046,12 +1086,12 @@ diagnostic files use `category-<profile>-diagnostic.{json,junit.xml,md}` and
 Exclusive-create publication must not overwrite one mode with the other.
 
 `--verify <report> --coordinator <trusted-manifest>` and
-`--aggregate <directory> --coordinator <trusted-manifest>` now inspect retained
+`--aggregate <directory> --coordinator <trusted-manifest>` with schema 1 inspect retained
 correspondence. They do not attest runtime origin or qualify a profile; valid
 diagnostic inspection returns `qualification: false`, `EvidenceIncomplete`,
 exit2. A retained failed attempt returns `AssertionFailed`, exit1, even when its
 final result passes. Invalid packets return a closed error without private text.
-Claimed qualification cannot substitute for the unfinished native evaluator.
+Claimed qualification cannot substitute for original native authority.
 
 The separately trusted coordinator manifest has exactly `schemaVersion: 1`
 and `profiles`. A profile entry has exactly:

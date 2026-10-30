@@ -15,6 +15,57 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T073 public receipt verification: four real profiles, aggregate still open
+
+`--verify` now dispatches to the existing independent category/composition/
+compatibility readers when a separately trusted schema-2 coordinator supplies
+the original owner's externally observed receipt. Schema-1 correspondence
+diagnostics remain unchanged and cannot qualify. Schema 2 pins complete
+per-profile inputs/report paths/hashes, original receipts, observed execution/
+transfer statuses and a common configuration policy. It does not confuse the
+common policy with identical profile fingerprints: native composition hashes
+its actual XML configuration; other profiles include additional frozen inputs.
+Original input/report receipt digests and complete native proof replay remain
+mandatory. Local transfers are explicitly `not-required`, not invented CI
+success; clean-ci assignments still require successful job/upload/download.
+
+Fresh processes mount original evidence and current reader source readonly and
+exercise the actual public `--verify` route from external original stdout:
+
+| Retained native source/profile | Actual verified scope | Public CLI controls |
+| --- | --- | --- |
+| `c4e36cb` metadata | 102 cases/141 witnesses | Four rejecting controls |
+| `e5b9aec` artifacts | 103 cases/263 witnesses | Four rejecting controls |
+| `48faeec` composition | 50 cases/36 witnesses; 525 inherited parameters/58 scopes, 349 controller children and 855 tooling tests | Four rejecting controls |
+| `c012f7b` compatibility | 142 cases/212 witnesses; 86 foundation parameters | Four rejecting controls |
+
+Each successful CLI exits 0 with finite qualification and
+`baselineQualification:false`. Missing original receipts, altered report pins,
+changed released resources and failed execution statuses reject through that
+same public route. No original evidence is changed or native authority
+reconstructed. Initial replay-wrapper parsing passed text instead of bytes
+to the strict JSON loader; correcting that wrapper, not the repository gate,
+produces the observations above.
+
+Linux
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_ci test_conformance_evidence test_conformance_composition test_conformance_sdk_checks test_conformance_cli test_conformance_sanitation -q`
+passes 492 tests in 117.998 seconds, zero skips. After additional policy/mode
+and four-without-harness rejection regressions,
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_ci test_conformance_cli -q`
+passes 42 tests.
+The mutable test fixture copies the immutable policy to a plain dict; production
+admission remains immutable.
+
+T073 remains unchecked: the harness receipt reader/producer and therefore
+successful all-five aggregate are still missing. Diagnostic five-profile
+transport correspondence cannot supply that authority. Full baseline and
+current-source local/CI acceptance are not inferred from different-source
+replay. At `6dff581`, hosted composition run `41145305827` fails during initial
+CP runtime ingestion, before completion-input/report presentation. It retains
+no artifact packet. Its fallback `toolingCode:OutputLimitExceeded` describes a
+missing later tooling file, not proof that tooling ran or exceeded its budget.
+The original CP failure's cause is not established; no blind rerun is launched.
+
 ### T071 evaluator and T072 finite report implementation verified
 
 The strict evaluator prerequisite is now verified, not held open for the

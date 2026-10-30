@@ -11,8 +11,11 @@ in-process code: review them before execution.
 qualifying report. Successful common execution still ends with
 `qualification:false`, `profileComplete:false` and `EvidenceIncomplete` exit2.
 The faulty run must have an actual named failed assertion, not merely a nonzero
-exit. Independent qualification, `--verify`, `--aggregate` and five-profile CI
-acceptance are not delivered by this walkthrough.
+exit. Independent contributor qualification, `--aggregate` and five-profile CI
+acceptance are not delivered by this walkthrough. Built-in finite fixture
+qualification can separately be replayed through `--verify` with a trusted
+schema-2 coordinator and external original-owner receipt; that route does not
+promote this custom contributor's diagnostic output.
 
 Built-in metadata/artifact runs without `--binding-project` additionally produce
 closed JSON/JUnit/Markdown/CI-summary projections under their owned

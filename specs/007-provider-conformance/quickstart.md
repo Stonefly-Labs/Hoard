@@ -52,7 +52,10 @@ original native evaluator, report exact fixture exclusions, and explicitly deny
 baseline qualification. Diagnostic summaries are not
 portable verification reports or evidence of complete private-proof sanitation.
 They do not change the separate custom-contributor path or deliver the planned
-qualifying `--verify`, `--aggregate` or five-profile qualification workflow.
+qualifying five-profile `--aggregate` or qualification workflow.
+Built-in finite qualification can now be replayed with `--verify` and a
+separately trusted schema-2 coordinator/original-owner receipt; this does not
+qualify custom bindings or a baseline.
 Offline correspondence inspection with a separate `--coordinator` manifest is
 now delivered; see [offline inspection](#offline-correspondence-inspection).
 Selected metadata/artifact settings are transient owned `stores/` resources;
@@ -1529,10 +1532,23 @@ controls, including genuine derivation and mutation rejection, without changing
 those diagnostics or public exit2. Internal qualified readback and finite safe
 JSON/JUnit/Markdown rendering still need their own fresh native acceptance.
 
+## Trusted Original-Receipt Verification
+
+`--verify <qualified-report> --coordinator <trusted-manifest>` replays finite
+metadata/artifact/composition/compatibility qualification with the original
+owner's independently observed receipt and schema-2 assignments. The manifest
+must remain outside the inspected evidence. It is not created by trusting
+the report's own qualification flag or an artifact's bundled receipt.
+See the [exact fields and trust boundary](contracts/evidence.md#trusted-original-receipt-verification).
+Successful replay exits 0 with `baselineQualification:false`; it does not
+execute providers again. Actual readonly verification of all four original
+native packets and four rejecting controls per profile passes.
+Harness receipts and a successful five-profile aggregate remain unfinished.
+
 ## Offline Correspondence Inspection
 
-The current offline routes inspect existing complete retained ledgers without
-claiming qualification:
+Schema-1 offline routes inspect existing complete retained diagnostic ledgers
+without claiming qualification:
 
 ```bash
 bash scripts/validate-conformance.sh \

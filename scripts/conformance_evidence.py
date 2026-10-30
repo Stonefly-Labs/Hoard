@@ -86,8 +86,9 @@ def invocation_parser():
         description="Conformance admission and native metadata/artifact/composition/compatibility execution. "
                     "Complete built-in metadata/artifact/composition/compatibility runs require original native authority for finite fixture "
                     "qualification; full baseline, focused/custom bindings, harness "
-                    "qualification and qualifying verify/aggregate remain incomplete. "
-                    "Offline --verify/--aggregate with --coordinator inspect correspondence only.",
+                    "qualification and five-profile aggregation remain incomplete. "
+                    "Offline --verify with a separately trusted receipt replays finite fixture qualification; "
+                    "schema-1 --coordinator manifests inspect correspondence only.",
         add_help=False, allow_abbrev=False)
     parser.add_argument("--profile", metavar="PROFILE",
                         help="baseline (default), metadata, artifacts, composition, compatibility, harness")
@@ -98,7 +99,7 @@ def invocation_parser():
     parser.add_argument("--verify", type=Path, metavar="PUBLIC_REPORT")
     parser.add_argument("--aggregate", type=Path, metavar="REPORT_DIRECTORY")
     parser.add_argument("--coordinator", type=Path, metavar="TRUSTED_MANIFEST",
-                        help="separate trusted input/report/configuration assignments for offline inspection")
+                        help="separate trusted assignments: schema 1 diagnostics or schema 2 original-owner receipts")
     parser.add_argument("--help", action="store_true")
     return parser
 
@@ -1282,13 +1283,22 @@ def native_category_qualification_receipt(
     })
 
 
-def admit_qualification_origin(value):
-    return _record({
-        "kind": _constant("native-category-fixture-qualification"),
+def admit_qualification_origin(value, *, profile=None):
+    if profile in (None, "metadata", "artifacts"):
+        kind = "category"
+    elif profile in ("composition", "compatibility"):
+        kind = profile
+    else:
+        raise ConformanceError("UnsupportedProfile")
+    fields = {
+        "kind": _constant("native-" + kind + "-fixture-qualification"),
         "inputsSha256": sha256, "reportSha256": sha256,
         "originalReportPath": relative_path, "originalReportSha256": sha256,
         "resourcesSha256": sha256,
-    })(value)
+    }
+    if profile == "compatibility":
+        fields.update(summaryPath=relative_path, summarySha256=sha256)
+    return _record(fields)(value)
 
 
 def inspect_receipted_category_qualification(
@@ -1726,12 +1736,7 @@ def inspect_receipted_composition_qualification(
 
     if qualification_origin is None:
         raise ConformanceError("OwnershipInvalid")
-    origin = _record({
-        "kind": _constant("native-composition-fixture-qualification"),
-        "inputsSha256": sha256, "reportSha256": sha256,
-        "originalReportPath": relative_path, "originalReportSha256": sha256,
-        "resourcesSha256": sha256,
-    })(qualification_origin)
+    origin = admit_qualification_origin(qualification_origin, profile="composition")
     inputs = admit_entity("RunInputs", expected_inputs)
     if inputs["profileId"] != "composition":
         raise ConformanceError("UnsupportedProfile")
@@ -1790,12 +1795,7 @@ def inspect_receipted_compatibility_qualification(
 
     if qualification_origin is None:
         raise ConformanceError("OwnershipInvalid")
-    origin = _record({
-        "kind": _constant("native-compatibility-fixture-qualification"),
-        "inputsSha256": sha256, "reportSha256": sha256,
-        "originalReportPath": relative_path, "originalReportSha256": sha256,
-        "summaryPath": relative_path, "summarySha256": sha256, "resourcesSha256": sha256,
-    })(qualification_origin)
+    origin = admit_qualification_origin(qualification_origin, profile="compatibility")
     inputs = admit_entity("RunInputs", expected_inputs)
     if inputs["profileId"] != "compatibility":
         raise ConformanceError("UnsupportedProfile")
@@ -1838,6 +1838,23 @@ def inspect_receipted_compatibility_qualification(
         "witnessCount": len(report["witnesses"]),
         "foundationParameters": frame["foundation"]["foundationRuntime"]["passedParameters"],
     })
+
+
+def inspect_receipted_profile_qualification(
+        root, report_data, *, expected_inputs, expected_report_sha256, qualification_origin):
+    inputs = admit_entity("RunInputs", expected_inputs)
+    readers = {
+        "metadata": inspect_receipted_category_qualification,
+        "artifacts": inspect_receipted_category_qualification,
+        "composition": inspect_receipted_composition_qualification,
+        "compatibility": inspect_receipted_compatibility_qualification,
+    }
+    reader = readers.get(inputs["profileId"])
+    if reader is None:
+        raise ConformanceError("EvidenceIncomplete")
+    return reader(
+        root, report_data, expected_inputs=inputs, expected_report_sha256=expected_report_sha256,
+        qualification_origin=qualification_origin)
 
 
 def inspect_profile_report(root, report_data, *, expected_inputs, expected_report_sha256):

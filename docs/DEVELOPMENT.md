@@ -4668,6 +4668,21 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+**Trusted verification:** public `--verify` now consumes separately trusted
+schema-2 input/report assignments and original-owner receipts for metadata,
+artifacts, composition and compatibility. Actual readonly packets from all four
+native qualifications pass through the CLI; four missing/altered authority,
+resource or execution-status controls per profile reject. This is replay of the
+original finite scope, not fresh execution or a common-source baseline.
+Schema-1 diagnostics remain nonqualifying. Local upload/download observations
+are explicitly `not-required`; clean-ci assignments still require successful
+job/upload/download. The six affected Linux modules pass 492 tests, zero skips;
+the final coordinator/CLI selection passes 42 tests after added policy and
+missing-harness regressions.
+The [schema and trust boundary](../specs/007-provider-conformance/contracts/evidence.md#trusted-original-receipt-verification)
+distinguish common policy from exact profile fingerprints. T073 remains open
+until the harness reader/producer allows a genuine all-five aggregate.
+
 **Current report checkpoint:** T071 strict evaluation and T072 finite
 presentation implementation are verified. Category, composition and
 compatibility qualification share JSON/JUnit/Markdown/CI rendering; original

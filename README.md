@@ -175,6 +175,12 @@ Linux regressions pass. Readonly replays of the original 50-case composition
 and 142-case compatibility diagnostic packets produce all four formats without
 claiming qualification. Fresh current-source native publication remains part
 of final acceptance. T073..T086 stay open.
+Public `--verify` now also replays these four finite profiles from a separate
+schema-2 trusted coordinator and original-owner receipt; readonly actual
+metadata/artifact/composition/compatibility replay passes, with 16 rejecting
+public-CLI controls. Schema-1 inspection remains nonqualifying. The harness
+reader/producer and successful five-profile aggregate are still missing, so
+T073 is not marked complete.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

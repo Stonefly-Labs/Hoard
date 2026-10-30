@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -278,6 +279,135 @@ class ConformanceProfileTransportTests(unittest.TestCase):
                 context["profiles"]["artifacts"]["jobResults"][defect] = "cancelled"
             with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
                 ci.admit_coordinator(context, require_all=True)
+
+    def qualification_origin(self, profile, entry):
+        category = profile in ("metadata", "artifacts")
+        original = (f"proofs/category-{profile}-qualification-report.json" if category
+                    else f"proofs/{profile}-runtime-released-report.json")
+        origin = {
+            "kind": "native-" + ("category" if category else profile) + "-fixture-qualification",
+            "inputsSha256": evidence.digest(entry["inputs"]), "reportSha256": entry["reportSha256"],
+            "originalReportPath": original, "originalReportSha256": "a" * 64,
+            "resourcesSha256": "b" * 64}
+        if profile == "compatibility":
+            origin.update(summaryPath="proofs/compatibility-diagnostic-summary.json",
+                          summarySha256="c" * 64)
+        return origin
+
+    def qualified_coordinator(self, context, profiles):
+        entries = {}
+        for profile in profiles:
+            entry = {key: value for key, value in context["profiles"][profile].items()
+                     if key != "configuration"}
+            entry["qualificationOrigin"] = self.qualification_origin(profile, entry)
+            entries[profile] = entry
+        return {"schemaVersion": 2, "configurationPolicy": dict(evidence.configuration_policy()), "profiles": entries}
+
+    def test_coordinator_pins_external_original_receipts_and_freezes_their_fields(self):
+        ci = importlib.import_module("conformance_ci")
+        for profile in ("metadata", "artifacts", "composition", "compatibility"):
+            with self.subTest(profile=profile):
+                context = self.qualified_coordinator(self.coordinator(), (profile,))
+                entry = context["profiles"][profile]
+                admitted = ci.admit_coordinator(context)
+                origin = admitted["profiles"][profile]["qualificationOrigin"]
+                entry["qualificationOrigin"]["resourcesSha256"] = "d" * 64
+                self.assertEqual(origin["resourcesSha256"], "b" * 64)
+                for defect in ("inputsSha256", "reportSha256", "kind", "extra"):
+                    changed = copy.deepcopy(context)
+                    candidate = changed["profiles"][profile]["qualificationOrigin"]
+                    candidate[defect] = "f" * 64
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        ci.admit_coordinator(changed)
+
+    def test_public_verify_uses_only_the_separately_trusted_receipt_and_exact_assignment(self):
+        import conformance_cli
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory, coordinator, context = self.aggregate_fixture(Path(temporary).resolve())
+            context = self.qualified_coordinator(context, ("composition",))
+            entry = context["profiles"]["composition"]
+            coordinator.write_bytes(evidence.canonical_bytes(context))
+            report = directory / "composition" / entry["reportPath"]
+            raw = report.read_bytes()
+            output = io.StringIO()
+            with mock.patch("conformance_ci.inspect_receipted_profile_qualification", return_value={
+                    "qualification": True, "baselineQualification": False, "code": "None",
+                    "profileId": "composition", "reportSha256": entry["reportSha256"]}) as reader:
+                with contextlib.redirect_stdout(output):
+                    result = conformance_cli.main([
+                        "--verify", str(report), "--coordinator", str(coordinator)])
+            self.assertEqual(result, 0)
+            reader.assert_called_once_with(
+                directory / "composition", raw, expected_inputs=evidence.admit_entity("RunInputs", entry["inputs"]),
+                expected_report_sha256=entry["reportSha256"],
+                qualification_origin=evidence.admit_qualification_origin(
+                    entry["qualificationOrigin"], profile="composition"))
+            packet = json.loads(output.getvalue())
+            self.assertTrue(packet["qualification"])
+            self.assertFalse(packet["baselineQualification"])
+            self.assertNotIn(str(directory), output.getvalue())
+
+    def test_native_local_assignments_do_not_invent_ci_transfer_status_or_allow_ci_omission(self):
+        ci = importlib.import_module("conformance_ci")
+        context = self.qualified_coordinator(self.coordinator(), ("metadata",))
+        entry = context["profiles"]["metadata"]
+        entry["jobResults"].update(upload="not-required", download="not-required")
+        with self.assertRaises(evidence.ConformanceError):
+            ci.admit_coordinator(context)
+        entry["inputs"]["sourceState"] = "clean-local"
+        entry["qualificationOrigin"]["inputsSha256"] = evidence.digest(entry["inputs"])
+        admitted = ci.admit_coordinator(context)
+        self.assertEqual(admitted["profiles"]["metadata"]["jobResults"]["upload"], "not-required")
+        entry["jobResults"]["job"] = "cancelled"
+        with self.assertRaises(evidence.ConformanceError):
+            ci.admit_coordinator(context)
+
+    def test_receipted_coordinator_requires_the_common_policy_and_clean_qualifying_inputs(self):
+        ci = importlib.import_module("conformance_ci")
+        original = self.qualified_coordinator(self.coordinator(), ("metadata",))
+        for defect in ("policy", "diagnostic", "preparation", "dirty", "missing-receipt", "extra"):
+            context = copy.deepcopy(original)
+            entry = context["profiles"]["metadata"]
+            if defect == "policy":
+                context["configurationPolicy"]["restore"] = "unlocked"
+            elif defect in ("diagnostic", "preparation"):
+                entry["inputs"]["mode"] = defect
+            elif defect == "dirty":
+                entry["inputs"]["sourceState"] = "dirty-local"
+            elif defect == "missing-receipt":
+                del entry["qualificationOrigin"]
+            else:
+                context["qualification"] = True
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                ci.admit_coordinator(context)
+
+    def test_receipted_dispatch_rejects_missing_authority_and_unimplemented_harness(self):
+        context = self.coordinator()
+        for profile in evidence.PROFILES:
+            entry = context["profiles"][profile]
+            with self.subTest(profile=profile), self.assertRaises(evidence.ConformanceError):
+                evidence.inspect_receipted_profile_qualification(
+                    Path("."), evidence.canonical_bytes(self.reports[profile]),
+                    expected_inputs=entry["inputs"], expected_report_sha256=entry["reportSha256"],
+                    qualification_origin=None)
+
+    def test_receipted_aggregate_cannot_promote_four_profiles_without_harness_authority(self):
+        import conformance_cli
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory, coordinator, context = self.aggregate_fixture(Path(temporary).resolve())
+            context = self.qualified_coordinator(
+                context, ("metadata", "artifacts", "composition", "compatibility"))
+            coordinator.write_bytes(evidence.canonical_bytes(context))
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = conformance_cli.main([
+                    "--aggregate", str(directory), "--coordinator", str(coordinator)])
+            packet = json.loads(output.getvalue())
+            self.assertNotEqual(result, 0)
+            self.assertFalse(packet["qualification"])
+            self.assertEqual(packet["code"], "EvidenceIncomplete")
 
     def aggregate_fixture(self, parent):
         context = self.coordinator()
