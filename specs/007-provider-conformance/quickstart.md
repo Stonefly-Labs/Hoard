@@ -1426,6 +1426,9 @@ Native execution is now wired using isolated test builds, the managed discovery
 driver and shared inherited executor, with all runtime bytes frozen up front.
 Original native acceptance is pending; complete formatting and independent settled
 foundation authority are still required.
+The first original staging attempt fails before capture on an unnecessary
+readonly logger overwrite. That repair preserves and package-verifies the image;
+the failed attempt is retained and a fresh original acceptance is still needed.
 
 ## Offline Correspondence Inspection
 

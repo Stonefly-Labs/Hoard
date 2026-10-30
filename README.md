@@ -1225,6 +1225,9 @@ The native compatibility path now builds isolated foundation runtimes, freezes
 all three assemblies and the discovery driver, and executes the complete admitted
 scopes through the shared inherited executor. Original native validation is pending;
 complete formatting and independent settled foundation authority remain unfinished.
+The first original run rejects a readonly architecture logger overwrite during
+staging. Staging now preserves that image and verifies its package bytes instead;
+this repair still needs a fresh original acceptance.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

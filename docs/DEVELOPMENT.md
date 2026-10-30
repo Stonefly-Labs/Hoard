@@ -9614,6 +9614,14 @@ also records actual before/after source hashes required by its original assertio
 passes390 tests in112.756 seconds, one platform prerequisite skip. Original
 native acceptance of this integration is pending; full formatting and independent
 settled foundation authority are still unfinished.
+The first original immutable `7689777` run exits1 after450448.512 ms, before
+runtime capture, at the logger copy in foundation staging (`PrerequisiteMissing`).
+The architecture logger was already frozen readonly; copying it and then
+overwriting it is unnecessary. A regression reproduces the extra copy. Staging
+now copies the logger only when absent and always verifies both staged SDK/logger
+images against their actual packages; no readonly image is made writable.
+Affected composition/inherited/SDK/CI checks pass241 tests in33.456 seconds.
+The failed original is retained; fresh native acceptance remains required.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

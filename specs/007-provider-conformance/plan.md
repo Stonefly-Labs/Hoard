@@ -5583,6 +5583,14 @@ runtime. Focused ingestion/composition/inherited/legacy/SDK/CI validation passes
 checks pass. Original native acceptance is pending. Full foundation formatting
 and independent settled foundation authority remain open; no qualification is
 derived from the new diagnostic execution path.
+Original `7689777` attempt11e73b2180fe4ba2a08a33433ea2a1ac fails before runtime
+capture, exit1/450448.512 ms, with `PrerequisiteMissing` at the logger staging copy.
+The existing readonly architecture logger was copied with its original mode and
+then unnecessarily overwritten. A focused regression fails for that extra copy.
+The repair preserves an existing logger and independently validates its actual
+package hash, copying only an absent image; no proof mode/limit changes.
+Composition/inherited/SDK/CI checks pass241 tests in33.456 seconds. This original
+failure remains failed; fresh original native validation is still required.
 
 ### Compatibility logical case linkage and released presentation
 

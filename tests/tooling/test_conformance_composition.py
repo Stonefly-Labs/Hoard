@@ -34,12 +34,16 @@ class CompositionDiagnosticTests(unittest.TestCase):
 
                 def copy_runtime(original, destination):
                     destination.mkdir()
+                    if original.is_relative_to(candidate):
+                        logger = destination / "Hoard.Conformance.TestLogger.dll"
+                        logger.write_bytes(b"already frozen logger")
+                        logger.chmod(0o400)
 
                 with mock.patch.object(evidence, "snapshot_sources", return_value=(source, captured)), \
                         mock.patch.object(evidence, "verify_snapshot") as verify, \
                         mock.patch.object(sdk, "build") as build, \
                         mock.patch.object(legacy, "_copy_runtime", side_effect=copy_runtime) as copies, \
-                        mock.patch.object(legacy, "stage_sdk"), mock.patch.object(sdk.shutil, "copy2"), \
+                        mock.patch.object(legacy, "stage_sdk"), mock.patch.object(sdk.shutil, "copy2") as logger_copy, \
                         mock.patch.object(sdk, "verify_runtime_packages"):
                     if defect != "none":
                         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
@@ -59,6 +63,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     (candidate / ARCHITECTURE_PROJECT).parent / "bin/Release/net10.0")
                 self.assertTrue(all(not call.args[0].is_relative_to(candidate)
                                     for call in copies.call_args_list[:-1]))
+                self.assertEqual(logger_copy.call_count, 2)
 
     def test_foundation_gate_inventory_preserves_original_surface_and_rejects_resealed_omissions(self):
         import importlib.util

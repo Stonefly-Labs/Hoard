@@ -4103,8 +4103,9 @@ def prepare_foundation_runtime(run, repository, candidate, sources, config, feed
         legacy._copy_runtime((original / relative).parent / "bin/Release/net10.0", runtime)
         legacy.stage_sdk(feed / "Hoard.Testing.Conformance.0.1.0.nupkg",
                          runtime / "Hoard.Testing.Conformance.dll")
-        shutil.copy2(candidate / LOGGER / "bin/Release/net10.0/Hoard.Conformance.TestLogger.dll",
-                     runtime / "Hoard.Conformance.TestLogger.dll")
+        logger = runtime / "Hoard.Conformance.TestLogger.dll"
+        if not logger.exists():
+            shutil.copy2(candidate / LOGGER / "bin/Release/net10.0/Hoard.Conformance.TestLogger.dll", logger)
         verify_runtime_packages(runtime, feed, ("Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger"))
 
 
