@@ -999,8 +999,12 @@ changed quality-proof bytes. Diagnostic mode/full-profile gaps still prevent
 qualification.
 Composition and compatibility commands now also bind the selected SDK VSTest
 closure into their frozen execution inputs, select the exact runtime/runner and
-recheck the closure after execution. Host regressions pass; fresh native
-verification of this increment remains pending.
+recheck the closure after execution. All twelve genuine composition controls
+pass at `d35824c`; compatibility's new native execution remains pending.
+Compatibility now prepares every runtime before capturing one shared immutable
+input set for architecture, version and binary execution. Each scope rechecks
+the entire set, and CI rejects split inputs or changed completion measurements.
+Host regressions pass; this remains diagnostic, not profile qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

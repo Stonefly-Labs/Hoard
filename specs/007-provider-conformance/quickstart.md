@@ -1188,8 +1188,11 @@ in117841.250533 ms, starting with212224888832 free scratch bytes and no extra
 SDK prewarming. All50 finite CP/QC rows replay successfully; complete finite
 case rows do not promote the diagnostic report to qualification.
 The next increment freezes the exact SDK/runtime runner in original command
-inputs and adds the twelfth control. Its fresh native verification remains
-pending; neither earlier packet covers it.
+inputs and adds the twelfth control. Its separate immutable `d35824c`
+execution passes all12 controls, exit0 in130014.212075 ms,
+starting with211429793792 free scratch bytes and no extra SDK prewarming.
+Compatibility now uses one frozen full-runtime input set across all three scopes;
+its new native verification remains pending.
 Ordinary unittest discovery needs no retained packet. Preserve unsuccessful
 roots and do not edit the frozen checkout.
 

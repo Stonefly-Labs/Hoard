@@ -4461,6 +4461,44 @@ contracts are affected; provider APIs, package/module graph, production
 architecture/ADR/diagrams, CustomHost, infrastructure, releases and UI guides
 are unchanged. T071 remains open; implementation continues at70/86.
 
+### Verified exact-runner composition and shared compatibility inputs
+
+The immutable `d35824cf3d39312b68f29faeed7233326cceb0d8`
+Linux/aarch64 composition execution passes all3 live/nine released controls,
+test-only exit0 in130014.2120749988 ms. Initial free scratch211429793792 bytes;
+no extra SDK prewarming. The selected-SDK-closure mutation rejects, restoration
+passes and the entire retained root fingerprint remains unchanged.
+Original closed packet SHA-256:
+`ffcff1a65946f17d239d8769629b7ad953989ab6b457cf29bac269e3c871cbc0`.
+Inherited/tooling remain outside this finite boundary; no qualification inferred.
+
+The next compatibility increment removes separate runtime declarations:
+version consumer/Host builds and locks are prepared before architecture
+preparation and the first execution. One shared read-only RunInputs file/group
+binds all three runtime trees, selected SDK closure, full locks/packages/baselines
+and architecture inputs. Each scope remeasures the entire set before/after
+execution and retains its actual completion inputs. A later scope cannot borrow
+a successful earlier scope after replacing either scope's images/locks or
+architecture material. This remains diagnostic; original compatibility report
+authority, complete catalog derivation and generic qualification remain unbuilt.
+
+The new red test first exposes missing common capture; its first modeled repair
+run exposes the fixture's old metadata-only profile budget, now explicitly
+compatibility-scoped. The CI challenge then reproduces acceptance of split
+input hashes and rehashed changed completion inputs. Updated workflow admission
+checks the common RunInputs and all three actual completion documents.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes432 tests in112.398 seconds, four native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Fresh native compatibility execution remains required.
+README, DEVELOPMENT, quickstart and evidence/matrix contracts are affected;
+provider APIs, package/module graph, production architecture/ADR/diagrams,
+CustomHost, infrastructure, releases and UI guides are unchanged.
+T071 remains open; implementation continues at70/86.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

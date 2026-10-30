@@ -95,18 +95,28 @@ jobs:
               owner = evidence.load_json(read_bounded(root / "ownership.json", 65536))
               preflight = evidence.load_json(read_bounded(root / "proofs/preflight.json", 65536))
               architecture = summary["architecturePreparation"]
+              frozen = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+                  root / "proofs/compatibility-runtime-inputs.json", 16 * 1024**2)))
+              if (frozen["profileId"] != "compatibility" or frozen["mode"] != "diagnostic"
+                      or frozen["runId"] != owner["runId"]):
+                  raise evidence.ConformanceError("InputChanged")
               for key, scope, count in (("architectureRuntime", "architecture", 88),
                                         ("versionRuntime", "version", 114),
                                         ("binaryRuntime", "binary", 7)):
                   observed = summary[key]
                   retained = evidence.load_json(read_bounded(
                       root / f"proofs/compatibility-{scope}-runtime-summary.json", 65536))
+                  completion = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+                      root / f"proofs/compatibility-{scope}-completion-inputs.json", 16 * 1024**2)))
                   if (observed != retained or observed["qualification"] is not False
                           or observed["profileComplete"] is not False
                           or observed["scope"] != f"{scope}-runtime-diagnostic"
+                          or observed["inputsSha256"] != evidence.digest(frozen)
+                          or observed["postInputsSha256"] != evidence.digest(completion)
                           or observed["passedParameters"] != count
                           or scope == "version" and observed["admittedObservations"] != 170):
                       raise evidence.ConformanceError("ProofMismatch")
+                  evidence.verify_input_recomputation(frozen, completion)
                   for field in ("inputsSha256", "postInputsSha256", "discoverySha256",
                                 "completionSha256", "runtimeProofsSha256", "nativeParentSha256"):
                       evidence.sha256(observed[field])

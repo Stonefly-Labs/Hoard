@@ -4055,9 +4055,37 @@ def compatibility_runtime_paths(run, runtime):
     return paths
 
 
-def execute_version_runtime(run, repository, candidate, sources, config, feed, seal_sha, *,
-                            ci_revision=None, msbuild=None):
-    from conformance_case_catalog import version_runtime_tests
+def capture_compatibility_runtime_inputs(run, repository, candidate, config, feed, prepared, seal_sha, *,
+                                         invocation_group_id, observed_environment, ci_revision=None):
+    from conformance_inherited import admit_architecture_preparation
+
+    _, selected = admit_architecture_preparation(run.root, prepared)
+    paths = ["proofs/sdk-vstest-inputs.json"]
+    for folder, name in (
+            (ARCHITECTURE_TESTS + "/bin/Release/net10.0", "Hoard.Architecture.Tests.dll"),
+            (VERSION_TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0", "Hoard.Composition.Tests.dll"),
+            (TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll")):
+        runtime = candidate / folder
+        no_symlinks(runtime / name)
+        if not (runtime / name).is_file():
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        paths.extend(compatibility_runtime_paths(run, runtime))
+    base = evidence.capture_profile_inputs(
+        run, repository, candidate, profile_id="compatibility", mode="diagnostic",
+        invocation_group_id=invocation_group_id,
+        package_versions=[{"packageId": name, "version": "0.1.0"}
+                          for name in sorted({*INPUT_PACKAGES, *VERSION_PACKAGES, "Hoard.Conformance.TestLogger"})],
+        feed=feed.relative_to(run.root).as_posix(), configuration=config.relative_to(run.root).as_posix(),
+        lock_paths=sorted(path.relative_to(run.root).as_posix() for path in candidate.rglob("packages.lock.json")),
+        runtime_paths=sorted(set(paths)), binding_sources=[], observed_environment=observed_environment,
+        budgets=BUDGETS, invocation=["component", "compatibility", "runtime"],
+        baseline_sha256=seal_sha, ci_revision=ci_revision)
+    return evidence.admit_entity("RunInputs", {
+        **base, "configurationSha256": evidence.digest({
+            "configuration": base["configurationSha256"], "architectureInputs": selected})})
+
+
+def prepare_version_runtime(run, candidate, config, feed, *, msbuild=None):
     from conformance_prepare import Project, build_project
 
     record = build_project(
@@ -4074,11 +4102,21 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, s
     verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
     _original_wrapper_runtime(candidate, feed, VERSION_TESTS, PACKAGE_TEST_OUTPUT, VERSION_PACKAGES)
     runtime = candidate / VERSION_TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
-    assembly = runtime / "Hoard.Composition.Tests.dll"
+    return runtime / "Hoard.Composition.Tests.dll", lock, receipt, record
+
+
+def execute_version_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha, *,
+                            frozen_inputs, version_runtime, ci_revision=None):
+    from conformance_case_catalog import version_runtime_tests
+
+    assembly, lock, receipt, record = version_runtime
+    verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
+    if record is not None:
+        verify_project_lock(record, candidate, feed)
     summary = _execute_compatibility_runtime_scope(
         run, repository, candidate, sources, config, feed, seal_sha, assembly,
-        scope="version", tests=version_runtime_tests(), packages=(*VERSION_PACKAGES, "Hoard.Conformance.TestLogger"),
-        extra_locks=(lock.relative_to(run.root).as_posix(),), ci_revision=ci_revision)
+        scope="version", tests=version_runtime_tests(), prepared=prepared, frozen_inputs=frozen_inputs,
+        ci_revision=ci_revision)
     verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
     if record is not None:
         verify_project_lock(record, candidate, feed)
@@ -4086,7 +4124,8 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, s
     return summary
 
 
-def execute_binary_runtime(run, repository, candidate, sources, config, feed, seal_sha, *, ci_revision=None):
+def execute_binary_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha, *,
+                           frozen_inputs, ci_revision=None):
     from conformance_case_catalog import binary_runtime_tests
 
     runtime = candidate / TESTS / "bin/Release/net10.0"
@@ -4094,30 +4133,27 @@ def execute_binary_runtime(run, repository, candidate, sources, config, feed, se
     verify_runtime_packages(runtime, feed, packages)
     summary = _execute_compatibility_runtime_scope(
         run, repository, candidate, sources, config, feed, seal_sha, runtime / "Hoard.Conformance.Tests.dll",
-        scope="binary", tests=binary_runtime_tests(), packages=packages, ci_revision=ci_revision)
+        scope="binary", tests=binary_runtime_tests(), prepared=prepared, frozen_inputs=frozen_inputs,
+        ci_revision=ci_revision)
     write_new(run.root / "proofs/compatibility-binary-runtime-summary.json", evidence.canonical_bytes(summary))
     return summary
 
 
 def _execute_compatibility_runtime_scope(run, repository, candidate, sources, config, feed, seal_sha, assembly,
-                                       *, scope, tests, packages, extra_locks=(), ci_revision=None):
+                                       *, scope, tests, prepared, frozen_inputs, ci_revision=None):
     paths = [*compatibility_runtime_paths(run, assembly.parent), "proofs/sdk-vstest-inputs.json"]
     owner = evidence.load_json(read_bounded(run.root / "runtime-owner.json", 64 * 1024))
     group, attempt = evidence._uuid(owner["invocationGroupId"]), str(uuid.uuid4())
-    arguments = dict(
-        profile_id="compatibility", mode="diagnostic", invocation_group_id=group,
-        package_versions=[{"packageId": name, "version": "0.1.0"}
-                          for name in packages],
-        feed="feed/candidate", configuration=config.relative_to(run.root).as_posix(),
-        lock_paths=sorted({*extra_locks,
-                           *(path.relative_to(run.root).as_posix() for path in candidate.rglob("packages.lock.json"))}),
-        runtime_paths=paths, binding_sources=[], budgets=BUDGETS,
-        invocation=["component", "compatibility", f"{scope}-runtime"],
-        baseline_sha256=seal_sha, ci_revision=ci_revision)
-    inputs = evidence.capture_profile_inputs(
-        run, repository, candidate, observed_environment=environment(run, scope="compatibility-" + scope), **arguments)
-    inputs_path = f"proofs/compatibility-{scope}-runtime-inputs.json"
-    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+    inputs = evidence.admit_entity("RunInputs", frozen_inputs)
+    inputs_path = "proofs/compatibility-runtime-inputs.json"
+    if (owner["runId"] != run.run_id or group != inputs["invocationGroupId"]
+            or read_bounded(run.root / inputs_path, 16 * 1024**2) != evidence.canonical_bytes(inputs)):
+        raise evidence.ConformanceError("InputChanged")
+    current = capture_compatibility_runtime_inputs(
+        run, repository, candidate, config, feed, prepared, seal_sha,
+        invocation_group_id=group, observed_environment=environment(run, scope="compatibility-" + scope),
+        ci_revision=ci_revision)
+    evidence.verify_input_recomputation(inputs, current)
     assembly_path = assembly.relative_to(run.root).as_posix()
     manifest = {
         "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group, "attemptId": attempt,
@@ -4139,14 +4175,18 @@ def _execute_compatibility_runtime_scope(run, repository, candidate, sources, co
     print(json.dumps({"qualification": False, "phase": f"{scope}-runtime"}), flush=True)
     result, observed, transport, discovery_sha = _execute_runtime_transport(
         run, inputs, assembly, manifest, {identity: ("none", f"{scope}-runtime") for identity in tests},
-        {"category_scope": ("compatibility", scope)})
+        {"category_scope": ("compatibility", scope),
+         **({"architecture_preparation": prepared} if scope == "architecture" else {})})
     validate_observation(observed, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
-    post_inputs = evidence.capture_profile_inputs(
-        run, repository, candidate, observed_environment=environment(
-            run, phase="completion", scope="compatibility-" + scope), **arguments)
+    post_inputs = capture_compatibility_runtime_inputs(
+        run, repository, candidate, config, feed, prepared, seal_sha,
+        invocation_group_id=group, observed_environment=environment(
+            run, phase="completion", scope="compatibility-" + scope), ci_revision=ci_revision)
     evidence.verify_input_recomputation(inputs, post_inputs)
     if inputs["sourceManifest"] != sources:
         raise evidence.ConformanceError("InputChanged")
+    write_new(run.root / f"proofs/compatibility-{scope}-completion-inputs.json",
+              evidence.canonical_bytes(post_inputs))
     return {
         "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
         "passedParameters": len(tests),
@@ -4161,81 +4201,21 @@ def _execute_compatibility_runtime_scope(run, repository, candidate, sources, co
 
 
 def execute_architecture_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha,
-                                 *, ci_revision=None):
+                                 *, frozen_inputs, ci_revision=None):
     from conformance_case_catalog import architecture_runtime_tests
     from conformance_inherited import admit_architecture_preparation
 
-    prepared, selected = admit_architecture_preparation(run.root, prepared)
+    prepared, _ = admit_architecture_preparation(run.root, prepared)
     print(json.dumps({"qualification": False, "phase": "architecture-runtime-inputs"}), flush=True)
     runtime = candidate / ARCHITECTURE_TESTS / "bin/Release/net10.0"
     verify_runtime_packages(runtime, feed,
                             ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions"))
     assembly = runtime / "Hoard.Architecture.Tests.dll"
-    paths = [*compatibility_runtime_paths(run, runtime), "proofs/sdk-vstest-inputs.json"]
-    group, attempt = str(uuid.uuid4()), str(uuid.uuid4())
-    base = evidence.capture_profile_inputs(
-        run, repository, candidate, profile_id="compatibility", mode="diagnostic", invocation_group_id=group,
-        package_versions=[{"packageId": name, "version": "0.1.0"} for name in INPUT_PACKAGES],
-        feed="feed/candidate", configuration=config.relative_to(run.root).as_posix(),
-        lock_paths=[path.relative_to(run.root).as_posix() for path in candidate.rglob("packages.lock.json")],
-        runtime_paths=paths, binding_sources=[], observed_environment=environment(run), budgets=BUDGETS,
-        invocation=["component", "compatibility", "architecture-runtime"],
-        baseline_sha256=seal_sha, ci_revision=ci_revision)
-    inputs = evidence.admit_entity("RunInputs", {
-        **base, "configurationSha256": evidence.digest({
-            "configuration": base["configurationSha256"], "architectureInputs": selected})})
-    inputs_path = "proofs/compatibility-architecture-runtime-inputs.json"
-    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
-    owner = {
-        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group,
-        "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}
-    write_new(run.root / "runtime-owner.json", evidence.canonical_bytes(owner))
     tests = architecture_runtime_tests()
-    assembly_path = assembly.relative_to(run.root).as_posix()
-    images = [{
-        "id": "test-assembly" if path == assembly_path else f"architecture-image-{index}",
-        "path": path, "sha256": inputs["runtimeAssemblies"][path],
-    } for index, path in enumerate(paths)]
-    manifest = {
-        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group, "attemptId": attempt,
-        "attemptSequence": 1, "purpose": "execution", "inputSha256": evidence.digest(inputs),
-        "runInputsPath": inputs_path, "assemblies": images,
-        "packages": [{"id": package["packageId"],
-                      "path": f'feed/candidate/{package["packageId"]}.0.1.0.nupkg',
-                      "sha256": package["sha256"]} for package in inputs["packages"]],
-        "expected": [{
-            "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
-            "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
-            "bindingId": binding, "matrixId": "architecture-runtime", "caseId": case, "assertionSymbol": None,
-        } for identity, (binding, case) in tests.items()],
-    }
-    print(json.dumps({"qualification": False, "phase": "architecture-runtime"}), flush=True)
-    result, observed, transport, discovery_sha = _execute_runtime_transport(
-        run, inputs, assembly, manifest, {identity: ("none", "architecture-runtime") for identity in tests},
-        {"category_scope": ("compatibility", "architecture"), "architecture_preparation": prepared})
-    validate_observation(observed, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
-    post_base = evidence.capture_profile_inputs(
-        run, repository, candidate, profile_id="compatibility", mode="diagnostic", invocation_group_id=group,
-        package_versions=[{"packageId": name, "version": "0.1.0"} for name in INPUT_PACKAGES],
-        feed="feed/candidate", configuration=config.relative_to(run.root).as_posix(),
-        lock_paths=list(base["locks"]), runtime_paths=paths, binding_sources=[],
-        observed_environment=environment(run, phase="completion"), budgets=BUDGETS,
-        invocation=list(base["invocation"]), baseline_sha256=seal_sha, ci_revision=ci_revision)
-    _, post_selected = admit_architecture_preparation(run.root, prepared)
-    post_inputs = evidence.admit_entity("RunInputs", {
-        **post_base, "configurationSha256": evidence.digest({
-            "configuration": post_base["configurationSha256"], "architectureInputs": post_selected})})
-    evidence.verify_input_recomputation(inputs, post_inputs)
-    if inputs["sourceManifest"] != sources:
-        raise evidence.ConformanceError("InputChanged")
-    summary = {
-        "qualification": False, "profileComplete": False, "scope": "architecture-runtime-diagnostic",
-        "passedParameters": len(tests), "inputsSha256": evidence.digest(inputs),
-        "postInputsSha256": evidence.digest(post_inputs), "discoverySha256": discovery_sha,
-        "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
-        "runtimeProofsSha256": evidence.digest(dict(observed["proofs"])),
-        "nativeParentSha256": result.execution_record_sha256,
-    }
+    summary = _execute_compatibility_runtime_scope(
+        run, repository, candidate, sources, config, feed, seal_sha, assembly,
+        scope="architecture", tests=tests, prepared=prepared, frozen_inputs=frozen_inputs,
+        ci_revision=ci_revision)
     write_new(run.root / "proofs/compatibility-architecture-runtime-summary.json", evidence.canonical_bytes(summary))
     return summary
 
@@ -4443,6 +4423,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             if compatibility_only:
                 _, runner_material = runtime_runner_material(build_environment)
                 write_new(run.root / "proofs/sdk-vstest-inputs.json", runner_material)
+                version_runtime = prepare_version_runtime(run, candidate, config, feed, msbuild=msbuild)
                 from conformance_inherited import (
                     admit_architecture_preparation, controller_phase, verify_controller_invocations)
                 prepared, parent_sha, invocations = controller_phase(
@@ -4451,14 +4432,25 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 verify_controller_invocations(run.root, invocations, "architecture", run.run_id, run.root_id)
                 compatibility_summary["architecturePreparation"] = {
                     **prepared, "parentSha256": parent_sha, "nativeInvocations": invocations}
+                group = str(uuid.uuid4())
+                frozen_inputs = capture_compatibility_runtime_inputs(
+                    run, repository, candidate, config, feed, prepared, seal_sha,
+                    invocation_group_id=group,
+                    observed_environment=environment(run, scope="compatibility-runtime"), ci_revision=ci_revision)
+                write_new(run.root / "proofs/compatibility-runtime-inputs.json",
+                          evidence.canonical_bytes(frozen_inputs))
+                write_new(run.root / "runtime-owner.json", evidence.canonical_bytes({
+                    "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group,
+                    "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}))
                 compatibility_summary["architectureRuntime"] = execute_architecture_runtime(
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
-                    ci_revision=ci_revision)
+                    frozen_inputs=frozen_inputs, ci_revision=ci_revision)
                 compatibility_summary["versionRuntime"] = execute_version_runtime(
-                    run, repository, candidate, sources, config, feed, seal_sha,
-                    ci_revision=ci_revision, msbuild=msbuild)
+                    run, repository, candidate, sources, config, feed, prepared, seal_sha,
+                    frozen_inputs=frozen_inputs, version_runtime=version_runtime, ci_revision=ci_revision)
                 compatibility_summary["binaryRuntime"] = execute_binary_runtime(
-                    run, repository, candidate, sources, config, feed, seal_sha, ci_revision=ci_revision)
+                    run, repository, candidate, sources, config, feed, prepared, seal_sha,
+                    frozen_inputs=frozen_inputs, ci_revision=ci_revision)
                 admit_architecture_preparation(run.root, prepared)
                 if (dict(evidence.source_manifest(repository)) != dict(sources)
                         or evidence.source_identity(repository, ci_revision=ci_revision) != identity):

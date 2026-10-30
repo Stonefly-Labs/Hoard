@@ -8767,8 +8767,23 @@ than accepting default `dotnet vstest` resolution. A changed compatibility
 runner after execution rejects with InputChanged; the released composition
 factory also challenges changed SDK-closure bytes (now three live/nine released
 controls). Host validation passes273 tests with four native-only skips in79.519
-seconds; catalog/SDK and diff checks pass. Native verification of this increment
-remains pending; earlier packets cannot establish its execution.
+seconds; catalog/SDK and diff checks pass. Fresh immutable
+`d35824cf3d39312b68f29faeed7233326cceb0d8` Linux/aarch64 execution passes all12
+composition controls, test-only exit0 in130014.212075 ms, starting with211429793792
+free scratch bytes and no extra SDK prewarming. The unchanged original packet
+SHA-256 is `ffcff1a65946f17d239d8769629b7ad953989ab6b457cf29bac269e3c871cbc0`.
+Inherited/tooling/full-profile acceptance is still excluded.
+
+Compatibility additionally prepares version runtime/locks before architecture
+preparation and any scoped execution. All three scopes share one
+`proofs/compatibility-runtime-inputs.json`, invocation group, selected SDK closure,
+complete runtime/lock/package/baseline set and architecture-input fingerprint.
+Every scope checks the entire set before and after executing, not a fresh
+scope-specific declaration; actual completion inputs are retained separately.
+CI rejects split input hashes and rehashed changed completion inputs.
+Host validation passes432 tests with four native-only skips in112.398 seconds;
+catalog/SDK and diff checks pass. Fresh native compatibility execution remains
+pending; neither modeled tests nor earlier separate-scope diagnostics qualify it.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

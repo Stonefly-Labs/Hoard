@@ -17,6 +17,106 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_compatibility_freezes_all_three_runtime_scopes_and_rejects_late_input_substitution(self):
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            candidate = root / "stores/candidate"
+            runtime_paths = []
+            for folder, name in (
+                    (sdk.ARCHITECTURE_TESTS + "/bin/Release/net10.0", "Hoard.Architecture.Tests.dll"),
+                    (sdk.VERSION_TESTS + "/" + sdk.PACKAGE_TEST_OUTPUT + "/Release/net10.0",
+                     "Hoard.Composition.Tests.dll"),
+                    (sdk.TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll")):
+                path = candidate / folder / name
+                path.parent.mkdir(parents=True)
+                path.write_bytes(name.encode("ascii"))
+                runtime_paths.append(path.relative_to(root).as_posix())
+            (root / "proofs").mkdir()
+            (root / "proofs/sdk-vstest-inputs.json").write_bytes(b"selected-sdk")
+            lock = candidate / sdk.VERSION_TESTS / "packages.lock.json"
+            lock.write_bytes(b"prepared-version-lock")
+            base = ConformanceAdmissionTests().inputs()
+            base.update(profileId="compatibility", bindings=[], invocation=["profile", "compatibility"])
+            base["budgets"]["profileSeconds"] = 3600
+            run = SimpleNamespace(root=root, run_id=base["runId"])
+            selected = {"proofs/architecture-map.json": "a" * 64}
+
+            def capture(*args, **kwargs):
+                return {
+                    **base, "invocationGroupId": kwargs["invocation_group_id"],
+                    "runtimeAssemblies": dict(evidence.input_manifest(root, kwargs["runtime_paths"])),
+                    "locks": dict(evidence.input_manifest(root, kwargs["lock_paths"])),
+                    "environment": kwargs["observed_environment"],
+                    "environmentSha256": evidence.digest(kwargs["observed_environment"])}
+
+            with mock.patch.object(inherited, "admit_architecture_preparation", return_value=({}, selected)), \
+                    mock.patch.object(evidence, "capture_profile_inputs", side_effect=capture) as measured:
+                options = dict(
+                    invocation_group_id=base["invocationGroupId"], observed_environment=base["environment"])
+                frozen = sdk.capture_compatibility_runtime_inputs(
+                    run, ROOT, candidate, root / "config", root / "feed", {}, "b" * 64, **options)
+                self.assertEqual(set(frozen["runtimeAssemblies"]),
+                                 {*runtime_paths, "proofs/sdk-vstest-inputs.json"})
+                self.assertEqual(frozen["locks"][lock.relative_to(root).as_posix()],
+                                 evidence.file_sha256(lock))
+                self.assertEqual({row["packageId"] for row in measured.call_args.kwargs["package_versions"]},
+                                 {*sdk.INPUT_PACKAGES, *sdk.VERSION_PACKAGES, "Hoard.Conformance.TestLogger"})
+                original = evidence.canonical_bytes(frozen)
+                sdk.write_new(root / "proofs/compatibility-runtime-inputs.json", original)
+                sdk.write_new(root / "runtime-owner.json", evidence.canonical_bytes({
+                    "runId": base["runId"], "invocationGroupId": base["invocationGroupId"]}))
+                for index, scope in enumerate(("architecture", "version", "binary")):
+                    assembly = root / runtime_paths[index]
+                    target = root / runtime_paths[(index + 1) % 3]
+                    raw = target.read_bytes()
+                    try:
+                        target.chmod(0o600)
+                        target.write_bytes(raw + b"changed-in-another-scope")
+                        with self.subTest(scope=scope), \
+                                mock.patch.object(sdk, "environment", return_value=base["environment"]), \
+                                mock.patch.object(sdk, "_execute_runtime_transport") as launch:
+                            with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                                sdk._execute_compatibility_runtime_scope(
+                                    run, ROOT, candidate, base["sourceManifest"], root / "config",
+                                    root / "feed", "b" * 64, assembly, scope=scope, tests={},
+                                    prepared={}, frozen_inputs=frozen)
+                            launch.assert_not_called()
+                    finally:
+                        target.chmod(0o600)
+                        target.write_bytes(raw)
+                for path in (*runtime_paths, lock.relative_to(root).as_posix(), "proofs/sdk-vstest-inputs.json"):
+                    target = root / path
+                    raw = target.read_bytes()
+                    try:
+                        target.chmod(0o600)
+                        target.write_bytes(raw + b"changed-after-first-scope")
+                        changed = sdk.capture_compatibility_runtime_inputs(
+                            run, ROOT, candidate, root / "config", root / "feed", {}, "b" * 64, **options)
+                        with self.subTest(path=path), self.assertRaisesRegex(
+                                evidence.ConformanceError, "^InputChanged$"):
+                            evidence.verify_input_recomputation(frozen, changed)
+                    finally:
+                        target.chmod(0o600)
+                        target.write_bytes(raw)
+                selected["proofs/architecture-map.json"] = "c" * 64
+                changed = sdk.capture_compatibility_runtime_inputs(
+                    run, ROOT, candidate, root / "config", root / "feed", {}, "b" * 64, **options)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                    evidence.verify_input_recomputation(frozen, changed)
+                self.assertEqual(evidence.canonical_bytes(frozen), original)
+                missing = root / runtime_paths[1]
+                missing.unlink()
+                measured.reset_mock()
+                with self.assertRaisesRegex(evidence.ConformanceError, "^PrerequisiteMissing$"):
+                    sdk.capture_compatibility_runtime_inputs(
+                        run, ROOT, candidate, root / "config", root / "feed", {}, "b" * 64, **options)
+                measured.assert_not_called()
+
     def test_native_report_inspection_rejects_modeled_ownership_before_reading_proofs(self):
         import conformance_composition_checks as composition
         import conformance_evidence as evidence
@@ -202,7 +302,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                                       side_effect=evidence.ConformanceError("InputChanged")) as verify:
                 with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
                     sdk.execute_architecture_runtime(
-                        SimpleNamespace(root=root), ROOT, candidate, {}, root / "NuGet.Config", feed, {}, "a" * 64)
+                        SimpleNamespace(root=root), ROOT, candidate, {}, root / "NuGet.Config", feed, {}, "a" * 64,
+                        frozen_inputs={})
             verify.assert_called_once_with(
                 runtime, feed, ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions"))
             self.assertEqual(installed.read_bytes(), b"already-prepared-image")
@@ -483,13 +584,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import hashlib
         import conformance_evidence as evidence
         import conformance_inherited as inherited
+        from test_conformance_evidence import ConformanceAdmissionTests
 
         workflow = (ROOT / ".github/workflows/conformance.yml").read_text()
         script = workflow.split('--profile compatibility --evidence "$private_parent/run"', 1)[1].split(
             "<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
         code = compile(textwrap.dedent(script), "<architecture-workflow>", "exec")
         for defect in ("none", "live", "profile", "path", "manifest", "inputs", "qualification",
-                       "missing-version", "missing-axis", "missing-observation", "runtime-receipt", "missing-binary"):
+                       "missing-version", "missing-axis", "missing-observation", "runtime-receipt", "missing-binary",
+                       "split-inputs", "changed-completion"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -504,6 +607,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 summary = {
                     "qualification": defect == "qualification", "profileComplete": False,
                     "processResourcesReleased": True, "architecturePreparation": architecture}
+                frozen = ConformanceAdmissionTests().inputs()
+                frozen.update(profileId="compatibility", bindings=[])
+                frozen["budgets"]["profileSeconds"] = 3600
+                (root / "proofs/compatibility-runtime-inputs.json").write_bytes(evidence.canonical_bytes(frozen))
                 for key, scope, count in (("architectureRuntime", "architecture", 88),
                                           ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 7)):
                     observed = {
@@ -511,6 +618,15 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         "passedParameters": count, **{field: "d" * 64 for field in (
                             "inputsSha256", "postInputsSha256", "discoverySha256", "completionSha256",
                             "runtimeProofsSha256", "nativeParentSha256")}}
+                    observed.update(inputsSha256=evidence.digest(frozen), postInputsSha256=evidence.digest(frozen))
+                    post = evidence.load_json(evidence.canonical_bytes(frozen))
+                    if scope == "version" and defect == "split-inputs":
+                        observed["inputsSha256"] = "e" * 64
+                    if scope == "version" and defect == "changed-completion":
+                        post["runtimeAssemblies"]["consumer/Hoard.Tests.dll"] = "f" * 64
+                        observed["postInputsSha256"] = evidence.digest(post)
+                    (root / f"proofs/compatibility-{scope}-completion-inputs.json").write_bytes(
+                        evidence.canonical_bytes(post))
                     if scope == "version":
                         observed["admittedObservations"] = 169 if defect == "missing-observation" else 170
                         if defect == "missing-axis":
@@ -524,7 +640,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     summary["versionRuntime"]["nativeParentSha256"] = "e" * 64
                 if defect == "missing-binary":
                     del summary["binaryRuntime"]
-                owner = {"state": "Active" if defect == "live" else "Released", "runId": "modeled", "rootId": "modeled"}
+                owner = {"state": "Active" if defect == "live" else "Released",
+                         "runId": frozen["runId"], "rootId": "modeled"}
                 preflight = {"profileId": "baseline" if defect == "profile" else "compatibility"}
                 for path, data in (
                         ("proofs/compatibility-diagnostic-summary.json", evidence.canonical_bytes(summary)),

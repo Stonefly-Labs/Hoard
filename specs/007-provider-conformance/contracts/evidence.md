@@ -1103,7 +1103,14 @@ VSTest closure into RunInputs and the original command's input hashes. Commands
 use the exact captured SDK runner and runtime version, rechecked after execution;
 independent composition replay reconstructs the same prefix and bound inputs.
 Changed runner/closure material cannot borrow an otherwise unchanged successful
-command. Host controls pass; fresh native verification remains pending.
+command. All12 genuine composition controls pass at immutable `d35824c`;
+compatibility's new native execution remains pending.
+All compatibility runtime preparation now precedes one shared immutable
+RunInputs capture. Architecture/version/binary scopes recheck the complete
+runtime/lock/package/baseline set and architecture fingerprint before/after each
+execution. Separate actual completion measurements must recompute to the
+original inputs; CI rejects split declarations and changed completion inputs.
+This does not supply original compatibility report authority or qualification.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
