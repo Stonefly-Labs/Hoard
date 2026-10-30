@@ -9358,6 +9358,42 @@ passes237 tests in33.144 seconds. Original retained observation inspection,
 executor-held authority and physical assertions remain unfinished; fresh native
 replay is required and binary/predecessor/QC-25 stay Incomplete.
 
+Immutable `4249723` attempt5f9dda3518064181a149a55ebcc816a3 passes all11 live/
+13 released controls, exit0,502270.05426500546ms, initial scratch193654013952
+bytes, no extra SDK prewarming. A separate readonly container uses the subsequent
+strict retained inspector against those unchanged original bytes: ten actual
+observer-compiler/consumer records, nine scenarios and40 loaded-image
+observations reconstruct, with exact source/source-frame/summary correspondence.
+Packet/retained-packet/observer-frame SHA256:
+`3cceb39b2e9b9060ec7fa3facd11f460d257f1199d0ffa01086f2c55a4e6df81` /
+`889683fe8c71709c323f852eea6c2bf3514db7d793c0ab9c2760f4c863db35bc` /
+`24439e65efa87bd373eebee1cdc18ff018340d321b1fa6b183492ce6ef574239`.
+This correspondence is not new native authority.
+
+The subsequent inspector independently reconstructs exact observer compiler
+commands/inputs/outputs, nine fixed old runtime inventories, four candidate package
+images, original request/staging/observation bytes, loaded identities and original
+consumer command owners/groups/timing. Active inspection checks actual stores;
+released inspection needs no deleted stores/feed. Original capture requires the
+same Active owner and every executor-held compiler/consumer record, freezes the
+result before source-break execution and preserves it through released-token
+inspection. Resealed source/image/parent/failure/owner/time and omitted/reordered
+scenarios reject. A modeled fixture first fails for the absent inspector, then
+passes active/released and deleted-store replay; explicit native factories
+challenge the original live capture and released token.414 baseline/admission/
+ingestion/composition/SDK/CI/CLI tests pass in138.724 seconds. New13 live/14 released
+controls remain unverified; physical retained assertions and all three remaining
+logical cases still require completion.
+
+Original CI SDK123962991499 now succeeds, with closed result None; metadata and
+artifact jobs also succeeded with unchanged closure/bounds. Overallc25 CI still
+fails its preserved source/ownership outcomes. A directly dependent CI gate also
+retained the stale eight-witness count; it now derives all three scope counts
+from the independent catalog. Its existing embedded-workflow regression now
+requires the ninth witness and rejects a missing binary parameter. The old
+workflow fails two cases; the repaired embedded workflow test passes. No full
+five-profile or600-second tooling acceptance is inferred.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

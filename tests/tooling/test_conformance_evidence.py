@@ -9019,6 +9019,189 @@ class ConformanceBaselineTests(unittest.TestCase):
             run.transition("Settling")
             run.release()
 
+    def test_retained_replay_binds_original_observer_and_all_nine_consumers_before_and_after_release(self):
+        inspector = self.baselines.inspect_retained_consumers
+        self.historical_binary_fixture()
+
+        def write(relative, data):
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if path.exists():
+                path.chmod(0o600)
+            path.write_bytes(data)
+            path.chmod(0o400)
+            return hashlib.sha256(data).hexdigest()
+
+        platform = {}
+        packages = {}
+        for name in ("Abstractions", "Core", "Hosting", "Application"):
+            filename = "Hoard." + name + ".dll"
+            raw = ("modeled candidate image " + name).encode()
+            platform[filename] = hashlib.sha256(raw).hexdigest()
+            archive = io.BytesIO()
+            with zipfile.ZipFile(archive, "w") as target:
+                target.writestr("lib/net10.0/" + filename, raw)
+            package = "Hoard." + name + ".0.1.0.nupkg"
+            packages[package] = write("feed/candidate/" + package, archive.getvalue())
+        for scenario in self.baselines.RETAINED_SCENARIOS:
+            baseline_id, prefix, assembly, _ = self.baselines.retained_recipe(scenario)
+            entry = next(row for row in self.manifest["entries"] if row["id"] == baseline_id)
+            names = (assembly, assembly.removesuffix(".dll") + ".pdb",
+                     assembly.removesuffix(".dll") + ".deps.json",
+                     assembly.removesuffix(".dll") + ".runtimeconfig.json",
+                     "Hoard.Abstractions.dll", "Hoard.Hosting.dll")
+            if baseline_id == "f06":
+                family = "Metadata" if scenario in ("memory", "sqlite") else "Artifacts"
+                provider = {"memory": "Memory", "sqlite": "Sqlite",
+                            "local": "Local", "object": "ObjectSemantics"}[scenario]
+                names += ("Hoard.Fixtures." + family + "." + provider + ".dll",)
+            for name in names:
+                relative = prefix + name
+                entry["binaries"][relative] = write(
+                    "stores/" + baseline_id + "/" + relative, ("modeled historical " + name).encode())
+        self.manifest["schemaVersion"] = 3
+        self.seal.chmod(0o600)
+        seal_sha = write("proofs/baselines.json", evidence.canonical_bytes(self.manifest))
+        source_root = "stores/snapshot/"
+        project = source_root + self.baselines.OBSERVER_PROJECT
+        lock = str(Path(project).parent / "packages.lock.json")
+        sources = {
+            self.baselines.OBSERVER_PROJECT: write(project, b"<Project />"),
+            str(Path(self.baselines.OBSERVER_PROJECT).parent / "packages.lock.json"): write(lock, b"{}"),
+        }
+        config = "stores/candidate.NuGet.Config"
+        config_sha = write(config, evidence.synthetic_nuget_configuration(self.root / "feed/candidate"))
+        observer_frame = {
+            "schemaVersion": 1, "qualification": False, "mode": "retained-observer-inputs",
+            "baselineSealSha256": seal_sha, "candidateSourceSha256": evidence.digest(sources),
+            "sources": sources, "configurationSha256": config_sha}
+        frame_sha = write(self.baselines.RETAINED_OBSERVER_INPUTS, evidence.canonical_bytes(observer_frame))
+        source_frame = {
+            "schemaVersion": 1, "qualification": False, "baselineSealSha256": seal_sha,
+            "recipeSha256": evidence.digest(self.baselines.source_recipes(ROOT)),
+            "candidatePackages": packages, "configurationSha256": config_sha,
+            "sources": {"historical-f06": self.manifest["entries"][-1]["sources"],
+                        "candidate-source-manifest": sources}}
+        write(self.baselines.SOURCE_COMPATIBILITY_INPUTS, evidence.canonical_bytes(source_frame))
+        observer = self.baselines.RETAINED_OBSERVER_IMAGES + "/" + self.baselines.RETAINED_OBSERVER_ASSEMBLY
+        images = {suffix: write(observer + suffix, ("modeled observer " + suffix).encode())
+                  for suffix in (".dll", ".pdb")}
+        prefix = ("dotnet", "exec", "MSBuild.dll")
+        run_id = str(uuid.uuid4())
+        records = {}
+
+        def command(sequence, arguments, cwd, inputs, outputs):
+            record = {
+                "schemaVersion": 1, "sequence": sequence, "childPid": 100 + sequence,
+                "childStartSha256": "a" * 64, "startedMs": sequence * 10, "endedMs": sequence * 10 + 5,
+                "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "ordinary",
+                "runId": run_id, "rootId": "modeled-root", "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(cwd).encode()).hexdigest(),
+                "inputFiles": inputs, "outputFiles": outputs}
+            records[sequence] = record
+            hashed = write(f"proofs/execution-command-{sequence:04}.json", evidence.canonical_bytes(record))
+            return {"sequence": sequence, "executionSha256": hashed}
+
+        properties = (
+            "-p:OutputPath=" + str(self.root / "proofs/retained-observer-output") + os.sep,
+            "-p:AppendTargetFrameworkToOutputPath=false",
+            "-p:PathMap=" + str(self.root / "stores/snapshot") + os.sep + "=/_/")
+        arguments, = self.baselines.project_build_steps(
+            self.root / project, self.root / config, properties=properties, msbuild=prefix)
+        original = command(1, arguments, (self.root / project).parent, {
+            self.baselines.RETAINED_OBSERVER_INPUTS: frame_sha, config: config_sha,
+            project: sources[self.baselines.OBSERVER_PROJECT],
+            lock: sources[str(Path(self.baselines.OBSERVER_PROJECT).parent / "packages.lock.json")]},
+            {"proofs/retained-observer-output/" + self.baselines.RETAINED_OBSERVER_ASSEMBLY + suffix: hashed
+             for suffix, hashed in images.items()})
+        packet = {
+            "schemaVersion": 2, "qualification": False, "mode": "retained-compatibility",
+            "baselineSealSha256": seal_sha, "observerSha256": images[".dll"],
+            "observerPreparation": {
+                "inputFrameSha256": frame_sha, "commands": [original], "assemblyPath": observer + ".dll",
+                "assemblySha256": images[".dll"], "pdbSha256": images[".pdb"]},
+            "scenarios": []}
+        run = mock.Mock(root=self.root, state="Active")
+        for sequence, scenario in enumerate(self.baselines.RETAINED_SCENARIOS, 2):
+            staged = self.baselines.stage_retained_runtime(run, seal_sha, scenario)
+            namespace = "retained-compatibility-" + scenario
+            request_path = "proofs/" + namespace + "-request.json"
+            output_path = "proofs/" + namespace + "-observation.json"
+            staged_path = "proofs/" + namespace + "-staged.json"
+            request = self.baselines.retained_request(staged, output_path)
+            request_sha = write(request_path, evidence.canonical_bytes(request))
+            staged_sha = write(staged_path, evidence.canonical_bytes(staged))
+            loaded = sorted([{
+                "name": Path(image["path"]).stem, "sha256": image["sha256"],
+                "moduleVersionId": str(uuid.uuid4())} for image in request["images"]], key=lambda row: row["name"])
+            observation = {"schemaVersion": 1, "qualification": False,
+                           "scenario": scenario, "code": "None", "loaded": loaded}
+            observation_sha = write(output_path, evidence.canonical_bytes(observation))
+            workspace = self.root / "stores" / (namespace + "-workspace")
+            arguments = ["dotnet", str(self.root / staged["runtimePath"] / staged["assembly"])]
+            if scenario in ("local", "object"):
+                arguments += [scenario, str(workspace)]
+            declaration = command(sequence, arguments, workspace, {
+                observer + ".dll": images[".dll"],
+                staged["runtimePath"] + "/" + staged["assembly"]: staged["stagedFiles"][staged["assembly"]],
+                request_path: request_sha, staged_path: staged_sha}, {output_path: observation_sha})
+            packet["scenarios"].append({
+                **declaration, "scenario": scenario, "scope": staged["scope"], "commonSuiteExecuted": False,
+                "requestSha256": request_sha, "stagedSha256": staged_sha,
+                "observationSha256": observation_sha, "loadedAssemblies": len(loaded)})
+        raw = evidence.canonical_bytes(packet)
+        observed = inspector(self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix)
+        self.assertEqual(len(observed["commands"]), 10)
+        self.assertEqual(observed["candidateSourceSha256"], evidence.digest(sources))
+        self.assertEqual(inspector(
+            self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix, retained=True), observed)
+        parked = []
+        try:
+            for name in ("stores", "feed"):
+                original_path = self.root / name
+                parked_path = self.root / ("parked-" + name)
+                original_path.rename(parked_path)
+                parked.append((original_path, parked_path))
+            self.assertEqual(inspector(
+                self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix, retained=True), observed)
+        finally:
+            for original_path, parked_path in parked:
+                parked_path.rename(original_path)
+        for mutation in ("omit", "reorder", "observer-image", "observer-source", "parent", "failure", "owner", "time"):
+            changed = copy.deepcopy(packet)
+            touched = None
+            if mutation == "omit":
+                changed["scenarios"].pop()
+            elif mutation == "reorder":
+                changed["scenarios"].reverse()
+            elif mutation == "observer-image":
+                changed["observerPreparation"]["assemblySha256"] = "b" * 64
+                changed["observerSha256"] = "b" * 64
+            elif mutation == "observer-source":
+                touched = self.baselines.RETAINED_OBSERVER_INPUTS
+                frame = {**observer_frame, "candidateSourceSha256": "b" * 64}
+                changed["observerPreparation"]["inputFrameSha256"] = write(
+                    touched, evidence.canonical_bytes(frame))
+            else:
+                touched = "proofs/execution-command-0002.json"
+                record = copy.deepcopy(records[2])
+                field, value = {
+                    "parent": ("argvSha256", "b" * 64), "failure": ("exitCode", 1),
+                    "owner": ("runId", str(uuid.uuid4())), "time": ("startedMs", 0)}[mutation]
+                record[field] = value
+                changed["scenarios"][0]["executionSha256"] = write(touched, evidence.canonical_bytes(record))
+            try:
+                for retained in (False, True):
+                    with self.subTest(mutation=mutation, retained=retained), self.assertRaises(
+                            evidence.ConformanceError):
+                        inspector(self.root, evidence.canonical_bytes(changed),
+                                  expected_baseline_sha256=seal_sha, msbuild=prefix, retained=retained)
+            finally:
+                if touched == self.baselines.RETAINED_OBSERVER_INPUTS:
+                    write(touched, evidence.canonical_bytes(observer_frame))
+                elif touched is not None:
+                    write(touched, evidence.canonical_bytes(records[2]))
+
     def test_retained_observation_requires_bound_bytes_exact_loaded_identities_and_finite_success(self):
         request = {"scenario": "registration", "required": ["RegistrationConsumer", "Hoard.Abstractions"],
                    "images": [{"path": "stores/runtime/RegistrationConsumer.dll", "sha256": "a" * 64},

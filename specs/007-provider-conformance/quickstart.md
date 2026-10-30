@@ -1368,6 +1368,12 @@ Retained preparation now declares original observer compiler inputs and DLL/PDB
 outputs and stages those exact images into transient owned storage before old
 consumers execute.237 focused checks pass; independent retained origin/physical
 assertions and fresh native replay remain required. No remaining case is promoted.
+The original `4249723` observer producer now passes11/13 native controls.
+Separate readonly replay reconstructs ten compiler/consumer records and40 loaded
+observations; it grants no native authority. Strict retained replay/held capture
+now has414 focused passing checks, but new13/14 controls and physical assertions
+are pending. Original SDK CI succeeds with the parallel reader; overall old CI
+still fails. CI scope counts derive from the catalog, including the ninth witness.
 
 ## Offline Correspondence Inspection
 

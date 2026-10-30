@@ -86,6 +86,7 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "scripts")
           import conformance_evidence as evidence
+          from conformance_case_catalog import architecture_runtime_tests, binary_runtime_tests, version_runtime_tests
           from conformance_inherited import verify_controller_invocations
           from conformance_sources import read_bounded
           root = Path(sys.argv[1])
@@ -100,9 +101,9 @@ jobs:
               if (frozen["profileId"] != "compatibility" or frozen["mode"] != "diagnostic"
                       or frozen["runId"] != owner["runId"]):
                   raise evidence.ConformanceError("InputChanged")
-              for key, scope, count in (("architectureRuntime", "architecture", 88),
-                                        ("versionRuntime", "version", 114),
-                                        ("binaryRuntime", "binary", 8)):
+              for key, scope, count in (("architectureRuntime", "architecture", len(architecture_runtime_tests())),
+                                        ("versionRuntime", "version", len(version_runtime_tests())),
+                                        ("binaryRuntime", "binary", len(binary_runtime_tests()))):
                   observed = summary[key]
                   retained = evidence.load_json(read_bounded(
                       root / f"proofs/compatibility-{scope}-runtime-summary.json", 65536))

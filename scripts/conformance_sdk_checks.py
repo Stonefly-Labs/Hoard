@@ -4749,6 +4749,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             retained_compatibility = baselines.execute_retained_consumers(
                 run, candidate, sources, config, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/retained-compatibility.json", evidence.canonical_bytes(retained_compatibility))
+            retained_origin = native_sources.capture_retained() if native_sources is not None else None
             source_break = baselines.execute_source_break(
                 run, candidate, sources, config, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/source-break-control.json", evidence.canonical_bytes(source_break))
@@ -4781,6 +4782,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 "baselineSealSha256": seal_sha,
                 **({"historicalPreparation": historical_preparation} if historical_preparation is not None else {}),
                 **({"sourceRecipeOrigin": source_recipe_origin} if source_recipe_origin is not None else {}),
+                **({"retainedOrigin": retained_origin} if retained_origin is not None else {}),
                 **({"sourceBreakOrigin": source_break_origin} if source_break_origin is not None else {}),
             }
             print(json.dumps(compatibility_summary), flush=True)

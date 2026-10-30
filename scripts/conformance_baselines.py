@@ -971,6 +971,30 @@ def retained_recipe(scenario):
     raise ConformanceError("UnsupportedProfile")
 
 
+def _retained_candidate_images(root):
+    packages, images = {}, {}
+    for name in ("Abstractions", "Core", "Hosting", "Application"):
+        filename = f"Hoard.{name}.dll"
+        package = root / "feed/candidate" / f"Hoard.{name}.0.1.0.nupkg"
+        no_symlinks(package)
+        if not package.is_file() or package.stat().st_size > 64 * 1024**2:
+            raise ConformanceError("InputChanged")
+        package_sha = file_sha256(package)
+        try:
+            with zipfile.ZipFile(package) as archive:
+                entries = [item for item in archive.infolist() if item.filename == "lib/net10.0/" + filename]
+                if len(entries) != 1 or not 0 < entries[0].file_size <= 16 * 1024**2:
+                    raise ConformanceError("InputChanged")
+                raw = archive.read(entries[0])
+        except zipfile.BadZipFile:
+            raise ConformanceError("InputChanged") from None
+        if file_sha256(package) != package_sha:
+            raise ConformanceError("InputChanged")
+        packages[package.name] = package_sha
+        images[filename] = raw
+    return packages, images
+
+
 def stage_retained_runtime(run, baseline_sha256, scenario):
     from conformance_sources import read_bounded
     if run.state != "Active":
@@ -996,26 +1020,9 @@ def stage_retained_runtime(run, baseline_sha256, scenario):
         with destination.open("xb") as output:
             output.write(raw)
         destination.chmod(0o400)
-    packages, platform = {}, {}
-    for name in ("Abstractions", "Core", "Hosting", "Application"):
-        filename = f"Hoard.{name}.dll"
-        package = run.root / "feed/candidate" / f"Hoard.{name}.0.1.0.nupkg"
-        no_symlinks(package)
-        if not package.is_file() or package.stat().st_size > 64 * 1024**2:
-            raise ConformanceError("InputChanged")
-        package_sha = file_sha256(package)
-        try:
-            with zipfile.ZipFile(package) as archive:
-                entries = [item for item in archive.infolist() if item.filename == "lib/net10.0/" + filename]
-                if len(entries) != 1 or not 0 < entries[0].file_size <= 16 * 1024**2:
-                    raise ConformanceError("InputChanged")
-                raw = archive.read(entries[0])
-        except zipfile.BadZipFile:
-            raise ConformanceError("InputChanged") from None
-        if file_sha256(package) != package_sha:
-            raise ConformanceError("InputChanged")
-        packages[package.name] = package_sha
-        platform[filename] = hashlib.sha256(raw).hexdigest()
+    packages, candidate = _retained_candidate_images(run.root)
+    platform = {name: hashlib.sha256(raw).hexdigest() for name, raw in candidate.items()}
+    for filename, raw in candidate.items():
         destination = runtime / filename
         if destination.exists():
             destination.chmod(0o600)
@@ -1174,6 +1181,197 @@ def execute_retained_consumers(run, candidate, candidate_sources, config, baseli
     return {"schemaVersion": 2, "qualification": False, "mode": "retained-compatibility",
             "baselineSealSha256": baseline_sha256, "observerSha256": observer_sha,
             "observerPreparation": observer_preparation, "scenarios": records}
+
+
+def inspect_retained_consumers(root, packet_data, *, expected_baseline_sha256, msbuild=None, retained=False):
+    """Reconstruct correspondence; original executor-held capture supplies native authority."""
+    import conformance_evidence as evidence
+
+    root = Path(root).absolute()
+    baseline = (_prepared_baseline_document(root, expected_baseline_sha256) if retained
+                else verify_prepared_baselines(root, expected_baseline_sha256))
+    if baseline["schemaVersion"] != 3:
+        raise ConformanceError("EvidenceIncomplete")
+    declaration = evidence._record({"sequence": evidence._integer, "executionSha256": sha256})
+    packet = evidence._runtime_json(packet_data, {
+        "schemaVersion": evidence._constant(2), "qualification": evidence._constant(False),
+        "mode": evidence._constant("retained-compatibility"),
+        "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+        "observerSha256": sha256,
+        "observerPreparation": evidence._record({
+            "inputFrameSha256": sha256, "commands": evidence._list(declaration, 2, minimum=1),
+            "assemblyPath": evidence._constant(RETAINED_OBSERVER_IMAGES + "/" + RETAINED_OBSERVER_ASSEMBLY + ".dll"),
+            "assemblySha256": sha256, "pdbSha256": sha256}),
+        "scenarios": evidence._list(evidence._record({
+            "scenario": evidence._one_of(*RETAINED_SCENARIOS),
+            "scope": evidence._one_of("operational-consumer", "marker-only", "inherited-api"),
+            "commonSuiteExecuted": evidence._constant(False), "sequence": evidence._integer,
+            "executionSha256": sha256, "requestSha256": sha256, "stagedSha256": sha256,
+            "observationSha256": sha256, "loadedAssemblies": evidence._integer}),
+            len(RETAINED_SCENARIOS), minimum=len(RETAINED_SCENARIOS)),
+    }, limit=MAX_REPORT_BYTES)
+    preparation = packet["observerPreparation"]
+    frame_sha, frame_raw = evidence._readonly_report_proof(root, RETAINED_OBSERVER_INPUTS)
+    frame = evidence._runtime_json(frame_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "mode": evidence._constant("retained-observer-inputs"),
+        "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+        "candidateSourceSha256": sha256, "sources": evidence._hash_map, "configurationSha256": sha256,
+    }, limit=MAX_REPORT_BYTES)
+    source_sha, source_raw = evidence._readonly_report_proof(root, SOURCE_COMPATIBILITY_INPUTS)
+    source = evidence._runtime_json(source_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+        "recipeSha256": sha256, "candidatePackages": evidence._hash_map, "configurationSha256": sha256,
+        "sources": evidence._record({
+            "historical-f06": evidence._hash_map, "candidate-source-manifest": evidence._hash_map}),
+    }, limit=MAX_REPORT_BYTES)
+    config = root / "stores/candidate.NuGet.Config"
+    config_sha = hashlib.sha256(synthetic_nuget_configuration(root / "feed/candidate")).hexdigest()
+    candidate = root / "stores/snapshot"
+    project = candidate / OBSERVER_PROJECT
+    lock = (Path(OBSERVER_PROJECT).parent / "packages.lock.json").as_posix()
+    historical = next(row for row in baseline["entries"] if row["id"] == "f06")
+    if (frame_sha != preparation["inputFrameSha256"]
+            or frame["candidateSourceSha256"] != digest(frame["sources"])
+            or frame["sources"] != source["sources"]["candidate-source-manifest"]
+            or source["sources"]["historical-f06"] != historical["sources"]
+            or OBSERVER_PROJECT not in frame["sources"] or lock not in frame["sources"]
+            or frame["configurationSha256"] != config_sha or source["configurationSha256"] != config_sha
+            or preparation["assemblySha256"] != packet["observerSha256"]
+            or tuple(row["scenario"] for row in packet["scenarios"]) != RETAINED_SCENARIOS):
+        raise ConformanceError("ProofMismatch")
+    if not retained:
+        verify_snapshot(candidate, frame["sources"])
+        for suffix, field in ((".dll", "assemblySha256"), (".pdb", "pdbSha256")):
+            hashed, _ = evidence._readonly_report_proof(
+                root, RETAINED_OBSERVER_IMAGES + "/" + RETAINED_OBSERVER_ASSEMBLY + suffix)
+            if hashed != preparation[field]:
+                raise ConformanceError("InputChanged")
+    commands, previous_sequence, previous_end, started, owner = [], 0, 0, None, None
+
+    def inspect_command(declared, arguments, cwd, inputs, outputs):
+        nonlocal previous_sequence, previous_end, started, owner
+        sequence = declared["sequence"]
+        hashed, raw = evidence._readonly_report_proof(root, f"proofs/execution-command-{sequence:04}.json")
+        record = evidence._runtime_json(raw, {
+            "schemaVersion": evidence._constant(1), "sequence": evidence._constant(sequence),
+            "childPid": evidence._integer, "childStartSha256": sha256,
+            "startedMs": evidence._number, "endedMs": evidence._number,
+            "exitCode": evidence._constant(0), "diagnosticCode": evidence._constant("None"),
+            "groupState": evidence._constant("Exited"), "scope": evidence._constant("ordinary"),
+            "runId": evidence._uuid, "rootId": evidence.stable_id,
+            "argvSha256": sha256, "cwdSha256": sha256, "inputFiles": evidence._hash_map,
+            **({"outputFiles": evidence._hash_map} if outputs else {}),
+        }, limit=64 * 1024)
+        identity = (record["runId"], record["rootId"])
+        if (sequence <= previous_sequence or hashed != declared["executionSha256"]
+                or record["childPid"] == 0 or record["childStartSha256"] == "0" * 64
+                or record["argvSha256"] != digest(arguments)
+                or record["cwdSha256"] != hashlib.sha256(str(cwd).encode()).hexdigest()
+                or record["inputFiles"] != inputs or record.get("outputFiles", {}) != outputs
+                or record["startedMs"] < previous_end or record["endedMs"] < record["startedMs"]
+                or owner is not None and owner != identity):
+            raise ConformanceError("ProofMismatch")
+        owner = identity
+        started = record["startedMs"] if started is None else started
+        previous_sequence, previous_end = sequence, record["endedMs"]
+        commands.append({"sequence": sequence, "executionSha256": hashed})
+
+    input_files = {
+        RETAINED_OBSERVER_INPUTS: frame_sha, config.relative_to(root).as_posix(): config_sha,
+        project.relative_to(root).as_posix(): frame["sources"][OBSERVER_PROJECT],
+        (candidate / lock).relative_to(root).as_posix(): frame["sources"][lock]}
+    if not retained and evidence.input_manifest(root, tuple(input_files)) != input_files:
+        raise ConformanceError("InputChanged")
+    output = "proofs/retained-observer-output"
+    properties = (
+        "-p:OutputPath=" + str(root / output) + os.sep,
+        "-p:AppendTargetFrameworkToOutputPath=false", "-p:PathMap=" + str(candidate) + os.sep + "=/_/")
+    steps = project_build_steps(project, config, properties=properties, msbuild=msbuild)
+    if len(steps) != len(preparation["commands"]):
+        raise ConformanceError("ProofMismatch")
+    for index, (arguments, declared) in enumerate(zip(steps, preparation["commands"])):
+        outputs = {output + "/" + RETAINED_OBSERVER_ASSEMBLY + suffix: preparation[field]
+                   for suffix, field in ((".dll", "assemblySha256"), (".pdb", "pdbSha256"))}
+        inspect_command(declared, arguments, project.parent, input_files,
+                        outputs if index == len(steps) - 1 else {})
+    package_names = tuple("Hoard." + name + ".0.1.0.nupkg"
+                          for name in ("Abstractions", "Core", "Hosting", "Application"))
+    if not set(package_names) <= source["candidatePackages"].keys():
+        raise ConformanceError("ProofMismatch")
+    expected_packages = {name: source["candidatePackages"][name] for name in package_names}
+    actual_platform = None
+    if not retained:
+        actual_packages, images = _retained_candidate_images(root)
+        actual_platform = {name: hashlib.sha256(raw).hexdigest() for name, raw in images.items()}
+        if actual_packages != expected_packages:
+            raise ConformanceError("InputChanged")
+    frozen_platform = None
+    loaded_count = 0
+    for row in packet["scenarios"]:
+        scenario = row["scenario"]
+        baseline_id, prefix, assembly, _ = retained_recipe(scenario)
+        entry = next(item for item in baseline["entries"] if item["id"] == baseline_id)
+        frozen = {path.removeprefix(prefix): hashed for path, hashed in entry["binaries"].items()
+                  if path.startswith(prefix)}
+        stem = assembly.removesuffix(".dll")
+        if not {assembly, stem + ".pdb", stem + ".deps.json", stem + ".runtimeconfig.json"} <= frozen.keys():
+            raise ConformanceError("EvidenceIncomplete")
+        namespace = "retained-compatibility-" + scenario
+        request_path = "proofs/" + namespace + "-request.json"
+        staged_path = "proofs/" + namespace + "-staged.json"
+        output_path = "proofs/" + namespace + "-observation.json"
+        staged_sha, staged_raw = evidence._readonly_report_proof(root, staged_path)
+        staged = evidence._runtime_json(staged_raw, {
+            "scenario": evidence._constant(scenario), "baselineId": evidence._constant(baseline_id),
+            "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+            "runtimePath": evidence._constant("stores/" + namespace), "assembly": evidence._constant(assembly),
+            "frozenFiles": evidence._hash_map, "candidatePackages": evidence._hash_map,
+            "candidateAssemblies": evidence._hash_map, "stagedFiles": evidence._hash_map,
+            "commonSuiteExecuted": evidence._constant(False),
+            "scope": evidence._one_of("operational-consumer", "marker-only", "inherited-api"),
+        }, limit=MAX_REPORT_BYTES)
+        scope = ("operational-consumer" if scenario in ("memory", "sqlite", "local", "object")
+                 else "marker-only" if scenario.endswith("-marker") else "inherited-api")
+        platform = staged["candidateAssemblies"]
+        if (staged_sha != row["stagedSha256"] or staged["frozenFiles"] != frozen
+                or staged["candidatePackages"] != expected_packages
+                or set(platform) != {name.removesuffix(".0.1.0.nupkg") + ".dll" for name in package_names}
+                or staged["stagedFiles"] != {**frozen, **platform}
+                or row["scope"] != scope or staged["scope"] != scope
+                or frozen_platform is not None and platform != frozen_platform
+                or actual_platform is not None and platform != actual_platform):
+            raise ConformanceError("ProofMismatch")
+        frozen_platform = platform
+        request_sha, request_raw = evidence._readonly_report_proof(root, request_path)
+        request = retained_request(staged, output_path)
+        observation_sha, observation_raw = evidence._readonly_report_proof(root, output_path)
+        observed = verify_retained_observation(observation_raw, request, row["observationSha256"])
+        if (request_sha != row["requestSha256"] or request_raw != canonical_bytes(request)
+                or observation_sha != row["observationSha256"] or len(observed["loaded"]) != row["loadedAssemblies"]):
+            raise ConformanceError("ProofMismatch")
+        workspace = root / "stores" / (namespace + "-workspace")
+        arguments = ["dotnet", str(root / staged["runtimePath"] / assembly)]
+        if scenario in ("local", "object"):
+            arguments += [scenario, str(workspace)]
+        input_files = {
+            preparation["assemblyPath"]: packet["observerSha256"],
+            staged["runtimePath"] + "/" + assembly: staged["stagedFiles"][assembly],
+            request_path: request_sha, staged_path: staged_sha}
+        if not retained:
+            verify_snapshot(root / staged["runtimePath"], staged["stagedFiles"])
+            if evidence.input_manifest(root, tuple(input_files)) != input_files:
+                raise ConformanceError("InputChanged")
+        inspect_command(row, arguments, workspace, input_files, {output_path: observation_sha})
+        loaded_count += len(observed["loaded"])
+    return {
+        "schemaVersion": 1, "qualification": False, "mode": "retained-compatibility-native-correspondence",
+        "baselineSealSha256": expected_baseline_sha256, "summarySha256": hashlib.sha256(packet_data).hexdigest(),
+        "inputFrameSha256": frame_sha, "sourceInputFrameSha256": source_sha,
+        "candidateSourceSha256": frame["candidateSourceSha256"], "runId": owner[0], "rootId": owner[1],
+        "startedMs": started, "endedMs": previous_end, "commands": commands, "loadedAssemblies": loaded_count,
+    }
 
 
 def _command(run, args, *, cwd, cache_id, execution_inputs=(), execution_outputs=()):

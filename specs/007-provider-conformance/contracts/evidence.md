@@ -1325,6 +1325,15 @@ owned transient stores before old consumers run; raw compiler binaries are not
 retained as public proof files. This is producer provenance only: independent
 retained observation/origin/physical inspection is not yet complete and cannot
 qualify binary/predecessor/QC-25.
+Immutable `4249723` establishes the producer with11 live/13 released controls.
+Separate readonly reconstruction verifies its ten compiler/consumer records and
+40 loaded observations without granting native authority. The following strict
+inspector derives exact observer compiler and nine runtime/request/image/observation/
+command bindings, including original owners, windows and actual candidate archives
+while Active. Original capture must match every executor-held record and the
+already held source frame; released replay must match that same original token
+without reopening deleted stores/feed.414 focused checks pass. New13/14 controls
+and physical retained assertions remain required; no logical case is promoted.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

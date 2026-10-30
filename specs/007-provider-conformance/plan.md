@@ -5297,6 +5297,42 @@ passes237 tests in33.144 seconds. Native replay, independent retained inspection
 executor-held authority and physical assertions are not yet established; the
 three remaining logical cases remain Incomplete.
 
+Immutable4249723 attempt5f9dda3518064181a149a55ebcc816a3 passes all11 live/
+13 released controls, exit0,502270.05426500546ms, initial scratch193654013952
+bytes, no extra SDK prewarming. A separate readonly container applies the new
+retained inspector to unchanged original bytes and reconstructs ten original
+observer-compiler/consumer records, nine scenarios and40 loaded-image observations,
+with candidate-source/source-frame/summary correspondence. Packet/retained-packet/
+observer-frame SHA256:
+`3cceb39b2e9b9060ec7fa3facd11f460d257f1199d0ffa01086f2c55a4e6df81` /
+`889683fe8c71709c323f852eea6c2bf3514db7d793c0ab9c2760f4c863db35bc` /
+`24439e65efa87bd373eebee1cdc18ff018340d321b1fa6b183492ce6ef574239`.
+Readonly correspondence creates no authority.
+
+The following strict retained inspector independently reconstructs exact observer
+compiler commands/inputs/outputs, fixed nine-scenario order, sealed old runtime
+inventories, actual four candidate package DLLs, canonical request/staging frames,
+loaded identities, execution inputs/outputs, common owner, exit/group and timing.
+Active inspection verifies actual files; released replay needs no deleted stores
+or feed. Original Active capture matches every actual executor-held compiler/
+consumer record and the previously held source frame, freezes before source-break
+execution and persists through the same released token. The modeled regression
+first fails for the absent inspector, then proves active/released/deleted-store
+replay and eight resealed mutation families. Explicit native factories add
+single-use/held-compiler and released-observation/parent challenges. No native
+13/14 result or physical retained assertion is claimed yet.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceBaselineTests test_conformance_evidence.ConformanceAdmissionTests test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_composition test_conformance_sdk_checks test_conformance_ci test_conformance_cli`
+passes414 tests in138.724 seconds; catalog/diff checks pass. Binary/predecessor/
+QC-25 remain Incomplete.
+
+Original c25 CI SDK123962991499 now succeeds with closed result None, establishing
+actual parallel-reader SDK execution alongside genuine metadata/artifact successes;
+overall workflow failure remains. Its whole-profile/tooling600-second acceptance
+is not inferred. A directly dependent embedded workflow gate still expected eight
+binary witnesses; all three scope counts now derive from the independent catalog.
+The existing workflow regression requires nine and rejects an omitted binary
+parameter: old source has two failures, repaired embedded Python test passes.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

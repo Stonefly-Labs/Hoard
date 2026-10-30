@@ -1165,6 +1165,14 @@ source/configuration/lock inputs and DLL/PDB outputs, staged into transient owne
 storage before any consumer executes.237 focused checks pass. Independent
 retained-binary origin/physical assertions and fresh native replay remain pending;
 this producer increment does not promote the remaining three cases.
+Immutable `4249723` passes all11 live/13 released controls with the real observer
+compiler inputs/outputs. Independent readonly replay reconstructs its observer
+compiler plus nine old-consumer records and40 loaded-image observations.
+The next increment adds strict active/released retained inspection and original
+executor-held capture;414 focused checks pass. New13/14 native controls and
+retained physical assertions remain pending. The completed original SDK CI job
+also succeeds with the parallel reader; the overall old workflow still fails.
+CI scope counts now derive from the catalog rather than a stale eight-witness gate.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

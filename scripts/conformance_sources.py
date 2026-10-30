@@ -1975,6 +1975,7 @@ class NativeCompatibilityEvaluation:
     preparation_data: bytes
     source_break_data: bytes
     source_recipes_data: bytes
+    retained_data: bytes
 
     def verify_report_origin(self, run, inputs, summary):
         if (type(run) is not OwnedRun or type(self._source) is not NativeCompatibilitySources
@@ -1987,7 +1988,8 @@ class NativeCompatibilityEvaluation:
             raise evidence.ConformanceError("CleanupIncomplete")
         original = evidence.load_json(self.summary_data)
         from conformance_baselines import (
-            inspect_historical_binary_preparation, inspect_source_break_control, inspect_source_recipes)
+            inspect_historical_binary_preparation, inspect_retained_consumers,
+            inspect_source_break_control, inspect_source_recipes)
         from conformance_sdk_checks import selected_msbuild
 
         preparation = inspect_historical_binary_preparation(
@@ -2004,6 +2006,16 @@ class NativeCompatibilityEvaluation:
                 or original.get("sourceRecipeOrigin") != recipes
                 or original.get("sourceSha256") != recipes["summarySha256"]
                 or recipes["candidateSourceSha256"] != inputs["sourceManifestSha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
+        _, retained_raw = evidence._readonly_report_proof(run.root, "proofs/retained-compatibility.json")
+        retained = inspect_retained_consumers(
+            run.root, retained_raw, expected_baseline_sha256=original["baselineSealSha256"],
+            msbuild=selected_msbuild(inputs["environment"]), retained=True)
+        if (evidence.canonical_bytes(retained) != self.retained_data
+                or original.get("retainedOrigin") != retained
+                or original.get("retainedSha256") != retained["summarySha256"]
+                or retained["candidateSourceSha256"] != inputs["sourceManifestSha256"]
+                or retained["sourceInputFrameSha256"] != recipes["inputFrameSha256"]):
             raise evidence.ConformanceError("ProofMismatch")
         _, control_raw = evidence._readonly_report_proof(run.root, "proofs/source-break-control.json")
         source_break = inspect_source_break_control(
@@ -2029,8 +2041,10 @@ class NativeCompatibilityEvaluation:
         source_break_commands = tuple(
             (row["sequence"], row["executionSha256"]) for row in source_break["commands"])
         recipe_commands = tuple((row["sequence"], row["executionSha256"]) for row in recipes["commands"])
+        retained_commands = tuple((row["sequence"], row["executionSha256"]) for row in retained["commands"])
         for sequence, expected in (
-                *preparation_commands, *recipe_commands, *source_break_commands, *self.command_hashes):
+                *preparation_commands, *recipe_commands, *retained_commands,
+                *source_break_commands, *self.command_hashes):
             hashed, _ = evidence._readonly_report_proof(run.root, f"proofs/execution-command-{sequence:04}.json")
             if hashed != expected:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2051,6 +2065,8 @@ class NativeCompatibilitySources:
         self._source_break_commands = ()
         self._source_recipes = None
         self._source_recipe_commands = ()
+        self._retained = None
+        self._retained_commands = ()
 
     def capture_preparation(self, seal_sha256, *, msbuild=None):
         from conformance_baselines import inspect_historical_binary_preparation
@@ -2079,7 +2095,8 @@ class NativeCompatibilitySources:
 
         run = self._run
         if (run.state != "Active" or self._preparation is None or self._source_recipes is not None
-                or self._source_break is not None or self._evaluation is not None or self._scopes
+                or self._retained is not None or self._source_break is not None
+                or self._evaluation is not None or self._scopes
                 or not (run.root / "stores/snapshot").is_dir()):
             raise evidence.ConformanceError("OwnershipInvalid")
         preparation = evidence.load_json(self._preparation)
@@ -2100,11 +2117,40 @@ class NativeCompatibilitySources:
         self._source_recipe_commands = commands
         return evidence.load_json(self._source_recipes)
 
+    def capture_retained(self):
+        from conformance_baselines import inspect_retained_consumers
+
+        run = self._run
+        if (run.state != "Active" or self._preparation is None or self._source_recipes is None
+                or self._retained is not None or self._source_break is not None
+                or self._evaluation is not None or self._scopes):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        recipes = evidence.load_json(self._source_recipes)
+        _, raw = evidence._readonly_report_proof(run.root, "proofs/retained-compatibility.json")
+        observed = inspect_retained_consumers(
+            run.root, raw,
+            expected_baseline_sha256=evidence.load_json(self._preparation)["baselineSealSha256"],
+            msbuild=self._preparation_msbuild)
+        commands = tuple((row["sequence"], row["executionSha256"]) for row in observed["commands"])
+        if (observed["runId"] != run.run_id or observed["rootId"] != run.root_id
+                or observed["startedMs"] < recipes["endedMs"]
+                or observed["candidateSourceSha256"] != recipes["candidateSourceSha256"]
+                or observed["sourceInputFrameSha256"] != recipes["inputFrameSha256"]
+                or commands[0][0] <= self._source_recipe_commands[-1][0]
+                or commands[-1][0] != run.command_sequence):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        if any(hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != hashed
+               for sequence, hashed in commands):
+            raise evidence.ConformanceError("ProofMismatch")
+        self._retained = evidence.canonical_bytes(observed)
+        self._retained_commands = commands
+        return evidence.load_json(self._retained)
+
     def capture_source_break(self):
         from conformance_baselines import inspect_source_break_control
 
         run = self._run
-        if (run.state != "Active" or self._preparation is None or self._source_recipes is None
+        if (run.state != "Active" or self._preparation is None or self._source_recipes is None or self._retained is None
                 or self._source_break is not None
                 or self._evaluation is not None or self._scopes or not (run.root / "stores/snapshot").is_dir()):
             raise evidence.ConformanceError("OwnershipInvalid")
@@ -2115,8 +2161,8 @@ class NativeCompatibilitySources:
             msbuild=self._preparation_msbuild)
         commands = tuple((row["sequence"], row["executionSha256"]) for row in observed["commands"])
         if (observed["runId"] != run.run_id or observed["rootId"] != run.root_id
-                or observed["startedMs"] < evidence.load_json(self._source_recipes)["endedMs"]
-                or commands[0][0] <= self._source_recipe_commands[-1][0]
+                or observed["startedMs"] < evidence.load_json(self._retained)["endedMs"]
+                or commands[0][0] <= self._retained_commands[-1][0]
                 or commands[-1][0] != run.command_sequence):
             raise evidence.ConformanceError("OwnershipInvalid")
         if any(hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != hashed
@@ -2134,7 +2180,7 @@ class NativeCompatibilitySources:
         order = ("architecture", "version", "binary")
         hashed = evidence.digest(evidence.admit_entity("RunInputs", inputs))
         if (run.state != "Active" or self._evaluation is not None or self._preparation is None
-                or self._source_break is None or self._source_recipes is None
+                or self._source_break is None or self._source_recipes is None or self._retained is None
                 or len(self._scopes) >= len(order) or scope != order[len(self._scopes)]
                 or self._inputs_sha256 is not None and self._inputs_sha256 != hashed):
             raise evidence.ConformanceError("OwnershipInvalid")
@@ -2159,11 +2205,13 @@ class NativeCompatibilitySources:
 
     def capture_evaluation(self, inputs, summary):
         from conformance_baselines import (
-            inspect_historical_binary_preparation, inspect_source_break_control, inspect_source_recipes)
+            inspect_historical_binary_preparation, inspect_retained_consumers,
+            inspect_source_break_control, inspect_source_recipes)
         from conformance_sdk_checks import verify_compatibility_case_report
 
         if (self._run.state != "Active" or self._evaluation is not None
-                or self._preparation is None or self._source_break is None or self._source_recipes is None
+                or self._preparation is None or self._source_break is None
+                or self._source_recipes is None or self._retained is None
                 or tuple(self._scopes) != ("architecture", "version", "binary")
                 or evidence.digest(inputs) != self._inputs_sha256):
             raise evidence.ConformanceError("OwnershipInvalid")
@@ -2186,6 +2234,17 @@ class NativeCompatibilitySources:
                 or summary.get("sourceSha256") != recipes["summarySha256"]
                 or recipes["candidateSourceSha256"] != inputs["sourceManifestSha256"]):
             raise evidence.ConformanceError("ProofMismatch")
+        _, retained_raw = evidence._readonly_report_proof(self._run.root, "proofs/retained-compatibility.json")
+        retained = inspect_retained_consumers(
+            self._run.root, retained_raw, expected_baseline_sha256=summary["baselineSealSha256"],
+            msbuild=self._preparation_msbuild)
+        if (evidence.canonical_bytes(retained) != self._retained
+                or summary.get("retainedOrigin") != retained
+                or summary.get("retainedSha256") != retained["summarySha256"]
+                or summary.get("loadedAssemblies") != retained["loadedAssemblies"]
+                or retained["candidateSourceSha256"] != inputs["sourceManifestSha256"]
+                or retained["sourceInputFrameSha256"] != recipes["inputFrameSha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
         _, control_raw = evidence._readonly_report_proof(self._run.root, "proofs/source-break-control.json")
         source_break = inspect_source_break_control(
             self._run.root, control_raw, expected_baseline_sha256=summary["baselineSealSha256"],
@@ -2205,11 +2264,12 @@ class NativeCompatibilitySources:
         commands = tuple(row for _, rows in self._scopes.values() for row in rows)
         if any(hashlib.sha256(self._run.read_execution_record(sequence)).hexdigest() != hashed
                for sequence, hashed in (
-                   *self._preparation_commands, *self._source_recipe_commands, *self._source_break_commands)):
+                   *self._preparation_commands, *self._source_recipe_commands,
+                   *self._retained_commands, *self._source_break_commands)):
             raise evidence.ConformanceError("ProofMismatch")
         self._evaluation = NativeCompatibilityEvaluation(
             self, self._inputs_sha256, evidence.canonical_bytes(summary), commands, self._preparation,
-            self._source_break, self._source_recipes)
+            self._source_break, self._source_recipes, self._retained)
         return self._evaluation
 
 

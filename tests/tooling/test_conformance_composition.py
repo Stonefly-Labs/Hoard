@@ -877,7 +877,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         code = compile(textwrap.dedent(script), "<architecture-workflow>", "exec")
         for defect in ("none", "live", "profile", "path", "manifest", "inputs", "qualification",
                        "missing-version", "missing-axis", "missing-observation", "runtime-receipt", "missing-binary",
-                       "split-inputs", "changed-completion"):
+                       "missing-binary-axis", "split-inputs", "changed-completion"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -897,7 +897,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 frozen["budgets"]["profileSeconds"] = 3600
                 (root / "proofs/compatibility-runtime-inputs.json").write_bytes(evidence.canonical_bytes(frozen))
                 for key, scope, count in (("architectureRuntime", "architecture", 88),
-                                          ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 8)):
+                                          ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 9)):
                     observed = {
                         "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
                         "passedParameters": count, **{field: "d" * 64 for field in (
@@ -916,6 +916,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         observed["admittedObservations"] = 169 if defect == "missing-observation" else 170
                         if defect == "missing-axis":
                             observed["passedParameters"] -= 1
+                    if scope == "binary" and defect == "missing-binary-axis":
+                        observed["passedParameters"] -= 1
                     (root / f"proofs/compatibility-{scope}-runtime-summary.json").write_bytes(
                         evidence.canonical_bytes(observed))
                     summary[key] = dict(observed)
@@ -1852,6 +1854,43 @@ def native_compatibility_source_recipe_tests(source, capture):
     return unittest.TestLoader().loadTestsFromTestCase(NativeSourceRecipeTests)
 
 
+def native_compatibility_retained_tests(source, capture):
+    import hashlib
+    import conformance_evidence as evidence
+
+    owner = source._run
+
+    class NativeRetainedTests(unittest.TestCase):
+        def test_original_retained_capture_is_single_use(self):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                capture(source)
+
+        def test_resealed_retained_observer_cannot_replace_the_executor_held_compiler(self):
+            sequence, _ = source._retained_commands[0]
+            record_path = owner.root / f"proofs/execution-command-{sequence:04}.json"
+            packet_path = owner.root / "proofs/retained-compatibility.json"
+            originals = {path: path.read_bytes() for path in (record_path, packet_path)}
+            try:
+                changed = originals[record_path] + b"\n"
+                packet = evidence.load_json(originals[packet_path])
+                packet["observerPreparation"]["commands"][0]["executionSha256"] = hashlib.sha256(changed).hexdigest()
+                for path, raw in ((record_path, changed), (packet_path, evidence.canonical_bytes(packet))):
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+                with mock.patch.object(source, "_retained", None), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^OwnershipInvalid$"):
+                    capture(source)
+            finally:
+                for path, raw in originals.items():
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+            self.assertEqual(owner.read_execution_record(sequence), originals[record_path])
+
+    return unittest.TestLoader().loadTestsFromTestCase(NativeRetainedTests)
+
+
 def native_compatibility_source_break_tests(source, capture):
     import hashlib
     import conformance_evidence as evidence
@@ -2095,6 +2134,17 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.mutate_and_restore(owner.root / f"diagnostics/command-{sequence:04}.jsonl", "ProofMismatch")
             self.mutate_and_restore(owner.root / f"proofs/execution-command-{sequence:04}.json", "ProofMismatch")
 
+        def test_changed_retained_images_observations_or_parent_cannot_borrow_original_authority(self):
+            for path in (
+                    "proofs/retained-compatibility.json", "proofs/retained-observer-inputs.json",
+                    "proofs/retained-compatibility-registration-observation.json",
+                    "proofs/retained-compatibility-registration-staged.json"):
+                self.mutate_and_restore(owner.root / path, "ProofMismatch")
+            for row in (evidence.load_json(evaluation.retained_data)["commands"][0],
+                        evidence.load_json(evaluation.retained_data)["commands"][-1]):
+                self.mutate_and_restore(
+                    owner.root / f'proofs/execution-command-{row["sequence"]:04}.json', "ProofMismatch")
+
         def test_changed_runtime_proof_bytes_cannot_borrow_original_witnesses(self):
             manifest = evidence.load_json((owner.root / report["binaryRuntime"]["manifestPath"]).read_bytes())
             directory = owner.root / f'runtime-{manifest["attemptId"]}'
@@ -2168,6 +2218,7 @@ def run_native_compatibility_controls(arguments):
     original_capture = NativeCompatibilitySources.capture_evaluation
     original_preparation_capture = NativeCompatibilitySources.capture_preparation
     original_source_recipe_capture = NativeCompatibilitySources.capture_source_recipes
+    original_retained_capture = NativeCompatibilitySources.capture_retained
     original_source_break_capture = NativeCompatibilitySources.capture_source_break
 
     def capture_preparation(source, seal_sha256, *, msbuild=None):
@@ -2198,9 +2249,16 @@ def run_native_compatibility_controls(arguments):
             lambda: native_compatibility_source_recipe_tests(source, original_source_recipe_capture))
         return observed
 
+    def capture_retained(source):
+        observed = original_retained_capture(source)
+        counts["liveOriginTests"] += _run_native_control_suite(
+            lambda: native_compatibility_retained_tests(source, original_retained_capture))
+        return observed
+
     with mock.patch.object(NativeCompatibilitySources, "capture_evaluation", capture), mock.patch.object(
             NativeCompatibilitySources, "capture_preparation", capture_preparation), mock.patch.object(
             NativeCompatibilitySources, "capture_source_recipes", capture_source_recipes), mock.patch.object(
+            NativeCompatibilitySources, "capture_retained", capture_retained), mock.patch.object(
             NativeCompatibilitySources, "capture_source_break", capture_source_break):
         status = sdk.execute(ROOT, Path(arguments[1]).resolve(), compatibility_only=True)
     if status != 0 or len(captured) != 1 or not counts["liveOriginTests"]:
