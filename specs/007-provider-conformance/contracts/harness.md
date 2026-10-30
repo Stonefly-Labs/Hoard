@@ -8,6 +8,20 @@ Product [metadata](../../005-metadata-persistence/contracts/metadata-api.md),
 [compatibility](../../001-provider-contracts/contracts/compatibility.md)
 agreements remain authoritative.
 
+**Implemented finite presentations (T072):** metadata/artifact categories,
+composition and compatibility share bounded JSON/JUnit/Markdown/CI rendering.
+Qualified output requires reconstruction by the original released native
+evaluator; public completion checks every readonly presentation's bytes.
+Finite support includes observed matrix IDs, package versions/content hashes
+and exact environment/configuration/capability hashes, without inferring
+untested combinations or service/native-client/protocol/identity/production/HA
+support. Diagnostic rendering is always nonqualifying and includes a JUnit
+qualification error even when every observed case passed. Existing owned-root,
+frozen-admission, original-runtime/evaluation and actual-release guards enforce
+ordering before Complete derivation; no additional lifecycle journal is exposed.
+Current-source native publication and full baseline remain final acceptance
+work, not consequences of modeled renderer tests.
+
 ## Package and Binding Boundary
 
 `Hoard.Testing.Conformance` is a locally packable .NET 10 test SDK. It owns

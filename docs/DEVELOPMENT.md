@@ -4668,6 +4668,22 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+**Current report checkpoint:** T071 strict evaluation and T072 finite
+presentation implementation are verified. Category, composition and
+compatibility qualification share JSON/JUnit/Markdown/CI rendering; original
+released authority reconstructs each qualified candidate before rendering, and
+public completion compares exact readonly outputs. Support is limited to
+observed case/matrix IDs, package versions/hashes and environment/configuration/
+capability hashes, never an untested cross-product. Failed/Incomplete diagnostics
+remain nonqualifying, including a JUnit qualification error.
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_evidence test_conformance_composition test_conformance_sdk_checks test_conformance_cli test_conformance_sanitation -q`
+passes 472 tests on Linux with zero skips. Readonly actual composition and
+compatibility diagnostic replay also passes; it does not exercise fresh native
+qualified publication. T073..T086, final common-source acceptance and reviewer
+checklist approval remain open. See the [current evidence and lifecycle
+audit](../specs/007-provider-conformance/plan.md#t071-evaluator-and-t072-finite-report-implementation-verified);
+older checkpoints below retain their original scope.
+
 Complete package-component replay now passes all 155 discovered composition/
 version identities with exact result-set equality and unchanged consumer bytes.
 Source-mode checks pass 148 rows. This verifies the existing declaration/

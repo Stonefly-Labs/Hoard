@@ -5081,6 +5081,10 @@ def _release_compatibility_runtime(run, inputs, compatibility_summary, native_ev
         native_evaluation=native_evaluation)
     write_new(run.root / "proofs/compatibility-diagnostic-summary.json",
               evidence.canonical_bytes(summary))
+    for name, contents in evidence.render_profile_diagnostics(
+            run.root, evidence.canonical_bytes(released), expected_inputs=inputs,
+            expected_report_sha256=evidence.digest(released)).items():
+        write_new(run.root / "diagnostics" / name, contents)
     print(evidence.canonical_bytes({
         **summary, "runtimeOriginVerified": inspected["runtimeOriginVerified"]}).decode("ascii"), flush=True)
     if qualify:
@@ -5089,6 +5093,11 @@ def _release_compatibility_runtime(run, inputs, compatibility_summary, native_ev
             native_evaluation=native_evaluation)
         write_new(run.root / "proofs/compatibility-fixture-qualification-report.json",
                   evidence.canonical_bytes(qualified))
+        outputs = evidence.render_native_compatibility_qualification(
+            run, evidence.canonical_bytes(qualified), summary_data=evidence.canonical_bytes(summary),
+            expected_inputs=inputs, native_evaluation=native_evaluation)
+        for name, contents in outputs.items():
+            write_new(run.root / "diagnostics" / name, contents)
         return native_evaluation
     return 0
 

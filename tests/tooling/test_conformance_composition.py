@@ -573,6 +573,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             (root / "proofs").mkdir()
+            (root / "diagnostics").mkdir()
             original = b'{"qualification":false,"phase":"compatibility-replay-admitted"}'
             sdk.write_new(root / "proofs/compatibility-runtime-active-summary.json", original)
             inputs = ConformanceAdmissionTests().inputs()
@@ -602,9 +603,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
             sdk.write_new(root / "proofs/compatibility-runtime-report.json", active_raw)
             token = object()
             output = io.StringIO()
+            presentations = {"compatibility-diagnostic.json": b'{"qualification":false}'}
             with contextlib.redirect_stdout(output), mock.patch.object(
                     evidence, "inspect_native_compatibility_report",
-                    return_value={"runtimeOriginVerified": True}) as inspect:
+                    return_value={"runtimeOriginVerified": True}) as inspect, mock.patch.object(
+                    evidence, "render_profile_diagnostics", return_value=presentations) as render:
                 status = sdk._release_compatibility_runtime(
                     run, inputs, evidence.load_json(original), token)
             self.assertEqual(status, 0)
@@ -623,6 +626,13 @@ class CompositionDiagnosticTests(unittest.TestCase):
             self.assertEqual(released_report, {
                 **evidence.load_json(active_raw), "resources": [dict(resource)]})
             self.assertEqual((root / "proofs/compatibility-runtime-report.json").read_bytes(), active_raw)
+            render.assert_called_once_with(
+                root, evidence.canonical_bytes(released_report), expected_inputs=inputs,
+                expected_report_sha256=evidence.digest(released_report))
+            for name, contents in presentations.items():
+                published = root / "diagnostics" / name
+                self.assertEqual(published.read_bytes(), contents)
+                self.assertEqual(published.stat().st_mode & 0o777, 0o400)
 
     def test_compatibility_replay_requires_actual_transient_snapshot_not_legacy_candidate_namespace(self):
         import hashlib

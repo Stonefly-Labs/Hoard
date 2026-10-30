@@ -15,6 +15,59 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T071 evaluator and T072 finite report implementation verified
+
+The strict evaluator prerequisite is now verified, not held open for the
+separately assigned T074 harness/baseline producer. All four finite native
+profile readers require original released authority or an independently
+observed original receipt, complete catalog/witness/proof correspondence and
+unchanged admitted inputs; report flags do not confer authority.
+
+The actual metadata/artifact source-bound controls below cover QC-38..44:
+every admitted field and stale origin (QC-38), exact case/parameter/execution
+sets (QC-39), proof bytes and runtime provenance (QC-40), exclusion/capability
+reclassification (QC-41), unsupported/incomplete outcomes and optimistic
+summaries (QC-42), preserved failed retries (QC-43), and nested schema/Unicode/
+duration/path/file/byte limits (QC-44). Live/released controls additionally
+reject rehashed replacements for held runtime, admission and settlement.
+Separate readonly verification rejects altered external receipts and shortened
+control inventories. The complete Linux evaluator module passes 237 tests in
+78.973 seconds with zero skips. Earlier native composition/compatibility and
+current category qualifications remain finite different-source observations,
+not common-baseline acceptance.
+
+T071 and T072 are checked. Composition and compatibility now reuse the category
+renderer for finite JSON/JUnit/Markdown/CI presentations, after their original
+released evaluator reconstructs the exact qualified report. Public completion
+also recomputes and compares every readonly presentation before emitting success.
+Support records exact observed matrix IDs, package versions/content and
+environment/configuration/capability hashes; no cross-product or baseline claim
+is inferred. Nonqualifying diagnostics retain a JUnit qualification error and
+derive Failed/Incomplete from inspected outcomes, not an optimistic state label.
+
+The lifecycle audit reuses existing real ordering rather than adding a second
+state machine: owned-root creation, frozen input admission, original runtime
+capture while Active, original evaluation, actual Released resources, then
+Complete derivation. Captured input digests, original command/proof bytes and
+immutable exclusions are checked again after release. Missing capture,
+changed inputs, retained resources and failed/incomplete outcomes cannot reach
+qualified presentation. No new public lifecycle journal is claimed.
+
+Linux validation:
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_evidence test_conformance_composition test_conformance_sdk_checks test_conformance_cli test_conformance_sanitation -q`
+passes all 472 tests in 112.173 seconds, zero skips. The existing modeled
+resource-projection fixture mocks its new rendering collaborator while
+preserving all original native-authority/resource/report assertions; separate
+renderer tests exercise strict validation and substitution rejection.
+Fresh readonly processes also render all four diagnostic formats from the
+actual retained composition `48faeec` (50 passing cases) and compatibility
+`c012f7b` (142 passing cases) packets. Both remain explicitly Incomplete and
+nonqualifying. Original evidence is unchanged. These replays do not exercise a
+new original-owner publication or establish current-source native acceptance;
+that remains part of T083 after source freeze.
+
+T073..T086 and reviewer checklist approval remain outstanding.
+
 ### Native mutation-control custody: metadata and artifacts independently verified
 
 The explicit `tests/tooling/test_conformance_evidence.py --native-category-controls`

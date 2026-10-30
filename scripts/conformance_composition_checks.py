@@ -1108,13 +1108,21 @@ def execute(repository, destination, *, qualify=False):
             run, inputs, inherited_context)
         summary["processResourcesReleased"] = True
         write_new(run.root / "proofs/composition-diagnostic-summary.json", evidence.canonical_bytes(summary))
+        released_sha, released_raw = evidence._readonly_report_proof(
+            run.root, "proofs/composition-runtime-released-report.json")
+        for name, contents in evidence.render_profile_diagnostics(
+                run.root, released_raw, expected_inputs=inputs, expected_report_sha256=released_sha).items():
+            write_new(run.root / "diagnostics" / name, contents)
         if qualify:
-            _, raw = evidence._readonly_report_proof(
-                run.root, "proofs/composition-runtime-released-report.json")
             qualified = evidence.derive_native_composition_qualification(
-                run, raw, expected_inputs=inputs, native_evaluation=native_sources._evaluation)
+                run, released_raw, expected_inputs=inputs, native_evaluation=native_sources._evaluation)
             write_new(run.root / "proofs/composition-fixture-qualification-report.json",
                       evidence.canonical_bytes(qualified))
+            outputs = evidence.render_native_composition_qualification(
+                run, evidence.canonical_bytes(qualified), original_report_data=released_raw,
+                expected_inputs=inputs, native_evaluation=native_sources._evaluation)
+            for name, contents in outputs.items():
+                write_new(run.root / "diagnostics" / name, contents)
             return native_sources._evaluation
         print(json.dumps(summary, sort_keys=True), flush=True)
         return 0

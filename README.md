@@ -167,7 +167,14 @@ No deadline, assertion or acceptance requirement changed. These control
 observations do not qualify the harness profile.
 These different-source fixture results do not establish a common baseline;
 harness, qualifying coordinator/aggregate and full-baseline acceptance remain
-unfinished. T071..T086 stay open.
+unfinished. T071 strict evaluation and T072 report implementation are now
+verified. Composition/compatibility reuse the category JSON/JUnit/Markdown/CI
+renderer with exact finite support scope and original released authority;
+public success also checks the retained presentation bytes. All 472 affected
+Linux regressions pass. Readonly replays of the original 50-case composition
+and 142-case compatibility diagnostic packets produce all four formats without
+claiming qualification. Fresh current-source native publication remains part
+of final acceptance. T073..T086 stay open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

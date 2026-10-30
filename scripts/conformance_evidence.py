@@ -287,10 +287,7 @@ def complete_native_category_invocation(invocation, native_evaluation):
     outputs = render_native_category_qualification(
         run, qualified, original_report_data=original, expected_inputs=inputs,
         native_evaluation=native_evaluation)
-    for name, contents in outputs.items():
-        _, observed = _readonly_report_proof(run.root, "diagnostics/" + name)
-        if observed != contents:
-            raise ConformanceError("ProofMismatch")
+    _verify_qualified_presentations(run, outputs)
     origin = native_category_qualification_receipt(
         run, qualified, original_report_data=original, expected_inputs=inputs,
         native_evaluation=native_evaluation)
@@ -332,6 +329,9 @@ def complete_native_composition_invocation(invocation, native_evaluation):
     inspected = inspect_native_composition_qualification(
         run, qualified, original_report_data=original, expected_inputs=inputs,
         native_evaluation=native_evaluation)
+    _verify_qualified_presentations(run, render_native_composition_qualification(
+        run, qualified, original_report_data=original, expected_inputs=inputs,
+        native_evaluation=native_evaluation))
     origin = {
         "kind": "native-composition-fixture-qualification",
         "inputsSha256": digest(inputs), "reportSha256": inspected["reportSha256"],
@@ -379,6 +379,9 @@ def complete_native_compatibility_invocation(invocation, native_evaluation):
     _, qualified = _readonly_report_proof(run.root, "proofs/compatibility-fixture-qualification-report.json")
     if admit_entity("QualificationReport", load_json(qualified)) != expected:
         raise ConformanceError("ProofMismatch")
+    _verify_qualified_presentations(run, render_native_compatibility_qualification(
+        run, qualified, summary_data=summary, expected_inputs=inputs,
+        native_evaluation=native_evaluation))
     origin = {
         "kind": "native-compatibility-fixture-qualification",
         "inputsSha256": digest(inputs), "reportSha256": hashlib.sha256(qualified).hexdigest(),
@@ -392,6 +395,13 @@ def complete_native_compatibility_invocation(invocation, native_evaluation):
         "reportSha256": origin["reportSha256"], "caseCount": len(expected["results"]),
         "witnessCount": len(expected["witnesses"]), "qualificationOrigin": origin}).decode("ascii"))
     return 0
+
+
+def _verify_qualified_presentations(run, outputs):
+    for name, contents in outputs.items():
+        _, observed = _readonly_report_proof(run.root, "diagnostics/" + name)
+        if observed != contents:
+            raise ConformanceError("ProofMismatch")
 
 
 def _invalid():
@@ -1473,31 +1483,63 @@ def render_native_category_qualification(
     inspected = inspect_native_category_qualification(
         run, report_data, original_report_data=original_report_data,
         expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    return _render_verified_fixture_qualification(report_data, inspected)
+
+
+def render_native_composition_qualification(
+        run, report_data, *, original_report_data, expected_inputs, native_evaluation):
+    inspected = inspect_native_composition_qualification(
+        run, report_data, original_report_data=original_report_data,
+        expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    return _render_verified_fixture_qualification(report_data, inspected)
+
+
+def render_native_compatibility_qualification(
+        run, report_data, *, summary_data, expected_inputs, native_evaluation):
+    inspected = inspect_native_compatibility_qualification(
+        run, report_data, summary_data=summary_data,
+        expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    return _render_verified_fixture_qualification(report_data, inspected)
+
+
+def _render_verified_fixture_qualification(report_data, inspected):
     report = admit_entity("QualificationReport", load_json(report_data))
     inputs = report["inputs"]
     profile = inputs["profileId"]
     classes = {
         "metadata": {"sqlite": "durable-local-fixture", "memory": "in-process-logical-fixture"},
         "artifacts": {"local": "durable-local-fixture", "object": "object-semantics-fixture"},
+        "composition": {"none": "composition-lifecycle-fixture"},
+        "compatibility": {"none": "finite-compatibility-fixture"},
     }[profile]
-    bindings = sorted({row["bindingId"] for row in report["results"] if row["bindingId"] != "none"})
-    if set(bindings) != set(classes) or {row["bindingId"] for row in inputs["bindings"]} != set(classes):
+    category = profile in ("metadata", "artifacts")
+    bindings = sorted({row["bindingId"] for row in report["results"]
+                       if not category or row["bindingId"] != "none"})
+    if (set(bindings) != set(classes)
+            or category and {row["bindingId"] for row in inputs["bindings"]} != set(classes)):
         raise ConformanceError("EvidenceIncomplete")
+    prefix = ("category-" if category else "") + profile + "-fixture-qualification"
     cases = [{key: row[key] for key in ("bindingId", "matrixId", "caseId", "status", "exclusionRule")}
              for row in report["results"]]
     summary = {
-        "schemaVersion": 1, "kind": "category-fixture-qualification-summary",
+        "schemaVersion": 1, "kind": ("category" if category else "profile") + "-fixture-qualification-summary",
         "qualification": True, "baselineQualification": False, "state": "Complete", "code": "None",
-        "scope": "category-fixture-qualification", "profileId": profile,
+        "scope": "category-fixture-qualification" if category else profile + "-fixture-qualification",
+        "profileId": profile,
         "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "sourceRevision": inputs["sourceRevision"], "inputsSha256": digest(inputs),
         "reportSha256": inspected["reportSha256"], "caseStates": inspected["caseStates"],
         "witnessCount": len(report["witnesses"]), "proofCount": len(report["proofs"]), "cases": cases,
         "support": {
             "status": "QualifiedFixtureScope", "bindingSlots": bindings, "classes": classes,
+            "environmentSha256": inputs["environmentSha256"],
+            "configurationSha256": inputs["configurationSha256"],
+            "capabilitySha256": inputs["capabilitySha256"],
+            "matrixIds": sorted({row["matrixId"] for row in cases}),
+            "packages": [{key: package[key] for key in ("packageId", "version", "sha256")}
+                         for package in sorted(inputs["packages"], key=_package_key)],
             "exclusions": [{key: row[key] for key in ("bindingId", "matrixId", "caseId", "exclusionRule")}
                            for row in cases if row["status"] == "NotApplicable"]}}
-    prefix = f"category-{profile}-fixture-qualification"
     suite = ET.Element("testsuite", {
         "name": prefix, "tests": str(len(cases)), "failures": "0", "errors": "0",
         "skipped": str(inspected["caseStates"]["NotApplicable"])})
@@ -1652,6 +1694,24 @@ def inspect_native_composition_qualification(
     return MappingProxyType({
         "qualification": True, "scope": "native-composition-fixture-qualification",
         "profileId": "composition", "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "caseCount": len(report["results"]), "witnessCount": len(report["witnesses"]),
+        "caseStates": MappingProxyType({
+            state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}),
+    })
+
+
+def inspect_native_compatibility_qualification(
+        run, report_data, *, summary_data, expected_inputs, native_evaluation):
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    expected = derive_native_compatibility_qualification(
+        run, summary_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    if report != expected:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "qualification": True, "scope": "native-compatibility-fixture-qualification",
+        "profileId": "compatibility", "reportSha256": hashlib.sha256(report_data).hexdigest(),
         "caseCount": len(report["results"]), "witnessCount": len(report["witnesses"]),
         "caseStates": MappingProxyType({
             state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}),
@@ -1839,13 +1899,34 @@ def render_category_diagnostics(root, report_data, *, expected_inputs, expected_
     if (inspected["qualification"] or report["qualification"] or report["state"] != "Incomplete"
             or report["scope"] != ("category-runtime-diagnostic",)):
         raise ConformanceError("EvidenceIncomplete")
+    return _render_diagnostic_summary(report, inspected)
+
+
+def render_profile_diagnostics(root, report_data, *, expected_inputs, expected_report_sha256):
+    inputs = admit_entity("RunInputs", expected_inputs)
+    if inputs["profileId"] in ("metadata", "artifacts"):
+        return render_category_diagnostics(
+            root, report_data, expected_inputs=inputs, expected_report_sha256=expected_report_sha256)
+    inspected = inspect_profile_report(
+        root, report_data, expected_inputs=inputs, expected_report_sha256=expected_report_sha256)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    if (inspected["qualification"] or report["qualification"]
+            or report["state"] not in ("Failed", "Incomplete")
+            or report["scope"] != (inputs["profileId"] + "-runtime-diagnostic",)):
+        raise ConformanceError("EvidenceIncomplete")
+    return _render_diagnostic_summary(report, inspected)
+
+
+def _render_diagnostic_summary(report, inspected):
     inputs = report["inputs"]
     profile = inputs["profileId"]
+    category = profile in ("metadata", "artifacts")
+    state = failure_status(inspected["code"])
     states = {state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}
     summary = {
-        "schemaVersion": 1, "kind": "category-diagnostic-summary",
-        "qualification": False, "state": "Incomplete", "code": inspected["code"],
-        "scope": "category-report-structure-diagnostic", "profileId": profile,
+        "schemaVersion": 1, "kind": ("category" if category else "profile") + "-diagnostic-summary",
+        "qualification": False, "state": state, "code": inspected["code"],
+        "scope": ("category" if category else "profile") + "-report-structure-diagnostic", "profileId": profile,
         "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "sourceRevision": inputs["sourceRevision"], "inputsSha256": digest(inputs),
         "reportSha256": inspected["reportSha256"], "caseStates": states,
@@ -1873,13 +1954,13 @@ def render_category_diagnostics(root, report_data, *, expected_inputs, expected_
                   "error", {"type": "EvidenceIncomplete", "message": "Diagnostic evidence is not qualification."})
     markdown = (
         f"## {profile} conformance diagnostics\n\n"
-        "**Incomplete: diagnostic evidence is not qualification.**\n\n"
+        f"**{state}: diagnostic evidence is not qualification.**\n\n"
         "| Case state | Count |\n| --- | ---: |\n"
         + "".join(f"| {state} | {count} |\n" for state, count in states.items())
         + f"\nSource: `{inputs['sourceRevision']}`\n\nReport SHA-256: `{inspected['reportSha256']}`\n\n"
         "Only the catalogued fixture slots and frozen exclusions are described. "
         "No production, external-service, protocol, identity or HA support is inferred.\n").encode("utf-8")
-    prefix = "category-" + profile
+    prefix = ("category-" if category else "") + profile
     if inputs["mode"] == "qualification":
         prefix += "-qualification"
     outputs = {

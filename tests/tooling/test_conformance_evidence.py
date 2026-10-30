@@ -4889,6 +4889,155 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     None, evidence.canonical_bytes(report), expected_inputs=history._inputs, native_evaluation=None)
         origin.assert_called_once()
 
+    def test_all_native_profile_presentations_require_original_released_authority(self):
+        for profile in ("composition", "compatibility"):
+            render = getattr(evidence, f"render_native_{profile}_qualification", None)
+            self.assertTrue(callable(render), "Every implemented profile needs guarded finite presentations.")
+            context = {"original_report_data": b"{}"} if profile == "composition" else {"summary_data": b"{}"}
+            with self.subTest(profile=profile), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^OwnershipInvalid$"):
+                render(None, b"{}", expected_inputs=self.inputs, native_evaluation=None, **context)
+
+    def test_noncategory_diagnostic_presentations_preserve_failed_and_incomplete_without_qualification(self):
+        render = getattr(evidence, "render_profile_diagnostics", None)
+        self.assertTrue(callable(render), "Failed non-category reports need the same safe diagnostic projections.")
+        for state, code in (("Failed", "AssertionFailed"), ("Incomplete", "EvidenceIncomplete")):
+            report = ConformanceAdmissionTests().composition_report()
+            report.update(state=state, scope=["composition-runtime-diagnostic"])
+            row = report["results"][0]
+            row["status"] = state
+            row["attempts"][0].update(status=state, diagnosticCode=code)
+            for witness in report["witnesses"]:
+                witness["status"] = state
+            raw = evidence.canonical_bytes(report)
+            expected_sha = hashlib.sha256(raw).hexdigest()
+            inspected = {
+                "qualification": False, "code": code, "reportSha256": expected_sha,
+                "scope": "profile-report-structure-diagnostic"}
+            with self.subTest(state=state), mock.patch.object(
+                    evidence, "inspect_profile_report", return_value=inspected) as verify:
+                outputs = render(ROOT, raw, expected_inputs=report["inputs"],
+                                 expected_report_sha256=expected_sha)
+                verify.assert_called_once_with(
+                    ROOT, raw, expected_inputs=evidence.admit_entity("RunInputs", report["inputs"]),
+                    expected_report_sha256=expected_sha)
+                summary = evidence.load_json(outputs["composition-diagnostic.json"])
+                self.assertEqual(summary["state"], state)
+                self.assertFalse(summary["qualification"])
+                self.assertEqual(summary["support"]["status"], "NotQualified")
+                suite = ET.fromstring(outputs["composition-diagnostic.junit.xml"])
+                self.assertGreaterEqual(int(suite.attrib["errors"]), 1)
+                self.assertEqual(int(suite.attrib["failures"]), int(state == "Failed"))
+                for contents in outputs.values():
+                    self.assertNotIn(str(ROOT).encode(), contents)
+
+    def test_composition_presentations_reuse_verified_exact_cases_without_private_proof_contents(self):
+        render = getattr(evidence, "render_native_composition_qualification", None)
+        self.assertTrue(callable(render), "Composition needs the same finite presentation set as categories.")
+        report = ConformanceAdmissionTests().composition_report()
+        inputs = report["inputs"]
+        inputs.update(mode="qualification", sourceState="clean-local")
+        for witness in report["witnesses"]:
+            witness["inputSha256"] = evidence.digest(inputs)
+        report["postInputSha256"] = evidence.digest(inputs)
+        report["proofs"].update({
+            "proofs/category-composition-qualification-completion-inputs.json": evidence.digest(inputs),
+            "proofs/private-canary-source-transport.json": "e" * 64})
+        report["resources"] = [{
+            "runId": inputs["runId"], "rootId": "root", "childPid": 0,
+            "childStartSha256": "0" * 64, "state": "Released",
+            "cleanupDurationMs": 1, "diagnosticCode": "None"}]
+        report.update(qualification=True, state="Complete", scope=["composition-fixture-qualification"])
+        raw = evidence.canonical_bytes(report)
+        inspected = {
+            "qualification": True, "scope": "native-composition-fixture-qualification",
+            "profileId": "composition", "reportSha256": hashlib.sha256(raw).hexdigest(),
+            "caseStates": {state: sum(row["status"] == state for row in report["results"])
+                           for state in evidence.STATUSES}}
+        owner, token = object(), object()
+        with mock.patch.object(evidence, "inspect_native_composition_qualification",
+                               return_value=inspected) as verify:
+            outputs = render(owner, raw, original_report_data=b"original",
+                             expected_inputs=inputs, native_evaluation=token)
+        verify.assert_called_once_with(
+            owner, raw, original_report_data=b"original", expected_inputs=inputs, native_evaluation=token)
+        prefix = "composition-fixture-qualification"
+        self.assertEqual(set(outputs), {
+            prefix + ".json", prefix + ".junit.xml", prefix + ".md", prefix + "-ci-summary.md"})
+        summary = evidence.load_json(outputs[prefix + ".json"])
+        self.assertTrue(summary["qualification"])
+        self.assertFalse(summary["baselineQualification"])
+        self.assertEqual(summary["support"]["classes"], {"none": "composition-lifecycle-fixture"})
+        self.assertEqual(summary["support"]["environmentSha256"], inputs["environmentSha256"])
+        self.assertEqual(summary["caseStates"], inspected["caseStates"])
+        self.assertEqual(summary["cases"], [
+            {key: row[key] for key in ("bindingId", "matrixId", "caseId", "status", "exclusionRule")}
+            for row in report["results"]])
+        suite = ET.fromstring(outputs[prefix + ".junit.xml"])
+        self.assertEqual(int(suite.attrib["tests"]), len(report["results"]))
+        self.assertEqual(int(suite.attrib["errors"]), 0)
+        for contents in outputs.values():
+            self.assertNotIn(b"private-canary", contents)
+            self.assertNotIn(b"runtimeAssemblies", contents)
+        self.assertIn(b"not the full baseline", outputs[prefix + ".md"])
+        self.assertEqual(outputs[prefix + ".md"], outputs[prefix + "-ci-summary.md"])
+        with mock.patch.object(evidence, "inspect_native_composition_qualification",
+                               side_effect=evidence.ConformanceError("ProofMismatch")):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                render(owner, raw, original_report_data=b"changed",
+                       expected_inputs=inputs, native_evaluation=token)
+
+    def test_compatibility_presentations_reconstruct_the_candidate_and_bound_support_to_exact_inputs(self):
+        import conformance_case_catalog as catalog
+
+        factory = ConformanceAdmissionTests()
+        inputs = factory.compatibility_inputs()
+        inputs.update(mode="qualification", sourceState="clean-local")
+        report = factory.report()
+        case = next(row for row in catalog.expected_cases("compatibility") if row.case_id == "VERSION")
+        witness = {
+            **report["witnesses"][0], "testIdentity": case.witnesses[0],
+            "bindingId": "none", "matrixId": "version-runtime",
+            "inputSha256": evidence.digest(inputs)}
+        material = evidence.compatibility_case_material(
+            inputs, case_id=case.case_id, matrix_id=case.matrix_id,
+            witnesses=[witness], sequence=1, started_ms=0, ended_ms=3)
+        report.update(
+            inputs=inputs, postInputSha256=evidence.digest(inputs),
+            results=[evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]])],
+            witnesses=[witness], proofs={
+                "proofs/modeled-runtime.json": witness["proofSha256"],
+                "proofs/category-compatibility-qualification-completion-inputs.json": evidence.digest(inputs),
+                **{path: hashlib.sha256(raw).hexdigest() for path, raw in material["sourceProofs"].items()}},
+            resources=[{
+                "runId": inputs["runId"], "rootId": "root", "childPid": 0,
+                "childStartSha256": "0" * 64, "state": "Released",
+                "cleanupDurationMs": 1, "diagnosticCode": "None"}],
+            state="Complete", qualification=True, scope=["compatibility-fixture-qualification"])
+        expected = evidence.admit_entity("QualificationReport", report)
+        raw = evidence.canonical_bytes(report)
+        owner, token = object(), object()
+        with mock.patch.object(evidence, "derive_native_compatibility_qualification",
+                               return_value=expected) as derive:
+            outputs = evidence.render_native_compatibility_qualification(
+                owner, raw, summary_data=b"original-summary", expected_inputs=inputs, native_evaluation=token)
+            derive.assert_called_once_with(
+                owner, b"original-summary", expected_inputs=inputs, native_evaluation=token)
+            changed = evidence.load_json(raw)
+            changed["scope"] = ["optimistic-unobserved-scope"]
+            with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                evidence.render_native_compatibility_qualification(
+                    owner, evidence.canonical_bytes(changed), summary_data=b"original-summary",
+                    expected_inputs=inputs, native_evaluation=token)
+        summary = evidence.load_json(outputs["compatibility-fixture-qualification.json"])
+        self.assertEqual(summary["support"]["classes"], {"none": "finite-compatibility-fixture"})
+        self.assertEqual(summary["support"]["matrixIds"], [case.matrix_id])
+        self.assertEqual(summary["support"]["packages"], [
+            {key: package[key] for key in ("packageId", "version", "sha256")}
+            for package in sorted(inputs["packages"], key=evidence._package_key)])
+        self.assertEqual(summary["support"]["configurationSha256"], inputs["configurationSha256"])
+        self.assertFalse(summary["baselineQualification"])
+
     def test_composition_and_compatibility_qualification_require_original_released_authority(self):
         from types import SimpleNamespace
 
