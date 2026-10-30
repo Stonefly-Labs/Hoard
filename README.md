@@ -1251,6 +1251,12 @@ command bytes, and retains settings/inventory outside transient stores.
 Released evaluation re-ingests every foundation witness/proof and formatting
 receipt under the same held token. Focused checks pass457 tests,23 host native
 skips. Fresh immutable native validation is pending; this is not qualification.
+Original `26d647d` completes48 actual formatting commands and all86 foundation
+parameters, then rejects at input-frame comparison because the independent
+reader compares a normalized tuple with its unnormalized list preimage.
+The repair admits both through the existing RunInputs schema. Offline readonly
+replay now reconstructs220 proof files/61 commands without minting authority;
+the failed original remains failed and fresh native controls are required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -17,6 +17,59 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_foundation_scope_inputs_reconstruct_original_frame_and_reject_changed_preimages(self):
+        import copy
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(profileId="compatibility", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        inputs = evidence.admit_entity("RunInputs", inputs)
+        assembly, scope = "Hoard.Foundation.Tests", "Hoard.Foundation.Tests.DeclarationContractTests"
+        image = {"id": "test-assembly", "path": f"{sdk.FOUNDATION_RUNTIME_ROOT}/{assembly}/{assembly}.dll",
+                 "sha256": "a" * 64}
+        request = {"methods": [scope + ".Public_consumers_enforce_declaration_shape"], "assemblies": [image]}
+        files = {"stores/compatibility-architecture/manifest.json": "b" * 64}
+        variables = {"HOARD_FOUNDATION_EVIDENCE": "/owned/stores/compatibility-architecture/manifest.json"}
+        original = {
+            **inputs, "runtimeAssemblies": {image["path"]: image["sha256"]},
+            "configurationSha256": evidence.digest({
+                "configuration": inputs["configurationSha256"], "controllerReadInputs": files,
+                "environmentSha256": evidence.digest(variables), "discoveryRequestSha256": evidence.digest(request)}),
+            "invocation": ["component", "inherited", assembly, scope],
+        }
+        for defect in ("none", "foreign-source", "changed-image", "changed-scope", "changed-configuration",
+                       "changed-controller-inputs", "changed-discovery", "changed-environment"):
+            local = evidence.load_json(evidence.canonical_bytes(original))
+            selected_files, selected_request, selected_variables = files, request, variables
+            if defect == "foreign-source":
+                local["sourceRevision"] = "0" * 40
+            elif defect == "changed-image":
+                local["runtimeAssemblies"][image["path"]] = "0" * 64
+            elif defect == "changed-scope":
+                local["invocation"][-1] += "Foreign"
+            elif defect == "changed-configuration":
+                local["configurationSha256"] = "0" * 64
+            elif defect == "changed-controller-inputs":
+                selected_files = {name: "0" * 64 for name in files}
+            elif defect == "changed-discovery":
+                selected_request = {**copy.deepcopy(request), "methods": []}
+            elif defect == "changed-environment":
+                selected_variables = {**variables, "HOARD_FOUNDATION_EVIDENCE": "/foreign/manifest.json"}
+            local = evidence.admit_entity("RunInputs", local)
+            with self.subTest(defect=defect):
+                if defect == "none":
+                    self.assertEqual(sdk._admit_foundation_scope_inputs(
+                        inputs, local, selected_request, selected_files, selected_variables,
+                        assembly=assembly, scope=scope), [image])
+                else:
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                        sdk._admit_foundation_scope_inputs(
+                            inputs, local, selected_request, selected_files, selected_variables,
+                            assembly=assembly, scope=scope)
+
     def test_foundation_formatting_requires_all_original_fixture_roots_and_isolated_solution(self):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence

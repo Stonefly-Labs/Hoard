@@ -1452,6 +1452,13 @@ reconstructs scopes, inputs, formatting and original proofs using the same
 held token and actual owner. The new native mutation controls and this combined
 path still need fresh immutable Linux acceptance;457 affected host checks pass
 with23 native-prerequisite skips. Qualification remains false.
+The first held-origin original completes all48 formatting commands and86
+foundation parameters, then rejects an independently reconstructed input frame
+that was not schema-normalized. The repair normalizes that frame and preserves
+all preimage mutation rejections;458 affected tests pass with23 host skips.
+Offline readonly replay checks220 retained proofs/61 commands without granting
+authority. The original remains failed; fresh original native controls remain
+required.
 
 ## Offline Correspondence Inspection
 

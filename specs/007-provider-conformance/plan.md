@@ -5650,6 +5650,26 @@ passes457 tests in110.841 seconds with23 host native-prerequisite skips;
 failed discovery; it is superseded only as a command-selection error by this
 corrected passing run, not erased. Fresh immutable native acceptance is required;
 diagnostic mode, full qualification and T071..T086 remain unchanged/open.
+Original `26d647d` attempt `be99ba19a88e4589803fcccec87ea158` exits1/
+499085.551 ms at the independent scope-input guard. Actual original formatting
+finishes48 commands:34 architecture, five provider, two host, six compatibility
+projects and one solution. All86 foundation parameters/nine scopes execute too.
+Readonly diagnosis shows the sole input difference is normalized tuple
+`invocation` versus the reader's unnormalized list. Both independently derived
+frames now pass through the existing RunInputs schema before comparison;
+source/image/scope/configuration/controller/discovery/environment mutations
+remain rejecting. Offline readonly reconstruction with the repaired reader
+checks220 proof files,12 runtime commands and49 original preparation/formatting
+commands, explicitly without native authority. The unsuccessful original
+remains failed. The complete affected selector above passes458 tests in
+111.797 seconds with23 host skips; `git diff --check` passes.
+Fresh original held capture and Released mutation controls are still required.
+Original `113b310` composition CI run41046203954/job124031992729 separately
+stops trusted tooling at239/835 tests after655541.600 ms, zero observed
+failures/errors/skips/unexpected bytes. Its outcome remains failed; the earlier
+successful `ba791bc` original does not repair it. The exact subsequent838-test
+source still needs an original standard native tooling run under600 seconds;
+no limit, test inventory or original failure is relaxed.
 
 ### Compatibility logical case linkage and released presentation
 

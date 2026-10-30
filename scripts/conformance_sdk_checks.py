@@ -4426,6 +4426,21 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
     })
 
 
+def _admit_foundation_scope_inputs(inputs, local, request, files, variables, *, assembly, scope):
+    images = [row for row in request["assemblies"]
+              if row["path"].startswith(f"{FOUNDATION_RUNTIME_ROOT}/{assembly}/")]
+    expected = evidence.admit_entity("RunInputs", {
+        **inputs, "runtimeAssemblies": {row["path"]: row["sha256"] for row in images},
+        "configurationSha256": evidence.digest({
+            "configuration": inputs["configurationSha256"], "controllerReadInputs": files,
+            "environmentSha256": evidence.digest(variables), "discoveryRequestSha256": evidence.digest(request)}),
+        "invocation": ["component", "inherited", assembly, scope],
+    })
+    if local != expected:
+        raise evidence.ConformanceError("ProofMismatch")
+    return images
+
+
 def inspect_foundation_runtime_scope(root, inputs, runtime_summary, formatting_summary, prepared, *, retained=False):
     from conformance_inherited import (
         FOUNDATION_ASSEMBLIES, FOUNDATION_INVENTORY_PATH, admit_foundation_discovery,
@@ -4569,17 +4584,10 @@ def inspect_foundation_runtime_scope(root, inputs, runtime_summary, formatting_s
         scope_inputs_sha, scope_inputs_raw = read(manifest["runInputsPath"], 16 * 1024**2)
         local = evidence.admit_entity("RunInputs", evidence.load_json(scope_inputs_raw))
         request = requests[assembly]
-        images = [row for row in request["assemblies"]
-                  if row["path"].startswith(f"{FOUNDATION_RUNTIME_ROOT}/{assembly}/")]
         variables = {"HOARD_FOUNDATION_EVIDENCE": str(root / prepared["manifestPath"])}
-        expected_inputs = {
-            **inputs, "runtimeAssemblies": {row["path"]: row["sha256"] for row in images},
-            "configurationSha256": evidence.digest({
-                "configuration": inputs["configurationSha256"], "controllerReadInputs": files,
-                "environmentSha256": evidence.digest(variables), "discoveryRequestSha256": evidence.digest(request)}),
-            "invocation": ["component", "inherited", assembly, test_class],
-        }
-        if (local != expected_inputs or manifest["runInputsPath"] != f"proofs/inherited-inputs-{attempt}.json"
+        images = _admit_foundation_scope_inputs(
+            inputs, local, request, files, variables, assembly=assembly, scope=test_class)
+        if (manifest["runInputsPath"] != f"proofs/inherited-inputs-{attempt}.json"
                 or manifest["assemblies"] != images or manifest["expected"] != list(expected)):
             raise evidence.ConformanceError("ProofMismatch")
         runtime = root / FOUNDATION_RUNTIME_ROOT / assembly

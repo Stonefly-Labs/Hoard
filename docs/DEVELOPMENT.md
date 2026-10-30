@@ -9676,6 +9676,21 @@ passes457 tests in110.841 seconds,23 host native-prerequisite skips;
 `git diff --check` passes. A preceding selector misspelled a test class and
 failed discovery; the corrected complete command above passes. No original
 runtime/formatting acceptance, qualification or T071 completion is inferred.
+Original `26d647d` attempt `be99ba19a88e4589803fcccec87ea158` exits1 after
+499085.551 ms at independent scope-input comparison. It genuinely completes
+48 formatting commands (34 architecture/five provider/two host/six compatibility
+projects plus the solution) and all86 foundation parameters/nine scopes.
+Exact-source readonly diagnosis identifies only `invocation` as different:
+schema-admitted tuples were compared against an unnormalized list preimage.
+The reader now admits its independently reconstructed complete RunInputs frame
+before comparison. Focused controls retain rejection of changed source, image,
+scope, configuration, controller inputs, discovery and environment preimages.
+An independent offline readonly reconstruction with the repaired reader checks
+all220 retained proof files,12 discovery/class commands and49 original
+preparation/formatting commands. It explicitly has no native authority and does
+not relabel the failed original. The corrected affected selector above passes
+458 tests in111.797 seconds,23 host skips; `git diff --check` passes. Fresh
+original executor-held capture/released mutation validation remains required.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
