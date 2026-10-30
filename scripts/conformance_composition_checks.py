@@ -30,7 +30,8 @@ from conformance_sdk_checks import (
     BUDGETS, _RuntimeObservationError, category_command_proof, environment, verify_category_command_proof, write_new,
 )
 from conformance_sources import (
-    NativeCompositionEvaluation, NativeCompositionSources, read_bounded, runtime_arguments, runtime_settings,
+    NativeCompositionEvaluation, NativeCompositionSources, read_bounded, runtime_arguments,
+    runtime_runner, runtime_runner_material, runtime_settings,
 )
 
 
@@ -602,7 +603,8 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
     receipt, record = verify_category_command_proof(
         root, run_id=inputs["runId"], root_id=owner["rootId"], manifest=manifest,
         arguments=runtime_arguments(assembly, root / settings_path,
-                                    [row["testIdentity"] for row in expected_rows()]),
+                                    [row["testIdentity"] for row in expected_rows()],
+                                    runner_prefix=runtime_runner(root, inputs)["prefix"]),
         cwd=staged, settings_data=settings, started_ms=started_ms, ended_ms=ended_ms)
     required = {
         manifest_path, "runtime-owner.json", "proofs/composition-inputs.json", settings_path, command_path,
@@ -615,7 +617,8 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
     config = "stores/candidate.NuGet.Config"
     bound_paths = {
         manifest_path, "proofs/composition-inputs.json", "runtime-owner.json", settings_path,
-        "proofs/environment-admission.json", "proofs/composition-environment-admission.json", config,
+        "proofs/environment-admission.json", "proofs/composition-environment-admission.json",
+        "proofs/sdk-vstest-inputs.json", config,
         *(path.relative_to(root).as_posix() for path in (
             assembly, staged / f"{HOST}.dll", staged / f"{SDK}.dll", staged / f"{LOGGER}.dll",
             staged / "Hoard.Composition.Tests.deps.json", staged / "Hoard.Composition.Tests.runtimeconfig.json")),
@@ -896,6 +899,9 @@ def _runtime(run, repository, source, sources, config, feed, records, replay, *,
     })
     write_new(run.root / "proofs/composition-environment-admission.json",
               evidence.canonical_bytes(observed_environment))
+    _, runner_material = runtime_runner_material(observed_environment)
+    runner_path = "proofs/sdk-vstest-inputs.json"
+    write_new(run.root / runner_path, runner_material)
     ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
     if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
         raise evidence.ConformanceError("InputChanged")
@@ -915,7 +921,9 @@ def _runtime(run, repository, source, sources, config, feed, records, replay, *,
                for root in (source, replay) for path in root.rglob("packages.lock.json")},
             **{(source / record["preparedLock"]).relative_to(run.root).as_posix(): record["preparedSha256"]
                for record in records}},
-        "runtimeAssemblies": {row["path"]: row["sha256"] for row in images},
+        "runtimeAssemblies": {
+            **{row["path"]: row["sha256"] for row in images},
+            runner_path: hashlib.sha256(runner_material).hexdigest()},
         "bindings": [], "baselines": [], "configurationSha256": evidence.file_sha256(config),
         "capabilitySha256": evidence.digest({}), "environment": observed_environment,
         "environmentSha256": evidence.digest(observed_environment), "budgets": BUDGETS,
@@ -946,6 +954,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay, *,
     bound_paths = (
         manifest_path, inputs_path, run.root / "runtime-owner.json", settings_path,
         run.root / "proofs/environment-admission.json", run.root / "proofs/composition-environment-admission.json",
+        run.root / runner_path,
         config, assembly, staged / f"{HOST}.dll", staged / f"{SDK}.dll", staged / f"{LOGGER}.dll",
         staged / "Hoard.Composition.Tests.deps.json", staged / "Hoard.Composition.Tests.runtimeconfig.json",
     )
@@ -955,12 +964,18 @@ def _runtime(run, repository, source, sources, config, feed, records, replay, *,
         (run.root / image["path"]).chmod(0o400)
     command_inputs = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path)
                       for path in bound_paths}
-    arguments = runtime_arguments(assembly, settings_path, [row["testIdentity"] for row in expected])
+    runner = runtime_runner(run.root, inputs)
+    arguments = runtime_arguments(
+        assembly, settings_path, [row["testIdentity"] for row in expected], runner_prefix=runner["prefix"])
     print(json.dumps({"qualification": False, "phase": "runtime-command"}), flush=True)
     started = time.monotonic() * 1000
-    result = run.command(
-        arguments, cwd=staged, kind="tests", cache_id="composition-runtime", timeout=180,
-        record_execution=True, execution_inputs=tuple(command_inputs))
+    try:
+        result = run.command(
+            arguments, cwd=staged, kind="tests", cache_id="composition-runtime", timeout=180,
+            record_execution=True, execution_inputs=tuple(command_inputs))
+    finally:
+        if runtime_runner(run.root, inputs) != runner:
+            raise evidence.ConformanceError("InputChanged")
     ended = time.monotonic() * 1000
     parent_sha = category_command_proof(
         run, result, arguments=arguments, cwd=staged, manifest=manifest,

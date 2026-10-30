@@ -997,6 +997,10 @@ instead of leaving those rows as placeholder Incomplete outcomes. Host
 regressions and all eleven genuine native controls pass at `904384b`, including
 changed quality-proof bytes. Diagnostic mode/full-profile gaps still prevent
 qualification.
+Composition and compatibility commands now also bind the selected SDK VSTest
+closure into their frozen execution inputs, select the exact runtime/runner and
+recheck the closure after execution. Host regressions pass; fresh native
+verification of this increment remains pending.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

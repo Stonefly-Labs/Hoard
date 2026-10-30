@@ -380,6 +380,11 @@ controls, including changed-QC-proof rejection, and replays all50 finite CP/QC
 rows. Inherited/tooling acceptance and generic qualification remain required;
 diagnostic mode still cannot qualify.
 
+Composition and compatibility commands additionally freeze the exact SDK/runtime
+VSTest closure as original execution inputs and recheck it after execution.
+Retained composition replay requires that same selected runner, not default SDK
+resolution. Host regressions pass; new native execution remains pending.
+
 All packages use their actual local versions (initial repository baseline
 `0.1.0`) and exact content hashes. Normal platform host/abstractions versions
 are `0.1.0`; illustrative version-policy cases below are distinct.

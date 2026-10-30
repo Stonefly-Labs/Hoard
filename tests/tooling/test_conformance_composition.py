@@ -257,7 +257,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_sdk_checks as sdk
         import xml.etree.ElementTree as ET
 
-        for defect in ("none", "missing-context", "foreign-scope", "changed-input", "changed-after"):
+        for defect in ("none", "missing-context", "foreign-scope", "changed-input", "changed-after", "changed-runner"):
             with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -304,8 +304,16 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 command = mock.Mock(side_effect=execute)
                 run = SimpleNamespace(root=root, command=command)
                 scope = None if defect == "foreign-scope" else ("compatibility", "architecture")
-                with mock.patch.object(sdk, "category_command_proof"):
-                    if defect not in ("none", "changed-after"):
+                runner = {
+                    "prefix": ("dotnet", "exec", "--fx-version", "10.0.100",
+                               "/modeled/toolchain/sdk/10.0.100/vstest.console.dll"),
+                    "inputFiles": {"proofs/sdk-vstest-inputs.json": "b" * 64}}
+                with mock.patch.object(sdk, "category_command_proof"), \
+                        mock.patch.object(
+                            sdk, "runtime_runner", return_value=runner,
+                            side_effect=[runner, {**runner, "inputFiles": {"proofs/sdk-vstest-inputs.json": "c" * 64}}]
+                            if defect == "changed-runner" else None) as frozen_runner:
+                    if defect not in ("none", "changed-after", "changed-runner"):
                         with self.assertRaisesRegex(evidence.ConformanceError,
                                                     "InputChanged" if defect == "changed-input" else "WitnessMissing"):
                             sdk.runtime_command(
@@ -313,7 +321,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                                 architecture_preparation=None if defect == "missing-context" else prepared)
                         command.assert_not_called()
                         continue
-                    if defect == "changed-after":
+                    if defect in ("changed-after", "changed-runner"):
                         with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
                             sdk.runtime_command(
                                 run, assembly, manifest, category_scope=scope, architecture_preparation=prepared)
@@ -322,6 +330,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     sdk.runtime_command(run, assembly, manifest, category_scope=scope, architecture_preparation=prepared)
                 selected = command.call_args.kwargs["execution_inputs"]
                 self.assertTrue({manifest_path, map_path} <= set(selected))
+                self.assertIn("proofs/sdk-vstest-inputs.json", selected)
+                self.assertEqual(tuple(command.call_args.args[0][:len(runner["prefix"])]), runner["prefix"])
+                self.assertEqual(frozen_runner.call_count, 2)
                 self.assertEqual(len(selected), len(set(selected)))
                 settings = ET.fromstring((root / f'proofs/settings-{manifest["attemptId"]}.runsettings').read_bytes())
                 self.assertEqual(settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_FOUNDATION_EVIDENCE"),
@@ -1322,6 +1333,21 @@ def native_composition_origin_tests(evaluation, *, released):
 
         def test_changed_quality_derivation_bytes_cannot_borrow_the_original_report(self):
             path = owner.root / "proofs/composition-QC-18-attempt-1.json"
+            raw = path.read_bytes()
+            try:
+                path.chmod(0o600)
+                path.write_bytes(raw + b"\n")
+                path.chmod(0o400)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    inspect(report)
+            finally:
+                path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+            self.assertTrue(inspect(report)["runtimeOriginVerified"])
+
+        def test_changed_selected_sdk_closure_cannot_borrow_the_original_execution(self):
+            path = owner.root / "proofs/sdk-vstest-inputs.json"
             raw = path.read_bytes()
             try:
                 path.chmod(0o600)

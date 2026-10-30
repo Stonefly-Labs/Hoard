@@ -4431,6 +4431,36 @@ Public provider/contributor APIs, package/module graph, production architecture/
 ADR/diagrams, CustomHost, governance/backlog/predecessor, IaC, release and UI
 guides are unchanged. No task/checklist/stage advances;70/86 remain verified.
 
+### Frozen composition and compatibility SDK/runtime inputs (partial T071)
+
+The next increment closes the default-runner gap: composition and all three
+compatibility scopes use the exact SDK VSTest runner and runtime selected by
+their measured environment. The read-only `proofs/sdk-vstest-inputs.json` joins
+RunInputs and the original execution input set; pre/post checks reject changed
+closure material even if the child succeeded. Independent retained composition
+replay reconstructs the exact prefix and requires the closure in bound inputs.
+No deadline, byte limit, profile mode or qualification guard changes.
+
+Focused red checks first expose the old default command and missing closure.
+Updated modeled replay and architecture command tests then pass; the architecture
+test additionally rejects a changed post-command runner. A new genuine released
+composition control mutates/restores selected SDK-closure bytes, making the
+finite suite three live/nine released controls. Its fresh native execution is
+still required; neither023aff8 nor904384b covers this increment.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting
+test_conformance_sdk_checks.SdkDiagnosticTests.test_explicit_runtime_runner_rechecks_frozen_sdk_closure_and_rejects_missing_pins
+test_conformance_sdk_checks.SdkDiagnosticTests.test_sdk_runner_capture_does_not_walk_unselected_sdk_tool_subtrees`
+passes273 tests in79.519 seconds, four native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. README, DEVELOPMENT, quickstart and evidence/matrix
+contracts are affected; provider APIs, package/module graph, production
+architecture/ADR/diagrams, CustomHost, infrastructure, releases and UI guides
+are unchanged. T071 remains open; implementation continues at70/86.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

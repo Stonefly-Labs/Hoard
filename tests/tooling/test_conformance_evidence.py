@@ -1007,7 +1007,12 @@ class ConformanceAdmissionTests(unittest.TestCase):
                     composition.SDK + ".dll", composition.LOGGER + ".dll")}
             for name in ("Hoard.Composition.Tests.deps.json", "Hoard.Composition.Tests.runtimeconfig.json"):
                 write("stores/composition-runtime/" + name, b"{}")
-            inputs["runtimeAssemblies"] = images
+            runner = {
+                "prefix": ("dotnet", "exec", "--fx-version", "10.0.100",
+                           "/modeled/toolchain/sdk/10.0.100/vstest.console.dll"),
+                "inputFiles": {"proofs/sdk-vstest-inputs.json": write(
+                    "proofs/sdk-vstest-inputs.json", b'{"model":"selected-runner"}')}}
+            inputs["runtimeAssemblies"] = {**images, **runner["inputFiles"]}
             inputs["locks"] = {
                 "stores/packages.lock.json": write("stores/packages.lock.json", b"{}"),
                 "snapshot/tests/Example/packages.lock.json": write(
@@ -1045,11 +1050,11 @@ class ConformanceAdmissionTests(unittest.TestCase):
             bound = (
                 manifest_path, manifest["runInputsPath"], "runtime-owner.json", settings_path,
                 "proofs/environment-admission.json", "proofs/composition-environment-admission.json",
-                config, *images, "stores/composition-runtime/Hoard.Composition.Tests.deps.json",
+                config, *images, *runner["inputFiles"], "stores/composition-runtime/Hoard.Composition.Tests.deps.json",
                 "stores/composition-runtime/Hoard.Composition.Tests.runtimeconfig.json")
             arguments = composition.runtime_arguments(
                 staged / "Hoard.Composition.Tests.dll", root / settings_path,
-                [row["testIdentity"] for row in composition.expected_rows()])
+                [row["testIdentity"] for row in composition.expected_rows()], runner_prefix=runner["prefix"])
             record = {
                 "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
                 "startedMs": 0.25, "endedMs": 2, "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited",
@@ -1099,7 +1104,8 @@ class ConformanceAdmissionTests(unittest.TestCase):
                     output + "/witnesses.jsonl", output + "/completion.json"))
             shutil.rmtree(root / "stores")
             shutil.rmtree(root / "feed")
-            with mock.patch.object(evidence, "ingest_runtime_attempt", return_value=observed) as ingestion:
+            with mock.patch.object(evidence, "ingest_runtime_attempt", return_value=observed) as ingestion, \
+                    mock.patch.object(composition, "runtime_runner", return_value=runner):
                 self.assertEqual(composition.verify_composition_case_report(root, inputs, owner), summary)
                 self.assertEqual(composition.verify_composition_report_controls(root, inputs, owner, summary), {
                     "qualification": False, "reportMutations": 29, "semanticMutations": 2})

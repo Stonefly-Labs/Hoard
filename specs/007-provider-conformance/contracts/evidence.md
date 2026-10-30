@@ -1098,6 +1098,13 @@ passes all3 live/8 released controls, including changed quality-proof bytes,
 and independently replays all50 finite CP/QC rows. Full-profile/inherited/
 tooling qualification is not inferred.
 
+Composition and compatibility execution also bind the read-only selected SDK
+VSTest closure into RunInputs and the original command's input hashes. Commands
+use the exact captured SDK runner and runtime version, rechecked after execution;
+independent composition replay reconstructs the same prefix and bound inputs.
+Changed runner/closure material cannot borrow an otherwise unchanged successful
+command. Host controls pass; fresh native verification remains pending.
+
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
    durations. Treat import exceptions as safe classified failures, not success.

@@ -3897,7 +3897,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     write_new(settings, settings_data)
     started = time.monotonic() * 1000
     runner, runner_inputs = None, None
-    if category_scope is not None and category_scope[0] in ("metadata", "artifacts"):
+    if category_scope is not None and category_scope[0] in ("metadata", "artifacts", "compatibility"):
         runner_inputs = manifest["runInputsPath"]
         runner = runtime_runner(run.root, runner_inputs)
     arguments = runtime_arguments(
@@ -4101,7 +4101,7 @@ def execute_binary_runtime(run, repository, candidate, sources, config, feed, se
 
 def _execute_compatibility_runtime_scope(run, repository, candidate, sources, config, feed, seal_sha, assembly,
                                        *, scope, tests, packages, extra_locks=(), ci_revision=None):
-    paths = compatibility_runtime_paths(run, assembly.parent)
+    paths = [*compatibility_runtime_paths(run, assembly.parent), "proofs/sdk-vstest-inputs.json"]
     owner = evidence.load_json(read_bounded(run.root / "runtime-owner.json", 64 * 1024))
     group, attempt = evidence._uuid(owner["invocationGroupId"]), str(uuid.uuid4())
     arguments = dict(
@@ -4171,7 +4171,7 @@ def execute_architecture_runtime(run, repository, candidate, sources, config, fe
     verify_runtime_packages(runtime, feed,
                             ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions"))
     assembly = runtime / "Hoard.Architecture.Tests.dll"
-    paths = compatibility_runtime_paths(run, runtime)
+    paths = [*compatibility_runtime_paths(run, runtime), "proofs/sdk-vstest-inputs.json"]
     group, attempt = str(uuid.uuid4()), str(uuid.uuid4())
     base = evidence.capture_profile_inputs(
         run, repository, candidate, profile_id="compatibility", mode="diagnostic", invocation_group_id=group,
@@ -4441,6 +4441,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             }
             print(json.dumps(compatibility_summary), flush=True)
             if compatibility_only:
+                _, runner_material = runtime_runner_material(build_environment)
+                write_new(run.root / "proofs/sdk-vstest-inputs.json", runner_material)
                 from conformance_inherited import (
                     admit_architecture_preparation, controller_phase, verify_controller_invocations)
                 prepared, parent_sha, invocations = controller_phase(

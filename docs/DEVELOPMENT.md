@@ -8759,6 +8759,17 @@ execution remains outside this run. Original closed packet SHA-256:
 Neither this packet nor the earlier023aff8 packet is relabeled as full-profile
 acceptance; T071 remains open.
 
+Composition and compatibility now use the same frozen exact SDK/runtime runner
+as category commands. `proofs/sdk-vstest-inputs.json` is read-only, included in
+RunInputs and original command inputs, and checked before/after execution.
+Independent composition replay reconstructs that exact runner prefix rather
+than accepting default `dotnet vstest` resolution. A changed compatibility
+runner after execution rejects with InputChanged; the released composition
+factory also challenges changed SDK-closure bytes (now three live/nine released
+controls). Host validation passes273 tests with four native-only skips in79.519
+seconds; catalog/SDK and diff checks pass. Native verification of this increment
+remains pending; earlier packets cannot establish its execution.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently
