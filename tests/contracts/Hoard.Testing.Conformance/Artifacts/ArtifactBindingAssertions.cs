@@ -51,7 +51,7 @@ public static class ArtifactBindingAssertions
             ConformanceFault.PayloadDamage => DamageAsync(session, cancellationToken),
             ConformanceFault.Capacity => CapacityAsync(session, cancellationToken),
             ConformanceFault.CleanupFailure => CleanupAsync(session, cancellationToken),
-            ConformanceFault.NativeNonCooperation => NativeAsync(session, cancellationToken),
+            ConformanceFault.NativeNonCooperation => NativeAsync(session, advanceClock, cancellationToken),
             ConformanceFault.SourceNonCooperation => SourceAsync(session, cancellationToken),
             ConformanceFault.SinkNonCooperation => SinkAsync(session, cancellationToken),
             _ => throw new ArgumentException("BindingInvalid")
@@ -233,7 +233,8 @@ public static class ArtifactBindingAssertions
         }
     }
 
-    private static async Task NativeAsync(IArtifactConformanceSession session, CancellationToken cancellationToken)
+    private static async Task NativeAsync(
+        IArtifactConformanceSession session, Action<TimeSpan> advanceClock, CancellationToken cancellationToken)
     {
         const ConformanceFault fault = ConformanceFault.NativeNonCooperation;
         using var source = new ShortSource("full synchronous ownership"u8.ToArray());
@@ -244,6 +245,7 @@ public static class ArtifactBindingAssertions
         try
         {
             await ArrivedAsync(session, fault, deleting, cancellationToken);
+            advanceClock(TimeSpan.FromMilliseconds(100));
             var failed = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
                 await deleting.WaitAsync(TimeSpan.FromSeconds(2)));
             Assert.True(failed.Code is ArtifactFailureCode.DeadlineExceeded or ArtifactFailureCode.Uncertain);

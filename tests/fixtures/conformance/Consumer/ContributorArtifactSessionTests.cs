@@ -426,7 +426,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
     {
         Assert.Equal(ContributorBindingFactory.BindingId, provider);
         await using var resources = new RecordingDirectories();
-        var clock = new ArtifactConformanceSessionTests.ControlledClock();
+        var (clock, advanceClock) = ArtifactConformanceSessionTests.ControlClock(fault);
         var context = new ConformanceRunContext(ArtifactConformanceSessionTests.RunId(), "contributor-artifact-component", clock,
             resources, new ConformanceEvidenceBuffer());
         var binding = ContributorBindingFactory.Create(new ArtifactAssertionOptions(references: (_, _) =>
@@ -440,7 +440,7 @@ public sealed class ContributorArtifactSessionTests(ITestOutputHelper output)
         try
         {
             AssertProfile(session);
-            await ArtifactBindingAssertions.ControlsAsync(session, fault, clock.Advance, default);
+            await ArtifactBindingAssertions.ControlsAsync(session, fault, advanceClock, default);
             AssertProfile(session);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }

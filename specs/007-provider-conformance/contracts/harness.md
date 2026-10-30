@@ -103,7 +103,8 @@ events also require exact settled owned-command records. These diagnostic
 controls do not yet satisfy the remaining category-control imports.
 Native category failures identify scope execution versus joint admission with
 closed catalog scope IDs/codes. Unexpected runtime results additionally retain
-only observed code/exit, state/mismatch counts and up to four identity hashes;
+only observed code/exit, state/mismatch counts and up to four identity hashes
+and existing numeric source lines (integers 1..1000000);
 raw test/failure text and private paths remain excluded. This diagnostic limit
 never truncates the actual evidence or admits an incomplete inventory.
 The CLI's final failure record also preserves that bounded unexpected-result
@@ -112,7 +113,7 @@ Fresh metadata-input controls and both complete batches are independently
 admitted at exact `564c67f`, run 40193163127 (three jobs/272 foundations without
 skips). They remain non-qualifying until control import is implemented.
 
-The original native-boundary deadline fixture uses a private controlled clock
+The original native-boundary deadline fixture uses a controlled clock
 to expire its 100 ms deadline only after the synchronous fault seam is entered;
 a 200 ms pre-entry ObjectSemantics observer covers delayed worker execution.
 Its common entry/deadline/retained-ownership/20 ms stop assertions remain
@@ -124,6 +125,15 @@ passes all three Linux jobs, 273 foundations without skips and the complete
 fresh category controls. Failed run 40197707264 at `4e6f03b` identifies this
 ObjectSemantics witness but is not admitted evidence. Source-parent changes
 below are later than that receipt and still require their own native execution.
+
+That clock is now shared as test-only `ArtifactNativeBoundaryClock`. The bundled
+built-in/contributor NativeNonCooperation controls select it through their
+context clock and advance 100 ms only after the actual native-entry observation.
+A private 200-ms pre-entry Local delay first fails the unchanged `ArrivedAsync`
+assertion with the real-time timer; the same delayed comparison then passes all 118
+contributor parameters. Entry, 100-ms deadline, retained ownership, bounded stop
+and actual settlement assertions remain unchanged. Other control clocks and
+budgets are unchanged; no private delay enters acceptance source.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,

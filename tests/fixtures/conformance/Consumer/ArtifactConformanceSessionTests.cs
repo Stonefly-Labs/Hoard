@@ -2251,7 +2251,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
     private async Task RunControlAsync(string provider, ConformanceFault fault, string caseId)
     {
         await using var resources = new RecordingDirectories();
-        var clock = new ControlledClock();
+        var (clock, advanceClock) = ControlClock(fault);
         var context = new ConformanceRunContext(RunId(), caseId, clock,
             resources, new ConformanceEvidenceBuffer());
         var binding = Binding(provider);
@@ -2263,7 +2263,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         try
         {
-            await ArtifactBindingAssertions.ControlsAsync(session, fault, clock.Advance, default);
+            await ArtifactBindingAssertions.ControlsAsync(session, fault, advanceClock, default);
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { await session.DisposeAsync(); }
@@ -2361,6 +2361,17 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
         return provider == "local" ? new LocalBinding(sha256, options: options)
             : new ObjectSemanticsBinding(sha256, options: options);
+    }
+
+    internal static (TimeProvider Clock, Action<TimeSpan> Advance) ControlClock(ConformanceFault fault)
+    {
+        if (fault == ConformanceFault.NativeNonCooperation)
+        {
+            var native = new ArtifactNativeBoundaryClock(new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+            return (native, native.Advance);
+        }
+        var clock = new ControlledClock();
+        return (clock, clock.Advance);
     }
 
     internal sealed class ControlledClock : TimeProvider

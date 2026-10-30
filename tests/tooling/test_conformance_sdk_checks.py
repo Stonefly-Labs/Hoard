@@ -6593,6 +6593,38 @@ class SdkDiagnosticTests(unittest.TestCase):
                     changed, result, identities, expected_code, expected_status, expected_exit,
                     {"proof.json": json.dumps({"failureKind": expected_kind}).encode()}, expected_kind)
 
+    def test_unexpected_runtime_failure_preserves_only_closed_bounded_source_lines(self):
+        location = {"event": "test", "code": "UnknownDiagnostic", "value": 42}
+        events = (
+            location, {**location, "extra": "private-canary"}, {**location, "value": True},
+            {**location, "value": "private-canary"}, {**location, "value": 0},
+            {**location, "value": 1_000_001}, {**location, "event": "control"},
+            {**location, "code": "None"}, {**location, "value": 1},
+            {**location, "value": 1_000_000}, location, location)
+        error = checks._RuntimeObservationError(
+            {"diagnosticCode": "UnknownDiagnostic",
+             "witnesses": ({"testIdentity": "PrivateCanary.Case", "status": "Failed"},)},
+            SimpleNamespace(exit_code=1, events=events), "Passed")
+        observed = error.runtime_diagnostic
+        self.assertEqual(observed["failureLines"], [42, 1, 1_000_000, 42])
+        self.assertEqual(checks.bounded_runtime_diagnostic(observed), observed)
+        for invalid in ([], [True], ["private-canary"], [0], [1_000_001], [1] * 5, (42,)):
+            with self.subTest(lines=invalid), self.assertRaisesRegex(
+                    checks.evidence.ConformanceError, "^UnknownDiagnostic$"):
+                checks.bounded_runtime_diagnostic({**observed, "failureLines": invalid})
+        import conformance_unit_checks as unit_checks
+
+        class RuntimeFailure(unittest.TestCase):
+            def runTest(self):
+                raise error
+
+        result = unit_checks.SafeResult()
+        RuntimeFailure().run(result)
+        failure, = unit_checks.failed_tests(result)
+        self.assertEqual(failure["runtimeDiagnostic"], observed)
+        self.assertNotIn("PrivateCanary", json.dumps(failure))
+        self.assertNotIn("private-canary", json.dumps(failure))
+
     def test_unexpected_runtime_failure_retains_only_bounded_closed_observations(self):
         identities = tuple(f"PrivateCanary.Case{index}" for index in range(9))
         ingested = {"diagnosticCode": "AssertionFailed", "witnesses": tuple(

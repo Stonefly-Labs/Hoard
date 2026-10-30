@@ -15,6 +15,54 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### Hosted SDK confirmation and bounded native prerequisite repairs
+
+Exact `c012f7b` foundations run 41130045684 now completes: SDK diagnostics,
+metadata extraction, compatibility and lock replay pass. Tooling rejects two
+actual `OwnershipInvalid` observations at the procfs inode-owner check, while
+artifact extraction rejects one ObjectSemantics native-boundary witness.
+Those failures remain preserved. Later unchanged `322db69` foundations
+run 41131932203 passes tooling, both categories, compatibility, lock replay and
+SDK diagnostics. Neither later passes nor the following
+controlled comparisons establish unique causes for original hosted failures.
+
+A real same-user non-dumpable Linux child reproduces the process-owner rejection:
+its procfs inode is root-owned while its kernel credentials still match.
+Identity and memory admission now check all four kernel-reported credentials,
+retaining exact PID/start/group/session fingerprints and foreign/malformed
+credential rejection. An initial zombie-only hypothesis did not reproduce on
+the local kernel and is not the adopted explanation.
+
+A bounded contributor execution separately rejects
+`Observed_controls_reach_actual_work(..., fault: NativeNonCooperation)`.
+A private 200-ms delay before the Local native-entry signal deterministically
+fails the unchanged common assertion in `ArrivedAsync`: the inherited real-time
+100-ms timer can finish before the fault is entered. The original boundary-driven
+clock is extracted into test-only `ArtifactNativeBoundaryClock`; built-in and
+contributor native-control rows use it and advance100 ms only after proven entry.
+All original entry/deadline/retained-ownership/shutdown/settlement assertions and
+budgets remain required. The identical delayed comparison passes all118
+contributor parameters; its private delay is not tracked or acceptance input.
+
+Unexpected runtime rejections now retain at most four existing closed numeric
+source-line events, each integer 1..1000000. Raw messages/paths, malformed events
+and unknown diagnostic fields remain excluded. This does not change witness,
+proof, outcome or qualification requirements. Public CLI help now correctly
+includes compatibility fixture qualification.
+
+`python3 scripts/conformance_unit_checks.py --all-tooling` on normal Linux arm64/
+two-CPU/6-GiB fixtures passes 861 tests with zero failures/errors/skips or unexpected
+diagnostics. The initial local unsupported/read-only scratch runs are setup
+failures, not passing validation; the successful layout keeps tracked source
+readonly with writable ignored `.foundation`, writable source parent and
+supported-volume `TMPDIR`. The 265-test affected portable selector passes with
+28 native-only skips before shared-clock extraction. Focused
+`dotnet format whitespace --folder --verify-no-changes --include <five changed C# files>`,
+frozen inventory, SDK/catalog and whitespace checks pass. T071..T086 remain open;
+this is not full-baseline acceptance. Provider guidance records test-clock use;
+examples, product architecture/ADR/charter/governance, infrastructure, deployment/
+release and UI behavior are unaffected.
+
 ### First compatibility fixture qualification and independent verification
 
 Exact immutable `c012f7bf6e61e4e26be3e1b3e55147bfb12eee2b` executes

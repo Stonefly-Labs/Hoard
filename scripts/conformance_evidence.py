@@ -83,9 +83,9 @@ class _Arguments(argparse.ArgumentParser):
 
 def invocation_parser():
     parser = _Arguments(
-        description="Conformance admission and native metadata/artifact/composition execution. "
-                    "Complete built-in metadata/artifact/composition runs require original native authority for finite fixture "
-                    "qualification; full baseline, focused/custom bindings, compatibility/harness "
+        description="Conformance admission and native metadata/artifact/composition/compatibility execution. "
+                    "Complete built-in metadata/artifact/composition/compatibility runs require original native authority for finite fixture "
+                    "qualification; full baseline, focused/custom bindings, harness "
                     "qualification and qualifying verify/aggregate remain incomplete. "
                     "Offline --verify/--aggregate with --coordinator inspect correspondence only.",
         add_help=False, allow_abbrev=False)

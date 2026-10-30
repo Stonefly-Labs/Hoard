@@ -126,7 +126,8 @@ the unchanged24 GiB gate; the later `48faeec` hosted lock replay passes, so this
 is not a universal hosted-capacity blocker. The SDK observation guard now admits
 the logger's bounded optional unknown-failure source-line event before its exact
 final control; every original outcome check remains required. All189 affected
-tooling checks pass (four native-only skips); hosted confirmation is pending.
+tooling checks pass (four native-only skips); hosted SDK diagnostics at exact
+`c012f7b` now pass too.
 The hosted composition diagnostic remains explicitly diagnostic.
 Complete public compatibility execution now also qualifies at exact `c012f7b`:
 142 cases/212 runtime witnesses,86 foundation parameters,24 source recipes and
@@ -135,6 +136,13 @@ publication. A fresh readonly process independently verifies that same complete
 frame using the external original stdout receipt; five altered/missing receipt/
 input/report controls reject without reconstructing native authority.
 Its direct SDK diagnostic and hosted replay remain explicitly diagnostic.
+The next bounded correction replaces procfs inode ownership with actual kernel
+credentials and shares the existing native-boundary clock with contributor
+controls. A private 200-ms pre-entry comparison first fails, then passes every
+unchanged contributor assertion after expiry is driven from proven entry.
+All 861 tooling tests pass on normal Linux fixtures without skips or unexpected
+diagnostics; focused C# formatting and frozen inventory/catalog checks pass.
+Earlier hosted failures remain preserved, not retrospectively repaired.
 These different-source fixture results do not establish a common baseline;
 harness, qualifying coordinator/aggregate and full-baseline acceptance remain
 unfinished. T071..T086 stay open.

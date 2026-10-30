@@ -421,7 +421,8 @@ class ConformanceCliTests(unittest.TestCase):
         error = sdk._RuntimeObservationError({
             "diagnosticCode": "UnknownDiagnostic", "witnesses": (
                 {"testIdentity": "private-canary-test", "status": "Failed"},)},
-            SimpleNamespace(exit_code=1), "Passed")
+            SimpleNamespace(exit_code=1, events=(
+                {"event": "test", "code": "UnknownDiagnostic", "value": 42},)), "Passed")
         observed = error.runtime_diagnostic
         for defect in ("none", "unsafe-code", "unknown-field"):
             error.runtime_diagnostic = dict(observed)

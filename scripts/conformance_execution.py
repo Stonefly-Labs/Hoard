@@ -184,10 +184,17 @@ def process_identity(pid, *, deadline=None, include_exited=False):
         except FileNotFoundError:
             return None
         with os.fdopen(descriptor, "rb") as source:
-            if os.fstat(source.fileno()).st_uid != os.getuid():
-                raise ConformanceError("OwnershipInvalid")
             encoded = source.read(4097)
-        return linux_process_identity(pid, encoded, include_exited=include_exited)
+        identity = linux_process_identity(pid, encoded, include_exited=include_exited)
+        if identity is None:
+            return None
+        try:
+            descriptor = os.open(f"/proc/{pid}/status", os.O_RDONLY | os.O_NOFOLLOW)
+        except FileNotFoundError:
+            return None
+        with os.fdopen(descriptor, "rb") as source:
+            validate_linux_process_owner(source.read(8193))
+        return identity
     code, output = capture_control(
         ["ps", "-p", str(pid), "-o", "pid=,uid=,pgid=,lstart=,stat="],
         limit=4096, timeout=control_timeout(deadline))
@@ -232,14 +239,23 @@ def linux_process_memory(encoded):
     return tuple(values)
 
 
+def validate_linux_process_owner(encoded):
+    if not isinstance(encoded, bytes) or len(encoded) > 8192:
+        raise ConformanceError("OwnershipInvalid")
+    expected = [str(os.getuid()).encode("ascii")] * 4
+    credentials = [line.split()[1:] for line in encoded.splitlines() if line.startswith(b"Uid:")]
+    if credentials != [expected]:
+        raise ConformanceError("OwnershipInvalid")
+
+
 def process_memory(pid, *, deadline=None):
     if not native_execution_supported() or type(pid) is not int or pid <= 0:
         raise ConformanceError("OwnershipInvalid")
     control_timeout(deadline)
     with os.fdopen(os.open(f"/proc/{pid}/status", os.O_RDONLY | os.O_NOFOLLOW), "rb") as source:
-        if os.fstat(source.fileno()).st_uid != os.getuid():
-            raise ConformanceError("OwnershipInvalid")
-        return linux_process_memory(source.read(8193))
+        encoded = source.read(8193)
+    validate_linux_process_owner(encoded)
+    return linux_process_memory(encoded)
 
 
 def process_group(group, *, deadline=None):

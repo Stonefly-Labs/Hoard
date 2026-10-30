@@ -10172,6 +10172,63 @@ remains required. These different-source fixture results do not establish a
 common baseline; T071..T086 remain open. Provider contracts/examples, architecture
 diagrams, infrastructure and release behavior are unaffected.
 
+The next bounded T071 checkpoint confirms hosted SDK diagnostics at exact
+`c012f7b` (run 41130045684). Its tooling job instead rejects two process identities
+at the procfs inode-owner guard, and artifact extraction rejects one actual
+ObjectSemantics native-boundary witness. Later unchanged `322db69`
+run 41131932203 passes tooling, both categories, compatibility, lock replay and
+SDK diagnostics. Original failures stay
+preserved; successful comparisons do not retrospectively repair them.
+
+A same-user non-dumpable native child reproduces root-owned procfs inodes with
+matching actual credentials. `process_identity` and `process_memory` now validate
+the four kernel-reported UID fields instead of assuming procfs inode ownership
+is a process credential. Exact PID/start/group/session fingerprints and
+foreign/malformed credential rejection remain required. The initial local
+zombie-only probe does not reproduce that mismatch; it is not the adopted fix.
+
+The bounded contributor check separately identifies the
+NativeNonCooperation control. A private 200-ms delay before Local native entry
+reproduces failure in the unchanged `ArtifactBindingAssertions.ArrivedAsync`.
+Its real-time 100-ms timer can finish before the synchronous fault is reached.
+The original controlled boundary clock is shared as test-only
+`ArtifactNativeBoundaryClock`; native-control contexts use it and advance 100 ms
+after actual entry. All entry/deadline/retained-ownership/shutdown/settlement
+assertions and bounds remain unchanged. The identical private delayed comparison
+passes all 118 parameters and is not qualification or tracked acceptance source.
+
+Unexpected runtime errors also preserve at most four existing closed numeric
+source lines (integer 1..1000000) through the same bounded diagnostic validator
+used by the CLI and tooling result reader. Malformed events/fields, raw failure
+messages and private paths remain excluded; outcomes and qualification stay
+strict. Actual `bash scripts/validate-conformance.sh --help` now includes the
+implemented compatibility fixture qualification and retains unfinished-mode
+warnings.
+
+Validation:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_execution test_conformance_cli test_conformance_sdk_checks test_conformance_sanitation -q`
+  passes 265 tests with 28 native-only skips before shared-clock extraction.
+- `python3 scripts/conformance_unit_checks.py --all-tooling` on normal Linux
+  arm64/two CPUs/6 GiB passes 861 tests, zero failures/errors/skips/unexpected
+  diagnostic bytes, including actual SDK/consumer builds and runtime assertions.
+  Initial container checks fail unsupported/read-only setup and are not counted
+  as passes. The successful layout retains readonly tracked source, writable
+  `.foundation`, an owned writable source parent and supported-volume `TMPDIR`;
+  contributor tests create private source siblings.
+- `dotnet format whitespace --folder --verify-no-changes --include tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactNativeBoundaryClock.cs tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactBindingAssertions.cs tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactNonCooperationTests.cs tests/fixtures/conformance/Consumer/ArtifactConformanceSessionTests.cs tests/fixtures/conformance/Consumer/ContributorArtifactSessionTests.cs`
+  passes.
+- `python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+  `python3 scripts/conformance_case_catalog.py --check-sdk` and `git diff --check`
+  pass; the frozen inventory is unchanged.
+
+README, provider guidance and feature plan/contract record the boundary.
+Provider examples, product architecture/ADR/charter/governance, infrastructure,
+release/deployment and UI documents are unaffected: no product API/project
+reference, provider guarantee, acceptance budget or operational action changes.
+T071..T086 remain open; current finite fixture results remain different-source,
+not common-baseline or all-five hosted qualification.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

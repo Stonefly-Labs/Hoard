@@ -1196,6 +1196,67 @@ print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
             with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
                 execution.linux_process_identity(42, malformed)
 
+    def test_linux_identity_verifies_credentials_not_procfs_inode_ownership(self):
+        source = mock.MagicMock()
+        fields = [b"S", b"1", b"42", b"42"] + [b"0"] * 15 + [b"100"]
+        live = b"42 (child) " + b" ".join(fields)
+        credentials = b"Uid:\t" + b"\t".join([str(os.getuid()).encode()] * 4) + b"\n"
+        foreign = credentials.replace(str(os.getuid()).encode(), str(os.getuid() + 1).encode(), 1)
+        with mock.patch.object(execution.sys, "platform", "linux"), \
+                mock.patch.object(execution.os, "open", return_value=77), \
+                mock.patch.object(execution.os, "fdopen") as opened, \
+                mock.patch.object(execution.os, "fstat",
+                                  return_value=SimpleNamespace(st_uid=os.getuid() + 1)):
+            opened.return_value.__enter__.return_value = source
+            source.read.side_effect = [live, credentials]
+            self.assertIsNotNone(execution.process_identity(42))
+            for state in (b"Z", b"X", b"x"):
+                exited = live.replace(b") S ", b") " + state + b" ")
+                with self.subTest(state=state):
+                    source.read.side_effect = [exited]
+                    self.assertIsNone(execution.process_identity(42))
+                    source.read.side_effect = [exited, foreign]
+                    with self.assertRaisesRegex(ConformanceError, "^OwnershipInvalid$"):
+                        execution.process_identity(42, include_exited=True)
+            for invalid in (b"", foreign, credentials * 2, b"Uid:\t0\n",
+                            credentials.rstrip() + b"\t0\n", credentials + b"x" * 8192):
+                with self.subTest(status_sha256=hashlib.sha256(invalid).hexdigest()):
+                    source.read.side_effect = [live, invalid]
+                    with self.assertRaisesRegex(ConformanceError, "^OwnershipInvalid$"):
+                        execution.process_identity(42)
+                    source.read.side_effect = [invalid]
+                    with self.assertRaisesRegex(ConformanceError, "^OwnershipInvalid$"):
+                        execution.process_memory(42)
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process credentials require Linux.")
+    def test_nondumpable_owned_child_keeps_its_identity_and_memory_ownership(self):
+        program = (
+            "import ctypes,sys\n"
+            "assert ctypes.CDLL(None).prctl(4,0,0,0,0)==0\n"
+            "print('ready',flush=True)\n"
+            "sys.stdin.readline()\n")
+        child = subprocess.Popen([sys.executable, "-c", program], stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, text=True)
+        try:
+            self.assertEqual(child.stdout.readline(), "ready\n")
+            self.assertIsNotNone(execution.process_identity(child.pid))
+            rss, peak = execution.process_memory(child.pid)
+            self.assertGreater(rss, 0)
+            self.assertGreaterEqual(peak, rss)
+        finally:
+            if child.poll() is None:
+                child.stdin.write("release\n")
+                child.stdin.flush()
+            try:
+                child.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                child.kill()
+                child.wait(timeout=5)
+                raise
+            finally:
+                child.stdin.close()
+                child.stdout.close()
+
     def test_ledger_tampering_and_symlink_swap_prevent_cleanup(self):
         run = self.workspace()
         run.transition("Active")

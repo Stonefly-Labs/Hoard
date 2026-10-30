@@ -4062,7 +4062,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
 
 def bounded_runtime_diagnostic(value):
     fields = {"observedCode", "observedExit", "witnessStates", "mismatchCount", "mismatchedTestsSha256"}
-    if (type(value) is not dict or set(value) != fields
+    if (type(value) is not dict or set(value) not in (fields, fields | {"failureLines"})
             or type(value["observedCode"]) is not str or value["observedCode"] not in evidence.DIAGNOSTIC_CODES
             or type(value["observedExit"]) is not int or not -(2**31) <= value["observedExit"] < 2**31
             or type(value["witnessStates"]) is not dict
@@ -4075,10 +4075,14 @@ def bounded_runtime_diagnostic(value):
             or len(value["mismatchedTestsSha256"]) != min(4, value["mismatchCount"])
             or any(type(hashed) is not str or re.fullmatch(r"[a-f0-9]{64}", hashed) is None
                    for hashed in value["mismatchedTestsSha256"])
-            or value["mismatchedTestsSha256"] != sorted(set(value["mismatchedTestsSha256"]))):
+            or value["mismatchedTestsSha256"] != sorted(set(value["mismatchedTestsSha256"]))
+            or "failureLines" in value and (
+                type(value["failureLines"]) is not list or not 1 <= len(value["failureLines"]) <= 4
+                or any(type(line) is not int or not 1 <= line <= 1_000_000 for line in value["failureLines"]))):
         raise evidence.ConformanceError("UnknownDiagnostic")
     return {**value, "witnessStates": dict(value["witnessStates"]),
-            "mismatchedTestsSha256": list(value["mismatchedTestsSha256"])}
+            "mismatchedTestsSha256": list(value["mismatchedTestsSha256"]),
+            **({"failureLines": list(value["failureLines"])} if "failureLines" in value else {})}
 
 
 class _RuntimeObservationError(evidence.ConformanceError):
@@ -4093,6 +4097,13 @@ class _RuntimeObservationError(evidence.ConformanceError):
                 state: sum(row["status"] == state for row in ingested["witnesses"])
                 for state in ("Passed", "Failed", "Incomplete")},
             "mismatchCount": len(mismatched), "mismatchedTestsSha256": sorted(mismatched)[:4]}
+        lines = [
+            event["value"] for event in result.events
+            if isinstance(event, Mapping) and set(event) == {"event", "code", "value"}
+            and event["event"] == "test" and event["code"] == "UnknownDiagnostic"
+            and type(event["value"]) is int and 1 <= event["value"] <= 1_000_000]
+        if lines:
+            self.runtime_diagnostic["failureLines"] = lines[:4]
 
 
 def validate_observation(ingested, result, identities, code, status, exit_code, proofs, failure_kind):

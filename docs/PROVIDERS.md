@@ -302,6 +302,13 @@ Both actual durable/snapshot and simulated/incomplete adapters pass. False
 durability/enumeration claims and a profile changed during actual work reject at
 the named profile assertion. This contributor-only convention leaves the
 registration shape, SDK interfaces and default fixture declarations unchanged.
+Bundled NativeNonCooperation test consumers now supply the shared test-only
+`ArtifactNativeBoundaryClock` as `context.Clock`. They advance its 100-ms deadline
+only after actual native entry, avoiding an assumption that queued work starts
+before a real-time timer expires. Bindings continue passing the supplied context
+clock to the actual fixture; no product clock or budget changes. A private 200-ms
+pre-entry comparison preserves every assertion and passes all 118 contributor
+parameters after the correction. Other control rows retain their existing clock.
 The component now independently expands sequential recovery using the frozen
 enumeration expectation and includes the incomplete-only direct-availability
 case for that declared class. Both actual profiles match exact discovery and
