@@ -1072,6 +1072,22 @@ without weakening its stricter diagnostic scope/state requirements.
 
 ### Remaining qualification evaluator
 
+The acceptance-reset increment introduces an internal category receipt boundary;
+it does not change the public coordinator schema or enable qualifying CLI exits.
+`native_category_qualification_receipt` first verifies the exact qualified
+derivation under its original Released owner/evaluation. Its closed record
+contains `kind: native-category-fixture-qualification`, `inputsSha256`,
+`reportSha256`, `originalReportPath`, `originalReportSha256` and
+`resourcesSha256`. These are safe hashes and a fixed relative proof path.
+`inspect_receipted_category_qualification` requires that record from a separately
+trusted observer, rechecks all pins, independently validates catalog/proof/
+completion correspondence and compares the exact derivation from original
+diagnostic bytes. Missing authority, changed pins, optimistic scope/state/flags,
+failed attempts and unsettled resources reject. The result explicitly denies
+baseline qualification. Constructing the receipt from downloaded artifacts is
+not independent authority; public trusted-coordinator production/consumption and
+fresh native acceptance of these new controls remain unfinished.
+
 The category publisher now additionally calls the independent
 `inspect_native_category_report` boundary with its original
 `NativeCategoryEvaluation` and `OwnedRun`, never a reconstructed token.

@@ -3088,6 +3088,35 @@ def _category_report(run, inputs, post_inputs, summary, *, resources=(), native_
     return {**summary, "reportState": "Incomplete", "reportSha256": inspected["reportSha256"]}
 
 
+def _publish_category_fixture_qualification(run, inputs, *, native_evaluation):
+    if (type(run) is not OwnedRun or type(native_evaluation) is not NativeCategoryEvaluation
+            or run.state != "Released"):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    if inputs["profileId"] not in ("metadata", "artifacts") or inputs["mode"] != "qualification":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    prefix = f'proofs/category-{inputs["profileId"]}'
+    _, original = evidence._readonly_report_proof(run.root, prefix + "-qualification-report.json")
+    report = evidence.derive_native_category_qualification(
+        run, original, expected_inputs=inputs, native_evaluation=native_evaluation)
+    raw = evidence.canonical_bytes(report)
+    outputs = evidence.render_native_category_qualification(
+        run, raw, original_report_data=original, expected_inputs=inputs, native_evaluation=native_evaluation)
+    path = prefix + "-fixture-qualification-report.json"
+    write_new(run.root / path, raw)
+    for name, contents in outputs.items():
+        write_new(run.root / "diagnostics" / name, contents)
+    _, retained = evidence._readonly_report_proof(run.root, path)
+    if retained != raw:
+        raise evidence.ConformanceError("ProofMismatch")
+    for name, contents in outputs.items():
+        _, observed = evidence._readonly_report_proof(run.root, "diagnostics/" + name)
+        if observed != contents:
+            raise evidence.ConformanceError("ProofMismatch")
+    return evidence.inspect_native_category_qualification(
+        run, retained, original_report_data=original, expected_inputs=inputs, native_evaluation=native_evaluation)
+
+
 def _category_failure_locations(error):
     folder = Path(__file__).resolve().parent
     sources = {str(folder / name): "scripts/" + name for name in (

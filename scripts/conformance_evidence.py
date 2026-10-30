@@ -1070,18 +1070,23 @@ def inspect_native_category_report(run, report_data, *, expected_inputs, native_
         **inspected, "scope": "native-category-runtime-origin-diagnostic", "runtimeOriginVerified": True})
 
 
+def _require_qualifying_outcomes(report):
+    if any(attempt["status"] == "Failed" for result in report["results"] for attempt in result["attempts"]):
+        raise ConformanceError("AssertionFailed")
+    if (report["inputs"]["mode"] != "qualification"
+            or any(result["status"] not in ("Passed", "NotApplicable") for result in report["results"])
+            or any(attempt["status"] != "Passed" for result in report["results"] for attempt in result["attempts"])):
+        raise ConformanceError("EvidenceIncomplete")
+    if report["inputs"]["sourceState"] not in ("clean-local", "clean-ci"):
+        raise ConformanceError("InputChanged")
+
+
 def derive_native_category_qualification(run, report_data, *, expected_inputs, native_evaluation):
     """Derive the finite fixture result only from the original released executor."""
     inspect_native_category_report(
         run, report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
     report = admit_entity("QualificationReport", load_json(report_data))
-    if any(attempt["status"] == "Failed" for result in report["results"] for attempt in result["attempts"]):
-        raise ConformanceError("AssertionFailed")
-    if (any(result["status"] not in ("Passed", "NotApplicable") for result in report["results"])
-            or any(attempt["status"] != "Passed" for result in report["results"] for attempt in result["attempts"])):
-        raise ConformanceError("EvidenceIncomplete")
-    if report["inputs"]["sourceState"] not in ("clean-local", "clean-ci"):
-        raise ConformanceError("InputChanged")
+    _require_qualifying_outcomes(report)
     return admit_entity("QualificationReport", {
         **report, "state": "Complete", "qualification": True, "scope": ["category-fixture-qualification"]})
 
@@ -1102,6 +1107,77 @@ def inspect_native_category_qualification(
         "caseCount": len(report["results"]), "witnessCount": len(report["witnesses"]),
         "caseStates": MappingProxyType({
             state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}),
+    })
+
+
+def native_category_qualification_receipt(
+        run, report_data, *, original_report_data, expected_inputs, native_evaluation):
+    """Export the original owner's verified result for a separately trusted coordinator."""
+    inspected = inspect_native_category_qualification(
+        run, report_data, original_report_data=original_report_data,
+        expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    original_path = f'proofs/category-{inspected["profileId"]}-qualification-report.json'
+    original_sha, original = _readonly_report_proof(run.root, original_path)
+    if original != original_report_data:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "kind": "native-category-fixture-qualification",
+        "inputsSha256": digest(expected_inputs), "reportSha256": inspected["reportSha256"],
+        "originalReportPath": original_path, "originalReportSha256": original_sha,
+        "resourcesSha256": digest(run.resource_projection()),
+    })
+
+
+def admit_qualification_origin(value):
+    return _record({
+        "kind": _constant("native-category-fixture-qualification"),
+        "inputsSha256": sha256, "reportSha256": sha256,
+        "originalReportPath": relative_path, "originalReportSha256": sha256,
+        "resourcesSha256": sha256,
+    })(value)
+
+
+def inspect_receipted_category_qualification(
+        root, report_data, *, expected_inputs, expected_report_sha256, qualification_origin):
+    """Replay a category against an externally trusted native-owner receipt.
+
+    The receipt must come from the trusted coordinator, never the inspected
+    artifact. It transfers that observer's result, not a recreated native token.
+    """
+    if qualification_origin is None:
+        raise ConformanceError("OwnershipInvalid")
+    origin = admit_qualification_origin(qualification_origin)
+    inputs = admit_entity("RunInputs", expected_inputs)
+    if inputs["profileId"] not in ("metadata", "artifacts"):
+        raise ConformanceError("UnsupportedProfile")
+    if (origin["inputsSha256"] != digest(inputs)
+            or origin["reportSha256"] != sha256(expected_report_sha256)):
+        raise ConformanceError("InputChanged")
+    if (not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES
+            or hashlib.sha256(report_data).hexdigest() != origin["reportSha256"]):
+        raise ConformanceError("ProofMismatch")
+    original_path = f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+    if origin["originalReportPath"] != original_path:
+        raise ConformanceError("InputChanged")
+    original_sha, original_data = _readonly_report_proof(root, original_path)
+    if original_sha != origin["originalReportSha256"]:
+        raise ConformanceError("ProofMismatch")
+    original = admit_entity("QualificationReport", load_json(original_data))
+    inspected = inspect_category_report(root, original_data, expected_inputs=inputs)
+    _require_qualifying_outcomes(original)
+    resources = original["resources"]
+    if (not resources or any(row["state"] != "Released" for row in resources)
+            or digest(resources) != origin["resourcesSha256"]):
+        raise ConformanceError("CleanupIncomplete")
+    report = admit_entity("QualificationReport", load_json(report_data))
+    expected = admit_entity("QualificationReport", {
+        **original, "state": "Complete", "qualification": True, "scope": ["category-fixture-qualification"]})
+    if report != expected:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        **inspected, "qualification": True, "baselineQualification": False, "code": "None",
+        "scope": "trusted-native-category-fixture-qualification",
+        "profileId": inputs["profileId"], "reportSha256": origin["reportSha256"],
     })
 
 
@@ -1233,6 +1309,27 @@ def inspect_native_composition_report(run, report_data, *, expected_inputs, nati
         run.root, inputs, load_json(owner_data), report_data=report_data)
     return MappingProxyType({
         **inspected, "scope": "native-composition-runtime-origin-diagnostic", "runtimeOriginVerified": True})
+
+
+def derive_native_composition_qualification(run, report_data, *, expected_inputs, native_evaluation):
+    """Qualify only a complete composition report verified by its original owner."""
+    inspect_native_composition_report(
+        run, report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    _require_qualifying_outcomes(report)
+    return admit_entity("QualificationReport", {
+        **report, "state": "Complete", "qualification": True, "scope": ["composition-fixture-qualification"]})
+
+
+def derive_native_compatibility_qualification(run, report_data, *, expected_inputs, native_evaluation):
+    """Qualify compatibility only after original runtime, baseline and foundation replay."""
+    inspect_native_compatibility_report(
+        run, report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    _, raw = _readonly_report_proof(run.root, "proofs/compatibility-runtime-released-report.json")
+    report = admit_entity("QualificationReport", load_json(raw))
+    _require_qualifying_outcomes(report)
+    return admit_entity("QualificationReport", {
+        **report, "state": "Complete", "qualification": True, "scope": ["compatibility-fixture-qualification"]})
 
 
 def inspect_profile_report(root, report_data, *, expected_inputs, expected_report_sha256):

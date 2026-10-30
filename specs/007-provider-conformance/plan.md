@@ -10,6 +10,47 @@ assertion extraction, five-profile workflow, custom checklist approval or qualif
 result is delivered. Public product contracts and required outcomes remain
 unchanged; necessary fixture-private controls are extended as recorded below.
 
+## Acceptance reset: bounded T071 checkpoint
+
+The maintainer authorized resumption after preserving the original work/evidence
+and reviewing acceptance-essential versus accumulated implementation. T071 remains
+unchecked; no stage completion, requirement relaxation or merge is authorized.
+The preserved category publisher now has rejecting standard controls and a genuine
+native publication control. Internal evaluator work shares the strict
+qualification-mode/clean-source/complete-attempt policy across category,
+composition and compatibility boundaries. Existing diagnostic producers do not
+become qualifying. A category owner can export an input/report/original-report/
+Released-resource receipt only through its original held evaluation; an internal
+independent reader checks that separately trusted receipt, exact derivation,
+catalog, proof bytes and completion inputs. Public coordinator/CLI wiring is
+unchanged. Fresh native acceptance of the new controls remains required.
+
+On unchanged source `cc8e1ca53f57d0077619aa7a7b50339dffb480b8`, hosted
+[composition run41060808083](https://github.com/Stonefly-Labs/Hoard/actions/runs/41060808083)
+fails the required trusted-tooling gate: 241/841 tests, 626873.485049 ms,
+zero observed failures/errors/skips/unexpected diagnostic bytes,
+`EvidenceIncomplete`; the wrapper reports `WitnessMissing` and
+`summaryCode: OutputLimitExceeded`. The same source's standalone tooling step in
+run41060807935 succeeds but takes approximately736 seconds, not the owning
+controller's required600 seconds. Neither result qualifies that requirement.
+Further implementation stops at this concrete checkpoint; the next correction
+is one bounded standalone-versus-owning-supervisor runtime diagnosis. No test
+inventory, deadline or assertion is weakened, and no full-profile retry is
+justified without a targeted correction.
+
+Current local checks: the focused eight-module selector passes411 tests in
+125.118 seconds with four native-prerequisite skips; subsequent
+`python3 -m unittest discover -s tests/tooling -q` passes843 tests in507.625 seconds
+with31 native-only skips. These are regression results, not Linux native
+acceptance. `git diff --check`,
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check` pass.
+T071..T086 and final architecture review remain open. README,
+development guidance and the evidence contract record this checkpoint.
+Provider/host examples and quickstart commands, product/architecture/ADR/diagrams,
+governance/backlog/predecessor contracts, IaC, release and UI documents are
+unaffected: no public command, provider graph or product behavior changed.
+
 ## Pre-candidate inherited historical preparation
 
 ### Complete native composition execution: T047

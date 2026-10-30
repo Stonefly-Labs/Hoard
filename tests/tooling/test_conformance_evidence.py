@@ -4762,6 +4762,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     inspect(owner, b"{}", expected_inputs=self.inputs, native_evaluation=token)
 
     def test_category_qualification_cannot_be_derived_from_modeled_or_copied_authority(self):
+        import conformance_sdk_checks as checks
+
         derive = getattr(evidence, "derive_native_category_qualification", None)
         self.assertTrue(callable(derive), "Qualification requires an independent original-owner boundary.")
         from conformance_sources import NativeCategoryEvaluation
@@ -4779,6 +4781,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     evidence.render_native_category_qualification(
                         owner, b"{}", original_report_data=b"{}", expected_inputs=self.inputs, native_evaluation=token)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    evidence.native_category_qualification_receipt(
+                        owner, b"{}", original_report_data=b"{}", expected_inputs=self.inputs, native_evaluation=token)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    checks._publish_category_fixture_qualification(
+                        owner, self.inputs, native_evaluation=token)
         with mock.patch.object(
                 evidence, "derive_native_category_qualification", side_effect=AssertionError("Oversized input")):
             for raw in (None, "{}", b"x" * (evidence.MAX_REPORT_BYTES + 1)):
@@ -4797,6 +4805,38 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 evidence.derive_native_category_qualification(
                     None, evidence.canonical_bytes(report), expected_inputs=history._inputs, native_evaluation=None)
         origin.assert_called_once()
+
+    def test_composition_and_compatibility_qualification_require_original_released_authority(self):
+        from types import SimpleNamespace
+
+        for profile in ("composition", "compatibility"):
+            derive = getattr(evidence, f"derive_native_{profile}_qualification", None)
+            self.assertTrue(callable(derive), "All native profiles need the same strict qualification boundary.")
+            for owner, token in ((None, None), (SimpleNamespace(state="Released"), None)):
+                with self.subTest(profile=profile, owner=type(owner).__name__), mock.patch.object(
+                        evidence, "_input_root", side_effect=AssertionError("Unowned qualification read proofs")):
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                        derive(owner, b"{}", expected_inputs=self.inputs, native_evaluation=token)
+
+    def test_native_qualification_policy_rejects_diagnostic_dirty_incomplete_and_failed_history(self):
+        for defect, code in (("diagnostic", "EvidenceIncomplete"), ("dirty", "InputChanged"),
+                             ("incomplete", "EvidenceIncomplete"), ("failed-retry", "AssertionFailed")):
+            with self.subTest(defect=defect):
+                report = {
+                    "inputs": {"mode": "qualification", "sourceState": "clean-local"},
+                    "results": [{"status": "Passed", "attempts": [{"status": "Passed"}]}],
+                }
+                evidence._require_qualifying_outcomes(report)
+                if defect == "diagnostic":
+                    report["inputs"]["mode"] = "diagnostic"
+                elif defect == "dirty":
+                    report["inputs"]["sourceState"] = "dirty-local"
+                elif defect == "incomplete":
+                    report["results"][0]["status"] = "Incomplete"
+                else:
+                    report["results"][0]["attempts"].insert(0, {"status": "Failed"})
+                with self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$"):
+                    evidence._require_qualifying_outcomes(report)
 
     def test_native_category_reports_recheck_original_history_inputs_and_proof_files(self):
         import conformance_sdk_checks as checks
@@ -10952,6 +10992,74 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
                     owner, raw, original_report_data=original, expected_inputs=inputs,
                     native_evaluation=replace(evaluation))
             self.assertEqual(path.read_bytes(), original)
+
+        def test_published_fixture_qualification_keeps_diagnostics_and_rechecks_retained_bytes(self):
+            import conformance_sdk_checks as checks
+
+            original_path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            original = original_path.read_bytes()
+            published = checks._publish_category_fixture_qualification(
+                owner, inputs, native_evaluation=evaluation)
+            path = owner.root / f'proofs/category-{inputs["profileId"]}-fixture-qualification-report.json'
+            raw = path.read_bytes()
+            self.assertTrue(published["qualification"])
+            self.assertEqual(published["reportSha256"], hashlib.sha256(raw).hexdigest())
+            self.assertEqual(path.stat().st_mode & 0o777, 0o400)
+            for suffix in (".json", ".junit.xml", ".md", "-ci-summary.md"):
+                output = owner.root / "diagnostics" / (
+                    f'category-{inputs["profileId"]}-fixture-qualification' + suffix)
+                self.assertEqual(output.stat().st_mode & 0o777, 0o400)
+            self.assertEqual(original_path.read_bytes(), original)
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                checks._publish_category_fixture_qualification(
+                    owner, inputs, native_evaluation=replace(evaluation))
+
+        def test_independent_category_verification_requires_the_external_original_owner_receipt(self):
+            original_path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            original = original_path.read_bytes()
+            candidate = evidence.derive_native_category_qualification(
+                owner, original, expected_inputs=inputs, native_evaluation=evaluation)
+            raw = evidence.canonical_bytes(candidate)
+            receipt = evidence.native_category_qualification_receipt(
+                owner, raw, original_report_data=original, expected_inputs=inputs, native_evaluation=evaluation)
+            pinned = hashlib.sha256(raw).hexdigest()
+
+            def inspect(packet=raw, origin=receipt, report_sha=pinned):
+                return evidence.inspect_receipted_category_qualification(
+                    owner.root, packet, expected_inputs=inputs,
+                    expected_report_sha256=report_sha, qualification_origin=origin)
+
+            observed = inspect()
+            self.assertTrue(observed["qualification"])
+            self.assertFalse(observed["baselineQualification"])
+            self.assertEqual(observed["reportSha256"], pinned)
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                inspect(origin=None)
+            for key in receipt:
+                changed = dict(receipt)
+                changed[key] = "foreign" if key == "kind" else (
+                    "proofs/foreign.json" if key == "originalReportPath" else "0" * 64)
+                with self.subTest(field=key), self.assertRaises(evidence.ConformanceError):
+                    inspect(origin=changed)
+            for defect in ("scope", "qualification", "state", "result"):
+                changed = evidence.load_json(raw)
+                if defect == "scope":
+                    changed["scope"] = ["production"]
+                elif defect == "qualification":
+                    changed["qualification"] = False
+                elif defect == "state":
+                    changed["state"] = "Incomplete"
+                else:
+                    changed["results"].pop()
+                packet = evidence.canonical_bytes(changed)
+                changed_receipt = {**receipt, "reportSha256": hashlib.sha256(packet).hexdigest()}
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    inspect(packet, changed_receipt, changed_receipt["reportSha256"])
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.native_category_qualification_receipt(
+                    owner, raw, original_report_data=original, expected_inputs=inputs,
+                    native_evaluation=replace(evaluation))
+            self.assertEqual(original_path.read_bytes(), original)
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 

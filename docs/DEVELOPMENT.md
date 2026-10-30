@@ -9763,6 +9763,26 @@ identity/HA/deployment/support claim. Native readback/render acceptance remains
 pending; the corrected affected selector above passes211 tests in96.155 seconds,
 four host native-prerequisite skips; `git diff --check` passes.
 
+The acceptance-reset checkpoint preserves the internal category publication
+helper and adds a separately trusted native-owner receipt boundary. Receipt
+creation still requires the exact original Released owner/evaluation; its
+independent reader verifies input/report/original-report/resource pins and
+reconstructs the exact qualified category from unchanged diagnostic bytes,
+catalog, proofs and completion inputs. It does not reconstruct native tokens.
+Public coordinator admission, CLI exits and all-five qualification are unchanged;
+the new native controls still require fresh Linux acceptance.
+
+Current local `python3 -m unittest discover -s tests/tooling -q` passes843 tests
+in507.625 seconds with31 native-only skips. Hosted composition run41060808083
+at `cc8e1ca` fails its mandatory600-second tooling gate after241/841 tests
+(626873.485049 ms, no observed failures/errors/skips/unexpected diagnostic bytes).
+The standalone tooling step at that source takes approximately736 seconds.
+Implementation stops at this measured blocker rather than changing budgets or
+omitting tests. The next bounded correction compares standard tooling execution
+in the standalone and owning-supervisor contexts; no repeated full-profile run
+is warranted without targeted evidence. See the
+[current checkpoint](../specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
