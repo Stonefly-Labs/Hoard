@@ -4867,6 +4867,57 @@ observation. This metadata attempt never reaches the repaired PDB image-set
 guard and is not repair verification. No failure, bound or cold-input condition
 is discarded or relaxed.
 
+### Original bounded reader-progress diagnostics
+
+The recurring CI reader guard now retains four typed numeric observations from
+the original failed walk: files actually hashed, bytes actually read (including
+the unfinished file), entries seen and elapsed monotonic milliseconds.
+SDK and admitted public/category CLI failure projections share that closed
+observation. No name, path, payload, extra read or SDK prewarming is introduced.
+Original exception trace/code/status and5-second/256-MiB/file/depth limits remain
+unchanged; observations do not constitute witnesses or qualify any attempt.
+This instruments the blocker rather than claiming a throughput fix.
+
+The new regression first fails on absent `proofRead`; it then drives the actual
+two-byte proof reader across its unchanged deadline and verifies zero completed
+hashes/two read bytes/one entry/5000ms in both CLI projections, failed exit1,
+original ProofMismatch and no private root/file canaries. Wider host selection
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks
+test_conformance_execution` passes515 tests with26 native-only skips in114.076
+seconds. After shared public-CLI projection is added, final targeted command
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks.SdkDiagnosticTests.test_proof_reader_failure_projects_only_original_bounded_progress_without_private_names
+test_conformance_cli.ConformanceCliTests test_conformance_evidence.ConformanceInputTests`
+passes43 tests in3.962 seconds. Its initial test-only unrelated admission fixture
+is corrected; original guard, overflow, special-file and canary checks stay
+enforced. Catalog/SDK and diff checks pass. Fresh CI progress is required;
+the reader constraint and full-tooling600-second acceptance remain unfinished.
+
+The original immutable `3589481` attempt
+`1b9157a4b8c94adfb4a4294e51fced54` passes8 live/12 released controls, exit0,
+425522.77478700125ms,202967445504 initial free scratch bytes, no extra SDK
+prewarming. Original packet SHA256:
+`afaea642ba9b5f93be38e42f04a604f41d36ac9eabb1eaef45746439a5a353eb`.
+Active/released report SHA256:
+`dd0e246b255fc00fe79d77917fa6b14d7b1e4aa05d663da94d21637bf9f316e4` /
+`5eda057840c2a0ba46c9fff11089c724eedfab03c3627459d8b7dbe84ce8010e`.
+Both retain142 cases,136 Passed/six Incomplete and209 witnesses, resources-only
+difference. Initial input SHA256 is
+`7a479783effbdd0d28c03c4d705730819f93cd243444373411e8440ffa7ac826`;
+completion SHA256 is
+`9d112e8721531b11ca063aa856574fb821b1962f4f00b06f54bcebbfc83fcdf3`.
+Readonly inspection confirms only actual environment.freeBytes and its derived
+environmentSha256 differ, not source/runtime bytes.
+
+That same inspection exposes an unfinished staging obligation: both13-file
+scopes are physically staged, but only default13 are frozen; package13 are
+absent from common RunInputs. The existing controls do not yet challenge this.
+The initial inspection assertion and a follow-up missing-key failure expose the
+gap; neither is discarded or called passing. Correct package-scope capture and
+fresh corresponding verification remain required before staging acceptance.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

@@ -5224,6 +5224,7 @@ def main():
         print(json.dumps({
             "qualification": False, "status": status, "code": code,
             "locations": _category_failure_locations(error),
+            **evidence.proof_read_diagnostic(error),
             **(error.runtime_diagnostic if isinstance(error, _RuntimeObservationError) else {})}))
         return 2 if status == "Incomplete" else 1
 

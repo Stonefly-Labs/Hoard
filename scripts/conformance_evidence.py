@@ -47,6 +47,7 @@ class ConformanceError(ValueError):
 
     def __init__(self, code="EvidenceSchemaInvalid"):
         super().__init__(code if code in DIAGNOSTIC_CODES else "EvidenceSchemaInvalid")
+        self._proof_read: "_ProofReadObservation | None" = None
 
 
 def failure_status(code):
@@ -1640,6 +1641,29 @@ def verify_snapshot(snapshot, manifest):
         raise ConformanceError("InputChanged") from None
 
 
+@dataclass(frozen=True)
+class _ProofReadObservation:
+    files_hashed: int
+    bytes_read: int
+    entries_seen: int
+    elapsed_ms: float
+
+    def __post_init__(self):
+        for value in (self.files_hashed, self.bytes_read, self.entries_seen):
+            _integer(value)
+        _number(self.elapsed_ms)
+
+    def diagnostic(self):
+        return {
+            "filesHashed": self.files_hashed, "bytesRead": self.bytes_read,
+            "entriesSeen": self.entries_seen, "elapsedMs": self.elapsed_ms}
+
+
+def proof_read_diagnostic(error):
+    observed = getattr(error, "_proof_read", None)
+    return {"proofRead": observed.diagnostic()} if type(observed) is _ProofReadObservation else {}
+
+
 def proof_manifest(directory, *, exclude_outputs=False, include_file=None, include_directory=None):
     from conformance_execution import no_symlinks
     if (include_file is not None and not callable(include_file)
@@ -1648,11 +1672,13 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
     directory = Path(directory).absolute()
     files = {}
     total = 0
+    partial = 0
     entries_seen = 0
-    deadline = time.monotonic() + 5
+    started = time.monotonic()
+    deadline = started + 5
 
     def visit(descriptor, prefix="", depth=0):
-        nonlocal total, entries_seen
+        nonlocal total, partial, entries_seen
         if depth > 32 or time.monotonic() >= deadline:
             raise ConformanceError("ProofMismatch")
         with os.scandir(descriptor) as entries:
@@ -1687,6 +1713,7 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
                         observed = 0
                         while block := source.read(64 * 1024):
                             observed += len(block)
+                            partial = observed
                             if total + observed > MAX_PROOF_BYTES:
                                 raise ConformanceError("ProofMismatch")
                             if time.monotonic() >= deadline:
@@ -1696,6 +1723,7 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
                             raise ConformanceError("ProofMismatch")
                         files[relative] = hashed.hexdigest()
                         total += observed
+                        partial = 0
                 elif not stat.S_ISREG(before.st_mode):
                     raise ConformanceError("ProofMismatch")
                 after = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
@@ -1716,10 +1744,18 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
             os.close(root)
     except ConformanceError as error:
         if str(error) == "ProofMismatch":
+            error._proof_read = _ProofReadObservation(
+                len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000)
             raise
-        raise ConformanceError("ProofMismatch") from None
+        rejected = ConformanceError("ProofMismatch")
+        rejected._proof_read = _ProofReadObservation(
+            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000)
+        raise rejected from None
     except OSError:
-        raise ConformanceError("ProofMismatch") from None
+        rejected = ConformanceError("ProofMismatch")
+        rejected._proof_read = _ProofReadObservation(
+            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000)
+        raise rejected from None
     if not files:
         raise ConformanceError("ProofMismatch")
     return MappingProxyType(files)

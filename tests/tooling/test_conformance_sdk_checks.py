@@ -6457,6 +6457,37 @@ class SdkDiagnosticTests(unittest.TestCase):
             "qualification": False, "status": "Failed", "code": "ProofMismatch",
         })
 
+    def test_proof_reader_failure_projects_only_original_bounded_progress_without_private_names(self):
+        private = self.directory / "private-proof-reader-canary"
+        private.mkdir()
+        (private / "private-file-canary").write_bytes(b"{}")
+        with patch.object(checks.evidence.time, "monotonic", side_effect=(0, 0, 0, 5, 5)), \
+                self.assertRaisesRegex(checks.evidence.ConformanceError, "^ProofMismatch$") as captured:
+            checks.evidence.proof_manifest(private)
+        output = io.StringIO()
+        with patch.object(sys, "argv", ["conformance_sdk_checks.py", "--evidence", "unused"]), \
+                patch.object(checks, "execute", side_effect=captured.exception), \
+                contextlib.redirect_stdout(output):
+            self.assertEqual(checks.main(), 1)
+        diagnostic = json.loads(output.getvalue())
+        self.assertEqual(diagnostic["proofRead"], {
+            "filesHashed": 0, "bytesRead": 2, "entriesSeen": 1, "elapsedMs": 5000})
+        self.assertEqual(diagnostic["code"], "ProofMismatch")
+        self.assertEqual(diagnostic["status"], "Failed")
+        self.assertFalse(diagnostic["qualification"])
+        self.assertNotIn("private-proof-reader-canary", output.getvalue())
+        self.assertNotIn("private-file-canary", output.getvalue())
+        import conformance_cli
+        public = io.StringIO()
+        with patch.object(checks.evidence, "admit_invocation", return_value=SimpleNamespace(mode="qualification")), \
+                patch.object(checks.evidence, "dispatch_invocation", side_effect=captured.exception), \
+                contextlib.redirect_stdout(public):
+            self.assertEqual(conformance_cli.main([
+                "--profile", "metadata", "--evidence", str(self.directory / "uncaptured")]), 1)
+        self.assertEqual(json.loads(public.getvalue())["proofRead"], diagnostic["proofRead"])
+        self.assertNotIn("private-proof-reader-canary", public.getvalue())
+        self.assertNotIn("private-file-canary", public.getvalue())
+
     def test_negative_observations_require_matching_exit_event_inventory_and_failure_kind(self):
         scenario = checks.SCENARIOS[2]
         _, identities, code, status, exit_code, kind = scenario

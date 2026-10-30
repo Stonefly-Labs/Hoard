@@ -1078,6 +1078,12 @@ The next increment stages original source-control DLL/PDB pairs and five exact
 compiler/control frames into transient runtimes before input capture, with
 canonical PDB paths. Host514 checks pass; fresh native staging verification and
 logical source-case assertions remain required.
+Failed proof reads now also project original numeric byte/file/entry progress
+and elapsed time, without private names or extra reads. This diagnoses the CI
+reader constraint; it does not relax or fix its five-second bound.
+The `3589481` native controls pass8/12, but independent inspection catches a
+remaining gap: only the default source fixture is frozen; its package-runtime
+copy is not. Full staging verification is not claimed.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -22,6 +22,7 @@ def main(arguments=None):
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
         status = evidence.failure_status(code) if admitted else "Incomplete"
         failure = {"mode": mode, "qualification": False, "status": status, "code": code}
+        failure.update(evidence.proof_read_diagnostic(error))
         if admitted:
             from conformance_sdk_checks import (
                 _RuntimeObservationError, _category_failure_locations, bounded_runtime_diagnostic)

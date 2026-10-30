@@ -1212,6 +1212,14 @@ selected byte is copied bounded/readonly without overwrite or symlink traversal
 and captured before runtime execution. Actual cleanup still removes all staged
 raw images. Host514 checks pass; native staging and logical case linkage remain
 required, with no case promotion inferred from copying or modeled tests.
+Rejected proof reads may include a typed `proofRead` diagnostic containing only
+original numeric `filesHashed`, `bytesRead`, `entriesSeen`, `elapsedMs`.
+It preserves the original closed error/status/guard and performs no additional
+reads. Counts are not witnesses, proof authority, qualification or a relaxed
+deadline/byte/file/depth condition; private names and payloads are never projected.
+Original `3589481` control execution passes8/12 but does not establish both staged
+source scopes: readonly inspection finds13 default files frozen and no package
+copy files. Scope correction and a corresponding control remain required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

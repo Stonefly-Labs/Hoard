@@ -9078,6 +9078,24 @@ jobs pass. SDK, metadata and artifacts all reject at the initial selected-runner
 proof-read deadline: SDK4825 -> sources959 -> evidence1710/1693, ProofMismatch.
 Thus this metadata attempt does not reach or verify the PDB integration repair.
 These original failures remain separate from successful local compiler controls.
+Proof-reader rejections now retain original numeric progress only:
+`proofRead.filesHashed`, `bytesRead`, `entriesSeen`, `elapsedMs`. SDK and public
+category CLI failure projection share the same typed observation; no file/root
+name, payload, retry, extra SDK read or prewarming is added. Code/status, original
+guard traceback, five-second/256-MiB/file/depth limits and failure exit remain
+unchanged. This is diagnostic instrumentation, not a deadline repair or pass.
+The first regression rejects the missing progress field. The broader host
+selection passes515 tests with26 native-only skips in114.076 seconds; final
+CLI/proof-input selection passes43 tests in3.962 seconds after correcting a
+test-only admission fixture. Catalog/SDK and diff checks pass. Fresh CI numbers
+remain required to distinguish actual byte throughput from traversal/scheduling.
+The original `3589481` native attempt passes8 live/12 released controls, but
+independent readonly inspection finds only13/26 staged source files selected:
+default runtime13, package runtime0. The controls do not yet test that new scope
+obligation. This remains an implementation gap, not complete staging acceptance.
+Reports still contain142 cases/136 Passed/six Incomplete/209 witnesses and differ
+only in resources. Completion differs only by actual freeBytes measurement and
+its derived environmentSha256, not source/runtime bytes.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
