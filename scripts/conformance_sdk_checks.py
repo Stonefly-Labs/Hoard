@@ -2645,12 +2645,28 @@ def validate_original_observations(ingested):
                 raise evidence.ConformanceError("WitnessMissing")
 
 
+def _require_runtime_transport_output(result, output):
+    if output.is_dir():
+        return
+    if len(result.events) == 1:
+        event = result.events[0]
+        if (set(event) == {"event", "code", "value"} and event["event"] == "control"
+                and type(event["value"]) is int and event["value"] == 0):
+            code = event["code"]
+            if not isinstance(code, str) or code not in evidence.DIAGNOSTIC_CODES:
+                raise evidence.ConformanceError("UnknownDiagnostic")
+            if code != "None":
+                raise evidence.ConformanceError(code)
+    raise evidence.ConformanceError("EvidenceIncomplete")
+
+
 def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtime_options, *,
                                origin_inputs=None, original_inputs=None):
     identities = tuple(expected)
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     discovery_result, discovery_output, discovery_transport = runtime_command(
         run, assembly, discovery_manifest, **runtime_options)
+    _require_runtime_transport_output(discovery_result, discovery_output)
     files = set()
     for path in discovery_output.iterdir():
         files.add(path.name)
@@ -2669,6 +2685,7 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
             or {record["testIdentity"] for record in discovery["discoveries"]} != set(identities)):
         raise evidence.ConformanceError("EvidenceIncomplete")
     result, output, transport = runtime_command(run, assembly, manifest, **runtime_options)
+    _require_runtime_transport_output(result, output)
     files = set()
     for path in output.iterdir():
         files.add(path.name)
@@ -4100,8 +4117,7 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
                          "Hoard.Architecture.Tests.dll"),
         "version": (version_runtime_tests, VERSION_TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0",
                     "Hoard.Composition.Tests.dll"),
-        "binary": (binary_runtime_tests, TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0",
-                   "Hoard.Conformance.Tests.dll"),
+        "binary": (binary_runtime_tests, TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll"),
     }
     inputs = evidence.admit_entity("RunInputs", inputs)
     if scope not in definitions or inputs["profileId"] != "compatibility" or inputs["mode"] != "diagnostic":
@@ -4411,7 +4427,7 @@ def execute_binary_runtime(run, repository, candidate, sources, config, feed, pr
                            frozen_inputs, native_sources, ci_revision=None):
     from conformance_case_catalog import binary_runtime_tests
 
-    runtime = candidate / TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
+    runtime = candidate / TESTS / "bin/Release/net10.0"
     packages = ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions")
     verify_runtime_packages(runtime, feed, packages)
     summary = _execute_compatibility_runtime_scope(

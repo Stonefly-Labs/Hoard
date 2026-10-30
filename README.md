@@ -1090,12 +1090,15 @@ pass. Immutable `a53fd49` now passes all8 live/13 released native controls;
 independent readonly inspection verifies both13-file scopes frozen and reports
 differing only in resources. These remain142 cases/136 Passed/six Incomplete/
 209 witnesses, without qualification.
-The next increment links the source-break logical row to an actual package-only
+The next increment links the source-break logical row to an actual shared
 runtime assertion checking original compiler diagnostics, PE/PDB provenance and
-compatible repair. Binary execution selects the frozen package consumer with
-eight physical tests; source copies and historical binaries are bound in both
-frozen runtimes. Fresh native compilation/execution remains required before
-claiming the additional logical case.
+compatible repair. Its first package-consumer execution rejects139 manifest
+images against the unchanged128-image logger bound; the missing transport then
+masks that closed rejection. The assertion now compiles with the existing default
+binary controls and that complete runtime is selected, preserving all eight tests
+and both frozen source/historical image copies without raising bounds or pruning.
+Missing transports retain the original closed logger error. Fresh native execution
+remains required before claiming the additional logical case.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

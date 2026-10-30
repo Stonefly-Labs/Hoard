@@ -662,6 +662,36 @@ class SdkDiagnosticTests(unittest.TestCase):
                         {"category_scope": ("metadata" if scope == "shared-consumer" else "artifacts", scope)})
                 self.assertTrue(all(path.stat().st_mode & 0o777 == 0o600 for path in execution.iterdir()))
 
+    def test_missing_runtime_transport_preserves_original_logger_rejection_before_directory_read(self):
+        missing = self.directory / "PrivateCanary-missing-transport"
+        for purpose in ("discovery", "execution"):
+            for code in ("EvidenceSchemaInvalid", "OwnershipInvalid", "None", "PrivateCanary"):
+                result = SimpleNamespace(
+                    exit_code=0, events=({"event": "control", "code": code, "value": 0},))
+                discovery = self.directory / ("discovery-" + code)
+                if purpose == "execution":
+                    discovery.mkdir()
+                    (discovery / "completion.json").write_bytes(b"{}")
+                    (discovery / "discovered.jsonl").write_bytes(b"")
+                successful = SimpleNamespace(
+                    exit_code=0, events=({"event": "control", "code": "None", "value": 1},))
+                transport = {"manifest_data": b"{}", "owner_data": b"{}",
+                             "manifest_sha256": "a" * 64, "owner_sha256": "b" * 64,
+                             "started_ms": 1, "ended_ms": 2}
+                responses = ([(successful, discovery, transport)] if purpose == "execution" else [])
+                responses.append((result, missing, transport))
+                expected_code = ("UnknownDiagnostic" if code == "PrivateCanary"
+                                 else "EvidenceIncomplete" if code == "None" else code)
+                with self.subTest(purpose=purpose, code=code), patch.object(
+                        checks, "runtime_command", side_effect=responses) as launch, patch.object(
+                        checks.evidence, "ingest_runtime_discovery", return_value={
+                            "diagnosticCode": "None", "discoveries": ({"testIdentity": "Test.Source"},)}):
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "^" + expected_code + "$"):
+                        checks._execute_runtime_transport(
+                            SimpleNamespace(), {"mode": "diagnostic"}, None, {},
+                            {"Test.Source": ("none", "binary-runtime")}, {})
+                self.assertEqual(launch.call_count, 1 if purpose == "discovery" else 2)
+
     def test_category_failure_locations_are_bounded_static_source_roles_only(self):
         trace = None
         for source, line in (

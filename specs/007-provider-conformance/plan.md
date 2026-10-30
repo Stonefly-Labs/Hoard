@@ -4959,6 +4959,43 @@ package compilation/execution is still required:137 Passed/five Incomplete and21
 witnesses are expected test criteria, not verified observations. T071–T086 remain
 open; the original SDK reader deadline and full-tooling acceptance are unresolved.
 
+The original immutable `62175f4cb2267d85ed6c257ec027fad08a3d6665` attempt
+`3cd6319873a64812afa9cc74ac7b927d` fails before binary discovery transport creation,
+exit1,363300.8376470025ms. Initial free scratch202220085248 bytes, no extra SDK
+prewarming. Original packet SHA-256:
+`7bc725cc5ec6a3a8acb919616f877bef5ccd68900af84b1a5d0a92608dfb7ebf`.
+Native compilation succeeds, but the selected package runtime declares139 images
+against the managed logger's unchanged128-image cap. Original command125 exits0
+and emits the closed EvidenceSchemaInvalid control with zero records; no discovery
+directory exists. The subsequent unchecked directory iteration masks the original
+code as PrerequisiteMissing. This original failure is preserved, not restarted or
+reported as source-case acceptance.
+
+The repair shares SourceBreakRuntimeTests with the existing always-compiled
+CompatibilityBaselineTests and restores execution/inspection to their complete
+default runtime. Both exact13-file source scopes and historical image copies
+remain frozen/bound. The required physical inventory remains eight; no image cap,
+deadline, assertion or selected inventory is relaxed or pruned. A regression
+first reproduces FileNotFoundError for both discovery and execution missing
+transports. Shared output admission now preserves original closed zero-record
+logger errors, maps absent success transport to EvidenceIncomplete, and rejects
+unknown codes without reflecting them. Focused source/transport/composition
+selection passes74 tests in4.832 seconds; shared C# whitespace, catalog/SDK and
+diff checks pass. Fresh immutable native8/13 execution remains required.
+
+`python3 -m unittest discover -s tests/tooling -q` on the prior62175f4 source
+passes820 tests in471.025 seconds with30 explicit native-only skips. It does not
+establish native full-tooling acceptance. Original `a53fd49` foundations run
+41015177818 completes failure: preparation/native/artifacts jobs pass;
+SDK123932938435, metadata123932938571 and compatibility123932938535 reject at
+the unchanged proof_manifest mid-read five-second guard. Original safe numeric
+progress: SDK245 files/63516037 bytes/979 entries/5002.562774ms;
+metadata335/67850318/1104/5003.303179ms; compatibility317/67554958/1082/
+5000.087683000003ms. Job-specific API logs are projected through the strict
+code/location/numeric allowlist; no raw terminal content is reflected.
+No prewarming, retries-to-acceptance, reader-bound changes or fresh metadata
+PDB acceptance are inferred. Actual reader optimization remains necessary.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

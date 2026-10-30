@@ -1298,11 +1298,16 @@ control/PDB rejection and a new exact two-scope released control. Host56 tests
 pass. Immutable `a53fd49` now passes all8 live/13 released controls; independent
 readonly inspection verifies both13-file source inventories frozen. Reports
 remain142 cases/136 Passed/six Incomplete/209 witnesses, resources-only difference.
-The next source-break logical assertion runs in the already-frozen package
+The next source-break logical assertion runs in the already-frozen default
 consumer alongside the seven binary controls. It checks original compiler
 diagnostics, actual DLL/PDB source provenance and compatible repair. Exact
 two-scope source/historical image bindings are required; fresh native execution
 must establish this additional logical case before it is reported passing.
+The first package-runtime selection rejects139 images against the unchanged128
+logger cap; no bound is raised or selected inventory pruned. Sharing the source
+assertion with the existing default binary tests avoids that unnecessary runtime.
+Missing transport errors now retain the original closed logger rejection rather
+than a misleading missing-directory prerequisite failure.
 
 ## Offline Correspondence Inspection
 

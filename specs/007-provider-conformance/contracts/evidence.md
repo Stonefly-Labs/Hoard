@@ -1230,12 +1230,17 @@ original13-file source inventories frozen, without adding a logical case.
 Source-break logical derivation additionally binds its fixed physical runtime
 witness to both exact matching13-file source inventories and the frozen F-06
 source/lock/recipe. Original live scope capture checks the staged control hash
-against its already-held compiler receipt. The package-only assertion checks
+against its already-held compiler receipt. The shared runtime assertion checks
 the original negative diagnostics/input/control frames, unchanged consumer and
 repair images, actual PE/PDB source documents and loaded contract behavior.
-The combined binary scope selects the frozen package consumer and eight physical
+The combined binary scope selects the frozen default consumer and eight physical
 tests; binary-break retains its original seven witnesses and independently binds
-both historical image copies. Fresh native package compilation/execution is
+both historical image copies. The initial package selection rejects139 images
+against the unchanged128-image logger cap. The assertion now compiles beside the
+existing default binary controls, without raising caps or pruning either runtime's
+frozen inventory. If transport creation failed, preserve the original closed
+logger rejection before reading missing directories; unknown codes reject safely.
+Fresh native execution is
 required before the new logical source-break row can be claimed passing.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.

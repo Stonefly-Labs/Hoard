@@ -9121,6 +9121,26 @@ receipt. Fresh native package compilation/execution is required; no modeled
 case or updated expected count establishes acceptance. Provider/product APIs,
 examples, diagrams and deployment remain unaffected by this test-only increment.
 
+The original immutable `62175f4` attempt compiles the new assertion but fails
+before binary discovery transport creation: the package runtime has139 manifest
+images, beyond the existing128-image managed logger bound. The original logger
+emits EvidenceSchemaInvalid; an unchecked missing directory then masks it as
+PrerequisiteMissing. This is not a capacity issue. The source assertion now lives
+beside the existing shared binary tests, and execution/inspection select their
+complete default runtime instead. Both13-file source scopes and historical image
+copies stay frozen/bound; no cap is raised and no selected inventory is pruned.
+A failing regression reproduces the masked rejection for discovery/execution;
+missing transport now preserves a known closed logger error, rejects unknown
+codes safely and otherwise remains EvidenceIncomplete.
+
+Before that repair, `python3 -m unittest discover -s tests/tooling -q` passes820
+tests in471.025 seconds with30 explicit native-only skips; this is not the native
+full-tooling acceptance. Original `a53fd49` CI now passes preparation/native/artifact
+jobs but fails SDK/metadata/compatibility at the unchanged five-second read guard.
+Original bounded progress is respectively245/335/317 files,63516037/67850318/
+67554958 bytes,979/1104/1082 entries,5002.563/5003.303/5000.088ms.
+Reader optimization and full qualification remain unresolved.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently
