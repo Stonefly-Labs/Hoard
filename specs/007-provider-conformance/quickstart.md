@@ -1239,6 +1239,14 @@ The next increment derives QC-22..24/27..28 from complete original logical bases
 and physical version/architecture scopes, leaving seven baseline-related rows
 Incomplete. The tenth control also challenges QC derivations; fresh native
 verification is required. None of these diagnostic runs qualifies the profile.
+Immutable `df47818` now passes all3 live/ten released controls, exit0
+in377600.666429 ms:142 cases,135 Passed/seven Incomplete,202 witnesses.
+The following increment prepares the actual historical binary-break contract
+and consumer before candidate compilation and seals both original PE/PDB pairs
+in schema3. Both test runtimes stage those exact originals, never a rebuilt
+consumer; earlier schema1/2 seals remain verifiable but cannot supply this fixture.
+Host checks pass; fresh native execution and full baseline authority remain
+required. Seven baseline-related case rows remain explicitly Incomplete.
 
 ## Offline Correspondence Inspection
 

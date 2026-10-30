@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -8257,6 +8258,101 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def historical_binary_fixture(self):
+        source = self.root / "stores/f06"
+        fixture = "tests/fixtures/compatibility/BinaryMemberRemoval/"
+        entry = next(row for row in self.manifest["entries"] if row["id"] == "f06")
+        for project in ("Old/BinaryContract.csproj", "Consumer/BinaryConsumer.csproj"):
+            path = source / fixture / project
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("<Project />")
+            entry["recipes"]["compatibility/BinaryMemberRemoval/" + project] = evidence.file_sha256(path)
+        images = {}
+        for variant, project, name in (("baseline", "Old", "BinaryContract"),
+                                       ("consumer", "Consumer", "BinaryConsumer")):
+            for suffix in (".dll", ".pdb"):
+                relative = fixture + project + "/bin/Release/net10.0/" + name + suffix
+                path = source / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                raw = ("historical " + variant + suffix).encode()
+                path.write_bytes(raw)
+                entry["binaries"][relative] = evidence.file_sha256(path)
+                target = variant + "/" + ("RetainedConsumer" if variant == "consumer" else name) + suffix
+                images[target] = raw
+        entry["sources"] = self.baselines._hash_tree(source, exclude_outputs=True)
+        entry["sourceSha256"] = evidence.digest(entry["sources"])
+        entry["recipeSha256"] = evidence.digest(entry["recipes"])
+        self.manifest["schemaVersion"] = 3
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        return evidence.file_sha256(self.seal), images
+
+    def test_historical_binary_preparation_requires_both_original_pe_and_pdb_pairs(self):
+        seal_sha, _ = self.historical_binary_fixture()
+        self.baselines.verify_prepared_baselines(self.root, seal_sha)
+        entry = next(row for row in self.manifest["entries"] if row["id"] == "f06")
+        for relative in tuple(entry["binaries"]):
+            if "BinaryMemberRemoval/" not in relative:
+                continue
+            path = self.root / "stores/f06" / relative
+            original = path.read_bytes()
+            path.write_bytes(b"candidate rebuilt image or substituted debug symbols")
+            with self.subTest(path=relative), self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                self.baselines.verify_prepared_baselines(self.root, seal_sha)
+            path.write_bytes(original)
+            expected = entry["binaries"].pop(relative)
+            path.unlink()
+            self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+            with self.subTest(omitted=relative), self.assertRaises(evidence.ConformanceError):
+                self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
+            path.write_bytes(original)
+            entry["binaries"][relative] = expected
+            self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+
+    def test_historical_binary_staging_uses_sealed_original_bytes_and_never_rebuilds_consumer(self):
+        seal_sha, images = self.historical_binary_fixture()
+        runtime = self.root / "stores/snapshot/runtime"
+        for relative in images:
+            path = runtime / "compatibility-fixtures" / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"newly compiled wrapper")
+        run = mock.Mock(root=self.root, state="Active")
+        result = self.baselines.stage_historical_binary_fixture(run, runtime, seal_sha)
+        self.assertEqual(len(result["images"]), 4)
+        self.assertEqual(result["baselineSealSha256"], seal_sha)
+        self.assertFalse(result["qualification"])
+        run.command.assert_not_called()
+        for relative, raw in images.items():
+            path = runtime / "compatibility-fixtures" / relative
+            self.assertEqual(path.read_bytes(), raw)
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o400)
+        self.baselines.verify_prepared_baselines(self.root, seal_sha)
+        original = self.root / "stores/f06/tests/fixtures/compatibility/BinaryMemberRemoval/Consumer/bin/Release/net10.0/BinaryConsumer.pdb"
+        original.write_bytes(b"candidate debug symbols")
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            self.baselines.stage_historical_binary_fixture(run, runtime, seal_sha)
+
+    def test_legacy_baseline_seals_remain_readable_but_cannot_supply_historical_binary_fixture(self):
+        self.baselines.verify_prepared_baselines(self.root, self.expected_sha256)
+        run = mock.Mock(root=self.root, state="Active")
+        with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
+            self.baselines.stage_historical_binary_fixture(run, self.root / "runtime", self.expected_sha256)
+
+    def test_historical_binary_staging_rejects_foreign_roots_and_symlinks_without_touching_target(self):
+        seal_sha, _ = self.historical_binary_fixture()
+        run = mock.Mock(root=self.root, state="Active")
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            self.baselines.stage_historical_binary_fixture(run, self.root.parent / "foreign-runtime", seal_sha)
+        runtime = self.root / "stores/snapshot/runtime"
+        image = runtime / "compatibility-fixtures/baseline/BinaryContract.dll"
+        image.parent.mkdir(parents=True)
+        unrelated = self.root / "unrelated.bin"
+        unrelated.write_bytes(b"untouched")
+        image.symlink_to(unrelated)
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines.stage_historical_binary_fixture(run, runtime, seal_sha)
+        self.assertEqual(unrelated.read_bytes(), b"untouched")
+        self.assertTrue(image.is_symlink())
+
     def test_compatibility_import_rejects_candidate_rebuilt_consumer_even_when_output_is_success(self):
         request = {
             "scenario": "registration", "required": ["Hoard.Abstractions", "RegistrationConsumer"],

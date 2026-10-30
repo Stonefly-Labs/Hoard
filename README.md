@@ -1028,6 +1028,14 @@ report controls:142 cases,130 Passed/12 Incomplete, no qualification.
 The next increment independently derives runtime QC-22..24/27..28 from complete
 original logical bases and physical scopes. Seven baseline-related rows remain
 Incomplete; fresh native QC verification is still required.
+Immutable `df47818` now passes all3 live/ten released QC/report controls:
+142 cases,135 Passed/seven Incomplete,202 witnesses, no qualification.
+The following increment builds the original F-06 binary-break contract and
+consumer before candidate compilation, seals both original PE/PDB pairs in
+preparation schema3, and stages those exact bytes into both test runtimes.
+Earlier schema1/2 seals remain readable but cannot supply that historical
+fixture. Host checks pass; genuine execution of this increment remains required.
+Baseline case authority and QC-25/26 are still unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

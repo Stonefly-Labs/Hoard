@@ -4726,6 +4726,67 @@ APIs, module graph, production architecture/ADR/diagrams, supplied-provider
 example, infrastructure, releases and UI guides are unchanged.
 T071 stays open at70/86; implementation continues.
 
+### Verified runtime QC and original historical binary preparation
+
+Immutable `df47818ce80e0a9ecae42d7ac4b42cb8bb6c692d` Linux/aarch64 execution
+passes all3 live/ten released controls, exit0 in377600.66642899986 ms.
+Initial free scratch208143249408 bytes; no extra SDK prewarming.
+Original packet SHA-256:
+`1aa2b721475caac8c30b4ac5e4caf4788730a2cb2da41307235cd3005c596cf3`.
+All209 runtime parameters and170 version observations bind common input SHA-256
+`dab395201e7c663e1b84ea729ba952a90d7ae09aa5c1dc755ceb335727bc2eac`.
+Both reports contain142 cases,135 Passed/seven Incomplete and202 witnesses.
+Their only difference is resources. Active report SHA-256:
+`d8fa5a4c3d661dc51c7491fb85c434fdf84575ec4b62a58b9d39263016d9e4ba`.
+Released report SHA-256:
+`f404ba6fd6aeb926830ef08dcb6f9dd35cd1480e01509d8184b9b60cfcd6ea40`.
+This remains a runtime diagnostic, not profile qualification.
+
+While projecting those retained reports, an unnecessary `docker start` restarted
+that completed task-owned diagnostic container. The unintended new execution was
+stopped immediately after detection, before any result was accepted. It is not
+a replacement acceptance attempt; the successful original packet/root remains
+preserved unchanged and is the only result cited above.
+
+The existing seven binary-component assertions previously loaded freshly rebuilt
+F-07 wrappers. Frozen historical source checksums alone do not prove original
+pre-candidate binaries, so no baseline-only case was promoted.
+The next increment builds the exact F-06 old contract, then its actual original
+consumer with ContractAssembly pointing at that original DLL, during preparation
+before candidate compilation. Preparation schema3 seals PDBs alongside the prior
+binary inventory and requires both original DLL/PDB pairs and recipes.
+Versions1/2 remain verifiable under their unchanged inventory rules but cannot
+supply this historical fixture. After candidate/compatibility builds, exact sealed
+originals atomically replace fresh wrappers in both default/package test runtimes.
+The consumer is staged under the existing RetainedConsumer filename without
+altering its original assembly or debug bytes. Read/copy/verification uses bounded
+source reads and descriptor-relative atomic replacement; staging never invokes
+a compiler, and changed originals, escaping roots and symlinks reject.
+The separate readonly staging manifest records original/runtime path hashes.
+
+The new tests first reject schema3 and expose the missing staging function.
+The initial implementation test exposes misuse of `_source_file`'s byte-count
+return as bytes; direct bounded streaming to the temporary output fixes that
+without another unbounded read. The wider run then exposes a missing test-only
+stat import; it is corrected.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes441 tests, four native-only skips, in109.538 seconds.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. A further foreign-root/symlink regression is included
+in `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence.ConformanceBaselineTests`, which passes all21 tests
+in0.867 seconds.
+
+Actual execution of the new original images remains to be verified on a fresh
+immutable native run. These bindings do not yet establish native-build origin
+authority, the remaining baseline-only cases or QC-25/26.
+README, DEVELOPMENT, quickstart and evidence contract are affected; product
+APIs/provider boundaries, production architecture/ADR/diagrams, infrastructure,
+release/governance/UI documents and examples are unaffected.
+T071 stays open at70/86; implementation continues.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -1146,6 +1146,15 @@ Missing, failed, retried-away or retimed bases/physical controls reject.
 Reusing an admitted immutable frame within one pure evaluation does not cache
 runtime/proof/SDK reads across evaluations. QC-25/26 and baseline-only cases
 remain Incomplete; fresh native QC verification is required.
+Immutable `df47818` subsequently passes the genuine3/10 runtime-QC/report
+controls, retaining142 cases,135 Passed/seven Incomplete and202 witnesses.
+Historical preparation schema3 additionally seals PDB inventories and requires
+the original F-06 binary-break contract/consumer PE/PDB pairs and recipes.
+Default and package-consumer runtimes stage the exact sealed originals before
+common input capture; staging rejects changed originals, foreign roots and
+symlinks. Versions1/2 keep their original verification semantics but cannot
+supply this historical fixture. These file bindings are not native-build origin
+authority or a passing baseline case; fresh native execution remains required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

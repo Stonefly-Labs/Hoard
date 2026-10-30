@@ -8898,6 +8898,26 @@ increase is introduced. The focused pair passes in1.772 seconds; the full
 Catalog/SDK and diff checks pass. The genuine factory extends its existing
 tenth report-control test to QC hashes/bytes; fresh native execution is required.
 
+Immutable `df47818ce80e0a9ecae42d7ac4b42cb8bb6c692d` now passes all3 live/ten
+released controls, exit0 in377600.666429 ms, with208143249408 initial free
+scratch bytes and no extra SDK prewarming. Both reports contain142 cases,
+135 Passed/seven Incomplete and202 witnesses; only resources differ.
+Original packet SHA-256:
+`1aa2b721475caac8c30b4ac5e4caf4788730a2cb2da41307235cd3005c596cf3`.
+This remains a runtime diagnostic, not full compatibility qualification.
+
+The next historical-binary increment builds the exact F-06
+`BinaryMemberRemoval/Old/BinaryContract.csproj`, then its original
+`Consumer/BinaryConsumer.csproj` with that original ContractAssembly, before
+candidate compilation. Preparation schema3 includes PDBs and requires both
+original DLL/PDB pairs and recipes; schema1/2 verification keeps its earlier
+inventory semantics. Exact sealed originals atomically replace fresh wrapper
+bytes in both default and package-consumer runtimes before input capture.
+The consumer filename is staged as RetainedConsumer; assembly/PDB bytes are
+unchanged. Staging never recompiles it and rejects changed originals, foreign
+roots and symlinks. This does not yet attest baseline-case/native-build authority
+or QC-25/26. Focused host checks pass; fresh native validation remains required.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently
