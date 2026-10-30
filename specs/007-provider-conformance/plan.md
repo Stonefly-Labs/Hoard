@@ -15,7 +15,7 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
-### Native mutation-control custody: portable checks passed, native replay pending
+### Native mutation-control custody: metadata verified, artifact rejection unresolved
 
 The explicit `tests/tooling/test_conformance_evidence.py --native-category-controls`
 runner previously emitted only aggregate suite counts. It now captures exact
@@ -36,7 +36,68 @@ harness or full baseline.
 
 `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence -q`
 passes 237 tests, zero skips. Frozen inventory, SDK/catalog and
-`git diff --check` pass. Actual native execution of this increment is pending.
+`git diff --check` pass.
+
+At exact `c4e36cb`, the original native metadata command
+`python3 -B tests/tooling/test_conformance_evidence.py --native-category-controls --profile metadata --evidence /validation/work/native-controls-c4e36cb/run`
+passes: 102 cases (93 Passed/nine declared exclusions), 141 runtime witnesses,
+and all 4 live/15 released/9 retained mutation controls. Actual release precedes
+separate category/control publication. A fresh process with source and evidence
+mounted readonly independently verifies the complete closure from the two
+externally observed receipts; eight missing/altered/shortened receipt, input,
+source, phase and proof controls reject. Original qualified-report SHA-256:
+`206f3ce8f0272eec6df37f8db36204f370127979ddbc83952f40498016d4d7a6`;
+control-proof SHA-256:
+`64ac2d61d2cb12e81850cb0a5168376e5e48865e4a0997e4c4830bc1c43c3d15`.
+
+The same-source artifact command
+`python3 -B tests/tooling/test_conformance_evidence.py --native-category-controls --profile artifacts --evidence /validation/work/native-controls-artifacts-c4e36cb/run`
+fails with `UnknownDiagnostic` during ObjectSemantics 4-GiB transfer sequence
+103. Local 256 MiB/4 GiB and ObjectSemantics 256 MiB transfers passed. The failed
+child's observed incremental RSS remains below the unchanged 64-MiB limit;
+its `-9` exit follows parent containment and does not establish OOM. The original
+run and inputs remain preserved in `Settling`, not `Released`; no artifact
+qualification or successful native-control receipt is published.
+
+Two bounded isolated diagnostic replays copy only the admitted original runtime
+images into new owned roots, with original evidence and source mounted readonly.
+Both execute the exact retained transfer DLL
+`8afe5d620dccc831e610e947efc0c91c5a698e62b85ca7a959f8657c3c8c331a`
+and pass unchanged (15.426 and 21.984 seconds), with actual diagnostic-root
+release. A transient closed failure classifier preserves the original parser's
+rejection behavior and retains no raw message; neither replay emits a failure.
+These are nonqualifying observations, not a repair, a replacement for the failed
+profile or evidence that its unique cause is known. The five-second commit-call
+hypothesis is ruled out: `CommitAsync` takes `ArtifactTransferOptions`, whose
+default deadline is ten minutes. No budget or test changes.
+
+Stop this reproduction loop after the original failure and two bounded replays.
+The unresolved blocker is failure attribution, not an established deadline
+defect. The next critical path is:
+
+1. Retain a closed first-failure classification at the existing transfer
+   rejection boundary, without accepting unknown text or persisting raw errors.
+2. Execute one full artifact qualification with its actual mutation controls;
+   preserve any rejection rather than retrying it away.
+3. Finish the remaining T071 harness obligations, then the already-planned
+   coordinator/common-source five-profile acceptance and final gates.
+
+The first prerequisite is now implemented at the existing measured-transfer
+rejection boundary. Its existing `UnknownDiagnostic` control event retains a
+closed numeric failure category instead of always zero. Unknown output still
+raises the same error and contains the child; no event is newly accepted, and
+no exception text, stack, payload or path is retained. The value identifies only
+a reported failure category, not qualification or an independently proved cause.
+Ordinary commands and unclassified transfer failures keep zero. Source bounds,
+output budgets, process identity, memory limits and handshake checks are
+unchanged. The regression first fails for the missing classifier; all 73 Linux
+execution tests then pass, including actual known/unknown rejecting children,
+containment and no-raw-error retention. All 174 dependent SDK/sanitation tests
+pass with their required writable ignored `.foundation` scratch; an initial
+read-only scratch invocation is a setup rejection, not a pass. Frozen inventory,
+SDK/catalog and `git diff --check` pass. One fresh native artifact profile replay
+is pending; the old rejected profile is not repaired.
+
 README, DEVELOPMENT and harness guidance record the custody boundary. Provider
 guidance/examples and product architecture/ADR/charter/governance, infrastructure,
 release/deployment and UI documents are unaffected; no provider, product API or

@@ -145,8 +145,21 @@ diagnostics; focused C# formatting and frozen inventory/catalog checks pass.
 Earlier hosted failures remain preserved, not retrospectively repaired.
 The explicit native category-control runner now retains its three source-bound
 mutation-suite inventories and a separate original-owner receipt. All 237
-evidence regressions pass; actual native replay of this custody increment is
-pending. These control observations do not qualify the harness profile.
+evidence regressions pass. At exact `c4e36cb`, metadata qualifies with 93 passed
+cases, nine declared exclusions and 141 runtime witnesses; its 4 live/15 released/
+9 retained mutation controls pass. A separate readonly process verifies both
+original receipts and rejects eight altered/missing/shortened controls.
+The same-source artifact run fails at the ObjectSemantics 4-GiB transfer after
+the other three measured transfers pass. Two bounded replays of the exact
+retained runner pass unchanged in isolation; they are diagnostic, not a repair
+or artifact qualification. The failed run remains preserved in `Settling`.
+The bounded reproduction loop stops rather than retrying the profile until
+green. The existing rejected-transfer record now retains a closed numeric
+first-failure category, never raw errors; unknown output still rejects and
+contains the child. All 247 execution/SDK/sanitation checks pass on Linux.
+Native artifact replay of this observability correction remains pending.
+No deadline, assertion or acceptance requirement changed. These control
+observations do not qualify the harness profile.
 These different-source fixture results do not establish a common baseline;
 harness, qualifying coordinator/aggregate and full-baseline acceptance remain
 unfinished. T071..T086 stay open.

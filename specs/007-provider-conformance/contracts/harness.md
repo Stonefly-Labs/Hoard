@@ -143,7 +143,20 @@ requires both the separate original category-qualification receipt and a
 separately observed control-proof receipt. Changed bytes, shortened/rehashed
 inventories, skipped/failed work, unknown fields and source substitutions reject.
 The observations remain nonqualifying for the harness/full baseline. Portable
-evidence checks pass; native replay of this retention increment is pending.
+evidence checks pass. At exact `c4e36cb`, metadata qualification and its actual
+4 live/15 released/9 retained controls pass; separate readonly replay verifies
+both original receipts and eight rejecting mutations. Same-source artifact
+execution rejects the ObjectSemantics 4-GiB transfer with `UnknownDiagnostic`;
+its root remains `Settling`, with no artifact qualification/control receipt.
+Two bounded isolated replays of the unchanged retained runner pass but remain
+nonqualifying. They cannot erase the original rejection or establish its cause.
+The bounded reproduction loop stops. A rejected measured transfer now retains
+only a closed numeric first-failure category in its existing `UnknownDiagnostic`
+control event; ordinary/unclassified failures keep zero. The same unknown line
+still rejects and contains the child. No raw error or new successful event is
+admitted, and no deadline, parser or assertion is weakened. All 247 Linux
+execution/SDK/sanitation checks pass; one full native artifact replay remains
+pending.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,

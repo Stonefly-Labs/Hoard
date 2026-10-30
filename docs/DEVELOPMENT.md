@@ -10251,8 +10251,37 @@ and altered proof bytes reject. This does not qualify the harness or baseline.
 
 `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence -q`
 passes 237 tests without skips; frozen inventory, SDK/catalog and
-`git diff --check` pass. Actual native replay is pending. README and feature
-plan/harness guidance are updated. Provider guidance/examples, product APIs,
+`git diff --check` pass. At exact `c4e36cb`, native metadata qualification passes
+93 cases/nine declared exclusions with 141 witnesses, followed by all 4 live/
+15 released/9 retained controls. Separate readonly inspection verifies both
+external original receipts and rejects eight missing/altered/shortened controls.
+The same-source artifact run rejects ObjectSemantics 4-GiB transfer sequence 103
+with `UnknownDiagnostic`; the other three measured transfers pass. Its original
+root remains preserved in `Settling`, not released or qualified. Two bounded
+isolated replays of the hash-identical retained runtime pass unchanged and
+release their new diagnostic roots. They do not repair or qualify the original
+failure. The five-second commit-deadline hypothesis is ruled out by the actual
+ten-minute `ArtifactTransferOptions` default; no deadline or test changed.
+The bounded reproduction loop stops here. The next prerequisite now retains a
+closed first-failure category in the existing rejected-transfer control event:
+`code` stays `UnknownDiagnostic`, while `value` is zero for unclassified output,
+1 for the exact native OOM notice, 2/3/4 for the exact fixture authority-retained/
+cleanup-budget/provider-retained notices, 10..17 for the bounded runtime exception
+types listed in `transfer_failure_value`, or 100..118 for the exact artifact
+failure codes in that function's fixed order. Only the closed number persists;
+no raw exception message, stack, path or payload does. These values classify
+reported failures, not their independent cause. Every such line still rejects,
+contains the child and cannot produce measured success. Ordinary commands keep
+their previous zero-valued failure event.
+
+The regression fails before implementation. All 73 Linux execution checks and
+174 dependent SDK/sanitation checks pass, including actual known/unknown rejected
+children, original receipts, containment and raw-error canaries. The dependent
+checks require writable ignored `.foundation` scratch; an initial read-only
+layout rejects and is not passing evidence. One full native artifact replay of
+this correction remains pending. See the feature plan for exact commands, hashes
+and critical path. T071..T086 remain open. README and feature plan/harness guidance are
+updated. Provider guidance/examples, product APIs,
 architecture/ADR/diagrams, governance, infrastructure, deployment/release and UI
 are unaffected: only existing test-control observation custody changes.
 

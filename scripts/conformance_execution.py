@@ -290,6 +290,42 @@ def project_event(line):
     return MappingProxyType(value)
 
 
+def transfer_failure_value(line):
+    if len(line) > SAFE_EVENT_BYTES:
+        return 0
+    line = line.removesuffix(b"\r")
+    if b"\n" in line or b"\r" in line:
+        return 0
+    fixed = {
+        b"Out of memory.": 1,
+        b"Unhandled exception. System.InvalidOperationException: "
+        b"Artifact fixture shutdown retains authority ownership.": 2,
+        b"Unhandled exception. System.InvalidOperationException: "
+        b"Artifact fixture shutdown exhausted its cleanup budget.": 3,
+        b"Unhandled exception. System.InvalidOperationException: "
+        b"Artifact fixture shutdown retains live ownership.": 4,
+    }
+    if line in fixed:
+        return fixed[line]
+    match = re.fullmatch(
+        rb"Unhandled exception\. System\.InvalidOperationException: Artifact transfer failed \(([A-Za-z]+)\)\.", line)
+    codes = (
+        b"InvalidInput", b"NotFound", b"Conflict", b"Denied", b"Unsupported", b"LimitExceeded", b"Capacity",
+        b"AccessDenied", b"Unavailable", b"CorruptContent", b"CorruptState", b"CancelledBeforeCommit",
+        b"DeadlineExceeded", b"Uncertain", b"ReconciliationExpired", b"CleanupIncomplete", b"Disposed",
+        b"InternalFailure", b"IncompatibleStore",
+    )
+    if match is not None and match[1] in codes:
+        return 100 + codes.index(match[1])
+    for code, name in enumerate((
+            b"System.IO.IOException", b"System.UnauthorizedAccessException", b"System.OutOfMemoryException",
+            b"System.ObjectDisposedException", b"System.OperationCanceledException",
+            b"System.ArgumentOutOfRangeException", b"System.NullReferenceException", b"System.AggregateException"), 10):
+        if line.startswith(b"Unhandled exception. " + name + b":"):
+            return code
+    return 0
+
+
 def project_metadata_marker_line(line):
     if len(line) > SAFE_EVENT_BYTES:
         raise ConformanceError("OutputLimitExceeded")
@@ -949,6 +985,7 @@ class OwnedRun:
         retained = 0
         raw_total = 0
         failure = None
+        failure_value = 0
         identity = None
         exited = False
         barrier = {"value": stop_at_barrier, "observedMs": None, "signalMs": None}
@@ -974,7 +1011,7 @@ class OwnedRun:
                 raise ConformanceError("ProofMismatch")
 
         def observe(line):
-            nonlocal retained, transfer_deadline
+            nonlocal retained, transfer_deadline, failure_value
             try:
                 event = (project_discovery_line(line, discovery_tests) if kind == "discovery"
                          else {"build": project_build_line, "compatibility-source": project_compatibility_source_line,
@@ -983,6 +1020,8 @@ class OwnedRun:
             except ConformanceError as error:
                 if str(error) == "OutputLimitExceeded":
                     raise
+                if measure_transfer_bytes is not None:
+                    failure_value = transfer_failure_value(line)
                 raise ConformanceError("UnknownDiagnostic") from None
             if event is not None:
                 size = len(canonical_bytes(event)) + 1
@@ -1111,7 +1150,8 @@ class OwnedRun:
                     self.transition("Retained")
                 events.append(MappingProxyType({
                     "event": "control", "code": str(observed) if isinstance(observed, ConformanceError)
-                    else "EvidenceIncomplete", "value": 0,
+                    else "EvidenceIncomplete",
+                    "value": failure_value if str(observed) == "UnknownDiagnostic" else 0,
                 }))
                 failure = ConformanceError("CleanupIncomplete")
             else:
@@ -1163,7 +1203,8 @@ class OwnedRun:
         if failure is not None:
             events.append(MappingProxyType({
                 "event": "control", "code": str(failure) if isinstance(failure, ConformanceError)
-                else "EvidenceIncomplete", "value": 0,
+                else "EvidenceIncomplete",
+                "value": failure_value if str(failure) == "UnknownDiagnostic" else 0,
             }))
         self._retain_diagnostics(destination.name, events)
         receipts = []

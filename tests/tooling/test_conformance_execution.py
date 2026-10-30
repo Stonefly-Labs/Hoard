@@ -1092,6 +1092,59 @@ time.sleep(60)
         run.transition("Settling")
         run.release()
 
+    def test_transfer_failure_values_classify_only_closed_bounded_runtime_failures(self):
+        project = getattr(execution, "transfer_failure_value", None)
+        self.assertTrue(callable(project), "Rejected transfers need closed first-failure attribution.")
+        for line, expected in (
+                (b"Out of memory.", 1),
+                (b"Unhandled exception. System.InvalidOperationException: "
+                 b"Artifact fixture shutdown retains authority ownership.", 2),
+                (b"Unhandled exception. System.InvalidOperationException: "
+                 b"Artifact fixture shutdown exhausted its cleanup budget.", 3),
+                (b"Unhandled exception. System.InvalidOperationException: "
+                 b"Artifact fixture shutdown retains live ownership.\r", 4),
+                (b"Unhandled exception. System.IO.IOException: private-canary /private/path", 10),
+                (b"Unhandled exception. System.InvalidOperationException: Artifact transfer failed (Conflict).", 102),
+                (b"Unhandled exception. System.InvalidOperationException: Artifact transfer failed (Unavailable).", 108),
+                (b"Unhandled exception. System.InvalidOperationException: Artifact transfer failed (private-canary).", 0),
+                (b"Unhandled exception. System.InvalidOperationException: Artifact transfer failed (Conflict). extra", 0),
+                (b"Unhandled exception. System.IO.IOException: private-canary\nanother line", 0),
+                (b"Unhandled exception. System.IO.IOException:" + b"x" * execution.SAFE_EVENT_BYTES, 0),
+                (b"private-canary /private/path", 0)):
+            with self.subTest(line_sha256=hashlib.sha256(line).hexdigest()):
+                self.assertEqual(project(line), expected)
+                with self.assertRaises(ConformanceError):
+                    execution.project_event(line)
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_rejected_transfer_retains_closed_attribution_without_accepting_or_retaining_raw_error(self):
+        run = self.workspace()
+        program = (
+            'import sys,time; print(\'{"event":"control","code":"None","value":0}\',flush=True); '
+            'assert sys.stdin.readline()=="transfer\\n"; print(sys.argv[1],flush=True); time.sleep(60)')
+        for sequence, (line, value) in enumerate((
+                ("Unhandled exception. System.InvalidOperationException: Artifact transfer failed (Conflict).", 102),
+                ("Unhandled exception. System.IO.IOException: private-canary /private/path", 10),
+                ("private-canary /private/path", 0)), 1):
+            with self.subTest(sequence=sequence), self.assertRaisesRegex(ConformanceError, "^UnknownDiagnostic$"):
+                run.command([sys.executable, "-c", program, line], scope="transfer",
+                            measure_transfer_bytes=268435456, record_execution=True, timeout=5)
+            control = json.loads((run.root / f"proofs/transfer-command-{sequence:04}.json").read_bytes())
+            self.assertEqual((control["diagnosticCode"], control["groupState"]), ("UnknownDiagnostic", "Exited"))
+            self.assertEqual(control["transfer"]["phase"], "transferring")
+            self.assertEqual(json.loads(run.read_execution_record(sequence))["diagnosticCode"], "UnknownDiagnostic")
+            observed = [json.loads(row) for row in
+                        (run.root / f"diagnostics/command-{sequence:04}.jsonl").read_bytes().splitlines()]
+            self.assertEqual(observed[-1], {"event": "control", "code": "UnknownDiagnostic", "value": value})
+            for path in (*run.root.joinpath("diagnostics").glob("*"), *run.root.joinpath("proofs").glob("*")):
+                if path.is_file():
+                    self.assertNotIn(line.encode("ascii"), path.read_bytes())
+                    self.assertNotIn(b"private-canary", path.read_bytes())
+                    self.assertNotIn(b"/private/path", path.read_bytes())
+            self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
     def test_linux_memory_projection_requires_exact_bounded_kernel_rss_and_high_water_fields(self):
         self.assertTrue(callable(getattr(execution, "linux_process_memory", None)),
                         "Measured transfers need bounded independent kernel RSS observations.")
