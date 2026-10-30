@@ -65,6 +65,8 @@ BREAK_CONTROLS = {
     "binary": {"fixture": "tests/fixtures/conformance/Compatibility", "failure": "MissingMethodException",
                "symbol": "BinaryContract.Api.Describe()", "consumerRecompiled": False},
 }
+SOURCE_BREAK_SOURCES = "proofs/compatibility-source-break-sources.json"
+SOURCE_BREAK_INPUTS = "proofs/compatibility-source-break-inputs.json"
 SOURCE_RECIPE_POLICY = (
     *((project, "historical-f06", "api-consumer") for project in (
         "tests/fixtures/lifecycle/registration/RegistrationConsumer/RegistrationConsumer.csproj",
@@ -219,17 +221,95 @@ def execute_source_recipes(repository, run, candidate, candidate_sources, baseli
 
 
 def verify_source_break_result(result):
-    if (result.exit_code != 1 or not result.events
+    _verify_source_break_events(result.exit_code, result.events)
+
+
+def _verify_source_break_events(exit_code, events):
+    if (exit_code != 1 or not events
             or any(dict(event) not in (
                 {"event": "build", "code": "CommandFailed", "value": 0},
-                {"event": "build", "code": "CommandFailed", "value": 535}) for event in result.events)
-            or not any(event["value"] == 535 for event in result.events)):
+                {"event": "build", "code": "CommandFailed", "value": 535}) for event in events)
+            or not any(event["value"] == 535 for event in events)):
         raise ConformanceError("ProofMismatch")
+
+
+def source_break_build_inputs(project, sources, *, contract=None):
+    fixture = BREAK_CONTROLS["source"]["fixture"] + "/"
+    projects = {
+        fixture + variant + "/RequiredContract.csproj": variant for variant in ("Old", "New")}
+    projects[fixture + "Consumer/RequiredConsumer.csproj"] = "Consumer"
+    if project not in projects or contract not in (None, "Old", "New"):
+        raise ConformanceError("EvidenceIncomplete")
+    variant = projects[project]
+    if (variant == "Consumer") != (contract is not None):
+        raise ConformanceError("EvidenceIncomplete")
+    required = (
+        "Directory.Build.props", "Directory.Packages.props", "global.json",
+        "tests/fixtures/compatibility/Directory.Build.props", project,
+        fixture + variant + "/packages.lock.json",
+        fixture + variant + ("/Provider.cs" if variant == "Consumer" else "/Contract.cs"))
+    if not set(required) <= sources.keys():
+        raise ConformanceError("EvidenceIncomplete")
+    return (
+        SOURCE_BREAK_INPUTS if contract is not None else SOURCE_BREAK_SOURCES,
+        "stores/candidate.NuGet.Config",
+        *("stores/compatibility-source-break/" + path for path in required),
+        *(("stores/compatibility-source-break/" + fixture + contract
+           + "/bin/Release/net10.0/RequiredContract.dll",) if contract is not None else ()))
+
+
+def source_break_output_properties(root, variant):
+    if variant not in ("Old", "New", "Consumer"):
+        raise ConformanceError("EvidenceIncomplete")
+    return (
+        "-p:OutputPath=" + str(Path(root) / "proofs" / ("source-break-output-" + variant)) + os.sep,
+        "-p:AppendTargetFrameworkToOutputPath=false")
+
+
+def source_break_output_paths(variant):
+    if variant not in ("Old", "New", "Consumer"):
+        raise ConformanceError("EvidenceIncomplete")
+    name = "RequiredConsumer" if variant == "Consumer" else "RequiredContract"
+    return tuple("proofs/source-break-output-" + variant + "/" + name + suffix for suffix in (".dll", ".pdb"))
+
+
+def _stage_source_break_outputs(run, variant, *, repair=False):
+    import conformance_evidence as evidence
+
+    source = Path(source_break_output_paths(variant)[0]).parent
+    if repair and variant != "Consumer":
+        raise ConformanceError("EvidenceIncomplete")
+    target = (Path("stores/compatibility-source-break") / BREAK_CONTROLS["source"]["fixture"]
+              / variant / "bin/Release" / ("net10.0-repair" if repair else "net10.0"))
+    with evidence._input_root(run.root) as (_, root), evidence._input_parent(
+            root, source.as_posix()) as (parent, name):
+        descriptor = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+        try:
+            original = os.fstat(descriptor)
+            if original.st_uid != os.getuid():
+                raise ConformanceError("InputChanged")
+            with evidence._input_parent(root, target.as_posix(), create=True) as (destination, target_name):
+                try:
+                    os.stat(target_name, dir_fd=destination, follow_symlinks=False)
+                except FileNotFoundError:
+                    pass
+                else:
+                    raise ConformanceError("InputChanged")
+                os.rename(name, target_name, src_dir_fd=parent, dst_dir_fd=destination)
+                actual = os.stat(target_name, dir_fd=destination, follow_symlinks=False)
+                if (actual.st_dev, actual.st_ino) != (original.st_dev, original.st_ino):
+                    raise ConformanceError("InputChanged")
+        finally:
+            os.close(descriptor)
+    return run.root / target
 
 
 def execute_source_break(run, candidate, candidate_sources, config, baseline_sha256, *, msbuild=None):
     """Challenge the unchanged historical implementer, then repair only its contract."""
     from conformance_sources import read_bounded
+    if (type(run) is not OwnedRun or run.state != "Active"
+            or Path(config) != run.root / "stores/candidate.NuGet.Config"):
+        raise ConformanceError("OwnershipInvalid")
     verify_snapshot(candidate, candidate_sources)
     controls = load_json(read_bounded(candidate / BREAK_CONTROLS_PATH, 4096))
     if canonical_bytes(controls) != canonical_bytes(BREAK_CONTROLS):
@@ -239,8 +319,23 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
     copied = run.root / "stores/compatibility-source-break"
     _copy_recipe_sources(run.root / "stores/f06", copied, historical["sources"])
     fixture = copied / controls["source"]["fixture"]
+    source_frame = {
+        "schemaVersion": 1, "qualification": False, "baselineSealSha256": baseline_sha256,
+        "sources": historical["sources"], "controlsSha256": digest(controls)}
+    with (run.root / SOURCE_BREAK_SOURCES).open("xb") as destination:
+        destination.write(canonical_bytes(source_frame))
+    (run.root / SOURCE_BREAK_SOURCES).chmod(0o400)
+    commands = []
     for variant in ("Old", "New"):
-        _build(run, fixture / variant / "RequiredContract.csproj", config, "compatibility-source", msbuild=msbuild)
+        project = fixture / variant / "RequiredContract.csproj"
+        project_relative = project.relative_to(copied).as_posix()
+        commands.extend({**row, "role": variant} for row in _build(
+            run, project, config, "compatibility-source", msbuild=msbuild,
+            properties=source_break_output_properties(run.root, variant),
+            execution_inputs=_freeze_build_inputs(
+                run, source_break_build_inputs(project_relative, historical["sources"])),
+            execution_outputs=source_break_output_paths(variant)))
+        _stage_source_break_outputs(run, variant)
     contracts = {variant: fixture / variant / "bin/Release/net10.0/RequiredContract.dll"
                  for variant in ("Old", "New")}
     for contract in contracts.values():
@@ -251,42 +346,218 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
         raise ConformanceError("ProofMismatch")
     project = fixture / "Consumer/RequiredConsumer.csproj"
     original = historical["sources"][project.with_name("Provider.cs").relative_to(copied).as_posix()]
-    _build(run, project, config, "compatibility-source",
-           properties=("-p:ContractAssembly=" + str(contracts["Old"]),), msbuild=msbuild)
-    output = project.parent / "bin/Release/net10.0/RequiredConsumer.dll"
-    baseline_output = file_sha256(output)
-    manifest_path = "proofs/compatibility-source-break-inputs.json"
+    project_relative = project.relative_to(copied).as_posix()
+    manifest_path = SOURCE_BREAK_INPUTS
     manifest = {"sources": historical["sources"], "contracts": hashes, "controls": digest(controls)}
     with (run.root / manifest_path).open("xb") as destination:
         destination.write(canonical_bytes(manifest))
     (run.root / manifest_path).chmod(0o400)
+    consumer_outputs = source_break_output_paths("Consumer")
+    compatible_inputs = _freeze_build_inputs(
+        run, source_break_build_inputs(project_relative, historical["sources"], contract="Old"))
+    commands.extend({**row, "role": "consumer"} for row in _build(
+        run, project, config, "compatibility-source",
+        properties=(*source_break_output_properties(run.root, "Consumer"),
+                    "-p:ContractAssembly=" + str(contracts["Old"])), msbuild=msbuild,
+        execution_inputs=compatible_inputs, execution_outputs=consumer_outputs))
+    consumer_directory = _stage_source_break_outputs(run, "Consumer")
+    original_outputs = {suffix: file_sha256(consumer_directory / ("RequiredConsumer" + suffix))
+                        for suffix in (".dll", ".pdb")}
+    baseline_output = original_outputs[".dll"]
     _, arguments, _ = project_build_commands(
-        project, config, properties=("-p:ContractAssembly=" + str(contracts["New"]),), msbuild=msbuild)
+        project, config, properties=(*source_break_output_properties(run.root, "Consumer"),
+                                    "-p:ContractAssembly=" + str(contracts["New"])), msbuild=msbuild)
     result = run.command(
         arguments, cwd=project.parent, cache_id="compatibility-source", kind="compatibility-source",
         env={"DOTNET_ROLL_FORWARD": "Disable"}, record_execution=True,
-        execution_inputs=(manifest_path, project.relative_to(run.root).as_posix(),
-                          project.with_name("Provider.cs").relative_to(run.root).as_posix(),
-                          contracts["New"].relative_to(run.root).as_posix()))
+        execution_inputs=_freeze_build_inputs(
+            run, source_break_build_inputs(project_relative, historical["sources"], contract="New")))
     sequence = run.command_sequence
     verify_source_break_result(result)
     negative = run.read_execution_record(sequence)
-    _command(run, [*arguments[:-1], "-p:ContractAssembly=" + str(contracts["Old"])],
-             cwd=project.parent, cache_id="compatibility-source")
-    if baseline_output != file_sha256(output):
+    commands.append({"role": "negative", "sequence": sequence,
+                     "executionSha256": hashlib.sha256(negative).hexdigest()})
+    (run.root / f"diagnostics/command-{sequence:04}.jsonl").chmod(0o400)
+    _, repair_arguments, _ = project_build_commands(
+        project, config, properties=(*source_break_output_properties(run.root, "Consumer"),
+                                    "-p:ContractAssembly=" + str(contracts["Old"])), msbuild=msbuild)
+    _command(run, repair_arguments, cwd=project.parent, cache_id="compatibility-source",
+             execution_inputs=compatible_inputs, execution_outputs=consumer_outputs)
+    repair = run.read_execution_record(run.command_sequence)
+    commands.append({"role": "repair", "sequence": run.command_sequence,
+                     "executionSha256": hashlib.sha256(repair).hexdigest()})
+    repaired_directory = _stage_source_break_outputs(run, "Consumer", repair=True)
+    if any(value != file_sha256(directory / ("RequiredConsumer" + suffix))
+           for directory in (consumer_directory, repaired_directory) for suffix, value in original_outputs.items()):
         raise ConformanceError("InputChanged")
     verify_snapshot(copied, historical["sources"])
     verify_snapshot(candidate, candidate_sources)
     verify_prepared_baselines(run.root, baseline_sha256)
     if any(file_sha256(contracts[variant]) != value for variant, value in hashes.items()):
         raise ConformanceError("InputChanged")
-    return {"schemaVersion": 1, "qualification": False, "mode": "source-break-control",
+    packet = {"schemaVersion": 2, "qualification": False, "mode": "source-break-control",
             "baselineSealSha256": baseline_sha256, "controlsSha256": digest(controls),
             "consumerSourceSha256": original, "consumerAssemblySha256": baseline_output,
             "contracts": hashes, "compilerCode": controls["source"]["compilerCode"],
             "symbol": controls["source"]["symbol"], "repair": controls["source"]["repair"],
             "negativeSequence": sequence, "negativeExecutionSha256": hashlib.sha256(negative).hexdigest(),
-            "inputsSha256": file_sha256(run.root / manifest_path)}
+            "inputsSha256": file_sha256(run.root / manifest_path),
+            "sourceFrameSha256": file_sha256(run.root / SOURCE_BREAK_SOURCES),
+            "consumerPdbSha256": original_outputs[".pdb"],
+            "contractPdbSha256": {variant: file_sha256(path.with_suffix(".pdb"))
+                                  for variant, path in contracts.items()},
+            "commands": commands}
+    inspected = inspect_source_break_control(
+        run.root, canonical_bytes(packet), expected_baseline_sha256=baseline_sha256, msbuild=msbuild)
+    if (inspected["runId"] != run.run_id or inspected["rootId"] != run.root_id
+            or any(hashlib.sha256(run.read_execution_record(row["sequence"])).hexdigest()
+                   != row["executionSha256"] for row in inspected["commands"])):
+        raise ConformanceError("OwnershipInvalid")
+    return packet
+
+
+def inspect_source_break_control(root, packet_data, *, expected_baseline_sha256, msbuild=None, retained=False):
+    """Inspect recorded correspondence; only the original live owner can supply native origin."""
+    import conformance_evidence as evidence
+
+    root = Path(root).absolute()
+    baseline = (_prepared_baseline_document(root, expected_baseline_sha256) if retained
+                else verify_prepared_baselines(root, expected_baseline_sha256))
+    historical = next(row for row in baseline["entries"] if row["id"] == "f06")
+    packet = evidence._runtime_json(packet_data, {
+        "schemaVersion": evidence._constant(2), "qualification": evidence._constant(False),
+        "mode": evidence._constant("source-break-control"),
+        "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+        "controlsSha256": evidence._constant(digest(BREAK_CONTROLS)),
+        "consumerSourceSha256": sha256, "consumerAssemblySha256": sha256,
+        "contracts": evidence._record({"Old": sha256, "New": sha256}),
+        "compilerCode": evidence._constant(BREAK_CONTROLS["source"]["compilerCode"]),
+        "symbol": evidence._constant(BREAK_CONTROLS["source"]["symbol"]),
+        "repair": evidence._constant(BREAK_CONTROLS["source"]["repair"]),
+        "negativeSequence": evidence._integer, "negativeExecutionSha256": sha256,
+        "inputsSha256": sha256, "sourceFrameSha256": sha256, "consumerPdbSha256": sha256,
+        "contractPdbSha256": evidence._record({"Old": sha256, "New": sha256}),
+        "commands": evidence._list(evidence._record({
+            "role": evidence._one_of("Old", "New", "consumer", "negative", "repair"),
+            "sequence": evidence._integer, "executionSha256": sha256}), 8, minimum=5),
+    }, limit=64 * 1024)
+    source_sha, source_raw = evidence._readonly_report_proof(root, SOURCE_BREAK_SOURCES)
+    source_frame = evidence._runtime_json(source_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "baselineSealSha256": evidence._constant(sha256(expected_baseline_sha256)),
+        "sources": evidence._hash_map, "controlsSha256": evidence._constant(digest(BREAK_CONTROLS)),
+    }, limit=MAX_REPORT_BYTES)
+    inputs_sha, inputs_raw = evidence._readonly_report_proof(root, SOURCE_BREAK_INPUTS)
+    inputs = evidence._runtime_json(inputs_raw, {
+        "sources": evidence._hash_map, "contracts": evidence._record({"Old": sha256, "New": sha256}),
+        "controls": evidence._constant(digest(BREAK_CONTROLS)),
+    }, limit=MAX_REPORT_BYTES)
+    fixture = BREAK_CONTROLS["source"]["fixture"] + "/"
+    if (source_sha != packet["sourceFrameSha256"] or inputs_sha != packet["inputsSha256"]
+            or source_frame["sources"] != historical["sources"] or inputs["sources"] != historical["sources"]
+            or inputs["contracts"] != packet["contracts"] or packet["contracts"]["Old"] == packet["contracts"]["New"]
+            or historical["sources"].get(fixture + "Consumer/Provider.cs") != packet["consumerSourceSha256"]):
+        raise ConformanceError("ProofMismatch")
+    copied = root / "stores/compatibility-source-break"
+    config = root / "stores/candidate.NuGet.Config"
+    if not retained:
+        verify_snapshot(copied, historical["sources"])
+    expected = []
+    for role, variant, contract in (
+            ("Old", "Old", None), ("New", "New", None), ("consumer", "Consumer", "Old"),
+            ("negative", "Consumer", "New"), ("repair", "Consumer", "Old")):
+        name = "RequiredConsumer" if variant == "Consumer" else "RequiredContract"
+        project = fixture + variant + "/" + name + ".csproj"
+        target = copied / project
+        properties = (*source_break_output_properties(root, variant), *((
+            "-p:ContractAssembly=" + str(copied / fixture / contract / "bin/Release/net10.0/RequiredContract.dll"),)
+            if contract is not None else ()))
+        paths = source_break_build_inputs(project, historical["sources"], contract=contract)
+        input_files = {
+            SOURCE_BREAK_SOURCES if contract is None else SOURCE_BREAK_INPUTS:
+                source_sha if contract is None else inputs_sha,
+            "stores/candidate.NuGet.Config": hashlib.sha256(
+                synthetic_nuget_configuration(root / "feed/candidate")).hexdigest(),
+            **{"stores/compatibility-source-break/" + path: value for path, value in historical["sources"].items()
+               if "stores/compatibility-source-break/" + path in paths},
+        }
+        if contract is not None:
+            input_files["stores/compatibility-source-break/" + fixture + contract
+                        + "/bin/Release/net10.0/RequiredContract.dll"] = packet["contracts"][contract]
+        if set(input_files) != set(paths):
+            raise ConformanceError("ProofMismatch")
+        if not retained and evidence.input_manifest(root, paths) != input_files:
+            raise ConformanceError("InputChanged")
+        dll, pdb = source_break_output_paths(variant)
+        output_files = {
+            dll: packet["consumerAssemblySha256"] if variant == "Consumer" else packet["contracts"][variant],
+            pdb: packet["consumerPdbSha256"] if variant == "Consumer" else packet["contractPdbSha256"][variant]}
+        steps = (project_build_steps(target, config, properties=properties, msbuild=msbuild)
+                 if role not in ("negative", "repair") else (
+                     project_build_commands(target, config, properties=properties, msbuild=msbuild)[1],))
+        for index, arguments in enumerate(steps):
+            expected.append((role, arguments, target.parent, input_files,
+                             output_files if role != "negative" and index == len(steps) - 1 else {}))
+    if len(expected) != len(packet["commands"]):
+        raise ConformanceError("ProofMismatch")
+    previous_sequence, previous_end, started, owner, negative_sha = 0, 0, None, None, None
+    commands = []
+    for declaration, (role, arguments, cwd, input_files, output_files) in zip(packet["commands"], expected):
+        sequence = declaration["sequence"]
+        if declaration["role"] != role or sequence <= previous_sequence:
+            raise ConformanceError("ProofMismatch")
+        record_sha, record_raw = evidence._readonly_report_proof(root, f"proofs/execution-command-{sequence:04}.json")
+        record = evidence._runtime_json(record_raw, {
+            "schemaVersion": evidence._constant(1), "sequence": evidence._constant(sequence),
+            "childPid": evidence._integer, "childStartSha256": sha256,
+            "startedMs": evidence._number, "endedMs": evidence._number,
+            "exitCode": evidence._constant(1 if role == "negative" else 0),
+            "diagnosticCode": evidence._constant("None"), "groupState": evidence._constant("Exited"),
+            "scope": evidence._constant("ordinary"), "runId": evidence._uuid, "rootId": evidence.stable_id,
+            "argvSha256": sha256, "cwdSha256": sha256, "inputFiles": evidence._hash_map,
+            **({"outputFiles": evidence._hash_map} if output_files else {}),
+            **({"diagnosticsSha256": sha256} if role == "negative" else {}),
+        }, limit=64 * 1024)
+        identity = (record["runId"], record["rootId"])
+        if (record_sha != declaration["executionSha256"] or record["childPid"] == 0
+                or record["childStartSha256"] == "0" * 64 or record["argvSha256"] != digest(arguments)
+                or record["cwdSha256"] != hashlib.sha256(str(cwd).encode()).hexdigest()
+                or record["inputFiles"] != input_files or record.get("outputFiles", {}) != output_files
+                or record["startedMs"] < previous_end or record["endedMs"] < record["startedMs"]
+                or owner is not None and owner != identity):
+            raise ConformanceError("ProofMismatch")
+        if not retained:
+            for path, hashed in output_files.items():
+                directory = "net10.0-repair" if role == "repair" else "net10.0"
+                variant = "Old" if role == "Old" else "New" if role == "New" else "Consumer"
+                physical = ("stores/compatibility-source-break/" + fixture + variant
+                            + "/bin/Release/" + directory + "/" + Path(path).name)
+                actual, _ = evidence._readonly_report_proof(root, physical)
+                if actual != hashed:
+                    raise ConformanceError("InputChanged")
+        if role == "negative":
+            negative_sha, raw = evidence._readonly_report_proof(root, f"diagnostics/command-{sequence:04}.jsonl")
+            if (negative_sha != record["diagnosticsSha256"] or len(raw) > 64 * 1024
+                    or packet["negativeSequence"] != sequence or packet["negativeExecutionSha256"] != record_sha):
+                raise ConformanceError("ProofMismatch")
+            events = [evidence._runtime_json(line, {
+                "event": evidence._constant("build"), "code": evidence._constant("CommandFailed"),
+                "value": evidence._integer}, limit=512) for line in raw.splitlines()]
+            _verify_source_break_events(record["exitCode"], events)
+            if raw != b"".join(canonical_bytes(event) + b"\n" for event in events):
+                raise ConformanceError("ProofMismatch")
+        owner = identity
+        started = record["startedMs"] if started is None else started
+        previous_sequence, previous_end = sequence, record["endedMs"]
+        commands.append({"sequence": sequence, "executionSha256": record_sha})
+    return {
+        "schemaVersion": 1, "qualification": False, "mode": "source-break-native-correspondence",
+        "baselineSealSha256": expected_baseline_sha256,
+        "summarySha256": hashlib.sha256(packet_data).hexdigest(),
+        "sourceFrameSha256": source_sha, "inputsSha256": inputs_sha,
+        "negativeDiagnosticsSha256": negative_sha, "runId": owner[0], "rootId": owner[1],
+        "startedMs": started, "endedMs": previous_end, "commands": commands,
+    }
 
 
 def retained_recipe(scenario):
@@ -488,8 +759,9 @@ def execute_retained_consumers(run, candidate, candidate_sources, config, baseli
             "baselineSealSha256": baseline_sha256, "observerSha256": observer_sha, "scenarios": records}
 
 
-def _command(run, args, *, cwd, cache_id, execution_inputs=()):
-    recording = {"record_execution": True, "execution_inputs": execution_inputs} if execution_inputs else {}
+def _command(run, args, *, cwd, cache_id, execution_inputs=(), execution_outputs=()):
+    recording = ({"record_execution": True, "execution_inputs": execution_inputs,
+                  "execution_outputs": execution_outputs} if execution_inputs or execution_outputs else {})
     observed = run.command(args, cwd=cwd, kind="build", cache_id=cache_id,
                            env={"DOTNET_ROLL_FORWARD": "Disable"}, **recording)
     if observed.exit_code or any(event["code"] != "None" for event in observed.events):
@@ -608,7 +880,7 @@ def project_build_steps(project, config, *, feed=None, lock=None, properties=(),
 
 
 def _build(run, project, config, name, *, pack=False, feed=None, source_root=None, preparations=None,
-           properties=(), baseline=False, msbuild=None, execution_inputs=()):
+           properties=(), baseline=False, msbuild=None, execution_inputs=(), execution_outputs=()):
     lock_args = []
     if preparations is not None:
         alternate, record = prepare_project_lock(project, source_root, run.root / "feed" / name, name,
@@ -619,10 +891,12 @@ def _build(run, project, config, name, *, pack=False, feed=None, source_root=Non
         elif baseline:
             lock_args = [f"-p:NuGetLockFilePath={project.parent / 'Baseline/packages.lock.json'}"]
     records = []
-    for command in project_build_steps(
-            project, config, feed=feed if pack else None, properties=(*lock_args, *properties), msbuild=msbuild):
-        if execution_inputs:
-            _command(run, command, cwd=project.parent, cache_id=name, execution_inputs=execution_inputs)
+    steps = project_build_steps(
+        project, config, feed=feed if pack else None, properties=(*lock_args, *properties), msbuild=msbuild)
+    for index, command in enumerate(steps):
+        if execution_inputs or execution_outputs:
+            _command(run, command, cwd=project.parent, cache_id=name, execution_inputs=execution_inputs,
+                     execution_outputs=execution_outputs if index == len(steps) - 1 else ())
             records.append({"sequence": run.command_sequence,
                             "executionSha256": hashlib.sha256(
                                 run.read_execution_record(run.command_sequence)).hexdigest()})
@@ -662,8 +936,7 @@ def historical_binary_build_properties(source, project):
           if project.startswith("Consumer/") else ()))
 
 
-def _freeze_historical_binary_inputs(run, project, sources):
-    paths = historical_binary_build_inputs(project, sources)
+def _freeze_build_inputs(run, paths):
     for relative in paths:
         path = run.root / relative
         no_symlinks(path)
@@ -671,6 +944,10 @@ def _freeze_historical_binary_inputs(run, project, sources):
             raise ConformanceError("InputChanged")
         path.chmod(0o400)
     return paths
+
+
+def _freeze_historical_binary_inputs(run, project, sources):
+    return _freeze_build_inputs(run, historical_binary_build_inputs(project, sources))
 
 
 def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):

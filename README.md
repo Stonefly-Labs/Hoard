@@ -1054,6 +1054,13 @@ Binary-break derivation now additionally binds all seven original runtime
 witnesses to the exact historical and staged PE/PDB hashes. Host445 checks pass;
 fresh native6/11 verification remains required. Its expected diagnostic report
 is136 Passed/six Incomplete, not full-profile qualification.
+Immutable `c8d8e30` now verifies that repair: all6 live/11 released controls pass,
+with142 cases,136 Passed/six Incomplete and209 witnesses; only report resources
+differ. The following increment records original source-break contract/consumer
+build outputs, binds the intended compiler diagnostics to the held parent and
+captures the compatible repair. Its original owner/data are replayed through
+release; host514 checks pass with26 native-only skips. Fresh8/12 native controls
+remain required, and the six baseline/QC report rows stay Incomplete.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

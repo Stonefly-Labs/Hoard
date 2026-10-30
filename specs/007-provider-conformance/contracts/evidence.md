@@ -1180,6 +1180,16 @@ one exact F-06 baseline with complete binary-map digest, and the original/staged
 contract/consumer DLL/PDB pairs. Missing or substituted pairs reject. Host checks
 pass; fresh native6/11 execution must verify the expected136 Passed/six Incomplete,
 209-witness diagnostic report. Full compatibility qualification remains unfinished.
+Immutable `c8d8e30` subsequently verifies all6/11 controls and those report counts.
+The next source-break origin additionally binds each actual contract/consumer
+build's original input and DLL/PDB output maps, the exact source-specific closed
+compiler diagnostic digest and compatible repair. Active capture is single-use,
+at the actual latest repair command and before runtime-scope capture, matching
+all executor-held parent bytes. Original preparation/control bytes and command
+hashes are retained separately from the six runtime hashes and independently
+replay through release without transient trees. Rehashed metadata alone still
+cannot mint native origin or promote the six remaining logical rows.
+Host checks pass; fresh immutable8 live/12 released controls remain required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

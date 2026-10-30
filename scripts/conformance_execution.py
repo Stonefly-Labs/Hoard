@@ -1157,6 +1157,9 @@ class OwnedRun:
                 execution_receipt = canonical_bytes({
                     **observed, "runId": self.run_id, "rootId": self.root_id,
                     "argvSha256": argv_sha, "cwdSha256": cwd_sha,
+                    **({"diagnosticsSha256": hashlib.sha256(
+                        b"".join(canonical_bytes(event) + b"\n" for event in events)).hexdigest()}
+                       if kind == "compatibility-source" else {}),
                     **({"directoryLease": lease_snapshot} if directory_lease is not None else {}),
                     **({"controlRecordSha256": hashlib.sha256(control_receipt).hexdigest()}
                        if control_receipt is not None else {}),

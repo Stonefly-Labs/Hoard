@@ -536,6 +536,38 @@ class ConformanceExecutionTests(unittest.TestCase):
             self.assertEqual(run.state, "Released")
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_source_compiler_execution_binds_only_closed_original_diagnostic_bytes(self):
+        run = self.workspace()
+        line = ("fixture.cs(1,1): error CS0535: 'Provider' does not implement "
+                "interface member 'IProvider.Required()' [fixture.csproj]")
+        result = run.command(
+            [sys.executable, "-c", f"print({line!r}); raise SystemExit(1)"],
+            kind="compatibility-source", record_execution=True)
+        self.assertEqual(result.exit_code, 1)
+        self.assertTrue(any(event["value"] == 535 for event in result.events))
+        receipt = json.loads(run.read_execution_record(1))
+        raw = (run.root / "diagnostics/command-0001.jsonl").read_bytes()
+        self.assertEqual(receipt["diagnosticsSha256"], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(raw, b"".join(execution.canonical_bytes(dict(event)) + b"\n"
+                                      for event in result.events))
+        self.assertNotIn(b"fixture", raw)
+        self.assertNotIn(b"Required", raw)
+        original = run.read_execution_record(1)
+        path = run.root / "proofs/execution-command-0001.json"
+        path.chmod(0o600)
+        path.write_bytes(execution.canonical_bytes({**receipt, "diagnosticsSha256": "0" * 64}))
+        path.chmod(0o400)
+        with self.assertRaisesRegex(ConformanceError, "^OwnershipInvalid$"):
+            run.read_execution_record(1)
+        path.chmod(0o600)
+        path.write_bytes(original)
+        path.chmod(0o400)
+        run.transition("Settling")
+        run.release()
+        self.assertEqual((run.root / "proofs/execution-command-0001.json").read_bytes(), original)
+        self.assertEqual((run.root / "diagnostics/command-0001.jsonl").read_bytes(), raw)
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_bounded_safe_events_are_retained_without_raw_canary(self):
         run = self.workspace()
         input_file = run.root / "stores/command-input.json"

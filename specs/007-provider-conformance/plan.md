@@ -4687,6 +4687,71 @@ selection above passes. Fresh immutable6 live/11 released controls remain requir
 No assertion, deadline, cold-input condition or acceptance gate is relaxed.
 T071 and T072..T086 remain open at70/86; implementation continues.
 
+### Verified historical/binary linkage and original source-break authority
+
+Immutable `c8d8e30a9e84e9f587de3d22ace117a28e6181be` passes all6 live/11
+released original-origin controls, exit0 in467178.538511 ms, initial free
+scratch205250375680 bytes and no extra SDK prewarming. All209 runtime parameters
+and170 version observations share input SHA-256
+`ad89f456ab9163c58fea2b21880edcf19089fe1a8483c45313066de633dd92ae`.
+Both reports contain142 cases,136 Passed/six Incomplete and209 witnesses;
+only resources differ. Original packet SHA-256:
+`d1d753fcd2ea69cc5c4fe60554bb918149222e4e10eb58d85ba2db0cf14314c8`.
+Active report SHA-256:
+`d07dba5568c8fe0c35d99267cc7962bc5b05ec2b2fc2fa15623a45a636507fb4`;
+released report SHA-256:
+`ac915585d17b7ddf164dfbe7571519bf2e8310df9a50e3187729ead39742875e`.
+The completed container was not restarted for inspection. Its original packet,
+root and full restored mutation-control fingerprint remain preserved separately
+from the earlier failed1ba attempt.
+
+The following source-break increment records every original Old/New contract,
+unchanged consumer and compatible-repair build parent with DLL/PDB output maps.
+Split restore/build captures outputs only after the final build. Dedicated
+proof-output slots are atomically moved to transient stores after native capture;
+the original and repaired consumers stay readonly and compare identically.
+The existing proof-only output boundary is unchanged, and cleanup retains no
+raw compiler DLL/PDB outputs in proofs. Historical baselines are never modified.
+Source-specific native receipts additionally hash the actual canonical closed
+diagnostic stream: CS0535 is admitted only by the existing exact member guard,
+and raw compiler/source-path text is never retained.
+Independent correspondence checks exact input/source/configuration/output maps,
+arguments, ordered owners/child identities/exits/times, intended failure and
+identical repaired DLL/PDB bytes. Active capture must match every held record,
+be single-use, follow original preparation at the latest actual repair command
+and precede runtime scopes. Final token capture replays original data again;
+actual release replays the same retained source/control/diagnostic/parent hashes
+without dereferencing deleted stores. Source-control parents stay separate from
+the six runtime hashes and original historical preparation.
+
+The native protocol unit first fails on missing diagnosticsSha256. Two actual
+Linux executor units then pass in0.133 seconds, using a disposable overlay and
+synthetic compiler-format output, not a compiler/certification result.
+The output-boundary host regression first fails on missing execution_outputs.
+The independent source-break model rejects resealed wrong compiler codes, repair
+arguments, missing output/command declarations, reordered commands and mixed
+owners; retained replay succeeds after stores are removed. Models never mint
+actual native origin.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks
+test_conformance_execution` passes514 tests,26 native-only skips, in119.291
+seconds. Catalog/SDK and diff checks pass. The native factory adds two actual
+source-capture controls and one released control/diagnostic/parent mutation
+method: expected8 live/12 released controls on a fresh immutable source.
+No deadline, cold-input condition, assertion or qualification gate changes.
+Six baseline/QC logical rows and T071..T086 remain open at70/86; implementation
+continues after this checkpoint rather than treating native origin as completion.
+The first514-test selection exposes a test-only missing namespace in the new
+output-staging fixture; corrected focused25 tests pass in1.088 seconds before
+the complete514-test success above. Output-slot controls also reject overwrites
+and source/destination symlinks before touching targets. The c8 foundations CI
+now passes compatibility, preparation and artifacts; SDK/metadata still fail,
+and cancelled native regressions do not count as qualification.
+Final staging reuses descriptor-relative no-follow parent creation and verifies
+the moved directory identity; focused25 tests pass in0.835 seconds. Its collision
+failure follows the input-root helper's existing InputChanged classification.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

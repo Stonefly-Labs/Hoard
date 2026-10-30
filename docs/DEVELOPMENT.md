@@ -8981,6 +8981,53 @@ above passes. Fresh immutable6/11 native controls remain required; expected
 diagnostic counts are142 cases,136 Passed/six Incomplete and209 witnesses.
 No deadline, cold-input condition, assertion or qualification gate changes.
 
+Immutable `c8d8e30a9e84e9f587de3d22ace117a28e6181be` now passes all6 live/
+11 released original-origin controls, exit0 in467178.538511 ms, initial free
+scratch205250375680 bytes and no extra SDK prewarming.
+Both reports have142 cases,136 Passed/six Incomplete and209 witnesses; only
+actual resources differ. Original packet SHA-256:
+`d1d753fcd2ea69cc5c4fe60554bb918149222e4e10eb58d85ba2db0cf14314c8`.
+Active/released report SHA-256:
+`d07dba5568c8fe0c35d99267cc7962bc5b05ec2b2fc2fa15623a45a636507fb4` /
+`ac915585d17b7ddf164dfbe7571519bf2e8310df9a50e3187729ead39742875e`.
+All209 parameters/170 version observations share input SHA-256
+`ad89f456ab9163c58fea2b21880edcf19089fe1a8483c45313066de633dd92ae`.
+The original failed1ba attempt remains distinct.
+
+The next source-break increment records the actual Old/New contract and unchanged
+consumer build parents, including native output hashes for each DLL/PDB pair.
+Split dotnet restore/build captures outputs only after the final build; selected
+MSBuild remains one parent. Compiler output uses dedicated proof slots, then
+atomically moves into transient stores; original and repaired consumers remain
+readonly and compare identically. The existing proof-only output boundary is
+unchanged, and cleanup retains no raw compiler DLL/PDB outputs under proofs.
+The source-specific parent also binds the canonical closed diagnostic stream,
+including the intended CS0535/member guard; no raw compiler text is retained.
+Independent inspection checks exact source/configuration/input/output maps,
+arguments, ordered child identities/exits/times, failed compilation and repaired
+DLL/PDB bytes. Actual Active-owner capture must match held records at the final
+repair command, precede runtime scopes and occur once. Original frozen data and
+all command hashes replay again before evaluation and after actual release;
+retained replay does not access deleted stores. Metadata models cannot mint it.
+
+The new native protocol unit first fails on the missing diagnostic hash, then
+two actual Linux executor tests pass in0.133 seconds. This overlay unit run
+uses synthetic compiler-format output, not a real compiler/certification.
+The new independent correspondence model rejects resealed wrong compiler codes,
+repair arguments, missing outputs/commands, reordered commands and foreign
+owners, and verifies metadata replay after transient-store deletion.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks
+test_conformance_execution` passes514 tests,26 native-only skips, in119.291
+seconds. Fresh immutable8 live/12 released native controls remain required.
+Focused baseline/output-staging checks pass25 tests in1.088 seconds after fixing
+a test-only missing namespace in the first514-test invocation. Output-slot
+controls reject overwrites and source/destination symlinks before touching targets.
+The final descriptor-relative staging rerun passes those25 tests in0.835 seconds;
+it reuses the bounded no-follow input-parent helper and verifies the moved inode.
+The six remaining baseline/QC logical rows are not promoted by this increment.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

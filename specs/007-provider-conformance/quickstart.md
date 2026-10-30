@@ -1264,6 +1264,12 @@ physical files and executor-held records. Binary-break now derives from all
 seven witnesses plus exact original/staged PE/PDB hashes. Host445 checks pass;
 fresh native6/11 controls remain required. Expected diagnostic counts become
 142 cases,136 Passed/six Incomplete and209 witnesses, still nonqualifying.
+Immutable `c8d8e30` now passes all6 live/11 released controls with those counts;
+only actual resources differ between reports. The next increment captures native
+source-break contract/consumer DLL/PDB outputs, the original held compiler
+diagnostic digest and compatible repair, retaining original owner authority
+through release. Host514 checks pass with26 native-only skips. Fresh8/12 native
+controls remain required; six baseline/QC logical rows still remain Incomplete.
 
 ## Offline Correspondence Inspection
 

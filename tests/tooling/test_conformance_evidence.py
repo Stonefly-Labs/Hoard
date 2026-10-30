@@ -8319,6 +8319,182 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_source_control_output_slots_move_to_transient_stores_without_overwrite_or_symlink_escape(self):
+        run = mock.Mock(root=self.root)
+        source = self.root / "proofs/source-break-output-Old"
+        source.mkdir(mode=0o700)
+        expected = {}
+        for suffix in (".dll", ".pdb"):
+            path = source / ("RequiredContract" + suffix)
+            path.write_bytes(("modeled compiler output" + suffix).encode())
+            path.chmod(0o400)
+            expected[path.name] = path.read_bytes()
+        target = self.baselines._stage_source_break_outputs(run, "Old")
+        self.assertFalse(source.exists())
+        self.assertEqual({name: (target / name).read_bytes() for name in expected}, expected)
+        self.assertTrue(all(stat.S_IMODE((target / name).stat().st_mode) == 0o400 for name in expected))
+        source.mkdir(mode=0o700)
+        (source / "RequiredContract.dll").write_bytes(b"substituted output")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.baselines._stage_source_break_outputs(run, "Old")
+        self.assertEqual((source / "RequiredContract.dll").read_bytes(), b"substituted output")
+        self.assertEqual({name: (target / name).read_bytes() for name in expected}, expected)
+        shutil.rmtree(source)
+        source.symlink_to(self.root / "stores/f06", target_is_directory=True)
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines._stage_source_break_outputs(run, "Old")
+        new_source = self.root / "proofs/source-break-output-New"
+        new_source.mkdir(mode=0o700)
+        (new_source / "RequiredContract.dll").write_bytes(b"must remain in its proof slot")
+        parent = self.root / "stores/compatibility-source-break" / self.baselines.BREAK_CONTROLS["source"]["fixture"]
+        (parent / "New").symlink_to(self.root / "stores/f06", target_is_directory=True)
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines._stage_source_break_outputs(run, "New")
+        self.assertFalse((self.root / "stores/f06/bin").exists())
+        self.assertTrue((new_source / "RequiredContract.dll").is_file())
+
+    def test_source_break_replay_binds_native_compiler_diagnostics_repair_outputs_and_retained_frames(self):
+        baseline = self.root / "stores/f06"
+        fixture = self.baselines.BREAK_CONTROLS["source"]["fixture"] + "/"
+        for relative in (
+                "Directory.Build.props", "Directory.Packages.props", "global.json",
+                "tests/fixtures/compatibility/Directory.Build.props",
+                *(fixture + variant + "/" + name for variant, names in (
+                    ("Old", ("RequiredContract.csproj", "Contract.cs", "packages.lock.json")),
+                    ("New", ("RequiredContract.csproj", "Contract.cs", "packages.lock.json")),
+                    ("Consumer", ("RequiredConsumer.csproj", "Provider.cs", "packages.lock.json")))
+                  for name in names)):
+            path = baseline / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"modeled source, not a compiler execution")
+        entry = self.manifest["entries"][-1]
+        entry["sources"] = self.baselines._hash_tree(baseline, exclude_outputs=True)
+        entry["sourceSha256"] = evidence.digest(entry["sources"])
+        entry["locks"] = {key: value for key, value in entry["sources"].items()
+                          if key.endswith("packages.lock.json")}
+        entry["lockSha256"] = evidence.digest(entry["locks"])
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        seal_sha = evidence.file_sha256(self.seal)
+        copied = self.root / "stores/compatibility-source-break"
+        self.baselines._copy_recipe_sources(baseline, copied, entry["sources"])
+        images = {}
+        for variant in ("Old", "New", "Consumer"):
+            name = "RequiredConsumer" if variant == "Consumer" else "RequiredContract"
+            for suffix in (".dll", ".pdb"):
+                path = copied / fixture / variant / "bin/Release/net10.0" / (name + suffix)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(("modeled " + variant + suffix).encode())
+                path.chmod(0o400)
+                images[variant, suffix] = evidence.file_sha256(path)
+                if variant == "Consumer":
+                    repaired = path.parent.parent / "net10.0-repair" / path.name
+                    repaired.parent.mkdir(exist_ok=True)
+                    repaired.write_bytes(path.read_bytes())
+                    repaired.chmod(0o400)
+        config = self.root / "stores/candidate.NuGet.Config"
+        config.write_bytes(evidence.synthetic_nuget_configuration(self.root / "feed/candidate"))
+        config.chmod(0o400)
+        source_frame = {
+            "schemaVersion": 1, "qualification": False, "baselineSealSha256": seal_sha,
+            "sources": entry["sources"], "controlsSha256": evidence.digest(self.baselines.BREAK_CONTROLS)}
+        inputs = {
+            "sources": entry["sources"], "contracts": {variant: images[variant, ".dll"] for variant in ("Old", "New")},
+            "controls": evidence.digest(self.baselines.BREAK_CONTROLS)}
+        for relative, frame in ((self.baselines.SOURCE_BREAK_SOURCES, source_frame),
+                                (self.baselines.SOURCE_BREAK_INPUTS, inputs)):
+            path = self.root / relative
+            path.write_bytes(evidence.canonical_bytes(frame))
+            path.chmod(0o400)
+        packet = {
+            "schemaVersion": 2, "qualification": False, "mode": "source-break-control",
+            "baselineSealSha256": seal_sha, "controlsSha256": inputs["controls"],
+            "consumerSourceSha256": entry["sources"][fixture + "Consumer/Provider.cs"],
+            "consumerAssemblySha256": images["Consumer", ".dll"], "contracts": inputs["contracts"],
+            **{name: self.baselines.BREAK_CONTROLS["source"][name] for name in ("compilerCode", "symbol", "repair")},
+            "negativeSequence": 4, "negativeExecutionSha256": "0" * 64,
+            "inputsSha256": evidence.file_sha256(self.root / self.baselines.SOURCE_BREAK_INPUTS),
+            "sourceFrameSha256": evidence.file_sha256(self.root / self.baselines.SOURCE_BREAK_SOURCES),
+            "consumerPdbSha256": images["Consumer", ".pdb"],
+            "contractPdbSha256": {variant: images[variant, ".pdb"] for variant in ("Old", "New")}, "commands": []}
+        prefix, run_id = ("dotnet", "exec", "MSBuild.dll"), str(uuid.uuid4())
+        original_events = b'{"code":"CommandFailed","event":"build","value":535}\n'
+        diagnostics = self.root / "diagnostics/command-0004.jsonl"
+        diagnostics.parent.mkdir()
+        records = []
+        for sequence, (role, variant, contract) in enumerate((
+                ("Old", "Old", None), ("New", "New", None), ("consumer", "Consumer", "Old"),
+                ("negative", "Consumer", "New"), ("repair", "Consumer", "Old")), 1):
+            name = "RequiredConsumer" if variant == "Consumer" else "RequiredContract"
+            project = fixture + variant + "/" + name + ".csproj"
+            target = copied / project
+            properties = (*self.baselines.source_break_output_properties(self.root, variant), *((
+                "-p:ContractAssembly=" + str(copied / fixture / contract / "bin/Release/net10.0/RequiredContract.dll"),)
+                if contract is not None else ()))
+            arguments = (self.baselines.project_build_steps(target, config, properties=properties, msbuild=prefix)[0]
+                         if role not in ("negative", "repair") else self.baselines.project_build_commands(
+                             target, config, properties=properties, msbuild=prefix)[1])
+            record = {
+                "schemaVersion": 1, "sequence": sequence, "childPid": sequence + 100,
+                "childStartSha256": "f" * 64, "startedMs": sequence * 10, "endedMs": sequence * 10 + 1,
+                "exitCode": 1 if role == "negative" else 0, "diagnosticCode": "None", "groupState": "Exited",
+                "scope": "ordinary", "runId": run_id, "rootId": "modeled-source-break-root",
+                "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(target.parent).encode()).hexdigest(),
+                "inputFiles": dict(evidence.input_manifest(self.root, self.baselines.source_break_build_inputs(
+                    project, entry["sources"], contract=contract)))}
+            if role == "negative":
+                record["diagnosticsSha256"] = hashlib.sha256(original_events).hexdigest()
+            else:
+                record["outputFiles"] = {
+                    path: images[variant, suffix] for path, suffix in zip(
+                        self.baselines.source_break_output_paths(variant), (".dll", ".pdb"))}
+            records.append(record)
+            packet["commands"].append({"role": role, "sequence": sequence, "executionSha256": evidence.digest(record)})
+        packet["negativeExecutionSha256"] = evidence.digest(records[3])
+
+        def replay(selected, changed, *, events=original_events, retained=False):
+            for record in selected:
+                path = self.root / f'proofs/execution-command-{record["sequence"]:04}.json'
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(evidence.canonical_bytes(record))
+                path.chmod(0o400)
+            if diagnostics.exists():
+                diagnostics.chmod(0o600)
+            diagnostics.write_bytes(events)
+            diagnostics.chmod(0o400)
+            return self.baselines.inspect_source_break_control(
+                self.root, evidence.canonical_bytes(changed),
+                expected_baseline_sha256=seal_sha, msbuild=prefix, retained=retained)
+
+        observed = replay(records, packet)
+        self.assertEqual(observed["runId"], run_id)
+        self.assertEqual(len(observed["commands"]), 5)
+        self.assertFalse(observed["qualification"])
+        for mutation in ("diagnostics", "repair-arguments", "output", "order", "missing", "foreign-owner"):
+            selected, changed, events = copy.deepcopy(records), copy.deepcopy(packet), original_events
+            if mutation == "diagnostics":
+                events = original_events.replace(b"535", b"1000")
+                selected[3]["diagnosticsSha256"] = hashlib.sha256(events).hexdigest()
+            elif mutation == "repair-arguments":
+                selected[-1]["argvSha256"] = selected[3]["argvSha256"]
+            elif mutation == "output":
+                selected[-1]["outputFiles"] = {}
+            elif mutation == "foreign-owner":
+                selected[-1]["rootId"] = "foreign-root"
+            for declaration, record in zip(changed["commands"], selected):
+                declaration["executionSha256"] = evidence.digest(record)
+            changed["negativeExecutionSha256"] = evidence.digest(selected[3])
+            if mutation == "order":
+                changed["commands"].reverse()
+            elif mutation == "missing":
+                changed["commands"].pop()
+            with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                replay(selected, changed, events=events)
+        replay(records, packet)
+        shutil.rmtree(self.root / "stores")
+        self.assertEqual(replay(records, packet, retained=True), observed)
+
     def test_baseline_build_native_recording_binds_inputs_and_reads_original_executor_record(self):
         project = self.root / "project.csproj"
         config = self.root / "NuGet.Config"
@@ -8327,13 +8503,24 @@ class ConformanceBaselineTests(unittest.TestCase):
         run.read_execution_record.return_value = b"original held record"
         records = self.baselines._build(
             run, project, config, "f06", msbuild=("dotnet", "exec", "MSBuild.dll"),
-            execution_inputs=("proofs/historical-binary-inputs.json",))
+            execution_inputs=("proofs/historical-binary-inputs.json",),
+            execution_outputs=("proofs/control.dll", "proofs/control.pdb"))
         self.assertEqual(records, ({"sequence": 7, "executionSha256": hashlib.sha256(
             b"original held record").hexdigest()},))
         run.read_execution_record.assert_called_once_with(7)
         self.assertEqual(run.command.call_args.kwargs["execution_inputs"],
                          ("proofs/historical-binary-inputs.json",))
         self.assertIs(run.command.call_args.kwargs["record_execution"], True)
+        self.assertEqual(run.command.call_args.kwargs["execution_outputs"],
+                         ("proofs/control.dll", "proofs/control.pdb"))
+        run.command.reset_mock()
+        self.baselines._build(
+            run, project, config, "f06", execution_inputs=("proofs/historical-binary-inputs.json",),
+            execution_outputs=("proofs/control.dll", "proofs/control.pdb"))
+        self.assertEqual(len(run.command.call_args_list), 2)
+        self.assertEqual(run.command.call_args_list[0].kwargs["execution_outputs"], ())
+        self.assertEqual(run.command.call_args_list[1].kwargs["execution_outputs"],
+                         ("proofs/control.dll", "proofs/control.pdb"))
 
     def test_historical_native_preparation_replay_rejects_resealed_wrong_commands_inputs_and_order(self):
         self.historical_binary_fixture()

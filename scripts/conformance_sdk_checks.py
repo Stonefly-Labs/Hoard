@@ -4727,6 +4727,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
             source_break = baselines.execute_source_break(
                 run, candidate, sources, config, seal_sha, msbuild=msbuild)
             write_new(run.root / "proofs/source-break-control.json", evidence.canonical_bytes(source_break))
+            source_break_origin = native_sources.capture_source_break() if native_sources is not None else None
             historical_binary = [
                 baselines.stage_historical_binary_fixture(run, candidate / folder, seal_sha)
                 for folder in (TESTS + "/bin/Release/net10.0",
@@ -4744,6 +4745,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 "historicalBinarySha256": evidence.digest(historical_binary),
                 "baselineSealSha256": seal_sha,
                 **({"historicalPreparation": historical_preparation} if historical_preparation is not None else {}),
+                **({"sourceBreakOrigin": source_break_origin} if source_break_origin is not None else {}),
             }
             print(json.dumps(compatibility_summary), flush=True)
             if compatibility_only:
