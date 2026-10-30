@@ -1466,6 +1466,16 @@ subtests retain closed identities/locations without private parameters.459
 affected tests pass with23 host skips. The failed original is preserved and
 fresh full native controls remain required.
 
+Fresh immutable `3e85871` now passes all15 live/17 released native controls,
+including all48 original formatting commands,86 foundation parameters,
+original held capture and independently reconstructed replay after actual
+release. All142 logical cases/212 witnesses pass; elapsed829.315 seconds.
+The same exact source's unchanged Linux command
+`python3 scripts/conformance_unit_checks.py --all-tooling` passes839 tests,
+zero skips/failures/errors/unexpected bytes,405.727 seconds under600 seconds.
+Earlier failures remain retained. These are source-bound diagnostic successes,
+not completed profile qualification or the final all-five CI baseline.
+
 ## Offline Correspondence Inspection
 
 The current offline routes inspect existing complete retained ledgers without

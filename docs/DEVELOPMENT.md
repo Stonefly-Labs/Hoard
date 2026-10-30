@@ -9712,6 +9712,24 @@ The full affected selector above passes459 tests in113.153 seconds,23 host
 native-prerequisite skips; `git diff --check` passes. Fresh immutable full native
 controls remain required; qualification and T071..T086 remain open.
 
+Fresh immutable `3e85871a561f212828488ef9f7bd29e058720fbb` original attempt
+`c0c6faa6976f4bcfb481966245394a9e` exits0 after829315.482 ms. All15 live/
+17 released controls pass, including original48-command formatting and86
+foundation parameters across nine scopes/three assemblies, original executor-held
+foundation capture, actual owner release and independently reconstructed settled
+replay. Architecture/version/binary retain88/114/10 parameters and170 version
+observations;142 logical cases pass with212 witnesses. Shared inputs:
+`94f4bafcd1639b2dd05312e2c9f5dd8a6cd9496f5fde38097a8698ecd6ea263d`.
+All resources are Released. Initial free scratch180427517952 bytes exceeds the
+unchanged24 GiB gate; no extra SDK prewarming, assertion or budget change.
+The separate exact-source uninstrumented Linux command
+`python3 scripts/conformance_unit_checks.py --all-tooling` also exits0:
+839 tests, zero skips/failures/errors/expected failures/unexpected successes/
+unexpected diagnostic bytes,405727.381 ms under its original600-second wrapper.
+These successful originals do not erase the earlier a2ebcab/26d647d/9ec148f
+failures or failed113b310 CI tooling. Runtime-origin validation is now observed;
+profile qualification, final five-profile CI and T071..T086 remain unfinished.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

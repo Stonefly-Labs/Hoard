@@ -1264,6 +1264,15 @@ The original is retained as failed. Released evaluation now verifies original
 held proof bytes before parsing their new meaning; native subtest failures also
 retain safe identities/locations without private parameters.459 affected tests
 pass with23 host skips. Fresh full native controls are still required.
+The fresh immutable `3e85871` original now passes all15 live/17 released controls
+in829.315 seconds, including actual48-command formatting, all86 foundation
+parameters, held foundation capture and independent replay after actual release.
+Its142 logical cases/212 witnesses remain diagnostic, not qualification.
+The same exact source also passes the unchanged standard Linux
+`python3 scripts/conformance_unit_checks.py --all-tooling`:839 tests, zero skips,
+failures, errors or unexpected bytes,405.727 seconds under the600-second bound.
+Earlier unsuccessful originals remain failed; full five-profile qualification
+and T071..T086 remain open.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

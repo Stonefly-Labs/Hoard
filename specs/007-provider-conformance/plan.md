@@ -5689,6 +5689,26 @@ selector passes459 tests in113.153 seconds,23 host skips;
 `git diff --check` passes. A fresh immutable original remains required; the
 unsuccessful original and T071..T086 remain failed/open respectively.
 
+Fresh immutable `3e85871a561f212828488ef9f7bd29e058720fbb` original attempt
+`c0c6faa6976f4bcfb481966245394a9e` exits0 in829315.482 ms. All15 live and17
+released controls pass, including complete48-command foundation formatting,
+86 foundation parameters/nine scopes/three assemblies, actual held capture,
+owner release and independent settled reconstruction under the same token.
+The three compatibility runtime scopes retain88 architecture/114 version/
+10 binary parameters and170 version observations;142 logical cases pass with
+212 witnesses and no incomplete cases. Shared input SHA256:
+`94f4bafcd1639b2dd05312e2c9f5dd8a6cd9496f5fde38097a8698ecd6ea263d`.
+All resources are Released; initial free scratch180427517952 bytes. The original
+2100-second wrapper, per-command/proof limits and no-extra-prewarming condition
+are unchanged. Diagnostic/profileComplete flags remain false.
+The separate exact-source standard Linux command
+`python3 scripts/conformance_unit_checks.py --all-tooling` passes839 tests,
+zero skips/failures/errors/expected failures/unexpected successes/unexpected
+diagnostic bytes,405727.381 ms under the unchanged600-second wrapper,
+with no instrumentation. This source-specific success does not relabel failed
+originals or the failed113b310 owning-controller CI proof. T071..T086,
+qualification-mode orchestration and all-five qualifying CI remain open.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`
