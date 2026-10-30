@@ -387,7 +387,11 @@ resolution. All12 genuine composition controls pass at immutable `d35824c`.
 Compatibility prepares all runtime scopes before one shared immutable input
 capture; every scope rechecks the full set, including the other scopes' images,
 locks and architecture fingerprint. CI rejects split inputs/changed completion
-measurements. Host regressions pass; fresh compatibility execution remains pending.
+measurements. Immutable `6c2ee88` passes all209 native parameters and170 version
+observations. Its diagnostic packet does not retain a live-to-released token.
+The next increment independently binds/replays all six original runtime commands
+through actual release; host controls pass, but its new genuine control execution
+remains pending. Complete compatibility/QC/baseline qualification is not inferred.
 
 All packages use their actual local versions (initial repository baseline
 `0.1.0`) and exact content hashes. Normal platform host/abstractions versions

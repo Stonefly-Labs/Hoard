@@ -8783,7 +8783,28 @@ scope-specific declaration; actual completion inputs are retained separately.
 CI rejects split input hashes and rehashed changed completion inputs.
 Host validation passes432 tests with four native-only skips in112.398 seconds;
 catalog/SDK and diff checks pass. Fresh native compatibility execution remains
-pending; neither modeled tests nor earlier separate-scope diagnostics qualify it.
+separate: immutable `6c2ee884ead12fef0834debc1f7866e11963dc55`
+Linux/aarch64 execution passes88 architecture,114 version and7 binary parameters,
+including170 version observations, diagnostic exit0 in356891.265625 ms.
+Initial free scratch212137140224 bytes, no extra SDK prewarming.
+All scopes bind common input SHA-256
+`917e5346fe440e488417c78f16a501bdd2f8c392d64b339dc98887e21ea5230f`
+and actual completion recomputes successfully. Original closed packet SHA-256:
+`cb3187932dc34cf27d5cb5d8f26dfde6761bb31dd0d9f493527583e0f6c4343e`.
+It does not retain an original live-to-released token or qualify a profile.
+
+The next increment adds that original compatibility runtime boundary.
+`NativeCompatibilitySources` independently replays each original discovery/
+execution transport and binds all six records to executor-held bytes while
+Active. One captured evaluation retains original scope summaries, shared inputs
+and original active summary. Released inspection requires the same token/owner,
+actual Released resources, unchanged captured material and independently replayed
+readonly transports/completion inputs. The original active summary is preserved
+beside the released summary; cached verification flags supply no authority.
+Host validation passes434 tests, four native-only skips, in113.699 seconds;
+catalog/SDK and diff checks pass. Three live/nine released genuine controls are
+connected but their new native execution remains pending. They do not cover
+complete compatibility catalog/QC derivation, baseline attestation or qualification.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

@@ -879,6 +879,10 @@ def verify_synthetic_source_mapping(root, configuration, feed, *, local_package_
             if captured.getvalue() != synthetic_nuget_configuration(
                     root / feed, local_package_ids=local_package_ids):
                 raise ConformanceError("InputChanged")
+    return synthetic_source_mapping(local_package_ids=local_package_ids)
+
+
+def synthetic_source_mapping(*, local_package_ids=()):
     return MappingProxyType({
         "packageSources": MappingProxyType({
             "local": "isolated-current-archives", "nuget.org": "https://api.nuget.org/v3/index.json"}),
@@ -1018,6 +1022,43 @@ def inspect_native_category_report(run, report_data, *, expected_inputs, native_
     inspected = inspect_category_report(run.root, report_data, expected_inputs=inputs)
     return MappingProxyType({
         **inspected, "scope": "native-category-runtime-origin-diagnostic", "runtimeOriginVerified": True})
+
+
+def inspect_native_compatibility_report(run, report_data, *, expected_inputs, native_evaluation):
+    """Replay compatibility runtimes only with their original released executor."""
+    from conformance_execution import OwnedRun
+    from conformance_sdk_checks import inspect_compatibility_runtime_scope
+    from conformance_sources import NativeCompatibilityEvaluation
+
+    if type(run) is not OwnedRun or type(native_evaluation) is not NativeCompatibilityEvaluation:
+        raise ConformanceError("OwnershipInvalid")
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    inputs = admit_entity("RunInputs", expected_inputs)
+    summary = load_json(report_data)
+    if not isinstance(summary, dict):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    native_evaluation.verify_report_origin(run, inputs, summary)
+    commands = []
+    counts = {}
+    for scope, key in (("architecture", "architectureRuntime"), ("version", "versionRuntime"),
+                       ("binary", "binaryRuntime")):
+        _, retained = _readonly_report_proof(run.root, f"proofs/compatibility-{scope}-runtime-summary.json")
+        observed, records = inspect_compatibility_runtime_scope(
+            run.root, inputs, scope, summary[key], summary["architecturePreparation"])
+        if canonical_bytes(observed) != retained or retained != canonical_bytes(summary[key]):
+            raise ConformanceError("ProofMismatch")
+        commands.extend(records)
+        counts[scope] = observed["passedParameters"]
+    if tuple(commands) != native_evaluation.command_hashes:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "qualification": False, "profileComplete": False, "runtimeOriginVerified": True,
+        "scope": "native-compatibility-runtime-origin-diagnostic",
+        "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "architectureParameters": counts["architecture"], "versionParameters": counts["version"],
+        "binaryParameters": counts["binary"],
+    })
 
 
 def inspect_native_composition_report(run, report_data, *, expected_inputs, native_evaluation):

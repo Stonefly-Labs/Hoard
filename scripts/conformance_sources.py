@@ -1967,6 +1967,90 @@ def category_replay_packet(projection):
 
 
 @dataclass(frozen=True, repr=False)
+class NativeCompatibilityEvaluation:
+    _source: "NativeCompatibilitySources"
+    inputs_sha256: str
+    summary_data: bytes
+    command_hashes: tuple[tuple[int, str], ...]
+
+    def verify_report_origin(self, run, inputs, summary):
+        if (type(run) is not OwnedRun or type(self._source) is not NativeCompatibilitySources
+                or self._source._run is not run or self._source._evaluation is not self
+                or run.state != "Released"):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        resources = run.resource_projection()
+        if (not resources or any(row["state"] != "Released" for row in resources)
+                or evidence.canonical_bytes(summary.get("resources")) != evidence.canonical_bytes(resources)):
+            raise evidence.ConformanceError("CleanupIncomplete")
+        original = evidence.load_json(self.summary_data)
+        _, retained = evidence._readonly_report_proof(run.root, "proofs/compatibility-runtime-active-summary.json")
+        if (evidence.digest(inputs) != self.inputs_sha256
+                or retained != self.summary_data
+                or summary.get("phase") != "compatibility-replay-released"
+                or summary.get("profileComplete") is not False
+                or summary.get("processResourcesReleased") is not True
+                or evidence.canonical_bytes({key: value for key, value in summary.items()
+                                             if key not in ("phase", "profileComplete",
+                                                            "processResourcesReleased", "resources")})
+                != evidence.canonical_bytes({key: value for key, value in original.items() if key != "phase"})):
+            raise evidence.ConformanceError("ProofMismatch")
+        for sequence, expected in self.command_hashes:
+            hashed, _ = evidence._readonly_report_proof(run.root, f"proofs/execution-command-{sequence:04}.json")
+            if hashed != expected:
+                raise evidence.ConformanceError("ProofMismatch")
+
+
+class NativeCompatibilitySources:
+    def __init__(self, run):
+        if type(run) is not OwnedRun or run.state != "Active":
+            raise evidence.ConformanceError("OwnershipInvalid")
+        self._run = run
+        self._inputs_sha256 = None
+        self._scopes = {}
+        self._evaluation = None
+
+    def capture_scope(self, inputs, scope, summary, prepared):
+        from conformance_sdk_checks import inspect_compatibility_runtime_scope
+
+        run = self._run
+        order = ("architecture", "version", "binary")
+        hashed = evidence.digest(evidence.admit_entity("RunInputs", inputs))
+        if (run.state != "Active" or self._evaluation is not None
+                or len(self._scopes) >= len(order) or scope != order[len(self._scopes)]
+                or self._inputs_sha256 is not None and self._inputs_sha256 != hashed):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        observed, commands = inspect_compatibility_runtime_scope(run.root, inputs, scope, summary, prepared)
+        if evidence.canonical_bytes(observed) != evidence.canonical_bytes(summary):
+            raise evidence.ConformanceError("ProofMismatch")
+        previous = max((sequence for _, rows in self._scopes.values() for sequence, _ in rows), default=0)
+        for sequence, expected in commands:
+            if sequence <= previous or hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != expected:
+                raise evidence.ConformanceError("ProofMismatch")
+            previous = sequence
+        self._inputs_sha256 = hashed
+        self._scopes[scope] = (evidence.canonical_bytes(summary), commands)
+
+    def capture_evaluation(self, inputs, summary):
+        if (self._run.state != "Active" or self._evaluation is not None
+                or tuple(self._scopes) != ("architecture", "version", "binary")
+                or evidence.digest(inputs) != self._inputs_sha256):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        _, original = evidence._readonly_report_proof(
+            self._run.root, "proofs/compatibility-runtime-active-summary.json")
+        if (original != evidence.canonical_bytes(summary) or summary.get("qualification") is not False
+                or summary.get("phase") != "compatibility-replay-admitted"):
+            raise evidence.ConformanceError("ProofMismatch")
+        for scope, key in (("architecture", "architectureRuntime"), ("version", "versionRuntime"),
+                           ("binary", "binaryRuntime")):
+            if evidence.canonical_bytes(summary.get(key)) != self._scopes[scope][0]:
+                raise evidence.ConformanceError("ProofMismatch")
+        commands = tuple(row for _, rows in self._scopes.values() for row in rows)
+        self._evaluation = NativeCompatibilityEvaluation(
+            self, self._inputs_sha256, evidence.canonical_bytes(summary), commands)
+        return self._evaluation
+
+
+@dataclass(frozen=True, repr=False)
 class NativeCompositionEvaluation:
     _source: "NativeCompositionSources"
     report_data: bytes

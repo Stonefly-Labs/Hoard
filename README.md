@@ -1000,11 +1000,16 @@ qualification.
 Composition and compatibility commands now also bind the selected SDK VSTest
 closure into their frozen execution inputs, select the exact runtime/runner and
 recheck the closure after execution. All twelve genuine composition controls
-pass at `d35824c`; compatibility's new native execution remains pending.
+pass at `d35824c`.
 Compatibility now prepares every runtime before capturing one shared immutable
 input set for architecture, version and binary execution. Each scope rechecks
 the entire set, and CI rejects split inputs or changed completion measurements.
-Host regressions pass; this remains diagnostic, not profile qualification.
+All209 native compatibility parameters pass at `6c2ee88`, including170 version
+observations, with shared inputs unchanged through actual release.
+The next increment retains original compatibility command authority across
+release and independently replays all three runtime transports. Host regressions
+pass; its new native controls remain pending. Neither increment qualifies the
+full compatibility profile.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

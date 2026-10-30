@@ -4499,6 +4499,55 @@ provider APIs, package/module graph, production architecture/ADR/diagrams,
 CustomHost, infrastructure, releases and UI guides are unchanged.
 T071 remains open; implementation continues at70/86.
 
+### Native shared-input compatibility and original runtime authority
+
+Immutable `6c2ee884ead12fef0834debc1f7866e11963dc55` Linux/aarch64
+execution passes88 architecture,114 version and7 binary parameters, including170
+version observations, diagnostic exit0 in356891.26562499953 ms. Initial free
+scratch212137140224 bytes; no extra SDK prewarming. All scopes use common input
+SHA-256 `917e5346fe440e488417c78f16a501bdd2f8c392d64b339dc98887e21ea5230f`;
+actual completion measurements recompute and the real owner releases.
+Original closed packet SHA-256:
+`cb3187932dc34cf27d5cb5d8f26dfde6761bb31dd0d9f493527583e0f6c4343e`.
+That packet explicitly does not retain the original token and does not qualify.
+
+The following increment introduces `NativeCompatibilitySources` and frozen
+`NativeCompatibilityEvaluation` in the shared sources module, avoiding duplicate
+class identity under direct producer execution. Each runtime scope independently
+replays its original fixed discovery/execution selections, exact SDK/settings,
+bound inputs, readonly transport and actual completion inputs. Both original
+command hashes must match executor-held records while Active; ordered scope
+captures and the complete original active summary are single-use.
+
+The independent evidence boundary then requires the same original token/owner
+after actual release, exact Released resources, unchanged captured scope/active
+summary material, all six original command hashes and fresh transport replay.
+The active summary is never overwritten; released summary and a derived console
+verification flag are separate. No copied boolean or serialized owner map supplies
+authority. Scope remains runtime-only diagnostic, not complete catalog/QC,
+baseline attestation or generic profile qualification.
+
+The modeled-owner test first fails on the missing source/boundary; the completed
+guard rejects models before reading proofs. The explicit test-only runner requires
+actual original capture and preserves failures. Its three live/nine released
+controls include an execution record plus matching resealed receipt that must
+still reject against executor-held bytes, copied token, modeled owner, stale/
+missing resources, changed scope summaries, execution/runtime proof bytes, SDK
+closure and completion bytes. Ordinary discovery does not invoke those factories.
+Fresh native execution is still required;6c2ee88 cannot cover this increment.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes434 tests in108.515 seconds, four native-only skips.
+After final semantic configuration-preimage reuse and explicit native-factory
+wiring, the same434-test command passes in113.699 seconds, four native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. README, DEVELOPMENT, quickstart and evidence/matrix
+contracts are affected; provider APIs, package/module graph, production
+architecture/ADR/diagrams, CustomHost, infrastructure, releases and UI guides
+are unchanged. T071 remains open; implementation continues at70/86.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

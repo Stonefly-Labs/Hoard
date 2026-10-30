@@ -1104,13 +1104,22 @@ use the exact captured SDK runner and runtime version, rechecked after execution
 independent composition replay reconstructs the same prefix and bound inputs.
 Changed runner/closure material cannot borrow an otherwise unchanged successful
 command. All12 genuine composition controls pass at immutable `d35824c`;
-compatibility's new native execution remains pending.
+the separate shared-input compatibility run passes all209 parameters at `6c2ee88`.
 All compatibility runtime preparation now precedes one shared immutable
 RunInputs capture. Architecture/version/binary scopes recheck the complete
 runtime/lock/package/baseline set and architecture fingerprint before/after each
 execution. Separate actual completion measurements must recompute to the
 original inputs; CI rejects split declarations and changed completion inputs.
-This does not supply original compatibility report authority or qualification.
+That packet does not itself supply original live-to-released authority.
+The next increment captures all six original compatibility discovery/execution
+records while Active, independently replays the transports and freezes their
+scope summaries/shared inputs. Released inspection requires the same original
+token and owner, actual Released resources, unchanged active-summary bytes and
+fresh replay of readonly manifests, witnesses/proofs and completion inputs.
+Copied tokens or matching serialized owner maps cannot supply authority.
+Three live/nine released controls are connected; host checks pass and new native
+execution remains pending. Scope is runtime-origin diagnostic only: complete
+compatibility/QC/baseline attestation and qualification remain required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

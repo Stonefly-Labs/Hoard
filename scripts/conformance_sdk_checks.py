@@ -49,7 +49,8 @@ from conformance_sources import (
     COMMON_CONSUMER_NAMESPACES, category_common_consumer_sdk_images, category_common_consumer_sdk_paths,
     native_category_common_consumer_control,
     category_common_consumer_manifest,
-    NativeCategoryEvaluation, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
+    NativeCategoryEvaluation, NativeCategorySources, NativeCompatibilitySources,
+    admit_owned_command, admit_recovery_barrier,
     category_replay_packet,
     admit_sqlite_noncooperation, admit_transfer_measurement, admit_artifact_transfer_producer,
     admit_artifact_noncooperation, admit_original_artifact_crash, admit_original_artifact_retention,
@@ -2711,6 +2712,8 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
             if read_bounded(path, len(raw)) != raw:
                 raise evidence.ConformanceError("InputChanged")
             path.chmod(0o400)
+    if runtime_options.get("category_scope", (None,))[0] == "compatibility":
+        data["discovery_manifest_path"] = f'runtime-input-{discovery_manifest["attemptId"]}.json'
     return result, ingested, MappingProxyType(data), hashlib.sha256(discovery_completion).hexdigest()
 
 
@@ -4085,6 +4088,177 @@ def capture_compatibility_runtime_inputs(run, repository, candidate, config, fee
             "configuration": base["configurationSha256"], "architectureInputs": selected})})
 
 
+def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
+    from conformance_case_catalog import architecture_runtime_tests, binary_runtime_tests, version_runtime_tests
+
+    definitions = {
+        "architecture": (architecture_runtime_tests, ARCHITECTURE_TESTS + "/bin/Release/net10.0",
+                         "Hoard.Architecture.Tests.dll"),
+        "version": (version_runtime_tests, VERSION_TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0",
+                    "Hoard.Composition.Tests.dll"),
+        "binary": (binary_runtime_tests, TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll"),
+    }
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    if scope not in definitions or inputs["profileId"] != "compatibility" or inputs["mode"] != "diagnostic":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    tests_factory, folder, name = definitions[scope]
+    tests = tests_factory()
+    summary = evidence._runtime_json(evidence.canonical_bytes(summary), {
+        "qualification": evidence._constant(False), "profileComplete": evidence._constant(False),
+        "scope": evidence._constant(f"{scope}-runtime-diagnostic"),
+        "passedParameters": evidence._constant(len(tests)),
+        **({"admittedObservations": evidence._integer} if scope == "version" else {}),
+        **{field: evidence.sha256 for field in (
+            "inputsSha256", "postInputsSha256", "discoverySha256", "completionSha256",
+            "runtimeProofsSha256", "nativeParentSha256")},
+        "manifestPath": evidence.relative_path, "discoveryManifestPath": evidence.relative_path,
+    }, limit=64 * 1024)
+    assembly = root / "stores/candidate" / folder / name
+    inputs_path = "proofs/compatibility-runtime-inputs.json"
+
+    def read(path, limit):
+        hashed, raw = evidence._readonly_report_proof(root, path)
+        if len(raw) > limit:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        return hashed, raw
+
+    _, owner_data = read("runtime-owner.json", 64 * 1024)
+    owner = evidence._runtime_json(owner_data, {
+        "schemaVersion": evidence._constant(1), "runId": evidence._uuid,
+        "invocationGroupId": evidence._uuid, "rootId": evidence.stable_id,
+        "rootPathSha256": evidence.sha256,
+    }, limit=64 * 1024)
+    inputs_sha, inputs_data = read(inputs_path, 16 * 1024**2)
+    if (inputs_data != evidence.canonical_bytes(inputs) or owner["runId"] != inputs["runId"]
+            or owner["invocationGroupId"] != inputs["invocationGroupId"]
+            or owner["rootPathSha256"] != hashlib.sha256(str(root).encode()).hexdigest()):
+        raise evidence.ConformanceError("ProofMismatch")
+    if not isinstance(prepared, Mapping):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    map_path = evidence.relative_path(prepared.get("inputMapPath"))
+    map_sha, map_data = read(map_path, 2 * 1024**2)
+    selected = evidence._hash_map(evidence.load_json(map_data))
+    manifest_path = evidence.relative_path(prepared.get("manifestPath"))
+    if (map_path != "proofs/compatibility-architecture-inputs.json"
+            or manifest_path != "stores/compatibility-architecture/manifest.json"
+            or map_sha != evidence.sha256(prepared.get("inputMapSha256"))
+            or selected.get(manifest_path) != evidence.sha256(prepared.get("manifestSha256"))
+            or inputs["configurationSha256"] != evidence.digest({
+                "configuration": evidence.configuration_fingerprint(evidence.synthetic_source_mapping()),
+                "architectureInputs": selected})):
+        raise evidence.ConformanceError("ProofMismatch")
+    runner = runtime_runner(root, inputs)
+    observations, commands, manifests = {}, [], {}
+    previous_end = 0
+    for purpose, field in (("discovery", "discoveryManifestPath"), ("execution", "manifestPath")):
+        manifest_path = evidence.relative_path(summary[field])
+        manifest_sha, manifest_data = read(manifest_path, 2 * 1024**2)
+        _, manifest, _, _, _, _ = evidence._runtime_manifest(
+            inputs, manifest_data, owner_data,
+            {identity: ("none", f"{scope}-runtime") for identity in tests},
+            manifest_sha, hashlib.sha256(owner_data).hexdigest(), purpose)
+        attempt = evidence._uuid(manifest["attemptId"])
+        if (manifest_path != f"runtime-input-{attempt}.json" or manifest["purpose"] != purpose
+                or manifest["runInputsPath"] != inputs_path or manifest["inputSha256"] != inputs_sha
+                or manifest["attemptSequence"] != 1
+                or _category_manifest_tests(("compatibility", scope), manifest) != tests
+                or [row["path"] for row in manifest["assemblies"] if row["id"] == "test-assembly"]
+                != [assembly.relative_to(root).as_posix()]):
+            raise evidence.ConformanceError("ProofMismatch")
+        origin_environment = ""
+        if scope == "architecture":
+            origin_environment = (
+                "<EnvironmentVariables><HOARD_FOUNDATION_EVIDENCE>"
+                + escape(str(root / evidence.relative_path(prepared["manifestPath"])))
+                + "</HOARD_FOUNDATION_EVIDENCE></EnvironmentVariables>")
+        settings = runtime_settings(
+            root, assembly, attempt, manifest_sha, hashlib.sha256(owner_data).hexdigest(), origin_environment)
+        _, receipt_data = read(f"proofs/category-command-{attempt}-{purpose}.json", 64 * 1024)
+        sequence = evidence._integer(evidence.load_json(receipt_data).get("commandSequence"))
+        if not 0 < sequence <= 2**63 - 1:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        record_sha, record_data = read(f"proofs/execution-command-{sequence:04}.json", 64 * 1024)
+        record = evidence.load_json(record_data)
+        _, record = verify_category_command_proof(
+            root, run_id=inputs["runId"], root_id=owner["rootId"], manifest=manifest,
+            arguments=runtime_arguments(
+                assembly, root / f"proofs/settings-{attempt}.runsettings", tuple(tests),
+                discovery=purpose == "discovery", runner_prefix=runner["prefix"]),
+            cwd=assembly.parent, settings_data=settings,
+            started_ms=evidence._number(record.get("startedMs")), ended_ms=evidence._number(record.get("endedMs")))
+        bound = {
+            manifest_path: manifest_sha, "runtime-owner.json": hashlib.sha256(owner_data).hexdigest(),
+            inputs_path: inputs_sha,
+            f"proofs/settings-{attempt}.runsettings": hashlib.sha256(settings).hexdigest(),
+            assembly.relative_to(root).as_posix(): inputs["runtimeAssemblies"][assembly.relative_to(root).as_posix()],
+            **runner["inputFiles"],
+        }
+        if scope == "architecture":
+            for path, hashed in ((prepared["inputMapPath"], prepared["inputMapSha256"]),
+                                 (prepared["manifestPath"], prepared["manifestSha256"])):
+                bound[evidence.relative_path(path)] = evidence.sha256(hashed)
+            for image in manifest["assemblies"]:
+                if Path(image["path"]).name in (
+                        "Hoard.Conformance.TestLogger.dll", "Hoard.Testing.Conformance.dll", "Hoard.Abstractions.dll"):
+                    bound[image["path"]] = inputs["runtimeAssemblies"][image["path"]]
+        if (record.get("inputFiles") != bound or record["startedMs"] < previous_end
+                or commands and sequence <= commands[-1][0]):
+            raise evidence.ConformanceError("ProofMismatch")
+        previous_end = record["endedMs"]
+        commands.append((sequence, record_sha))
+        directory = root / f'{"discovery" if purpose == "discovery" else "runtime"}-{attempt}'
+        names = {path.name for path in directory.iterdir()}
+        base = directory.relative_to(root).as_posix() + "/"
+        _, completion = read(base + "completion.json", 64 * 1024)
+        common = dict(
+            inputs=inputs, manifest_data=manifest_data, owner_data=owner_data, expected_tests={
+                identity: ("none", f"{scope}-runtime") for identity in tests},
+            manifest_sha256=manifest_sha, owner_sha256=hashlib.sha256(owner_data).hexdigest())
+        if purpose == "discovery":
+            if names != {"discovered.jsonl", "completion.json"}:
+                raise evidence.ConformanceError("ProofMismatch")
+            _, discovered = read(base + "discovered.jsonl", 1024 * 1024)
+            observed = evidence.ingest_runtime_discovery(
+                **common, discoveries_data=discovered, completion_data=completion,
+                started_ms=record["startedMs"], ended_ms=record["endedMs"])
+            if (len(observed["discoveries"]) != len(tests)
+                    or {row["testIdentity"] for row in observed["discoveries"]} != set(tests)):
+                raise evidence.ConformanceError("WitnessMissing")
+        else:
+            proof_names = {path for path in names if re.fullmatch(r"proof-[0-9a-f-]{36}\.json", path)}
+            if names != {"witnesses.jsonl", "completion.json", *proof_names} or len(proof_names) != len(tests):
+                raise evidence.ConformanceError("ProofMismatch")
+            proofs = {path: read(base + path, 64 * 1024)[1] for path in proof_names}
+            _, witnesses = read(base + "witnesses.jsonl", 1024 * 1024)
+            observed = evidence.ingest_runtime_attempt(
+                **common, witnesses_data=witnesses, completion_data=completion, proofs=proofs,
+                started_ms=record["startedMs"], ended_ms=record["endedMs"])
+            if any(row["status"] != "Passed" for row in observed["witnesses"]):
+                raise evidence.ConformanceError("AssertionFailed")
+        if observed["diagnosticCode"] != "None":
+            raise evidence.ConformanceError(observed["diagnosticCode"])
+        observations[purpose] = (observed, hashlib.sha256(completion).hexdigest())
+        manifests[purpose] = manifest
+    if manifests["discovery"] != {**manifests["execution"], "purpose": "discovery",
+                                  "attemptId": manifests["discovery"]["attemptId"]}:
+        raise evidence.ConformanceError("ProofMismatch")
+    completion_sha, completion_data = read(f"proofs/compatibility-{scope}-completion-inputs.json", 16 * 1024**2)
+    post = evidence.admit_entity("RunInputs", evidence.load_json(completion_data))
+    evidence.verify_input_recomputation(inputs, post)
+    observed = observations["execution"][0]
+    return {
+        "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
+        "passedParameters": len(tests),
+        **({"admittedObservations": sum(map(len, observed["versionObservations"].values()))}
+           if scope == "version" else {}),
+        "inputsSha256": inputs_sha, "postInputsSha256": completion_sha,
+        "discoverySha256": observations["discovery"][1], "completionSha256": observations["execution"][1],
+        "runtimeProofsSha256": evidence.digest(dict(observed["proofs"])),
+        "nativeParentSha256": commands[-1][1],
+        "manifestPath": summary["manifestPath"], "discoveryManifestPath": summary["discoveryManifestPath"],
+    }, tuple(commands)
+
+
 def prepare_version_runtime(run, candidate, config, feed, *, msbuild=None):
     from conformance_prepare import Project, build_project
 
@@ -4106,7 +4280,7 @@ def prepare_version_runtime(run, candidate, config, feed, *, msbuild=None):
 
 
 def execute_version_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha, *,
-                            frozen_inputs, version_runtime, ci_revision=None):
+                            frozen_inputs, version_runtime, native_sources, ci_revision=None):
     from conformance_case_catalog import version_runtime_tests
 
     assembly, lock, receipt, record = version_runtime
@@ -4116,7 +4290,7 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, p
     summary = _execute_compatibility_runtime_scope(
         run, repository, candidate, sources, config, feed, seal_sha, assembly,
         scope="version", tests=version_runtime_tests(), prepared=prepared, frozen_inputs=frozen_inputs,
-        ci_revision=ci_revision)
+        native_sources=native_sources, ci_revision=ci_revision)
     verify_package_consumer_lock(candidate, feed, lock, receipt, project=VERSION_TESTS)
     if record is not None:
         verify_project_lock(record, candidate, feed)
@@ -4125,7 +4299,7 @@ def execute_version_runtime(run, repository, candidate, sources, config, feed, p
 
 
 def execute_binary_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha, *,
-                           frozen_inputs, ci_revision=None):
+                           frozen_inputs, native_sources, ci_revision=None):
     from conformance_case_catalog import binary_runtime_tests
 
     runtime = candidate / TESTS / "bin/Release/net10.0"
@@ -4134,13 +4308,13 @@ def execute_binary_runtime(run, repository, candidate, sources, config, feed, pr
     summary = _execute_compatibility_runtime_scope(
         run, repository, candidate, sources, config, feed, seal_sha, runtime / "Hoard.Conformance.Tests.dll",
         scope="binary", tests=binary_runtime_tests(), prepared=prepared, frozen_inputs=frozen_inputs,
-        ci_revision=ci_revision)
+        native_sources=native_sources, ci_revision=ci_revision)
     write_new(run.root / "proofs/compatibility-binary-runtime-summary.json", evidence.canonical_bytes(summary))
     return summary
 
 
 def _execute_compatibility_runtime_scope(run, repository, candidate, sources, config, feed, seal_sha, assembly,
-                                       *, scope, tests, prepared, frozen_inputs, ci_revision=None):
+                                       *, scope, tests, prepared, frozen_inputs, native_sources, ci_revision=None):
     paths = [*compatibility_runtime_paths(run, assembly.parent), "proofs/sdk-vstest-inputs.json"]
     owner = evidence.load_json(read_bounded(run.root / "runtime-owner.json", 64 * 1024))
     group, attempt = evidence._uuid(owner["invocationGroupId"]), str(uuid.uuid4())
@@ -4187,7 +4361,18 @@ def _execute_compatibility_runtime_scope(run, repository, candidate, sources, co
         raise evidence.ConformanceError("InputChanged")
     write_new(run.root / f"proofs/compatibility-{scope}-completion-inputs.json",
               evidence.canonical_bytes(post_inputs))
-    return {
+    discovery_manifest = evidence.load_json(read_bounded(
+        run.root / transport["discovery_manifest_path"], 2 * 1024**2))
+    for path in (
+            run.root / transport["discovery_manifest_path"],
+            run.root / f'runtime-input-{manifest["attemptId"]}.json',
+            run.root / f'discovery-{discovery_manifest["attemptId"]}',
+            run.root / f'runtime-{manifest["attemptId"]}'):
+        selected = path.iterdir() if path.is_dir() else (path,)
+        for item in selected:
+            no_symlinks(item)
+            item.chmod(0o400)
+    summary = {
         "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
         "passedParameters": len(tests),
         **({"admittedObservations": sum(map(len, observed["versionObservations"].values()))}
@@ -4197,11 +4382,15 @@ def _execute_compatibility_runtime_scope(run, repository, candidate, sources, co
         "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
         "runtimeProofsSha256": evidence.digest(dict(observed["proofs"])),
         "nativeParentSha256": result.execution_record_sha256,
+        "manifestPath": f'runtime-input-{manifest["attemptId"]}.json',
+        "discoveryManifestPath": transport["discovery_manifest_path"],
     }
+    native_sources.capture_scope(inputs, scope, summary, prepared)
+    return summary
 
 
 def execute_architecture_runtime(run, repository, candidate, sources, config, feed, prepared, seal_sha,
-                                 *, frozen_inputs, ci_revision=None):
+                                 *, frozen_inputs, native_sources, ci_revision=None):
     from conformance_case_catalog import architecture_runtime_tests
     from conformance_inherited import admit_architecture_preparation
 
@@ -4215,7 +4404,7 @@ def execute_architecture_runtime(run, repository, candidate, sources, config, fe
     summary = _execute_compatibility_runtime_scope(
         run, repository, candidate, sources, config, feed, seal_sha, assembly,
         scope="architecture", tests=tests, prepared=prepared, frozen_inputs=frozen_inputs,
-        ci_revision=ci_revision)
+        native_sources=native_sources, ci_revision=ci_revision)
     write_new(run.root / "proofs/compatibility-architecture-runtime-summary.json", evidence.canonical_bytes(summary))
     return summary
 
@@ -4442,30 +4631,39 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 write_new(run.root / "runtime-owner.json", evidence.canonical_bytes({
                     "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group,
                     "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}))
+                native_sources = NativeCompatibilitySources(run)
                 compatibility_summary["architectureRuntime"] = execute_architecture_runtime(
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
-                    frozen_inputs=frozen_inputs, ci_revision=ci_revision)
+                    frozen_inputs=frozen_inputs, native_sources=native_sources, ci_revision=ci_revision)
                 compatibility_summary["versionRuntime"] = execute_version_runtime(
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
-                    frozen_inputs=frozen_inputs, version_runtime=version_runtime, ci_revision=ci_revision)
+                    frozen_inputs=frozen_inputs, version_runtime=version_runtime,
+                    native_sources=native_sources, ci_revision=ci_revision)
                 compatibility_summary["binaryRuntime"] = execute_binary_runtime(
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
-                    frozen_inputs=frozen_inputs, ci_revision=ci_revision)
+                    frozen_inputs=frozen_inputs, native_sources=native_sources, ci_revision=ci_revision)
                 admit_architecture_preparation(run.root, prepared)
                 if (dict(evidence.source_manifest(repository)) != dict(sources)
                         or evidence.source_identity(repository, ci_revision=ci_revision) != identity):
                     raise evidence.ConformanceError("InputChanged")
                 evidence.verify_snapshot(candidate, sources)
                 baselines.verify_prepared_baselines(run.root, seal_sha)
+                write_new(run.root / "proofs/compatibility-runtime-active-summary.json",
+                          evidence.canonical_bytes(compatibility_summary))
+                native_evaluation = native_sources.capture_evaluation(frozen_inputs, compatibility_summary)
                 run.transition("Settling")
                 run.release()
                 if any(resource["state"] != "Released" for resource in run.resource_projection()):
                     raise evidence.ConformanceError("CleanupIncomplete")
                 summary = {**compatibility_summary, "phase": "compatibility-replay-released",
-                           "profileComplete": False, "processResourcesReleased": True}
+                           "profileComplete": False, "processResourcesReleased": True,
+                           "resources": run.resource_projection()}
+                inspected = evidence.inspect_native_compatibility_report(
+                    run, evidence.canonical_bytes(summary), expected_inputs=frozen_inputs,
+                    native_evaluation=native_evaluation)
                 write_new(run.root / "proofs/compatibility-diagnostic-summary.json",
                           evidence.canonical_bytes(summary))
-                print(json.dumps(summary), flush=True)
+                print(json.dumps({**summary, "runtimeOriginVerified": inspected["runtimeOriginVerified"]}), flush=True)
                 return 0
         print(json.dumps({"qualification": False, "phase": "inspection-preparation"}), flush=True)
         inspection_records = build_inspection_projects(run, candidate, config, feed, msbuild=msbuild)

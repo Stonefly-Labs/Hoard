@@ -1191,10 +1191,31 @@ The next increment freezes the exact SDK/runtime runner in original command
 inputs and adds the twelfth control. Its separate immutable `d35824c`
 execution passes all12 controls, exit0 in130014.212075 ms,
 starting with211429793792 free scratch bytes and no extra SDK prewarming.
-Compatibility now uses one frozen full-runtime input set across all three scopes;
-its new native verification remains pending.
+Compatibility's immutable `6c2ee88` execution also passes all88 architecture/
+114 version/7 binary parameters, including170 version observations, using one
+shared frozen input set through release. This is diagnostic, not qualification.
 Ordinary unittest discovery needs no retained packet. Preserve unsuccessful
 roots and do not edit the frozen checkout.
+
+## Native Compatibility Origin Controls
+
+On a supported Linux host with fresh private scratch:
+
+```bash
+PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_composition.py \
+  --native-compatibility-origin-controls --evidence "$HOARD_PRIVATE_PARENT/compatibility-origin"
+```
+
+This test-only route executes actual source/retained compatibility preparation
+and all three packaged runtime scopes. It challenges original live command
+authority, releases through the real owner, then independently replays released
+transports. Three live/nine released controls cover resealed command records,
+copied tokens, modeled owners, stale/missing settlement, changed scope summaries,
+runtime proofs, SDK closure and actual completion bytes. Host checks pass;
+fresh native execution remains pending. Exit0 means finite controls passed,
+not complete compatibility/QC/baseline attestation or profile qualification.
+The original `proofs/compatibility-runtime-active-summary.json` remains unchanged
+beside `proofs/compatibility-diagnostic-summary.json`.
 
 ## Offline Correspondence Inspection
 
