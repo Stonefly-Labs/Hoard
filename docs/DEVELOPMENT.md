@@ -9919,6 +9919,15 @@ The prepared journey is still mandatory in full execution.
 Targeted architecture review finds no actionable defects; final T081 and
 fresh full native confirmation remain outstanding.
 
+Post-release inherited command replay now supports the explicit transient
+settings role. Reconstructed bytes must match the receipt and exact original
+held-input hash; any surviving settings file must remain readonly, identical
+and non-symlinked. Default retained proof settings are still mandatory.
+The232-test affected selector passes. A fresh readonly Linux process verifies
+actual original passed command156 from `4240185` with settings absent and
+proofs unchanged. This is command-level evidence, not full inherited/profile
+qualification; command157's rejection remains preserved.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

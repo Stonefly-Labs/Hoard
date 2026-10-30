@@ -71,6 +71,9 @@ regression,95 focused lifecycle/bounds/worker cases and231 tooling checks
 pass; fresh full native confirmation remains required. Prior failures stay
 preserved, and the original concurrency failure lacks a retained exception
 that would uniquely establish its cause.
+An independent readonly replay now also validates a genuinely released
+inherited command without retaining its private settings; full inherited
+profile evaluation remains unfinished.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

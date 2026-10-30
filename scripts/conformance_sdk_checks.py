@@ -3626,7 +3626,9 @@ def _category_command_record(root, raw, *, record_sha, sequence, run_id, root_id
 
 
 def verify_category_command_proof(root, *, run_id, root_id, arguments, cwd, manifest, settings_data,
-                                  started_ms, ended_ms):
+                                  started_ms, ended_ms, settings_directory="proofs"):
+    if settings_directory not in ("proofs", "stores"):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
     attempt = evidence._uuid(manifest["attemptId"])
     purpose = manifest["purpose"]
     if purpose not in ("discovery", "execution") or manifest["runId"] != run_id:
@@ -3645,10 +3647,14 @@ def verify_category_command_proof(root, *, run_id, root_id, arguments, cwd, mani
         "manifestSha256": evidence._constant(evidence.digest(manifest)),
         "settingsSha256": evidence._constant(hashlib.sha256(settings_data).hexdigest()),
     }, limit=64 * 1024)
-    settings_path = root / f"proofs/settings-{attempt}.runsettings"
-    if (path.stat().st_mode & 0o777 != 0o400 or settings_path.stat().st_mode & 0o777 != 0o400
-            or read_bounded(settings_path, 256 * 1024) != settings_data):
+    settings_path = root / settings_directory / f"settings-{attempt}.runsettings"
+    no_symlinks(settings_path)
+    if path.stat().st_mode & 0o777 != 0o400:
         raise evidence.ConformanceError("ProofMismatch")
+    if settings_directory == "proofs" or settings_path.exists():
+        if (settings_path.stat().st_mode & 0o777 != 0o400
+                or read_bounded(settings_path, 256 * 1024) != settings_data):
+            raise evidence.ConformanceError("ProofMismatch")
     sequence = receipt["commandSequence"]
     if not 0 < sequence <= 2**63 - 1:
         raise evidence.ConformanceError("OwnershipInvalid")
@@ -3656,6 +3662,9 @@ def verify_category_command_proof(root, *, run_id, root_id, arguments, cwd, mani
         root, read_bounded(root / f"proofs/execution-command-{sequence:04}.json", 64 * 1024),
         record_sha=receipt["executionRecordSha256"], sequence=sequence, run_id=run_id, root_id=root_id,
         exit_code=0, arguments=arguments, cwd=cwd, started_ms=started_ms, ended_ms=ended_ms)
+    if (settings_directory == "stores" and record.get("inputFiles", {}).get(
+            settings_path.relative_to(root).as_posix()) != receipt["settingsSha256"]):
+        raise evidence.ConformanceError("ProofMismatch")
     return receipt, record
 
 

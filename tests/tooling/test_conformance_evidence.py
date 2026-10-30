@@ -1415,6 +1415,82 @@ class ConformanceAdmissionTests(unittest.TestCase):
 
 
 class ConformanceCommandProofReplayTests(unittest.TestCase):
+    def test_transient_settings_replay_requires_original_held_settings_hash(self):
+        import conformance_sdk_checks as checks
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            (root / "stores").mkdir()
+            run_id, group, attempt = (str(uuid.uuid4()) for _ in range(3))
+            settings_path = root / f"stores/settings-{attempt}.runsettings"
+            settings = b"<RunSettings><PrivatePath>/private/fixture</PrivatePath></RunSettings>"
+            arguments = ["dotnet", "fixture.dll", "--Settings:" + str(settings_path)]
+            manifest = {
+                "runId": run_id, "invocationGroupId": group, "attemptId": attempt,
+                "purpose": "execution", "inputSha256": "a" * 64}
+            record = {
+                "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
+                "startedMs": 1, "endedMs": 2, "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited",
+                "scope": "ordinary", "runId": run_id, "rootId": "modeled-root",
+                "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(root).encode()).hexdigest(),
+                "inputFiles": {settings_path.relative_to(root).as_posix(): hashlib.sha256(settings).hexdigest()}}
+            receipt = {
+                "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+                "runId": run_id, "rootId": "modeled-root", "invocationGroupId": group,
+                "attemptId": attempt, "purpose": "execution", "commandSequence": 1,
+                "inputsSha256": manifest["inputSha256"], "manifestSha256": evidence.digest(manifest),
+                "settingsSha256": hashlib.sha256(settings).hexdigest()}
+            record_path = root / "proofs/execution-command-0001.json"
+            receipt_path = root / f"proofs/category-command-{attempt}-execution.json"
+
+            def seal(path, data):
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(data)
+                path.chmod(0o400)
+
+            def bind(original):
+                raw = evidence.canonical_bytes(original)
+                seal(record_path, raw)
+                seal(receipt_path, evidence.canonical_bytes({
+                    **receipt, "executionRecordSha256": hashlib.sha256(raw).hexdigest()}))
+
+            def replay(**options):
+                return checks.verify_category_command_proof(
+                    root, run_id=run_id, root_id="modeled-root", arguments=arguments, cwd=root,
+                    manifest=manifest, settings_data=settings, started_ms=0, ended_ms=3, **options)
+
+            bind(record)
+            seal(settings_path, settings)
+            original = {path.name: path.read_bytes() for path in (root / "proofs").iterdir()}
+            self.assertEqual(replay(settings_directory="stores")[1], record)
+            settings_path.unlink()
+            self.assertEqual(replay(settings_directory="stores")[1], record)
+            self.assertEqual({path.name: path.read_bytes() for path in (root / "proofs").iterdir()}, original)
+            self.assertNotIn(b"/private/fixture", b"".join(original.values()))
+            with self.assertRaises((evidence.ConformanceError, OSError)):
+                replay()
+            with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceSchemaInvalid$"):
+                replay(settings_directory="../stores")
+            for changed in ({}, {settings_path.relative_to(root).as_posix(): "d" * 64}):
+                bind({**record, "inputFiles": changed})
+                with self.subTest(held=changed), self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    replay(settings_directory="stores")
+            bind(record)
+            for data, mode in ((b"changed", 0o400), (settings, 0o600)):
+                seal(settings_path, data)
+                settings_path.chmod(mode)
+                with self.subTest(mode=mode, changed=data != settings), self.assertRaises(evidence.ConformanceError):
+                    replay(settings_directory="stores")
+            settings_path.unlink()
+            target = root / "other-settings"
+            seal(target, settings)
+            settings_path.symlink_to(target)
+            with self.assertRaises(evidence.ConformanceError):
+                replay(settings_directory="stores")
+
     def test_modeled_native_command_receipt_replays_without_rewriting_original_files(self):
         import conformance_sdk_checks as checks
         from types import SimpleNamespace

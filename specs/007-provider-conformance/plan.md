@@ -267,6 +267,27 @@ because the existing lifecycle guarantee is restored without changing them.
 Fresh immutable full composition execution remains required. T071..T086 stay
 open; no qualification is inferred from these focused checks.
 
+### Private inherited settings after release
+
+The next T071 reader prerequisite preserves privacy rather than retaining
+private executable settings. `verify_category_command_proof` now accepts the
+producer's explicit `stores` role and checks the reconstructed settings against
+both its original receipt and exact held command input. An existing file must
+remain readonly, identical and non-symlinked. Default `proofs` replay still
+requires the original retained file. A red-first control covers actual
+removal, unchanged proofs, missing/mismatched/resealed held inputs, changed/
+writable/symlinked remaining files and invalid roles.
+
+The232-test inherited/composition/SDK/command-proof selector passes in39.971
+seconds. A fresh Linux Python process with the original `4240185` run mounted
+readonly genuinely replays passed native command156 (`LifecycleCleanupTests`)
+after its private settings are gone. It derives the original Exited/exit0
+record SHA-256 `b8408714e2e8ffb8eb4a0bcd4b697e922c4d99fc24d479b4b75aa4d898838218`
+without rewriting any proof. This is one original command receipt, not full
+profile/native authority or a repair of rejected command157. The independent
+immutable full `c72e13e` composition run continues separately; its source is
+unaffected by these reader edits. Complete inherited evaluation remains open.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

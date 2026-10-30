@@ -1500,6 +1500,12 @@ legacy-call view. The persisted bytes/seal are never rewritten to that view.
 Controller-result manifest descriptors are root-relative as well. Inherited
 execution settings containing private environment paths belong in `stores`;
 live command/settings validation and original settings hashes are unchanged.
+Post-release command replay may reconstruct those transient settings without
+retaining them, but must match both the original receipt's settings digest
+and that exact `stores/settings-<attempt>.runsettings` held-input entry.
+Any remaining settings file must still be readonly, byte-identical and free
+of symlinks. The default retained-settings reader continues to require the
+original proof file; the private role cannot authorize its omission.
 Pure CP settings remain retained and subject to their existing strict original
 byte replay. These distinctions do not close the all-output sanitation gate.
 Composition source/build and mutation snapshots also require transient
