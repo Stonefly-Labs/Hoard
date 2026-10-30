@@ -3797,8 +3797,8 @@ T068--T086, checklists and implement/running remain unchanged.
 Exact49804ee foundations run40975517530 finishes with preparation and
 compatibility successful, and SDK/native regressions/metadata/artifacts failed.
 Metadata123814150038 and artifacts123814150235 both reject at
-`proof_manifest`'s unchanged aggregate byte-limit guard (line1527), resolving
-the earlier runner-capture ambiguity without inferring which input is large.
+`proof_manifest`'s combined read-byte/deadline guard (line1527). That location
+alone does not identify which condition fired; no oversized input is inferred.
 SDK123814150593 instead fails before any declared phase with
 `UnknownDiagnostic`; its environment child writes presentation JSON into the
 build-line projector when admission fails.
@@ -3815,9 +3815,50 @@ passes186 tests in103.840 seconds with four explicit native-only skips.
 README and DEVELOPMENT are affected; provider contracts, examples, product,
 architecture/ADR/diagrams, governance/backlog/predecessor/IaC/release/UI guides
 are unaffected by this private probe-protocol repair.
-The underlying SDK startup rejection, excessive runner-capture bytes and native
+The underlying SDK startup rejection, runner-capture rejection and native
 tooling budget are unresolved; this is not native acceptance or qualification.
 T068--T086, reviewer-owned checklists and implement/running remain unchanged.
+
+### Bound SDK runner traversal to its selected closure
+
+The runner's file predicate omits unrelated nested SDK tools, but its proof
+walker still descends through all of them. A new focused regression first
+rejects an otherwise valid selected runner because an unrelated tool contains
+a40-level subtree. The proof walker now supports an explicit directory
+predicate, used only by the SDK runner to avoid entering branches with no
+selected inputs. Top-level SDK files, all extension descendants and the same
+immediate localized TestPlatform/vstest resources remain selected.
+The default proof walker is unchanged. The SDK walk retains one aggregate
+five-second deadline and the original byte/file/entry/depth bounds, descriptor
+identity checks and selected-path no-link guards. The regression verifies the
+exact selected hashes and rejection of selected-byte/file overflows and
+extension symlinks; the original frozen-runner mutation controls also pass.
+The combined read-loop byte/deadline guard is split into distinct static
+locations without changing either limit.
+
+A direct installed-SDK comparison produces identical367-file inventories,
+measuring364.947 ms for the original traversal and101.991 ms for the pruned
+traversal. This local diagnostic is not native CI performance acceptance.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_contributors
+test_conformance_evidence.ConformanceInputTests` passes310 tests in977.424
+seconds with three explicit native-only skips. Catalog/SDK and diff checks pass.
+
+An immutable `cdb998b` Linux/aarch64 diagnostic separately admits SDK10.0.203,
+runtime10.0.7, btrfs and207684562944 free scratch bytes; original runner capture
+observes367 files in795.610 ms and its owner reaches Released.
+The first diagnostic wrapper fails while serializing nested mapping proxies
+after admission and releases its owner; that failed attempt remains separate.
+A corrected diagnostic wrapper uses canonical serialization and a fresh owned
+attempt, then profiles the original unchanged600-second tooling boundary:
+216 observations in776579.097 ms, zero failures/errors/skips/expected failures/
+unexpected successes/diagnostic bytes, explicitly incomplete. The two slowest
+observations take349220.810 ms and219860.274 ms; source-identity resolution
+and investigation are required rather than inferring a single cause.
+Its timing instrumentation is explicitly nonqualifying and does not modify
+the frozen source. README and DEVELOPMENT describe the delivered capture
+behavior; other provider/product/example/architecture/governance/IaC/release/UI
+documents are unaffected. Native CI diagnosis and T068--T086 remain open.
 
 ### Retained composition failure diagnostics
 

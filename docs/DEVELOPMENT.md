@@ -8487,7 +8487,7 @@ selection passes53 tests with four native-only skips. This enables precise
 future SDK capture diagnosis, not a claimed explanation or successful retry.
 
 At49804ee, both isolated metadata and artifacts CI reach SDK runner capture
-and reject at the proof inventory's unchanged aggregate byte-limit guard,
+and reject at the proof inventory's combined read-byte/deadline guard,
 not the earlier metadata namespace verifier. The SDK job separately fails
 before its first declared phase: a failed environment probe emits presentation
 JSON into a build-output parser, obscuring its originating closed error as
@@ -8499,9 +8499,23 @@ no failed probe reads or publishes a successful environment receipt.
 `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
 test_conformance_sdk_checks test_conformance_cli test_conformance_sanitation`
 passes186 tests with four explicit native-only skips. The underlying SDK
-startup failure, oversized runner inventory and native tooling budget still
+startup failure, runner-capture rejection and native tooling budget still
 require native investigation; no limits, assertions or qualification gates
 are relaxed.
+
+SDK runner capture previously traverses every SDK tool subtree even though
+those files are outside its declared input selection. It now prunes beneath
+unselected first-level directories, retaining every top-level SDK file, all
+`Extensions/` descendants and the same immediate localized TestPlatform/vstest
+resources. The selected closure, five-second/256 MiB/file/depth/entry limits,
+descriptor checks and no-link checks on selected paths remain unchanged.
+A new regression first rejects a valid runner solely because an unrelated
+tool has a40-level subtree; after the fix it captures exactly the selected
+files and still rejects selected-byte/file overflows and extension symlinks.
+The installed SDK's original and pruned inventories match all367 file hashes;
+one local diagnostic measures364.947 ms versus101.991 ms, not a CI benchmark
+or qualification result. Byte-limit and deadline rejection now occupy distinct
+closed source locations so a future read-loop failure is not ambiguous.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

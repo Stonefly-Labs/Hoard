@@ -1333,7 +1333,8 @@ def vstest_runner_inputs(toolchain_root, sdk_version):
         directory, include_file=lambda path: "/" not in path or path.startswith("Extensions/")
         or path.count("/") == 1 and path.endswith(".resources.dll")
         and Path(path).name.startswith(("Microsoft.TestPlatform.", "Microsoft.VisualStudio.TestPlatform.",
-                                        "vstest.console.")))
+                                        "vstest.console.")),
+        include_directory=lambda path: "/" not in path or path.startswith("Extensions/"))
     if not {"vstest.console.dll", "vstest.console.deps.json", "vstest.console.runtimeconfig.json"} <= files.keys():
         raise evidence.ConformanceError("PrerequisiteMissing")
     return {"schemaVersion": 1, "qualification": False, "sdkVersion": sdk_version, "files": files}

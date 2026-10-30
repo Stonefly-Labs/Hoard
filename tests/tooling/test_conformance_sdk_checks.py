@@ -28,6 +28,38 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_sdk_runner_capture_does_not_walk_unselected_sdk_tool_subtrees(self):
+        from conformance_contributors import vstest_runner_inputs
+
+        toolchain = self.directory / "dotnet"
+        sdk = toolchain / "sdk" / ENVIRONMENT["sdk"]
+        selected = {
+            "vstest.console.dll": b"runner",
+            "vstest.console.deps.json": b"dependencies",
+            "vstest.console.runtimeconfig.json": b"runtime",
+            "Extensions/nested/adapter.dll": b"extension",
+            "en/Microsoft.TestPlatform.Core.resources.dll": b"resources",
+        }
+        for path, raw in selected.items():
+            target = sdk / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+        ignored = sdk / "DotnetTools/unrelated"
+        for _ in range(40):
+            ignored /= "nested"
+        ignored.mkdir(parents=True)
+        (ignored / "not-a-runner-input").write_bytes(b"unselected")
+        observed = vstest_runner_inputs(toolchain, ENVIRONMENT["sdk"])
+        self.assertEqual(observed["files"], {
+            path: hashlib.sha256(raw).hexdigest() for path, raw in selected.items()})
+        for limit in ("MAX_PROOF_BYTES", "MAX_PROOF_FILES"):
+            with self.subTest(limit=limit), patch.object(checks.evidence, limit, 1), \
+                    self.assertRaisesRegex(checks.evidence.ConformanceError, "^ProofMismatch$"):
+                vstest_runner_inputs(toolchain, ENVIRONMENT["sdk"])
+        (sdk / "Extensions/unsafe").symlink_to(ignored, target_is_directory=True)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "^ProofMismatch$"):
+            vstest_runner_inputs(toolchain, ENVIRONMENT["sdk"])
+
     def test_explicit_runtime_runner_rechecks_frozen_sdk_closure_and_rejects_missing_pins(self):
         import conformance_sources as sources
         toolchain = self.directory / "dotnet"

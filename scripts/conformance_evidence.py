@@ -1478,9 +1478,10 @@ def verify_snapshot(snapshot, manifest):
         raise ConformanceError("InputChanged") from None
 
 
-def proof_manifest(directory, *, exclude_outputs=False, include_file=None):
+def proof_manifest(directory, *, exclude_outputs=False, include_file=None, include_directory=None):
     from conformance_execution import no_symlinks
-    if include_file is not None and not callable(include_file):
+    if (include_file is not None and not callable(include_file)
+            or include_directory is not None and not callable(include_directory)):
         raise ConformanceError("ProofMismatch")
     directory = Path(directory).absolute()
     files = {}
@@ -1502,14 +1503,15 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None):
                 relative = relative_path(prefix + entry.name)
                 before = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
                 if stat.S_ISDIR(before.st_mode):
-                    child = os.open(entry.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
-                    try:
-                        opened = os.fstat(child)
-                        if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
-                            raise ConformanceError("ProofMismatch")
-                        visit(child, relative + "/", depth + 1)
-                    finally:
-                        os.close(child)
+                    if include_directory is None or include_directory(relative):
+                        child = os.open(entry.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+                        try:
+                            opened = os.fstat(child)
+                            if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
+                                raise ConformanceError("ProofMismatch")
+                            visit(child, relative + "/", depth + 1)
+                        finally:
+                            os.close(child)
                 elif stat.S_ISREG(before.st_mode) and (include_file is None or include_file(relative)):
                     if len(files) >= MAX_PROOF_FILES or total + before.st_size > MAX_PROOF_BYTES:
                         raise ConformanceError("ProofMismatch")
@@ -1523,7 +1525,9 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None):
                         observed = 0
                         while block := source.read(64 * 1024):
                             observed += len(block)
-                            if total + observed > MAX_PROOF_BYTES or time.monotonic() >= deadline:
+                            if total + observed > MAX_PROOF_BYTES:
+                                raise ConformanceError("ProofMismatch")
+                            if time.monotonic() >= deadline:
                                 raise ConformanceError("ProofMismatch")
                             hashed.update(block)
                         if observed != before.st_size:
