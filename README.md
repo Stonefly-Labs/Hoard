@@ -1151,6 +1151,15 @@ Actual `c25be95` CI metadata and artifact jobs each pass4 live/8 released/9 reta
 controls with the bounded parallel reader and unchanged budgets. SDK completion,
 fresh source controls and a separate native output-flood ownership rejection remain
 unresolved; no overall CI pass is claimed.
+Fresh immutable `d1b814c` now passes all11 live/13 released source controls and
+the complete826-test host suite (30 explicit native-only skips). Independent
+readonly replay confirms142 cases/139 Passed/three Incomplete/211 witnesses,
+the source case Passed and actual Released resources; it grants no new authority.
+The next ownership repair captures child identity only after its containment
+acknowledgement, while target execution is still held; missing or foreign identity
+rejects before target release. All93 ownership/sanitation/CI checks pass on native
+Linux/btrfs without skips. The original CI UID failure was not independently
+reproduced, and fresh CI/full-profile acceptance is still required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

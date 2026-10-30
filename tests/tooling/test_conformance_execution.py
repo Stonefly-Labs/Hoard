@@ -1297,16 +1297,72 @@ else:
         run.release()
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_child_identity_is_captured_after_guard_acknowledgement_before_target_release(self):
+        run = self.workspace()
+        original_pair = execution.socket.socketpair
+        original_identity = execution.process_identity
+        observed = {"ready": False, "released": False, "captured": False}
+
+        class Acknowledgement:
+            def __init__(self, source):
+                self.source = source
+
+            def __getattr__(self, name):
+                return getattr(self.source, name)
+
+            def recv(self, size):
+                value = self.source.recv(size)
+                observed["ready"] = value == b"1"
+                return value
+
+            def sendall(self, value):
+                self_test.assertTrue(observed["captured"])
+                observed["released"] = True
+                self.source.sendall(value)
+
+        self_test = self
+
+        def pair():
+            reader, writer = original_pair()
+            return Acknowledgement(reader), writer
+
+        def identity(pid, **options):
+            if pid != os.getpid():
+                if not observed["ready"] or observed["released"]:
+                    raise ConformanceError("OwnershipInvalid")
+                observed["captured"] = True
+            return original_identity(pid, **options)
+
+        with mock.patch.object(execution.socket, "socketpair", side_effect=pair), \
+                mock.patch.object(execution, "process_identity", side_effect=identity):
+            result = run.command(
+                [sys.executable, "-c", 'print(\'{"event":"test","code":"None","value":1}\')'],
+                record_execution=True)
+        self.assertEqual(result.exit_code, 0)
+        self.assertTrue(all(observed.values()))
+        self.assertNotEqual(json.loads(run.read_execution_record(1))["childStartSha256"], "0" * 64)
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_identity_failure_after_spawn_contains_the_provisional_child(self):
         run = self.workspace()
         original = execution.process_identity
-        def failing_identity(pid, **kwargs):
-            if pid != os.getpid():
-                raise ConformanceError("OwnershipInvalid")
-            return original(pid, **kwargs)
-        with mock.patch.object(execution, "process_identity", side_effect=failing_identity):
-            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
-                run.command([sys.executable, "-c", "import time; time.sleep(60)"])
+        marker = run.root / "stores" / "target-started"
+        program = "from pathlib import Path; Path('target-started').write_text('unsafe')"
+        for missing in (False, True):
+            def failing_identity(pid, **kwargs):
+                if pid != os.getpid():
+                    if missing:
+                        return None
+                    raise ConformanceError("OwnershipInvalid")
+                return original(pid, **kwargs)
+            with self.subTest(missing=missing), mock.patch.object(
+                    execution, "process_identity", side_effect=failing_identity):
+                with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    run.command([sys.executable, "-c", program], cwd=marker.parent)
+            self.assertFalse(marker.exists())
         self.assertFalse(run.live_children())
         run.transition("Settling")
         run.release()

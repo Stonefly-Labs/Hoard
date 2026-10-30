@@ -1356,6 +1356,14 @@ ingestion gate is also corrected to nine;116 focused ingestion checks pass.
 Actual CI metadata/artifact jobs each pass4/8/9 controls with the parallel reader;
 SDK completion, fresh source controls and native output-flood ownership failure
 remain open.
+Fresh immutable `d1b814c` now passes all11 live/13 released source controls;
+independent readonly replay confirms139 Passed/three Incomplete/211 witnesses
+and actual Released resources. Its full host826-test suite passes,30 native skips.
+The following owned-command repair holds target exec until guarded acknowledgement
+and actual nonmissing UID/PID/start identity have been captured; foreign/missing
+identity still rejects with safe containment. All93 ownership/sanitation/CI
+checks pass on actual Linux/btrfs without skips. The original CI UID error was
+not reproduced independently; fresh CI/full-profile acceptance remains required.
 
 ## Offline Correspondence Inspection
 

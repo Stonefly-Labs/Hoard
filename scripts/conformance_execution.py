@@ -1018,10 +1018,6 @@ class OwnedRun:
             if scope != "cleanup":
                 self._admit_group_handle(child.pid)
             self._persist(deadline=deadline)
-            identity = process_identity(child.pid, deadline=deadline)
-            if identity is not None:
-                self.children[child.pid] = identity
-            self._persist(deadline=deadline)
             if scope != "cleanup":
                 if time.monotonic() >= deadline:
                     raise ConformanceError("DeadlineExceeded")
@@ -1031,6 +1027,14 @@ class OwnedRun:
                         raise ConformanceError("DeadlineExceeded")
                     if acknowledgement.recv(2) != b"1":
                         raise ConformanceError("PrerequisiteMissing")
+            # Capture identity while the acknowledged bootstrap still holds target exec.
+            identity = process_identity(child.pid, deadline=deadline)
+            if identity is None and scope != "cleanup":
+                raise ConformanceError("OwnershipInvalid")
+            if identity is not None:
+                self.children[child.pid] = identity
+            self._persist(deadline=deadline)
+            if scope != "cleanup":
                 acknowledgement.sendall(b"1")
             with selectors.DefaultSelector() as selector:
                 selector.register(child.stdout, selectors.EVENT_READ)

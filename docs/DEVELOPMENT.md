@@ -9315,6 +9315,35 @@ sanitation rejecting OwnershipInvalid at the original process identity check.
 That ownership failure remains unresolved; SDK123962991499 is still running.
 No full CI/source/profile acceptance is inferred.
 
+Fresh immutable `d1b814c` attempt70c424309ef84617ac211e250f24345c passes all11
+live/13 released controls, exit0,499926.36765600037ms, initial scratch193804124160
+bytes, without extra SDK prewarming. A separate readonly container reconstructs
+all24 original compiler frames and candidate-source equality, both bundle inputs,
+the actual source case Passed and142 cases/139 Passed/three Incomplete/211
+witnesses. Active/released reports differ only in actual Released resources.
+Packet/source-frame/fixture SHA256:
+`b370ed4698df21078f53a635a3a09e1003b2d6569b9bb80ccb65f81804e248ec` /
+`c91b4b52556c8bb76d3e7c1c91741761f9c489f758c514a50f3bcf3372a24775` /
+`55afd91cef60ab101595ab3aa7c555d2642e7f580fc0c9d99f88d4592e3add3c`.
+The original full host `python3 -m unittest discover -s tests/tooling -q`
+passes826 tests in442.364 seconds with30 explicit native-only skips.
+
+The subsequent ownership repair eliminates the pre-bootstrap identity sampling
+boundary: the original pidfd group handle and provisional ledger are retained
+before waiting for the child's guarded acknowledgement; actual UID/PID/start
+identity is captured and persisted while target exec is still held. Missing
+identity now rejects just like foreign identity, before target release. No UID,
+start-time, group, cleanup or deadline guard is weakened. A new actual-Linux
+ordering regression fails first at the old pre-acknowledgement read; the expanded
+missing-identity regression first proves the old target could execute without
+that identity. Both pass after repair, including original containment and flood
+controls. All93 ownership/sanitation/CI tests pass in9991.920255997684ms on actual
+Linux/btrfs, zero skips or unexpected diagnostics; host93 pass with27 native
+skips. The first broad diagnostic used tmpfs and correctly rejects three
+artifact/baseline prerequisite cases; it is not acceptance. Separately,16 original
+flood samples pass without reproducing the CI UID error, so its transient kernel
+cause remains unproved. Fresh source CI and full-profile acceptance remain required.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

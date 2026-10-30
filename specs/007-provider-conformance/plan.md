@@ -5250,6 +5250,39 @@ failure and one output-flood OwnershipInvalid error at the original process
 identity check; that ownership failure is not repaired or counted as success.
 SDK123962991499 remains running. Full source/profile/CI acceptance is not claimed.
 
+Fresh immutable `d1b814c` attempt70c424309ef84617ac211e250f24345c passes all11
+live/13 released controls, exit0,499926.36765600037ms, initial scratch193804124160
+bytes, no extra SDK prewarming. Separate readonly reconstruction confirms all24
+original compiler frames/current-source equality, both source bundle bindings,
+source case Passed,142 cases/139 Passed/three Incomplete/211 witnesses and
+resources-only differences with actual Released resources. Packet/source-frame/
+fixture/active-report/released-report SHA256:
+`b370ed4698df21078f53a635a3a09e1003b2d6569b9bb80ccb65f81804e248ec` /
+`c91b4b52556c8bb76d3e7c1c91741761f9c489f758c514a50f3bcf3372a24775` /
+`55afd91cef60ab101595ab3aa7c555d2642e7f580fc0c9d99f88d4592e3add3c` /
+`25e746b471320ae4660f32b26b3f8908d8409579d4a2f8ea8d8ef6e47e3a4b0d` /
+`269ee76cff04049c1f0eb3e5c544afd577f2fad474824d0b1aab0a2cc9f7f223`.
+Readonly correspondence creates no native authority. Exact-source full host
+`python3 -m unittest discover -s tests/tooling -q` passes826 tests in442.364
+seconds with30 explicit native-only skips.
+
+The next owned-command repair moves child identity capture behind the existing
+guarded bootstrap acknowledgement, retaining original pidfd/provisional ownership
+and holding target exec until actual nonmissing UID/PID/start identity is persisted.
+The new Linux ordering regression first fails OwnershipInvalid at the original
+pre-acknowledgement read; the expanded missing-identity regression first shows an
+unsafe target can execute without captured identity. Both pass after repair;
+foreign/missing identities reject before target release and cleanup remains owned.
+All93 execution/sanitation/CI tests pass on actual Linux/btrfs in9991.920255997684ms,
+zero skips/errors/unexpected bytes. Host
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_execution test_conformance_sanitation test_conformance_ci`
+passes93 tests in4.439 seconds with27 native skips. The first broad diagnostic's
+tmpfs correctly rejects three artifact/baseline prerequisites and is not counted
+as acceptance.16 original flood samples separately pass without reproducing the
+original CI UID failure; its transient kernel cause is not proved. This repair
+eliminates the unready identity boundary, not the guard. Fresh CI/full tooling
+and all remaining binary/predecessor/QC-25/full-profile obligations remain open.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

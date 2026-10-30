@@ -1309,6 +1309,15 @@ source hashes; all other unknown generated paths still reject. The actual origin
 24-recipe ZIP passes this repaired metadata assertion, but fresh native controls
 remain required. Separate CI metadata/artifact4/8/9 controls pass with the bounded
 parallel reader; no overall or full-profile acceptance is inferred.
+Fresh immutable `d1b814c` does establish the source row with all11 live/13
+released controls. Independent readonly replay confirms139 Passed/three
+Incomplete/211 witnesses and actual Released resources; offline inspection grants
+no new authority. The following ownership repair requires guarded bootstrap
+acknowledgement before sampling actual UID/PID/start identity, with target exec
+still held until that nonmissing identity is persisted. Original pidfd/provisional
+ownership and all rejection/containment/deadline guards remain. Actual Linux/btrfs
+ownership/sanitation/CI checks pass93 tests without skips; full qualification and
+fresh CI acceptance remain open.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
