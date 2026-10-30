@@ -1980,6 +1980,7 @@ class NativeCategoryEvaluation:
         if (evidence.digest(inputs) != self.inputs_sha256 or not isinstance(record, Mapping)
                 or not {"inputsSha256", "results", "witnesses", "proofs"} <= set(record)
                 or not isinstance(record["proofs"], Mapping)
+                or evidence.digest(record) != self.history_sha256
                 or record["inputsSha256"] != self.inputs_sha256
                 or evidence.digest(record["results"]) != self.replay["resultsSha256"]
                 or evidence.digest(record["witnesses"]) != self.replay["witnessesSha256"]

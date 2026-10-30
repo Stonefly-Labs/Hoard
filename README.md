@@ -971,6 +971,8 @@ settled-origin and retained-report mutation controls through the same local/CI
 test-only entry point. Its orchestration regressions pass; actual Linux control
 execution remains required and does not promote these reports to qualification.
 See [native report controls](specs/007-provider-conformance/quickstart.md#native-generated-report-controls).
+The held native evaluation also binds the entire original history record,
+not only its results/witness/proof projections; borrowed summary fields reject.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

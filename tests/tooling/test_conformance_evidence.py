@@ -4275,6 +4275,28 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.assertRaises(evidence.ConformanceError):
                     evidence.admit_entity("QualificationReport", changed)
 
+    def test_native_history_correspondence_rejects_resealed_summary_fields_without_granting_origin(self):
+        from conformance_sources import NativeCategoryEvaluation, category_replay_packet
+
+        inputs = {"profileId": "metadata"}
+        replay = {
+            "inputsSha256": evidence.digest(inputs), "planSha256": "a" * 64,
+            "resultsSha256": evidence.digest([]), "witnessesSha256": evidence.digest([]),
+            "proofsSha256": evidence.digest({})}
+        record = {
+            "inputsSha256": evidence.digest(inputs), "results": [], "witnesses": [], "scopeCount": 1,
+            "proofs": {"proofs/category-metadata-qualification-native-replay.json":
+                       hashlib.sha256(category_replay_packet(replay)).hexdigest()}}
+        token = NativeCategoryEvaluation(None, evidence.digest(inputs), evidence.digest(record), replay)
+        token._verify_record(inputs, record)
+        for defect in ("summary", "extra"):
+            changed = copy.deepcopy(record)
+            changed["scopeCount" if defect == "summary" else "optimistic"] = 2
+            with self.subTest(defect=defect), self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                token._verify_record(inputs, changed)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+            token.verify_report_origin(None, inputs, record, {"historySha256": evidence.digest(record)}, ())
+
     def test_native_replay_cannot_mint_origin_from_a_modeled_history(self):
         from conformance_sources import NativeCategorySources
         from types import SimpleNamespace
@@ -9182,6 +9204,13 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
             with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
                 evaluation.verify_report_origin(
                     owner, inputs, record, {**summary, "historySha256": "0" * 64}, resources)
+
+        def test_changed_history_summary_fields_cannot_borrow_original_results_and_origin(self):
+            for field in ("scopeCount", "tests", "sourceParentCount", "qualitySourceCount", "optimistic"):
+                changed = evidence.load_json(evidence.canonical_bytes(record))
+                changed[field] = changed.get(field, 0) + 1
+                with self.subTest(field=field), self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    evaluation.verify_report_origin(owner, inputs, changed, summary, resources)
 
         def test_cached_resources_cannot_replace_actual_resource_projection(self):
             changed = evidence.load_json(evidence.canonical_bytes(resources))

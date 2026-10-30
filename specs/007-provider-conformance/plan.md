@@ -4036,6 +4036,41 @@ the updated quickstart and make no exit-code claim. DEVELOPMENT and quickstart
 are affected; all other unaffected-guide reasons above still hold.
 T068--T086 and implement/running remain unchanged.
 
+### Full native history-record correspondence
+
+The held `NativeCategoryEvaluation` already binds original owner/token identity,
+actual settlement, inputs, replayed results/witnesses/proofs and its captured
+history hash. Its private record checker nevertheless accepts changed or extra
+summary fields if those four projections stay unchanged; the publisher's
+separate readonly-file check previously supplies the missing whole-record gate.
+A new focused correspondence test reproduces changed scope count and an extra
+optimistic field before the fix. The record checker now independently compares
+the entire canonical record with the held history hash. The same test explicitly
+rejects modeled ownership, so passing mathematical correspondence never creates
+native authority. The genuine released-origin factory additionally challenges
+scope/test/source-parent/quality-source counts and an unknown optimistic field.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
+passes244 tests in92.099 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass. Actual execution of the expanded genuine
+factory remains required; the running immutable `ae0a7fe` attempt contains
+neither this change nor the following filename/status repairs.
+
+At `0e6af49`, CI foundations now finishes: compatibility, preparation, metadata
+and artifacts succeed, native ownership/evidence is cancelled, and SDK fails at
+the distinct selected-runner read-deadline guard. No full native pass is claimed.
+The original local metadata control attempt is progressing through actual
+owned commands, with64 completed execution records at inspection and no final
+history/report yet. Its source and earlier failed packets remain untouched.
+
+README and DEVELOPMENT are affected; quickstart/example commands, PROVIDERS,
+CustomHost and all product/architecture/ADR/diagram/governance/backlog/
+predecessor/IaC/release/UI guides are unaffected by this private record-binding
+repair. No task/checklist marker, proof budget or qualification claim changes.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

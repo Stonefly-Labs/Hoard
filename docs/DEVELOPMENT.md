@@ -8587,6 +8587,21 @@ in107.512 seconds with four explicit native-only skips; catalog/SDK and diff
 checks pass. The original immutable `ae0a7fe` Linux attempt remains active and
 unchanged, not silently upgraded to these repaired control bytes.
 
+The original native evaluation now additionally compares the entire canonical
+history record with its held history hash. Previously its record checker binds
+results/witnesses/proofs but permits changed or extra summary fields when those
+projections remain unchanged. A new correspondence regression reproduces both
+cases before the fix, while explicitly proving a modeled token cannot authorize
+an owner. The genuine released-origin factory also challenges changed scope,
+test, source-parent and quality-source counts and an extra optimistic field.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
+passes244 tests in92.099 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass. This strengthens the original in-memory
+authority; it does not mint offline origin or complete generic qualification.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently
