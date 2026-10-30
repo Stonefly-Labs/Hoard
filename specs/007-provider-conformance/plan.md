@@ -399,6 +399,34 @@ derived result explicitly keeps `qualification:false`, `profileComplete:false`
 and `fullControllerAcceptance:false`; original inherited containment is not
 complete controller qualification. No task checkbox advances.
 
+### Fresh original-context capture confirmation
+
+Exact immutable `32426beae0be508accb4d248c395f501d504cef8` completes
+`PYTHONPATH=scripts:tests/tooling python3 -B
+scripts/conformance_composition_checks.py --evidence /validation/work/run-5`
+on Linux arm64 with two CPUs/6 GiB and corrected owned supported scratch:
+exit0,36 CP parameters/110 snapshots, all525 inherited parameters/58 scopes,
+12 discovery mutation pairs (29 negative/29 repaired parameters), and all851
+trusted tooling tests pass. The new original-owner capture executes unmocked,
+resources genuinely release, and the same original evaluation independently
+verifies the identical released runtime/tooling frame.
+
+The released finite CP report independently replays50 passing logical cases;
+its SHA-256 is
+`86442e39506146fec33b58a2742c27ff9192eba6385b600fcd50efd7618cda13`.
+A separate fresh process with readonly original evidence/source runs
+`python3 -B /replay.py /validation/work/run-5` and independently re-admits
+525/525 original witnesses,58 original settled parents and882 proof hashes.
+No original bytes are rewritten and no native authority is reconstructed.
+The exact documented276-test focused selector also passes in36.214 seconds
+with five native-only skips after the final unqualified-symbol guard.
+
+This confirms the inherited capture and corrected scratch layout. It does not
+establish a root cause or repair for the intermittent original ownership
+failure, which remains rejected and preserved. Full controller input/origin
+evaluation, public complete-profile qualification and T071..T086 remain open;
+no task checkbox or qualification flag is advanced from this diagnostic pass.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

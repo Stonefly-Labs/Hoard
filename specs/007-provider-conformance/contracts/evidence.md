@@ -1523,6 +1523,11 @@ readonly runtime/tooling proof frame only after actual resource release.
 Offline reconstruction, a copied evaluator or a later successful comparison
 cannot supply that missing capture. Inherited native containment remains
 distinct from full controller acceptance and profile qualification.
+The original capture/released-frame path is now confirmed unmocked at exact
+`32426be`:525 inherited parameters/58 scopes and851 trusted tooling tests pass
+with actual release; a separate readonly process replays525 witnesses/58
+parents/882 proofs. Full controller/profile qualification remains distinct,
+and the earlier intermittent failed run is not repaired by that later pass.
 For unknown failed tests only, an existing safe `test/UnknownDiagnostic`
 event may additionally carry a positive source-line integer bounded to1000000,
 derived from the exact admitted method's mapped `/_/tests/` declaring-type

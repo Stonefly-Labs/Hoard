@@ -85,7 +85,6 @@ composition run at `035bcce` rejects a later response-completion ownership
 parameter:419 Passed/one Failed across420 observed parameters, with47 passing
 scopes. The original owner is Released. An unchanged24-case class comparison
 and150 original-method invocations pass; neither repairs the failed run.
-Further full retries are paused pending an original-context assertion diagnosis.
 The maintainer authorizes resumption with that missing observability addressed:
 unknown failed tests now emit only a bounded mapped-test source-line number
 through the existing safe event stream, never raw errors, paths or stack text.
@@ -93,7 +92,12 @@ All176 logger parameters and276 focused tooling checks pass (five native-only
 skips). Known named assertion/guard protocols and every outcome remain unchanged.
 The next T071 increment captures inherited parents in the original active
 owner and independently checks the same runtime/tooling frame after release;
-236 focused checks pass, with fresh native confirmation still required.
+236 focused checks pass. Fresh immutable `32426be` now passes all525 inherited
+parameters/58 scopes,12 discovery mutation pairs and all851 tooling tests;
+original-owner capture and identical released-frame verification pass after
+actual release. A separate readonly process replays all525 witnesses/58 parents/
+882 proofs. The earlier failed run remains rejected; this pass does not
+establish a repair for its intermittent ownership failure.
 Full inherited/controller profile evaluation remains unfinished.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).

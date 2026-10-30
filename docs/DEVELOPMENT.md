@@ -10000,7 +10000,19 @@ changed proofs/summary/inputs/tooling or retained ownership reject. No new proof
 schema or persisted native token is introduced. This derives native containment
 for inherited runtime only, not full controller acceptance or profile
 qualification. The focused selector passes236 tests in34.704 seconds;
-unmocked native confirmation of this new capture remains required.
+Fresh immutable `32426be` confirms that capture unmocked using the corrected
+container layout: all525 inherited parameters/58 scopes,12 discovery mutation
+pairs (29 negative/29 repaired parameters),36 CP executions/110 snapshots and
+all851 trusted tooling tests pass. The original owner captures while Active,
+actually releases resources and independently verifies the same inherited
+runtime/tooling frame afterward; the command exits0. A separate readonly Linux
+process replays all525 witnesses/58 original parents/882 proofs without changing
+original files or reconstructing native authority. The released finite CP
+report has50 passing cases and SHA-256
+`86442e39506146fec33b58a2742c27ff9192eba6385b600fcd50efd7618cda13`.
+This is the first successful native confirmation of the new capture, not full
+controller/profile qualification or an established repair for the intermittent
+response-completion failure. Original rejected evidence stays unchanged.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
