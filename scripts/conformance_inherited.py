@@ -822,9 +822,8 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
     if parent_sha is None or record.get("inputFiles") != bound:
         raise ConformanceError("ProofMismatch")
     output = run.root / ("runtime-" + attempt)
-    if retain_settings:
-        for path in output.iterdir():
-            path.chmod(0o400)
+    for path in output.iterdir():
+        path.chmod(0o400)
     transport = {
         "inputs": inputs, "manifest_data": manifest_raw, "owner_data": owner_raw,
         "witnesses_data": read_bounded(output / "witnesses.jsonl", 2 * 1024**2),

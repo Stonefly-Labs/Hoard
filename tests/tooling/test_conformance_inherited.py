@@ -28,7 +28,7 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
-    def test_inherited_private_settings_do_not_drop_the_pinned_runtime_runner(self):
+    def test_private_settings_preserve_pinned_runner_and_sealed_runtime_outputs(self):
         import conformance_evidence as evidence
         import conformance_sources as sources
         from test_conformance_evidence import ConformanceAdmissionTests
@@ -65,18 +65,35 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 owner_raw = canonical_bytes({"rootId": uuid.uuid4().hex})
                 (root / "runtime-owner.json").write_bytes(owner_raw)
 
-                def blocked(arguments, **options):
+                def execute(arguments, **options):
                     self.assertEqual(tuple(arguments[:len(runner["prefix"])]), runner["prefix"])
                     settings, = (value.removeprefix("--Settings:") for value in arguments
                                  if value.startswith("--Settings:"))
                     self.assertEqual(Path(settings).parent, root / ("proofs" if retain_settings else "stores"))
                     self.assertIn("proofs/sdk-vstest-inputs.json", options["execution_inputs"])
                     self.assertIn(Path(settings).relative_to(root).as_posix(), options["execution_inputs"])
-                    raise ConformanceError("EvidenceIncomplete")
+                    run.read_execution_record = lambda sequence: canonical_bytes({
+                        "inputFiles": {name: file_sha256(root / name) for name in options["execution_inputs"]}})
+                    output = root / ("runtime-" + Path(settings).stem.removeprefix("settings-"))
+                    output.mkdir()
+                    for name, data in (
+                            ("completion.json", b"{}"), ("witnesses.jsonl", b""),
+                            ("proof-" + str(uuid.uuid4()) + ".json", b"{}")):
+                        (output / name).write_bytes(data)
+                        (output / name).chmod(0o600)
+                    return SimpleNamespace(exit_code=0)
 
-                run = SimpleNamespace(root=root, run_id=prior["runId"], command=blocked)
+                def inspect(**transport):
+                    output = root / ("runtime-" + json.loads(transport["manifest_data"])["attemptId"])
+                    for path in output.iterdir():
+                        self.assertEqual(path.stat().st_mode & 0o777, 0o400)
+                    return {"diagnosticCode": "None", "witnesses": []}
+
+                run = SimpleNamespace(root=root, run_id=prior["runId"], command=execute, command_sequence=1)
                 with patch.object(sources, "runtime_runner", return_value=runner) as resolve, \
-                        self.assertRaisesRegex(ConformanceError, "^EvidenceIncomplete$"):
+                        patch("conformance_sdk_checks.category_command_proof", return_value="a" * 64), \
+                        patch.object(evidence, "ingest_runtime_attempt", side_effect=inspect), \
+                        redirect_stdout(io.StringIO()):
                     inherited.execute_inventory_scope(
                         run, source, root / "feed", prior, {}, closure, "inventory.json",
                         owner_raw,

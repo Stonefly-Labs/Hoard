@@ -9868,6 +9868,15 @@ runner prefix; privacy-driven settings cleanup no longer selects bare
 `dotnet vstest`. The focused inherited/composition/SDK selector passes229
 tests in47.693 seconds. This closes that runner-wiring gap, not full inherited
 controller input-origin verification or composition qualification.
+The same private-settings path now seals logger witnesses/completion/proofs
+before ingestion, without retaining its private settings. The strengthened
+selector, including command-proof replay, passes230 tests in61.795 seconds.
+The isolated Linux composition run at `f6eee7f` passes its first18 inherited
+scopes, then rejects both boolean variants of `DiscoveryBoundsTests`' HTTP
+projection cancellation/deadline method (7 Passed/2 Failed in that scope).
+Its settled original command and complete nine-witness failure remain
+preserved. The exception cause is not available in retained typed evidence;
+targeted diagnosis is required, not an automatic full-profile retry.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

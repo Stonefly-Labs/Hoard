@@ -132,6 +132,30 @@ close T071 or supply full inherited/controller input closure. Contributor
 commands, provider contracts, product/architecture/ADR diagrams, infrastructure
 and release behavior are unchanged, so their examples/guides need no change.
 
+The same settings-retention flag also left inherited logger output writable.
+Sealing witnesses/completion/proofs is now independent of private settings
+retention. The strengthened wiring regression reproduces writable output in
+the private-settings mode before correction, then verifies readonly output
+before ingestion in both modes. The inherited/composition/SDK/command-proof
+selector passes230 tests in61.795 seconds; `git diff --check` passes.
+
+The isolated original Linux composition command at exact `f6eee7f`,
+`PYTHONPATH=scripts:tests/tooling python3 -B
+scripts/conformance_composition_checks.py --evidence /validation/work/run`,
+exits2 with `WitnessMissing`. Package builds, locked replay, the finite CP
+runtime, preparation/41 formatting commands, exact discovery and the first18
+inherited scopes pass. Scope19, `DiscoveryBoundsTests`, records7 Passed/
+2 Failed parameters: both boolean variants of
+`Cancellation_and_deadline_during_HTTP_projection_leave_live_modules_untouched`.
+Original command134 exits1 after1906 ms with actual group settlement.
+Completion has9 observed/expected witnesses and `UnknownDiagnostic`; the
+failure kind is `Unknown`, not a retained exception diagnosis. No composition
+qualification is accepted, and no cause or timing repair is inferred.
+The readonly source clone and `hoard-f07-composition-f6eee7f` evidence volume
+remain preserved. The subsequent output-sealing correction was not part of
+this frozen source. Next diagnosis is limited to the failed method, not a
+blind full-profile retry; this is the first observed native rejection of it.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

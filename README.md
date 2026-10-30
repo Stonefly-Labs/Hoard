@@ -58,6 +58,9 @@ unexplained; no timing repair is claimed. These finite category results are not
 full-baseline qualification.
 Inherited composition scopes now use the same pinned SDK/runtime runner as
 foundation scopes, independently of whether private settings are retained.
+Their logger outputs are sealed independently too. The isolated composition
+run rejects two inherited HTTP projection parameters; its failure is preserved
+and targeted diagnosis remains open.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
