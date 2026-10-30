@@ -56,6 +56,8 @@ and separate verification also pass102 cases (93 Passed,9 exclusions) and141
 witnesses. An earlier concurrent metadata output failure remains retained and
 unexplained; no timing repair is claimed. These finite category results are not
 full-baseline qualification.
+Inherited composition scopes now use the same pinned SDK/runtime runner as
+foundation scopes, independently of whether private settings are retained.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

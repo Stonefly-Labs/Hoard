@@ -794,7 +794,7 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
     settings_directory = "proofs" if retain_settings else "stores"
     settings_path = run.root / settings_directory / f"settings-{attempt}.runsettings"
     write_new(settings_path, settings_data)
-    runner = runtime_runner(run.root, prior) if retain_settings else None
+    runner = runtime_runner(run.root, prior)
     bound_paths = (
         manifest_path, inputs_path, run.root / "runtime-owner.json", settings_path, closure_path,
         source / inventory_path, request_path, discovery_path, assembly,
@@ -804,13 +804,12 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
     for path in (*bound_paths, *(run.root / name for name in files)):
         path.chmod(0o400)
     bound = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in bound_paths}
-    if runner is not None:
-        bound.update(runner["inputFiles"])
+    bound.update(runner["inputFiles"])
     if any(evidence.file_sha256(run.root / name) != hashed for name, hashed in files.items()):
         raise ConformanceError("InputChanged")
     arguments = runtime_arguments(
         assembly, settings_path, [row["testIdentity"] for row in expected],
-        runner_prefix=runner["prefix"] if runner is not None else None)
+        runner_prefix=runner["prefix"])
     started = time.monotonic() * 1000
     result = run.command(
         arguments, cwd=runtime, env=variables, kind="tests", cache_id="inherited-runtime", timeout=180,

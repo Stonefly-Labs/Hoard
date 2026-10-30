@@ -109,6 +109,29 @@ prove that concurrency caused it. These separate invocations do not establish
 a shared-context five-profile baseline, offline CLI qualification or T071
 completion.
 
+### Inherited runtime runner origin
+
+T071 tracing finds an unnecessary coupling: `execute_inventory_scope` selects
+the pinned SDK/runtime runner only when settings are retained. Inherited
+composition deliberately keeps private environment settings in transient
+`stores/`, so it instead launches bare `dotnet vstest`, outside the explicit
+runner selection already recorded by the parent inputs. Runner selection now
+always uses the parent's existing frozen SDK closure. Settings location and
+cleanup remain unchanged, and the original command's held input map includes
+that closure in both modes.
+
+A focused regression reaches the actual command-dispatch boundary in both
+settings modes. Before correction, the private-settings mode reproduces the
+bare-runner mismatch; afterward, the unchanged inherited/composition/SDK
+selector passes229 tests in47.693 seconds:
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_inherited test_conformance_composition
+test_conformance_sdk_checks`. No native assertion, timeout or qualification
+gate is relaxed. Native composition execution remains required; this does not
+close T071 or supply full inherited/controller input closure. Contributor
+commands, provider contracts, product/architecture/ADR diagrams, infrastructure
+and release behavior are unchanged, so their examples/guides need no change.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

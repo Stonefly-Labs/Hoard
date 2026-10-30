@@ -28,6 +28,63 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_inherited_private_settings_do_not_drop_the_pinned_runtime_runner(self):
+        import conformance_evidence as evidence
+        import conformance_sources as sources
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        for retain_settings in (False, True):
+            with self.subTest(retain_settings=retain_settings), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                runtime = root / "stores/runtime"
+                runtime.mkdir(parents=True)
+                (root / "proofs").mkdir()
+                source = root / "stores/snapshot"
+                source.mkdir()
+                for name in ("Fixture.dll", "Fixture.deps.json", "Fixture.runtimeconfig.json",
+                             "Hoard.Conformance.TestLogger.dll", "Hoard.Testing.Conformance.dll"):
+                    (runtime / name).write_bytes(name.encode())
+                inventory_path = source / "inventory.json"
+                inventory_path.write_bytes(b"{}")
+                closure = root / "proofs/input-map.json"
+                closure.write_bytes(b"{}")
+                discovery = root / "proofs/cases.json"
+                discovery.write_bytes(b"[]")
+                request = root / "proofs/request.json"
+                request.write_bytes(canonical_bytes({"assemblies": [{
+                    "id": "test-assembly", "path": "stores/runtime/Fixture.dll",
+                    "sha256": file_sha256(runtime / "Fixture.dll")}]}))
+                runner_path = root / "proofs/sdk-vstest-inputs.json"
+                runner_path.write_bytes(b"pinned SDK closure")
+                runner = {
+                    "prefix": ("dotnet", "exec", "--fx-version", "10.0.7", "/sdk/pinned/vstest.console.dll"),
+                    "inputFiles": {"proofs/sdk-vstest-inputs.json": file_sha256(runner_path)}}
+                prior = ConformanceAdmissionTests().inputs()
+                prior.update(profileId="composition", bindings=[])
+                prior["budgets"]["profileSeconds"] = 3600
+                owner_raw = canonical_bytes({"rootId": uuid.uuid4().hex})
+                (root / "runtime-owner.json").write_bytes(owner_raw)
+
+                def blocked(arguments, **options):
+                    self.assertEqual(tuple(arguments[:len(runner["prefix"])]), runner["prefix"])
+                    settings, = (value.removeprefix("--Settings:") for value in arguments
+                                 if value.startswith("--Settings:"))
+                    self.assertEqual(Path(settings).parent, root / ("proofs" if retain_settings else "stores"))
+                    self.assertIn("proofs/sdk-vstest-inputs.json", options["execution_inputs"])
+                    self.assertIn(Path(settings).relative_to(root).as_posix(), options["execution_inputs"])
+                    raise ConformanceError("EvidenceIncomplete")
+
+                run = SimpleNamespace(root=root, run_id=prior["runId"], command=blocked)
+                with patch.object(sources, "runtime_runner", return_value=runner) as resolve, \
+                        self.assertRaisesRegex(ConformanceError, "^EvidenceIncomplete$"):
+                    inherited.execute_inventory_scope(
+                        run, source, root / "feed", prior, {}, closure, "inventory.json",
+                        owner_raw,
+                        {"HOARD_FOUNDATION_EVIDENCE": str(root / "stores/private-manifest.json")},
+                        (runtime, request, discovery), [], assembly_name="Fixture", scope="Fixture.Tests",
+                        retain_settings=retain_settings)
+                resolve.assert_called_once_with(root, prior)
+
     def test_controller_requests_are_original_readonly_transient_inputs_not_retained_proofs(self):
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary).resolve()

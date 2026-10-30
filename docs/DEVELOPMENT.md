@@ -9861,6 +9861,14 @@ public path. The earlier metadata failure stays failed and unexplained; neither
 concurrency causation nor a timing repair is proven. Separate invocation groups
 are not a five-profile/shared-context baseline.
 
+Inherited composition execution now resolves the parent input manifest's
+pinned SDK/runtime runner even when private environment settings stay under
+transient `stores/`. Its native command binds the SDK closure and explicit
+runner prefix; privacy-driven settings cleanup no longer selects bare
+`dotnet vstest`. The focused inherited/composition/SDK selector passes229
+tests in47.693 seconds. This closes that runner-wiring gap, not full inherited
+controller input-origin verification or composition qualification.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader
