@@ -5451,6 +5451,43 @@ passes224 tests in33.734 seconds; diff check passes. No selected closure, byte/
 count/depth/entry/file guard, cleanup rule or five-second/256MiB bound changes.
 Fresh actual native/CI timing remains required; no earlier rejection is relabeled.
 
+### Accepted QC-25 and cross-directory originals
+
+Immutable `d01ac8835623876919823457468ab7809b63ec8e` original attempt
+`ff8bffd577894ca7a48762b5886f253e` passes14 live/15 released controls, original
+exit0 in540601.7273500038ms. Independent read-only exact-source reconstruction
+verifies all142 cases Passed/zero Incomplete/212 witnesses, both retained bundle
+inputs, actual Released owner and deleted stores/cache/feed. The active and
+released reports differ only in resources. Original packet SHA256:
+`64b7222bbababae7071cc9cd1baf0b2c77db0b41515006087ca597bbd2f25ca3`.
+Released report SHA256:
+`1138ee17c39ebf7ec0336caf27785ff8d330751050465aad0eaef82cd43068e6`.
+
+Immutable `5d0ba2a941102463e3d920748ec86148fc44fc38` original attempt
+`6ab50e058afd441694b48b80c6697fe5` independently passes the same14/15 controls,
+142 Passed/zero Incomplete/212 witnesses and88/114/10 physical parameters in
+555662.9065230009ms, original exit0. Initial free scratch190608465920 bytes,
+no extra SDK prewarming. The same read-only reconstruction verifies actual
+release/deleted stores, both retained inputs and resources-only report change.
+Original packet SHA256:
+`175214d4e3a77bafc14a3eb7fe5cb0dc53412da586c012df74d92b675a521afe`.
+Active/released report SHA256:
+`841632fe9d604e51408bf042a99e849f07c55c55ecd00a9f003e56cad07dec50` /
+`b1d9e1bb995eb3a6815811908d101533c1fb102e985d08dd7d6b9e5a25572bea`.
+These original diagnostics and subsequent inspections remain non-qualifying.
+
+Exact `5d0ba2a` standard `python3 scripts/conformance_unit_checks.py --all-tooling`
+passes831 tests, zero failures/errors/skips/expected failures/unexpected
+successes/unexpected diagnostic bytes, original exit0/codeNone,
+425869.97062299633ms under the unchanged600-second bound. The fresh immutable
+Linux/btrfs clone has no SafeResult/clock instrumentation and grants no native
+profile authority. This is not the trusted owning-controller full-profile proof.
+The original `408a2d3` full composition CI run41031215098/job123983610350 instead
+fails with trusted-supervisor EvidenceIncomplete:237/828 tests, zero assertion
+failures/errors/skips/unexpected bytes,644350.5989359999ms. Its original failure
+is retained. Current-source GitHub timing and full profile qualification remain
+unaccepted; no task completion, budget relaxation or authority substitution.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

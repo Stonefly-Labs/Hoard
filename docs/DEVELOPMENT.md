@@ -9515,6 +9515,31 @@ passes224 tests in33.734 seconds; diff check passes. Full selection, file guards
 counts/bytes/depth/entry limits, cleanup and five-second/256MiB bounds remain.
 This is not yet a fresh GitHub proof-deadline acceptance claim.
 
+Fresh immutable `d01ac88` attempt `ff8bffd577894ca7a48762b5886f253e` and
+`5d0ba2a` attempt `6ab50e058afd441694b48b80c6697fe5` now both pass14 live/
+15 released controls, original exit0, all142 logical cases/zero Incomplete/
+212 witnesses and88/114/10 physical parameters. Elapsed times are
+540601.7273500038ms and555662.9065230009ms respectively; neither uses extra SDK
+prewarming. Read-only reconstruction using each exact source verifies both
+retained bundle inputs, every logical row, actual Released ownership, deleted
+stores/cache/feed and active/released reports differing only in resources.
+This inspection preserves the original authority result; it mints no authority.
+The `5d0ba2a` original packet SHA256 is
+`175214d4e3a77bafc14a3eb7fe5cb0dc53412da586c012df74d92b675a521afe`.
+
+Exact `5d0ba2a` standard `python3 scripts/conformance_unit_checks.py --all-tooling`
+also passes831 tests, zero failures/errors/skips/expected failures/unexpected
+successes/unexpected diagnostic bytes, original exit0/codeNone, in
+425869.97062299633ms under the unchanged600-second bound. No result or clock
+instrumentation is used. This standalone diagnostic does not replace the
+owning-controller tooling proof required by full profile orchestration.
+Original full composition CI job123983610350/run41031215098 remains failed:
+its trusted controller supervisor reports237/828 observed tests, zero assertion
+failures/errors/skips/unexpected bytes and EvidenceIncomplete after
+644350.5989359999ms. No bound is increased and no cancelled/failed CI attempt is
+reclassified. The current native accepts do not establish current GitHub timing
+acceptance or qualification; T071-T086 remain open.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

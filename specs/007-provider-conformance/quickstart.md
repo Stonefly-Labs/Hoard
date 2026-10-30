@@ -1400,6 +1400,16 @@ no-follow traversal after all reads.224 focused checks pass, including late
 outside-parent replacement rejection. No inventory/budget is relaxed; fresh
 native/CI timing remains required.
 
+Fresh immutable `d01ac88` and `5d0ba2a` originals now both pass14 live/15 released
+controls,142 Passed/zero Incomplete/212 witnesses with actual Released owners and
+deleted stores. Exact-source read-only replay verifies both retained bundles
+and resources-only active/released report changes without minting authority.
+Exact `5d0ba2a` uninstrumented full Linux tooling passes831 tests, zero skips/
+failures/errors/unexpected bytes, in425.870 seconds under the unchanged600-second
+bound. These remain diagnostics. The original `408a2d3` full composition CI
+trusted supervisor instead stops incomplete at237/828 tests after644.351 seconds;
+this is not a disk-capacity failure or a successful full-profile tooling proof.
+
 ## Offline Correspondence Inspection
 
 The current offline routes inspect existing complete retained ledgers without

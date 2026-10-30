@@ -1200,6 +1200,13 @@ boundaries, deferring no-follow directory identity checks until all reads finish
 Nested slow-first and replaced-parent controls reproduce the old barrier;224
 focused checks pass. Full inventory/five-second/256MiB guards remain unchanged,
 and fresh native/CI timing remains required.
+Fresh immutable `d01ac88` and `5d0ba2a` originals now both pass14 live/15 released
+controls, all142 logical cases and212 witnesses, with actual released owners and
+deleted stores. Exact `5d0ba2a` uninstrumented full Linux tooling passes831 tests,
+zero skips/errors/unexpected bytes, in425.870 seconds under the600-second bound.
+These are diagnostic acceptances, not five-profile qualification. The original
+`408a2d3` full composition CI attempt remains incomplete: its trusted tooling
+supervisor stops at237/828 tests after644.351 seconds, without assertion failures.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
