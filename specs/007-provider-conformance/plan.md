@@ -4575,6 +4575,76 @@ required. README, DEVELOPMENT and quickstart record the unsuccessful attempt;
 evidence/matrix contracts and other guides/diagrams remain accurate and unchanged.
 T071 stays open at70/86; implementation continues.
 
+### Historical fixture policy and original pre-candidate build authority
+
+Immutable `1db3816ceb4a310c568866f4f02d09b4cff445d3` executes all209 runtime
+parameters but exits1 after five binary failures, before origin/control capture,
+in348497.96480700024 ms. Initial free scratch204408074240 bytes, no extra SDK
+prewarming. Original failed packet SHA-256:
+`690afc906c26ff7ec45aceeb9562d09c978235834a167ca7306675cf737f97c7`.
+An earlier wrapper launch omitted the explicit Python entrypoint and exits126
+before the source driver runs; its stopped container is retained separately.
+The corrected launch runs a new immutable source/root, not a failure-erasing
+acceptance retry.
+
+A separate bounded in-memory projection of four source-provenance tests against
+the retained readonly images exits1 and exposes only static source line34.
+No exception text is persisted or printed. All original PE/PDB headers are valid.
+The exact historical `tests/fixtures/compatibility/Directory.Build.props` sets
+Version1.0.0 and does not import the root PathMap. Original document names therefore
+do not match mapped wrappers; original assembly identity1.0.0 also differs from
+the wrappers' root-inherited0.1.0. The fix preserves Version1.0.0 in all four
+controlled wrappers and explicitly supplies the virtual PathMap for original
+historical compilation. It does not change original sources/recipes, recompile
+a retained consumer against candidates, or weaken any of the seven assertions.
+The explicit invocation properties are included in exact native-argument replay.
+This fixture version is not a product/package release version.
+
+Actual historical old-contract/consumer builds now record original native parents,
+with bounded readonly inputs: original source frame, project/source/lock, nested
+and root policies/global SDK, configuration, and original contract PE/PDB references
+for the consumer. Preparation seals original images readonly and includes the
+closed preparation receipt as a recipe. Independent replay reconstructs exact
+arguments, source/configuration/input hashes, ordered live child identities,
+exits/times and original sealed image bindings. Active capture precedes creation
+of `stores/snapshot`, compares every receipt with executor-held bytes, is single-use,
+and replays again before final token capture. Actual released inspection requires
+the same captured preparation and original command hashes; modeled labels do not
+mint authority.
+
+The genuine factory adds two actual pre-candidate controls (single use and
+resealed receipt/recipe/seal versus original held bytes), late-capture rejection,
+and released preparation/command mutations: expected6 live/11 released controls.
+The existing runtime held-record test preserves the actual original preparation
+while temporarily isolating its mutable scope state, so the new preparation gate
+cannot mask that guard.
+
+The new build-recording test initially fails on the missing execution_inputs
+parameter. Focused model correspondence tests reject resealed wrong arguments,
+substituted inputs, missing/reordered commands and mixed owners; they do not
+claim native origin.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes444 tests, four native-only skips, in110.151 seconds.
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore -c Release -p:UseSharedCompilation=false -nodeReuse:false
+--filter 'FullyQualifiedName~CompatibilityBaselineTests'
+--logger 'console;verbosity=minimal'`
+passes all seven managed tests with zero skips. These use fresh controlled
+wrappers, not a substitute for the pending genuine historical-image run.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Fresh immutable native verification remains required.
+No source/SDK/proof/tooling/cleanup bound, cold-input condition or assertion changes.
+Seven baseline-related report rows and T071 remain incomplete at70/86.
+The final integration keeps the six runtime command hashes distinct from the
+separately frozen preparation commands, preserving exact scope-replay comparison.
+Preparation capture also requires its last build to be the owner's actual latest
+command, not merely an earlier counter. After those ownership refinements,
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence.ConformanceBaselineTests`
+passes54 tests in2.511 seconds; catalog/SDK and diff checks pass.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

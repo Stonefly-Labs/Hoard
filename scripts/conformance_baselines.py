@@ -47,6 +47,8 @@ OBSERVER_PROJECT = "tests/fixtures/conformance/Compatibility/Observer/Observer.c
 BREAK_CONTROLS_PATH = "tests/fixtures/conformance/Compatibility/break-controls.json"
 HISTORICAL_BINARY_FIXTURE = "tests/fixtures/compatibility/BinaryMemberRemoval/"
 HISTORICAL_BINARY_PROJECTS = ("Old/BinaryContract.csproj", "Consumer/BinaryConsumer.csproj")
+HISTORICAL_BINARY_INPUTS = "proofs/historical-binary-inputs.json"
+HISTORICAL_BINARY_PREPARATION = "F07BinaryPreparation.json"
 HISTORICAL_BINARY_IMAGES = {
     variant + "/" + target + suffix:
     HISTORICAL_BINARY_FIXTURE + project + "/bin/Release/net10.0/" + name + suffix
@@ -485,9 +487,10 @@ def execute_retained_consumers(run, candidate, candidate_sources, config, baseli
             "baselineSealSha256": baseline_sha256, "observerSha256": observer_sha, "scenarios": records}
 
 
-def _command(run, args, *, cwd, cache_id):
+def _command(run, args, *, cwd, cache_id, execution_inputs=()):
+    recording = {"record_execution": True, "execution_inputs": execution_inputs} if execution_inputs else {}
     observed = run.command(args, cwd=cwd, kind="build", cache_id=cache_id,
-                           env={"DOTNET_ROLL_FORWARD": "Disable"})
+                           env={"DOTNET_ROLL_FORWARD": "Disable"}, **recording)
     if observed.exit_code or any(event["code"] != "None" for event in observed.events):
         codes = sorted({event["value"] for event in observed.events if event["code"] == "CommandFailed"})
         diagnostic = {"code": "CommandFailed", "compilerCodes": codes,
@@ -604,7 +607,7 @@ def project_build_steps(project, config, *, feed=None, lock=None, properties=(),
 
 
 def _build(run, project, config, name, *, pack=False, feed=None, source_root=None, preparations=None,
-           properties=(), baseline=False, msbuild=None):
+           properties=(), baseline=False, msbuild=None, execution_inputs=()):
     lock_args = []
     if preparations is not None:
         alternate, record = prepare_project_lock(project, source_root, run.root / "feed" / name, name,
@@ -614,12 +617,59 @@ def _build(run, project, config, name, *, pack=False, feed=None, source_root=Non
             lock_args = [f"-p:NuGetLockFilePath={alternate}"]
         elif baseline:
             lock_args = [f"-p:NuGetLockFilePath={project.parent / 'Baseline/packages.lock.json'}"]
+    records = []
     for command in project_build_steps(
             project, config, feed=feed if pack else None, properties=(*lock_args, *properties), msbuild=msbuild):
-        _command(run, command, cwd=project.parent, cache_id=name)
+        if execution_inputs:
+            _command(run, command, cwd=project.parent, cache_id=name, execution_inputs=execution_inputs)
+            records.append({"sequence": run.command_sequence,
+                            "executionSha256": hashlib.sha256(
+                                run.read_execution_record(run.command_sequence)).hexdigest()})
+        else:
+            _command(run, command, cwd=project.parent, cache_id=name)
     if pack:
         for package in feed.glob("*.nupkg"):
             canonicalize_acceptance_archive(package)
+    return tuple(records)
+
+
+def historical_binary_build_inputs(project, sources):
+    if project not in HISTORICAL_BINARY_PROJECTS:
+        raise ConformanceError("EvidenceIncomplete")
+    variant = project.split("/", 1)[0]
+    required = (
+        "Directory.Build.props", "Directory.Packages.props", "global.json",
+        "tests/fixtures/compatibility/Directory.Build.props",
+        HISTORICAL_BINARY_FIXTURE + project,
+        HISTORICAL_BINARY_FIXTURE + variant + "/packages.lock.json",
+        HISTORICAL_BINARY_FIXTURE + ("Old/Contract.cs" if variant == "Old" else "Consumer/Program.cs"))
+    if not set(required) <= sources.keys():
+        raise ConformanceError("EvidenceIncomplete")
+    return (
+        HISTORICAL_BINARY_INPUTS, "stores/f06.NuGet.Config",
+        *("stores/f06/" + path for path in required),
+        *(("stores/f06/" + HISTORICAL_BINARY_IMAGES["baseline/" + name]
+           for name in ("BinaryContract.dll", "BinaryContract.pdb")) if variant == "Consumer" else ()))
+
+
+def historical_binary_build_properties(source, project):
+    if project not in HISTORICAL_BINARY_PROJECTS:
+        raise ConformanceError("EvidenceIncomplete")
+    return (
+        "-p:PathMap=" + str(source) + os.sep + "=/_/",
+        *(("-p:ContractAssembly=" + str(source / HISTORICAL_BINARY_IMAGES["baseline/BinaryContract.dll"]),)
+          if project.startswith("Consumer/") else ()))
+
+
+def _freeze_historical_binary_inputs(run, project, sources):
+    paths = historical_binary_build_inputs(project, sources)
+    for relative in paths:
+        path = run.root / relative
+        no_symlinks(path)
+        if not path.is_file() or path.stat().st_uid != os.getuid():
+            raise ConformanceError("InputChanged")
+        path.chmod(0o400)
+    return paths
 
 
 def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):
@@ -632,9 +682,11 @@ def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):
         config, feed = _config(run, name)
         preparations = [] if prepare_local_archives else None
 
-        def build(project, configuration, cache_id, *, pack=False, feed=None, properties=()):
-            _build(run, project, configuration, cache_id, pack=pack, feed=feed,
-                   source_root=source, preparations=preparations, msbuild=msbuild, properties=properties)
+        def build(project, configuration, cache_id, *, pack=False, feed=None, properties=(), execution_inputs=()):
+            return _build(
+                run, project, configuration, cache_id, pack=pack, feed=feed,
+                source_root=source, preparations=preparations, msbuild=msbuild,
+                properties=properties, execution_inputs=execution_inputs)
 
         for package in ("Abstractions", "Core", "Hosting", "Application"):
             project = source / f"src/Hoard.{package}/Hoard.{package}.csproj"
@@ -665,17 +717,41 @@ def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):
                 build(source / "tests/fixtures" / relative, artifact_config, "f06-artifacts",
                       pack=True, feed=artifact_feed)
             build(source / "tests/fixtures/artifacts/Consumer/Consumer.csproj", artifact_config, "f06-artifacts")
-            build(source / HISTORICAL_BINARY_FIXTURE / HISTORICAL_BINARY_PROJECTS[0], config, name)
+            inputs = {"schemaVersion": 1, "qualification": False, "mode": "historical-binary-inputs",
+                      "baselineRevision": BASELINE, "sourceSha256": digest(source_hashes), "sources": source_hashes}
+            with (run.root / HISTORICAL_BINARY_INPUTS).open("xb") as output:
+                output.write(canonical_bytes(inputs))
+            (run.root / HISTORICAL_BINARY_INPUTS).chmod(0o400)
+            binary_commands = []
+            project = HISTORICAL_BINARY_PROJECTS[0]
+            binary_commands.extend(
+                {**row, "project": project} for row in build(
+                    source / HISTORICAL_BINARY_FIXTURE / project, config, name,
+                    properties=historical_binary_build_properties(source, project),
+                    execution_inputs=_freeze_historical_binary_inputs(run, project, source_hashes)))
             original_contract = source / HISTORICAL_BINARY_IMAGES["baseline/BinaryContract.dll"]
             if not original_contract.is_file():
                 raise ConformanceError("EvidenceIncomplete")
-            build(source / HISTORICAL_BINARY_FIXTURE / HISTORICAL_BINARY_PROJECTS[1], config, name,
-                  properties=("-p:ContractAssembly=" + str(original_contract),))
+            project = HISTORICAL_BINARY_PROJECTS[1]
+            binary_commands.extend(
+                {**row, "project": project} for row in build(
+                    source / HISTORICAL_BINARY_FIXTURE / project, config, name,
+                    properties=historical_binary_build_properties(source, project),
+                    execution_inputs=_freeze_historical_binary_inputs(run, project, source_hashes)))
+            binary_preparation = {
+                "schemaVersion": 1, "qualification": False, "mode": "historical-binary-preparation",
+                "baselineRevision": BASELINE, "inputsSha256": file_sha256(run.root / HISTORICAL_BINARY_INPUTS),
+                "commands": binary_commands}
+            binary_preparation_path = source / "tests/fixtures" / HISTORICAL_BINARY_PREPARATION
+            with binary_preparation_path.open("xb") as output:
+                output.write(canonical_bytes(binary_preparation))
+            binary_preparation_path.chmod(0o400)
             recipes = {relative: file_sha256(source / "tests/fixtures" / relative)
                        for relative in (*metadata_projects, *artifact_projects, "metadata/Consumer/Consumer.csproj",
                                         "artifacts/Consumer/Consumer.csproj",
                                         *("compatibility/BinaryMemberRemoval/" + project
                                           for project in HISTORICAL_BINARY_PROJECTS))}
+            recipes[HISTORICAL_BINARY_PREPARATION] = file_sha256(binary_preparation_path)
         else:
             if name == "artifact-marker":
                 for relative in ("metadata/Sqlite/Sqlite.csproj", "metadata/Memory/Memory.csproj",
@@ -708,6 +784,8 @@ def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):
         }
         if not binaries:
             raise ConformanceError("EvidenceIncomplete")
+        for relative in binaries:
+            (source / relative).chmod(0o400)
         if any(file_sha256(source / path) != expected for path, expected in source_hashes.items()):
             raise ConformanceError("InputChanged")
         locks = {path: value for path, value in source_hashes.items() if path.endswith("packages.lock.json")}
@@ -898,6 +976,87 @@ def stage_historical_binary_fixture(run, runtime, seal_sha256):
     verify_prepared_baselines(run.root, seal_sha256)
     return {"schemaVersion": 1, "qualification": False, "mode": "historical-binary-staging",
             "baselineSealSha256": seal_sha256, "images": images}
+
+
+def inspect_historical_binary_preparation(root, seal_sha256, *, msbuild=None):
+    import conformance_evidence as evidence
+
+    root = Path(root).absolute()
+    prepared = verify_prepared_baselines(root, seal_sha256)
+    if prepared["schemaVersion"] != 3:
+        raise ConformanceError("EvidenceIncomplete")
+    entry = next(row for row in prepared["entries"] if row["id"] == "f06")
+    path = "stores/f06/tests/fixtures/" + HISTORICAL_BINARY_PREPARATION
+    hashed, raw = evidence._readonly_report_proof(root, path)
+    packet = evidence._runtime_json(raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "mode": evidence._constant("historical-binary-preparation"),
+        "baselineRevision": evidence._constant(BASELINE), "inputsSha256": sha256,
+        "commands": evidence._list(evidence._record({
+            "sequence": evidence._integer, "executionSha256": sha256,
+            "project": evidence._one_of(*HISTORICAL_BINARY_PROJECTS)}), 4, minimum=2),
+    }, limit=64 * 1024)
+    inputs_sha, inputs_raw = evidence._readonly_report_proof(root, HISTORICAL_BINARY_INPUTS)
+    inputs = evidence._runtime_json(inputs_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "mode": evidence._constant("historical-binary-inputs"),
+        "baselineRevision": evidence._constant(BASELINE),
+        "sourceSha256": sha256, "sources": evidence._hash_map,
+    }, limit=MAX_REPORT_BYTES)
+    if (entry["recipes"].get(HISTORICAL_BINARY_PREPARATION) != hashed
+            or packet["inputsSha256"] != inputs_sha or inputs["sources"] != entry["sources"]
+            or inputs["sourceSha256"] != entry["sourceSha256"]):
+        raise ConformanceError("ProofMismatch")
+    for relative in HISTORICAL_BINARY_IMAGES.values():
+        actual, _ = evidence._readonly_report_proof(root, "stores/f06/" + relative)
+        if actual != entry["binaries"][relative]:
+            raise ConformanceError("InputChanged")
+    evidence.verify_synthetic_source_mapping(root, "stores/f06.NuGet.Config", "feed/f06")
+    expected = []
+    for project in HISTORICAL_BINARY_PROJECTS:
+        properties = historical_binary_build_properties(root / "stores/f06", project)
+        target = root / "stores/f06" / HISTORICAL_BINARY_FIXTURE / project
+        paths = historical_binary_build_inputs(project, entry["sources"])
+        physical = evidence.input_manifest(root, paths)
+        for arguments in project_build_steps(
+                target, root / "stores/f06.NuGet.Config", properties=properties, msbuild=msbuild):
+            expected.append((project, arguments, target.parent, physical))
+    if len(expected) != len(packet["commands"]):
+        raise ConformanceError("ProofMismatch")
+    previous_sequence, previous_end, started, owner = 0, 0, None, None
+    commands = []
+    for declaration, (project, arguments, cwd, physical) in zip(packet["commands"], expected):
+        sequence = declaration["sequence"]
+        if declaration["project"] != project or sequence <= previous_sequence:
+            raise ConformanceError("ProofMismatch")
+        record_sha, record_raw = evidence._readonly_report_proof(
+            root, f"proofs/execution-command-{sequence:04}.json")
+        record = evidence._runtime_json(record_raw, {
+            "schemaVersion": evidence._constant(1), "sequence": evidence._constant(sequence),
+            "childPid": evidence._integer, "childStartSha256": sha256,
+            "startedMs": evidence._number, "endedMs": evidence._number,
+            "exitCode": evidence._constant(0), "diagnosticCode": evidence._constant("None"),
+            "groupState": evidence._constant("Exited"), "scope": evidence._constant("ordinary"),
+            "runId": evidence._uuid, "rootId": evidence.stable_id,
+            "argvSha256": sha256, "cwdSha256": sha256, "inputFiles": evidence._hash_map,
+        }, limit=64 * 1024)
+        identity = (record["runId"], record["rootId"])
+        if (record_sha != declaration["executionSha256"] or record["childPid"] == 0
+                or record["childStartSha256"] == "0" * 64
+                or record["argvSha256"] != digest(arguments)
+                or record["cwdSha256"] != hashlib.sha256(str(cwd).encode()).hexdigest()
+                or record["inputFiles"] != physical
+                or record["startedMs"] < previous_end or record["endedMs"] < record["startedMs"]
+                or owner is not None and owner != identity):
+            raise ConformanceError("ProofMismatch")
+        owner = identity
+        started = record["startedMs"] if started is None else started
+        previous_sequence, previous_end = sequence, record["endedMs"]
+        commands.append({"sequence": sequence, "executionSha256": record_sha})
+    return {"schemaVersion": 1, "qualification": False, "mode": "historical-binary-native-preparation",
+            "baselineSealSha256": seal_sha256, "preparationSha256": hashed, "inputsSha256": inputs_sha,
+            "runId": owner[0], "rootId": owner[1], "startedMs": started, "endedMs": previous_end,
+            "commands": commands}
 
 
 def main():

@@ -1247,6 +1247,15 @@ in schema3. Both test runtimes stage those exact originals, never a rebuilt
 consumer; earlier schema1/2 seals remain verifiable but cannot supply this fixture.
 Host checks pass; fresh native execution and full baseline authority remain
 required. Seven baseline-related case rows remain explicitly Incomplete.
+Its first `1db3816` native execution fails five binary assertions because the
+historical nested policy has Version1.0.0 and no root PathMap. The next repair
+keeps controlled wrappers at the original fixture version and explicitly maps
+historical source documents without altering sources or assertions.
+Actual historical build parents/inputs are independently replayed and captured
+before the candidate snapshot, then bound through actual release. The extended
+factory expects6 live/11 released controls. Host444 and managed seven-case checks
+pass; fresh immutable native verification remains required. These diagnostics
+still do not qualify the seven remaining baseline-related report rows.
 
 ## Offline Correspondence Inspection
 

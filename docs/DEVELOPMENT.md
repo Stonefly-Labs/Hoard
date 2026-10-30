@@ -8918,6 +8918,38 @@ unchanged. Staging never recompiles it and rejects changed originals, foreign
 roots and symlinks. This does not yet attest baseline-case/native-build authority
 or QC-25/26. Focused host checks pass; fresh native validation remains required.
 
+The first immutable `1db3816` native execution exits1 after all209 parameters,
+with five binary assertions failing. The original packet SHA-256 is
+`690afc906c26ff7ec45aceeb9562d09c978235834a167ca7306675cf737f97c7`.
+A bounded in-memory, read-only diagnostic projects only static source line34,
+not exception text. The actual historical nested compatibility build policy
+sets Version1.0.0 and omits the root PathMap. Thus the original source-document
+names differ from mapped wrappers, and the original identity differs from0.1.0
+wrappers. All assertions remain unchanged: the four wrappers now preserve the
+original fixture Version1.0.0, while historical builds receive an explicit
+virtual PathMap as an invocation property. Original sources/recipes are untouched.
+
+The next increment also records the actual old-contract/consumer build parents,
+binding readonly source-frame/project/source/lock/build-policy/configuration
+inputs and the consumer's original contract PE/PDB references. Independent replay
+checks exact arguments, input bytes, ordered child identities/exits/times and
+sealed original images. Actual Active-owner capture occurs before the candidate
+snapshot; copied/resealed build records cannot replace executor-held bytes.
+Capture is single-use, cannot occur late, and the same original preparation
+survives common-input execution and actual release. The native factory adds
+two pre-candidate, one late-capture and one released preparation controls,
+expecting6 live/11 released controls. No model mints native authority.
+
+The six-module host command passes444 tests with four native-only skips in
+110.151 seconds. The documented direct
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore -c Release -p:UseSharedCompilation=false -nodeReuse:false
+--filter 'FullyQualifiedName~CompatibilityBaselineTests'
+--logger 'console;verbosity=minimal'`
+passes all seven tests with zero skips. Catalog/SDK and diff checks pass.
+Fresh immutable native verification is required; baseline-only case authority
+and QC-25/26 remain incomplete.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

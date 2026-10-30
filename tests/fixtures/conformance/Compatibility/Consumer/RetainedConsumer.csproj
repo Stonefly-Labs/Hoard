@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="NuGetLockFilePath">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <Version>1.0.0</Version>
     <IsPackable>false</IsPackable>
     <NuGetLockFilePath>$(MSBuildProjectDirectory)/packages.lock.json</NuGetLockFilePath>
   </PropertyGroup>

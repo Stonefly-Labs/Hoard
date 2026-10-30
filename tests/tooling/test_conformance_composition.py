@@ -1735,6 +1735,52 @@ def native_composition_origin_tests(evaluation, *, released):
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCompositionOriginTests)
 
 
+def native_compatibility_preparation_tests(source, seal_sha256, msbuild, capture):
+    import hashlib
+    import conformance_baselines as baselines
+    import conformance_evidence as evidence
+    import conformance_sources as sources
+
+    owner = source._run
+
+    class NativeCompatibilityPreparationTests(unittest.TestCase):
+        def test_original_pre_candidate_preparation_capture_is_single_use(self):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                capture(source, seal_sha256, msbuild=msbuild)
+
+        def test_resealed_preparation_cannot_replace_original_executor_held_build_record(self):
+            sequence, _ = source._preparation_commands[0]
+            record_path = owner.root / f"proofs/execution-command-{sequence:04}.json"
+            preparation_path = owner.root / "stores/f06/tests/fixtures" / baselines.HISTORICAL_BINARY_PREPARATION
+            seal_path = owner.root / "proofs/baselines.json"
+            originals = {path: path.read_bytes() for path in (record_path, preparation_path, seal_path)}
+            try:
+                record = originals[record_path] + b"\n"
+                packet = evidence.load_json(originals[preparation_path])
+                packet["commands"][0]["executionSha256"] = hashlib.sha256(record).hexdigest()
+                preparation = evidence.canonical_bytes(packet)
+                manifest = evidence.load_json(originals[seal_path])
+                entry = next(row for row in manifest["entries"] if row["id"] == "f06")
+                entry["recipes"][baselines.HISTORICAL_BINARY_PREPARATION] = hashlib.sha256(preparation).hexdigest()
+                entry["recipeSha256"] = evidence.digest(entry["recipes"])
+                for path, raw in ((record_path, record), (preparation_path, preparation),
+                                  (seal_path, evidence.canonical_bytes(manifest))):
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    capture(sources.NativeCompatibilitySources(owner), evidence.file_sha256(seal_path),
+                            msbuild=msbuild)
+            finally:
+                for path, raw in originals.items():
+                    path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+            self.assertEqual(owner.read_execution_record(sequence), originals[record_path])
+
+    return unittest.TestLoader().loadTestsFromTestCase(NativeCompatibilityPreparationTests)
+
+
 def native_compatibility_origin_tests(evaluation, *, released):
     from dataclasses import replace
     import hashlib
@@ -1761,6 +1807,10 @@ def native_compatibility_origin_tests(evaluation, *, released):
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     evaluation._source.capture_evaluation(inputs, original)
 
+            def test_preparation_cannot_be_captured_after_candidate_snapshot_exists(self):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    sources.NativeCompatibilitySources(owner).capture_preparation(original["baselineSealSha256"])
+
             def test_resealed_execution_cannot_replace_the_executor_held_record(self):
                 summary = original["architectureRuntime"]
                 manifest = evidence.load_json((owner.root / summary["discoveryManifestPath"]).read_bytes())
@@ -1779,9 +1829,11 @@ def native_compatibility_origin_tests(evaluation, *, released):
                     receipt_path.chmod(0o600)
                     receipt_path.write_bytes(evidence.canonical_bytes(receipt))
                     receipt_path.chmod(0o400)
-                    with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
-                        sources.NativeCompatibilitySources(owner).capture_scope(
-                            inputs, "architecture", summary, original["architecturePreparation"])
+                    with mock.patch.object(evaluation._source, "_evaluation", None), mock.patch.object(
+                            evaluation._source, "_scopes", {}):
+                        with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                            evaluation._source.capture_scope(
+                                inputs, "architecture", summary, original["architecturePreparation"])
                 finally:
                     record_path.chmod(0o600)
                     record_path.write_bytes(record_raw)
@@ -1849,6 +1901,15 @@ def native_compatibility_origin_tests(evaluation, *, released):
             sequence, _ = evaluation.command_hashes[-1]
             self.mutate_and_restore(owner.root / f"proofs/execution-command-{sequence:04}.json", "ProofMismatch")
 
+        def test_changed_original_preparation_cannot_borrow_pre_candidate_authority(self):
+            import conformance_baselines as baselines
+
+            self.mutate_and_restore(
+                owner.root / "stores/f06/tests/fixtures" / baselines.HISTORICAL_BINARY_PREPARATION,
+                "InputChanged")
+            sequence = evidence.load_json(evaluation.preparation_data)["commands"][0]["sequence"]
+            self.mutate_and_restore(owner.root / f"proofs/execution-command-{sequence:04}.json", "ProofMismatch")
+
         def test_changed_runtime_proof_bytes_cannot_borrow_original_witnesses(self):
             manifest = evidence.load_json((owner.root / report["binaryRuntime"]["manifestPath"]).read_bytes())
             directory = owner.root / f'runtime-{manifest["attemptId"]}'
@@ -1909,17 +1970,26 @@ def run_native_compatibility_controls(arguments):
     captured = []
     counts = {"liveOriginTests": 0, "settlementOriginTests": 0}
     original_capture = NativeCompatibilitySources.capture_evaluation
+    original_preparation_capture = NativeCompatibilitySources.capture_preparation
+
+    def capture_preparation(source, seal_sha256, *, msbuild=None):
+        observed = original_preparation_capture(source, seal_sha256, msbuild=msbuild)
+        counts["liveOriginTests"] += _run_native_control_suite(
+            lambda: native_compatibility_preparation_tests(
+                source, seal_sha256, msbuild, original_preparation_capture))
+        return observed
 
     def capture(source, inputs, summary):
         evaluation = original_capture(source, inputs, summary)
         if captured:
             raise evidence.ConformanceError("ProofMismatch")
         captured.append(evaluation)
-        counts["liveOriginTests"] = _run_native_control_suite(
+        counts["liveOriginTests"] += _run_native_control_suite(
             lambda: native_compatibility_origin_tests(evaluation, released=False))
         return evaluation
 
-    with mock.patch.object(NativeCompatibilitySources, "capture_evaluation", capture):
+    with mock.patch.object(NativeCompatibilitySources, "capture_evaluation", capture), mock.patch.object(
+            NativeCompatibilitySources, "capture_preparation", capture_preparation):
         status = sdk.execute(ROOT, Path(arguments[1]).resolve(), compatibility_only=True)
     if status != 0 or len(captured) != 1 or not counts["liveOriginTests"]:
         raise evidence.ConformanceError("WitnessMissing")

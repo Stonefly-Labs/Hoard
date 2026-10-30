@@ -1972,6 +1972,7 @@ class NativeCompatibilityEvaluation:
     inputs_sha256: str
     summary_data: bytes
     command_hashes: tuple[tuple[int, str], ...]
+    preparation_data: bytes
 
     def verify_report_origin(self, run, inputs, summary):
         if (type(run) is not OwnedRun or type(self._source) is not NativeCompatibilitySources
@@ -1983,6 +1984,14 @@ class NativeCompatibilityEvaluation:
                 or evidence.canonical_bytes(summary.get("resources")) != evidence.canonical_bytes(resources)):
             raise evidence.ConformanceError("CleanupIncomplete")
         original = evidence.load_json(self.summary_data)
+        from conformance_baselines import inspect_historical_binary_preparation
+        from conformance_sdk_checks import selected_msbuild
+
+        preparation = inspect_historical_binary_preparation(
+            run.root, original["baselineSealSha256"], msbuild=selected_msbuild(inputs["environment"]))
+        if (evidence.canonical_bytes(preparation) != self.preparation_data
+                or original.get("historicalPreparation") != preparation):
+            raise evidence.ConformanceError("ProofMismatch")
         _, retained = evidence._readonly_report_proof(run.root, "proofs/compatibility-runtime-active-summary.json")
         if (evidence.digest(inputs) != self.inputs_sha256
                 or retained != self.summary_data
@@ -1994,7 +2003,9 @@ class NativeCompatibilityEvaluation:
                                                             "processResourcesReleased", "resources")})
                 != evidence.canonical_bytes({key: value for key, value in original.items() if key != "phase"})):
             raise evidence.ConformanceError("ProofMismatch")
-        for sequence, expected in self.command_hashes:
+        preparation_commands = tuple(
+            (row["sequence"], row["executionSha256"]) for row in preparation["commands"])
+        for sequence, expected in (*preparation_commands, *self.command_hashes):
             hashed, _ = evidence._readonly_report_proof(run.root, f"proofs/execution-command-{sequence:04}.json")
             if hashed != expected:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2008,6 +2019,31 @@ class NativeCompatibilitySources:
         self._inputs_sha256 = None
         self._scopes = {}
         self._evaluation = None
+        self._preparation = None
+        self._preparation_commands = ()
+        self._preparation_msbuild = None
+
+    def capture_preparation(self, seal_sha256, *, msbuild=None):
+        from conformance_baselines import inspect_historical_binary_preparation
+
+        run = self._run
+        if (run.state != "Active" or self._preparation is not None or self._scopes
+                or (run.root / "stores/snapshot").exists()):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        observed = inspect_historical_binary_preparation(run.root, seal_sha256, msbuild=msbuild)
+        if observed["runId"] != run.run_id or observed["rootId"] != run.root_id:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        commands = tuple((row["sequence"], row["executionSha256"]) for row in observed["commands"])
+        if commands[-1][0] != run.command_sequence:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        if any(sequence > run.command_sequence
+               or hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != hashed
+               for sequence, hashed in commands):
+            raise evidence.ConformanceError("ProofMismatch")
+        self._preparation = evidence.canonical_bytes(observed)
+        self._preparation_commands = commands
+        self._preparation_msbuild = tuple(msbuild) if msbuild is not None else None
+        return evidence.load_json(self._preparation)
 
     def capture_scope(self, inputs, scope, summary, prepared):
         from conformance_sdk_checks import inspect_compatibility_runtime_scope
@@ -2015,14 +2051,15 @@ class NativeCompatibilitySources:
         run = self._run
         order = ("architecture", "version", "binary")
         hashed = evidence.digest(evidence.admit_entity("RunInputs", inputs))
-        if (run.state != "Active" or self._evaluation is not None
+        if (run.state != "Active" or self._evaluation is not None or self._preparation is None
                 or len(self._scopes) >= len(order) or scope != order[len(self._scopes)]
                 or self._inputs_sha256 is not None and self._inputs_sha256 != hashed):
             raise evidence.ConformanceError("OwnershipInvalid")
         observed, commands, _ = inspect_compatibility_runtime_scope(run.root, inputs, scope, summary, prepared)
         if evidence.canonical_bytes(observed) != evidence.canonical_bytes(summary):
             raise evidence.ConformanceError("ProofMismatch")
-        previous = max((sequence for _, rows in self._scopes.values() for sequence, _ in rows), default=0)
+        previous = max((sequence for _, rows in self._scopes.values() for sequence, _ in rows),
+                       default=self._preparation_commands[-1][0])
         for sequence, expected in commands:
             if sequence <= previous or hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != expected:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2031,16 +2068,23 @@ class NativeCompatibilitySources:
         self._scopes[scope] = (evidence.canonical_bytes(summary), commands)
 
     def capture_evaluation(self, inputs, summary):
+        from conformance_baselines import inspect_historical_binary_preparation
         from conformance_sdk_checks import verify_compatibility_case_report
 
         if (self._run.state != "Active" or self._evaluation is not None
+                or self._preparation is None
                 or tuple(self._scopes) != ("architecture", "version", "binary")
                 or evidence.digest(inputs) != self._inputs_sha256):
             raise evidence.ConformanceError("OwnershipInvalid")
         _, original = evidence._readonly_report_proof(
             self._run.root, "proofs/compatibility-runtime-active-summary.json")
         if (original != evidence.canonical_bytes(summary) or summary.get("qualification") is not False
-                or summary.get("phase") != "compatibility-replay-admitted"):
+                or summary.get("phase") != "compatibility-replay-admitted"
+                or evidence.canonical_bytes(summary.get("historicalPreparation")) != self._preparation):
+            raise evidence.ConformanceError("ProofMismatch")
+        observed_preparation = inspect_historical_binary_preparation(
+            self._run.root, summary["baselineSealSha256"], msbuild=self._preparation_msbuild)
+        if evidence.canonical_bytes(observed_preparation) != self._preparation:
             raise evidence.ConformanceError("ProofMismatch")
         for scope, key in (("architecture", "architectureRuntime"), ("version", "versionRuntime"),
                            ("binary", "binaryRuntime")):
@@ -2051,8 +2095,11 @@ class NativeCompatibilitySources:
                 self._run.root, inputs, summary, report_data=report_data):
             raise evidence.ConformanceError("ProofMismatch")
         commands = tuple(row for _, rows in self._scopes.values() for row in rows)
+        if any(hashlib.sha256(self._run.read_execution_record(sequence)).hexdigest() != hashed
+               for sequence, hashed in self._preparation_commands):
+            raise evidence.ConformanceError("ProofMismatch")
         self._evaluation = NativeCompatibilityEvaluation(
-            self, self._inputs_sha256, evidence.canonical_bytes(summary), commands)
+            self, self._inputs_sha256, evidence.canonical_bytes(summary), commands, self._preparation)
         return self._evaluation
 
 

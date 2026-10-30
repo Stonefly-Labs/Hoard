@@ -8258,6 +8258,115 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_baseline_build_native_recording_binds_inputs_and_reads_original_executor_record(self):
+        project = self.root / "project.csproj"
+        config = self.root / "NuGet.Config"
+        run = mock.Mock(root=self.root, command_sequence=7)
+        run.command.return_value = mock.Mock(exit_code=0, events=())
+        run.read_execution_record.return_value = b"original held record"
+        records = self.baselines._build(
+            run, project, config, "f06", msbuild=("dotnet", "exec", "MSBuild.dll"),
+            execution_inputs=("proofs/historical-binary-inputs.json",))
+        self.assertEqual(records, ({"sequence": 7, "executionSha256": hashlib.sha256(
+            b"original held record").hexdigest()},))
+        run.read_execution_record.assert_called_once_with(7)
+        self.assertEqual(run.command.call_args.kwargs["execution_inputs"],
+                         ("proofs/historical-binary-inputs.json",))
+        self.assertIs(run.command.call_args.kwargs["record_execution"], True)
+
+    def test_historical_native_preparation_replay_rejects_resealed_wrong_commands_inputs_and_order(self):
+        self.historical_binary_fixture()
+        source = self.root / "stores/f06"
+        entry = next(row for row in self.manifest["entries"] if row["id"] == "f06")
+        for relative in (
+                "Directory.Build.props", "Directory.Packages.props", "global.json",
+                "tests/fixtures/compatibility/Directory.Build.props",
+                "tests/fixtures/compatibility/BinaryMemberRemoval/Old/Contract.cs",
+                "tests/fixtures/compatibility/BinaryMemberRemoval/Old/packages.lock.json",
+                "tests/fixtures/compatibility/BinaryMemberRemoval/Consumer/Program.cs",
+                "tests/fixtures/compatibility/BinaryMemberRemoval/Consumer/packages.lock.json"):
+            (source / relative).write_bytes(b"modeled source input")
+        entry["sources"] = self.baselines._hash_tree(source, exclude_outputs=True)
+        entry["sourceSha256"] = evidence.digest(entry["sources"])
+        entry["locks"] = {key: value for key, value in entry["sources"].items()
+                          if key.endswith("packages.lock.json")}
+        entry["lockSha256"] = evidence.digest(entry["locks"])
+        inputs = {
+            "schemaVersion": 1, "qualification": False, "mode": "historical-binary-inputs",
+            "baselineRevision": self.baselines.BASELINE,
+            "sourceSha256": entry["sourceSha256"], "sources": entry["sources"]}
+        inputs_path = self.root / self.baselines.HISTORICAL_BINARY_INPUTS
+        inputs_path.write_bytes(evidence.canonical_bytes(inputs))
+        inputs_path.chmod(0o400)
+        config = self.root / "stores/f06.NuGet.Config"
+        config.write_bytes(evidence.synthetic_nuget_configuration(self.root / "feed/f06"))
+        prefix = ("dotnet", "exec", "MSBuild.dll")
+        run_id = str(uuid.uuid4())
+        declarations, originals = [], []
+        for index, project in enumerate(self.baselines.HISTORICAL_BINARY_PROJECTS):
+            target = source / self.baselines.HISTORICAL_BINARY_FIXTURE / project
+            properties = self.baselines.historical_binary_build_properties(source, project)
+            arguments, = self.baselines.project_build_steps(target, config, properties=properties, msbuild=prefix)
+            physical = evidence.input_manifest(
+                self.root, self.baselines.historical_binary_build_inputs(project, entry["sources"]))
+            record = {
+                "schemaVersion": 1, "sequence": index + 10, "childPid": index + 100,
+                "childStartSha256": "f" * 64, "startedMs": index * 10 + 1, "endedMs": index * 10 + 2,
+                "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "ordinary",
+                "runId": run_id, "rootId": "modeled-historical-root",
+                "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(target.parent).encode()).hexdigest(),
+                "inputFiles": dict(physical)}
+            originals.append(record)
+            declarations.append({"sequence": index + 10, "executionSha256": evidence.digest(record),
+                                 "project": project})
+        packet = {
+            "schemaVersion": 1, "qualification": False, "mode": "historical-binary-preparation",
+            "baselineRevision": self.baselines.BASELINE, "inputsSha256": evidence.file_sha256(inputs_path),
+            "commands": declarations}
+        for relative in self.baselines.HISTORICAL_BINARY_IMAGES.values():
+            (source / relative).chmod(0o400)
+        packet_path = source / "tests/fixtures" / self.baselines.HISTORICAL_BINARY_PREPARATION
+
+        def replay(records, declaration_packet):
+            for record in records:
+                path = self.root / f'proofs/execution-command-{record["sequence"]:04}.json'
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(evidence.canonical_bytes(record))
+                path.chmod(0o400)
+            if packet_path.exists():
+                packet_path.chmod(0o600)
+            packet_path.write_bytes(evidence.canonical_bytes(declaration_packet))
+            packet_path.chmod(0o400)
+            entry["recipes"][self.baselines.HISTORICAL_BINARY_PREPARATION] = evidence.file_sha256(packet_path)
+            entry["recipeSha256"] = evidence.digest(entry["recipes"])
+            self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+            return self.baselines.inspect_historical_binary_preparation(
+                self.root, evidence.file_sha256(self.seal), msbuild=prefix)
+
+        observed = replay(originals, packet)
+        self.assertEqual(observed["commands"],
+                         [{key: value for key, value in row.items() if key != "project"} for row in declarations])
+        self.assertEqual(observed["runId"], run_id)
+        self.assertFalse(observed["qualification"])
+        for mutation in ("argv", "inputs", "order", "missing", "foreign-owner"):
+            records, changed = copy.deepcopy(originals), copy.deepcopy(packet)
+            if mutation == "argv":
+                records[0]["argvSha256"] = "0" * 64
+            elif mutation == "inputs":
+                records[0]["inputFiles"][self.baselines.HISTORICAL_BINARY_INPUTS] = "0" * 64
+            elif mutation == "foreign-owner":
+                records[1]["rootId"] = "foreign-root"
+            for declaration, record in zip(changed["commands"], records):
+                declaration["executionSha256"] = evidence.digest(record)
+            if mutation == "order":
+                changed["commands"].reverse()
+            elif mutation == "missing":
+                changed["commands"].pop()
+            with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                replay(records, changed)
+
     def historical_binary_fixture(self):
         source = self.root / "stores/f06"
         fixture = "tests/fixtures/compatibility/BinaryMemberRemoval/"

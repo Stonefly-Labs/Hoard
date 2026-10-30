@@ -1155,6 +1155,18 @@ common input capture; staging rejects changed originals, foreign roots and
 symlinks. Versions1/2 keep their original verification semantics but cannot
 supply this historical fixture. These file bindings are not native-build origin
 authority or a passing baseline case; fresh native execution remains required.
+The first original-image execution exposes the historical nested policy's
+Version1.0.0/unmapped documents. Controlled wrappers now preserve that fixture
+version and historical build invocations explicitly map documents, with original
+source and all existing identity/checksum assertions unchanged.
+Historical native preparation additionally binds readonly original source,
+project, lock, nested/root policy and configuration inputs; the consumer includes
+its original contract PE/PDB references. Independent replay checks exact build
+arguments, ordered original child receipts and sealed images. Active capture
+must precede the candidate snapshot and match executor-held records, is single-use,
+and is retained by the original released token. Rehashed file correspondence
+alone never supplies that authority. Six live/11 released controls remain to be
+verified on a fresh immutable source; baseline report rows stay Incomplete.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

@@ -1036,6 +1036,15 @@ preparation schema3, and stages those exact bytes into both test runtimes.
 Earlier schema1/2 seals remain readable but cannot supply that historical
 fixture. Host checks pass; genuine execution of this increment remains required.
 Baseline case authority and QC-25/26 are still unfinished.
+The first `1db3816` native attempt exposes original fixture-policy mismatches:
+historical assemblies are version1.0.0 and their nested build policy does not
+map source paths. The repair keeps all four controlled wrappers at that original
+fixture version and supplies an explicit virtual PathMap to historical builds;
+none of the seven source/identity/retention assertions is weakened.
+Original build receipts and readonly input/output bytes are now independently
+replayed and captured before the candidate snapshot, then retained through actual
+release. Host444 and managed seven-case checks pass; fresh native6/11 controls
+remain required. The seven baseline-related report rows are still Incomplete.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

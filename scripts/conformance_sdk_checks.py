@@ -4580,6 +4580,9 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
         seal = baselines.prepare(repository, run, prepare_local_archives=True, msbuild=msbuild)
         seal_sha = evidence.file_sha256(seal)
         baselines.verify_prepared_baselines(run.root, seal_sha)
+        native_sources = NativeCompatibilitySources(run) if compatibility_only else None
+        historical_preparation = (
+            native_sources.capture_preparation(seal_sha, msbuild=msbuild) if native_sources is not None else None)
         ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
         if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
             raise evidence.ConformanceError("InputChanged")
@@ -4740,6 +4743,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 "sourceBreakSha256": evidence.digest(source_break),
                 "historicalBinarySha256": evidence.digest(historical_binary),
                 "baselineSealSha256": seal_sha,
+                **({"historicalPreparation": historical_preparation} if historical_preparation is not None else {}),
             }
             print(json.dumps(compatibility_summary), flush=True)
             if compatibility_only:
@@ -4764,7 +4768,6 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 write_new(run.root / "runtime-owner.json", evidence.canonical_bytes({
                     "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group,
                     "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}))
-                native_sources = NativeCompatibilitySources(run)
                 compatibility_summary["architectureRuntime"] = execute_architecture_runtime(
                     run, repository, candidate, sources, config, feed, prepared, seal_sha,
                     frozen_inputs=frozen_inputs, native_sources=native_sources, ci_revision=ci_revision)
