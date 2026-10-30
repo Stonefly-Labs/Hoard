@@ -9148,6 +9148,14 @@ static guard through SDK/public CLI. The focused reader/CLI/input selection
 passes43 tests in4.013 seconds. Fresh CI CPU observations remain required before
 attributing elapsed delay to hashing, reads or scheduling; this is instrumentation,
 not the reader optimization or profile acceptance.
+QC-26 additionally reconstructs both source-break and binary-break logical bases
+and their complete eight-witness scope, original input/group/window, controls and
+proof links. Missing, failed, retried or retimed bases reject rather than borrowing
+passing physical observations. Existing released native controls now also mutate
+source-break/QC-26 derivations and their actual retained proof bytes. The affected
+composition/admission/CI selection passes88 tests in6.113 seconds after the first
+regression reproduces the unimplemented QC row. Fresh native execution remains
+required;138 Passed/four Incomplete is an expected criterion, not an observation.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

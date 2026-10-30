@@ -66,8 +66,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 report = evidence.load_json(raw)
                 self.assertEqual(len(report["results"]), len(catalog.expected_cases("compatibility")))
                 self.assertEqual(observed["incompleteCases"],
-                                 sum(not case.witnesses for case in catalog.expected_cases("compatibility")) - 5)
-                quality = {"QC-22", "QC-23", "QC-24", "QC-27", "QC-28"}
+                                 sum(not case.witnesses for case in catalog.expected_cases("compatibility")) - 6)
+                quality = {"QC-22", "QC-23", "QC-24", "QC-26", "QC-27", "QC-28"}
                 self.assertEqual(
                     {row["caseId"] for row in report["results"]
                      if row["caseId"] in quality and row["status"] == "Passed"}, quality)
@@ -79,9 +79,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         sequence=1, started_ms=0, ended_ms=9)
                     self.assertLessEqual(len(material["attempt"]["proofSha256"]), evidence.MAX_WITNESSES)
                     changed = evidence.load_json(raw)
+                    basis_id = ("COMPATIBILITY" if case_id == "QC-26" else
+                                "VERSION" if case_id in {"QC-22", "QC-23", "QC-24"} else "ARCHITECTURE")
                     basis = next(row for row in changed["results"]
-                                 if row["caseId"] == ("VERSION" if case_id in {"QC-22", "QC-23", "QC-24"}
-                                                     else "ARCHITECTURE"))
+                                 if row["caseId"] == basis_id
+                                 and (case_id != "QC-26" or row["matrixId"] == "source-break"))
                     basis["attempts"][0]["endedMs"] = 10
                     with self.subTest(case_id=case_id), self.assertRaises(evidence.ConformanceError):
                         evidence.compatibility_quality_case_material(
@@ -104,6 +106,23 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         evidence.compatibility_quality_case_material(
                             inputs, case_id="QC-28", results=changed["results"], witnesses=changed["witnesses"],
                             sequence=1, started_ms=0, ended_ms=9)
+                for matrix in ("source-break", "binary-break"):
+                    for defect in ("missing", "failed", "retried"):
+                        changed = evidence.load_json(raw)
+                        basis = next(row for row in changed["results"]
+                                     if row["caseId"] == "COMPATIBILITY" and row["matrixId"] == matrix)
+                        if defect == "missing":
+                            changed["results"].remove(basis)
+                        elif defect == "failed":
+                            basis["status"] = basis["attempts"][0]["status"] = "Failed"
+                            basis["attempts"][0]["diagnosticCode"] = "AssertionFailed"
+                        else:
+                            basis["attempts"].append({**basis["attempts"][0], "sequence": 2})
+                        with self.subTest(matrix=matrix, defect=defect), self.assertRaises(
+                                evidence.ConformanceError):
+                            evidence.compatibility_quality_case_material(
+                                inputs, case_id="QC-26", results=changed["results"],
+                                witnesses=changed["witnesses"], sequence=1, started_ms=0, ended_ms=9)
                 for defect in ("missing-case", "duplicate-case", "optimistic"):
                     changed = evidence.load_json(raw)
                     if defect == "missing-case":
@@ -1907,7 +1926,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.assertEqual(
                 (observed["architectureParameters"], observed["versionParameters"], observed["binaryParameters"]),
                 (88, 114, 8))
-            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (137, 5))
+            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (138, 4))
 
         def test_both_original_source_fixture_scopes_are_frozen_in_common_inputs(self):
             import conformance_sdk_checks as checks
@@ -2007,7 +2026,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
             raw = path.read_bytes()
             report = evidence.load_json(raw)
             for defect in ("missing-case", "optimistic", "resources", "derivation", "quality-derivation",
-                           "binary-derivation"):
+                           "binary-derivation", "source-derivation", "break-quality-derivation"):
                 changed = evidence.load_json(raw)
                 if defect == "missing-case":
                     changed["results"].pop(0)
@@ -2016,9 +2035,12 @@ def native_compatibility_origin_tests(evaluation, *, released):
                 elif defect == "resources":
                     changed["resources"] = []
                 else:
-                    prefix = ("proofs/compatibility-QC-22-" if defect == "quality-derivation" else
-                              "proofs/compatibility-COMPATIBILITY-binary-break-" if defect == "binary-derivation"
-                              else "proofs/compatibility-VERSION-")
+                    prefix = {
+                        "derivation": "proofs/compatibility-VERSION-",
+                        "quality-derivation": "proofs/compatibility-QC-22-",
+                        "binary-derivation": "proofs/compatibility-COMPATIBILITY-binary-break-",
+                        "source-derivation": "proofs/compatibility-COMPATIBILITY-source-break-",
+                        "break-quality-derivation": "proofs/compatibility-QC-26-"}[defect]
                     name = next(name for name in changed["proofs"] if name.startswith(prefix))
                     changed["proofs"][name] = "0" * 64
                 try:
@@ -2031,13 +2053,12 @@ def native_compatibility_origin_tests(evaluation, *, released):
                     path.chmod(0o600)
                     path.write_bytes(raw)
                     path.chmod(0o400)
-            name = next(name for name in report["proofs"] if name.startswith("proofs/compatibility-VERSION-"))
-            self.mutate_and_restore(owner.root / name, "ProofMismatch")
-            name = next(name for name in report["proofs"] if name.startswith("proofs/compatibility-QC-22-"))
-            self.mutate_and_restore(owner.root / name, "ProofMismatch")
-            name = next(name for name in report["proofs"]
-                        if name.startswith("proofs/compatibility-COMPATIBILITY-binary-break-"))
-            self.mutate_and_restore(owner.root / name, "ProofMismatch")
+            for prefix in (
+                    "proofs/compatibility-VERSION-", "proofs/compatibility-QC-22-",
+                    "proofs/compatibility-COMPATIBILITY-binary-break-",
+                    "proofs/compatibility-COMPATIBILITY-source-break-", "proofs/compatibility-QC-26-"):
+                name = next(name for name in report["proofs"] if name.startswith(prefix))
+                self.mutate_and_restore(owner.root / name, "ProofMismatch")
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCompatibilityOriginTests)
 

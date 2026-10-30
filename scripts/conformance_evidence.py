@@ -2867,8 +2867,8 @@ def _compatibility_case_material(inputs, case, physical, witnesses, *, input_sha
 
 def compatibility_quality_case_material(inputs, *, case_id, results, witnesses, sequence, started_ms, ended_ms):
     from conformance_case_catalog import (
-        COMPATIBILITY_RUNTIME_QUALITY_SCOPES, architecture_runtime_tests, expected_cases, obligation_controls,
-        version_runtime_tests,
+        COMPATIBILITY_RUNTIME_QUALITY_SCOPES, architecture_runtime_tests, binary_runtime_tests,
+        expected_cases, obligation_controls, version_runtime_tests,
     )
 
     inputs = admit_entity("RunInputs", inputs)
@@ -2876,7 +2876,8 @@ def compatibility_quality_case_material(inputs, *, case_id, results, witnesses, 
         raise ConformanceError("UnsupportedProfile")
     sequence, started_ms, ended_ms = _integer(sequence), _number(started_ms), _number(ended_ms)
     scope = COMPATIBILITY_RUNTIME_QUALITY_SCOPES[case_id]
-    tests = {"version": version_runtime_tests, "architecture": architecture_runtime_tests}[scope]()
+    tests = {"version": version_runtime_tests, "architecture": architecture_runtime_tests,
+             "binary": binary_runtime_tests}[scope]()
     cases = tuple(case for case in expected_cases("compatibility")
                   if case.witnesses and set(case.witnesses) <= tests.keys())
     selected = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row

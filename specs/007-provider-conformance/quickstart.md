@@ -1309,6 +1309,9 @@ logger cap; no bound is raised or selected inventory pruned. Sharing the source
 assertion with the existing default binary tests avoids that unnecessary runtime.
 Missing transport errors now retain the original closed logger rejection rather
 than a misleading missing-directory prerequisite failure.
+QC-26 also derives independently from both complete break/repair bases and all
+eight physical witnesses, rejecting failed/missing/retried/retimed bases. Fresh
+native acceptance is still required; modeled derivation is not qualification.
 
 ## Offline Correspondence Inspection
 

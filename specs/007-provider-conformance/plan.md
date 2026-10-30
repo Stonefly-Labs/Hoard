@@ -5008,6 +5008,21 @@ test_conformance_cli.ConformanceCliTests test_conformance_evidence.ConformanceIn
 passes43 tests in4.013 seconds; catalog/SDK and diff checks pass.
 Fresh quantitative CI remains required; no reader optimization is claimed.
 
+QC-26 now independently reconstructs both original source-break and binary-break
+logical bases from the complete eight-parameter binary scope. It requires the
+same original inputs/group/window, successful physical witnesses and exact
+derived attempts/controls/proof hashes. Missing, failed, retried or retimed bases
+reject rather than borrowing passing observations. Existing genuine released
+controls also mutate source-break/QC-26 proof-map entries and actual retained
+derivation bytes, preserving the8 live/13 released method count.
+The existing common-report regression first reproduces five incomplete cases
+instead of the required four. `PYTHONPATH=scripts:tests/tooling python3 -m unittest
+-q test_conformance_composition test_conformance_evidence.ConformanceAdmissionTests
+test_conformance_ci` then passes88 tests in6.113 seconds; catalog/SDK and diff
+checks pass. Fresh native execution is still required:138 Passed/four Incomplete/
+210 witnesses are expected criteria, not verified observations. The separate
+immutable9f10d1a source-case run remains independent of this later QC increment.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

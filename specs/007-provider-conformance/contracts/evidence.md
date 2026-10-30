@@ -1243,6 +1243,11 @@ frozen inventory. If transport creation failed, preserve the original closed
 logger rejection before reading missing directories; unknown codes reject safely.
 Fresh native execution is
 required before the new logical source-break row can be claimed passing.
+QC-26 independently reconstructs both complete source-break/binary-break logical
+bases and the entire eight-witness binary scope, including original input/group/
+window, controls and proof hashes. Missing, failed, retried or retimed bases reject.
+Released controls also challenge both derivation maps and actual retained proof
+bytes. Modeled checks do not replace fresh original native execution.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

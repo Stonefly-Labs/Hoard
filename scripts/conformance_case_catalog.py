@@ -1459,7 +1459,7 @@ def architecture_runtime_tests():
 
 COMPATIBILITY_RUNTIME_QUALITY_SCOPES = {
     "QC-22": "version", "QC-23": "version", "QC-24": "version",
-    "QC-27": "architecture", "QC-28": "architecture",
+    "QC-26": "binary", "QC-27": "architecture", "QC-28": "architecture",
 }
 
 

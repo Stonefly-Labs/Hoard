@@ -1101,6 +1101,9 @@ binary controls and that complete runtime is selected, preserving all eight test
 and both frozen source/historical image copies without raising bounds or pruning.
 Missing transports retain the original closed logger error. Fresh native execution
 remains required before claiming the additional logical case.
+QC-26 now independently derives from both complete source/binary break-and-repair
+bases and all eight physical witnesses, rejecting missing, failed, retried or
+retimed bases. Host88 checks pass; fresh native case/QC execution remains required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
