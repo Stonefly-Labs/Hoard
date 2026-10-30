@@ -183,6 +183,37 @@ volume and safe JSON observation summary remain preserved. No assertion,
 test selection for acceptance, product guarantee or budget is weakened.
 T071..T086 remain open and the stage remains `implement / running`.
 
+The maintainer explicitly directs autonomous resumption. A bounded diagnostic
+placed before the failing equality guard identifies the same appended
+`protocol/worker` callback in both variants. `StartCoreAsync` schedules workers
+with `Task.Run` and returns after dispatch, not after worker entry. The test
+therefore snapshots legitimate startup activity too early; this observation
+does not establish an HTTP discovery mutation.
+
+The test now installs worker-entry signals before startup and awaits all
+signals with the existing five-second fixture bound before taking its
+callback-log snapshot. Worker delegates still return completed tasks, as
+before. Every original HTTP/cancellation/deadline/lifecycle/callback/fresh-
+capture assertion is unchanged. Isolated Linux explicit VSTest execution
+passes all9 original `DiscoveryBoundsTests` parameters; focused
+`dotnet format --verify-no-changes --no-restore --include
+tests/integration/Hoard.Composition.Tests/DiscoveryBoundsTests.cs` passes.
+
+The original frozen inventory and baseline hashes remain byte-identical.
+Because this is a setup-only execution-source correction, inventory admission
+explicitly recognizes only that file's exact corrected SHA-256
+`ef516b44d066f1f5a9667a9eb65aea8960d84ea8c889bd66be1535ffbbe5d4a4`,
+in addition to its original baseline bytes. Actual source manifests continue
+to bind whichever exact bytes execute. This is not permission for arbitrary
+source drift, changed assertions, altered identities/counts or resealed
+baseline data. A red-first control demonstrates the existing source gate,
+then verifies corrected-source admission and rejection of an unreviewed edit,
+missing source, cross-file substitution and baseline resealing. The affected
+inherited/composition/SDK/command-proof selector passes231 tests in40.943
+seconds; `freeze_composition_inventory.py --check` and `git diff --check`
+pass. Fresh immutable full composition execution remains required; no
+T071..T086 task is marked complete, and all prior failures stay rejected.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

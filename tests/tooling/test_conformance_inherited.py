@@ -1179,6 +1179,27 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
         path = ROOT / "tests/fixtures/conformance/baselines/composition-inventory.json"
         self.assertEqual(json.loads(path.read_bytes()), FREEZE.freeze())
 
+    def test_inventory_accepts_exact_worker_setup_variant_without_resealing_the_baseline(self):
+        data = (ROOT / inherited.INVENTORY_PATH).read_bytes()
+        baseline = json.loads(data)
+        path = "tests/integration/Hoard.Composition.Tests/DiscoveryBoundsTests.cs"
+        sources = {**baseline["sourceFiles"], path: file_sha256(ROOT / path)}
+        self.assertEqual(inherited.inventory(data, sources),
+                         inherited.inventory(data, baseline["sourceFiles"]))
+        for defect in ("unreviewed-edit", "missing-source", "other-file", "resealed-baseline"):
+            altered, packet = dict(sources), copy.deepcopy(baseline)
+            if defect == "unreviewed-edit":
+                altered[path] = hashlib.sha256((ROOT / path).read_bytes() + b"\n").hexdigest()
+            elif defect == "missing-source":
+                altered.pop(path)
+            elif defect == "other-file":
+                other = next(name for name in altered if name != path)
+                altered[other] = altered[path]
+            else:
+                packet["sourceFiles"][path] = altered[path]
+            with self.subTest(defect=defect), self.assertRaises(ConformanceError):
+                inherited.inventory(canonical_bytes(packet), altered)
+
     def test_exact_discovery_rejects_missing_duplicate_foreign_and_misexpanded_parameters(self):
         value = json.loads((ROOT / inherited.INVENTORY_PATH).read_bytes())
         methods = inherited.inventory(canonical_bytes(value), value["sourceFiles"])

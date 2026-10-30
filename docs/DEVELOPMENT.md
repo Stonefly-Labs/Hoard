@@ -9885,6 +9885,15 @@ after that guard. The exact callback/cause is not yet established; HTTP
 admission or asynchronous lifecycle work is the leading hypothesis. Work stops
 after the third observed failure as required; no further retry or repair is
 authorized by that checkpoint, and all original evidence remains preserved.
+The maintainer subsequently authorizes resumption. A safe diagnostic identifies
+the appended callback as `protocol/worker`, queued during startup but entering
+after the test's snapshot. Awaiting all fixture worker-entry signals before
+that snapshot preserves every original assertion and passes all9 bounds
+parameters on Linux; focused formatting passes. Frozen baseline bytes remain
+unchanged. Admission pins the exact setup-corrected file hash separately and
+rejects other drift, missing/cross-file sources and resealed baseline data.
+The231-test affected selector and frozen inventory check pass. This is a
+verified setup correction, not yet full composition/profile qualification.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

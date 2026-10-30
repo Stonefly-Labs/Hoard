@@ -60,8 +60,10 @@ Inherited composition scopes now use the same pinned SDK/runtime runner as
 foundation scopes, independently of whether private settings are retained.
 Their logger outputs are sealed independently too. The isolated composition
 run rejects two inherited HTTP projection parameters at the module callback-log
-stability assertion. Three observed failures are preserved; work stops under
-the maintainer's bounded-debugging rule pending direction.
+stability assertion. Authorized bounded diagnosis identifies late startup
+worker entry; synchronizing the test's initial snapshot preserves every
+assertion and passes all9 bounds parameters. Prior failures remain preserved;
+fresh full composition execution is pending.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

@@ -22,6 +22,15 @@ and actual resolved/runtime loaded assemblies. Equal version labels with
 different bytes are different tested inputs. No arbitrary commit label, empty
 hash map or hash of a filename counts as source/content proof.
 
+The inherited composition inventory retains its original frozen assertion
+identities and source hashes. Execution additionally admits one explicitly
+pinned setup-only `DiscoveryBoundsTests.cs` variant that awaits startup worker
+entry before its callback snapshot, preserving all original assertions.
+The actual source manifest binds its exact corrected bytes; no other source
+edit, cross-file substitution or resealed frozen inventory is accepted.
+This variant grants no exclusion or passing outcome and does not change
+product startup semantics.
+
 An explicit capture-time `catalogBindingId` assignment connects each known
 fixture declaration to its frozen category slot without changing the
 declaration. Independent parent mapping checks category, original declaration
