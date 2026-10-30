@@ -4761,6 +4761,30 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                     inspect(owner, b"{}", expected_inputs=self.inputs, native_evaluation=token)
 
+    def test_category_qualification_cannot_be_derived_from_modeled_or_copied_authority(self):
+        derive = getattr(evidence, "derive_native_category_qualification", None)
+        self.assertTrue(callable(derive), "Qualification requires an independent original-owner boundary.")
+        from conformance_sources import NativeCategoryEvaluation
+        from types import SimpleNamespace
+
+        for owner, token in ((None, None), (SimpleNamespace(), None),
+                             (SimpleNamespace(), NativeCategoryEvaluation(None, "a" * 64, "b" * 64, {}))):
+            with self.subTest(owner=type(owner).__name__), mock.patch.object(
+                    evidence, "_input_root", side_effect=AssertionError("Unowned qualification must not read proofs")):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    derive(owner, b"{}", expected_inputs=self.inputs, native_evaluation=token)
+
+    def test_category_qualification_keeps_failed_attempt_history_after_a_passing_retry(self):
+        history, finish = self.category_quality_fixture(profile="artifacts", max_attempts=2)
+        finish(failed=("local", next(iter(history.expected_runtime_tests("local")))))
+        finish(sequence=2)
+        report = self.category_quality_report(history)
+        with mock.patch.object(evidence, "inspect_native_category_report") as origin:
+            with self.assertRaisesRegex(evidence.ConformanceError, "^AssertionFailed$"):
+                evidence.derive_native_category_qualification(
+                    None, evidence.canonical_bytes(report), expected_inputs=history._inputs, native_evaluation=None)
+        origin.assert_called_once()
+
     def test_native_category_reports_recheck_original_history_inputs_and_proof_files(self):
         import conformance_sdk_checks as checks
         from types import SimpleNamespace
@@ -10795,6 +10819,62 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
                         owner, evidence.canonical_bytes(changed), expected_inputs=inputs, native_evaluation=evaluation)
             finally:
                 (owner.root / extra).unlink()
+
+        def test_complete_category_qualification_requires_original_released_runtime_and_exact_ledger(self):
+            path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            raw = path.read_bytes()
+            original = evidence.admit_entity("QualificationReport", evidence.load_json(raw))
+            qualified = evidence.derive_native_category_qualification(
+                owner, raw, expected_inputs=inputs, native_evaluation=evaluation)
+            self.assertTrue(qualified["qualification"])
+            self.assertEqual(qualified["state"], "Complete")
+            self.assertEqual(qualified["scope"], ("category-fixture-qualification",))
+            for key in ("inputs", "postInputSha256", "results", "witnesses", "resources", "proofs"):
+                self.assertEqual(qualified[key], original[key])
+            self.assertEqual(path.read_bytes(), raw)
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.derive_native_category_qualification(
+                    owner, raw, expected_inputs=inputs, native_evaluation=replace(evaluation))
+            with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                evidence.derive_native_category_qualification(
+                    owner, evidence.canonical_bytes(qualified), expected_inputs=inputs, native_evaluation=evaluation)
+
+        def test_category_qualification_rejects_changed_original_proofs_and_optimistic_ledger(self):
+            path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            raw = path.read_bytes()
+            original = evidence.load_json(raw)
+            for defect in ("omitted-case", "changed-attempt", "optimistic-state", "missing-resources", "input-mode"):
+                changed = evidence.load_json(raw)
+                if defect == "omitted-case":
+                    changed["results"].pop()
+                elif defect == "changed-attempt":
+                    case = next(row for row in changed["results"] if row["attempts"])
+                    case["attempts"][0]["diagnosticCode"] = "AssertionFailed"
+                    case["attempts"][0]["status"] = "Failed"
+                elif defect == "optimistic-state":
+                    changed.update(qualification=True, state="Complete")
+                elif defect == "missing-resources":
+                    changed["resources"] = []
+                else:
+                    changed["inputs"]["mode"] = "diagnostic"
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    evidence.derive_native_category_qualification(
+                        owner, evidence.canonical_bytes(changed), expected_inputs=inputs, native_evaluation=evaluation)
+            selected = owner.root / next(iter(original["proofs"]))
+            contents = selected.read_bytes()
+            try:
+                selected.chmod(0o600)
+                selected.write_bytes(contents + b" ")
+                selected.chmod(0o400)
+                with self.assertRaises(evidence.ConformanceError):
+                    evidence.derive_native_category_qualification(
+                        owner, raw, expected_inputs=inputs, native_evaluation=evaluation)
+            finally:
+                selected.chmod(0o600)
+                selected.write_bytes(contents)
+                selected.chmod(0o400)
+            evidence.derive_native_category_qualification(
+                owner, raw, expected_inputs=inputs, native_evaluation=evaluation)
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 

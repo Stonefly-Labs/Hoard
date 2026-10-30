@@ -1273,6 +1273,11 @@ The same exact source also passes the unchanged standard Linux
 failures, errors or unexpected bytes,405.727 seconds under the600-second bound.
 Earlier unsuccessful originals remain failed; full five-profile qualification
 and T071..T086 remain open.
+An internal category qualification boundary now independently requires the original
+Released executor, complete catalog/proof correspondence and passing append-only
+history before deriving a separate finite fixture result. It cannot authorize
+modeled/copy-token evidence or rewrite the original diagnostic. Its fresh native
+acceptance is pending; public commands and published reports remain nonqualifying.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

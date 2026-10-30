@@ -9730,6 +9730,21 @@ These successful originals do not erase the earlier a2ebcab/26d647d/9ec148f
 failures or failed113b310 CI tooling. Runtime-origin validation is now observed;
 profile qualification, final five-profile CI and T071..T086 remain unfinished.
 
+`derive_native_category_qualification` is a separate internal boundary, not a
+public/offline authority upgrade. It first verifies the original category history,
+complete catalog/result/proof/completion correspondence and actual Released
+owner against the same held native evaluation. Every attempt must pass, every
+case must pass or retain its exact frozen exclusion, and source state must be
+clean-local/clean-ci. Failed attempts remain `AssertionFailed` after repair.
+Only then may a new immutable result derive `Complete` with finite
+`category-fixture-qualification` scope; original diagnostic bytes are unchanged.
+Copied/modeled authority and optimistic original reports reject. Actual native
+controls additionally mutate cases, attempts, resources, mode and proof bytes.
+Fresh native acceptance is pending. Public command exit2, existing reports,
+offline verification and five-profile qualification remain unchanged.
+The corrected affected report/CLI/CI/sanitation selector passes211 tests in
+80.333 seconds, four host native-prerequisite skips; `git diff --check` passes.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

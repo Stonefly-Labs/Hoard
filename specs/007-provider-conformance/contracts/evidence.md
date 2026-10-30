@@ -67,6 +67,16 @@ requires a nonempty ownership inventory; initial/partial diagnostic inventories
 may remain empty. Schema consistency is necessary, not proof of actual release
 or runtime origin; independently observed settlement remains mandatory.
 
+The internal `derive_native_category_qualification` boundary requires the actual
+Released owner and its original held category evaluation before interpreting a
+candidate. It independently verifies complete catalog/results, original history,
+proof bytes and completion inputs, then derives a separate immutable
+`category-fixture-qualification` result only from passing append-only attempts,
+passing/frozen-excluded cases and a clean source. Original diagnostic bytes are
+never rewritten; copied/modeled authority and optimistic original flags reject.
+Fresh native acceptance of this boundary is pending. This does not change public
+command/report/offline behavior or establish five-profile baseline qualification.
+
 QC-12 explicitly requires all 32 fully parameterized
 `AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority`
 witnesses in the independent and embedded SDK catalogs, in addition to its

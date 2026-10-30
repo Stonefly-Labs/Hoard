@@ -5709,6 +5709,26 @@ with no instrumentation. This source-specific success does not relabel failed
 originals or the failed113b310 owning-controller CI proof. T071..T086,
 qualification-mode orchestration and all-five qualifying CI remain open.
 
+The next T071 increment adds the separate internal
+`derive_native_category_qualification` boundary. It consumes only the original
+qualification-input category diagnostic under its genuine held native evaluation,
+independently rechecks catalog/proof/completion correspondence and actual Released
+resources, rejects every failed/incomplete attempt and requires a clean source.
+It derives a new immutable finite fixture result rather than trusting summary
+booleans, changing admission mode or modifying original diagnostic bytes.
+Modeled/copied authority rejects before proof reads. An isolated status-policy
+test retains an actual generated failed attempt across a passing retry; it mocks
+the preceding origin check and is not native evidence. Genuine released-control
+coverage now additionally derives the unchanged successful ledger and challenges
+copied tokens, optimistic flags, omitted cases, changed attempts/resources/mode
+and original proof mutation. These new native controls remain pending.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceAdmissionTests test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_evidence.NativeCategoryControlRunnerTests test_conformance_ci test_conformance_cli test_conformance_sanitation`
+passes211 tests in80.333 seconds with four host native-prerequisite skips;
+`git diff --check` passes. Public CLI/report/offline behavior is unchanged.
+Provider contracts, host examples, product/architecture/ADR/diagrams, governance,
+IaC and release guides are unaffected by this internal evidence-only seam.
+T071..T086 and final architecture review remain open.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

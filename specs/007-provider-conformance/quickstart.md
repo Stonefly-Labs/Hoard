@@ -1475,6 +1475,10 @@ The same exact source's unchanged Linux command
 zero skips/failures/errors/unexpected bytes,405.727 seconds under600 seconds.
 Earlier failures remain retained. These are source-bound diagnostic successes,
 not completed profile qualification or the final all-five CI baseline.
+The new internal category qualification derivation is not a public command:
+it requires original released native authority and complete passing history,
+does not rewrite diagnostics and still needs fresh native acceptance. Existing
+public category commands and offline inspection remain nonqualifying, exit2.
 
 ## Offline Correspondence Inspection
 

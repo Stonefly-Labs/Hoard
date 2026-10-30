@@ -1070,6 +1070,22 @@ def inspect_native_category_report(run, report_data, *, expected_inputs, native_
         **inspected, "scope": "native-category-runtime-origin-diagnostic", "runtimeOriginVerified": True})
 
 
+def derive_native_category_qualification(run, report_data, *, expected_inputs, native_evaluation):
+    """Derive the finite fixture result only from the original released executor."""
+    inspect_native_category_report(
+        run, report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    if any(attempt["status"] == "Failed" for result in report["results"] for attempt in result["attempts"]):
+        raise ConformanceError("AssertionFailed")
+    if (any(result["status"] not in ("Passed", "NotApplicable") for result in report["results"])
+            or any(attempt["status"] != "Passed" for result in report["results"] for attempt in result["attempts"])):
+        raise ConformanceError("EvidenceIncomplete")
+    if report["inputs"]["sourceState"] not in ("clean-local", "clean-ci"):
+        raise ConformanceError("InputChanged")
+    return admit_entity("QualificationReport", {
+        **report, "state": "Complete", "qualification": True, "scope": ["category-fixture-qualification"]})
+
+
 def inspect_native_compatibility_report(run, report_data, *, expected_inputs, native_evaluation):
     """Replay compatibility runtimes only with their original released executor."""
     from conformance_execution import OwnedRun
