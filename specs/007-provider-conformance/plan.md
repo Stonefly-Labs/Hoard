@@ -4996,6 +4996,18 @@ code/location/numeric allowlist; no raw terminal content is reflected.
 No prewarming, retries-to-acceptance, reader-bound changes or fresh metadata
 PDB acceptance are inferred. Actual reader optimization remains necessary.
 
+To distinguish actual CPU work from elapsed I/O/scheduling delay, the reader
+also records original process CPU milliseconds using one start/one rejection
+clock call. No extra reads, SDK caching/prewarming or bound changes occur.
+The existing two-byte deadline regression first fails for the absent CPU field,
+then verifies125ms CPU against5000ms wall and the same original ProofMismatch/
+guard through SDK and public/category CLI. `PYTHONPATH=scripts:tests/tooling
+python3 -m unittest -q
+test_conformance_sdk_checks.SdkDiagnosticTests.test_proof_reader_failure_projects_only_original_bounded_progress_without_private_names
+test_conformance_cli.ConformanceCliTests test_conformance_evidence.ConformanceInputTests`
+passes43 tests in4.013 seconds; catalog/SDK and diff checks pass.
+Fresh quantitative CI remains required; no reader optimization is claimed.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

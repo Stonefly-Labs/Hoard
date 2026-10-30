@@ -9140,6 +9140,14 @@ jobs but fails SDK/metadata/compatibility at the unchanged five-second read guar
 Original bounded progress is respectively245/335/317 files,63516037/67850318/
 67554958 bytes,979/1104/1082 entries,5002.563/5003.303/5000.088ms.
 Reader optimization and full qualification remain unresolved.
+The reader additionally records original process CPU milliseconds with two
+process-clock calls and no extra I/O, caching, prewarming or wall-budget changes.
+The existing two-byte deadline regression first reproduces the missing CPU field,
+then verifies125ms CPU against5000ms wall time and the same original failure/
+static guard through SDK/public CLI. The focused reader/CLI/input selection
+passes43 tests in4.013 seconds. Fresh CI CPU observations remain required before
+attributing elapsed delay to hashing, reads or scheduling; this is instrumentation,
+not the reader optimization or profile acceptance.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

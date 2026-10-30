@@ -1213,7 +1213,8 @@ and captured before runtime execution. Actual cleanup still removes all staged
 raw images. Host514 checks pass; native staging and logical case linkage remain
 required, with no case promotion inferred from copying or modeled tests.
 Rejected proof reads may include a typed `proofRead` diagnostic containing only
-original numeric `filesHashed`, `bytesRead`, `entriesSeen`, `elapsedMs`.
+original numeric `filesHashed`, `bytesRead`, `entriesSeen`, `elapsedMs` and
+`cpuElapsedMs` (process CPU, not another wall-time allowance).
 It preserves the original closed error/status/guard and performs no additional
 reads. Counts are not witnesses, proof authority, qualification or a relaxed
 deadline/byte/file/depth condition; private names and payloads are never projected.

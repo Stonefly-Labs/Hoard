@@ -1081,6 +1081,8 @@ logical source-case assertions remain required.
 Failed proof reads now also project original numeric byte/file/entry progress
 and elapsed time, without private names or extra reads. This diagnoses the CI
 reader constraint; it does not relax or fix its five-second bound.
+Original process CPU time is also measured to distinguish CPU work from elapsed
+read/scheduling delay; fresh CI measurements are still required.
 The `3589481` native controls pass8/12, but independent inspection catches a
 remaining gap: only the default source fixture is frozen; its package-runtime
 copy is not. Full staging verification is not claimed.

@@ -1647,16 +1647,19 @@ class _ProofReadObservation:
     bytes_read: int
     entries_seen: int
     elapsed_ms: float
+    cpu_elapsed_ms: float
 
     def __post_init__(self):
         for value in (self.files_hashed, self.bytes_read, self.entries_seen):
             _integer(value)
         _number(self.elapsed_ms)
+        _number(self.cpu_elapsed_ms)
 
     def diagnostic(self):
         return {
             "filesHashed": self.files_hashed, "bytesRead": self.bytes_read,
-            "entriesSeen": self.entries_seen, "elapsedMs": self.elapsed_ms}
+            "entriesSeen": self.entries_seen, "elapsedMs": self.elapsed_ms,
+            "cpuElapsedMs": self.cpu_elapsed_ms}
 
 
 def proof_read_diagnostic(error):
@@ -1675,6 +1678,7 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
     partial = 0
     entries_seen = 0
     started = time.monotonic()
+    cpu_started = time.process_time()
     deadline = started + 5
 
     def visit(descriptor, prefix="", depth=0):
@@ -1745,16 +1749,19 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
     except ConformanceError as error:
         if str(error) == "ProofMismatch":
             error._proof_read = _ProofReadObservation(
-                len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000)
+                len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
+                (time.process_time() - cpu_started) * 1000)
             raise
         rejected = ConformanceError("ProofMismatch")
         rejected._proof_read = _ProofReadObservation(
-            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000)
+            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
+            (time.process_time() - cpu_started) * 1000)
         raise rejected from None
     except OSError:
         rejected = ConformanceError("ProofMismatch")
         rejected._proof_read = _ProofReadObservation(
-            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000)
+            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
+            (time.process_time() - cpu_started) * 1000)
         raise rejected from None
     if not files:
         raise ConformanceError("ProofMismatch")

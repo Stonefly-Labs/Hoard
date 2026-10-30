@@ -6492,6 +6492,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         private.mkdir()
         (private / "private-file-canary").write_bytes(b"{}")
         with patch.object(checks.evidence.time, "monotonic", side_effect=(0, 0, 0, 5, 5)), \
+                patch.object(checks.evidence.time, "process_time", side_effect=(10, 10.125)), \
                 self.assertRaisesRegex(checks.evidence.ConformanceError, "^ProofMismatch$") as captured:
             checks.evidence.proof_manifest(private)
         output = io.StringIO()
@@ -6501,7 +6502,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertEqual(checks.main(), 1)
         diagnostic = json.loads(output.getvalue())
         self.assertEqual(diagnostic["proofRead"], {
-            "filesHashed": 0, "bytesRead": 2, "entriesSeen": 1, "elapsedMs": 5000})
+            "filesHashed": 0, "bytesRead": 2, "entriesSeen": 1, "elapsedMs": 5000, "cpuElapsedMs": 125})
         self.assertEqual(diagnostic["code"], "ProofMismatch")
         self.assertEqual(diagnostic["status"], "Failed")
         self.assertFalse(diagnostic["qualification"])

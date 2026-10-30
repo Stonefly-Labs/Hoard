@@ -1287,7 +1287,8 @@ images and five exact compiler/control frames into both transient runtimes,
 freezing them with common inputs. Host514 checks pass; fresh native staging
 verification and logical source assertions remain unfinished.
 On a rejected proof read, `proofRead` now exposes original numeric file/byte/
-entry counts and elapsed milliseconds through SDK/category CLI diagnostics.
+entry counts, elapsed milliseconds and process CPU milliseconds through
+SDK/category CLI diagnostics.
 It contains no private names and performs no additional reads or prewarming.
 The existing five-second limit and failure outcome remain unchanged.
 Original `3589481` passes8/12 controls, but readonly inspection catches missing
