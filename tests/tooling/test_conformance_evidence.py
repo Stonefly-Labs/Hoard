@@ -24,12 +24,73 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
-    def test_compatibility_logical_cases_require_every_fixed_runtime_witness_and_recomputed_derivation(self):
-        import conformance_case_catalog as catalog
+    def compatibility_inputs(self):
+        import conformance_baselines as baselines
 
         inputs = self.inputs()
         inputs.update(profileId="compatibility", bindings=[])
         inputs["budgets"]["profileSeconds"] = 3600
+        binaries = {relative: hashlib.sha256(relative.encode()).hexdigest()
+                    for relative in baselines.HISTORICAL_BINARY_IMAGES.values()}
+        inputs["baselines"] = [{
+            "revision": baselines.BASELINE, "sourceSha256": "1" * 64, "lockSha256": "2" * 64,
+            "recipeSha256": "3" * 64, "binarySha256": evidence.digest(binaries),
+            "dependencySha256": binaries, "apiScope": "f06"}]
+        prefix = ("stores/snapshot/tests/contracts/Hoard.Conformance.Tests/bin/Release/net10.0/"
+                  "compatibility-fixtures/")
+        inputs["runtimeAssemblies"].update({
+            prefix + target: binaries[relative] for target, relative in baselines.HISTORICAL_BINARY_IMAGES.items()})
+        return inputs
+
+    def test_binary_break_case_rejects_resealed_baseline_or_runtime_substitutions(self):
+        import conformance_case_catalog as catalog
+
+        inputs = self.compatibility_inputs()
+        case = next(row for row in catalog.expected_cases("compatibility")
+                    if row.case_id == "COMPATIBILITY" and row.matrix_id == "binary-break")
+        self.assertEqual(set(case.witnesses), set(catalog.binary_runtime_tests()))
+        witnesses = [{
+            **self.report()["witnesses"][0], "executionId": str(uuid.uuid4()),
+            "testIdentity": identity, "bindingId": "none", "matrixId": "binary-runtime",
+            "inputSha256": evidence.digest(inputs), "startedMs": 1, "endedMs": 2,
+        } for identity in case.witnesses]
+
+        def material(frame):
+            return evidence.compatibility_case_material(
+                frame, case_id="COMPATIBILITY", matrix_id="binary-break",
+                witnesses=[{**row, "inputSha256": evidence.digest(frame)} for row in witnesses],
+                sequence=1, started_ms=0, ended_ms=3)
+
+        self.assertEqual(material(inputs)["attempt"]["status"], "Passed")
+        for defect in ("missing-baseline", "duplicate-baseline", "foreign-revision",
+                       "missing-pdb", "resealed-pdb", "runtime-substitution", "wrong-binary-digest"):
+            changed = copy.deepcopy(inputs)
+            if defect == "missing-baseline":
+                changed["baselines"] = []
+            elif defect == "duplicate-baseline":
+                changed["baselines"].append(copy.deepcopy(changed["baselines"][0]))
+            elif defect == "foreign-revision":
+                changed["baselines"][0]["revision"] = "0" * 40
+            elif defect == "runtime-substitution":
+                path = next(path for path in changed["runtimeAssemblies"] if path.endswith("RetainedConsumer.pdb"))
+                changed["runtimeAssemblies"][path] = "0" * 64
+            elif defect == "wrong-binary-digest":
+                changed["baselines"][0]["binarySha256"] = "0" * 64
+            else:
+                baseline = changed["baselines"][0]
+                path = next(path for path in baseline["dependencySha256"] if path.endswith("BinaryConsumer.pdb"))
+                if defect == "missing-pdb":
+                    baseline["dependencySha256"].pop(path)
+                else:
+                    baseline["dependencySha256"][path] = "0" * 64
+                baseline["binarySha256"] = evidence.digest(baseline["dependencySha256"])
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                material(changed)
+
+    def test_compatibility_logical_cases_require_every_fixed_runtime_witness_and_recomputed_derivation(self):
+        import conformance_case_catalog as catalog
+
+        inputs = self.compatibility_inputs()
         physical = {}
         for scope, rows in (("architecture", catalog.architecture_runtime_tests()),
                             ("version", catalog.version_runtime_tests()), ("binary", catalog.binary_runtime_tests())):
@@ -8335,10 +8396,11 @@ class ConformanceBaselineTests(unittest.TestCase):
                     path.chmod(0o600)
                 path.write_bytes(evidence.canonical_bytes(record))
                 path.chmod(0o400)
-            if packet_path.exists():
-                packet_path.chmod(0o600)
-            packet_path.write_bytes(evidence.canonical_bytes(declaration_packet))
-            packet_path.chmod(0o400)
+            for path in (packet_path, self.root / self.baselines.HISTORICAL_BINARY_PREPARATION_PROOF):
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(evidence.canonical_bytes(declaration_packet))
+                path.chmod(0o400)
             entry["recipes"][self.baselines.HISTORICAL_BINARY_PREPARATION] = evidence.file_sha256(packet_path)
             entry["recipeSha256"] = evidence.digest(entry["recipes"])
             self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
@@ -8366,6 +8428,26 @@ class ConformanceBaselineTests(unittest.TestCase):
                 changed["commands"].pop()
             with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
                 replay(records, changed)
+
+        observed = replay(originals, packet)
+        retained = self.root / "proofs/historical-binary-preparation.json"
+        seal_sha = evidence.file_sha256(self.seal)
+        shutil.rmtree(self.root / "stores")
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            self.baselines.inspect_historical_binary_preparation(self.root, seal_sha, msbuild=prefix)
+        self.assertEqual(self.baselines.inspect_historical_binary_preparation(
+            self.root, seal_sha, msbuild=prefix, retained=True), observed)
+        retained.chmod(0o600)
+        retained.write_bytes(retained.read_bytes() + b"\n")
+        retained.chmod(0o400)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            self.baselines.inspect_historical_binary_preparation(
+                self.root, seal_sha, msbuild=prefix, retained=True)
+        del entry["binaries"][self.baselines.HISTORICAL_BINARY_IMAGES["consumer/RetainedConsumer.pdb"]]
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            self.baselines.inspect_historical_binary_preparation(
+                self.root, evidence.file_sha256(self.seal), msbuild=prefix, retained=True)
 
     def historical_binary_fixture(self):
         source = self.root / "stores/f06"

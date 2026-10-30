@@ -1256,6 +1256,14 @@ before the candidate snapshot, then bound through actual release. The extended
 factory expects6 live/11 released controls. Host444 and managed seven-case checks
 pass; fresh immutable native verification remains required. These diagnostics
 still do not qualify the seven remaining baseline-related report rows.
+The `1ba70f9` execution then reaches cleanup but rejects replay of deleted
+transient baseline files. The repair preserves the exact preparation receipt
+under readonly `proofs`; released correspondence uses the original captured
+seal/source frame and native command inputs, while live capture still checks
+physical files and executor-held records. Binary-break now derives from all
+seven witnesses plus exact original/staged PE/PDB hashes. Host445 checks pass;
+fresh native6/11 controls remain required. Expected diagnostic counts become
+142 cases,136 Passed/six Incomplete and209 witnesses, still nonqualifying.
 
 ## Offline Correspondence Inspection
 

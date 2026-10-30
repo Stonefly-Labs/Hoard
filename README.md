@@ -1045,6 +1045,15 @@ Original build receipts and readonly input/output bytes are now independently
 replayed and captured before the candidate snapshot, then retained through actual
 release. Host444 and managed seven-case checks pass; fresh native6/11 controls
 remain required. The seven baseline-related report rows are still Incomplete.
+The `1ba70f9` execution reaches release but then rejects preparation replay:
+cleanup correctly deletes `stores`/`feed`, which that replay incorrectly rereads.
+The repair retains the exact preparation receipt under readonly `proofs` and
+reconstructs original command inputs from the captured seal/source frame after
+release; live capture still checks actual files and executor-held bytes.
+Binary-break derivation now additionally binds all seven original runtime
+witnesses to the exact historical and staged PE/PDB hashes. Host445 checks pass;
+fresh native6/11 verification remains required. Its expected diagnostic report
+is136 Passed/six Incomplete, not full-profile qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

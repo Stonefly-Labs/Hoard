@@ -49,6 +49,7 @@ HISTORICAL_BINARY_FIXTURE = "tests/fixtures/compatibility/BinaryMemberRemoval/"
 HISTORICAL_BINARY_PROJECTS = ("Old/BinaryContract.csproj", "Consumer/BinaryConsumer.csproj")
 HISTORICAL_BINARY_INPUTS = "proofs/historical-binary-inputs.json"
 HISTORICAL_BINARY_PREPARATION = "F07BinaryPreparation.json"
+HISTORICAL_BINARY_PREPARATION_PROOF = "proofs/historical-binary-preparation.json"
 HISTORICAL_BINARY_IMAGES = {
     variant + "/" + target + suffix:
     HISTORICAL_BINARY_FIXTURE + project + "/bin/Release/net10.0/" + name + suffix
@@ -743,9 +744,10 @@ def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):
                 "baselineRevision": BASELINE, "inputsSha256": file_sha256(run.root / HISTORICAL_BINARY_INPUTS),
                 "commands": binary_commands}
             binary_preparation_path = source / "tests/fixtures" / HISTORICAL_BINARY_PREPARATION
-            with binary_preparation_path.open("xb") as output:
-                output.write(canonical_bytes(binary_preparation))
-            binary_preparation_path.chmod(0o400)
+            for path in (binary_preparation_path, run.root / HISTORICAL_BINARY_PREPARATION_PROOF):
+                with path.open("xb") as output:
+                    output.write(canonical_bytes(binary_preparation))
+                path.chmod(0o400)
             recipes = {relative: file_sha256(source / "tests/fixtures" / relative)
                        for relative in (*metadata_projects, *artifact_projects, "metadata/Consumer/Consumer.csproj",
                                         "artifacts/Consumer/Consumer.csproj",
@@ -814,7 +816,7 @@ def prepare(repository, run, *, prepare_local_archives=False, msbuild=None):
     return sealed
 
 
-def verify_prepared_baselines(root, expected_sha256):
+def _prepared_baseline_document(root, expected_sha256):
     root = Path(root).absolute()
     no_symlinks(root)
     if (not root.is_dir() or root.stat().st_uid != os.getuid()
@@ -822,9 +824,13 @@ def verify_prepared_baselines(root, expected_sha256):
         raise ConformanceError("OwnershipInvalid")
     seal = root / "proofs/baselines.json"
     no_symlinks(seal)
-    if not seal.is_file() or seal.stat().st_size > MAX_REPORT_BYTES or file_sha256(seal) != sha256(expected_sha256):
+    if not seal.is_file() or seal.stat().st_size > MAX_REPORT_BYTES:
         raise ConformanceError("InputChanged")
-    evidence = load_json(seal.read_bytes())
+    with seal.open("rb") as source:
+        raw = source.read(MAX_REPORT_BYTES + 1)
+    if len(raw) > MAX_REPORT_BYTES or hashlib.sha256(raw).hexdigest() != sha256(expected_sha256):
+        raise ConformanceError("InputChanged")
+    evidence = load_json(raw)
     if (not isinstance(evidence, dict) or set(evidence) !=
             {"schemaVersion", "qualification", "mode", "baselineRevision", "entries"}
             or type(evidence["schemaVersion"]) is not int or evidence["schemaVersion"] not in (1, 2, 3)
@@ -841,18 +847,32 @@ def verify_prepared_baselines(root, expected_sha256):
     for entry in evidence["entries"]:
         if not isinstance(entry, dict) or set(entry) != fields or entry["revision"] != revisions[entry["id"]]:
             raise ConformanceError("EvidenceIncomplete")
+        for field in ("sources", "recipes", "locks", "binaries", "packages"):
+            if not isinstance(entry[field], dict) or not entry[field] or len(entry[field]) > 50_000:
+                raise ConformanceError("EvidenceIncomplete")
+        for field, hash_field in (("sources", "sourceSha256"), ("recipes", "recipeSha256"), ("locks", "lockSha256")):
+            if digest(entry[field]) != sha256(entry[hash_field]):
+                raise ConformanceError("InputChanged")
+        if evidence["schemaVersion"] == 3 and entry["id"] == "f06":
+            required_recipes = {"compatibility/BinaryMemberRemoval/" + project
+                                for project in HISTORICAL_BINARY_PROJECTS}
+            if (not set(HISTORICAL_BINARY_IMAGES.values()) <= set(entry["binaries"])
+                    or not required_recipes <= set(entry["recipes"])):
+                raise ConformanceError("EvidenceIncomplete")
+    return evidence
+
+
+def verify_prepared_baselines(root, expected_sha256):
+    root = Path(root).absolute()
+    evidence = _prepared_baseline_document(root, expected_sha256)
+    seal = root / "proofs/baselines.json"
+    for entry in evidence["entries"]:
         source = root / "stores" / entry["id"]
         no_symlinks(source)
         count = 0
         for path in source.rglob("*"):
             count += 1
             if count > 50_000 or path.is_symlink():
-                raise ConformanceError("InputChanged")
-        for field in ("sources", "recipes", "locks", "binaries", "packages"):
-            if not isinstance(entry[field], dict) or not entry[field] or len(entry[field]) > 50_000:
-                raise ConformanceError("EvidenceIncomplete")
-        for field, hash_field in (("sources", "sourceSha256"), ("recipes", "recipeSha256"), ("locks", "lockSha256")):
-            if digest(entry[field]) != sha256(entry[hash_field]):
                 raise ConformanceError("InputChanged")
         expected_sources = dict(entry["sources"])
         if entry["id"] != "f06":
@@ -892,12 +912,6 @@ def verify_prepared_baselines(root, expected_sha256):
                 no_symlinks(path)
                 if not path.is_file() or file_sha256(path) != sha256(expected):
                     raise ConformanceError("InputChanged")
-        if evidence["schemaVersion"] == 3 and entry["id"] == "f06":
-            required_recipes = {"compatibility/BinaryMemberRemoval/" + project
-                                for project in HISTORICAL_BINARY_PROJECTS}
-            if (not set(HISTORICAL_BINARY_IMAGES.values()) <= set(entry["binaries"])
-                    or not required_recipes <= set(entry["recipes"])):
-                raise ConformanceError("EvidenceIncomplete")
         actual_binaries = {
             path.relative_to(source).as_posix(): file_sha256(path)
             for path in source.rglob("*") if path.is_file()
@@ -978,16 +992,22 @@ def stage_historical_binary_fixture(run, runtime, seal_sha256):
             "baselineSealSha256": seal_sha256, "images": images}
 
 
-def inspect_historical_binary_preparation(root, seal_sha256, *, msbuild=None):
+def inspect_historical_binary_preparation(root, seal_sha256, *, msbuild=None, retained=False):
+    """Replay retained correspondence; native authority requires the original live-captured token."""
     import conformance_evidence as evidence
 
     root = Path(root).absolute()
-    prepared = verify_prepared_baselines(root, seal_sha256)
+    prepared = (_prepared_baseline_document(root, seal_sha256) if retained
+                else verify_prepared_baselines(root, seal_sha256))
     if prepared["schemaVersion"] != 3:
         raise ConformanceError("EvidenceIncomplete")
     entry = next(row for row in prepared["entries"] if row["id"] == "f06")
-    path = "stores/f06/tests/fixtures/" + HISTORICAL_BINARY_PREPARATION
-    hashed, raw = evidence._readonly_report_proof(root, path)
+    hashed, raw = evidence._readonly_report_proof(root, HISTORICAL_BINARY_PREPARATION_PROOF)
+    if not retained:
+        original_sha, _ = evidence._readonly_report_proof(
+            root, "stores/f06/tests/fixtures/" + HISTORICAL_BINARY_PREPARATION)
+        if original_sha != hashed:
+            raise ConformanceError("ProofMismatch")
     packet = evidence._runtime_json(raw, {
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
         "mode": evidence._constant("historical-binary-preparation"),
@@ -1007,17 +1027,29 @@ def inspect_historical_binary_preparation(root, seal_sha256, *, msbuild=None):
             or packet["inputsSha256"] != inputs_sha or inputs["sources"] != entry["sources"]
             or inputs["sourceSha256"] != entry["sourceSha256"]):
         raise ConformanceError("ProofMismatch")
-    for relative in HISTORICAL_BINARY_IMAGES.values():
-        actual, _ = evidence._readonly_report_proof(root, "stores/f06/" + relative)
-        if actual != entry["binaries"][relative]:
-            raise ConformanceError("InputChanged")
-    evidence.verify_synthetic_source_mapping(root, "stores/f06.NuGet.Config", "feed/f06")
+    if not retained:
+        for relative in HISTORICAL_BINARY_IMAGES.values():
+            actual, _ = evidence._readonly_report_proof(root, "stores/f06/" + relative)
+            if actual != entry["binaries"][relative]:
+                raise ConformanceError("InputChanged")
+        evidence.verify_synthetic_source_mapping(root, "stores/f06.NuGet.Config", "feed/f06")
     expected = []
     for project in HISTORICAL_BINARY_PROJECTS:
         properties = historical_binary_build_properties(root / "stores/f06", project)
         target = root / "stores/f06" / HISTORICAL_BINARY_FIXTURE / project
         paths = historical_binary_build_inputs(project, entry["sources"])
-        physical = evidence.input_manifest(root, paths)
+        physical = {
+            HISTORICAL_BINARY_INPUTS: inputs_sha,
+            "stores/f06.NuGet.Config": hashlib.sha256(
+                evidence.synthetic_nuget_configuration(root / "feed/f06")).hexdigest(),
+            **{"stores/f06/" + path: inputs["sources"][path] for path in inputs["sources"]
+               if "stores/f06/" + path in paths},
+            **{"stores/f06/" + path: entry["binaries"][path] for path in HISTORICAL_BINARY_IMAGES.values()
+               if "stores/f06/" + path in paths},
+        }
+        if (set(physical) != set(paths)
+                or not retained and evidence.input_manifest(root, paths) != physical):
+            raise ConformanceError("ProofMismatch")
         for arguments in project_build_steps(
                 target, root / "stores/f06.NuGet.Config", properties=properties, msbuild=msbuild):
             expected.append((project, arguments, target.parent, physical))

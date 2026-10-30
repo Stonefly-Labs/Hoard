@@ -8950,6 +8950,37 @@ passes all seven tests with zero skips. Catalog/SDK and diff checks pass.
 Fresh immutable native verification is required; baseline-only case authority
 and QC-25/26 remain incomplete.
 
+The immutable `1ba70f9` run reaches actual release, then exits1 with InputChanged:
+the new preparation inspector still calls physical baseline verification after
+cleanup has correctly removed `stores`, `feed` and `cache`. Its original packet
+SHA-256 is `3923f05ffe29db030e4798216dfb533319b703194329f8574d99a2c0aca3980b`;
+elapsed361513.447843 ms, initial free scratch205323829248 bytes, no extra SDK
+prewarming. This is a replay lifecycle bug, not insufficient disk capacity.
+Preparation now writes the same readonly receipt into
+`proofs/historical-binary-preparation.json` before candidate creation.
+Live capture still checks the complete physical seal, original images/config,
+actual input hashes and executor-held receipts. Released replay verifies the
+original captured seal digest, retained source frame/receipt and exact native
+command hashes/arguments/input maps without rereading deliberately deleted
+trees. Only the original Released owner/token supplies native authority.
+The regression reproduces rejection after removing transient stores, verifies
+retained correspondence and rejects changed receipt bytes.
+
+The binary-break logical row now requires all seven physical witnesses, one
+exact F-06 baseline, its complete binary-map digest, and all four original/staged
+PE/PDB correspondences. Missing/duplicate/foreign baselines, missing PDBs,
+runtime substitutions and rehashed changed derivations reject.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes445 tests, four native-only skips, in111.326 seconds.
+The focused baseline class passes23 tests in0.596 seconds; catalog/SDK and
+diff checks pass. An earlier package-qualified two-module invocation lacked the
+documented tooling import path and failed nine imports; the corrected command
+above passes. Fresh immutable6/11 native controls remain required; expected
+diagnostic counts are142 cases,136 Passed/six Incomplete and209 witnesses.
+No deadline, cold-input condition, assertion or qualification gate changes.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

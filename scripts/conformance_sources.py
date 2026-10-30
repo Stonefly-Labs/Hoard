@@ -1988,7 +1988,8 @@ class NativeCompatibilityEvaluation:
         from conformance_sdk_checks import selected_msbuild
 
         preparation = inspect_historical_binary_preparation(
-            run.root, original["baselineSealSha256"], msbuild=selected_msbuild(inputs["environment"]))
+            run.root, original["baselineSealSha256"], msbuild=selected_msbuild(inputs["environment"]),
+            retained=True)
         if (evidence.canonical_bytes(preparation) != self.preparation_data
                 or original.get("historicalPreparation") != preparation):
             raise evidence.ConformanceError("ProofMismatch")

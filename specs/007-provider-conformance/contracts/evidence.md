@@ -1167,6 +1167,19 @@ must precede the candidate snapshot and match executor-held records, is single-u
 and is retained by the original released token. Rehashed file correspondence
 alone never supplies that authority. Six live/11 released controls remain to be
 verified on a fresh immutable source; baseline report rows stay Incomplete.
+The first such run reaches release but rejects physical baseline rereads after
+cleanup. The exact preparation receipt is now also retained under readonly
+`proofs/historical-binary-preparation.json`. Active capture continues to verify
+actual baseline/configuration/image/input bytes and held native receipts.
+Released replay instead checks the original captured seal digest and retained
+source frame/receipt against reconstructed exact command inputs and original
+command hashes; it never requires deleted transient trees. Metadata-only replay
+still cannot mint the actual Released owner/token.
+Binary-break derivation additionally requires the seven fixed physical witnesses,
+one exact F-06 baseline with complete binary-map digest, and the original/staged
+contract/consumer DLL/PDB pairs. Missing or substituted pairs reject. Host checks
+pass; fresh native6/11 execution must verify the expected136 Passed/six Incomplete,
+209-witness diagnostic report. Full compatibility qualification remains unfinished.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

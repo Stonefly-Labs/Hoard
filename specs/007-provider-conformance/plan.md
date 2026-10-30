@@ -4645,6 +4645,48 @@ command, not merely an earlier counter. After those ownership refinements,
 test_conformance_composition test_conformance_evidence.ConformanceBaselineTests`
 passes54 tests in2.511 seconds; catalog/SDK and diff checks pass.
 
+### Released historical preparation replay and binary-break linkage
+
+Immutable `1ba70f92162ef40044c1692cc166258a1f1047bd` reaches actual runtime
+capture and release, then exits1 with InputChanged in
+`conformance_baselines.py:985 -> :874`: physical baseline verification tries to
+read an F07LockPreparation receipt after cleanup correctly removes `stores`,
+`feed` and `cache`. Original packet SHA-256:
+`3923f05ffe29db030e4798216dfb533319b703194329f8574d99a2c0aca3980b`.
+Elapsed361513.447843 ms, initial free scratch205323829248 bytes; no extra SDK
+prewarming. The failed attempt is retained; disk is healthy.
+
+The repair writes an exact readonly preparation receipt under `proofs` before
+candidate creation, alongside its sealed recipe copy. Active inspection still
+verifies all physical baseline files, original images/configuration/inputs and
+executor-held records. Released inspection verifies the original captured seal
+digest, retained source frame/receipt and reconstructed exact native command
+arguments/input hashes without rereading deleted trees. Actual owner/token
+identity, original held preparation data and command hashes remain mandatory.
+The seal parser hashes the exact bounded bytes it decodes. The regression
+reproduces physical replay rejection after transient-store removal, then verifies
+retained correspondence and rejects changed readonly receipt bytes.
+
+Binary-break independently derives from the exact seven physical witnesses and
+one actual F-06 baseline, its complete binary-map digest and the four original/
+staged PE/PDB correspondences. Missing/duplicate/foreign baselines, missing PDBs,
+substituted runtime bytes and changed derivation bytes/hashes reject. The SDK
+catalog is regenerated from the canonical catalog producer. Other case proof
+bytes stay unchanged. Expected native diagnostic counts become142 cases,
+136 Passed/six Incomplete and209 witnesses, still nonqualifying.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes445 tests, four native-only skips, in111.326 seconds.
+The focused baseline class passes23 tests in0.596 seconds.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. An initial package-qualified two-module command failed
+nine imports because it omitted the documented tooling import path; the corrected
+selection above passes. Fresh immutable6 live/11 released controls remain required.
+No assertion, deadline, cold-input condition or acceptance gate is relaxed.
+T071 and T072..T086 remain open at70/86; implementation continues.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

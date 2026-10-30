@@ -29,9 +29,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
             root = Path(temporary).resolve()
             (root / "proofs").mkdir()
             fixture = ConformanceAdmissionTests()
-            inputs = fixture.inputs()
-            inputs.update(profileId="compatibility", bindings=[])
-            inputs["budgets"]["profileSeconds"] = 3600
+            inputs = fixture.compatibility_inputs()
             summary, scopes = {"architecturePreparation": {}}, {}
             for index, (scope, tests) in enumerate((
                     ("architecture", catalog.architecture_runtime_tests()),
@@ -1752,8 +1750,10 @@ def native_compatibility_preparation_tests(source, seal_sha256, msbuild, capture
             sequence, _ = source._preparation_commands[0]
             record_path = owner.root / f"proofs/execution-command-{sequence:04}.json"
             preparation_path = owner.root / "stores/f06/tests/fixtures" / baselines.HISTORICAL_BINARY_PREPARATION
+            retained_path = owner.root / baselines.HISTORICAL_BINARY_PREPARATION_PROOF
             seal_path = owner.root / "proofs/baselines.json"
-            originals = {path: path.read_bytes() for path in (record_path, preparation_path, seal_path)}
+            originals = {path: path.read_bytes()
+                         for path in (record_path, preparation_path, retained_path, seal_path)}
             try:
                 record = originals[record_path] + b"\n"
                 packet = evidence.load_json(originals[preparation_path])
@@ -1764,6 +1764,7 @@ def native_compatibility_preparation_tests(source, seal_sha256, msbuild, capture
                 entry["recipes"][baselines.HISTORICAL_BINARY_PREPARATION] = hashlib.sha256(preparation).hexdigest()
                 entry["recipeSha256"] = evidence.digest(entry["recipes"])
                 for path, raw in ((record_path, record), (preparation_path, preparation),
+                                  (retained_path, preparation),
                                   (seal_path, evidence.canonical_bytes(manifest))):
                     path.chmod(0o600)
                     path.write_bytes(raw)
@@ -1858,7 +1859,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.assertEqual(
                 (observed["architectureParameters"], observed["versionParameters"], observed["binaryParameters"]),
                 (88, 114, 7))
-            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (135, 7))
+            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (136, 6))
 
         def test_copied_evaluation_cannot_replace_original_identity(self):
             with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
@@ -1905,8 +1906,8 @@ def native_compatibility_origin_tests(evaluation, *, released):
             import conformance_baselines as baselines
 
             self.mutate_and_restore(
-                owner.root / "stores/f06/tests/fixtures" / baselines.HISTORICAL_BINARY_PREPARATION,
-                "InputChanged")
+                owner.root / baselines.HISTORICAL_BINARY_PREPARATION_PROOF,
+                "ProofMismatch")
             sequence = evidence.load_json(evaluation.preparation_data)["commands"][0]["sequence"]
             self.mutate_and_restore(owner.root / f"proofs/execution-command-{sequence:04}.json", "ProofMismatch")
 
@@ -1926,7 +1927,8 @@ def native_compatibility_origin_tests(evaluation, *, released):
             path = owner.root / "proofs/compatibility-runtime-released-report.json"
             raw = path.read_bytes()
             report = evidence.load_json(raw)
-            for defect in ("missing-case", "optimistic", "resources", "derivation", "quality-derivation"):
+            for defect in ("missing-case", "optimistic", "resources", "derivation", "quality-derivation",
+                           "binary-derivation"):
                 changed = evidence.load_json(raw)
                 if defect == "missing-case":
                     changed["results"].pop(0)
@@ -1935,7 +1937,8 @@ def native_compatibility_origin_tests(evaluation, *, released):
                 elif defect == "resources":
                     changed["resources"] = []
                 else:
-                    prefix = ("proofs/compatibility-QC-22-" if defect == "quality-derivation"
+                    prefix = ("proofs/compatibility-QC-22-" if defect == "quality-derivation" else
+                              "proofs/compatibility-COMPATIBILITY-binary-break-" if defect == "binary-derivation"
                               else "proofs/compatibility-VERSION-")
                     name = next(name for name in changed["proofs"] if name.startswith(prefix))
                     changed["proofs"][name] = "0" * 64
@@ -1952,6 +1955,9 @@ def native_compatibility_origin_tests(evaluation, *, released):
             name = next(name for name in report["proofs"] if name.startswith("proofs/compatibility-VERSION-"))
             self.mutate_and_restore(owner.root / name, "ProofMismatch")
             name = next(name for name in report["proofs"] if name.startswith("proofs/compatibility-QC-22-"))
+            self.mutate_and_restore(owner.root / name, "ProofMismatch")
+            name = next(name for name in report["proofs"]
+                        if name.startswith("proofs/compatibility-COMPATIBILITY-binary-break-"))
             self.mutate_and_restore(owner.root / name, "ProofMismatch")
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCompatibilityOriginTests)

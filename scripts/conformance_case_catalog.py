@@ -1353,6 +1353,8 @@ def architecture_witnesses(rule, mode):
 
 def compatibility_witnesses(proof):
     prefix = "Hoard.Architecture.Tests."
+    if proof == "binary-break":
+        return tuple(binary_runtime_tests())
     if proof == "identity-paths":
         return (
             prefix + "ArchitectureRuleTests.Identity_can_use_approved_hosting_with_its_transitive_core_dependency",
@@ -1371,7 +1373,7 @@ def compatibility_witnesses(proof):
             + f'(failure: "{failure}")' for failure in (
                 "assembly", "assets", "references", "ownership", "duplicate", "slices", "unresolved", "empty")
         )
-    if proof not in ("source", "binary", "source-break", "binary-break", "predecessor-binaries"):
+    if proof not in ("source", "binary", "source-break", "predecessor-binaries"):
         raise ConformanceError("WitnessMissing")
     return ()
 
