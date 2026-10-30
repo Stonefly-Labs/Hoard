@@ -33,8 +33,27 @@ precedence, no launch after expiry, rejection at suite expiry and independently
 resealed over-budget proof rejection. Existing mutation/failure controls are
 unchanged. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
 test_conformance_inherited test_conformance_execution test_conformance_composition`
-passes134 tests in8.126 seconds with23 native-only skips. Fresh exact-source
-hosted composition/tooling results are pending; no T071..T086 task is closed.
+passes134 tests in8.126 seconds with23 native-only skips.
+
+At exact `115a5077fdb6eec8483e4ca8606fe8c12eee2af8`,
+[composition run41073808029/job124124516211](https://github.com/Stonefly-Labs/Hoard/actions/runs/41073808029/job/124124516211)
+passes:36 CP parameters/110 snapshots,525 inherited parameters/58 scopes,
+all844 tooling tests and actual process-resource release. Qualification and
+profileComplete remain false. In
+[foundations run41073808138](https://github.com/Stonefly-Labs/Hoard/actions/runs/41073808138),
+job124125423740 independently passes844 tooling tests with zero failures/errors/
+skips/expected failures/unexpected successes/unexpected diagnostic bytes. Its
+tooling step runs14:43:03Z..14:59:30Z (987 seconds), confirming that the old
+15-minute job cap was also too short. Metadata extraction, artifact extraction,
+lock replay and unchanged-source/retained-binary compatibility jobs pass.
+The overall workflow nevertheless fails its separate SDK diagnostic
+job124125423904: scenario53 `original-metadata-sqlite`, test
+`Hoard.Metadata.Tests.MetadataHostIntegrationTests.MP46_Configured_selection_uses_existing_lifecycle_and_has_no_routes_or_fallback`,
+observed `UnknownDiagnostic`/exit1,62 Passed/one Failed witnesses, one mismatched
+identity (`de4ffea886e8ddaa97de9d66a4ba5a11d13cc77e160072a39c4d20810b10795e`).
+That failure is not a tooling timeout; it remains unresolved and is not relabeled
+success or automatically retried. The requested timeout correction is verified;
+no T071..T086 task is closed and no full qualification is claimed.
 Quickstart/provider/host examples and product/architecture/ADR/diagrams remain
 unaffected because invocation, provider graph and product behavior are unchanged.
 

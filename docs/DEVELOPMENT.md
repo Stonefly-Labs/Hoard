@@ -9786,7 +9786,15 @@ The standalone hosted tooling job allows35 minutes including overhead, replacing
 its15-minute cap. The new focused regression accepts a complete736-second suite
 and still rejects expired suite/profile budgets and resealed over-budget proofs.
 The inherited/execution/composition selector passes134 tests with23 native-only
-skips; fresh exact-source hosted acceptance remains pending. See the
+skips. Exact `115a507` hosted composition run41073808029 succeeds with all844
+tooling tests,36 CP parameters/110 snapshots,525 inherited parameters/58 scopes
+and actual process-resource release. Foundations run41073808138 separately
+passes844 tooling tests with zero skips/failures/errors/unexpected output;
+the tooling step takes987 seconds, beyond the former15-minute CI job cap.
+The timeout correction is verified, but the overall foundations workflow fails
+its separate SDK `original-metadata-sqlite` MP46 host-integration test
+(62 Passed/one Failed witnesses, `UnknownDiagnostic`/exit1). That unresolved
+failure is not a tooling timeout or qualifying acceptance. See the
 [current checkpoint](../specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,

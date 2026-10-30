@@ -37,7 +37,10 @@ dependency management into another full-time job.
 **Current F-07 acceptance checkpoint:** the maintainer-authorized timeout
 correction separates the complete Python tooling suite's 30-minute budget
 from individual test-child commands' unchanged ten-minute limit. The suite
-still cannot exceed its remaining profile time; fresh hosted retesting is pending.
+still cannot exceed its remaining profile time. At `115a507`, hosted composition
+passes with all 844 tooling tests and actual resource release; standalone tooling
+also passes all 844 tests with zero skips in 16m27s. A separate SDK diagnostic
+fails a SQLite metadata-host integration test, so the overall workflow is not green.
 Internal evaluator/receipt work is preserved, but public commands remain
 nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
