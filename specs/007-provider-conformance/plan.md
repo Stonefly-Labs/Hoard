@@ -5432,6 +5432,25 @@ tests, zero failures/errors/skips/unexpected bytes,484149.1196739953ms; it grant
 native authority. The first globally instrumented run has21 synthetic result/clock
 failures in430946.4084880019ms and is retained as invalid acceptance instrumentation.
 
+The recursive proof walk has a second deterministic head-of-line barrier: it
+drains every pending read at every directory exit. Extending the existing
+slow-first/fifth-read test to one file per directory reproduces ProofMismatch;
+the first directory cannot admit the fifth file despite idle reader slots.
+The walk now keeps the same four global slots across directories and drains
+after traversal. Each selected directory's original stat snapshot is retained
+and revalidated through root-anchored no-follow parent traversal after all file
+reads; immediate checks also remain. Descriptor ownership is unchanged and
+deferred metadata is bounded by the existing entry limit.
+
+The same actual-file regression also replaces the first parent with an outside
+symlink after traversal: late directory validation rejects while the original
+parent descriptor cannot redirect the read, and the outside sentinel remains
+untouched. Flat/nested positives retain all eight exact hashes and at most four
+readers. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceInputTests test_conformance_sdk_checks test_conformance_cli test_conformance_ci`
+passes224 tests in33.734 seconds; diff check passes. No selected closure, byte/
+count/depth/entry/file guard, cleanup rule or five-second/256MiB bound changes.
+Fresh actual native/CI timing remains required; no earlier rejection is relabeled.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

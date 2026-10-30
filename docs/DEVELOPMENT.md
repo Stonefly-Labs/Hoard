@@ -9494,6 +9494,27 @@ authority or profile qualification. The first global timing instrumentation
 caused21 nested synthetic-result/clock failures and is preserved as an invalid
 acceptance attempt, not relabeled.
 
+The remaining reader scheduling barrier is reproduced across directories: the
+old recursive walk drains all pending work at every directory exit, so one
+slow file prevents admission in the next directory despite idle worker slots.
+The shared pending set now drains once after traversal; four slots are still
+refilled on any completion. Each selected directory retains its original stat
+snapshot and is revalidated through a root-anchored no-follow parent walk after
+all reads. Immediate open/traversal checks remain as well. This preserves or
+strengthens the original directory checks without retaining unbounded open
+descriptors: workers keep only their existing duplicated parents, while delayed
+checks are bounded by the unchanged entry limit.
+
+The existing actual-file regression now covers flat and one-file-per-directory
+layouts plus replacement of the first parent with an outside symlink after
+traversal. The old directory drain cannot reach the fifth read; the repair
+hashes all eight files with at most four readers, rejects the late replacement
+and leaves the outside sentinel untouched.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceInputTests test_conformance_sdk_checks test_conformance_cli test_conformance_ci`
+passes224 tests in33.734 seconds; diff check passes. Full selection, file guards,
+counts/bytes/depth/entry limits, cleanup and five-second/256MiB bounds remain.
+This is not yet a fresh GitHub proof-deadline acceptance claim.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

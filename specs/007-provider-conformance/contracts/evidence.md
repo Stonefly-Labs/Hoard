@@ -1364,6 +1364,13 @@ input/window/proof correspondence and rejecting absent/failed/retried/retimed
 bases.253 focused checks pass; fresh142-Passed native acceptance is required.
 Even zero incomplete logical cases cannot override diagnostic mode or unmet
 full-profile obligations.
+Proof reads now refill across directory boundaries rather than draining at
+every recursive exit. After all reads, original selected directory inode/mode/
+size/mtime snapshots are revalidated through no-follow root-anchored traversal;
+immediate checks remain. Nested starvation and late outside-parent replacement
+controls pass with all hashes/four readers,224 focused checks total. All original
+selection/byte/count/depth/entry/cleanup/five-second/256MiB guards remain; fresh
+native/CI timing still decides acceptance.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

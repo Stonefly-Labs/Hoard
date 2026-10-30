@@ -1690,6 +1690,7 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
     stopped = threading.Event()
     pending = []
     parent_descriptors = set()
+    directory_checks = []
 
     def read_file(parent, name, relative, before):
         nonlocal bytes_read, read_elapsed_ms
@@ -1772,6 +1773,7 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
                             visit(child, pool, relative + "/", depth + 1)
                         finally:
                             os.close(child)
+                        directory_checks.append((relative, before))
                 elif stat.S_ISREG(before.st_mode) and (include_file is None or include_file(relative)):
                     if selected_files >= MAX_PROOF_FILES or reserved_bytes + before.st_size > MAX_PROOF_BYTES:
                         raise ConformanceError("ProofMismatch")
@@ -1794,8 +1796,6 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
                 if ((after.st_dev, after.st_ino, after.st_mode, after.st_size, after.st_mtime_ns)
                         != (before.st_dev, before.st_ino, before.st_mode, before.st_size, before.st_mtime_ns)):
                     raise ConformanceError("ProofMismatch")
-        while pending:
-            drain()
     try:
         pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="hoard-proof")
         try:
@@ -1804,6 +1804,16 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
             try:
                 original = os.fstat(root)
                 visit(root, pool)
+                while pending:
+                    drain()
+                for relative, before in directory_checks:
+                    if time.monotonic() >= deadline:
+                        raise ConformanceError("ProofMismatch")
+                    with _input_parent(root, relative) as (parent, name):
+                        after = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                    if ((after.st_dev, after.st_ino, after.st_mode, after.st_size, after.st_mtime_ns)
+                            != (before.st_dev, before.st_ino, before.st_mode, before.st_size, before.st_mtime_ns)):
+                        raise ConformanceError("ProofMismatch")
                 no_symlinks(directory)
                 final = directory.stat()
                 if ((final.st_dev, final.st_ino) != (original.st_dev, original.st_ino)

@@ -2149,57 +2149,75 @@ class ConformanceInputTests(unittest.TestCase):
     def test_proof_reader_refills_completed_slots_before_the_oldest_read_finishes(self):
         import threading
 
-        actual = self.parent / "slow-first-proofs"
-        actual.mkdir()
-        for index in range(8):
-            (actual / f"proof-{index}.json").write_bytes(("actual proof " + str(index)).encode())
-        expected = {path.name: evidence.file_sha256(path) for path in actual.iterdir()}
         original_fdopen = os.fdopen
         original_submit = evidence.ThreadPoolExecutor.submit
-        fifth_read, lock = threading.Event(), threading.Lock()
-        admissions = active = peak = 0
-        first_inode = fifth_inode = None
+        for layout in ("flat", "nested", "replaced-parent"):
+            actual = self.parent / ("slow-first-" + layout)
+            actual.mkdir()
+            for index in range(8):
+                parent = actual if layout == "flat" else actual / f"directory-{index}"
+                parent.mkdir(exist_ok=True)
+                (parent / f"proof-{index}.json").write_bytes(("actual proof " + str(index)).encode())
+            expected = {path.relative_to(actual).as_posix(): evidence.file_sha256(path)
+                        for path in actual.rglob("*.json")}
+            outside = self.parent / ("outside-" + layout)
+            outside.mkdir()
+            sentinel = outside / "sentinel"
+            sentinel.write_bytes(b"untouched outside bytes")
+            fifth_read, lock = threading.Event(), threading.Lock()
+            admissions = active = peak = 0
+            first_inode = fifth_inode = first_relative = None
 
-        def submit(pool, function, *args, **kwargs):
-            nonlocal admissions, first_inode, fifth_inode
-            admissions += 1
-            if admissions == 1:
-                first_inode = args[-1].st_ino
-            elif admissions == 5:
-                fifth_inode = args[-1].st_ino
-            return original_submit(pool, function, *args, **kwargs)
+            def submit(pool, function, *args, **kwargs):
+                nonlocal admissions, first_inode, fifth_inode, first_relative
+                admissions += 1
+                if admissions == 1:
+                    first_inode, first_relative = args[-1].st_ino, args[-2]
+                elif admissions == 5:
+                    fifth_inode = args[-1].st_ino
+                return original_submit(pool, function, *args, **kwargs)
 
-        def fdopen(*args, **kwargs):
-            source = original_fdopen(*args, **kwargs)
-            original_read = source.read
-            inode = os.fstat(source.fileno()).st_ino
+            def fdopen(*args, **kwargs):
+                source = original_fdopen(*args, **kwargs)
+                original_read = source.read
+                inode = os.fstat(source.fileno()).st_ino
 
-            def read(size):
-                nonlocal active, peak
-                with lock:
-                    active += 1
-                    peak = max(peak, active)
-                try:
-                    if inode == fifth_inode:
-                        fifth_read.set()
-                    if inode == first_inode and not fifth_read.wait(1):
-                        raise OSError("Completed proof readers were not refilled")
-                    return original_read(size)
-                finally:
+                def read(size):
+                    nonlocal active, peak
                     with lock:
-                        active -= 1
+                        active += 1
+                        peak = max(peak, active)
+                    try:
+                        if inode == fifth_inode and not fifth_read.is_set():
+                            if layout == "replaced-parent":
+                                parent = (actual / first_relative).parent
+                                parent.rename(actual / "moved-first-parent")
+                                parent.symlink_to(outside, target_is_directory=True)
+                            fifth_read.set()
+                        if inode == first_inode and not fifth_read.wait(1):
+                            raise OSError("Completed proof readers were not refilled")
+                        return original_read(size)
+                    finally:
+                        with lock:
+                            active -= 1
 
-            source.read = read
-            return source
+                source.read = read
+                return source
 
-        with mock.patch.object(evidence.os, "fdopen", side_effect=fdopen), mock.patch.object(
-                evidence.ThreadPoolExecutor, "submit", new=submit):
-            observed = evidence.proof_manifest(actual)
-        self.assertTrue(fifth_read.is_set())
-        self.assertEqual(observed, expected)
-        self.assertEqual(admissions, 8)
-        self.assertLessEqual(peak, 4)
-        self.assertEqual(active, 0)
+            with self.subTest(layout=layout), mock.patch.object(
+                    evidence.os, "fdopen", side_effect=fdopen), mock.patch.object(
+                    evidence.ThreadPoolExecutor, "submit", new=submit):
+                if layout == "replaced-parent":
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                        evidence.proof_manifest(actual)
+                else:
+                    self.assertEqual(evidence.proof_manifest(actual), expected)
+                self.assertTrue(fifth_read.is_set())
+                if layout != "replaced-parent":
+                    self.assertEqual(admissions, 8)
+                self.assertLessEqual(peak, 4)
+                self.assertEqual(active, 0)
+                self.assertEqual(sentinel.read_bytes(), b"untouched outside bytes")
 
     def test_proof_reader_submission_failure_releases_admitted_directory_descriptors(self):
         actual = self.parent / "unavailable-reader-proofs"

@@ -1195,6 +1195,11 @@ binary scope:142 cases,141 Passed/one Incomplete,212 witnesses. Its full host su
 passes831 tests,31 native skips. QC-25 now derives independently from the complete
 physical source/binary/predecessor/break bases;253 focused checks pass. Fresh
 142-Passed native acceptance is required; diagnostic mode still cannot qualify.
+The next proof-reader repair keeps the same four slots filled across directory
+boundaries, deferring no-follow directory identity checks until all reads finish.
+Nested slow-first and replaced-parent controls reproduce the old barrier;224
+focused checks pass. Full inventory/five-second/256MiB guards remain unchanged,
+and fresh native/CI timing remains required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

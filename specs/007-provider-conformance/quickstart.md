@@ -1394,6 +1394,11 @@ and141 Passed/one Incomplete/212 witnesses. Full host tooling passes831 tests,
 break bases;253 focused tests pass. Fresh142-Passed native acceptance remains
 required, and diagnostic mode still cannot qualify. New CI full native830 passes,
 but independent environment-probe/proof-deadline failures remain unresolved.
+The next reader repair removes reproduced directory-exit slot starvation,
+retaining four readers and checking every original selected directory through
+no-follow traversal after all reads.224 focused checks pass, including late
+outside-parent replacement rejection. No inventory/budget is relaxed; fresh
+native/CI timing remains required.
 
 ## Offline Correspondence Inspection
 
