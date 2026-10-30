@@ -1110,6 +1110,37 @@ this work, not a repository directory or broad shared temp root. Run full
 acceptance serially unless each run has its own immutable input snapshot and
 independent stores/caches. Do not edit shared tooling during acceptance.
 
+## Native Generated-Report Controls
+
+The test-only entry point used by metadata/artifact category CI creates a real
+native run and challenges its original live executor, original released
+evaluation and retained generated report:
+
+```bash
+PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_evidence.py \
+  --native-category-controls --profile metadata \
+  --evidence "$HOARD_PRIVATE_PARENT/metadata-controls"
+PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_evidence.py \
+  --native-category-controls --profile artifacts \
+  --evidence "$HOARD_PRIVATE_PARENT/artifact-controls"
+```
+
+Use the supported native Linux environment and all ordinary profile
+prerequisites, including at least24 GiB free scratch and genuine history.
+Both roots must be absent under an existing owner-private physical directory.
+Keep this checkout immutable throughout execution and run profiles serially.
+No custom binding, focused mode, offline report or modeled owner substitutes
+for this command. Ordinary unittest discovery remains independent of retained
+packets. Failures, skips, missing callbacks, unexpected text and output floods
+reject with closed diagnostics; retained evidence must not be deleted to hide
+an unsuccessful attempt.
+
+The final closed control-count packet is emitted only after all three control
+stages pass. Even then the current category report remains `Incomplete`,
+`qualification: false`, exit2, not a five-profile qualification or independent
+runtime-origin verifier. Host orchestration regressions pass; genuine Linux
+execution of these newly connected controls remains required.
+
 ## Offline Correspondence Inspection
 
 The current offline routes inspect existing complete retained ledgers without

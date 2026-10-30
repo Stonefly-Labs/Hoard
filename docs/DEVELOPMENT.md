@@ -8553,6 +8553,30 @@ observes664/788 tooling tests in601817.908 ms, zero failures/errors/skips/
 diagnostic bytes, and remains incomplete against the unchanged600-second
 ceiling. The source-pinned combined-build native replay remains required.
 
+The immutable local Linux/aarch64 replay at `0e6af49` now completes its
+diagnostic:228 observations in622541.328 ms, zero failures/errors/skips/
+diagnostic bytes, and `EvidenceIncomplete` against the unchanged600-second
+boundary. Its initial free scratch is200545800192 bytes; disk capacity is not
+the current blocker. The original unsuccessful packets remain unchanged.
+
+Metadata/artifact category CI now invokes the explicit test-only
+`--native-category-controls` mode documented in the
+[quickstart](../specs/007-provider-conformance/quickstart.md#native-generated-report-controls).
+It runs the existing mutation factories against the original live executor,
+then its actual released evaluation token, then the retained generated report.
+Ordinary foundational discovery does not acquire an external-packet dependency.
+Skipped, incomplete, failed, unexpectedly successful, noisy or flooded controls
+reject; private exceptions are not reflected. Missing callbacks cannot masquerade
+as success, and a failed underlying CLI remains failed. Successful controls
+still leave the category explicitly nonqualifying, exit2.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation` passes240 tests in101.217 seconds with four explicit
+native-only skips. Catalog/SDK and diff checks pass. These host regressions
+verify orchestration and rejection, not genuine Linux mutation execution;
+that execution and the remaining T068/T077 obligations are still required.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

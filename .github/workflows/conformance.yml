@@ -196,7 +196,8 @@ jobs:
           private_parent="$(dirname "$GITHUB_WORKSPACE")/category-extraction-${CONFORMANCE_CATEGORY}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -m 700 "$private_parent"
           status=0
-          bash scripts/validate-conformance.sh \
+          PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_evidence.py \
+            --native-category-controls \
             --profile "$CONFORMANCE_CATEGORY" --evidence "$private_parent/run" || status=$?
           test "$status" -eq 2
           python3 - "$private_parent/run" "$CONFORMANCE_CATEGORY" <<'PY'

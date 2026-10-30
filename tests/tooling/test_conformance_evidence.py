@@ -2,6 +2,7 @@ import base64
 import contextlib
 import copy
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -8880,6 +8881,82 @@ class _RetainedNativeCategoryStructureControls:
                 self.assertEqual(sentinel.read_bytes(), b"untouched")
 
 
+class NativeCategoryControlRunnerTests(unittest.TestCase):
+    def test_explicit_native_control_cli_does_not_reflect_unavailable_private_paths(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            missing = Path(temporary).resolve() / "private-control-canary" / "missing.json"
+            observed = subprocess.run(
+                [sys.executable, str(Path(__file__)), "--native-category-controls", "--verify", str(missing)],
+                cwd=ROOT, capture_output=True, timeout=30)
+            self.assertEqual(observed.returncode, 2)
+            self.assertEqual(observed.stderr, b"")
+            self.assertNotIn(b"private-control-canary", observed.stdout)
+            packet = evidence.load_json(observed.stdout)
+            self.assertFalse(packet["qualification"])
+            self.assertEqual(packet["code"], "PrerequisiteMissing")
+
+    def test_native_control_suite_requires_complete_quiet_success(self):
+        run = globals().get("_run_native_control_suite")
+        self.assertTrue(callable(run), "Native control suites need fail-closed bounded execution.")
+        for defect, code in ((None, None), ("empty", "EvidenceIncomplete"), ("skipped", "EvidenceIncomplete"),
+                             ("failed", "AssertionFailed"), ("expected-failure", "EvidenceIncomplete"),
+                             ("unexpected-success", "AssertionFailed"), ("diagnostic", "UnknownDiagnostic"),
+                             ("flood", "OutputLimitExceeded")):
+            class Control(unittest.TestCase):
+                def runTest(self):
+                    if defect == "skipped":
+                        self.skipTest("PrerequisiteMissing")
+                    elif defect in ("failed", "expected-failure"):
+                        self.fail("private-control-canary")
+                    elif defect == "diagnostic":
+                        print("private-control-canary")
+                    elif defect == "flood":
+                        print("private-control-canary" * 65536)
+
+            if defect in ("expected-failure", "unexpected-success"):
+                Control.runTest = unittest.expectedFailure(Control.runTest)
+            factory = lambda: unittest.TestSuite([] if defect == "empty" else [Control()])
+            with self.subTest(defect=defect), contextlib.redirect_stdout(io.StringIO()) as output:
+                if code is None:
+                    self.assertEqual(run(factory), 1)
+                else:
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$"):
+                        run(factory)
+                self.assertNotIn("private-control-canary", output.getvalue())
+
+    def test_native_control_runner_rejects_non_native_and_partial_scopes_before_execution(self):
+        run = globals().get("run_native_category_controls")
+        self.assertTrue(callable(run), "Native control execution needs one explicit local/CI entry point.")
+        from dataclasses import replace
+        invocation = evidence.ConformanceInvocation(
+            "run", ROOT, "qualification", ("metadata",), evidence=ROOT.parent / "unused-native-controls")
+        for field in ("mode", "profile", "action", "binding", "platform"):
+            changed = {"mode": "diagnostic"} if field == "mode" else (
+                {"profiles": ("harness",)} if field == "profile" else (
+                    {"action": "verify"} if field == "action" else (
+                        {"binding_project": ROOT / "Adapter.csproj"} if field == "binding" else {})))
+            with self.subTest(field=field), mock.patch.object(
+                    evidence, "admit_invocation", return_value=replace(invocation, **changed)), mock.patch(
+                    "conformance_execution.native_execution_supported", return_value=field != "platform"), mock.patch(
+                    "conformance_cli.main") as execute, self.assertRaises(evidence.ConformanceError):
+                run([])
+            execute.assert_not_called()
+
+    def test_native_control_runner_cannot_pass_without_actual_callbacks_or_hide_cli_failure(self):
+        run = globals().get("run_native_category_controls")
+        self.assertTrue(callable(run))
+        invocation = evidence.ConformanceInvocation(
+            "run", ROOT, "qualification", ("metadata",), evidence=ROOT.parent / "unused-native-controls")
+        with mock.patch.object(evidence, "admit_invocation", return_value=invocation), mock.patch(
+                "conformance_execution.native_execution_supported", return_value=True), mock.patch(
+                "conformance_cli.main", return_value=2) as execute:
+            with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                run([])
+            execute.assert_called_once_with([])
+            execute.return_value = 1
+            self.assertEqual(run([]), 1)
+
+
 def retained_native_category_structure_tests():
     """Explicit packet replay; foundational discovery needs no external fixture."""
     @unittest.skipUnless(os.environ.get("HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT"), "PrerequisiteMissing")
@@ -9054,5 +9131,97 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 
 
+def _run_native_control_suite(factory):
+    from conformance_unit_checks import DiagnosticBoundary, SafeResult, failed_tests
+
+    diagnostics = DiagnosticBoundary()
+    with contextlib.redirect_stdout(diagnostics), contextlib.redirect_stderr(diagnostics):
+        suite = factory()
+        expected = [test.id() for test in suite]
+        if not 0 < len(expected) <= 128:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        result = SafeResult()
+        suite.run(result)
+    code = ("OutputLimitExceeded" if diagnostics.bytes > 1024 * 1024 else
+            "UnknownDiagnostic" if diagnostics.bytes else
+            "AssertionFailed" if result.failures or result.errors or result.unexpectedSuccesses else
+            "EvidenceIncomplete" if result.skipped or result.expectedFailures
+            or result.observed_tests != expected else "None")
+    if code != "None":
+        print(evidence.canonical_bytes({
+            "qualification": False, "scope": "native-category-control-diagnostic", "code": code,
+            "tests": result.testsRun, "skipped": len(result.skipped),
+            "unexpectedDiagnosticBytes": diagnostics.bytes, "failedTests": failed_tests(result)}).decode("ascii"))
+        raise evidence.ConformanceError(code)
+    return result.testsRun
+
+
+def run_native_category_controls(arguments):
+    import conformance_cli
+    import conformance_sdk_checks as checks
+    from conformance_execution import native_execution_supported
+    from conformance_sources import read_bounded
+
+    invocation = evidence.admit_invocation(ROOT, arguments)
+    if (invocation.action != "run" or invocation.mode != "qualification"
+            or invocation.profiles not in (("metadata",), ("artifacts",))
+            or invocation.binding_project is not None):
+        raise evidence.ConformanceError("UnsupportedProfile")
+    if not native_execution_supported():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    profile, = invocation.profiles
+    counts = {"liveOriginTests": 0, "settlementOriginTests": 0, "retainedReportTests": 0}
+    original_replay = evidence.CategoryRuntimeHistory.replay_joint
+    original_report = checks._category_report
+
+    def replay(history, *, plan, transports):
+        if counts["liveOriginTests"] or history._inputs["profileId"] != profile:
+            raise evidence.ConformanceError("ProofMismatch")
+        projection = original_replay(history, plan=plan, transports=transports)
+        with mock.patch.object(evidence.CategoryRuntimeHistory, "replay_joint", original_replay):
+            counts["liveOriginTests"] = _run_native_control_suite(
+                lambda: live_native_category_replay_tests(history, plan=plan, transports=transports))
+        return projection
+
+    def publish(run, inputs, post_inputs, summary, *, resources=(), native_evaluation=None):
+        if (counts["settlementOriginTests"] or run.root != invocation.evidence
+                or inputs["profileId"] != profile):
+            raise evidence.ConformanceError("ProofMismatch")
+        result = original_report(
+            run, inputs, post_inputs, summary, resources=resources, native_evaluation=native_evaluation)
+        record = evidence.load_json(read_bounded(
+            run.root / f"proofs/category-{profile}-qualification-history.json", evidence.MAX_REPORT_BYTES))
+        counts["settlementOriginTests"] = _run_native_control_suite(
+            lambda: released_native_category_evaluation_tests(
+                native_evaluation, inputs=inputs, record=record, summary=summary, resources=resources))
+        with mock.patch.dict(os.environ, {"HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT": str(run.root)}):
+            counts["retainedReportTests"] = _run_native_control_suite(retained_native_category_structure_tests)
+        return result
+
+    with mock.patch.object(evidence.CategoryRuntimeHistory, "replay_joint", replay), mock.patch.object(
+            checks, "_category_report", publish):
+        status = conformance_cli.main(arguments)
+    if type(status) is not int or status not in (0, 1, 2):
+        raise evidence.ConformanceError("CommandFailed")
+    if status == 1:
+        return status
+    if not all(counts.values()):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    print(evidence.canonical_bytes({
+        "qualification": False, "scope": "native-category-control-diagnostic", "profileId": profile,
+        "code": "None", **counts}).decode("ascii"))
+    return status
+
+
 if __name__ == "__main__":
-    unittest.main()
+    if sys.argv[1:2] == ["--native-category-controls"]:
+        try:
+            status = run_native_category_controls(sys.argv[2:])
+        except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
+            code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
+            status = 1 if evidence.failure_status(code) == "Failed" else 2
+            print(evidence.canonical_bytes({
+                "qualification": False, "scope": "native-category-control-diagnostic", "code": code}).decode("ascii"))
+        raise SystemExit(status)
+    else:
+        unittest.main()

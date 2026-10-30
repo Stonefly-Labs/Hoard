@@ -3948,6 +3948,54 @@ README and DEVELOPMENT are affected; provider/product/example/architecture/
 ADR/diagram/governance/backlog/predecessor/IaC/release/UI guides are unaffected
 by this private process-startup optimization. T068--T086 remain open.
 
+### Explicit genuine native report-control execution
+
+The completed immutable `0e6af49` Linux/aarch64 timing diagnostic observes228
+tooling tests in622541.328 ms, zero failures/errors/skips/diagnostic bytes, and
+`EvidenceIncomplete` at the unchanged600-second boundary. It begins with
+200545800192 free scratch bytes and no extra SDK prewarming. Its original
+packet SHA-256 is
+`421540a80bdcf74cc4c5aa638de77629f9402fb46395d18e307498363181fd19`;
+its separate timing packet SHA-256 is
+`a0b2e857316f14d3c0806e6ae1305c3fdce90e331e9255df8885d7d47ef236a2`.
+Neither packet replaces earlier unsuccessful observations or establishes a
+native full-tooling pass. Disk capacity is not the current blocker.
+
+Existing genuine-category mutation factories were not connected to actual
+category execution. A new explicit test-only `--native-category-controls`
+entry point now wraps the original replay and report publication: it runs
+live-origin challenges while the original owner is Active, released-origin
+challenges against the original evaluation token after settlement, and
+retained-report challenges against that same actual report/root. Original
+replay is temporarily restored during live controls to prevent recursion.
+Missing/duplicate/foreign callbacks, partial scopes, nonnative execution,
+empty/incomplete/skipped/expected-failure/unexpected-success controls, noise
+and output floods fail closed. Underlying CLI failure is not masked.
+Only bounded sanitized failure locations/counts reach presentation.
+
+Category CI uses this same command and still requires the expected
+nonqualifying exit2 and independent report/root/proof checks. Default
+foundational discovery remains independent of external packets. No production
+library imports tests, report qualification is not promoted, and no ownership,
+proof or scheduling limit changes.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation` passes240 tests in101.217 seconds with four explicit
+native-only skips. Catalog/SDK and diff checks pass. A missing-private-path
+subprocess control first exposes an uncaught filesystem exception; the explicit
+test-only CLI now uses the existing closed exception boundary and suppresses
+private paths. These are orchestration regressions, not execution of the
+genuine Linux control suites. That execution and remaining T068/T077 work
+remain open; implement/running and all task/checklist markers are unchanged.
+
+README, DEVELOPMENT, quickstart and the provider-conformance example are
+affected. PROVIDERS and CustomHost are unaffected because provider APIs and
+contributor invocation/recovery are unchanged. Product/architecture/ADR/
+diagrams/governance/backlog/predecessor/IaC/release/UI guides are unaffected
+because this connects test-only category controls without changing those
+contracts or operational surfaces.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

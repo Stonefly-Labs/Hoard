@@ -966,6 +966,11 @@ build/pack in one MSBuild process, retaining original restore properties,
 fresh import evaluation, private inputs and captured-compiler boundaries.
 Managed DLL/PDB/archive equivalence and both contributor runtimes pass;
 native full-tooling deadline acceptance remains unverified.
+Native metadata/artifact diagnostics now explicitly run live-origin,
+settled-origin and retained-report mutation controls through the same local/CI
+test-only entry point. Its orchestration regressions pass; actual Linux control
+execution remains required and does not promote these reports to qualification.
+See [native report controls](specs/007-provider-conformance/quickstart.md#native-generated-report-controls).
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

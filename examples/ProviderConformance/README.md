@@ -250,6 +250,13 @@ inspection; do not reconstruct an owner, trust a bare PID, kill by process name,
 follow a substituted path or delete a retained root. Missing/foreign/reused
 process identity or unverifiable descendants must remain incomplete.
 
+The separate [native generated-report controls](../../specs/007-provider-conformance/quickstart.md#native-generated-report-controls)
+exercise the standard metadata/artifact executors before and after actual
+settlement, plus their retained reports, through the same explicit test-only
+command as category CI. They do not accept contributor bindings or qualify a
+provider. Their host orchestration regressions pass; newly connected genuine
+Linux control execution remains required.
+
 For actual overlapping contributors, keep the restored adapter unchanged and
 use different roots. The duplicate path must fail without disturbing either
 valid owner or an outside sentinel. The final command explicitly rejects an
