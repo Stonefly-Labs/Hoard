@@ -1195,6 +1195,11 @@ frozen metadata runtime so schema3's complete dependency map and actual runtime
 image set agree. Original symbols remain readonly and hash-bound; substitutions
 reject. This adds no unselected symbol scope and relaxes no exact-image, byte,
 file-count or deadline guard. Focused checks pass; fresh native CI is required.
+Source compiler producers prepare output-parent directories through the existing
+descriptor-relative no-follow input helper before native output preflight.
+They do not change output namespaces, permit existing output files, follow
+symlinks or retain raw compiler images after staging. Baseline regressions pass;
+the original failed attempt remains distinct from fresh required verification.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

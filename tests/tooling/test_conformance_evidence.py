@@ -8323,7 +8323,9 @@ class ConformanceBaselineTests(unittest.TestCase):
     def test_source_control_output_slots_move_to_transient_stores_without_overwrite_or_symlink_escape(self):
         run = mock.Mock(root=self.root)
         source = self.root / "proofs/source-break-output-Old"
-        source.mkdir(mode=0o700)
+        self.baselines._prepare_source_break_outputs(run, "Old")
+        self.assertTrue(source.is_dir())
+        self.assertFalse(any(source.iterdir()))
         expected = {}
         for suffix in (".dll", ".pdb"):
             path = source / ("RequiredContract" + suffix)
@@ -8342,6 +8344,8 @@ class ConformanceBaselineTests(unittest.TestCase):
         self.assertEqual({name: (target / name).read_bytes() for name in expected}, expected)
         shutil.rmtree(source)
         source.symlink_to(self.root / "stores/f06", target_is_directory=True)
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines._prepare_source_break_outputs(run, "Old")
         with self.assertRaises(evidence.ConformanceError):
             self.baselines._stage_source_break_outputs(run, "Old")
         new_source = self.root / "proofs/source-break-output-New"

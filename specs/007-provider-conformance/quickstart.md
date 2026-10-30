@@ -1274,6 +1274,10 @@ The latest CI metadata guard also exposes staged schema3 PDBs missing from
 runtime capture. Their exact hashes are now admitted for the frozen metadata
 runtime only, with mutation rejection; focused checks pass. Fresh CI remains
 required, and the distinct SDK proof-reader deadline is not relaxed or resolved.
+Source compiler output-slot parents are now explicitly prepared before native
+preflight after the original8/12 attempt rejected their absence. No-follow,
+no-overwrite and transient staging remain enforced;25 baseline tests pass.
+Fresh8/12 execution remains required.
 
 ## Offline Correspondence Inspection
 

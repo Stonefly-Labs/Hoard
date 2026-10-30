@@ -1066,6 +1066,10 @@ PDBs are staged/sealed but omitted from runtime inputs. Their exact hashes are
 now captured for that frozen runtime only; symbol mutation rejects. Focused
 checks pass; fresh metadata CI verification is still required. The separate
 SDK runner proof-reader deadline remains unresolved.
+The source compiler's first native attempt also rejects an absent proof output
+parent before launch. The producer now creates that parent through existing
+no-follow traversal;25 baseline regressions pass. Fresh8/12 verification remains
+required, not claimed.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

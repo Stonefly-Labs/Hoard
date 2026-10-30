@@ -9045,6 +9045,10 @@ The original `e82daf7`8/12 attempt also fails before source compiler launch:
 InputChanged at execution's output-parent preflight, because the new proof
 output directory is absent. Its original packet is preserved; producer slot
 creation and a fresh genuine run are still required. No8/12 pass is claimed.
+The producer now explicitly prepares each compiler proof-slot parent before its
+recorded build/repair, using the existing descriptor-relative no-follow helper.
+Execution keeps rejecting existing outputs and symlinked parents. All25 baseline
+regressions pass in0.704 seconds; a fresh immutable native run remains required.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

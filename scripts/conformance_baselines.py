@@ -273,6 +273,15 @@ def source_break_output_paths(variant):
     return tuple("proofs/source-break-output-" + variant + "/" + name + suffix for suffix in (".dll", ".pdb"))
 
 
+def _prepare_source_break_outputs(run, variant):
+    import conformance_evidence as evidence
+
+    run._check_ledger()
+    with evidence._input_root(run.root) as (_, root), evidence._input_parent(
+            root, source_break_output_paths(variant)[0], create=True):
+        pass
+
+
 def _stage_source_break_outputs(run, variant, *, repair=False):
     import conformance_evidence as evidence
 
@@ -329,6 +338,7 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
     for variant in ("Old", "New"):
         project = fixture / variant / "RequiredContract.csproj"
         project_relative = project.relative_to(copied).as_posix()
+        _prepare_source_break_outputs(run, variant)
         commands.extend({**row, "role": variant} for row in _build(
             run, project, config, "compatibility-source", msbuild=msbuild,
             properties=source_break_output_properties(run.root, variant),
@@ -355,6 +365,7 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
     consumer_outputs = source_break_output_paths("Consumer")
     compatible_inputs = _freeze_build_inputs(
         run, source_break_build_inputs(project_relative, historical["sources"], contract="Old"))
+    _prepare_source_break_outputs(run, "Consumer")
     commands.extend({**row, "role": "consumer"} for row in _build(
         run, project, config, "compatibility-source",
         properties=(*source_break_output_properties(run.root, "Consumer"),
@@ -381,6 +392,7 @@ def execute_source_break(run, candidate, candidate_sources, config, baseline_sha
     _, repair_arguments, _ = project_build_commands(
         project, config, properties=(*source_break_output_properties(run.root, "Consumer"),
                                     "-p:ContractAssembly=" + str(contracts["Old"])), msbuild=msbuild)
+    _prepare_source_break_outputs(run, "Consumer")
     _command(run, repair_arguments, cwd=project.parent, cache_id="compatibility-source",
              execution_inputs=compatible_inputs, execution_outputs=consumer_outputs)
     repair = run.read_execution_record(run.command_sequence)

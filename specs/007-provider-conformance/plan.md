@@ -4789,6 +4789,17 @@ The execution-output preflight cannot traverse the uncreated proof output
 directory. This is separate from the metadata repair; source compiler origin
 remains unverified until producer slot creation and a fresh genuine run succeed.
 
+The source producer now prepares each exact proof output-slot parent before
+recorded contract/consumer builds and repair, with the existing descriptor-relative
+no-follow parent helper and live ledger check. Execution's no-existing-output
+preflight and proof-only namespace are unchanged. The staging regression first
+rejects the missing helper, then verifies empty physical creation, original
+byte-preserving move, no overwrite and symlink preparation/staging rejection.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence.ConformanceBaselineTests` passes25 tests in0.704 seconds;
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Fresh immutable8/12 execution remains required.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`
