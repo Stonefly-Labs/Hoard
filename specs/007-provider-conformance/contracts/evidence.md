@@ -1506,6 +1506,14 @@ and that exact `stores/settings-<attempt>.runsettings` held-input entry.
 Any remaining settings file must still be readonly, byte-identical and free
 of symlinks. The default retained-settings reader continues to require the
 original proof file; the private role cannot authorize its omission.
+Independent inherited replay reconstructs exact original scope inputs and
+settings, checks the pinned runner/held input map and settled bounded parent,
+and ingests every readonly witness/completion/proof. Whole-inventory replay
+must re-expand both frozen inventories, preserve disjoint complete scope
+membership and original parent chronology, reject conflicting proof identities,
+and exactly reproduce the original admission bytes. This is runtime evidence
+replay, not reconstructed native authority or full controller/tooling
+qualification; a failed owning run remains failed.
 Pure CP settings remain retained and subject to their existing strict original
 byte replay. These distinctions do not close the all-output sanitation gate.
 Composition source/build and mutation snapshots also require transient

@@ -68,12 +68,19 @@ A controlled comparison exposes a readiness ownership gap: shutdown can
 observe false quiescence before readiness registers cleanup. Assessment
 ownership now spans queueing through that handoff. A deterministic red/green
 regression,95 focused lifecycle/bounds/worker cases and231 tooling checks
-pass; fresh full native confirmation remains required. Prior failures stay
+pass. The full immutable `c72e13e` run subsequently passes all525 inherited
+parameters across58 scopes and all12 discovery mutation pairs, including the
+prepared restart journey. It remains rejected: the final tooling suite records
+229 setup errors against readonly/unsupported scratch locations. Prior failures stay
 preserved, and the original concurrency failure lacks a retained exception
 that would uniquely establish its cause.
 An independent readonly replay now also validates a genuinely released
-inherited command without retaining its private settings; full inherited
-profile evaluation remains unfinished.
+inherited command without retaining its private settings. The complete reader
+also independently re-admits all525 original witnesses/58 settled parents from
+readonly released evidence, with882 proof hashes. It does not confer native
+authority or repair the rejected run. Corrected container scratch mounts pass
+three original setup checks; a complete tooling comparison is pending.
+Full inherited/controller profile evaluation remains unfinished.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

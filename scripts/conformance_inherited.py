@@ -855,6 +855,224 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
     )
 
 
+def read_inventory_scope(root, prior, command, *, assembly_name, scope):
+    """Reconstruct one original inherited scope; this does not confer native authority."""
+    import conformance_evidence as evidence
+    from conformance_sdk_checks import verify_category_command_proof
+    from conformance_sources import read_bounded, runtime_arguments, runtime_runner, runtime_settings
+    from xml.sax.saxutils import escape
+
+    root = Path(root)
+    prior = evidence.admit_entity("RunInputs", prior)
+    if (prior["profileId"] != "composition" or not isinstance(assembly_name, str)
+            or assembly_name not in ASSEMBLIES or not isinstance(scope, str)
+            or not isinstance(command, dict) or set(command) != {"attemptId", "parentSha256"}):
+        raise ConformanceError("ProofMismatch")
+    attempt = evidence._uuid(command["attemptId"])
+    hashes = {}
+
+    def read(path, limit=2 * 1024**2):
+        hashed, raw = evidence._readonly_report_proof(root, path)
+        if len(raw) > limit:
+            raise ConformanceError("OutputLimitExceeded")
+        hashes[path] = hashed
+        return raw
+
+    inventory_raw = read_bounded(Path(__file__).resolve().parents[1] / INVENTORY_PATH, 2 * 1024**2)
+    inventory_sha = hashlib.sha256(inventory_raw).hexdigest()
+    if prior["sourceManifest"].get(INVENTORY_PATH) != inventory_sha:
+        raise ConformanceError("InputChanged")
+    methods = inventory(inventory_raw, prior["sourceManifest"])
+    prefix = "proofs/inherited-" + assembly_name
+    request_path, discovery_path = prefix + "-request.json", prefix + "-cases.json"
+    request = evidence._runtime_json(read(request_path), {
+        "methods": evidence._list(evidence._runtime_identity, evidence.MAX_RESULTS),
+        "assemblies": evidence._list(evidence._record({
+            "id": evidence.stable_id, "path": evidence.relative_path, "sha256": evidence.sha256}), 256),
+    })
+    discovery_raw = read(discovery_path)
+    expected = tuple(row for row in admit_discovery(discovery_raw, methods, assembly=assembly_name)
+                     if row["fullyQualifiedName"].rsplit(".", 1)[0] == scope)
+    if not expected or request["methods"] != tuple(sorted(
+            name for name in methods if name.startswith(assembly_name + "."))):
+        raise ConformanceError("WitnessMissing")
+    section = "integration" if assembly_name == "Hoard.Composition.Tests" else "architecture"
+    runtime = root / f"stores/inherited-runtime/tests/{section}/{assembly_name}/bin/Release/net10.0"
+    runtime_prefix = runtime.relative_to(root).as_posix() + "/"
+    images = [row for row in request["assemblies"] if row["path"].startswith(runtime_prefix)]
+    image_hashes = evidence._hash_map({row["path"]: row["sha256"] for row in images})
+    image_names = (
+        assembly_name + ".dll", assembly_name + ".deps.json", assembly_name + ".runtimeconfig.json",
+        "Hoard.Conformance.TestLogger.dll", "Hoard.Testing.Conformance.dll")
+    if (len(images) != len(image_hashes)
+            or any((runtime / name).relative_to(root).as_posix() not in image_hashes for name in image_names)):
+        raise ConformanceError("ProofMismatch")
+    assembly = runtime / (assembly_name + ".dll")
+    if [row for row in images if row["id"] == "test-assembly"] != [{
+            "id": "test-assembly", "path": assembly.relative_to(root).as_posix(),
+            "sha256": image_hashes.get(assembly.relative_to(root).as_posix())}]:
+        raise ConformanceError("ProofMismatch")
+    closure_path = "proofs/inherited-controller-read-inputs.json"
+    files = evidence._hash_map(load_json(read(closure_path)))
+    preparation = load_json(read("proofs/inherited-controllers-result.json", 16 * 1024**2))
+    owner_raw = read("runtime-owner.json", 65536)
+    owner = evidence._runtime_json(owner_raw, {
+        "schemaVersion": evidence._constant(1), "runId": evidence._uuid, "invocationGroupId": evidence._uuid,
+        "rootId": evidence.stable_id, "rootPathSha256": evidence.sha256,
+    })
+    if (not isinstance(preparation, dict)
+            or owner["runId"] != prior["runId"] or owner["invocationGroupId"] != prior["invocationGroupId"]
+            or owner["rootPathSha256"] != hashlib.sha256(str(root).encode()).hexdigest()
+            or preparation.get("runId") != owner["runId"] or preparation.get("rootId") != owner["rootId"]
+            or preparation.get("phase") != "controllers" or preparation.get("schemaVersion") != 3
+            or preparation.get("qualification") is not False):
+        raise ConformanceError("OwnershipInvalid")
+    result = preparation.get("result")
+    manifests = result.get("manifests") if isinstance(result, dict) else None
+    if not isinstance(manifests, dict) or set(manifests) != {
+            "HOARD_FOUNDATION_EVIDENCE", "HOARD_LIFECYCLE_EVIDENCE",
+            "HOARD_CONFIGURATION_EVIDENCE", "HOARD_DISCOVERY_EVIDENCE"}:
+        raise ConformanceError("ProofMismatch")
+    if any(evidence.relative_path(path) not in files for path in manifests.values()):
+        raise ConformanceError("ProofMismatch")
+    variables = {
+        **{key: str(root / evidence.relative_path(path)) for key, path in manifests.items()},
+        "HOARD_DISCOVERY_RUN_ID": prior["runId"], "HOARD_DISCOVERY_SDK": prior["environment"]["sdk"],
+        "HOARD_DISCOVERY_OUTPUT": str(root / "stores/inherited-runtime/performance"),
+    }
+    manifest_path = f"runtime-input-{attempt}.json"
+    manifest_raw = read(manifest_path)
+    manifest = load_json(manifest_raw)
+    inputs_path = f"proofs/inherited-inputs-{attempt}.json"
+    local = evidence.admit_entity("RunInputs", load_json(read(inputs_path)))
+    evidence._runtime_manifest(
+        local, manifest_raw, owner_raw, {row["testIdentity"]: ("none", row["matrixId"]) for row in expected},
+        hashlib.sha256(manifest_raw).hexdigest(), hashlib.sha256(owner_raw).hexdigest(), "execution")
+    expected_inputs = evidence.admit_entity("RunInputs", {
+        **prior, "runtimeAssemblies": dict(image_hashes),
+        "configurationSha256": digest({
+            "configuration": prior["configurationSha256"], "controllerReadInputs": files,
+            "environmentSha256": digest(variables), "discoveryRequestSha256": digest(request)}),
+        "invocation": ["component", "inherited", assembly_name, scope],
+    })
+    if (local != expected_inputs or manifest["runInputsPath"] != inputs_path
+            or manifest["attemptId"] != attempt or manifest["attemptSequence"] != 1
+            or manifest["assemblies"] != images or manifest["expected"] != list(expected)
+            or manifest["packages"] != [{
+                "id": package["packageId"],
+                "path": "feed/candidate/" + package["packageId"] + ".0.1.0.nupkg",
+                "sha256": package["sha256"]} for package in prior["packages"]]):
+        raise ConformanceError("ProofMismatch")
+    environment = "<EnvironmentVariables>" + "".join(
+        "<" + key + ">" + escape(value) + "</" + key + ">" for key, value in variables.items()
+    ) + "</EnvironmentVariables>"
+    settings_path = f"stores/settings-{attempt}.runsettings"
+    settings = runtime_settings(
+        root, assembly, attempt, digest(manifest), hashlib.sha256(owner_raw).hexdigest(), environment)
+    receipt_raw = read(f"proofs/category-command-{attempt}-execution.json", 65536)
+    receipt = load_json(receipt_raw)
+    if not isinstance(receipt, dict):
+        raise ConformanceError("ProofMismatch")
+    sequence = evidence._integer(receipt.get("commandSequence"))
+    if not 1 <= sequence <= 10000:
+        raise ConformanceError("ProofMismatch")
+    record_path = f"proofs/execution-command-{sequence:04}.json"
+    record = load_json(read(record_path, 65536))
+    if not isinstance(record, dict):
+        raise ConformanceError("ProofMismatch")
+    runner = runtime_runner(root, prior)
+    for path in runner["inputFiles"]:
+        read(path, evidence.MAX_REPORT_BYTES)
+    verified, record = verify_category_command_proof(
+        root, run_id=prior["runId"], root_id=owner["rootId"], manifest=manifest,
+        arguments=runtime_arguments(assembly, root / settings_path,
+                                    [row["testIdentity"] for row in expected], runner_prefix=runner["prefix"]),
+        cwd=runtime, settings_data=settings, started_ms=evidence._number(record.get("startedMs")),
+        ended_ms=evidence._number(record.get("endedMs")),
+        settings_directory="stores")
+    bound = {
+        manifest_path: hashes[manifest_path], inputs_path: hashes[inputs_path],
+        "runtime-owner.json": hashlib.sha256(owner_raw).hexdigest(),
+        settings_path: hashlib.sha256(settings).hexdigest(), closure_path: hashes[closure_path],
+        "stores/snapshot/" + INVENTORY_PATH: inventory_sha,
+        request_path: hashes[request_path], discovery_path: hashes[discovery_path],
+        **{(runtime / name).relative_to(root).as_posix():
+           image_hashes[(runtime / name).relative_to(root).as_posix()] for name in image_names},
+        **runner["inputFiles"],
+    }
+    if (verified != receipt or hashlib.sha256(receipt_raw).hexdigest() != evidence.sha256(command["parentSha256"])
+            or record.get("inputFiles") != bound or record["endedMs"] - record["startedMs"] > 180000):
+        raise ConformanceError("ProofMismatch")
+    directory = root / ("runtime-" + attempt)
+    names = set()
+    for path in directory.iterdir():
+        names.add(path.name)
+        if len(names) > len(expected) + 2:
+            raise ConformanceError("WitnessMissing")
+    proof_names = {name for name in names if re.fullmatch(r"proof-[0-9a-f-]{36}\.json", name)}
+    if names != {"witnesses.jsonl", "completion.json", *proof_names} or len(proof_names) != len(expected):
+        raise ConformanceError("WitnessMissing")
+    base = directory.relative_to(root).as_posix() + "/"
+    transport = {
+        "inputs": local, "manifest_data": manifest_raw, "owner_data": owner_raw,
+        "witnesses_data": read(base + "witnesses.jsonl"), "completion_data": read(base + "completion.json", 65536),
+        "proofs": {name: read(base + name, 65536) for name in proof_names},
+        "expected_tests": {row["testIdentity"]: ("none", row["matrixId"]) for row in expected},
+        "manifest_sha256": digest(manifest), "owner_sha256": hashlib.sha256(owner_raw).hexdigest(),
+        "started_ms": record["startedMs"], "ended_ms": record["endedMs"],
+    }
+    observed = evidence.ingest_runtime_attempt(**transport)
+    if (observed["diagnosticCode"] != "None" or len(observed["witnesses"]) != len(expected)
+            or any(row["status"] != "Passed" for row in observed["witnesses"])):
+        raise ConformanceError("WitnessMissing")
+    return {"assembly": assembly_name, "testClass": scope, "transport": transport}, (
+        sequence, hashes[record_path]), hashes
+
+
+def read_inventory_runtime(root, prior):
+    """Re-admit the entire frozen inherited runtime from readonly original parents."""
+    import conformance_evidence as evidence
+    from conformance_sources import read_bounded
+
+    root = Path(root)
+    prior = evidence.admit_entity("RunInputs", prior)
+    inventory_raw = read_bounded(Path(__file__).resolve().parents[1] / INVENTORY_PATH, 2 * 1024**2)
+    admission_path = "proofs/inherited-scope-admission.json"
+    admission_sha, admission_raw = evidence._readonly_report_proof(root, admission_path)
+    admission = load_json(admission_raw)
+    if (not isinstance(admission, dict) or not isinstance(admission.get("scopes"), list)
+            or len(admission["scopes"]) > evidence.MAX_RESULTS):
+        raise ConformanceError("ProofMismatch")
+    discoveries, hashes = {}, {admission_path: admission_sha}
+    for assembly in sorted(ASSEMBLIES):
+        path = "proofs/inherited-" + assembly + "-cases.json"
+        hashes[path], discoveries[assembly] = evidence._readonly_report_proof(root, path)
+    packets, commands = [], []
+    previous_end = 0
+    for row in admission["scopes"]:
+        if not isinstance(row, dict):
+            raise ConformanceError("ProofMismatch")
+        attempt = evidence._uuid(row.get("attemptId"))
+        path = f"proofs/category-command-{attempt}-execution.json"
+        parent_sha, _ = evidence._readonly_report_proof(root, path)
+        packet, command, proofs = read_inventory_scope(
+            root, prior, {"attemptId": attempt, "parentSha256": parent_sha},
+            assembly_name=row.get("assembly"), scope=row.get("testClass"))
+        transport = packet["transport"]
+        if (transport["started_ms"] < previous_end or commands and command[0] <= commands[-1][0]
+                or any(path in hashes and hashes[path] != hashed for path, hashed in proofs.items())):
+            raise ConformanceError("ProofMismatch")
+        previous_end = transport["ended_ms"]
+        hashes.update(proofs)
+        packets.append(packet)
+        commands.append(command)
+    observed = evidence.inspect_inherited_runtime_attempts(
+        inventory_data=inventory_raw, sources=prior["sourceManifest"], discoveries=discoveries, attempts=packets)
+    if not observed["executionComplete"] or evidence.canonical_bytes(observed) != admission_raw:
+        raise ConformanceError("WitnessMissing")
+    return observed, tuple(commands), hashes
+
+
 def replay_reference_consumer(owner, descriptor):
     import conformance_legacy as legacy
     from conformance_evidence import input_manifest, relative_path, sha256

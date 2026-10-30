@@ -28,6 +28,247 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_inventory_runtime_reader_rejects_resealed_partial_or_reordered_original_scopes(self):
+        import conformance_evidence as evidence
+        from test_conformance_evidence import ConformanceRuntimeIngestionTests
+
+        fixture = ConformanceRuntimeIngestionTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        options = fixture.inherited_transports()
+        by_attempt = {}
+        for index, packet in enumerate(options["attempts"]):
+            transport = packet["transport"]
+            offset = index * 4
+            transport.update(started_ms=9 + offset, ended_ms=12 + offset)
+            records = [evidence.load_json(raw) for raw in transport["witnesses_data"].splitlines()]
+            for record in records:
+                record.update(startedMs=10 + offset, endedMs=11 + offset)
+            transport["witnesses_data"] = b"".join(canonical_bytes(row) + b"\n" for row in records)
+            transport["completion_data"] = canonical_bytes({
+                **evidence.load_json(transport["completion_data"]),
+                "recordsSha256": hashlib.sha256(transport["witnesses_data"]).hexdigest()})
+            attempt = evidence.load_json(transport["manifest_data"])["attemptId"]
+            by_attempt[attempt] = index, packet
+        observed = evidence.inspect_inherited_runtime_attempts(**options)
+        prior = options["attempts"][0]["transport"]["inputs"]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            admission_path = "proofs/inherited-scope-admission.json"
+
+            def seal(path, raw):
+                path = root / path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            def read_scope(_, inputs, command, *, assembly_name, scope):
+                index, packet = by_attempt[command["attemptId"]]
+                self.assertEqual(inputs, evidence.admit_entity("RunInputs", prior))
+                self.assertEqual((assembly_name, scope), (packet["assembly"], packet["testClass"]))
+                self.assertEqual(command["parentSha256"], hashlib.sha256(b"{}").hexdigest())
+                return packet, (index + 1, "b" * 64), {"proofs/shared.json": "a" * 64}
+
+            for assembly, raw in options["discoveries"].items():
+                seal("proofs/inherited-" + assembly + "-cases.json", raw)
+            for attempt in by_attempt:
+                seal(f"proofs/category-command-{attempt}-execution.json", b"{}")
+            seal(admission_path, canonical_bytes(observed))
+            with patch.object(inherited, "read_inventory_scope", side_effect=read_scope):
+                actual, commands, proofs = inherited.read_inventory_runtime(root, prior)
+                self.assertEqual(actual, observed)
+                self.assertEqual(len(commands), len(observed["scopes"]))
+                self.assertIn(admission_path, proofs)
+                self.assertFalse(actual["qualification"])
+                self.assertFalse(actual["profileComplete"])
+                for defect in ("omitted-scope", "duplicate-scope", "reordered-scopes", "optimistic-summary"):
+                    changed = evidence.load_json(canonical_bytes(observed))
+                    if defect == "omitted-scope":
+                        changed["scopes"].pop()
+                    elif defect == "duplicate-scope":
+                        changed["scopes"].append(changed["scopes"][0])
+                    elif defect == "reordered-scopes":
+                        changed["scopes"].reverse()
+                    else:
+                        changed["passedParameters"] += 1
+                    seal(admission_path, canonical_bytes(changed))
+                    with self.subTest(defect=defect), self.assertRaises(ConformanceError):
+                        inherited.read_inventory_runtime(root, prior)
+                seal(admission_path, canonical_bytes(observed))
+            second = observed["scopes"][1]["attemptId"]
+            for defect in ("overlapping-parent", "reused-sequence", "conflicting-proof"):
+                def changed_scope(*args, **kwargs):
+                    packet, command, proofs = read_scope(*args, **kwargs)
+                    if args[2]["attemptId"] == second:
+                        if defect == "overlapping-parent":
+                            packet = {**packet, "transport": {**packet["transport"], "started_ms": 0}}
+                        elif defect == "reused-sequence":
+                            command = (1, command[1])
+                        else:
+                            proofs = {"proofs/shared.json": "c" * 64}
+                    return packet, command, proofs
+
+                with patch.object(inherited, "read_inventory_scope", side_effect=changed_scope), \
+                        self.subTest(defect=defect), self.assertRaises(ConformanceError):
+                    inherited.read_inventory_runtime(root, prior)
+
+    def test_inventory_scope_reader_checks_original_frame_and_resealed_parent_inputs(self):
+        import conformance_evidence as evidence
+        import conformance_sources as sources
+        from test_conformance_evidence import ConformanceRuntimeIngestionTests
+
+        fixture = ConformanceRuntimeIngestionTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        packets = fixture.inherited_transports()
+        assembly, scope = "Hoard.Composition.Tests", "Hoard.Composition.Tests.LifecycleCleanupTests"
+        selected = next(row for row in packets["attempts"] if row["testClass"] == scope)
+        prior = copy.deepcopy(selected["transport"]["inputs"])
+        prior["sourceManifest"] = {
+            **prior["sourceManifest"], inherited.INVENTORY_PATH: hashlib.sha256(packets["inventory_data"]).hexdigest()}
+        prior["sourceManifestSha256"] = evidence.digest(prior["sourceManifest"])
+        expected = inherited.execution_scopes(
+            packets["discoveries"], inherited.inventory(packets["inventory_data"], prior["sourceManifest"]))[
+                (assembly, scope)]
+        attempt = str(uuid.uuid4())
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            runtime = root / f"stores/inherited-runtime/tests/integration/{assembly}/bin/Release/net10.0"
+            prefix = "proofs/inherited-" + assembly
+            image_names = (
+                assembly + ".dll", assembly + ".deps.json", assembly + ".runtimeconfig.json",
+                "Hoard.Conformance.TestLogger.dll", "Hoard.Testing.Conformance.dll")
+            images = [{
+                "id": "test-assembly" if index == 0 else "image-" + str(index),
+                "path": (runtime / name).relative_to(root).as_posix(),
+                "sha256": hashlib.sha256(name.encode()).hexdigest()} for index, name in enumerate(image_names)]
+            methods = inherited.inventory(packets["inventory_data"], prior["sourceManifest"])
+            request = {
+                "methods": sorted(name for name in methods if name.startswith(assembly + ".")),
+                "assemblies": images}
+            manifests = {key: "stores/" + key.lower() + ".json" for key in sorted((
+                "HOARD_FOUNDATION_EVIDENCE", "HOARD_LIFECYCLE_EVIDENCE",
+                "HOARD_CONFIGURATION_EVIDENCE", "HOARD_DISCOVERY_EVIDENCE"))}
+            files = {path: "a" * 64 for path in manifests.values()}
+            closure = "proofs/inherited-controller-read-inputs.json"
+            runner_path, runner_data = "proofs/sdk-vstest-inputs.json", b"modeled pinned runner"
+            runner = {
+                "prefix": ("dotnet", "exec", "--fx-version", prior["environment"]["runtime"], "/pinned/vstest.dll"),
+                "inputFiles": {runner_path: hashlib.sha256(runner_data).hexdigest()}}
+            prior["runtimeAssemblies"] = runner["inputFiles"]
+            owner = {**fixture.owner, "rootPathSha256": hashlib.sha256(str(root).encode()).hexdigest()}
+            variables = {
+                **{key: str(root / path) for key, path in manifests.items()},
+                "HOARD_DISCOVERY_RUN_ID": prior["runId"], "HOARD_DISCOVERY_SDK": prior["environment"]["sdk"],
+                "HOARD_DISCOVERY_OUTPUT": str(root / "stores/inherited-runtime/performance")}
+            local = evidence.admit_entity("RunInputs", {
+                **prior, "runtimeAssemblies": {row["path"]: row["sha256"] for row in images},
+                "configurationSha256": evidence.digest({
+                    "configuration": prior["configurationSha256"], "controllerReadInputs": files,
+                    "environmentSha256": evidence.digest(variables), "discoveryRequestSha256": evidence.digest(request)}),
+                "invocation": ["component", "inherited", assembly, scope]})
+            inputs_path = f"proofs/inherited-inputs-{attempt}.json"
+            manifest_path = f"runtime-input-{attempt}.json"
+            manifest = {
+                "schemaVersion": 1, "runId": prior["runId"], "invocationGroupId": prior["invocationGroupId"],
+                "attemptId": attempt, "attemptSequence": 1, "purpose": "execution",
+                "inputSha256": evidence.digest(local), "runInputsPath": inputs_path,
+                "assemblies": images, "expected": list(expected),
+                "packages": [{"id": package["packageId"],
+                              "path": "feed/candidate/" + package["packageId"] + ".0.1.0.nupkg",
+                              "sha256": package["sha256"]} for package in prior["packages"]]}
+            from xml.sax.saxutils import escape
+            environment = "<EnvironmentVariables>" + "".join(
+                "<" + key + ">" + escape(value) + "</" + key + ">" for key, value in variables.items()
+            ) + "</EnvironmentVariables>"
+            settings_path = f"stores/settings-{attempt}.runsettings"
+            settings = sources.runtime_settings(
+                root, runtime / (assembly + ".dll"), attempt, evidence.digest(manifest), evidence.digest(owner), environment)
+            raw_files = {
+                prefix + "-request.json": evidence.canonical_bytes(request),
+                prefix + "-cases.json": packets["discoveries"][assembly],
+                closure: evidence.canonical_bytes(files), "runtime-owner.json": evidence.canonical_bytes(owner),
+                manifest_path: evidence.canonical_bytes(manifest), inputs_path: evidence.canonical_bytes(local),
+                runner_path: runner_data,
+                "proofs/inherited-controllers-result.json": evidence.canonical_bytes({
+                    "schemaVersion": 3, "qualification": False, "phase": "controllers",
+                    "runId": prior["runId"], "rootId": owner["rootId"], "result": {"manifests": manifests}})}
+            bound = {path: hashlib.sha256(raw_files[path]).hexdigest() for path in (
+                manifest_path, inputs_path, "runtime-owner.json", closure,
+                prefix + "-request.json", prefix + "-cases.json", runner_path)}
+            bound.update({
+                settings_path: hashlib.sha256(settings).hexdigest(),
+                "stores/snapshot/" + inherited.INVENTORY_PATH: hashlib.sha256(packets["inventory_data"]).hexdigest(),
+                **{row["path"]: row["sha256"] for row in images}})
+            arguments = sources.runtime_arguments(
+                runtime / (assembly + ".dll"), root / settings_path,
+                [row["testIdentity"] for row in expected], runner_prefix=runner["prefix"])
+            record = {
+                "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
+                "startedMs": 1, "endedMs": 2, "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited",
+                "scope": "ordinary", "runId": prior["runId"], "rootId": owner["rootId"],
+                "argvSha256": evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(runtime).encode()).hexdigest(), "inputFiles": bound}
+            receipt = {
+                "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+                "runId": prior["runId"], "rootId": owner["rootId"], "invocationGroupId": prior["invocationGroupId"],
+                "attemptId": attempt, "purpose": "execution", "commandSequence": 1,
+                "inputsSha256": evidence.digest(local), "manifestSha256": evidence.digest(manifest),
+                "settingsSha256": hashlib.sha256(settings).hexdigest()}
+
+            def seal(path, raw):
+                path = root / path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            for path, raw in raw_files.items():
+                seal(path, raw)
+            output = f"runtime-{attempt}/"
+            seal(output + "witnesses.jsonl", b"")
+            seal(output + "completion.json", b"{}")
+            for _ in expected:
+                seal(output + "proof-" + str(uuid.uuid4()) + ".json", b"{}")
+            observed = {"diagnosticCode": "None", "witnesses": [{"status": "Passed"} for _ in expected]}
+
+            def read(changed=record):
+                raw = evidence.canonical_bytes(changed)
+                seal("proofs/execution-command-0001.json", raw)
+                parent = evidence.canonical_bytes({**receipt, "executionRecordSha256": hashlib.sha256(raw).hexdigest()})
+                seal(f"proofs/category-command-{attempt}-execution.json", parent)
+                return inherited.read_inventory_scope(
+                    root, prior, {"attemptId": attempt, "parentSha256": hashlib.sha256(parent).hexdigest()},
+                    assembly_name=assembly, scope=scope)
+
+            with patch.object(sources, "runtime_runner", return_value=runner), \
+                    patch.object(evidence, "ingest_runtime_attempt", return_value=observed) as ingest:
+                packet, command, proofs = read()
+                self.assertEqual(packet["transport"]["inputs"], local)
+                self.assertEqual(command, (1, hashlib.sha256(evidence.canonical_bytes(record)).hexdigest()))
+                self.assertIn(output + "witnesses.jsonl", proofs)
+                self.assertEqual(ingest.call_args.kwargs["expected_tests"],
+                                 {row["testIdentity"]: ("none", row["matrixId"]) for row in expected})
+                self.assertFalse((root / settings_path).exists())
+                for field, value in (
+                        ("inputFiles", {key: value for key, value in bound.items() if key != closure}),
+                        ("inputFiles", {**bound, images[0]["path"]: "d" * 64}),
+                        ("argvSha256", "d" * 64), ("groupState", "Active"), ("endedMs", 180002)):
+                    with self.subTest(field=field), self.assertRaises(ConformanceError):
+                        read({**record, field: value})
+                for outcome in ("failed", "incomplete"):
+                    bad = {"diagnosticCode": "UnknownDiagnostic" if outcome == "incomplete" else "None",
+                           "witnesses": [{"status": "Failed"} for _ in expected]}
+                    with patch.object(evidence, "ingest_runtime_attempt", return_value=bad), \
+                            self.subTest(outcome=outcome), self.assertRaises(ConformanceError):
+                        read()
+                seal(manifest_path, evidence.canonical_bytes({**manifest, "expected": list(expected[:-1])}))
+                with self.assertRaises(ConformanceError):
+                    read()
+
     def test_private_settings_preserve_pinned_runner_and_sealed_runtime_outputs(self):
         import conformance_evidence as evidence
         import conformance_sources as sources

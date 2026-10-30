@@ -9928,6 +9928,35 @@ actual original passed command156 from `4240185` with settings absent and
 proofs unchanged. This is command-level evidence, not full inherited/profile
 qualification; command157's rejection remains preserved.
 
+The subsequent immutable `c72e13e` composition run passes all525 inherited
+parameters/58 scopes, including both concurrency parameters and prepared
+restart, plus all12 discovery mutation pairs/73 borrowed native invocations.
+It then rejects at the trusted tooling supervisor:847 tests observed,229
+errors, zero assertion failures/skips/unexpected diagnostics,383700.597 ms.
+The owner genuinely releases; the run remains rejected.
+
+The independent inherited reader now reconstructs each original scope's
+exact inputs, settings, images, pinned runner, held parent inputs, settled
+bounded command and readonly witness packet. Whole-inventory replay re-admits
+all525 original witnesses/58 parents and882 proof hashes from that released
+root, without reconstructing native authority. Resealed omissions, reordered/
+overlapping parents, reused sequences, conflicting hashes and optimistic
+summaries reject. The focused reader/composition/SDK/receipt selector passes235
+tests in40.942 seconds.
+
+The diagnostic container previously mounted the frozen repository at `/source`
+readonly, leaving required ignored `.foundation` scratch unwritable and the
+explicit contributor scratch parent `/` unwritable. Default `/tmp` was also
+outside the supported artifact scratch filesystem set. Keep tracked source
+readonly, mount a separate owned writable directory at its ignored
+`.foundation`, locate the repository beneath a writable owned parent, and set
+`TMPDIR` to an owned supported-volume directory. The corrected layout measures
+`btrfs` and passes three original setup-path regressions. A complete unchanged
+847-test comparison is pending; a later pass cannot be grafted onto the failed
+original owner. No test, assertion, filesystem requirement or budget changes.
+Provider examples, public architecture/ADR diagrams, infrastructure and release
+instructions are unaffected by this reader and local diagnostic mount correction.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

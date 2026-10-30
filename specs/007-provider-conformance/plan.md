@@ -288,6 +288,46 @@ profile/native authority or a repair of rejected command157. The independent
 immutable full `c72e13e` composition run continues separately; its source is
 unaffected by these reader edits. Complete inherited evaluation remains open.
 
+### Complete inherited replay and diagnostic scratch correction
+
+The immutable `c72e13eb69960412b576c12f45c9517ac9842a9e` composition run
+completes all525 inherited parameters/58 scopes and all12 discovery mutation
+pairs, backed by73 borrowed native invocations. Both original concurrency
+parameters and the prepared restart journey pass. Original mutation parent174
+exits0 with actual group settlement. The final trusted tooling suite observes
+all847 expected tests but reports229 setup errors, zero failures/skips/
+unexpected diagnostics, in383700.597 ms. The command exits2 and the owner
+genuinely releases. This rejected run and all earlier roots remain unchanged.
+
+`read_inventory_scope` reconstructs original source/input/configuration/package/
+image/settings identities, exact pinned argv/cwd and held input closure, settled
+successful bounded parent, complete readonly output membership and actual
+runtime witnesses. `read_inventory_runtime` independently re-expands both
+frozen inventories and re-admits all scopes, rejecting omitted/duplicate/
+reordered scopes, overlapping/reused parents, conflicting proof hashes and
+resealed optimistic summaries. Neither function creates native authority.
+Fresh Linux `python3 -B /replay.py /validation/work/run-3`, with evidence mounted
+readonly, verifies all525 original witnesses/58 parents and882 proof hashes.
+The prior original command156 also replays18 witnesses/30 proofs, not merely
+its receipt.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_inherited test_conformance_composition
+test_conformance_sdk_checks test_conformance_evidence.ConformanceCommandProofReplayTests
+test_conformance_evidence.ConformanceRuntimeIngestionTests.test_inherited_class_scopes_re_admit_every_parameter_without_qualifying_controllers`
+passes235 tests in40.942 seconds.
+
+The setup errors localize to required `.foundation` scratch under the readonly
+source mount, explicit contributor temporary directories under its unwritable
+parent `/`, and artifact/baseline temporary roots on an unsupported filesystem.
+The corrected comparison retains readonly tracked source, mounts only ignored
+`.foundation` writable, uses an owned writable source parent and sets `TMPDIR`
+to owned supported-volume scratch. Actual scratch measures `btrfs`; three
+original setup-path checks pass without changing source tests. A bounded full
+847-test comparison is pending. Its result cannot repair the original run;
+fresh full execution must start with the correct environment. All acceptance
+budgets/assertions remain unchanged; T071..T086 remain open.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic
