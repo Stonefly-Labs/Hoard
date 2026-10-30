@@ -1295,7 +1295,14 @@ package-runtime source capture (13 default files frozen, zero package files).
 That gap still requires correction and fresh verification.
 Common capture now adds the already-built package runtime, with omitted/changed
 control/PDB rejection and a new exact two-scope released control. Host56 tests
-pass; fresh8/13 native verification remains required.
+pass. Immutable `a53fd49` now passes all8 live/13 released controls; independent
+readonly inspection verifies both13-file source inventories frozen. Reports
+remain142 cases/136 Passed/six Incomplete/209 witnesses, resources-only difference.
+The next source-break logical assertion runs in the already-frozen package
+consumer alongside the seven binary controls. It checks original compiler
+diagnostics, actual DLL/PDB source provenance and compatible repair. Exact
+two-scope source/historical image bindings are required; fresh native execution
+must establish this additional logical case before it is reported passing.
 
 ## Offline Correspondence Inspection
 

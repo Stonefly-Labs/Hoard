@@ -69,6 +69,11 @@ SOURCE_BREAK_SOURCES = "proofs/compatibility-source-break-sources.json"
 SOURCE_BREAK_INPUTS = "proofs/compatibility-source-break-inputs.json"
 SOURCE_BREAK_RUNTIME = "source-break-fixtures"
 SOURCE_BREAK_RUNTIME_FRAMES = ("control.json", "sources.json", "inputs.json", "negative.json", "diagnostics.jsonl")
+SOURCE_BREAK_RUNTIME_FILES = (
+    *SOURCE_BREAK_RUNTIME_FRAMES,
+    *(role + "/" + name + suffix for role, name in (
+        ("Old", "RequiredContract"), ("New", "RequiredContract"),
+        ("Consumer", "RequiredConsumer"), ("repair", "RequiredConsumer")) for suffix in (".dll", ".pdb")))
 SOURCE_RECIPE_POLICY = (
     *((project, "historical-f06", "api-consumer") for project in (
         "tests/fixtures/lifecycle/registration/RegistrationConsumer/RegistrationConsumer.csproj",

@@ -2764,29 +2764,56 @@ def compatibility_case_material(inputs, *, case_id, matrix_id, witnesses, sequen
         sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
 
 
-def _compatibility_binary_binding(inputs):
-    from conformance_baselines import BASELINE, HISTORICAL_BINARY_IMAGES
+def _compatibility_baseline(inputs):
+    from conformance_baselines import BASELINE
 
     historical = [row for row in inputs["baselines"] if row["apiScope"] == "f06"]
     if len(historical) != 1:
         raise ConformanceError("EvidenceIncomplete")
     baseline = historical[0]
     binaries = baseline["dependencySha256"]
-    if (baseline["revision"] != BASELINE or baseline["binarySha256"] != digest(binaries)
-            or not set(HISTORICAL_BINARY_IMAGES.values()) <= binaries.keys()):
+    if baseline["revision"] != BASELINE or baseline["binarySha256"] != digest(binaries):
         raise ConformanceError("ProofMismatch")
-    prefix = ("stores/snapshot/tests/contracts/Hoard.Conformance.Tests/bin/Release/net10.0/"
-              "compatibility-fixtures/")
+    return baseline
+
+
+def _compatibility_binary_binding(inputs):
+    from conformance_baselines import BASELINE, HISTORICAL_BINARY_IMAGES
+
+    baseline = _compatibility_baseline(inputs)
+    binaries = baseline["dependencySha256"]
+    if not set(HISTORICAL_BINARY_IMAGES.values()) <= binaries.keys():
+        raise ConformanceError("ProofMismatch")
     images = []
-    for target, original in HISTORICAL_BINARY_IMAGES.items():
-        runtime = prefix + target
-        if inputs["runtimeAssemblies"].get(runtime) != binaries[original]:
-            raise ConformanceError("ProofMismatch")
-        images.append({"originalPath": original, "runtimePath": runtime, "sha256": binaries[original]})
+    for folder in ("bin/Release/net10.0", "bin/package-diagnostic/Release/net10.0"):
+        prefix = "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/" + folder + "/compatibility-fixtures/"
+        for target, original in HISTORICAL_BINARY_IMAGES.items():
+            runtime = prefix + target
+            if inputs["runtimeAssemblies"].get(runtime) != binaries[original]:
+                raise ConformanceError("ProofMismatch")
+            images.append({"originalPath": original, "runtimePath": runtime, "sha256": binaries[original]})
     return {
         "revision": BASELINE, "sourceSha256": baseline["sourceSha256"],
         "lockSha256": baseline["lockSha256"], "recipeSha256": baseline["recipeSha256"],
         "binarySha256": baseline["binarySha256"], "images": images}
+
+
+def _compatibility_source_break_binding(inputs):
+    from conformance_baselines import SOURCE_BREAK_RUNTIME, SOURCE_BREAK_RUNTIME_FILES
+
+    baseline = _compatibility_baseline(inputs)
+    prefixes = tuple(
+        "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/" + folder + "/" + SOURCE_BREAK_RUNTIME + "/"
+        for folder in ("bin/Release/net10.0", "bin/package-diagnostic/Release/net10.0"))
+    scopes = [{path.removeprefix(prefix): hashed for path, hashed in inputs["runtimeAssemblies"].items()
+               if path.startswith(prefix)} for prefix in prefixes]
+    if (any(scope.keys() != set(SOURCE_BREAK_RUNTIME_FILES) for scope in scopes)
+            or scopes[0] != scopes[1]):
+        raise ConformanceError("ProofMismatch")
+    return {
+        "revision": baseline["revision"], "sourceSha256": baseline["sourceSha256"],
+        "lockSha256": baseline["lockSha256"], "recipeSha256": baseline["recipeSha256"],
+        "runtimeRoots": prefixes, "files": scopes[0]}
 
 
 def _compatibility_case_material(inputs, case, physical, witnesses, *, input_sha, sequence, started_ms, ended_ms):
@@ -2807,6 +2834,8 @@ def _compatibility_case_material(inputs, case, physical, witnesses, *, input_sha
     path = f"proofs/compatibility-{case.case_id}-{case.matrix_id}-attempt-{sequence}.json"
     historical_binary = (_compatibility_binary_binding(inputs)
                          if (case.case_id, case.matrix_id) == ("COMPATIBILITY", "binary-break") else None)
+    source_break = (_compatibility_source_break_binding(inputs)
+                    if (case.case_id, case.matrix_id) == ("COMPATIBILITY", "source-break") else None)
     raw = canonical_bytes({
         "schemaVersion": 1, "qualification": False, "scope": "compatibility-case-derivation",
         "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -2814,6 +2843,7 @@ def _compatibility_case_material(inputs, case, physical, witnesses, *, input_sha
         "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms,
         "witnesses": ordered, "controls": case.controls,
         **({"historicalBinary": historical_binary} if historical_binary is not None else {}),
+        **({"sourceBreak": source_break} if source_break is not None else {}),
         "policiesSha256": digest({
             identity: {"runtimeScope": physical[identity][0], "bindingId": physical[identity][1],
                        "versionObservations": version_observation_policy(identity)}

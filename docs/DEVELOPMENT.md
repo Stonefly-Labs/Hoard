@@ -9103,7 +9103,23 @@ control/PDB hashes, then rejects their later mutation while excluding unselected
 JSON. A new released native control requires both exact13-file source scopes in
 original common inputs, so its expected native control count is now8 live/13
 released. Composition/baseline host selection passes56 tests in2.525 seconds;
-catalog/SDK and diff checks pass. Fresh native verification remains required.
+catalog/SDK and diff checks pass.
+Immutable `a53fd49` now passes all8 live/13 released controls in424853.976 ms,
+exit0. Independent readonly inspection verifies both13-file inventories frozen
+with their original hashes; active/released reports differ only in resources
+and retain142 cases/136 Passed/six Incomplete/209 witnesses.
+
+The next source-break logical linkage uses a real package-only runtime assertion:
+original compiler/control/input/negative/diagnostic frames, actual CS0535, original
+and repaired DLL/PDB hashes, canonical PE/PDB source documents, loaded old/new
+interface shapes and unchanged compatible consumer execution. The combined binary
+scope selects the already-frozen package consumer and adds this eighth physical
+test without adding a fourth execution scope. Independent derivation requires
+matching exact13-file source scopes and both original historical image copies;
+original live capture additionally binds the staged control to its held compiler
+receipt. Fresh native package compilation/execution is required; no modeled
+case or updated expected count establishes acceptance. Provider/product APIs,
+examples, diagrams and deployment remain unaffected by this test-only increment.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

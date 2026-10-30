@@ -36,10 +36,14 @@ class ConformanceAdmissionTests(unittest.TestCase):
             "revision": baselines.BASELINE, "sourceSha256": "1" * 64, "lockSha256": "2" * 64,
             "recipeSha256": "3" * 64, "binarySha256": evidence.digest(binaries),
             "dependencySha256": binaries, "apiScope": "f06"}]
-        prefix = ("stores/snapshot/tests/contracts/Hoard.Conformance.Tests/bin/Release/net10.0/"
-                  "compatibility-fixtures/")
-        inputs["runtimeAssemblies"].update({
-            prefix + target: binaries[relative] for target, relative in baselines.HISTORICAL_BINARY_IMAGES.items()})
+        for folder in ("bin/Release/net10.0", "bin/package-diagnostic/Release/net10.0"):
+            prefix = "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/" + folder + "/"
+            inputs["runtimeAssemblies"].update({
+                prefix + "compatibility-fixtures/" + target: binaries[relative]
+                for target, relative in baselines.HISTORICAL_BINARY_IMAGES.items()})
+            inputs["runtimeAssemblies"].update({
+                prefix + baselines.SOURCE_BREAK_RUNTIME + "/" + name: hashlib.sha256(name.encode()).hexdigest()
+                for name in baselines.SOURCE_BREAK_RUNTIME_FILES})
         return inputs
 
     def test_binary_break_case_rejects_resealed_baseline_or_runtime_substitutions(self):
@@ -48,7 +52,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
         inputs = self.compatibility_inputs()
         case = next(row for row in catalog.expected_cases("compatibility")
                     if row.case_id == "COMPATIBILITY" and row.matrix_id == "binary-break")
-        self.assertEqual(set(case.witnesses), set(catalog.binary_runtime_tests()))
+        self.assertEqual(set(case.witnesses), set(catalog.binary_break_runtime_tests()))
         witnesses = [{
             **self.report()["witnesses"][0], "executionId": str(uuid.uuid4()),
             "testIdentity": identity, "bindingId": "none", "matrixId": "binary-runtime",
@@ -84,6 +88,40 @@ class ConformanceAdmissionTests(unittest.TestCase):
                 else:
                     baseline["dependencySha256"][path] = "0" * 64
                 baseline["binarySha256"] = evidence.digest(baseline["dependencySha256"])
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                material(changed)
+
+    def test_source_break_case_requires_matching_frozen_compiler_frames_and_both_image_scopes(self):
+        inputs = self.compatibility_inputs()
+        prefixes = tuple(
+            "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/" + folder + "/source-break-fixtures/"
+            for folder in ("bin/Release/net10.0", "bin/package-diagnostic/Release/net10.0"))
+        identity = ("Hoard.Conformance.Tests.SourceBreakRuntimeTests."
+                    "Original_compiler_rejects_required_member_and_preserves_compatible_repair")
+        witness = {
+            **self.report()["witnesses"][0], "executionId": str(uuid.uuid4()),
+            "testIdentity": identity, "bindingId": "none", "matrixId": "binary-runtime",
+            "inputSha256": evidence.digest(inputs), "startedMs": 1, "endedMs": 2}
+
+        def material(frame):
+            return evidence.compatibility_case_material(
+                frame, case_id="COMPATIBILITY", matrix_id="source-break",
+                witnesses=[{**witness, "inputSha256": evidence.digest(frame)}],
+                sequence=1, started_ms=0, ended_ms=3)
+
+        self.assertEqual(material(inputs)["attempt"]["status"], "Passed")
+        for defect in ("control", "symbols", "missing", "extra", "baseline"):
+            changed = copy.deepcopy(inputs)
+            if defect == "control":
+                changed["runtimeAssemblies"][prefixes[1] + "control.json"] = "0" * 64
+            elif defect == "symbols":
+                changed["runtimeAssemblies"][prefixes[1] + "Consumer/RequiredConsumer.pdb"] = "0" * 64
+            elif defect == "missing":
+                changed["runtimeAssemblies"].pop(prefixes[0] + "negative.json")
+            elif defect == "extra":
+                changed["runtimeAssemblies"][prefixes[0] + "foreign.dll"] = "0" * 64
+            else:
+                changed["baselines"] = []
             with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
                 material(changed)
 
@@ -2090,7 +2128,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 {row["testIdentity"]: ("none", "binary-runtime") for row in self.manifest["expected"]},
                 evidence.digest(self.manifest), evidence.digest(self.owner), "execution")
         observed = admit()
-        self.assertEqual(len(observed[2]), 7)
+        self.assertEqual(len(observed[2]), 8)
         original = self.manifest["expected"]
         row = original[0]
         for path in ("/private/Contract.cs", "../Contract.cs", "Old/../Contract.cs", "Old//Contract.cs",

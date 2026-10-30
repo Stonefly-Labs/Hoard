@@ -102,7 +102,7 @@ jobs:
                   raise evidence.ConformanceError("InputChanged")
               for key, scope, count in (("architectureRuntime", "architecture", 88),
                                         ("versionRuntime", "version", 114),
-                                        ("binaryRuntime", "binary", 7)):
+                                        ("binaryRuntime", "binary", 8)):
                   observed = summary[key]
                   retained = evidence.load_json(read_bounded(
                       root / f"proofs/compatibility-{scope}-runtime-summary.json", 65536))

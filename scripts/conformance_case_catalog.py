@@ -1354,7 +1354,10 @@ def architecture_witnesses(rule, mode):
 def compatibility_witnesses(proof):
     prefix = "Hoard.Architecture.Tests."
     if proof == "binary-break":
-        return tuple(binary_runtime_tests())
+        return tuple(binary_break_runtime_tests())
+    if proof == "source-break":
+        return ("Hoard.Conformance.Tests.SourceBreakRuntimeTests."
+                "Original_compiler_rejects_required_member_and_preserves_compatible_repair",)
     if proof == "identity-paths":
         return (
             prefix + "ArchitectureRuleTests.Identity_can_use_approved_hosting_with_its_transitive_core_dependency",
@@ -1387,7 +1390,7 @@ def version_runtime_tests():
     return tests
 
 
-def binary_runtime_tests():
+def binary_break_runtime_tests():
     prefix = "Hoard.Conformance.Tests.CompatibilityBaselineTests."
     return {
         **{prefix + "Compiled_source_provenance_matches_actual_pe_pdb_and_frozen_historical_source"
@@ -1402,6 +1405,13 @@ def binary_runtime_tests():
            for variant, compatible in (("broken", False), ("compatible", True))},
         prefix + "Loaded_baseline_capture_rejects_replacement_with_actual_same_version_candidate_bytes":
             ("none", "COMPATIBILITY"),
+    }
+
+
+def binary_runtime_tests():
+    return {
+        **binary_break_runtime_tests(),
+        **{identity: ("none", "COMPATIBILITY") for identity in compatibility_witnesses("source-break")},
     }
 
 

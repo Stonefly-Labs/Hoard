@@ -4928,8 +4928,36 @@ original exact hashes in common RunInputs; expected controls are now8 live/13
 released. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
 test_conformance_composition test_conformance_evidence.ConformanceBaselineTests`
 passes56 tests in2.525 seconds; catalog/SDK and diff checks pass. Fresh immutable
-native8/13 verification remains required; no missing scope is relabeled passing
-and no logical baseline/QC result is promoted.
+native8/13 verification was still required at that checkpoint.
+
+The immutable `a53fd49858e411287b0def58c0bf7a3f42c4c069` attempt
+`c338e24d977347a1bc125db2e4167273` now passes all8 live/13 released controls,
+exit0,424853.9760149979 ms. Initial free scratch202929545216 bytes, no extra SDK
+prewarming. Separate readonly inspection verifies both exact13-file scopes and
+their original hashes frozen in common inputs, and resources-only report
+differences. Active report SHA-256:
+`0ccfbb12dabfbc9a663fb16dd8a59399ad7bff4fe979ff544fd2a2ff4d27d09b`;
+released report:
+`2c7e742caf23f539cbceb03e8f6217a6e80041f0f08b6f645c62ae69deaa45f6`.
+These retain142 cases/136 Passed/six Incomplete/209 witnesses; source staging
+acceptance does not itself promote the logical source-break row.
+
+The next increment adds that row's real package-only runtime assertion, checking
+original compiler/control/input/negative/diagnostic frames, CS0535, unchanged
+consumer/repair DLL/PDB hashes, canonical PE/PDB source documents and loaded
+old/new contracts. The binary scope selects the already-frozen package consumer;
+its original seven binary witnesses remain separate from this eighth physical
+test. Logical derivation independently reconstructs both matching exact13-file
+source inventories and both original historical image copies. Live capture also
+requires the staged control hash to match its held original compiler summary.
+The first source-case regression fails WitnessMissing before implementation;
+focused source/binary/reconstruction tests then pass3 tests. The affected516-test
+selection exposes one stale seven-parameter parser expectation; after correcting
+it and dependent native/workflow count gates,163 parser/composition/CI tests pass.
+Catalog/SDK, native assertion whitespace and diff checks pass. Actual fresh native
+package compilation/execution is still required:137 Passed/five Incomplete and210
+witnesses are expected test criteria, not verified observations. T071–T086 remain
+open; the original SDK reader deadline and full-tooling acceptance are unresolved.
 
 ### Compatibility logical case linkage and released presentation
 

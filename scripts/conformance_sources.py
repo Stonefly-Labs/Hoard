@@ -2095,6 +2095,9 @@ class NativeCompatibilitySources:
                 or len(self._scopes) >= len(order) or scope != order[len(self._scopes)]
                 or self._inputs_sha256 is not None and self._inputs_sha256 != hashed):
             raise evidence.ConformanceError("OwnershipInvalid")
+        source_break = evidence._compatibility_source_break_binding(inputs)
+        if source_break["files"]["control.json"] != evidence.load_json(self._source_break)["summarySha256"]:
+            raise evidence.ConformanceError("ProofMismatch")
         observed, commands, _ = inspect_compatibility_runtime_scope(run.root, inputs, scope, summary, prepared)
         if evidence.canonical_bytes(observed) != evidence.canonical_bytes(summary):
             raise evidence.ConformanceError("ProofMismatch")

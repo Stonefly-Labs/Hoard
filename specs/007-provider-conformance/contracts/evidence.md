@@ -1223,8 +1223,20 @@ copy files. Scope correction and a corresponding control remain required.
 Capture now includes the already-built package runtime before the same three
 execution scopes. Its omitted/changed assembly/control/PDB inputs reject; a new
 released control independently requires both exact13-file source scopes in the
-original common inventory. Host56 checks pass; fresh8/13 native controls remain
-required, without inferring any additional logical case or qualification.
+original common inventory. Host56 checks pass. Immutable `a53fd49` subsequently
+passes all8 live/13 released controls; separate readonly inspection verifies both
+original13-file source inventories frozen, without adding a logical case.
+
+Source-break logical derivation additionally binds its fixed physical runtime
+witness to both exact matching13-file source inventories and the frozen F-06
+source/lock/recipe. Original live scope capture checks the staged control hash
+against its already-held compiler receipt. The package-only assertion checks
+the original negative diagnostics/input/control frames, unchanged consumer and
+repair images, actual PE/PDB source documents and loaded contract behavior.
+The combined binary scope selects the frozen package consumer and eight physical
+tests; binary-break retains its original seven witnesses and independently binds
+both historical image copies. Fresh native package compilation/execution is
+required before the new logical source-break row can be claimed passing.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

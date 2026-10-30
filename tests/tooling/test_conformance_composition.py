@@ -875,7 +875,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 frozen["budgets"]["profileSeconds"] = 3600
                 (root / "proofs/compatibility-runtime-inputs.json").write_bytes(evidence.canonical_bytes(frozen))
                 for key, scope, count in (("architectureRuntime", "architecture", 88),
-                                          ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 7)):
+                                          ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 8)):
                     observed = {
                         "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
                         "passedParameters": count, **{field: "d" * 64 for field in (
@@ -1906,8 +1906,8 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.assertFalse(observed["profileComplete"])
             self.assertEqual(
                 (observed["architectureParameters"], observed["versionParameters"], observed["binaryParameters"]),
-                (88, 114, 7))
-            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (136, 6))
+                (88, 114, 8))
+            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (137, 5))
 
         def test_both_original_source_fixture_scopes_are_frozen_in_common_inputs(self):
             import conformance_sdk_checks as checks

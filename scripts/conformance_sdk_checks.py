@@ -4100,7 +4100,8 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
                          "Hoard.Architecture.Tests.dll"),
         "version": (version_runtime_tests, VERSION_TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0",
                     "Hoard.Composition.Tests.dll"),
-        "binary": (binary_runtime_tests, TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll"),
+        "binary": (binary_runtime_tests, TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0",
+                   "Hoard.Conformance.Tests.dll"),
     }
     inputs = evidence.admit_entity("RunInputs", inputs)
     if scope not in definitions or inputs["profileId"] != "compatibility" or inputs["mode"] != "diagnostic":
@@ -4410,7 +4411,7 @@ def execute_binary_runtime(run, repository, candidate, sources, config, feed, pr
                            frozen_inputs, native_sources, ci_revision=None):
     from conformance_case_catalog import binary_runtime_tests
 
-    runtime = candidate / TESTS / "bin/Release/net10.0"
+    runtime = candidate / TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
     packages = ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions")
     verify_runtime_packages(runtime, feed, packages)
     summary = _execute_compatibility_runtime_scope(
