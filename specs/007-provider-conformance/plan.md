@@ -3792,6 +3792,33 @@ governance/backlog/predecessor/IaC/release/UI artifacts are unaffected.
 The cause of the earlier Linux runner capture failure remains unproven.
 T068--T086, checklists and implement/running remain unchanged.
 
+### Native environment probe failure protocol
+
+Exact49804ee foundations run40975517530 finishes with preparation and
+compatibility successful, and SDK/native regressions/metadata/artifacts failed.
+Metadata123814150038 and artifacts123814150235 both reject at
+`proof_manifest`'s unchanged aggregate byte-limit guard (line1527), resolving
+the earlier runner-capture ambiguity without inferring which input is large.
+SDK123814150593 instead fails before any declared phase with
+`UnknownDiagnostic`; its environment child writes presentation JSON into the
+build-line projector when admission fails.
+
+A focused regression reproduces that protocol mismatch before implementation.
+The child now emits the existing strict closed control-event protocol and
+the parent preserves its admitted prerequisite/deadline/schema code and
+original incomplete/failed exit status. Success still requires exit0, no
+events and a valid independently admitted environment receipt. Failed probes
+cannot publish a successful environment. No private text or path is reflected.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_cli test_conformance_sanitation`
+passes186 tests in103.840 seconds with four explicit native-only skips.
+README and DEVELOPMENT are affected; provider contracts, examples, product,
+architecture/ADR/diagrams, governance/backlog/predecessor/IaC/release/UI guides
+are unaffected by this private probe-protocol repair.
+The underlying SDK startup rejection, excessive runner-capture bytes and native
+tooling budget are unresolved; this is not native acceptance or qualification.
+T068--T086, reviewer-owned checklists and implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

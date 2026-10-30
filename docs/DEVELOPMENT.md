@@ -8486,6 +8486,23 @@ no-symlink guards are unchanged. The focused input/CLI/sanitation/SDK runner
 selection passes53 tests with four native-only skips. This enables precise
 future SDK capture diagnosis, not a claimed explanation or successful retry.
 
+At49804ee, both isolated metadata and artifacts CI reach SDK runner capture
+and reject at the proof inventory's unchanged aggregate byte-limit guard,
+not the earlier metadata namespace verifier. The SDK job separately fails
+before its first declared phase: a failed environment probe emits presentation
+JSON into a build-output parser, obscuring its originating closed error as
+`UnknownDiagnostic`. A new regression reproduces that protocol mismatch.
+Environment probes now emit strict control events on failure, and the parent
+preserves the admitted code rather than interpreting it as compiler output.
+Prerequisite, deadline and schema controls retain their original exit status;
+no failed probe reads or publishes a successful environment receipt.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_cli test_conformance_sanitation`
+passes186 tests with four explicit native-only skips. The underlying SDK
+startup failure, oversized runner inventory and native tooling budget still
+require native investigation; no limits, assertions or qualification gates
+are relaxed.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

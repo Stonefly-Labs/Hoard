@@ -956,6 +956,9 @@ Category presentation files now separate diagnostic and qualification-mode
 attempts instead of colliding at create-new publication. The recovered-capacity
 local tooling replay observes784 tests without failures/errors, with29 explicit
 native-only skips; native CI still has unresolved failures and budget limits.
+Environment probes now use closed control events rather than build output,
+preserving actual prerequisite, deadline and schema failures without raw text.
+This does not bypass admission or establish successful native execution.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

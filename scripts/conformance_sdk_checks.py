@@ -2492,9 +2492,13 @@ def environment(run, *, phase="admission", candidate=None, scope=None):
              and re.fullmatch(r"[0-9]{8}\.[0-9]+\.[0-9]+", image_version) else "none")
     result = run.command(
         [sys.executable, str(Path(__file__).resolve()), "--probe", str(path)],
-        cwd=Path(__file__).resolve().parents[1], kind="build", timeout=30, cache_id=f"environment-{phase}",
+        cwd=Path(__file__).resolve().parents[1], kind="events", timeout=30, cache_id=f"environment-{phase}",
         env={"HOARD_RUNNER_IMAGE": image})
     if result.exit_code or result.events:
+        if result.exit_code and len(result.events) == 1:
+            event = result.events[0]
+            if event["event"] == "control" and event["value"] == 0 and event["code"] != "None":
+                raise evidence.ConformanceError(event["code"])
         raise evidence.ConformanceError("PrerequisiteMissing")
     observed = evidence.admit_entity("Environment", evidence.load_json(read_bounded(path, 64 * 1024)))
     if candidate is not None:
@@ -4879,6 +4883,9 @@ def main():
     except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
         status = evidence.failure_status(code)
+        if options.probe is not None:
+            print(json.dumps({"event": "control", "code": code, "value": 0}))
+            return 2 if status == "Incomplete" else 1
         print(json.dumps({
             "qualification": False, "status": status, "code": code,
             "locations": _category_failure_locations(error),

@@ -6288,7 +6288,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     patch.dict(checks.os.environ, {"ImageOS": image_os, "ImageVersion": image_version}):
                 checks.environment(run)
                 self.assertEqual(observed[-1]["env"], {"HOARD_RUNNER_IMAGE": expected})
-                self.assertEqual(observed[-1]["kind"], "build")
+                self.assertEqual(observed[-1]["kind"], "events")
                 self.assertLessEqual(observed[-1]["timeout"], 30)
 
     def test_admission_and_completion_capture_distinct_environment_observations(self):
@@ -6306,6 +6306,26 @@ class SdkDiagnosticTests(unittest.TestCase):
             ("environment-admission.json", "environment-admission"),
             ("environment-completion.json", "environment-completion"),
         ])
+
+    def test_environment_probe_preserves_closed_child_failures_instead_of_unknown_build_output(self):
+        from conformance_execution import project_event
+
+        output_path = self.directory / "probe-must-not-exist.json"
+        for expected, status in (
+                ("PrerequisiteMissing", 2), ("DeadlineExceeded", 2), ("EvidenceSchemaInvalid", 1)):
+            output = io.StringIO()
+            with self.subTest(code=expected), patch.object(
+                    sys, "argv", ["conformance_sdk_checks.py", "--probe", str(output_path)]), \
+                    patch.object(checks, "probe", side_effect=checks.evidence.ConformanceError(expected)), \
+                    contextlib.redirect_stdout(output):
+                self.assertEqual(checks.main(), status)
+            event = project_event(output.getvalue().encode())
+            self.assertEqual(dict(event), {"event": "control", "code": expected, "value": 0})
+            run = SimpleNamespace(root=self.directory, command=lambda *args, **kwargs: SimpleNamespace(
+                exit_code=status, events=(event,)))
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "^" + expected + "$"):
+                checks.environment(run)
+            self.assertFalse(output_path.exists())
 
     def test_probe_observes_filesystem_and_explicit_runner_metadata(self):
         output = self.directory / "environment.json"
