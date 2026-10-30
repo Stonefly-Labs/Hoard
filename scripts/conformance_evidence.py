@@ -1388,7 +1388,6 @@ def render_native_category_qualification(
 def inspect_native_compatibility_report(run, report_data, *, expected_inputs, native_evaluation):
     """Replay compatibility runtimes only with their original released executor."""
     from conformance_execution import OwnedRun
-    from conformance_sdk_checks import inspect_compatibility_runtime_scope, verify_compatibility_case_report
     from conformance_sources import NativeCompatibilityEvaluation
 
     if type(run) is not OwnedRun or type(native_evaluation) is not NativeCompatibilityEvaluation:
@@ -1400,39 +1399,49 @@ def inspect_native_compatibility_report(run, report_data, *, expected_inputs, na
     if not isinstance(summary, dict):
         raise ConformanceError("EvidenceSchemaInvalid")
     native_evaluation.verify_report_origin(run, inputs, summary)
+    inspected, commands = _read_compatibility_runtime_reports(
+        run.root, inputs, summary, run.resource_projection())
+    if commands != native_evaluation.command_hashes:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        **inspected, "runtimeOriginVerified": True, "scope": "native-compatibility-runtime-origin-diagnostic",
+        "reportSha256": hashlib.sha256(report_data).hexdigest()})
+
+
+def _read_compatibility_runtime_reports(root, inputs, summary, resources):
+    from conformance_sdk_checks import inspect_compatibility_runtime_scope, verify_compatibility_case_report
+
     commands = []
     counts = {}
     for scope, key in (("architecture", "architectureRuntime"), ("version", "versionRuntime"),
                        ("binary", "binaryRuntime")):
-        _, retained = _readonly_report_proof(run.root, f"proofs/compatibility-{scope}-runtime-summary.json")
+        _, retained = _readonly_report_proof(root, f"proofs/compatibility-{scope}-runtime-summary.json")
         observed, records, _ = inspect_compatibility_runtime_scope(
-            run.root, inputs, scope, summary[key], summary["architecturePreparation"])
+            root, inputs, scope, summary[key], summary["architecturePreparation"])
         if canonical_bytes(observed) != retained or retained != canonical_bytes(summary[key]):
             raise ConformanceError("ProofMismatch")
         commands.extend(records)
         counts[scope] = observed["passedParameters"]
-    if tuple(commands) != native_evaluation.command_hashes:
-        raise ConformanceError("ProofMismatch")
-    _, active_data = _readonly_report_proof(run.root, "proofs/compatibility-runtime-report.json")
+    _, active_data = _readonly_report_proof(root, "proofs/compatibility-runtime-report.json")
     active = admit_entity("QualificationReport", load_json(active_data))
     if summary.get("runtimeCases") != verify_compatibility_case_report(
-            run.root, inputs, summary, report_data=active_data):
+            root, inputs, summary, report_data=active_data):
         raise ConformanceError("ProofMismatch")
-    _, released_data = _readonly_report_proof(run.root, "proofs/compatibility-runtime-released-report.json")
+    _, released_data = _readonly_report_proof(root, "proofs/compatibility-runtime-released-report.json")
     released = admit_entity("QualificationReport", load_json(released_data))
-    expected = admit_entity("QualificationReport", {**active, "resources": run.resource_projection()})
+    expected = admit_entity("QualificationReport", {**active, "resources": resources})
     if released != expected:
         raise ConformanceError("ProofMismatch")
-    cases = verify_compatibility_case_report(run.root, inputs, summary, report_data=released_data)
+    cases = verify_compatibility_case_report(root, inputs, summary, report_data=released_data)
     return MappingProxyType({
-        "qualification": False, "profileComplete": False, "runtimeOriginVerified": True,
-        "scope": "native-compatibility-runtime-origin-diagnostic",
-        "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "qualification": False, "profileComplete": False,
+        "scope": "compatibility-runtime-frame-diagnostic",
+        "reportSha256": digest(summary),
         "architectureParameters": counts["architecture"], "versionParameters": counts["version"],
         "binaryParameters": counts["binary"],
         "passedCases": cases["passedCases"], "incompleteCases": cases["incompleteCases"],
         "runtimeCaseReportSha256": cases["reportSha256"],
-    })
+    }), tuple(commands)
 
 
 def inspect_native_composition_report(run, report_data, *, expected_inputs, native_evaluation):
@@ -1570,6 +1579,63 @@ def derive_native_compatibility_qualification(run, report_data, *, expected_inpu
     _require_qualifying_outcomes(report)
     return admit_entity("QualificationReport", {
         **report, "state": "Complete", "qualification": True, "scope": ["compatibility-fixture-qualification"]})
+
+
+def inspect_receipted_compatibility_qualification(
+        root, report_data, *, expected_inputs, expected_report_sha256, qualification_origin):
+    """Re-admit the complete compatibility frame using a separately trusted owner receipt."""
+    from conformance_sources import read_compatibility_preparation_frame, read_compatibility_released_context
+
+    if qualification_origin is None:
+        raise ConformanceError("OwnershipInvalid")
+    origin = _record({
+        "kind": _constant("native-compatibility-fixture-qualification"),
+        "inputsSha256": sha256, "reportSha256": sha256,
+        "originalReportPath": relative_path, "originalReportSha256": sha256,
+        "summaryPath": relative_path, "summarySha256": sha256, "resourcesSha256": sha256,
+    })(qualification_origin)
+    inputs = admit_entity("RunInputs", expected_inputs)
+    if inputs["profileId"] != "compatibility":
+        raise ConformanceError("UnsupportedProfile")
+    if (origin["inputsSha256"] != digest(inputs)
+            or origin["reportSha256"] != sha256(expected_report_sha256)
+            or origin["originalReportPath"] != "proofs/compatibility-runtime-released-report.json"
+            or origin["summaryPath"] != "proofs/compatibility-diagnostic-summary.json"):
+        raise ConformanceError("InputChanged")
+    if (not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES
+            or hashlib.sha256(report_data).hexdigest() != origin["reportSha256"]):
+        raise ConformanceError("ProofMismatch")
+    original_sha, original_data = _readonly_report_proof(root, origin["originalReportPath"])
+    summary_sha, summary_data = _readonly_report_proof(root, origin["summaryPath"])
+    if original_sha != origin["originalReportSha256"] or summary_sha != origin["summarySha256"]:
+        raise ConformanceError("ProofMismatch")
+    original = admit_entity("QualificationReport", load_json(original_data))
+    _require_qualifying_outcomes(original)
+    resources = original["resources"]
+    if (not resources or any(row["state"] != "Released" for row in resources)
+            or digest(resources) != origin["resourcesSha256"]):
+        raise ConformanceError("CleanupIncomplete")
+    if original["inputs"] != inputs:
+        raise ConformanceError("InputChanged")
+    summary = load_json(summary_data)
+    if not isinstance(summary, dict) or canonical_bytes(summary.get("resources")) != canonical_bytes(resources):
+        raise ConformanceError("ProofMismatch")
+    _, active = read_compatibility_released_context(root, summary)
+    frame = read_compatibility_preparation_frame(root, inputs, active)
+    inspected, _ = _read_compatibility_runtime_reports(root, inputs, summary, resources)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    expected = admit_entity("QualificationReport", {
+        **original, "state": "Complete", "qualification": True, "scope": ["compatibility-fixture-qualification"]})
+    if report != expected:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        **inspected, "qualification": True, "profileComplete": True, "baselineQualification": False,
+        "code": "None", "scope": "trusted-native-compatibility-fixture-qualification",
+        "profileId": "compatibility", "reportState": report["state"],
+        "reportSha256": origin["reportSha256"], "caseCount": len(report["results"]),
+        "witnessCount": len(report["witnesses"]),
+        "foundationParameters": frame["foundation"]["foundationRuntime"]["passedParameters"],
+    })
 
 
 def inspect_profile_report(root, report_data, *, expected_inputs, expected_report_sha256):

@@ -1,6 +1,7 @@
 # F-07 Evidence, Aggregation and CI Contract
 
-**Status**: Planned schema/evaluator/workflow contract, not an emitted report.
+**Status**: Schema/evaluator/workflow contract with partial executable boundaries;
+full baseline/coordinator qualification remains unfinished.
 See [model](../data-model.md), [matrix](matrix.md) and [harness](harness.md).
 
 ## Input Manifest
@@ -39,9 +40,12 @@ all runtime, historical, source-recipe, retained-binary, source-break and
 foundation evidence and actually releases resources. Public completion also
 requires exact current source/catalog/destination and the original evaluation,
 not an integer success or an artifact's assertion. Original raw reports and the
-direct SDK/hosted diagnostic remain nonqualifying. Fresh native qualification
-and independent external-receipt confirmation are still required; no diagnostic
-is retrospectively accepted.
+direct SDK/hosted diagnostic remain nonqualifying. Fresh `c012f7b` public native
+execution and a separate readonly external-receipt reader now both verify the
+same142 cases/212 runtime witnesses/86 foundation parameters and complete
+historical/source/retained/source-break frame. Five altered/missing controls
+reject without reconstructing native authority. Both explicitly deny
+full-baseline qualification; no diagnostic is retrospectively accepted.
 
 An explicit capture-time `catalogBindingId` assignment connects each known
 fixture declaration to its frozen category slot without changing the

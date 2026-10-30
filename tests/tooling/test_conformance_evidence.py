@@ -9694,7 +9694,7 @@ class ConformanceBaselineTests(unittest.TestCase):
         source_break = {"commands": declarations[3:4], "summarySha256": "e" * 64}
         inputs = {"sourceManifestSha256": "b" * 64, "environment": {}}
         active = {
-            "phase": "compatibility-replay-admitted", "baselineSealSha256": "f" * 64,
+            "qualification": False, "phase": "compatibility-replay-admitted", "baselineSealSha256": "f" * 64,
             "historicalPreparation": preparation, "sourceRecipeOrigin": recipes,
             "sourceSha256": recipes["summarySha256"], "retainedOrigin": retained,
             "retainedSha256": retained["summarySha256"], "sourceBreakOrigin": source_break,

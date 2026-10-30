@@ -10145,6 +10145,33 @@ passes582 tests in137.135 seconds with27 native-only skips; frozen inventory,
 SDK/catalog and `git diff --check` pass. T071..T086 stay open. Provider contracts/examples, architecture
 diagrams, infrastructure and release behavior are unaffected.
 
+Fresh immutable `c012f7bf6e61e4e26be3e1b3e55147bfb12eee2b` public execution:
+`bash scripts/validate-conformance.sh --profile compatibility --evidence /validation/work/run-1`
+on Linux arm64/two CPUs/6 GiB with fresh `btrfs` scratch — **passed, exit0**.
+All142 cases/212 runtime witnesses pass:88 architecture,114 version parameters/
+170 version observations and10 binary parameters. All86 foundation parameters,
+24 source recipes and9 retained-binary scenarios/40 loaded assemblies pass;
+the original owner actually releases every resource before separate qualified
+publication. Qualified SHA-256:
+`b0ca069959645c10e8024e7d927e157f075e85a35ebde7250e3bd6406228b7d6`.
+
+The new `inspect_receipted_compatibility_qualification` shares pure retained
+preparation/context/runtime-report verification with the original evaluator,
+without reconstructing native authority. A fresh readonly Linux process
+receiving only the external original stdout receipt independently verifies that
+same complete frame and qualified bytes:142 cases/212 witnesses/86 foundation
+parameters, Complete. All five missing/altered receipt/input/report/original-
+report/summary controls reject. Original raw diagnostic bytes remain unchanged;
+both processes explicitly deny full-baseline qualification.
+The87 focused baseline/composition/CLI regressions pass in11.332 seconds.
+The same eight-module shared-boundary command above additionally passes582 tests
+in125.142 seconds with27 native-only skips after the shared-reader refactor;
+frozen inventory, SDK/catalog and `git diff --check` pass. The original held-byte
+checks still run before semantic parsing, and every captured frame comparison
+remains required. These different-source fixture results do not establish a
+common baseline; T071..T086 remain open. Provider contracts/examples, architecture
+diagrams, infrastructure and release behavior are unaffected.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

@@ -22,8 +22,15 @@ Architecture/version/binary and foundation scope readers preserve diagnostic
 defaults while admitting that preselected mode; completion inputs cannot switch
 modes. Its raw reports remain nonqualifying and unchanged, and the hosted replay
 uses `python3 scripts/conformance_sdk_checks.py --compatibility-only` explicitly.
-Fresh native public qualification and independent receipt confirmation remain
-required; no old diagnostic is relabeled.
+At exact `c012f7b`, fresh native public execution passes142 cases/212 runtime
+witnesses and86 foundation parameters,24 source recipes and9 retained-binary
+scenarios/40 loaded assemblies, with actual Released resources. A fresh
+readonly process independently verifies the same qualified report and complete
+frame from the external original stdout receipt and rejects five altered/
+missing receipt/input/report controls without reconstructing native authority.
+The qualified SHA-256 is
+`b0ca069959645c10e8024e7d927e157f075e85a35ebde7250e3bd6406228b7d6`.
+No old diagnostic is relabeled; both processes deny full-baseline qualification.
 Complete public composition execution now has the same original-owner
 qualification boundary, additionally requiring all58 inherited runtime parents,
 four controller leaders and complete trusted tooling before actual release.

@@ -396,7 +396,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
             for index, (scope, tests) in enumerate((
                     ("architecture", catalog.architecture_runtime_tests()),
                     ("version", catalog.version_runtime_tests()), ("binary", catalog.binary_runtime_tests()))):
-                summary[scope + "Runtime"] = {"qualification": False, "scope": scope + "-runtime-diagnostic"}
+                summary[scope + "Runtime"] = {
+                    "qualification": False, "scope": scope + "-runtime-diagnostic", "passedParameters": len(tests)}
                 sdk.write_new(root / f"proofs/compatibility-{scope}-runtime-summary.json",
                               evidence.canonical_bytes(summary[scope + "Runtime"]))
                 witnesses, proofs = [], {}
@@ -421,7 +422,13 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 self.assertEqual(selected_inputs, evidence.admit_entity("RunInputs", inputs))
                 return selected_summary, (), scopes[scope]
 
-            run = SimpleNamespace(root=root, resource_projection=lambda: ())
+            resources = ()
+            if mode == "qualification":
+                resources = (evidence.admit_entity("ResourceOwnership", {
+                    "runId": inputs["runId"], "rootId": "modeled-root", "childPid": 0,
+                    "childStartSha256": "0" * 64, "state": "Released",
+                    "cleanupDurationMs": 1, "diagnosticCode": "None"}),)
+            run = SimpleNamespace(root=root, resource_projection=lambda: resources)
             with mock.patch.object(sdk, "inspect_compatibility_runtime_scope", side_effect=replay):
                 observed = sdk._compatibility_case_report(run, inputs, summary)
                 raw = (root / "proofs/compatibility-runtime-report.json").read_bytes()
@@ -438,6 +445,56 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 self.assertIn(f"proofs/category-compatibility-{mode}-completion-inputs.json", report["proofs"])
                 if mode == "qualification":
                     evidence._require_qualifying_outcomes(report)
+                    active = {
+                        **summary, "qualification": False, "phase": "compatibility-replay-admitted",
+                        "runtimeCases": observed}
+                    released = {
+                        **active, "phase": "compatibility-replay-released", "resources": resources,
+                        "profileComplete": False, "processResourcesReleased": True}
+                    summary_raw = evidence.canonical_bytes(released)
+                    summary_path = "proofs/compatibility-diagnostic-summary.json"
+                    original_path = "proofs/compatibility-runtime-released-report.json"
+                    sdk.write_new(root / "proofs/compatibility-runtime-active-summary.json",
+                                  evidence.canonical_bytes(active))
+                    sdk.write_new(root / summary_path, summary_raw)
+                    sdk.write_new(root / original_path, raw)
+                    qualified = evidence.canonical_bytes({
+                        **report, "state": "Complete", "qualification": True,
+                        "scope": ["compatibility-fixture-qualification"]})
+                    receipt = {
+                        "kind": "native-compatibility-fixture-qualification",
+                        "inputsSha256": evidence.digest(inputs),
+                        "reportSha256": hashlib.sha256(qualified).hexdigest(),
+                        "originalReportPath": original_path, "originalReportSha256": hashlib.sha256(raw).hexdigest(),
+                        "summaryPath": summary_path, "summarySha256": hashlib.sha256(summary_raw).hexdigest(),
+                        "resourcesSha256": evidence.digest(resources)}
+
+                    def inspect_origin(origin, data=qualified, selected_inputs=inputs):
+                        return evidence.inspect_receipted_compatibility_qualification(
+                            root, data, expected_inputs=selected_inputs,
+                            expected_report_sha256=receipt["reportSha256"], qualification_origin=origin)
+
+                    import conformance_sources as sources
+                    with mock.patch.object(sources, "read_compatibility_preparation_frame", return_value={
+                            "foundation": {"foundationRuntime": {"passedParameters": 7}}}), \
+                            mock.patch.object(sources, "NativeCompatibilitySources") as native_authority:
+                        verified = inspect_origin(receipt)
+                        self.assertTrue(verified["qualification"])
+                        self.assertEqual(verified["reportState"], "Complete")
+                        self.assertFalse(verified["baselineQualification"])
+                        self.assertEqual(verified["caseCount"], len(catalog.expected_cases("compatibility")))
+                        for changed_origin in (
+                                None, {**receipt, "inputsSha256": "0" * 64},
+                                {**receipt, "originalReportSha256": "0" * 64},
+                                {**receipt, "summarySha256": "0" * 64},
+                                {**receipt, "resourcesSha256": "0" * 64}):
+                            with self.subTest(receipt=changed_origin), self.assertRaises(evidence.ConformanceError):
+                                inspect_origin(changed_origin)
+                        with self.assertRaises(evidence.ConformanceError):
+                            inspect_origin(receipt, qualified + b"\n")
+                        with self.assertRaises(evidence.ConformanceError):
+                            inspect_origin(receipt, selected_inputs={**inputs, "mode": "diagnostic"})
+                        native_authority.assert_not_called()
                 else:
                     with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
                         evidence._require_qualifying_outcomes(report)

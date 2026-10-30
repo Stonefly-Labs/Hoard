@@ -6,13 +6,49 @@
 
 **Status**: The authorized implementation continues `implement / running`, with
 the resolved CP-11 timing clarification recorded below. Finite native metadata/
-artifact fixture qualifications at `984bb2e` and composition at `48faeec` have
+artifact fixture qualifications at `984bb2e`, composition at `48faeec` and
+compatibility at `c012f7b` have
 separate readonly external-receipt verification. These different-source results
 do not establish a common baseline. Complete harness, qualifying coordinator/
 five-profile CI, custom checklist approval and full-baseline qualification remain
 unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
+
+### First compatibility fixture qualification and independent verification
+
+Exact immutable `c012f7bf6e61e4e26be3e1b3e55147bfb12eee2b` executes
+`bash scripts/validate-conformance.sh --profile compatibility --evidence /validation/work/run-1`
+on Linux arm64 with two CPUs/6 GiB and fresh supported `btrfs` scratch:
+**passed, exit0**. All142 logical cases/212 runtime witnesses pass:
+88 architecture,114 version parameters/170 version observations and10 binary
+parameters. The86 foundation parameters,24 source recipes and9 retained-binary
+scenarios/40 loaded assemblies also pass. Original complete capture, actual
+Released resources and separate qualified publication execute unmocked.
+The qualified SHA-256 is
+`b0ca069959645c10e8024e7d927e157f075e85a35ebde7250e3bd6406228b7d6`;
+the unchanged released raw report SHA-256 is
+`f4975fb02bd992c30def4c58a1ff9f2477717cb769bb866bfa8517a3ee2d85e7`.
+
+A fresh readonly Linux process imports the new independent reader and consumes
+only the externally observed original stdout receipt. It reconstructs the
+same runtime/historical/source/retained/source-break/foundation frame and
+qualified bytes: **passed**, Complete,142 cases/212 witnesses/86 foundation
+parameters. All five missing/altered receipt/input/report/original-report/
+summary controls reject. No native token is reconstructed or receipt trusted
+from an inspected artifact; original diagnostic bytes are unchanged.
+Both processes explicitly report `baselineQualification:false`.
+
+The reader shares pure retained preparation/context/runtime-report verification
+with the original evaluator, preserving original held-byte checks before
+semantic parsing and strict captured-frame comparisons. Its87 focused
+baseline/composition/CLI regressions pass in11.332 seconds. The earlier rejected
+roots remain rejected; these different-source fixture results cannot establish
+a common baseline. T071..T086 remain open. Provider contracts/examples,
+architecture diagrams, infrastructure and release behavior are unaffected.
+The eight-module shared-boundary selector additionally passes582 tests in
+125.142 seconds with27 native-only skips after the refactor; frozen inventory,
+SDK/catalog and `git diff --check` pass.
 
 ### First complete composition fixture qualification and independent verification
 

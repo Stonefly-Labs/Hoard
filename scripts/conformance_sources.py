@@ -1966,6 +1966,75 @@ def category_replay_packet(projection):
         **projection})
 
 
+def read_compatibility_released_context(root, summary):
+    _, raw = evidence._readonly_report_proof(root, "proofs/compatibility-runtime-active-summary.json")
+    original = evidence.load_json(raw)
+    if not isinstance(original, dict) or not isinstance(summary, Mapping):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if (original.get("phase") != "compatibility-replay-admitted"
+            or original.get("qualification") is not False
+            or summary.get("phase") != "compatibility-replay-released"
+            or summary.get("profileComplete") is not False
+            or summary.get("processResourcesReleased") is not True
+            or evidence.canonical_bytes({key: value for key, value in summary.items()
+                                         if key not in ("phase", "profileComplete",
+                                                        "processResourcesReleased", "resources")})
+            != evidence.canonical_bytes({key: value for key, value in original.items() if key != "phase"})):
+        raise evidence.ConformanceError("ProofMismatch")
+    return raw, original
+
+
+def read_compatibility_preparation_frame(root, inputs, original):
+    """Re-admit retained compatibility preparation without creating native authority."""
+    from conformance_baselines import (
+        inspect_historical_binary_preparation, inspect_retained_consumers,
+        inspect_source_break_control, inspect_source_recipes)
+    from conformance_sdk_checks import inspect_foundation_runtime_scope, selected_msbuild
+
+    foundation, runtime_commands, preparation_commands = inspect_foundation_runtime_scope(
+        root, inputs, original["foundationRuntime"], original["foundationFormatting"],
+        original["architecturePreparation"], retained=True)
+    msbuild = selected_msbuild(inputs["environment"])
+    preparation = inspect_historical_binary_preparation(
+        root, original["baselineSealSha256"], msbuild=msbuild, retained=True)
+    _, recipes_raw = evidence._readonly_report_proof(root, "proofs/source-compatibility.json")
+    recipes = inspect_source_recipes(
+        root, recipes_raw, expected_baseline_sha256=original["baselineSealSha256"],
+        msbuild=msbuild, retained=True)
+    _, retained_raw = evidence._readonly_report_proof(root, "proofs/retained-compatibility.json")
+    retained = inspect_retained_consumers(
+        root, retained_raw, expected_baseline_sha256=original["baselineSealSha256"],
+        msbuild=msbuild, retained=True)
+    _, control_raw = evidence._readonly_report_proof(root, "proofs/source-break-control.json")
+    source_break = inspect_source_break_control(
+        root, control_raw, expected_baseline_sha256=original["baselineSealSha256"],
+        msbuild=msbuild, retained=True)
+    if (original.get("historicalPreparation") != preparation
+            or original.get("sourceRecipeOrigin") != recipes
+            or original.get("sourceSha256") != recipes["summarySha256"]
+            or recipes["candidateSourceSha256"] != inputs["sourceManifestSha256"]
+            or original.get("retainedOrigin") != retained
+            or original.get("retainedSha256") != retained["summarySha256"]
+            or retained["candidateSourceSha256"] != inputs["sourceManifestSha256"]
+            or retained["sourceInputFrameSha256"] != recipes["inputFrameSha256"]
+            or original.get("sourceBreakOrigin") != source_break
+            or original.get("sourceBreakSha256") != source_break["summarySha256"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    foundation_commands = tuple(sorted((*runtime_commands, *preparation_commands)))
+    commands = tuple(
+        (row["sequence"], row["executionSha256"])
+        for observed in (preparation, recipes, retained, source_break) for row in observed["commands"])
+    for sequence, expected in (*commands, *foundation_commands):
+        hashed, _ = evidence._readonly_report_proof(root, f"proofs/execution-command-{sequence:04}.json")
+        if hashed != expected:
+            raise evidence.ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "preparation": preparation, "recipes": recipes, "retained": retained,
+        "sourceBreak": source_break, "foundation": foundation,
+        "foundationCommands": foundation_commands, "commands": commands,
+    })
+
+
 @dataclass(frozen=True, repr=False)
 class NativeCompatibilityEvaluation:
     _source: "NativeCompatibilitySources"
@@ -1989,77 +2058,23 @@ class NativeCompatibilityEvaluation:
                 or evidence.canonical_bytes(summary.get("resources")) != evidence.canonical_bytes(resources)):
             raise evidence.ConformanceError("CleanupIncomplete")
         original = evidence.load_json(self.summary_data)
-        from conformance_baselines import (
-            inspect_historical_binary_preparation, inspect_retained_consumers,
-            inspect_source_break_control, inspect_source_recipes)
-        from conformance_sdk_checks import inspect_foundation_runtime_scope, selected_msbuild
-
         captured = evidence.load_json(self.foundation_data)
         # Preserve the selected runner's independent InputChanged diagnostic.
         pinned = {path: hashed for path, hashed in evidence._hash_map(captured["proofs"]).items()
                   if path != "proofs/sdk-vstest-inputs.json"}
         if dict(evidence.input_manifest(run.root, list(pinned))) != pinned:
             raise evidence.ConformanceError("ProofMismatch")
-        foundation, runtime_commands, preparation_commands = inspect_foundation_runtime_scope(
-            run.root, inputs, original["foundationRuntime"], original["foundationFormatting"],
-            original["architecturePreparation"], retained=True)
-        if (evidence.canonical_bytes(foundation) != self.foundation_data
-                or tuple(sorted((*runtime_commands, *preparation_commands))) != self.foundation_command_hashes):
+        frame = read_compatibility_preparation_frame(run.root, inputs, original)
+        if (frame["foundationCommands"] != self.foundation_command_hashes
+                or any(evidence.canonical_bytes(frame[key]) != expected for key, expected in (
+                    ("foundation", self.foundation_data), ("preparation", self.preparation_data),
+                    ("recipes", self.source_recipes_data), ("retained", self.retained_data),
+                    ("sourceBreak", self.source_break_data)))):
             raise evidence.ConformanceError("ProofMismatch")
-
-        preparation = inspect_historical_binary_preparation(
-            run.root, original["baselineSealSha256"], msbuild=selected_msbuild(inputs["environment"]),
-            retained=True)
-        if (evidence.canonical_bytes(preparation) != self.preparation_data
-                or original.get("historicalPreparation") != preparation):
+        active_raw, _ = read_compatibility_released_context(run.root, summary)
+        if evidence.digest(inputs) != self.inputs_sha256 or active_raw != self.summary_data:
             raise evidence.ConformanceError("ProofMismatch")
-        _, recipes_raw = evidence._readonly_report_proof(run.root, "proofs/source-compatibility.json")
-        recipes = inspect_source_recipes(
-            run.root, recipes_raw, expected_baseline_sha256=original["baselineSealSha256"],
-            msbuild=selected_msbuild(inputs["environment"]), retained=True)
-        if (evidence.canonical_bytes(recipes) != self.source_recipes_data
-                or original.get("sourceRecipeOrigin") != recipes
-                or original.get("sourceSha256") != recipes["summarySha256"]
-                or recipes["candidateSourceSha256"] != inputs["sourceManifestSha256"]):
-            raise evidence.ConformanceError("ProofMismatch")
-        _, retained_raw = evidence._readonly_report_proof(run.root, "proofs/retained-compatibility.json")
-        retained = inspect_retained_consumers(
-            run.root, retained_raw, expected_baseline_sha256=original["baselineSealSha256"],
-            msbuild=selected_msbuild(inputs["environment"]), retained=True)
-        if (evidence.canonical_bytes(retained) != self.retained_data
-                or original.get("retainedOrigin") != retained
-                or original.get("retainedSha256") != retained["summarySha256"]
-                or retained["candidateSourceSha256"] != inputs["sourceManifestSha256"]
-                or retained["sourceInputFrameSha256"] != recipes["inputFrameSha256"]):
-            raise evidence.ConformanceError("ProofMismatch")
-        _, control_raw = evidence._readonly_report_proof(run.root, "proofs/source-break-control.json")
-        source_break = inspect_source_break_control(
-            run.root, control_raw, expected_baseline_sha256=original["baselineSealSha256"],
-            msbuild=selected_msbuild(inputs["environment"]), retained=True)
-        if (evidence.canonical_bytes(source_break) != self.source_break_data
-                or original.get("sourceBreakOrigin") != source_break
-                or original.get("sourceBreakSha256") != source_break["summarySha256"]):
-            raise evidence.ConformanceError("ProofMismatch")
-        _, active_raw = evidence._readonly_report_proof(run.root, "proofs/compatibility-runtime-active-summary.json")
-        if (evidence.digest(inputs) != self.inputs_sha256
-                or active_raw != self.summary_data
-                or summary.get("phase") != "compatibility-replay-released"
-                or summary.get("profileComplete") is not False
-                or summary.get("processResourcesReleased") is not True
-                or evidence.canonical_bytes({key: value for key, value in summary.items()
-                                             if key not in ("phase", "profileComplete",
-                                                            "processResourcesReleased", "resources")})
-                != evidence.canonical_bytes({key: value for key, value in original.items() if key != "phase"})):
-            raise evidence.ConformanceError("ProofMismatch")
-        preparation_commands = tuple(
-            (row["sequence"], row["executionSha256"]) for row in preparation["commands"])
-        source_break_commands = tuple(
-            (row["sequence"], row["executionSha256"]) for row in source_break["commands"])
-        recipe_commands = tuple((row["sequence"], row["executionSha256"]) for row in recipes["commands"])
-        retained_commands = tuple((row["sequence"], row["executionSha256"]) for row in retained["commands"])
-        for sequence, expected in (
-                *preparation_commands, *recipe_commands, *retained_commands,
-                *source_break_commands, *self.command_hashes, *self.foundation_command_hashes):
+        for sequence, expected in self.command_hashes:
             hashed, _ = evidence._readonly_report_proof(run.root, f"proofs/execution-command-{sequence:04}.json")
             if hashed != expected:
                 raise evidence.ConformanceError("ProofMismatch")

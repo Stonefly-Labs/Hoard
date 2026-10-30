@@ -128,12 +128,16 @@ the logger's bounded optional unknown-failure source-line event before its exact
 final control; every original outcome check remains required. All189 affected
 tooling checks pass (four native-only skips); hosted confirmation is pending.
 The hosted composition diagnostic remains explicitly diagnostic.
-Complete public compatibility execution now also preselects qualification-mode
-inputs and requires the original released evaluator, unchanged source/catalog
-and exact separately derived qualified bytes. Its direct SDK diagnostic and
-hosted replay remain explicitly diagnostic. Fresh native qualification and
-independent receipt confirmation remain required; harness, qualifying
-coordinator/aggregate and the full baseline remain unfinished. T071..T086 stay open.
+Complete public compatibility execution now also qualifies at exact `c012f7b`:
+142 cases/212 runtime witnesses,86 foundation parameters,24 source recipes and
+nine retained-binary scenarios pass with actual release and separate qualified
+publication. A fresh readonly process independently verifies that same complete
+frame using the external original stdout receipt; five altered/missing receipt/
+input/report controls reject without reconstructing native authority.
+Its direct SDK diagnostic and hosted replay remain explicitly diagnostic.
+These different-source fixture results do not establish a common baseline;
+harness, qualifying coordinator/aggregate and full-baseline acceptance remain
+unfinished. T071..T086 stay open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group
