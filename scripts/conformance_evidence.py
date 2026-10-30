@@ -2898,9 +2898,19 @@ def _compatibility_source_break_binding(inputs):
 def _compatibility_source_recipe_binding(inputs):
     from conformance_baselines import SOURCE_RECIPE_RUNTIME
 
+    return _compatibility_fixture_binding(inputs, SOURCE_RECIPE_RUNTIME)
+
+
+def _compatibility_retained_binding(inputs):
+    from conformance_baselines import RETAINED_RUNTIME
+
+    return _compatibility_fixture_binding(inputs, RETAINED_RUNTIME)
+
+
+def _compatibility_fixture_binding(inputs, filename):
     baseline = _compatibility_baseline(inputs)
     paths = tuple(
-        "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/" + folder + "/" + SOURCE_RECIPE_RUNTIME
+        "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/" + folder + "/" + filename
         for folder in ("bin/Release/net10.0", "bin/package-diagnostic/Release/net10.0"))
     hashes = [inputs["runtimeAssemblies"].get(path) for path in paths]
     if any(value is None for value in hashes) or hashes[0] != hashes[1]:
@@ -2934,6 +2944,8 @@ def _compatibility_case_material(inputs, case, physical, witnesses, *, input_sha
                     if (case.case_id, case.matrix_id) == ("COMPATIBILITY", "source-break") else None)
     source_recipes = (_compatibility_source_recipe_binding(inputs)
                       if (case.case_id, case.matrix_id) == ("COMPATIBILITY", "source") else None)
+    retained = (_compatibility_retained_binding(inputs)
+                if case.case_id == "COMPATIBILITY" and case.matrix_id in ("binary", "predecessor-binaries") else None)
     raw = canonical_bytes({
         "schemaVersion": 1, "qualification": False, "scope": "compatibility-case-derivation",
         "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -2943,6 +2955,7 @@ def _compatibility_case_material(inputs, case, physical, witnesses, *, input_sha
         **({"historicalBinary": historical_binary} if historical_binary is not None else {}),
         **({"sourceBreak": source_break} if source_break is not None else {}),
         **({"sourceRecipes": source_recipes} if source_recipes is not None else {}),
+        **({"retainedBinaries": retained} if retained is not None else {}),
         "policiesSha256": digest({
             identity: {"runtimeScope": physical[identity][0], "bindingId": physical[identity][1],
                        "versionObservations": version_observation_policy(identity)}

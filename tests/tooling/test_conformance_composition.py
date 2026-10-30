@@ -897,7 +897,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 frozen["budgets"]["profileSeconds"] = 3600
                 (root / "proofs/compatibility-runtime-inputs.json").write_bytes(evidence.canonical_bytes(frozen))
                 for key, scope, count in (("architectureRuntime", "architecture", 88),
-                                          ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 9)):
+                                          ("versionRuntime", "version", 114), ("binaryRuntime", "binary", 10)):
                     observed = {
                         "qualification": False, "profileComplete": False, "scope": f"{scope}-runtime-diagnostic",
                         "passedParameters": count, **{field: "d" * 64 for field in (
@@ -2023,6 +2023,41 @@ def native_compatibility_origin_tests(evaluation, *, released):
                 self.assertEqual(
                     baselines.inspect_source_recipe_fixture(owner.root, inputs, observation), binding)
 
+            def test_resealed_retained_loaded_image_cannot_replace_the_original_frozen_bundle(self):
+                import io
+                import zipfile
+                import conformance_baselines as baselines
+
+                observation = evidence.load_json(evaluation.retained_data)
+                binding = baselines.inspect_retained_fixture(owner.root, inputs, observation)
+                paths = [owner.root / path for path in binding["runtimePaths"]]
+                originals = {path: path.read_bytes() for path in paths}
+                try:
+                    changed = io.BytesIO()
+                    with zipfile.ZipFile(io.BytesIO(originals[paths[0]])) as archive, \
+                            zipfile.ZipFile(changed, "w") as replacement:
+                        target = next(entry.filename for entry in archive.infolist()
+                                      if entry.filename.endswith(".dll"))
+                        for entry in archive.infolist():
+                            replacement.writestr(
+                                entry, b"changed actual retained image" if entry.filename == target
+                                else archive.read(entry))
+                    frame = evidence.load_json(evidence.canonical_bytes(inputs))
+                    for path in paths:
+                        path.chmod(0o600)
+                        path.write_bytes(changed.getvalue())
+                        path.chmod(0o400)
+                        frame["runtimeAssemblies"][path.relative_to(owner.root).as_posix()] = (
+                            hashlib.sha256(changed.getvalue()).hexdigest())
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                        baselines.inspect_retained_fixture(owner.root, frame, observation)
+                finally:
+                    for path, raw in originals.items():
+                        path.chmod(0o600)
+                        path.write_bytes(raw)
+                        path.chmod(0o400)
+                self.assertEqual(baselines.inspect_retained_fixture(owner.root, inputs, observation), binding)
+
         return unittest.TestLoader().loadTestsFromTestCase(LiveNativeCompatibilityOriginTests)
 
     report = evidence.load_json((owner.root / "proofs/compatibility-diagnostic-summary.json").read_bytes())
@@ -2037,8 +2072,8 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.assertFalse(observed["profileComplete"])
             self.assertEqual(
                 (observed["architectureParameters"], observed["versionParameters"], observed["binaryParameters"]),
-                (88, 114, 9))
-            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (139, 3))
+                (88, 114, 10))
+            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (141, 1))
 
         def test_both_original_source_fixture_scopes_are_frozen_in_common_inputs(self):
             import conformance_sdk_checks as checks
@@ -2069,6 +2104,16 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.assertEqual({row["runtime"] for row in staged}, set(binding["runtimePaths"]))
             self.assertTrue(all(row["sha256"] == binding["sha256"] for row in staged))
             self.assertTrue(all(row["sourceSummarySha256"] == report["sourceRecipeOrigin"]["summarySha256"]
+                                for row in staged))
+
+        def test_both_original_retained_metadata_bundles_are_frozen_in_common_inputs(self):
+            binding = evidence._compatibility_retained_binding(inputs)
+            _, raw = evidence._readonly_report_proof(owner.root, "proofs/retained-staging.json")
+            staged = evidence.load_json(raw)
+            self.assertEqual(len(staged), 2)
+            self.assertEqual({row["runtime"] for row in staged}, set(binding["runtimePaths"]))
+            self.assertTrue(all(row["sha256"] == binding["sha256"] for row in staged))
+            self.assertTrue(all(row["retainedSummarySha256"] == report["retainedOrigin"]["summarySha256"]
                                 for row in staged))
 
         def test_copied_evaluation_cannot_replace_original_identity(self):

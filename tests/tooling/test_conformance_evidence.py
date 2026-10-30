@@ -45,6 +45,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
                 prefix + baselines.SOURCE_BREAK_RUNTIME + "/" + name: hashlib.sha256(name.encode()).hexdigest()
                 for name in baselines.SOURCE_BREAK_RUNTIME_FILES})
             inputs["runtimeAssemblies"][prefix + baselines.SOURCE_RECIPE_RUNTIME] = "d" * 64
+            inputs["runtimeAssemblies"][prefix + baselines.RETAINED_RUNTIME] = "e" * 64
         return inputs
 
     def test_source_case_requires_the_physical_recipe_witness_and_both_frozen_metadata_bundles(self):
@@ -81,6 +82,40 @@ class ConformanceAdmissionTests(unittest.TestCase):
             with self.subTest(defect=defect), self.assertRaisesRegex(
                     evidence.ConformanceError, "^ProofMismatch$"):
                 material(changed)
+
+    def test_retained_cases_require_the_physical_witness_and_both_frozen_metadata_bundles(self):
+        import conformance_case_catalog as catalog
+        import conformance_baselines as baselines
+
+        inputs = self.compatibility_inputs()
+        for matrix in ("binary", "predecessor-binaries"):
+            case = next(row for row in catalog.expected_cases("compatibility")
+                        if row.case_id == "COMPATIBILITY" and row.matrix_id == matrix)
+            self.assertEqual(len(case.witnesses), 1)
+
+            def material(frame):
+                return evidence.compatibility_case_material(
+                    frame, case_id="COMPATIBILITY", matrix_id=matrix, witnesses=[{
+                        **self.report()["witnesses"][0], "executionId": str(uuid.uuid4()),
+                        "testIdentity": case.witnesses[0], "bindingId": "none", "matrixId": "binary-runtime",
+                        "inputSha256": evidence.digest(frame), "startedMs": 1, "endedMs": 2}],
+                    sequence=1, started_ms=0, ended_ms=3)
+
+            proof, = material(inputs)["sourceProofs"].values()
+            binding = evidence.load_json(proof)["retainedBinaries"]
+            self.assertEqual(len(binding["runtimePaths"]), 2)
+            self.assertEqual(binding["sha256"], "e" * 64)
+            for defect in ("default-omitted", "package-omitted", "changed-package"):
+                changed = copy.deepcopy(inputs)
+                paths = [path for path in changed["runtimeAssemblies"]
+                         if path.endswith("/" + baselines.RETAINED_RUNTIME)]
+                if defect == "changed-package":
+                    changed["runtimeAssemblies"][paths[1]] = "f" * 64
+                else:
+                    del changed["runtimeAssemblies"][paths[1 if defect == "package-omitted" else 0]]
+                with self.subTest(matrix=matrix, defect=defect), self.assertRaisesRegex(
+                        evidence.ConformanceError, "^ProofMismatch$"):
+                    material(changed)
 
     def test_binary_break_case_rejects_resealed_baseline_or_runtime_substitutions(self):
         import conformance_case_catalog as catalog
@@ -2301,7 +2336,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 {row["testIdentity"]: ("none", "binary-runtime") for row in self.manifest["expected"]},
                 evidence.digest(self.manifest), evidence.digest(self.owner), "execution")
         observed = admit()
-        self.assertEqual(len(observed[2]), 9)
+        self.assertEqual(len(observed[2]), 10)
         original = self.manifest["expected"]
         row = original[0]
         for path in ("/private/Contract.cs", "../Contract.cs", "Old/../Contract.cs", "Old//Contract.cs",
@@ -9210,6 +9245,45 @@ class ConformanceBaselineTests(unittest.TestCase):
         self.assertEqual(observed["candidateSourceSha256"], evidence.digest(sources))
         self.assertEqual(inspector(
             self.root, raw, expected_baseline_sha256=seal_sha, msbuild=prefix, retained=True), observed)
+        write("proofs/retained-compatibility.json", raw)
+        runtimes = [
+            self.root / "stores/snapshot/tests/contracts/Hoard.Conformance.Tests" / folder
+            for folder in ("bin/Release/net10.0", "bin/package-diagnostic/Release/net10.0")]
+        for runtime in runtimes:
+            runtime.mkdir(parents=True)
+        staged = [self.baselines.stage_retained_fixture(run, runtime, seal_sha, msbuild=prefix)
+                  for runtime in runtimes]
+        self.assertEqual(staged[0]["sha256"], staged[1]["sha256"])
+        historical = self.manifest["entries"][-1]
+        inputs = {
+            "profileId": "compatibility", "sourceManifestSha256": evidence.digest(sources),
+            "baselines": [{
+                "apiScope": "f06", "revision": self.baselines.BASELINE,
+                "sourceSha256": historical["sourceSha256"], "lockSha256": historical["lockSha256"],
+                "recipeSha256": historical["recipeSha256"],
+                "binarySha256": evidence.digest(historical["binaries"]),
+                "dependencySha256": historical["binaries"]}],
+            "runtimeAssemblies": {row["runtime"]: row["sha256"] for row in staged}}
+        binding = self.baselines.inspect_retained_fixture(self.root, inputs, observed)
+        self.assertEqual(binding["sha256"], staged[0]["sha256"])
+        with zipfile.ZipFile(runtimes[0] / self.baselines.RETAINED_RUNTIME) as archive:
+            fixture = {entry.filename: (entry, archive.read(entry)) for entry in archive.infolist()}
+        self.assertLessEqual(len(fixture), 128)
+        self.assertEqual(evidence.load_json(fixture["control.json"][1]), packet)
+        omitted = copy.deepcopy(inputs)
+        del omitted["runtimeAssemblies"][staged[0]["runtime"]]
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            self.baselines.inspect_retained_fixture(self.root, omitted, observed)
+        changed_image = next(name for name in fixture if name.endswith(".dll"))
+        changed = io.BytesIO()
+        with zipfile.ZipFile(changed, "w") as archive:
+            for name, (entry, data) in fixture.items():
+                archive.writestr(entry, b"resealed different image" if name == changed_image else data)
+        changed_inputs = copy.deepcopy(inputs)
+        for row in staged:
+            changed_inputs["runtimeAssemblies"][row["runtime"]] = write(row["runtime"], changed.getvalue())
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            self.baselines.inspect_retained_fixture(self.root, changed_inputs, observed)
         parked = []
         try:
             for name in ("stores", "feed"):

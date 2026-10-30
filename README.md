@@ -1184,6 +1184,12 @@ Proof admission now refills a completed reader slot instead of waiting for the
 oldest read while other readers sit idle. The slow-first/fifth-read regression
 fails the old FIFO drain;224 focused checks pass. Four-reader, complete-inventory,
 five-second and256MiB bounds are unchanged; fresh CI timing remains unverified.
+Immutable `3062a9f` now passes all13 live/14 released retained-origin controls.
+The next checkpoint adds a bounded metadata-only retained bundle to both runtime
+roots and common inputs: actual observer/old-consumer PE/PDB pairs, loaded-image
+assembly names/MVIDs and original execution/frame hashes are checked physically.
+416 focused checks and managed build pass; fresh14/15 native controls and the
+tenth binary witness remain unverified. QC-25/full qualification stay incomplete.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

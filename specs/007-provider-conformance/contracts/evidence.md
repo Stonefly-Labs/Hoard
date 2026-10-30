@@ -1345,6 +1345,17 @@ Proof admission drains a completed reader, not necessarily the oldest one,
 before refilling a bounded slot. The slow-first/fifth-file regression preserves
 every hash and the four-reader/five-second/256MiB bounds;224 focused checks pass.
 No failed original CI deadline is relabeled, and fresh timing remains required.
+Immutable3062a9f passes all13 live/14 released controls, original exit0,
+505160.07475899823ms, initial scratch193619550208 bytes and no extra prewarming.
+The next retained fixture binds both runtime ZIPs in common inputs before the
+first scope. Its bounded metadata-only frames contain exact original command
+parents and old/candidate/observer PE images plus observer/old-consumer PDBs.
+The physical witness verifies actual assembly names/MVIDs and PE/PDB pairs,
+seal/package overlays, all nine request/staging/loaded-observation hashes and
+common parent owner/input/output/window bindings, without loading fixture DLLs.
+Both binary/predecessor derivations require the actual witness and ZIP binding.
+416 focused checks and managed build pass; fresh14/15 native controls, ten binary
+parameters and141 Passed/one Incomplete remain unverified. QC-25 stays incomplete.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

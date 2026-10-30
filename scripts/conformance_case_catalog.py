@@ -1361,6 +1361,9 @@ def compatibility_witnesses(proof):
     if proof == "source":
         return ("Hoard.Conformance.Tests.SourceRecipeRuntimeTests."
                 "Original_source_recipes_bind_candidate_compilers_and_actual_pe_pdb_source_documents",)
+    if proof in ("binary", "predecessor-binaries"):
+        return ("Hoard.Conformance.Tests.RetainedBinaryRuntimeTests."
+                "Original_retained_consumers_bind_sealed_pe_pdb_and_actual_loaded_candidate_identities",)
     if proof == "identity-paths":
         return (
             prefix + "ArchitectureRuleTests.Identity_can_use_approved_hosting_with_its_transitive_core_dependency",
@@ -1416,6 +1419,7 @@ def binary_runtime_tests():
         **binary_break_runtime_tests(),
         **{identity: ("none", "COMPATIBILITY") for identity in compatibility_witnesses("source-break")},
         **{identity: ("none", "COMPATIBILITY") for identity in compatibility_witnesses("source")},
+        **{identity: ("none", "COMPATIBILITY") for identity in compatibility_witnesses("binary")},
     }
 
 

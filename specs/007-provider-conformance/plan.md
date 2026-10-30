@@ -5367,6 +5367,38 @@ size/mtime, count/bytes/depth/entry, cancellation/descriptor cleanup and five-se
 passes224 tests in33.840 seconds; `git diff --check` passes. Fresh actual CI timing
 is still required; original failures remain failures.
 
+Immutable3062a9f attempt67b0f4a04f084538985daf121602fc50 genuinely passes all13 live/
+14 released controls, original exit0,505160.07475899823ms, initial scratch193619550208
+bytes and no extra SDK prewarming. Scope counts remain88/114/9,170 version
+observations, runtimeOriginVerified true/profileComplete false. Packet SHA256:
+`a07f2a200396e48bb09fd34df2aa095f3857e7dd77c5163391eb782830d0ae20`.
+The original408a2d3 failure is preserved.
+
+The next increment stages a deterministic metadata-only retained ZIP in both
+runtime roots and captures both hashes in common RunInputs. Before the first
+scope, the original Active token verifies every ZIP byte against its held
+retained observation. Exact baseline/observer/source frames, compiler/nine
+consumer records, request/staging/observation frames, deduplicated loaded/
+candidate/observer PE images and old-consumer/observer PDBs share source ZIP
+staging/inspection guards: no-follow, exclusive readonly target, exact entries/
+hashes/metadata,128 entries/16MiB. A physical C# fact reads metadata, never loads
+those images, and verifies actual assembly names/MVIDs and PE/PDB pair identity,
+unchanged frozen consumers, four candidate package overlays, every original
+parent/frame hash and common owner/monotonic sequence/window/input/output maps.
+Both binary/predecessor derivations bind that tenth physical witness and both
+ZIP inputs. QC-25 stays incomplete pending remaining acceptance and baseline
+provenance review.
+
+The existing modeled nine-scenario test first fails for the absent producer,
+then verifies identical two-scope bundles, deleted-store replay, omitted input
+rejection and resealed changed-image rejection. The existing source ZIP tests
+also continue passing after shared guard extraction.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceBaselineTests test_conformance_evidence.ConformanceAdmissionTests test_conformance_evidence.ConformanceRuntimeIngestionTests test_conformance_composition test_conformance_sdk_checks test_conformance_ci test_conformance_cli`
+passes416 tests in112.991 seconds. `dotnet build tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --no-dependencies --verbosity quiet -p:UseSharedCompilation=false -nodeReuse:false`
+passes with zero warnings/errors; catalog/diff checks pass. New14 live/15 released
+controls,88/114/10 physical parameters and142 cases/141 Passed/one Incomplete/
+212 witnesses still require fresh actual native acceptance.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

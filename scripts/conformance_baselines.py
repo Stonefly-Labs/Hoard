@@ -44,6 +44,7 @@ BASELINES = (
 SOURCE_RECIPES_PATH = "tests/fixtures/conformance/baselines/source-consumers.json"
 SOURCE_COMPATIBILITY_INPUTS = "proofs/source-compatibility-inputs.json"
 SOURCE_RECIPE_RUNTIME = "source-compatibility-fixture.zip"
+RETAINED_RUNTIME = "retained-compatibility-fixture.zip"
 RETAINED_SCENARIOS = ("registration", "lifecycle", "configuration", "metadata-marker", "artifact-marker",
                       "memory", "sqlite", "local", "object")
 OBSERVER_PROJECT = "tests/fixtures/conformance/Compatibility/Observer/Observer.csproj"
@@ -447,6 +448,19 @@ def stage_source_recipe_fixture(run, runtime, seal_sha256, *, msbuild=None):
     observed = inspect_source_recipes(
         run.root, raw, expected_baseline_sha256=seal_sha256, msbuild=msbuild)
     files = _source_recipe_fixture_files(load_json(raw), observed)
+    target, hashed = _stage_metadata_fixture(run, runtime, SOURCE_RECIPE_RUNTIME, files)
+    return {
+        "schemaVersion": 1, "qualification": False, "mode": "source-compatibility-staging",
+        "baselineSealSha256": seal_sha256, "sourceSummarySha256": observed["summarySha256"],
+        "inputFrameSha256": observed["inputFrameSha256"], "runtime": target, "sha256": hashed}
+
+
+def _stage_metadata_fixture(run, runtime, filename, files):
+    import conformance_evidence as evidence
+
+    if run.state != "Active":
+        raise ConformanceError("OwnershipInvalid")
+    run._check_ledger()
     if len(files) > 128:
         raise ConformanceError("OutputLimitExceeded")
     runtime = Path(runtime).absolute()
@@ -454,7 +468,7 @@ def stage_source_recipe_fixture(run, runtime, seal_sha256, *, msbuild=None):
     if (not runtime.is_dir() or not runtime.is_relative_to(run.root)
             or not runtime.relative_to(run.root).as_posix().startswith("stores/snapshot/")):
         raise ConformanceError("InputChanged")
-    target = runtime.relative_to(run.root).as_posix() + "/" + SOURCE_RECIPE_RUNTIME
+    target = runtime.relative_to(run.root).as_posix() + "/" + filename
     with evidence._input_root(run.root) as (_, root), evidence._input_parent(
             root, target) as (parent, name):
         try:
@@ -479,10 +493,7 @@ def stage_source_recipe_fixture(run, runtime, seal_sha256, *, msbuild=None):
             output.flush()
             os.fsync(output.fileno())
         hashed, _ = evidence._source_file(root, target, remaining=16 * 1024**2, deadline=time.monotonic() + 5)
-    return {
-        "schemaVersion": 1, "qualification": False, "mode": "source-compatibility-staging",
-        "baselineSealSha256": seal_sha256, "sourceSummarySha256": observed["summarySha256"],
-        "inputFrameSha256": observed["inputFrameSha256"], "runtime": target, "sha256": hashed}
+    return target, hashed
 
 
 def inspect_source_recipe_fixture(root, inputs, observed):
@@ -494,6 +505,17 @@ def inspect_source_recipe_fixture(root, inputs, observed):
     if hashed != observed["summarySha256"]:
         raise ConformanceError("ProofMismatch")
     expected = _source_recipe_fixture_files(load_json(raw), observed)
+    for files in _inspect_metadata_fixture(root, binding, expected):
+        frame = load_json(files["inputs.json"])
+        if (digest(frame["sources"]["historical-f06"]) != binding["sourceSha256"]
+                or digest(frame["sources"]["candidate-source-manifest"]) != binding["candidateSourceSha256"]):
+            raise ConformanceError("ProofMismatch")
+    return binding
+
+
+def _inspect_metadata_fixture(root, binding, expected):
+    import conformance_evidence as evidence
+
     for path in binding["runtimePaths"]:
         hashed, raw = evidence._readonly_report_proof(root, path)
         if hashed != binding["sha256"]:
@@ -510,19 +532,15 @@ def inspect_source_recipe_fixture(root, inputs, observed):
                                or row.external_attr >> 16 != stat.S_IFREG | 0o400
                                or not 0 < row.file_size <= 16 * 1024**2 for row in entries)):
                     raise ConformanceError("ProofMismatch")
+                files = {}
                 for row in entries:
                     data = archive.read(row)
                     if hashlib.sha256(data).hexdigest() != expected[row.filename][1]:
                         raise ConformanceError("ProofMismatch")
-                    if row.filename == "inputs.json":
-                        frame = load_json(data)
-                        if (digest(frame["sources"]["historical-f06"]) != binding["sourceSha256"]
-                                or digest(frame["sources"]["candidate-source-manifest"])
-                                != binding["candidateSourceSha256"]):
-                            raise ConformanceError("ProofMismatch")
+                    files[row.filename] = data
         except zipfile.BadZipFile:
             raise ConformanceError("ProofMismatch") from None
-    return binding
+        yield files
 
 
 def verify_source_break_result(result):
@@ -1372,6 +1390,75 @@ def inspect_retained_consumers(root, packet_data, *, expected_baseline_sha256, m
         "candidateSourceSha256": frame["candidateSourceSha256"], "runId": owner[0], "rootId": owner[1],
         "startedMs": started, "endedMs": previous_end, "commands": commands, "loadedAssemblies": loaded_count,
     }
+
+
+def _retained_fixture_files(root, packet, observed):
+    import conformance_evidence as evidence
+
+    files = {
+        "control.json": ("proofs/retained-compatibility.json", observed["summarySha256"]),
+        "observer-inputs.json": (RETAINED_OBSERVER_INPUTS, observed["inputFrameSha256"]),
+        "source-inputs.json": (SOURCE_COMPATIBILITY_INPUTS, observed["sourceInputFrameSha256"]),
+        "baselines.json": ("proofs/baselines.json", observed["baselineSealSha256"])}
+    preparation = packet["observerPreparation"]
+    for suffix, field in ((".dll", "assemblySha256"), (".pdb", "pdbSha256")):
+        hashed = preparation[field]
+        files["images/" + hashed + suffix] = (
+            RETAINED_OBSERVER_IMAGES + "/" + RETAINED_OBSERVER_ASSEMBLY + suffix, hashed)
+    for command in observed["commands"]:
+        name = f'execution-command-{command["sequence"]:04}.json'
+        files["commands/" + name] = ("proofs/" + name, command["executionSha256"])
+    for row in packet["scenarios"]:
+        scenario = row["scenario"]
+        namespace = "proofs/retained-compatibility-" + scenario
+        frames = {}
+        for kind, field in (("request", "requestSha256"), ("staged", "stagedSha256"),
+                            ("observation", "observationSha256")):
+            path = namespace + "-" + kind + ".json"
+            hashed, raw = evidence._readonly_report_proof(root, path)
+            if hashed != row[field]:
+                raise ConformanceError("InputChanged")
+            files["scenarios/" + scenario + "/" + kind + ".json"] = (path, hashed)
+            frames[kind] = load_json(raw)
+        staged = frames["staged"]
+        loaded = {image["name"] + ".dll" for image in frames["observation"]["loaded"]}
+        for name in sorted(loaded | staged["candidateAssemblies"].keys()):
+            hashed = staged["stagedFiles"][name]
+            files.setdefault("images/" + hashed + ".dll", (staged["runtimePath"] + "/" + name, hashed))
+        pdb = staged["assembly"].removesuffix(".dll") + ".pdb"
+        hashed = staged["frozenFiles"][pdb]
+        files.setdefault("images/" + hashed + ".pdb", (staged["runtimePath"] + "/" + pdb, hashed))
+    return files
+
+
+def stage_retained_fixture(run, runtime, seal_sha256, *, msbuild=None):
+    import conformance_evidence as evidence
+
+    if run.state != "Active":
+        raise ConformanceError("OwnershipInvalid")
+    _, raw = evidence._readonly_report_proof(run.root, "proofs/retained-compatibility.json")
+    observed = inspect_retained_consumers(
+        run.root, raw, expected_baseline_sha256=seal_sha256, msbuild=msbuild)
+    files = _retained_fixture_files(run.root, load_json(raw), observed)
+    target, hashed = _stage_metadata_fixture(run, runtime, RETAINED_RUNTIME, files)
+    return {
+        "schemaVersion": 1, "qualification": False, "mode": "retained-compatibility-staging",
+        "baselineSealSha256": seal_sha256, "retainedSummarySha256": observed["summarySha256"],
+        "inputFrameSha256": observed["inputFrameSha256"], "runtime": target, "sha256": hashed}
+
+
+def inspect_retained_fixture(root, inputs, observed):
+    """Inspect frozen metadata bytes; only original held captures supply authority."""
+    import conformance_evidence as evidence
+
+    binding = evidence._compatibility_retained_binding(inputs)
+    hashed, raw = evidence._readonly_report_proof(root, "proofs/retained-compatibility.json")
+    if hashed != observed["summarySha256"] or binding["candidateSourceSha256"] != observed["candidateSourceSha256"]:
+        raise ConformanceError("ProofMismatch")
+    expected = _retained_fixture_files(root, load_json(raw), observed)
+    for _ in _inspect_metadata_fixture(root, binding, expected):
+        pass
+    return binding
 
 
 def _command(run, args, *, cwd, cache_id, execution_inputs=(), execution_outputs=()):

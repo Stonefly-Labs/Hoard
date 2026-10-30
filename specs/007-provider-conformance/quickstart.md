@@ -1383,6 +1383,11 @@ not treated as passes or a local disk-capacity blocker.
 Completion-driven proof-reader refill fixes reproduced FIFO slot starvation;
 224 focused checks pass with unchanged four-reader/five-second/256MiB and full
 inventory guards. Fresh CI deadline acceptance is still required.
+Immutable3062a9f now genuinely passes13 live/14 released retained-origin controls.
+The next metadata-only retained ZIP freezes actual PE/PDB/loaded-MVID/original
+parent frames into both runtime roots and shared inputs.416 focused tests and
+managed build pass; fresh14/15 controls and ten physical binary witnesses are
+still required. QC-25 and full qualification remain incomplete.
 
 ## Offline Correspondence Inspection
 

@@ -9428,6 +9428,37 @@ passes224 tests in33.840 seconds; `git diff --check` passes. All existing mutati
 descriptor cleanup, byte/count/depth/entry/selection guards and the five-second/
 256MiB bounds remain. This is not yet a fresh CI deadline acceptance claim.
 
+Immutable3062a9f original attempt67b0f4a04f084538985daf121602fc50 now passes all13
+live/14 released controls, exit0,505160.07475899823ms, initial scratch193619550208
+bytes and no extra SDK prewarming. Actual scope counts remain88/114/9 with170
+version observations; original runtime origin verifies and profileComplete stays
+false. Packet SHA256:
+`a07f2a200396e48bb09fd34df2aa095f3857e7dd77c5163391eb782830d0ae20`.
+The original408a2d3 failure is preserved, not reclassified.
+
+The next physical retained witness consumes `retained-compatibility-fixture.zip`
+from both common runtime roots. The original Active capture verifies every byte
+against its held retained observation before the first scope. The deterministic
+metadata-only bundle retains the exact baseline seal, observer/source frames,
+compiler/nine consumer records, all request/staging/observation frames, deduplicated
+loaded/candidate PE images and observer/old-consumer portable PDBs. It shares the
+source fixture's no-follow, exclusive readonly staging, exact ZIP-entry/hash,
+128-entry and16MiB guards. These images are never assembly-loaded by the witness.
+The physical fact checks actual PE assembly names/MVIDs against every loaded
+observation, PE/PDB identity pairs, original old consumer hashes, four candidate
+package overlays, frame hashes and common original parent/owner/time/input/output
+bindings. Both binary/predecessor derivations bind the frozen ZIP and the tenth
+physical binary witness; QC-25 remains incomplete pending remaining acceptance
+and baseline provenance review.
+
+The modeled bundle regression first fails for the absent producer, then passes
+both identical runtime scopes and rejects omitted/resealed images. All416 focused
+baseline/admission/ingestion/composition/SDK/CI/CLI tests pass in112.991 seconds.
+The managed project builds with zero warnings/errors; catalog/diff checks pass.
+New14 live/15 released controls, expected88/114/10 physical parameters and142
+cases/141 Passed/one Incomplete/212 witnesses require fresh actual native
+acceptance. No modeled fixture, build or expected count establishes that result.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

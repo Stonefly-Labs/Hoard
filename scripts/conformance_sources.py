@@ -2173,7 +2173,7 @@ class NativeCompatibilitySources:
         return evidence.load_json(self._source_break)
 
     def capture_scope(self, inputs, scope, summary, prepared):
-        from conformance_baselines import inspect_source_recipe_fixture
+        from conformance_baselines import inspect_retained_fixture, inspect_source_recipe_fixture
         from conformance_sdk_checks import inspect_compatibility_runtime_scope
 
         run = self._run
@@ -2191,6 +2191,7 @@ class NativeCompatibilitySources:
             raise evidence.ConformanceError("ProofMismatch")
         if not self._scopes:
             inspect_source_recipe_fixture(run.root, inputs, evidence.load_json(self._source_recipes))
+            inspect_retained_fixture(run.root, inputs, evidence.load_json(self._retained))
         observed, commands, _ = inspect_compatibility_runtime_scope(run.root, inputs, scope, summary, prepared)
         if evidence.canonical_bytes(observed) != evidence.canonical_bytes(summary):
             raise evidence.ConformanceError("ProofMismatch")

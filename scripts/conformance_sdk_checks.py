@@ -4070,6 +4070,7 @@ def compatibility_runtime_paths(run, runtime):
                    if path.is_file() and (path.suffix in (".dll", ".so", ".dylib", ".pdb")
                                          or path.name.endswith((".deps.json", ".runtimeconfig.json"))
                                          or path == runtime / baselines.SOURCE_RECIPE_RUNTIME
+                                         or path == runtime / baselines.RETAINED_RUNTIME
                                          or path.parent == runtime / baselines.SOURCE_BREAK_RUNTIME
                                          and path.name in baselines.SOURCE_BREAK_RUNTIME_FRAMES))
     for path in paths:
@@ -4759,6 +4760,11 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 for folder in (TESTS + "/bin/Release/net10.0",
                                TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0")]
             write_new(run.root / "proofs/source-recipe-staging.json", evidence.canonical_bytes(source_recipe_staging))
+            retained_staging = [
+                baselines.stage_retained_fixture(run, candidate / folder, seal_sha, msbuild=msbuild)
+                for folder in (TESTS + "/bin/Release/net10.0",
+                               TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0")]
+            write_new(run.root / "proofs/retained-staging.json", evidence.canonical_bytes(retained_staging))
             source_break_staging = [
                 baselines.stage_source_break_fixture(run, candidate / folder, seal_sha, msbuild=msbuild)
                 for folder in (TESTS + "/bin/Release/net10.0",
