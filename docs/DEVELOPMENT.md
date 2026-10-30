@@ -8869,6 +8869,34 @@ test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
 passes438 tests, four native-only skips, in110.298 seconds.
 Catalog/SDK and diff checks pass. Fresh native case-report controls remain
 required; the earlier61da227 packet cannot cover this increment.
+Immutable `fa3d70d` Linux/aarch64 execution now passes all3 live/ten released
+controls, test-only exit0 in623377.064450 ms. Initial free scratch207354695680
+bytes; no extra SDK prewarming. All209 runtime parameters and170 version
+observations share inputs through release. Original packet SHA-256:
+`b5bedeedb0c7f60ef80fc9c108bc1fd92809f2e1e5432c8db245d4ce42c2d663`.
+Both common reports contain142 cases (130 Passed/12 Incomplete) and155 witnesses,
+remain nonqualifying, and differ only by actual resources. Active report SHA-256
+`f2d9e51ece51d42d551bd6ad84709e565e6df3fe8debe9ed89a43778d7b81839`;
+released report SHA-256
+`9c1cf948d59fd79f7df08d87c13e22a1d56e2d8914636abd1c5640a4ee90d8bf`.
+
+The next increment independently derives QC-22..24 from the complete114-row
+version scope and every corresponding logical basis. QC-27/28 require the
+complete88-row architecture scope, including direct/helper Identity-to-Core
+paths in both traversal orders, and every corresponding logical basis.
+Failed/missing/retimed bases and missing/failed physical controls reject.
+QC proofs bind complete canonical bases and original witness hashes without
+exceeding the unchanged128-witness/proof bounds. Baseline-only cases and
+QC-25/26 remain explicitly Incomplete.
+
+Pure reconstruction now reuses one admitted immutable input/catalog frame within
+an evaluation rather than repeatedly admitting it per basis row. Canonical proof
+bytes and all source/group/window checks are unchanged; actual scope/proof/SDK
+reads still replay fresh. No cross-evaluation hash cache, prewarming or bound
+increase is introduced. The focused pair passes in1.772 seconds; the full
+438-test host selection passes in106.936 seconds, four native-only skips.
+Catalog/SDK and diff checks pass. The genuine factory extends its existing
+tenth report-control test to QC hashes/bytes; fresh native execution is required.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

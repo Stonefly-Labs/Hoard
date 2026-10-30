@@ -4669,6 +4669,63 @@ required. README, DEVELOPMENT, quickstart and evidence contract are affected;
 other guides/graphs/provider APIs/IaC/releases/UI remain unchanged.
 T071 remains open at70/86; implementation continues.
 
+### Verified common compatibility report and runtime QC derivation
+
+Immutable `fa3d70dd8fad23459dbbd9f4d94cef93433c6818` Linux/aarch64
+execution passes all3 live/ten released controls, test-only exit0
+in623377.0644500001 ms. Initial free scratch207354695680 bytes; no extra SDK
+prewarming. Original packet SHA-256:
+`b5bedeedb0c7f60ef80fc9c108bc1fd92809f2e1e5432c8db245d4ce42c2d663`.
+All209 runtime parameters and170 version observations bind common input SHA-256
+`9406a037e5939b29fdc4b98cee50ce2f21e5f47238986e3a6a094ac5f2e1dec0`.
+Actual completion inputs recompute, allowing independently observed free space.
+Full retained-root fingerprint is unchanged after controls.
+
+The original active and separate released reports each contain142 cases,
+130 Passed/12 Incomplete, and155 witnesses; the only difference is actual
+resources. Active SHA-256:
+`f2d9e51ece51d42d551bd6ad84709e565e6df3fe8debe9ed89a43778d7b81839`.
+Released SHA-256:
+`9c1cf948d59fd79f7df08d87c13e22a1d56e2d8914636abd1c5640a4ee90d8bf`.
+These remain diagnostic and do not qualify compatibility.
+
+The next increment derives QC-22..24 from all114 original version parameters
+and every corresponding logical row, and QC-27/28 from all88 original
+architecture parameters and corresponding logical rows. Complete physical
+architecture selection includes both direct/helper parallel Core paths in
+both orders, not merely the older helper-only row. Every basis must exactly
+reconstruct, including original inputs/group/window, status, witnesses, proof
+and attempt history. Canonical QC packets retain complete bases/controls and
+original runtime proof hashes without exceeding the unchanged128 bound.
+Baseline-only cases and QC-25/26 remain explicit EvidenceIncomplete.
+
+The focused test first exposes12 incomplete rows instead of the expected seven.
+Its next run exposes raw-versus-admitted CaseResult comparison; strict entity
+admission fixes that mismatch without relaxing correspondence. Missing/failed
+actual direct-Core reverse controls and retimed logical bases reject.
+Pure derivation now reuses one admitted immutable input/catalog frame per
+evaluation rather than reconstructing it for each basis. Proof bytes and
+validation remain identical, and all actual scope/proof/SDK reads remain fresh.
+No cross-evaluation hash cache, prewarming or limit change is introduced.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition.CompositionDiagnosticTests.test_compatibility_common_report_replays_complete_scopes_and_leaves_baseline_qc_incomplete
+test_conformance_evidence.ConformanceAdmissionTests.test_compatibility_logical_cases_require_every_fixed_runtime_witness_and_recomputed_derivation`
+passes two tests in1.772 seconds. The full command
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes438 tests in106.936 seconds, four native-only skips.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. The test-only genuine factory extends its existing
+tenth report-control test to QC derivation hashes/bytes and expects135 Passed/
+seven Incomplete rows. Fresh immutable native execution remains required.
+
+README, DEVELOPMENT, quickstart and the evidence contract are affected; provider
+APIs, module graph, production architecture/ADR/diagrams, supplied-provider
+example, infrastructure, releases and UI guides are unchanged.
+T071 stays open at70/86; implementation continues.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

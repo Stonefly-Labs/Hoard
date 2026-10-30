@@ -4271,11 +4271,13 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
 
 def _compatibility_report_material(root, inputs, summary, *, resources):
     from conformance_case_catalog import (
-        architecture_runtime_tests, binary_runtime_tests, expected_cases, version_runtime_tests,
+        COMPATIBILITY_RUNTIME_QUALITY_SCOPES, architecture_runtime_tests, binary_runtime_tests,
+        expected_cases, version_runtime_tests,
     )
 
     inputs = evidence.admit_entity("RunInputs", inputs)
-    proofs, selected, scopes = {}, {}, []
+    proofs, selected, scopes, physical = {}, {}, [], {}
+    input_sha = evidence.digest(inputs)
     for scope, key, tests in (
             ("architecture", "architectureRuntime", architecture_runtime_tests()),
             ("version", "versionRuntime", version_runtime_tests()),
@@ -4292,6 +4294,7 @@ def _compatibility_report_material(root, inputs, summary, *, resources):
                 or any(row["status"] != "Passed" for row in witnesses.values())):
             raise evidence.ConformanceError("WitnessMissing")
         selected.update(witnesses)
+        physical.update({identity: (scope, binding) for identity, (binding, _) in tests.items()})
         for name, value in {**material["proofs"], path: hashed}.items():
             if name in proofs and proofs[name] != value:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -4302,27 +4305,31 @@ def _compatibility_report_material(root, inputs, summary, *, resources):
     source_proofs, results = {}, []
     cases = expected_cases("compatibility")
     for case in cases:
-        if not case.witnesses:
+        if case.case_id in COMPATIBILITY_RUNTIME_QUALITY_SCOPES:
+            material = evidence.compatibility_quality_case_material(
+                inputs, case_id=case.case_id, results=results, witnesses=list(selected.values()),
+                sequence=1, started_ms=started_ms, ended_ms=ended_ms)
+        elif not case.witnesses:
             incomplete = evidence.admit_entity("Attempt", {
                 "sequence": 1, "startedMs": started_ms, "endedMs": ended_ms, "status": "Incomplete",
                 "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"})
             results.append(evidence._catalog_case_result(inputs, case, "Incomplete", [incomplete]))
             continue
-        material = evidence.compatibility_case_material(
-            inputs, case_id=case.case_id, matrix_id=case.matrix_id,
-            witnesses=[selected[identity] for identity in case.witnesses],
-            sequence=1, started_ms=started_ms, ended_ms=ended_ms)
+        else:
+            material = evidence._compatibility_case_material(
+                inputs, case, physical, [selected[identity] for identity in case.witnesses], input_sha=input_sha,
+                sequence=1, started_ms=started_ms, ended_ms=ended_ms)
         source_proofs.update(material["sourceProofs"])
         results.append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
     post = scopes[-1]["postInputs"]
     evidence.verify_input_recomputation(inputs, post)
     source_proofs["proofs/category-compatibility-diagnostic-completion-inputs.json"] = evidence.canonical_bytes(post)
     proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in source_proofs.items()})
-    identities = {identity for case in cases for identity in case.witnesses}
+    referenced = {execution for result in results for attempt in result["attempts"] for execution in attempt["witnessIds"]}
     report = evidence.admit_entity("QualificationReport", {
         "schemaVersion": 1, "catalogRevision": evidence.CATALOG_REVISION, "inputs": inputs,
         "postInputSha256": evidence.digest(post), "results": results,
-        "witnesses": [selected[identity] for identity in sorted(identities)],
+        "witnesses": [row for _, row in sorted(selected.items()) if row["executionId"] in referenced],
         "resources": resources, "proofs": proofs, "state": "Incomplete", "qualification": False,
         "scope": ["compatibility-runtime-diagnostic"]})
     return report, MappingProxyType(source_proofs)

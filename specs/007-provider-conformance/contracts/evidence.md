@@ -1137,6 +1137,15 @@ transport/derivation/proof bytes and actual completion inputs, and requires the
 original native token/owner. Neither complete case enumeration nor runtime
 origin changes diagnostic state into qualification. Host checks pass; fresh
 native report controls remain required.
+Runtime QC-22..24 derivations now require the complete fixed version scope and
+all corresponding original logical bases. QC-27/28 require the complete fixed
+architecture scope and its logical bases, including direct/helper parallel Core
+paths in both orders. Their canonical proofs bind all bases, original witnesses
+and fixed controls; attempt proof sets remain within the original128 bound.
+Missing, failed, retried-away or retimed bases/physical controls reject.
+Reusing an admitted immutable frame within one pure evaluation does not cache
+runtime/proof/SDK reads across evaluations. QC-25/26 and baseline-only cases
+remain Incomplete; fresh native QC verification is required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

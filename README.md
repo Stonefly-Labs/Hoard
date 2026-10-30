@@ -1023,7 +1023,11 @@ compatibility origin controls, with shared inputs unchanged through actual
 release. The next increment emits the common diagnostic case report from
 independently replayed scopes and preserves a separate released report.
 Runtime-backed rows are derived; baseline-only and QC rows stay explicitly
-Incomplete. Host checks pass; new native report controls remain pending.
+Incomplete. Its immutable `fa3d70d` execution passes all3 live/ten released
+report controls:142 cases,130 Passed/12 Incomplete, no qualification.
+The next increment independently derives runtime QC-22..24/27..28 from complete
+original logical bases and physical scopes. Seven baseline-related rows remain
+Incomplete; fresh native QC verification is still required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

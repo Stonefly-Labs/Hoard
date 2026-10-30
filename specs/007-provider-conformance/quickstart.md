@@ -1232,6 +1232,13 @@ at admission and no extra SDK prewarming. The next increment adds the common
 cases are reconstructed; baseline-only/QC rows remain explicitly Incomplete.
 A tenth released control rejects changed case/derivation/settlement material.
 Host checks pass; fresh native verification of that increment is still required.
+Its separate immutable `fa3d70d` run now passes all3 live/ten released controls,
+test-only exit0 in623377.064450 ms. Both reports contain142 cases,
+130 Passed/12 Incomplete, and155 witnesses; only actual resources change.
+The next increment derives QC-22..24/27..28 from complete original logical bases
+and physical version/architecture scopes, leaving seven baseline-related rows
+Incomplete. The tenth control also challenges QC derivations; fresh native
+verification is required. None of these diagnostic runs qualifies the profile.
 
 ## Offline Correspondence Inspection
 

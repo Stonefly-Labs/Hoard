@@ -1445,6 +1445,12 @@ def architecture_runtime_tests():
     return tests
 
 
+COMPATIBILITY_RUNTIME_QUALITY_SCOPES = {
+    "QC-22": "version", "QC-23": "version", "QC-24": "version",
+    "QC-27": "architecture", "QC-28": "architecture",
+}
+
+
 QC_CONTROLS = {
     1: ("immutable-expansion", "fixed-category-keys", "unknown-revision-rejected", "altered-catalog-rejected"),
     2: ("sqlite-binding", "memory-binding", "unchanged-assertions", "exact-metadata-parameters"),

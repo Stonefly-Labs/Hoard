@@ -68,9 +68,44 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 report = evidence.load_json(raw)
                 self.assertEqual(len(report["results"]), len(catalog.expected_cases("compatibility")))
                 self.assertEqual(observed["incompleteCases"],
-                                 sum(not case.witnesses for case in catalog.expected_cases("compatibility")))
+                                 sum(not case.witnesses for case in catalog.expected_cases("compatibility")) - 5)
+                quality = {"QC-22", "QC-23", "QC-24", "QC-27", "QC-28"}
+                self.assertEqual(
+                    {row["caseId"] for row in report["results"]
+                     if row["caseId"] in quality and row["status"] == "Passed"}, quality)
                 self.assertFalse(report["qualification"])
                 self.assertEqual(report["state"], "Incomplete")
+                for case_id in quality:
+                    material = evidence.compatibility_quality_case_material(
+                        inputs, case_id=case_id, results=report["results"], witnesses=report["witnesses"],
+                        sequence=1, started_ms=0, ended_ms=9)
+                    self.assertLessEqual(len(material["attempt"]["proofSha256"]), evidence.MAX_WITNESSES)
+                    changed = evidence.load_json(raw)
+                    basis = next(row for row in changed["results"]
+                                 if row["caseId"] == ("VERSION" if case_id in {"QC-22", "QC-23", "QC-24"}
+                                                     else "ARCHITECTURE"))
+                    basis["attempts"][0]["endedMs"] = 10
+                    with self.subTest(case_id=case_id), self.assertRaises(evidence.ConformanceError):
+                        evidence.compatibility_quality_case_material(
+                            inputs, case_id=case_id, results=changed["results"], witnesses=changed["witnesses"],
+                            sequence=1, started_ms=0, ended_ms=9)
+                required = next(
+                    row for row in report["witnesses"]
+                    if "Permitted_hosting_never_hides_actual_direct_or_helper_core_paths" in row["testIdentity"]
+                    and 'fixture: "identity-direct-core"' in row["testIdentity"]
+                    and "reverse: True" in row["testIdentity"])
+                for defect in ("missing", "failed"):
+                    changed = evidence.load_json(raw)
+                    if defect == "missing":
+                        changed["witnesses"] = [
+                            row for row in changed["witnesses"] if row["executionId"] != required["executionId"]]
+                    else:
+                        next(row for row in changed["witnesses"]
+                             if row["executionId"] == required["executionId"])["status"] = "Failed"
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        evidence.compatibility_quality_case_material(
+                            inputs, case_id="QC-28", results=changed["results"], witnesses=changed["witnesses"],
+                            sequence=1, started_ms=0, ended_ms=9)
                 for defect in ("missing-case", "duplicate-case", "optimistic"):
                     changed = evidence.load_json(raw)
                     if defect == "missing-case":
@@ -1771,6 +1806,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.assertEqual(
                 (observed["architectureParameters"], observed["versionParameters"], observed["binaryParameters"]),
                 (88, 114, 7))
+            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (135, 7))
 
         def test_copied_evaluation_cannot_replace_original_identity(self):
             with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
@@ -1829,7 +1865,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
             path = owner.root / "proofs/compatibility-runtime-released-report.json"
             raw = path.read_bytes()
             report = evidence.load_json(raw)
-            for defect in ("missing-case", "optimistic", "resources", "derivation"):
+            for defect in ("missing-case", "optimistic", "resources", "derivation", "quality-derivation"):
                 changed = evidence.load_json(raw)
                 if defect == "missing-case":
                     changed["results"].pop(0)
@@ -1838,7 +1874,9 @@ def native_compatibility_origin_tests(evaluation, *, released):
                 elif defect == "resources":
                     changed["resources"] = []
                 else:
-                    name = next(name for name in changed["proofs"] if name.startswith("proofs/compatibility-VERSION-"))
+                    prefix = ("proofs/compatibility-QC-22-" if defect == "quality-derivation"
+                              else "proofs/compatibility-VERSION-")
+                    name = next(name for name in changed["proofs"] if name.startswith(prefix))
                     changed["proofs"][name] = "0" * 64
                 try:
                     path.chmod(0o600)
@@ -1851,6 +1889,8 @@ def native_compatibility_origin_tests(evaluation, *, released):
                     path.write_bytes(raw)
                     path.chmod(0o400)
             name = next(name for name in report["proofs"] if name.startswith("proofs/compatibility-VERSION-"))
+            self.mutate_and_restore(owner.root / name, "ProofMismatch")
+            name = next(name for name in report["proofs"] if name.startswith("proofs/compatibility-QC-22-"))
             self.mutate_and_restore(owner.root / name, "ProofMismatch")
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCompatibilityOriginTests)
