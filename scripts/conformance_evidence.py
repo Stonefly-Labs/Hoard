@@ -1325,6 +1325,148 @@ def inspect_receipted_category_qualification(
     })
 
 
+_CATEGORY_CONTROL_SOURCE = "tests/tooling/test_conformance_evidence.py"
+
+
+def native_category_control_inventory(source_data):
+    """Expand the three explicit suites without importing or executing proof bytes."""
+    import ast
+
+    if not isinstance(source_data, bytes) or not 0 < len(source_data) <= 1024 * 1024:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    try:
+        syntax = ast.parse(source_data)
+    except (SyntaxError, UnicodeDecodeError):
+        raise ConformanceError("EvidenceSchemaInvalid") from None
+    result = {}
+    for phase, function, name in (
+            ("liveOriginTests", "live_native_category_replay_tests", "LiveNativeCategoryReplayTests"),
+            ("settlementOriginTests", "released_native_category_evaluation_tests",
+             "ReleasedNativeCategoryEvaluationTests"),
+            ("retainedReportTests", None, "_RetainedNativeCategoryStructureControls")):
+        body = syntax.body
+        if function is not None:
+            functions = [node for node in body if isinstance(node, ast.FunctionDef) and node.name == function]
+            if len(functions) != 1:
+                raise ConformanceError("WitnessMissing")
+            body = functions[0].body
+        classes = [node for node in body if isinstance(node, ast.ClassDef) and node.name == name]
+        if len(classes) != 1:
+            raise ConformanceError("WitnessMissing")
+        methods = sorted(node.name for node in classes[0].body
+                         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                         and node.name.startswith("test_"))
+        if not 0 < len(methods) <= 128 or len(methods) != len(set(methods)):
+            raise ConformanceError("WitnessMissing")
+        result[phase] = tuple(methods)
+    return MappingProxyType(result)
+
+
+def native_category_control_document(inputs, source_data, observations, *, report_sha256):
+    inputs = admit_entity("RunInputs", inputs)
+    if inputs["profileId"] not in ("metadata", "artifacts") or inputs["mode"] != "qualification":
+        raise ConformanceError("UnsupportedProfile")
+    inventory = native_category_control_inventory(source_data)
+    source_sha = hashlib.sha256(source_data).hexdigest()
+    if inputs["sourceManifest"].get(_CATEGORY_CONTROL_SOURCE) != source_sha:
+        raise ConformanceError("InputChanged")
+    if not isinstance(observations, Mapping) or set(observations) != set(inventory):
+        raise ConformanceError("WitnessMissing")
+    phases = {}
+    for phase, methods in inventory.items():
+        row = _record({
+            "tests": _integer, "expectedTests": _list(stable_id, 128),
+            "observedTests": _list(stable_id, 128),
+            **{name: _constant(0) for name in (
+                "failures", "errors", "skipped", "expectedFailures",
+                "unexpectedSuccesses", "unexpectedDiagnosticBytes")},
+            "elapsedMs": _number,
+        })(observations[phase])
+        if (row["tests"] != len(methods) or row["expectedTests"] != methods or row["observedTests"] != methods
+                or row["elapsedMs"] > inputs["budgets"]["profileSeconds"] * 1000):
+            raise ConformanceError("EvidenceIncomplete")
+        phases[phase] = row
+    if sum(row["elapsedMs"] for row in phases.values()) > inputs["budgets"]["profileSeconds"] * 1000:
+        raise ConformanceError("DeadlineExceeded")
+    return MappingProxyType({
+        "schemaVersion": 1, "qualification": False, "scope": "native-category-control-observation",
+        "profileId": inputs["profileId"], "runId": inputs["runId"],
+        "inputsSha256": digest(inputs), "sourceManifestSha256": inputs["sourceManifestSha256"],
+        "sourceSha256": source_sha, "reportSha256": sha256(report_sha256),
+        "phases": MappingProxyType(phases),
+    })
+
+
+def publish_native_category_controls(run, *, inputs, native_evaluation, source_data, observations):
+    """Retain actual supervisor observations only with the original released executor."""
+    from conformance_execution import OwnedRun
+    from conformance_sdk_checks import write_new
+    from conformance_sources import NativeCategoryEvaluation
+
+    if type(run) is not OwnedRun or type(native_evaluation) is not NativeCategoryEvaluation:
+        raise ConformanceError("OwnershipInvalid")
+    inputs = admit_entity("RunInputs", inputs)
+    profile = inputs["profileId"]
+    if profile not in ("metadata", "artifacts") or inputs["mode"] != "qualification":
+        raise ConformanceError("UnsupportedProfile")
+    _, original = _readonly_report_proof(run.root, f"proofs/category-{profile}-qualification-report.json")
+    report_sha, qualified = _readonly_report_proof(
+        run.root, f"proofs/category-{profile}-fixture-qualification-report.json")
+    qualification_origin = native_category_qualification_receipt(
+        run, qualified, original_report_data=original, expected_inputs=inputs, native_evaluation=native_evaluation)
+    document = native_category_control_document(
+        inputs, source_data, observations, report_sha256=report_sha)
+    prefix = f"proofs/category-{profile}-native-controls"
+    raw = canonical_bytes(document)
+    write_new(run.root / (prefix + "-source.py"), source_data)
+    write_new(run.root / (prefix + ".json"), raw)
+    origin = {
+        "kind": "native-category-control-observation", "inputsSha256": digest(inputs),
+        "reportSha256": report_sha, "proofPath": prefix + ".json",
+        "proofSha256": hashlib.sha256(raw).hexdigest(),
+    }
+    inspect_receipted_native_category_controls(
+        run.root, qualified, expected_inputs=inputs, expected_report_sha256=report_sha,
+        qualification_origin=qualification_origin, control_origin=origin)
+    return MappingProxyType(origin)
+
+
+def inspect_receipted_native_category_controls(
+        root, report_data, *, expected_inputs, expected_report_sha256, qualification_origin, control_origin):
+    """Require a separately observed control receipt, not counts in the downloaded packet."""
+    if control_origin is None:
+        raise ConformanceError("OwnershipInvalid")
+    origin = _record({
+        "kind": _constant("native-category-control-observation"), "inputsSha256": sha256,
+        "reportSha256": sha256, "proofPath": relative_path, "proofSha256": sha256,
+    })(control_origin)
+    inputs = admit_entity("RunInputs", expected_inputs)
+    prefix = f'proofs/category-{inputs["profileId"]}-native-controls'
+    if (origin["inputsSha256"] != digest(inputs)
+            or origin["reportSha256"] != sha256(expected_report_sha256)
+            or origin["proofPath"] != prefix + ".json"):
+        raise ConformanceError("InputChanged")
+    inspect_receipted_category_qualification(
+        root, report_data, expected_inputs=inputs, expected_report_sha256=expected_report_sha256,
+        qualification_origin=qualification_origin)
+    hashed, raw = _readonly_report_proof(root, origin["proofPath"])
+    if hashed != origin["proofSha256"]:
+        raise ConformanceError("ProofMismatch")
+    _, source = _readonly_report_proof(root, prefix + "-source.py")
+    document = load_json(raw)
+    if not isinstance(document, dict) or not isinstance(document.get("phases"), dict):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    expected = native_category_control_document(
+        inputs, source, document["phases"], report_sha256=origin["reportSha256"])
+    if canonical_bytes(document) != canonical_bytes(expected):
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "qualification": False, "scope": "trusted-native-category-control-observation", "code": "None",
+        "profileId": inputs["profileId"], "proofSha256": hashed,
+        **{phase: row["tests"] for phase, row in expected["phases"].items()},
+    })
+
+
 def render_native_category_qualification(
         run, report_data, *, original_report_data, expected_inputs, native_evaluation):
     """Render only verified finite fixture claims, never private proof contents."""

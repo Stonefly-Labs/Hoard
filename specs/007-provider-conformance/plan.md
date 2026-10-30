@@ -15,6 +15,33 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### Native mutation-control custody: portable checks passed, native replay pending
+
+The explicit `tests/tooling/test_conformance_evidence.py --native-category-controls`
+runner previously emitted only aggregate suite counts. It now captures exact
+expected/observed method inventories, finite elapsed time and every failure/
+skip/output count for the live-origin, released-origin and retained-report
+controls. Each phase stays inside the original profile deadline; missing/
+duplicate execution or incomplete output cannot publish a successful receipt.
+
+The independent reader expands the three inventories from retained original
+test source without importing it, requires that source's admitted manifest
+hash, and checks every closed field. The original native evaluation and actual
+release must first establish the finite category qualification. A separate
+externally observed control receipt pins the control proof; reading a receipt
+from the inspected packet cannot supply authority. Rehashed shortened phases,
+changed source/inputs, extra fields and altered proof bytes reject.
+Neither blanket tooling success nor these control observations qualify the
+harness or full baseline.
+
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence -q`
+passes 237 tests, zero skips. Frozen inventory, SDK/catalog and
+`git diff --check` pass. Actual native execution of this increment is pending.
+README, DEVELOPMENT and harness guidance record the custody boundary. Provider
+guidance/examples and product architecture/ADR/charter/governance, infrastructure,
+release/deployment and UI documents are unaffected; no provider, product API or
+acceptance budget changes. T071..T086 remain open.
+
 ### Hosted SDK confirmation and bounded native prerequisite repairs
 
 Exact `c012f7b` foundations run 41130045684 now completes: SDK diagnostics,

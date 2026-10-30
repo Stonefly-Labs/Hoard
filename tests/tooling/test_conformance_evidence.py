@@ -12,6 +12,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 import uuid
@@ -10708,6 +10709,162 @@ class _RetainedNativeCategoryStructureControls:
 
 
 class NativeCategoryControlRunnerTests(unittest.TestCase):
+    def control_observations(self):
+        source = (ROOT / "tests/tooling/test_conformance_evidence.py").read_bytes()
+        inventory = evidence.native_category_control_inventory(source)
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(mode="qualification", sourceState="clean-local")
+        inputs["sourceManifest"] = {
+            "tests/tooling/test_conformance_evidence.py": hashlib.sha256(source).hexdigest()}
+        inputs["sourceManifestSha256"] = evidence.digest(inputs["sourceManifest"])
+        observations = {
+            phase: {
+                "tests": len(methods), "expectedTests": list(methods), "observedTests": list(methods),
+                "failures": 0, "errors": 0, "skipped": 0, "expectedFailures": 0,
+                "unexpectedSuccesses": 0, "unexpectedDiagnosticBytes": 0, "elapsedMs": 1,
+            } for phase, methods in inventory.items()}
+        return inputs, source, observations
+
+    def test_native_control_observations_bind_every_phase_to_original_source_and_inventory(self):
+        inputs, source, observations = self.control_observations()
+        packet = evidence.native_category_control_document(
+            inputs, source, observations, report_sha256="4" * 64)
+        self.assertFalse(packet["qualification"])
+        self.assertEqual(packet["inputsSha256"], evidence.digest(inputs))
+        self.assertEqual(packet["reportSha256"], "4" * 64)
+        self.assertEqual(evidence.canonical_bytes(packet["phases"]), evidence.canonical_bytes(observations))
+        for defect in ("missing-phase", "extra-phase", "missing-test", "duplicate-test", "foreign-test",
+                       "reordered-test", "unobserved-test", "failure", "skip", "diagnostic", "extra-field",
+                       "duration", "count", "source", "input-mode", "profile"):
+            changed, changed_inputs, changed_source = copy.deepcopy(observations), copy.deepcopy(inputs), source
+            phase = changed["liveOriginTests"]
+            if defect == "missing-phase":
+                del changed["liveOriginTests"]
+            elif defect == "extra-phase":
+                changed["unobserved"] = phase
+            elif defect == "missing-test":
+                phase["expectedTests"].pop()
+            elif defect == "duplicate-test":
+                phase["expectedTests"].append(phase["expectedTests"][0])
+            elif defect == "foreign-test":
+                phase["expectedTests"][0] = "test_foreign"
+            elif defect == "reordered-test":
+                phase["expectedTests"].reverse()
+            elif defect == "unobserved-test":
+                phase["observedTests"].pop()
+            elif defect == "failure":
+                phase["failures"] = 1
+            elif defect == "skip":
+                phase["skipped"] = 1
+            elif defect == "diagnostic":
+                phase["unexpectedDiagnosticBytes"] = 1
+            elif defect == "extra-field":
+                phase["privatePath"] = "/private/control-canary"
+            elif defect == "duration":
+                phase["elapsedMs"] = float("nan")
+            elif defect == "count":
+                phase["tests"] = True
+            elif defect == "source":
+                changed_source += b"\n"
+            elif defect == "input-mode":
+                changed_inputs["mode"] = "diagnostic"
+            else:
+                changed_inputs.update(profileId="harness", bindings=[])
+                changed_inputs["budgets"]["profileSeconds"] = 3600
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.native_category_control_document(
+                    changed_inputs, changed_source, changed, report_sha256="4" * 64)
+
+    def test_native_control_inventory_rejects_missing_duplicate_and_unbounded_source(self):
+        source = (ROOT / "tests/tooling/test_conformance_evidence.py").read_bytes()
+        for raw in (b"", b"invalid syntax!", source * 4,
+                    source.replace(b"class LiveNativeCategoryReplayTests(unittest.TestCase):",
+                                   b"class ForeignReplayTests(unittest.TestCase):"),
+                    source + source):
+            with self.subTest(size=len(raw)), self.assertRaises(evidence.ConformanceError):
+                evidence.native_category_control_inventory(raw)
+
+    def test_native_control_readback_needs_separate_receipts_and_recomputes_complete_phases(self):
+        inputs, source, observations = self.control_observations()
+        document = evidence.native_category_control_document(
+            inputs, source, observations, report_sha256="4" * 64)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            prefix = "proofs/category-metadata-native-controls"
+            source_path, proof_path = root / (prefix + "-source.py"), root / (prefix + ".json")
+            source_path.write_bytes(source)
+            source_path.chmod(0o400)
+            raw = evidence.canonical_bytes(document)
+            proof_path.write_bytes(raw)
+            proof_path.chmod(0o400)
+            origin = {
+                "kind": "native-category-control-observation", "inputsSha256": evidence.digest(inputs),
+                "reportSha256": "4" * 64, "proofPath": prefix + ".json",
+                "proofSha256": hashlib.sha256(raw).hexdigest(),
+            }
+            qualification_origin = {"separateOriginalOwnerReceipt": "required"}
+
+            def inspect(control_origin=origin):
+                return evidence.inspect_receipted_native_category_controls(
+                    root, b"separately-verified-native-report", expected_inputs=inputs,
+                    expected_report_sha256="4" * 64, qualification_origin=qualification_origin,
+                    control_origin=control_origin)
+
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                inspect(None)
+            with mock.patch.object(evidence, "inspect_receipted_category_qualification") as original:
+                inspected = inspect()
+                self.assertFalse(inspected["qualification"])
+                self.assertEqual(inspected["liveOriginTests"], len(observations["liveOriginTests"]["expectedTests"]))
+                self.assertIs(original.call_args.kwargs["qualification_origin"], qualification_origin)
+                self.assertEqual(original.call_args.args[1], b"separately-verified-native-report")
+                for field in origin:
+                    changed = dict(origin)
+                    changed[field] = ("foreign" if field == "kind" else
+                                      "proofs/foreign.json" if field == "proofPath" else "0" * 64)
+                    with self.subTest(field=field), self.assertRaises(evidence.ConformanceError):
+                        inspect(changed)
+                for defect in ("raw-bytes", "rehashed-missing-test", "rehashed-input", "rehashed-extra", "source"):
+                    changed, changed_origin = evidence.load_json(raw), dict(origin)
+                    if defect == "rehashed-missing-test":
+                        phase = changed["phases"]["liveOriginTests"]
+                        phase["expectedTests"].pop()
+                        phase["observedTests"].pop()
+                        phase["tests"] -= 1
+                    elif defect == "rehashed-input":
+                        changed["inputsSha256"] = "0" * 64
+                    elif defect == "rehashed-extra":
+                        changed["privatePath"] = "/private/control-canary"
+                    if defect == "source":
+                        source_path.chmod(0o600)
+                        source_path.write_bytes(source + b"\n")
+                        source_path.chmod(0o400)
+                    packet = raw + b"\n" if defect == "raw-bytes" else evidence.canonical_bytes(changed)
+                    proof_path.chmod(0o600)
+                    proof_path.write_bytes(packet)
+                    proof_path.chmod(0o400)
+                    if defect.startswith("rehashed-"):
+                        changed_origin["proofSha256"] = hashlib.sha256(packet).hexdigest()
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        inspect(changed_origin)
+                original.side_effect = evidence.ConformanceError("OwnershipInvalid")
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    inspect()
+
+    def test_native_control_publication_rejects_foreign_authority_before_reading_or_writing(self):
+        with mock.patch.object(evidence, "_readonly_report_proof") as read:
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.publish_native_category_controls(
+                    object(), inputs={}, native_evaluation=object(), source_data=b"", observations={})
+            read.assert_not_called()
+
+    def test_native_control_suite_rejects_expired_deadline_before_factory_execution(self):
+        factory = mock.Mock()
+        with self.assertRaisesRegex(evidence.ConformanceError, "^DeadlineExceeded$"):
+            _run_native_control_suite(factory, deadline=time.monotonic() - 1)
+        factory.assert_not_called()
+
     def test_generated_public_completion_control_wiring_for_each_category(self):
         import conformance_case_catalog as catalog
         import conformance_sdk_checks as checks
@@ -10755,7 +10912,8 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
         invocation = evidence.ConformanceInvocation(
             "run", ROOT, "qualification", ("metadata",), evidence=ROOT.parent / "unused-native-controls")
         inputs = {"profileId": "metadata"}
-        history, owner = SimpleNamespace(_inputs=inputs), SimpleNamespace(root=invocation.evidence)
+        owner = SimpleNamespace(root=invocation.evidence, deadline=None)
+        history = SimpleNamespace(_inputs=inputs, _native_sources=SimpleNamespace(_run=owner))
 
         class Control(unittest.TestCase):
             def runTest(self):
@@ -10779,7 +10937,9 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
                         "live_native_category_replay_tests": suite,
                         "released_native_category_evaluation_tests": suite,
                         "retained_native_category_structure_tests": suite}), mock.patch.object(
-                    conformance_cli, "main", side_effect=execute), contextlib.redirect_stdout(io.StringIO()) as output:
+                    evidence, "publish_native_category_controls", return_value={"proofSha256": "1" * 64}) as retain, \
+                    mock.patch.object(conformance_cli, "main", side_effect=execute), \
+                    contextlib.redirect_stdout(io.StringIO()) as output:
                 if status == 2:
                     with self.assertRaisesRegex(evidence.ConformanceError, "^CommandFailed$"):
                         run([])
@@ -10791,6 +10951,10 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
                             [packet[key] for key in ("liveOriginTests", "settlementOriginTests", "retainedReportTests")],
                             [1, 1, 1])
                         self.assertFalse(packet["qualification"])
+                        self.assertEqual(packet["nativeControlsOrigin"], {"proofSha256": "1" * 64})
+                        retain.assert_called_once()
+                    else:
+                        retain.assert_not_called()
 
     def test_retained_generated_presentation_and_failed_retry_controls(self):
         producer = ConformanceRuntimeIngestionTests()
@@ -10829,6 +10993,7 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
         run = globals().get("_run_native_control_suite")
         self.assertTrue(callable(run), "Native control suites need fail-closed bounded execution.")
         for defect, code in ((None, None), ("empty", "EvidenceIncomplete"), ("skipped", "EvidenceIncomplete"),
+                             ("duplicate", "EvidenceIncomplete"),
                              ("failed", "AssertionFailed"), ("expected-failure", "EvidenceIncomplete"),
                              ("unexpected-success", "AssertionFailed"), ("diagnostic", "UnknownDiagnostic"),
                              ("flood", "OutputLimitExceeded")):
@@ -10845,10 +11010,15 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
 
             if defect in ("expected-failure", "unexpected-success"):
                 Control.runTest = unittest.expectedFailure(Control.runTest)
-            factory = lambda: unittest.TestSuite([] if defect == "empty" else [Control()])
+            factory = lambda: unittest.TestSuite(
+                [] if defect == "empty" else [Control(), Control()] if defect == "duplicate" else [Control()])
             with self.subTest(defect=defect), contextlib.redirect_stdout(io.StringIO()) as output:
                 if code is None:
-                    self.assertEqual(run(factory), 1)
+                    observed = run(factory)
+                    self.assertEqual(observed["tests"], 1)
+                    self.assertEqual(observed["expectedTests"], ["runTest"])
+                    self.assertEqual(observed["observedTests"], ["runTest"])
+                    self.assertGreaterEqual(observed["elapsedMs"], 0)
                 else:
                     with self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$"):
                         run(factory)
@@ -11310,29 +11480,41 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 
 
-def _run_native_control_suite(factory):
+def _run_native_control_suite(factory, *, deadline=None):
     from conformance_unit_checks import DiagnosticBoundary, SafeResult, failed_tests
 
     diagnostics = DiagnosticBoundary()
+    started = time.monotonic()
+    if deadline is not None and started >= deadline:
+        raise evidence.ConformanceError("DeadlineExceeded")
     with contextlib.redirect_stdout(diagnostics), contextlib.redirect_stderr(diagnostics):
         suite = factory()
         expected = [test.id() for test in suite]
-        if not 0 < len(expected) <= 128:
+        if not 0 < len(expected) <= 128 or len(expected) != len(set(expected)):
             raise evidence.ConformanceError("EvidenceIncomplete")
-        result = SafeResult()
+        result = SafeResult(deadline=deadline)
         suite.run(result)
-    code = ("OutputLimitExceeded" if diagnostics.bytes > 1024 * 1024 else
+    ended = time.monotonic()
+    code = ("DeadlineExceeded" if deadline is not None and ended >= deadline else
+            "OutputLimitExceeded" if diagnostics.bytes > 1024 * 1024 else
             "UnknownDiagnostic" if diagnostics.bytes else
             "AssertionFailed" if result.failures or result.errors or result.unexpectedSuccesses else
             "EvidenceIncomplete" if result.skipped or result.expectedFailures
-            or result.observed_tests != expected else "None")
+            or result.shouldStop or result.observed_tests != expected else "None")
     if code != "None":
         print(evidence.canonical_bytes({
             "qualification": False, "scope": "native-category-control-diagnostic", "code": code,
             "tests": result.testsRun, "skipped": len(result.skipped),
             "unexpectedDiagnosticBytes": diagnostics.bytes, "failedTests": failed_tests(result)}).decode("ascii"))
         raise evidence.ConformanceError(code)
-    return result.testsRun
+    return {
+        "tests": result.testsRun,
+        "expectedTests": [identity.rsplit(".", 1)[-1] for identity in expected],
+        "observedTests": [identity.rsplit(".", 1)[-1] for identity in result.observed_tests],
+        "failures": len(result.failures), "errors": len(result.errors), "skipped": len(result.skipped),
+        "expectedFailures": len(result.expectedFailures), "unexpectedSuccesses": len(result.unexpectedSuccesses),
+        "unexpectedDiagnosticBytes": diagnostics.bytes, "elapsedMs": (ended - started) * 1000,
+    }
 
 
 def run_native_category_controls(arguments):
@@ -11350,6 +11532,7 @@ def run_native_category_controls(arguments):
         raise evidence.ConformanceError("PrerequisiteMissing")
     profile, = invocation.profiles
     counts = {"liveOriginTests": 0, "settlementOriginTests": 0, "retainedReportTests": 0}
+    observations, captured = {}, {}
     original_replay = evidence.CategoryRuntimeHistory.replay_joint
     original_report = checks._category_report
 
@@ -11358,8 +11541,10 @@ def run_native_category_controls(arguments):
             raise evidence.ConformanceError("ProofMismatch")
         projection = original_replay(history, plan=plan, transports=transports)
         with mock.patch.object(evidence.CategoryRuntimeHistory, "replay_joint", original_replay):
-            counts["liveOriginTests"] = _run_native_control_suite(
-                lambda: live_native_category_replay_tests(history, plan=plan, transports=transports))
+            observations["liveOriginTests"] = _run_native_control_suite(
+                lambda: live_native_category_replay_tests(history, plan=plan, transports=transports),
+                deadline=history._native_sources._run.deadline)
+            counts["liveOriginTests"] = observations["liveOriginTests"]["tests"]
         return projection
 
     def publish(run, inputs, post_inputs, summary, *, resources=(), native_evaluation=None):
@@ -11370,11 +11555,16 @@ def run_native_category_controls(arguments):
             run, inputs, post_inputs, summary, resources=resources, native_evaluation=native_evaluation)
         record = evidence.load_json(read_bounded(
             run.root / f"proofs/category-{profile}-qualification-history.json", evidence.MAX_REPORT_BYTES))
-        counts["settlementOriginTests"] = _run_native_control_suite(
+        observations["settlementOriginTests"] = _run_native_control_suite(
             lambda: released_native_category_evaluation_tests(
-                native_evaluation, inputs=inputs, record=record, summary=summary, resources=resources))
+                native_evaluation, inputs=inputs, record=record, summary=summary, resources=resources),
+            deadline=run.deadline)
+        counts["settlementOriginTests"] = observations["settlementOriginTests"]["tests"]
         with mock.patch.dict(os.environ, {"HOARD_CONFORMANCE_NATIVE_CATEGORY_ROOT": str(run.root)}):
-            counts["retainedReportTests"] = _run_native_control_suite(retained_native_category_structure_tests)
+            observations["retainedReportTests"] = _run_native_control_suite(
+                retained_native_category_structure_tests, deadline=run.deadline)
+            counts["retainedReportTests"] = observations["retainedReportTests"]["tests"]
+        captured.update(run=run, inputs=inputs, native_evaluation=native_evaluation)
         return result
 
     with mock.patch.object(evidence.CategoryRuntimeHistory, "replay_joint", replay), mock.patch.object(
@@ -11388,9 +11578,13 @@ def run_native_category_controls(arguments):
         raise evidence.ConformanceError("CommandFailed")
     if not all(counts.values()):
         raise evidence.ConformanceError("EvidenceIncomplete")
+    origin = evidence.publish_native_category_controls(
+        captured["run"], inputs=captured["inputs"], native_evaluation=captured["native_evaluation"],
+        source_data=read_bounded(ROOT / "tests/tooling/test_conformance_evidence.py", 1024 * 1024),
+        observations=observations)
     print(evidence.canonical_bytes({
         "qualification": False, "scope": "native-category-control-diagnostic", "profileId": profile,
-        "code": "None", **counts}).decode("ascii"))
+        "code": "None", **counts, "nativeControlsOrigin": origin}).decode("ascii"))
     return 0
 
 

@@ -143,6 +143,10 @@ unchanged contributor assertion after expiry is driven from proven entry.
 All 861 tooling tests pass on normal Linux fixtures without skips or unexpected
 diagnostics; focused C# formatting and frozen inventory/catalog checks pass.
 Earlier hosted failures remain preserved, not retrospectively repaired.
+The explicit native category-control runner now retains its three source-bound
+mutation-suite inventories and a separate original-owner receipt. All 237
+evidence regressions pass; actual native replay of this custody increment is
+pending. These control observations do not qualify the harness profile.
 These different-source fixture results do not establish a common baseline;
 harness, qualifying coordinator/aggregate and full-baseline acceptance remain
 unfinished. T071..T086 stay open.

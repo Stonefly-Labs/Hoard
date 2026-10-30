@@ -10229,6 +10229,33 @@ reference, provider guarantee, acceptance budget or operational action changes.
 T071..T086 remain open; current finite fixture results remain different-source,
 not common-baseline or all-five hosted qualification.
 
+Native mutation-control custody is now implemented in the explicit test runner:
+
+```bash
+python3 tests/tooling/test_conformance_evidence.py --native-category-controls \
+  --profile metadata --evidence /fresh-private-parent/run
+```
+
+The same runner accepts `artifacts`. It executes the unchanged category command
+and its three original live/released/retained control suites, preserves their
+exact expected/observed method inventories and closed outcome/timing counts,
+and retains hash-pinned original test source. Expiry uses the existing profile
+deadline, never a new expanded budget. After actual release, the original
+evaluation verifies category qualification before create-new control publication.
+The stdout `nativeControlsOrigin` is a separate observer receipt; independent
+`inspect_receipted_native_category_controls` requires it from outside the
+inspected artifact, alongside the original category qualification receipt.
+Source parsing never imports proof bytes. Missing/duplicate/shortened execution,
+rehashed counts, failed/skipped controls, changed inputs/source, unknown fields
+and altered proof bytes reject. This does not qualify the harness or baseline.
+
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest test_conformance_evidence -q`
+passes 237 tests without skips; frozen inventory, SDK/catalog and
+`git diff --check` pass. Actual native replay is pending. README and feature
+plan/harness guidance are updated. Provider guidance/examples, product APIs,
+architecture/ADR/diagrams, governance, infrastructure, deployment/release and UI
+are unaffected: only existing test-control observation custody changes.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

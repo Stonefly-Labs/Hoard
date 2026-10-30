@@ -135,6 +135,16 @@ contributor parameters. Entry, 100-ms deadline, retained ownership, bounded stop
 and actual settlement assertions remain unchanged. Other control clocks and
 budgets are unchanged; no private delay enters acceptance source.
 
+The explicit native category-control runner additionally retains the exact
+live-origin, released-origin and retained-report suite observations, not just
+counts. Independent replay expands each inventory from original hash-pinned
+test source without importing proof bytes, checks all methods/outcomes and
+requires both the separate original category-qualification receipt and a
+separately observed control-proof receipt. Changed bytes, shortened/rehashed
+inventories, skipped/failed work, unknown fields and source substitutions reject.
+The observations remain nonqualifying for the harness/full baseline. Portable
+evidence checks pass; native replay of this retention increment is pending.
+
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,
 matching exit, successful supervisor diagnostics, nested monotonic timing and
