@@ -1053,6 +1053,20 @@ without weakening its stricter diagnostic scope/state requirements.
 
 ### Remaining qualification evaluator
 
+The category publisher now additionally calls the independent
+`inspect_native_category_report` boundary with its original
+`NativeCategoryEvaluation` and `OwnedRun`, never a reconstructed token.
+It rereads the readonly original history against the held pin, verifies
+actual Released resources, and compares exact report results/witnesses/proofs
+with that originally replayed capture plus the completion-input proof.
+It then runs the shared catalog/parameter/proof/completion inspection.
+The result's `runtimeOriginVerified: true` is a diagnostic observation from
+that original in-memory authority, not a transferable credential or permission
+for offline verification to trust a boolean. Reports remain nonqualifying.
+Host rejection/completion regressions pass; expanded genuine native execution
+remains required. This is a category-only T071 component, not completion of the
+generic evaluator below.
+
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
    durations. Treat import exceptions as safe classified failures, not success.

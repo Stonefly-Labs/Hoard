@@ -3054,7 +3054,11 @@ def _category_report(run, inputs, post_inputs, summary, *, resources=(), native_
         "proofs": {**record["proofs"], completion_path: hashlib.sha256(completion_raw).hexdigest()},
         "state": "Incomplete", "qualification": False, "scope": ["category-runtime-diagnostic"]})
     raw = evidence.canonical_bytes(report)
-    inspected = evidence.inspect_category_report(run.root, raw, expected_inputs=inputs)
+    inspected = (
+        evidence.inspect_category_report(run.root, raw, expected_inputs=inputs)
+        if native_evaluation is None else
+        evidence.inspect_native_category_report(
+            run, raw, expected_inputs=inputs, native_evaluation=native_evaluation))
     outputs = evidence.render_category_diagnostics(
         run.root, raw, expected_inputs=inputs, expected_report_sha256=inspected["reportSha256"])
     write_new(run.root / (prefix + "-report.json"), raw)

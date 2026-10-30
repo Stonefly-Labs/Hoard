@@ -4319,6 +4319,19 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             released_native_category_evaluation_tests(
                 None, inputs=history._inputs, record={}, summary={}, resources=())
 
+    def test_native_report_inspection_requires_original_owner_and_evaluation_before_reading_proofs(self):
+        inspect = getattr(evidence, "inspect_native_category_report", None)
+        self.assertTrue(callable(inspect), "Runtime-origin inspection needs an independent report boundary.")
+        from conformance_sources import NativeCategoryEvaluation
+        from types import SimpleNamespace
+
+        for owner, token in ((None, None), (SimpleNamespace(), None),
+                             (SimpleNamespace(), NativeCategoryEvaluation(None, "a" * 64, "b" * 64, {}))):
+            with self.subTest(owner=type(owner).__name__), mock.patch.object(
+                    evidence, "_input_root", side_effect=AssertionError("Unowned inspection must not read proofs")):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                    inspect(owner, b"{}", expected_inputs=self.inputs, native_evaluation=token)
+
     def test_native_category_reports_recheck_original_history_inputs_and_proof_files(self):
         import conformance_sdk_checks as checks
         from types import SimpleNamespace
@@ -9223,6 +9236,38 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
             changed["runId"] = str(uuid.uuid4())
             with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
                 evaluation.verify_report_origin(owner, changed, record, summary, resources)
+
+        def test_independent_report_inspection_requires_original_token_and_actual_resources(self):
+            path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            raw = path.read_bytes()
+            inspected = evidence.inspect_native_category_report(
+                owner, raw, expected_inputs=inputs, native_evaluation=evaluation)
+            self.assertTrue(inspected["runtimeOriginVerified"])
+            self.assertFalse(inspected["qualification"])
+            self.assertEqual(inspected["code"], "EvidenceIncomplete")
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                evidence.inspect_native_category_report(
+                    owner, raw, expected_inputs=inputs, native_evaluation=replace(evaluation))
+            changed = evidence.load_json(raw)
+            changed["resources"] = []
+            with self.assertRaisesRegex(evidence.ConformanceError, "^CleanupIncomplete$"):
+                evidence.inspect_native_category_report(
+                    owner, evidence.canonical_bytes(changed), expected_inputs=inputs, native_evaluation=evaluation)
+
+        def test_independent_report_cannot_add_proofs_absent_from_original_capture(self):
+            from conformance_sdk_checks import write_new
+            path = owner.root / f'proofs/category-{inputs["profileId"]}-qualification-report.json'
+            changed = evidence.load_json(path.read_bytes())
+            extra = "proofs/unobserved-native-report-" + uuid.uuid4().hex + ".json"
+            raw = b"unobserved"
+            write_new(owner.root / extra, raw)
+            changed["proofs"][extra] = hashlib.sha256(raw).hexdigest()
+            try:
+                with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    evidence.inspect_native_category_report(
+                        owner, evidence.canonical_bytes(changed), expected_inputs=inputs, native_evaluation=evaluation)
+            finally:
+                (owner.root / extra).unlink()
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCategoryEvaluationTests)
 

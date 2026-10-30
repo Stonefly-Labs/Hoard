@@ -4201,6 +4201,41 @@ need no API/command changes for this finite test checkpoint. No reviewer-owned
 checklist, flow-stage, source-failure, proof budget or qualification claim is
 advanced.
 
+### Independent native category-report boundary (partial T071)
+
+The source-owned native evaluation previously verifies the original history
+inside the publisher. A new independent boundary in `conformance_evidence.py`
+also checks the constructed report itself against that original authority,
+before native publication. It rejects modeled owner/evaluation types before
+proof reads, rereads readonly history against the held pin, checks original
+token identity and actual Released resources, requires exact captured results/
+witnesses/proofs plus only the verified completion-input proof, and runs the
+existing independent catalog/schema/parameter/file/completion inspection.
+History and completion reads share the original descriptor-bound bounded reader.
+An extra correctly hashed but unobserved proof still rejects.
+
+The result explicitly records native category origin verification while
+remaining diagnostic/nonqualifying. No report flag becomes transferable
+authority, and offline verification does not acquire runtime attestation.
+Other profiles, generic qualification and full reports remain unfinished;
+T071 stays unchecked and implement/running continues at70/86.
+
+The new ordinary rejection test first fails because no independent boundary
+exists. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
+passes246 tests in84.248 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass. The genuine released-origin factory gains
+two controls for copied token/substituted resources and appended unobserved
+proofs. Their native execution remains required; the earlier `bddb2a8`
+successful packets do not contain this new code and are not relabeled.
+
+README, DEVELOPMENT, quickstart, evidence contract and provider-conformance
+example are affected. Provider APIs, SDK package graph and contributor
+commands are unchanged, so PROVIDERS/CustomHost and product/architecture/ADR/
+diagrams/governance/backlog/predecessor/IaC/release/UI guides need no changes.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

@@ -920,13 +920,7 @@ def verify_input_recomputation(before, after):
     return digest(before)
 
 
-def verify_completion_inputs(root, report):
-    """Verify retained actual completion measurements without rewriting free space."""
-    report = admit_entity("QualificationReport", report)
-    inputs = report["inputs"]
-    path = f'proofs/category-{inputs["profileId"]}-{inputs["mode"]}-completion-inputs.json'
-    if report["proofs"].get(path) != report["postInputSha256"]:
-        raise ConformanceError("ProofMismatch")
+def _readonly_report_proof(root, path):
     contents = io.BytesIO()
     with _input_root(root) as (_, descriptor):
         with _input_parent(descriptor, path) as (parent, name):
@@ -934,9 +928,20 @@ def verify_completion_inputs(root, report):
                 raise ConformanceError("ProofMismatch")
         hashed, _ = _source_file(descriptor, path, remaining=MAX_REPORT_BYTES,
                                  deadline=time.monotonic() + 5, target=contents)
+    return hashed, contents.getvalue()
+
+
+def verify_completion_inputs(root, report):
+    """Verify retained actual completion measurements without rewriting free space."""
+    report = admit_entity("QualificationReport", report)
+    inputs = report["inputs"]
+    path = f'proofs/category-{inputs["profileId"]}-{inputs["mode"]}-completion-inputs.json'
+    if report["proofs"].get(path) != report["postInputSha256"]:
+        raise ConformanceError("ProofMismatch")
+    hashed, raw = _readonly_report_proof(root, path)
     if hashed != report["postInputSha256"]:
         raise ConformanceError("ProofMismatch")
-    completion = admit_entity("RunInputs", load_json(contents.getvalue()))
+    completion = admit_entity("RunInputs", load_json(raw))
     verify_input_recomputation(inputs, completion)
     return completion
 
@@ -973,6 +978,36 @@ def inspect_category_report(root, report_data, *, expected_inputs):
         "code": "EvidenceIncomplete", "reportSha256": inspected["reportSha256"],
         "caseCount": inspected["caseCount"], "witnessCount": inspected["witnessCount"],
     })
+
+
+def inspect_native_category_report(run, report_data, *, expected_inputs, native_evaluation):
+    """Bind independent report inspection to the original live-to-released authority."""
+    from conformance_execution import OwnedRun
+    from conformance_sources import NativeCategoryEvaluation
+
+    if type(run) is not OwnedRun or type(native_evaluation) is not NativeCategoryEvaluation:
+        raise ConformanceError("OwnershipInvalid")
+    inputs = admit_entity("RunInputs", expected_inputs)
+    if inputs["mode"] != "qualification" or inputs["profileId"] not in ("metadata", "artifacts"):
+        raise ConformanceError("UnsupportedProfile")
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    report = admit_entity("QualificationReport", load_json(report_data))
+    prefix = f'proofs/category-{inputs["profileId"]}-qualification'
+    hashed, raw = _readonly_report_proof(run.root, prefix + "-history.json")
+    if hashed != native_evaluation.history_sha256:
+        raise ConformanceError("ProofMismatch")
+    record = load_json(raw)
+    native_evaluation.verify_report_origin(
+        run, inputs, record, {"historySha256": hashed}, report["resources"])
+    if (digest(report["results"]) != digest(record["results"])
+            or digest(report["witnesses"]) != digest(record["witnesses"])
+            or report["proofs"] != {
+                **record["proofs"], prefix + "-completion-inputs.json": report["postInputSha256"]}):
+        raise ConformanceError("ProofMismatch")
+    inspected = inspect_category_report(run.root, report_data, expected_inputs=inputs)
+    return MappingProxyType({
+        **inspected, "scope": "native-category-runtime-origin-diagnostic", "runtimeOriginVerified": True})
 
 
 def inspect_profile_report(root, report_data, *, expected_inputs, expected_report_sha256):

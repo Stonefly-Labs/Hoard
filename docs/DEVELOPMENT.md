@@ -8648,6 +8648,30 @@ tooling observations in600175.675 ms, zero failures/errors/skips/diagnostic
 bytes, against600 seconds. Its missing final summary does not turn a deadline
 failure into acceptance. That independent scheduling issue remains unresolved.
 
+T071 now has an independent category-report boundary in
+`conformance_evidence.inspect_native_category_report`. Native publication uses
+it after actual release, in addition to the original source-record check.
+It requires the original owner/evaluation types, rereads readonly history
+against the held history pin, verifies original token identity and current
+resource projection, and binds exact report results/witnesses/proofs to that
+capture. The only additional proof is the separately verified completion-input
+packet; an otherwise valid unobserved proof cannot be appended.
+The same catalog/schema/parameter/proof/completion inspector still runs.
+Readonly history and completion reads share the existing descriptor-bound,
+bounded reader. The result explicitly verifies native category origin while
+remaining diagnostic and nonqualifying; offline correspondence does not gain
+authority from that result or any cached boolean.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
+passes246 tests in84.248 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass. Two expanded genuine released-origin controls
+challenge copied authority, substituted resources and extra unobserved proofs;
+their native execution remains required. T071 remains open because generic
+qualification and the remaining profile authorities/reports are unfinished.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

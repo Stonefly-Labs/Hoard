@@ -980,6 +980,10 @@ all-profile sanitation acceptance or qualification.
 The T069 transport/parity challenge tests also pass, including all-five
 matching focused/preparation/dirty assignments. Their modeled reports do not
 replace actual five-profile execution or qualify a baseline.
+A separate report boundary now checks the constructed category report against
+the original native evaluation, exact captured ledger/proofs and actual
+settlement. Host regressions pass; its expanded native controls still need
+execution. Generic five-profile qualification remains unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
