@@ -8684,6 +8684,25 @@ The same246-test selection passes in83.216 seconds with four explicit native
 skips; catalog/SDK and diff checks pass. Expanded native execution remains
 required, now including this ninth retained-report control.
 
+The expanded suites now genuinely pass in a fresh immutable `887aaba`
+Linux/aarch64 checkout, SDK10.0.203/runtime10.0.7 on btrfs, starting with
+212064096256 free scratch bytes and no extra SDK prewarming. All nine sanitation
+controls pass in197.218 ms. Metadata passes4 live,8 released and9 retained
+controls in421940.048 ms; artifacts passes the same counts in312851.054 ms.
+Both test-only commands return0, while their actual category reports remain
+Incomplete/nonqualifying with production exit2. The independent boundary,
+copied-token/resource/extra-proof challenges and modeled failed-retry
+classification now have actual native execution.
+Original closed packet SHA-256 values are
+`faee96e3b89543ac4ca0d7996927309bdeb26962176bd8644b808662adde413f`
+(sanitation),
+`b1c930cbc7710652575919503a935d9474e1277a02800a5f42a96d5f6b9c7457`
+(metadata) and
+`ce0105b5eea501f1e0e8efac2cb020ed8848858f22af1258cba826531070a5ed`
+(artifacts). Prior failed/incomplete packets remain unchanged. This is finite
+category-origin verification, not all-profile qualification or completion of
+T071/T077.
+
 Composition's original native command/report now has a separate held evaluation.
 Capture requires the actual Active `OwnedRun`, its descriptor-checked execution
 record, the exact original report and independent transport replay. After actual
@@ -8702,8 +8721,20 @@ owner's cleanup path, and runs live/released authority controls. It does not run
 inherited acceptance or tooling, so it cannot replace the full composition job.
 Ordinary discovery does not require external evidence. The focused report/
 composition selection passes271 tests in80.320 seconds with four explicit
-native-only skips; catalog/SDK and diff checks pass. Genuine execution of this
-new composition control remains pending; T071 stays unchecked at70/86.
+native-only skips; catalog/SDK and diff checks pass.
+
+The immutable `023aff8b83e4bdb3e1c760e37049f2dbf1f09cf8` native Linux/aarch64
+execution now passes all3 live and7 released-origin controls, test-only exit0,
+in99095.700287 ms. Initial free scratch is213162979328 bytes and extra SDK
+prewarming is false. The task-owned local tooling image
+`sha256:323a097f0870a3b880ea1e4313930ef0af2359905fcac0b29f7c14c59a45fe98`
+preserves Python/git installation over the existing pinned .NET image; source
+and all run caches/outputs remain fresh/private. Actual finally-path release
+and independent original-runtime replay succeed, while profileComplete and
+inheritedRuntimeExecuted remain false. Original closed packet SHA-256:
+`4af88c8689da40f5ed84ad9481b50f2b7ec1b84af7c4fbaaaa2a869746715643`.
+This finite result does not cover inherited/tooling execution or complete T071,
+which remains unchecked at70/86.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

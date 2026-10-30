@@ -255,9 +255,11 @@ exercise the standard metadata/artifact executors before and after actual
 settlement, plus their retained reports, through the same explicit test-only
 command as category CI. They do not accept contributor bindings or qualify a
 provider. Their host orchestration regressions and genuine Linux executions
-pass for both standard categories at `bddb2a8`; expanded independent report-
-boundary controls still require native execution. Generic/five-profile
-qualification remains unfinished.
+pass for both standard categories at `bddb2a8`. The expanded independent report-
+boundary/failed-retry controls also pass at immutable `887aaba`: four live,
+eight released-origin and nine retained-report checks per category. They do
+not qualify this contributor journey or complete generic/five-profile
+qualification.
 
 For actual overlapping contributors, keep the restored adapter unchanged and
 use different roots. The duplicate path must fail without disturbing either

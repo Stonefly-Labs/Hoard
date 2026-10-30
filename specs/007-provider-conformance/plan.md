@@ -4270,6 +4270,40 @@ product/architecture/ADR/diagram/governance/backlog/predecessor/IaC/release/UI
 guides need no changes. T071 remains running/unchecked;70/86 tasks remain
 verified, with no stage, qualification, proof-budget or checklist change.
 
+### Genuine expanded category-origin and failed-history controls
+
+The immutable `887aabaa69f704ca2d797de9c77c09bc9bbb38de` Linux/aarch64
+execution now completes both expanded category suites. It uses the same
+SDK10.0.203/runtime10.0.7, btrfs,4CPU/6GiB/512PID task-owned container;
+initial free scratch is212064096256 bytes and extra SDK prewarming is false.
+The original source clone and all earlier successful/failed/incomplete packets
+are preserved.
+
+- Sanitation: all9 controls pass, no skipped/missing/noisy controls,
+  197.2178320011153 ms. Closed packet SHA-256:
+  `faee96e3b89543ac4ca0d7996927309bdeb26962176bd8644b808662adde413f`.
+- Metadata: actual141 runtime observations followed by4 live-origin,8
+  released-origin and9 retained-report controls, test-only exit0,
+  421940.0476850005 ms. Closed packet SHA-256:
+  `b1c930cbc7710652575919503a935d9474e1277a02800a5f42a96d5f6b9c7457`.
+- Artifacts: actual263 runtime observations followed by the same4/8/9 controls,
+  test-only exit0,312851.053553999 ms. Closed packet SHA-256:
+  `ce0105b5eea501f1e0e8efac2cb020ed8848858f22af1258cba826531070a5ed`.
+
+The original independent-category boundary, copied authority, substituted actual
+resources, unobserved authentic proof and failed/passing retry-classification
+controls therefore now have genuine native execution. Both production category
+reports still remain Incomplete/nonqualifying with exit2; no result is relabeled
+as qualification. These are21 finite controls per category, not all-five
+profile/harness/CI qualification. T071/T077 remain open and70/86 tasks stay
+checked.
+
+README, DEVELOPMENT, quickstart, evidence contract and provider-conformance
+example now replace their exact pending-expanded-suite disclaimers. Existing
+command APIs and all unrelated documentation remain unchanged. This native
+result does not cover the following composition-authority implementation at a
+different source.
+
 ### Original composition authority across actual release (partial T071)
 
 The composition producer previously retains only an Active-resource diagnostic
@@ -4310,8 +4344,26 @@ test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction
 passes271 tests in80.320 seconds with four explicit native-only skips.
 `python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
 `git diff --check` pass. Genuine frozen native execution of the new composition
-authority/control path remains pending; previous category controls are not
+authority/control path is recorded below; previous category controls are not
 reused as evidence for it.
+
+The actual immutable `023aff8b83e4bdb3e1c760e37049f2dbf1f09cf8`
+Linux/aarch64 run now passes all3 live and7 released-origin controls, test-only
+exit0 in99095.700287 ms. Initial free scratch is213162979328 bytes, extra SDK
+prewarming is false, and all source/cache/output paths are fresh/private.
+The task-owned local image
+`sha256:323a097f0870a3b880ea1e4313930ef0af2359905fcac0b29f7c14c59a45fe98`
+retains only the earlier Python/git tool installation over the pinned .NET
+image; no source clone or per-run package/output cache is prewarmed.
+Actual packaged runtime preparation/ingestion, original held-command binding,
+finally-path release, positive independent replay and all negative authority/
+resource/proof substitutions pass. The original active diagnostic is unchanged
+and the released report remains Incomplete/nonqualifying.
+`profileComplete: false` and `inheritedRuntimeExecuted: false` explicitly retain
+the boundary: no inherited/tooling/whole-profile pass is inferred.
+The original closed packet SHA-256 is
+`4af88c8689da40f5ed84ad9481b50f2b7ec1b84af7c4fbaaaa2a869746715643`;
+its immutable clone/root and prior attempts remain preserved.
 
 README, DEVELOPMENT, quickstart and the evidence contract are affected.
 Provider/contributor commands and public APIs, package/module graph, production

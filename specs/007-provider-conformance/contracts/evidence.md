@@ -1066,9 +1066,10 @@ for offline verification to trust a boolean. Reports remain nonqualifying.
 Category inspection and public JSON preserve the independently derived
 `AssertionFailed` code for a failed attempt even after a passing retry; an
 Incomplete qualification state must not downgrade that failure classification.
-Host rejection/completion regressions pass; expanded genuine native execution
-remains required. This is a category-only T071 component, not completion of the
-generic evaluator below.
+Host rejection/completion regressions and expanded genuine native execution at
+`887aaba` pass: four live-origin, eight released-origin and nine retained-report
+controls per metadata/artifact category. This is a category-only T071 component,
+not completion of the generic evaluator below.
 
 Composition additionally holds the original Active owner's descriptor-checked
 execution hash and exact report bytes in a single-use native evaluation.
@@ -1079,8 +1080,9 @@ replays the retained transport. Original report bytes remain unchanged; the
 settled report is published separately. Copied tokens and merely matching
 serialized owner maps cannot supply authority. This remains diagnostic with
 incomplete non-runtime cases; neither a cached verification flag nor the finite
-test-only runtime boundary qualifies the composition profile. Genuine native
-origin-control execution remains pending.
+test-only runtime boundary qualifies the composition profile. All3 live and7
+released-origin controls genuinely pass at immutable `023aff8`; inherited/
+tooling and full-profile acceptance remain outside that finite boundary.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

@@ -1147,9 +1147,14 @@ executions at `bddb2a8` pass: each category runs four live-origin, six released-
 eight retained-report controls. These complete T068's mutation-test task, not
 the remaining generic evaluator or five-profile qualification. The original
 unsuccessful source-bound attempt is preserved separately in the plan.
-The following independent report-boundary/failure-classification changes add
-two released-origin controls and a failed-retry retained-report control;
-execution of that expanded native suite remains required.
+The independent report-boundary/failure-classification changes add two
+released-origin controls and a failed-retry retained-report control. Their
+expanded suite genuinely passes at immutable `887aaba`: four live-origin,
+eight released-origin and nine retained-report controls for each category,
+with no skipped/missing/noisy controls. Metadata takes421940.048 ms and artifacts
+312851.054 ms; both test-only commands return0 and original reports remain
+Incomplete/nonqualifying, production exit2. These are source-bound finite
+controls, not generic or five-profile acceptance.
 
 ## Native Composition Origin Controls
 
@@ -1174,9 +1179,11 @@ The original active diagnostic is retained unchanged beside the new
 
 Exit0 means only that these finite controls passed. It is not complete
 composition/inherited/tooling acceptance, an offline attestation, a replacement
-for the full CI job or qualification. Host orchestration/rejection checks pass;
-genuine execution remains pending. Ordinary unittest discovery needs no retained
-packet. Preserve unsuccessful roots and do not edit the frozen checkout.
+for the full CI job or qualification. Host orchestration/rejection checks and
+all ten genuine controls pass at immutable `023aff8`, exit0 in99095.700287 ms.
+Initial free scratch is213162979328 bytes, with no extra SDK prewarming.
+Ordinary unittest discovery needs no retained packet. Preserve unsuccessful
+roots and do not edit the frozen checkout.
 
 ## Offline Correspondence Inspection
 
