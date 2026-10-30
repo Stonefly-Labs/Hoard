@@ -12,6 +12,31 @@ unchanged; necessary fixture-private controls are extended as recorded below.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### Complete composition qualification boundary
+
+The public complete composition route now freezes qualification-mode inputs
+before execution and requires the original single-use complete runtime/
+controller/tooling capture, actual resource release and exact independent
+released-frame replay. It publishes separate qualified bytes and returns the
+original evaluation, not an integer success. Public completion binds exact
+destination/catalog/current source, original released report and reconstructed
+qualified bytes before emitting a finite original-owner receipt. CP-only success,
+diagnostic inputs, missing capture, changed context/proofs and retained resources
+cannot qualify. The four added controller leaders still need native capture
+confirmation; no old diagnostic is relabeled.
+
+The fresh readonly receipt reader shares the pure inherited/controller/tooling
+frame verifier and requires a separately trusted original-owner receipt; no
+native authority is reconstructed from downloaded bytes. Raw diagnostic
+transport/public diagnostic script behavior is preserved. The hosted diagnostic
+calls that script explicitly, requiring exit0 and its existing independent
+false-qualification checks instead of the newly qualifying public entry point.
+Both transport modes keep all29 report mutations/two semantic challenges.
+The final affected ten-module selector passes478 tests in122.029 seconds, with
+five native-only skips, including qualification-mode transport and the unchanged
+diagnostic comparison. Actual fresh native qualification and readonly
+external-receipt confirmation remain required. T071..T086 stay open.
+
 ### Public category native qualification wiring
 
 The next T071 increment connects the existing strict native category evaluator

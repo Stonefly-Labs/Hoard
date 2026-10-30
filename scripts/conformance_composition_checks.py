@@ -521,7 +521,8 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
     raw = read_bounded(report_path, 16 * 1024**2) if report_data is None else report_data
     report = evidence.admit_entity("QualificationReport", evidence.load_json(raw))
     inputs = evidence.admit_entity("RunInputs", inputs)
-    if (report["inputs"] != inputs or inputs["profileId"] != "composition" or inputs["mode"] != "diagnostic"
+    if (report["inputs"] != inputs or inputs["profileId"] != "composition"
+            or inputs["mode"] not in ("diagnostic", "qualification")
             or report["state"] != "Incomplete" or report["qualification"] is not False
             or tuple(report["scope"]) != ("composition-runtime-diagnostic",)
             or owner["runId"] != inputs["runId"] or owner["invocationGroupId"] != inputs["invocationGroupId"]
@@ -565,7 +566,7 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
         manifest_path, "runtime-owner.json", "proofs/composition-inputs.json", settings_path, command_path,
         f"proofs/execution-command-{receipt['commandSequence']:04}.json",
         runtime_directory + "/witnesses.jsonl", runtime_directory + "/completion.json",
-        "proofs/category-composition-diagnostic-completion-inputs.json",
+        f'proofs/category-composition-{inputs["mode"]}-completion-inputs.json',
     }
     if not required <= report["proofs"].keys() or not isinstance(record.get("inputFiles"), dict):
         raise evidence.ConformanceError("WitnessMissing")
@@ -779,7 +780,7 @@ def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_dire
     inputs = evidence.admit_entity("RunInputs", inputs)
     post_inputs = evidence.admit_entity("RunInputs", post_inputs)
     evidence.verify_input_recomputation(inputs, post_inputs)
-    if inputs["profileId"] != "composition" or inputs["mode"] != "diagnostic":
+    if inputs["profileId"] != "composition" or inputs["mode"] not in ("diagnostic", "qualification"):
         raise evidence.ConformanceError("UnsupportedProfile")
     runtime_directory = evidence.relative_path(runtime_directory)
     witnesses = tuple(evidence.admit_entity("RuntimeWitness", row) for row in observed["witnesses"])
@@ -809,7 +810,7 @@ def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_dire
             write_new(run.root / path, raw)
             proofs[path] = hashlib.sha256(raw).hexdigest()
         results.append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
-    completion = "proofs/category-composition-diagnostic-completion-inputs.json"
+    completion = f'proofs/category-composition-{inputs["mode"]}-completion-inputs.json'
     raw = evidence.canonical_bytes(post_inputs)
     write_new(run.root / completion, raw)
     proofs[completion] = hashlib.sha256(raw).hexdigest()
@@ -828,7 +829,7 @@ def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_dire
     }
 
 
-def _runtime(run, repository, source, sources, config, feed, records, replay, *, native_sources=None):
+def _runtime(run, repository, source, sources, config, feed, records, replay, *, native_sources=None, qualify=False):
     print(json.dumps({"qualification": False, "phase": "runtime-staging"}), flush=True)
     project = replay / PROJECT
     runtime = project.parent / "bin/Release/net10.0"
@@ -864,7 +865,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay, *,
     print(json.dumps({"qualification": False, "phase": "runtime-inputs"}), flush=True)
     inputs = evidence.admit_entity("RunInputs", {
         "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group,
-        "profileId": "composition", "mode": "diagnostic",
+        "profileId": "composition", "mode": "qualification" if qualify else "diagnostic",
         "catalogRevision": evidence.CATALOG_REVISION,
         "catalogSha256": sources["tests/contracts/Hoard.Testing.Conformance/Catalog/catalog.json"],
         "sdkSha256": evidence.digest({name: hashed for name, hashed in sources.items()
@@ -1025,7 +1026,7 @@ def _runtime(run, repository, source, sources, config, feed, records, replay, *,
     }
 
 
-def execute(repository, destination):
+def execute(repository, destination, *, qualify=False):
     if not native_execution_supported():
         raise evidence.ConformanceError("PrerequisiteMissing")
     run = OwnedRun.allocate(destination, repository, profile="composition")
@@ -1078,7 +1079,8 @@ def execute(repository, destination):
         write_new(run.root / "proofs/composition-lock-derivations.json", evidence.canonical_bytes(records))
         native_sources = NativeCompositionSources(run)
         summary = _runtime(
-            run, repository, source, sources, config, feed, records, replay, native_sources=native_sources)
+            run, repository, source, sources, config, feed, records, replay,
+            native_sources=native_sources, qualify=qualify)
         summary["historicalPreparationParentSha256"] = historical_parent
         summary["historicalNativeInvocations"] = historical_invocations
         summary["inheritedRuntime"] = _inherited_runtime(
@@ -1106,6 +1108,14 @@ def execute(repository, destination):
             run, inputs, inherited_context)
         summary["processResourcesReleased"] = True
         write_new(run.root / "proofs/composition-diagnostic-summary.json", evidence.canonical_bytes(summary))
+        if qualify:
+            _, raw = evidence._readonly_report_proof(
+                run.root, "proofs/composition-runtime-released-report.json")
+            qualified = evidence.derive_native_composition_qualification(
+                run, raw, expected_inputs=inputs, native_evaluation=native_sources._evaluation)
+            write_new(run.root / "proofs/composition-fixture-qualification-report.json",
+                      evidence.canonical_bytes(qualified))
+            return native_sources._evaluation
         print(json.dumps(summary, sort_keys=True), flush=True)
         return 0
     finally:

@@ -84,8 +84,8 @@ class _Arguments(argparse.ArgumentParser):
 def invocation_parser():
     parser = _Arguments(
         description="Conformance admission and native metadata/artifact/composition execution. "
-                    "Complete built-in metadata/artifact runs require original native authority for finite fixture "
-                    "qualification; full baseline, focused/custom bindings, composition/compatibility/harness "
+                    "Complete built-in metadata/artifact/composition runs require original native authority for finite fixture "
+                    "qualification; full baseline, focused/custom bindings, compatibility/harness "
                     "qualification and qualifying verify/aggregate remain incomplete. "
                     "Offline --verify/--aggregate with --coordinator inspect correspondence only.",
         add_help=False, allow_abbrev=False)
@@ -227,9 +227,10 @@ def dispatch_invocation(invocation):
         if profile == "composition":
             from conformance_composition_checks import execute
             try:
-                result = execute(invocation.repository, invocation.evidence)
+                result = execute(invocation.repository, invocation.evidence, qualify=True)
             except RuntimeError:
                 raise ConformanceError("EvidenceIncomplete") from None
+            return complete_native_composition_invocation(invocation, result)
         elif profile == "compatibility":
             from conformance_sdk_checks import execute
             try:
@@ -296,6 +297,50 @@ def complete_native_category_invocation(invocation, native_evaluation):
     origin = native_category_qualification_receipt(
         run, qualified, original_report_data=original, expected_inputs=inputs,
         native_evaluation=native_evaluation)
+    print(canonical_bytes({
+        **inspected, "baselineQualification": False, "code": "None", "qualificationOrigin": origin}).decode("ascii"))
+    return 0
+
+
+def complete_native_composition_invocation(invocation, native_evaluation):
+    from conformance_case_catalog import expected_cases
+    from conformance_execution import OwnedRun
+    from conformance_sources import NativeCompositionEvaluation, NativeCompositionSources
+
+    if type(native_evaluation) is not NativeCompositionEvaluation:
+        raise ConformanceError(
+            "EvidenceIncomplete" if type(native_evaluation) is int and native_evaluation == 0 else "CommandFailed")
+    if (type(invocation) is not ConformanceInvocation or invocation.action != "run"
+            or invocation.mode != "qualification" or invocation.profiles != ("composition",)
+            or invocation.binding_project is not None
+            or type(native_evaluation._source) is not NativeCompositionSources):
+        raise ConformanceError("OwnershipInvalid")
+    run = native_evaluation._source._run
+    if (type(run) is not OwnedRun or run.root != invocation.evidence
+            or invocation.case_keys != tuple(case.key for case in expected_cases("composition"))):
+        raise ConformanceError("OwnershipInvalid")
+    _, inputs_data = _readonly_report_proof(run.root, "proofs/composition-inputs.json")
+    inputs = admit_entity("RunInputs", load_json(inputs_data))
+    ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+    if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
+        raise ConformanceError("InputChanged")
+    identity = source_identity(invocation.repository, ci_revision=ci_revision)
+    if (inputs["profileId"] != "composition" or inputs["runId"] != run.run_id
+            or any(inputs[key] != value for key, value in identity.items())
+            or digest(inputs["sourceManifest"]) != digest(source_manifest(invocation.repository))):
+        raise ConformanceError("InputChanged")
+    original_path = "proofs/composition-runtime-released-report.json"
+    original_sha, original = _readonly_report_proof(run.root, original_path)
+    _, qualified = _readonly_report_proof(run.root, "proofs/composition-fixture-qualification-report.json")
+    inspected = inspect_native_composition_qualification(
+        run, qualified, original_report_data=original, expected_inputs=inputs,
+        native_evaluation=native_evaluation)
+    origin = {
+        "kind": "native-composition-fixture-qualification",
+        "inputsSha256": digest(inputs), "reportSha256": inspected["reportSha256"],
+        "originalReportPath": original_path, "originalReportSha256": original_sha,
+        "resourcesSha256": digest(run.resource_projection()),
+    }
     print(canonical_bytes({
         **inspected, "baselineQualification": False, "code": "None", "qualificationOrigin": origin}).decode("ascii"))
     return 0
@@ -1368,8 +1413,104 @@ def derive_native_composition_qualification(run, report_data, *, expected_inputs
         run, report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
     report = admit_entity("QualificationReport", load_json(report_data))
     _require_qualifying_outcomes(report)
+    captured = native_evaluation._source._inherited_runtime
+    if captured is None:
+        raise ConformanceError("OwnershipInvalid")
+    hashed, context = _released_composition_context(run.root)
+    if digest(context) != captured["summarySha256"]:
+        raise ConformanceError("ProofMismatch")
+    native_evaluation.verify_inherited_runtime(run, report["inputs"], context)
+    return _complete_composition_report(report, captured, hashed)
+
+
+def _released_composition_context(root):
+    hashed, raw = _readonly_report_proof(root, "proofs/composition-diagnostic-summary.json")
+    summary = load_json(raw)
+    if not isinstance(summary, dict) or summary.get("processResourcesReleased") is not True:
+        raise ConformanceError("CleanupIncomplete")
+    return hashed, {key: summary.get(key) for key in ("inheritedRuntime", "historicalNativeInvocations")}
+
+
+def _complete_composition_report(report, frame, summary_sha256):
+    inherited = {**frame["proofs"], "proofs/composition-diagnostic-summary.json": summary_sha256}
+    if any(path in report["proofs"] and report["proofs"][path] != value for path, value in inherited.items()):
+        raise ConformanceError("ProofMismatch")
     return admit_entity("QualificationReport", {
-        **report, "state": "Complete", "qualification": True, "scope": ["composition-fixture-qualification"]})
+        **report, "proofs": {**report["proofs"], **inherited},
+        "state": "Complete", "qualification": True, "scope": ["composition-fixture-qualification"]})
+
+
+def inspect_native_composition_qualification(
+        run, report_data, *, original_report_data, expected_inputs, native_evaluation):
+    """Reconstruct full finite composition qualification with the original released authority."""
+    if not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES:
+        raise ConformanceError("EvidenceSchemaInvalid")
+    expected = derive_native_composition_qualification(
+        run, original_report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    report = admit_entity("QualificationReport", load_json(report_data))
+    if report != expected:
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "qualification": True, "scope": "native-composition-fixture-qualification",
+        "profileId": "composition", "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "caseCount": len(report["results"]), "witnessCount": len(report["witnesses"]),
+        "caseStates": MappingProxyType({
+            state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}),
+    })
+
+
+def inspect_receipted_composition_qualification(
+        root, report_data, *, expected_inputs, expected_report_sha256, qualification_origin):
+    """Replay the full frame using an external original-owner receipt, never an artifact's claim."""
+    from conformance_composition_checks import verify_composition_case_report
+    from conformance_sources import read_composition_inherited_frame
+
+    if qualification_origin is None:
+        raise ConformanceError("OwnershipInvalid")
+    origin = _record({
+        "kind": _constant("native-composition-fixture-qualification"),
+        "inputsSha256": sha256, "reportSha256": sha256,
+        "originalReportPath": relative_path, "originalReportSha256": sha256,
+        "resourcesSha256": sha256,
+    })(qualification_origin)
+    inputs = admit_entity("RunInputs", expected_inputs)
+    if inputs["profileId"] != "composition":
+        raise ConformanceError("UnsupportedProfile")
+    if (origin["inputsSha256"] != digest(inputs)
+            or origin["reportSha256"] != sha256(expected_report_sha256)
+            or origin["originalReportPath"] != "proofs/composition-runtime-released-report.json"):
+        raise ConformanceError("InputChanged")
+    if (not isinstance(report_data, bytes) or len(report_data) > MAX_REPORT_BYTES
+            or hashlib.sha256(report_data).hexdigest() != origin["reportSha256"]):
+        raise ConformanceError("ProofMismatch")
+    original_sha, original_data = _readonly_report_proof(root, origin["originalReportPath"])
+    if original_sha != origin["originalReportSha256"]:
+        raise ConformanceError("ProofMismatch")
+    original = admit_entity("QualificationReport", load_json(original_data))
+    _require_qualifying_outcomes(original)
+    if (not original["resources"] or any(row["state"] != "Released" for row in original["resources"])
+            or digest(original["resources"]) != origin["resourcesSha256"]):
+        raise ConformanceError("CleanupIncomplete")
+    _, owner_data = _readonly_report_proof(root, "runtime-owner.json")
+    inspected = verify_composition_case_report(
+        root, inputs, load_json(owner_data), report_data=original_data)
+    commands = [int(match.group(1)) for path in original["proofs"]
+                if (match := re.fullmatch(r"proofs/execution-command-([0-9]{4,})\.json", path)) is not None]
+    if len(commands) != 1:
+        raise ConformanceError("WitnessMissing")
+    hashed, context = _released_composition_context(root)
+    frame = read_composition_inherited_frame(root, inputs, context, commands[0])
+    report = admit_entity("QualificationReport", load_json(report_data))
+    if report != _complete_composition_report(original, frame, hashed):
+        raise ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        **inspected, "qualification": True, "baselineQualification": False, "code": "None",
+        "scope": "trusted-native-composition-fixture-qualification", "profileId": "composition",
+        "reportSha256": origin["reportSha256"], "caseCount": len(report["results"]),
+        "witnessCount": len(report["witnesses"]), "passedParameters": frame["passedParameters"],
+        "scopes": len(frame["commands"]), "controllerParents": len(frame["controllerCommands"]),
+        "controllerInvocations": frame["controllerInvocations"], "toolingTests": frame["toolingTests"],
+    })
 
 
 def derive_native_compatibility_qualification(run, report_data, *, expected_inputs, native_evaluation):

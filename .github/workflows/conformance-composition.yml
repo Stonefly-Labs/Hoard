@@ -36,8 +36,8 @@ jobs:
           private_parent="$(dirname "$GITHUB_WORKSPACE")/composition-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -m 700 "$private_parent"
           status=0
-          bash scripts/validate-conformance.sh \
-            --profile composition --evidence "$private_parent/run" || status=$?
+          python3 scripts/conformance_composition_checks.py \
+            --evidence "$private_parent/run" || status=$?
           python3 - "$private_parent/run" "$GITHUB_SHA" <<'PY'
           import hashlib
           import sys
@@ -158,4 +158,4 @@ jobs:
               raise SystemExit("WitnessMissing")
           print('{"qualification":false,"status":"Incomplete","code":"EvidenceIncomplete"}')
           PY
-          test "$status" -eq 2
+          test "$status" -eq 0

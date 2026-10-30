@@ -1749,14 +1749,14 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 environment = {
                     **os.environ, "GITHUB_WORKSPACE": str(Path(temporary) / "workspace"),
                     "GITHUB_RUN_ID": "control", "GITHUB_RUN_ATTEMPT": "1", "GITHUB_SHA": "a" * 40}
-                controls = (f"bash() {{ return {status}; }}\n"
-                            "python3() { printf 'projection-reached\\n'; return 0; }\n")
+                controls = ("python3() { if test \"$1\" = scripts/conformance_composition_checks.py; then "
+                            f"return {status}; fi; printf 'projection-reached\\n'; return 0; }}\n")
                 result = subprocess.run(
                     ["/bin/bash", "-c", controls + script], cwd=ROOT, env=environment,
                     capture_output=True, timeout=10)
                 self.assertEqual(result.stdout, b"projection-reached\n")
                 self.assertEqual(result.stderr, b"")
-                self.assertEqual(result.returncode == 0, status == 2)
+                self.assertEqual(result.returncode == 0, status == 0)
 
     def test_workflow_checks_retained_historical_seal_after_stores_are_released(self):
         import hashlib

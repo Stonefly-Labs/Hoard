@@ -1224,6 +1224,12 @@ class ConformanceAdmissionTests(unittest.TestCase):
                     started_ms=0, ended_ms=1)
 
     def test_modeled_composition_report_links_replay_after_cleanup_without_claiming_runtime_origin(self):
+        self._check_modeled_composition_report_links("diagnostic")
+
+    def test_qualification_mode_transport_preserves_frozen_inputs_and_cannot_qualify_cp_alone(self):
+        self._check_modeled_composition_report_links("qualification")
+
+    def _check_modeled_composition_report_links(self, mode):
         import conformance_case_catalog as catalog
         import conformance_composition_checks as composition
         import conformance_sdk_checks as checks
@@ -1241,7 +1247,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
 
             prototype = self.composition_report()
             inputs = prototype["inputs"]
-            inputs["mode"] = "diagnostic"
+            inputs["mode"] = mode
             staged = root / "stores/composition-runtime"
             images = {f"stores/composition-runtime/{name}": write(
                 f"stores/composition-runtime/{name}", name.encode()) for name in (
@@ -4893,6 +4899,110 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         evidence, "_input_root", side_effect=AssertionError("Unowned qualification read proofs")):
                     with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
                         derive(owner, b"{}", expected_inputs=self.inputs, native_evaluation=token)
+
+    def test_composition_qualification_requires_the_captured_complete_runtime_not_cp_success_alone(self):
+        from types import SimpleNamespace
+
+        report = ConformanceAdmissionTests().composition_report()
+        inputs = report["inputs"]
+        inputs["mode"] = "qualification"
+        inputs["sourceState"] = "clean-local"
+        report["postInputSha256"] = evidence.digest(inputs)
+        for witness in report["witnesses"]:
+            witness["inputSha256"] = evidence.digest(inputs)
+        report["resources"] = [{
+            "runId": inputs["runId"], "rootId": "root", "childPid": 0,
+            "childStartSha256": "0" * 64, "state": "Released",
+            "cleanupDurationMs": 1, "diagnosticCode": "None",
+        }]
+        report["proofs"]["proofs/category-composition-qualification-completion-inputs.json"] = evidence.digest(inputs)
+        report["proofs"]["proofs/execution-command-0002.json"] = "e" * 64
+        context = {"inheritedRuntime": {"modeled": True}, "historicalNativeInvocations": {"modeled": True}}
+        path = "proofs/composition-diagnostic-summary.json"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            source = SimpleNamespace(_inherited_runtime={
+                "summarySha256": evidence.digest(context), "proofs": {"proofs/inherited-frame.json": "a" * 64},
+                "commands": ((5, "b" * 64),), "controllerCommands": ((1, "c" * 64),),
+                "passedParameters": 1, "toolingTests": 3, "controllerInvocations": 4})
+            token = SimpleNamespace(_source=source, verify_inherited_runtime=mock.Mock())
+            run = SimpleNamespace(root=root)
+            raw = evidence.canonical_bytes(report)
+
+            def seal(value, relative=path):
+                target = root / relative
+                if target.exists():
+                    target.chmod(0o600)
+                target.write_bytes(evidence.canonical_bytes(value))
+                target.chmod(0o400)
+
+            seal({**context, "processResourcesReleased": True})
+            with mock.patch.object(evidence, "inspect_native_composition_report"):
+                qualified = evidence.derive_native_composition_qualification(
+                    run, raw, expected_inputs=inputs, native_evaluation=token)
+                token.verify_inherited_runtime.assert_called_once_with(
+                    run, evidence.admit_entity("RunInputs", inputs), context)
+                self.assertTrue(qualified["qualification"])
+                self.assertEqual(qualified["proofs"], {
+                    **report["proofs"], **source._inherited_runtime["proofs"],
+                    path: evidence.file_sha256(root / path)})
+                for defect in ("missing-capture", "changed-context", "unreleased-summary", "changed-runtime"):
+                    captured = source._inherited_runtime
+                    if defect == "missing-capture":
+                        source._inherited_runtime = None
+                    elif defect == "changed-context":
+                        seal({**context, "inheritedRuntime": {"changed": True}, "processResourcesReleased": True})
+                    elif defect == "unreleased-summary":
+                        seal({**context, "processResourcesReleased": False})
+                    else:
+                        token.verify_inherited_runtime.side_effect = evidence.ConformanceError("ProofMismatch")
+                    with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                        evidence.derive_native_composition_qualification(
+                            run, raw, expected_inputs=inputs, native_evaluation=token)
+                    source._inherited_runtime = captured
+                    token.verify_inherited_runtime.side_effect = None
+                    seal({**context, "processResourcesReleased": True})
+            original_path = "proofs/composition-runtime-released-report.json"
+            seal(report, original_path)
+            seal({}, "runtime-owner.json")
+            qualified_data = evidence.canonical_bytes(qualified)
+            qualified_sha = hashlib.sha256(qualified_data).hexdigest()
+            origin = {
+                "kind": "native-composition-fixture-qualification",
+                "inputsSha256": evidence.digest(inputs), "reportSha256": qualified_sha,
+                "originalReportPath": original_path, "originalReportSha256": hashlib.sha256(raw).hexdigest(),
+                "resourcesSha256": evidence.digest(report["resources"]),
+            }
+            with mock.patch("conformance_composition_checks.verify_composition_case_report", return_value={}), \
+                    mock.patch("conformance_sources.read_composition_inherited_frame",
+                               return_value=source._inherited_runtime) as read_frame:
+                inspected = evidence.inspect_receipted_composition_qualification(
+                    root, qualified_data, expected_inputs=inputs, expected_report_sha256=qualified_sha,
+                    qualification_origin=origin)
+                self.assertTrue(inspected["qualification"])
+                self.assertFalse(inspected["baselineQualification"])
+                read_frame.assert_called_once_with(
+                    root, evidence.admit_entity("RunInputs", inputs), context, 2)
+                for defect in ("missing-receipt", "kind", "inputsSha256", "reportSha256",
+                               "originalReportPath", "originalReportSha256", "resourcesSha256",
+                               "changed-summary"):
+                    changed = dict(origin)
+                    if defect == "missing-receipt":
+                        changed = None
+                    elif defect == "kind":
+                        changed[defect] = "native-category-fixture-qualification"
+                    elif defect == "originalReportPath":
+                        changed[defect] = "proofs/foreign.json"
+                    elif defect == "changed-summary":
+                        seal({**context, "processResourcesReleased": True, "changed": True})
+                    else:
+                        changed[defect] = "f" * 64
+                    with self.subTest(receipt=defect), self.assertRaises(evidence.ConformanceError):
+                        evidence.inspect_receipted_composition_qualification(
+                            root, qualified_data, expected_inputs=inputs, expected_report_sha256=qualified_sha,
+                            qualification_origin=changed)
+                    seal({**context, "processResourcesReleased": True})
 
     def test_native_qualification_policy_rejects_diagnostic_dirty_incomplete_and_failed_history(self):
         for defect, code in (("diagnostic", "EvidenceIncomplete"), ("dirty", "InputChanged"),

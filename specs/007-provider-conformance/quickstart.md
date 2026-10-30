@@ -12,9 +12,15 @@ At exact `984bb2e`, actual Linux artifact execution and separate-process receipt
 verification pass103 cases/263 witnesses; isolated metadata execution and
 independent verification pass102 cases/141 witnesses at that same source.
 An earlier concurrent metadata failure remains unexplained. Original diagnostic
-reports remain unchanged. Composition, compatibility, focused/custom bindings,
+reports remain unchanged. Compatibility, focused/custom bindings,
 harness and the full baseline remain nonqualifying; offline correspondence does
 not yet consume the separately trusted native-owner receipt.
+Complete public composition execution now has the same original-owner
+qualification boundary, additionally requiring all58 inherited runtime parents,
+four controller leaders and complete trusted tooling before actual release.
+Its separate finite qualified report and independent readonly external-receipt
+reader are wired; actual native qualification confirmation remains pending.
+The older successful diagnostic cannot qualify under changed input mode.
 Built-in metadata/artifact report publication now also creates four fixed
 JSON/JUnit/Markdown/CI-summary projections in the owned `diagnostics/` directory.
 Original diagnostic projections contain only closed identifiers, counts and
@@ -38,7 +44,13 @@ exactc23251a native metadata pass, including seven sanitation controls and
 original/released-origin challenges. Full composition/CI qualification remains
 unfinished; this does not change the incomplete public qualification boundary.
 `bash scripts/validate-conformance.sh --profile composition --evidence /fresh/private/path`
-now attempts CP36/110 and all 525 inherited parameters, not qualification.
+now freezes qualification-mode inputs and requires the full original capture,
+exact released proof closure and unchanged source before exit0.
+Use `python3 scripts/conformance_composition_checks.py --evidence /fresh/private/path`
+for the explicitly nonqualifying diagnostic, including the hosted diagnostic job;
+its exit0 still requires complete runtime/tooling execution and real release.
+The historical public diagnostic attempted CP36/110 and all525 inherited
+parameters without qualification.
 Exact standalone Linux run40451900182 at `f319b77` passes that native scope;
 public-entry run40453911841 at `5d2e959` also passes while retaining incomplete
 exit 2 and false qualification. The composition executor now prepares and

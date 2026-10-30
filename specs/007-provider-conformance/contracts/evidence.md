@@ -1535,6 +1535,18 @@ Released replay must retain identical controller proof hashes and invocation
 counts. Borrowed-child selected-declared input snapshots remain distinct from
 a general native I/O trace; their recorded limitation cannot be promoted by
 copying a journal or changing its closure flag.
+Complete composition qualification additionally requires qualification-mode
+inputs frozen before execution, the original complete capture and actual
+release. Its separate qualified report must reproduce the finite CP results
+and include the exact inherited/controller/tooling proof union and readonly
+original summary. A CP-only report, missing capture or diagnostic input mode
+cannot qualify. Public completion must recheck the original evaluation,
+destination/catalog/current source and exact separate qualified bytes.
+Independent readonly replay requires an externally trusted original-owner
+receipt pinning inputs, original/qualified bytes and released resources; an
+artifact cannot supply its own authority. It reuses the same pure complete-frame
+reader, preserves original parent chronology and reproduces the exact proof
+closure. This finite fixture result explicitly denies full-baseline authority.
 For unknown failed tests only, an existing safe `test/UnknownDiagnostic`
 event may additionally carry a positive source-line integer bounded to1000000,
 derived from the exact admitted method's mapped `/_/tests/` declaring-type

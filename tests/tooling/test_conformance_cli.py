@@ -200,8 +200,18 @@ class ConformanceCliTests(unittest.TestCase):
         with patch("conformance_composition_checks.execute", return_value=0) as execute:
             with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
                 evidence.dispatch_invocation(invocation)
-            execute.assert_called_once_with(ROOT, self.destination)
+            execute.assert_called_once_with(ROOT, self.destination, qualify=True)
         self.assertFalse(self.destination.exists())
+
+    def test_complete_composition_dispatch_requires_original_qualification_completion(self):
+        invocation = evidence.admit_invocation(ROOT, [
+            "--profile", "composition", "--evidence", str(self.destination)])
+        token = object()
+        with patch("conformance_composition_checks.execute", return_value=token) as execute, patch.object(
+                evidence, "complete_native_composition_invocation", return_value=0) as complete:
+            self.assertEqual(evidence.dispatch_invocation(invocation), 0)
+            execute.assert_called_once_with(ROOT, self.destination, qualify=True)
+            complete.assert_called_once_with(invocation, token)
 
     def test_compatibility_dispatch_requires_the_complete_agreement_and_never_qualifies_diagnostics(self):
         invocation = evidence.admit_invocation(ROOT, [

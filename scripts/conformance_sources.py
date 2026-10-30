@@ -2318,6 +2318,47 @@ class NativeCompatibilitySources:
         return self._evaluation
 
 
+def read_composition_inherited_frame(root, inputs, summary, command_sequence):
+    """Re-admit runtime, controller and tooling correspondence without native authority."""
+    from conformance_inherited import (
+        read_controller_invocation_frame, read_inventory_runtime, verify_controller_tooling)
+
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    inherited = summary.get("inheritedRuntime") if isinstance(summary, Mapping) else None
+    if not isinstance(inherited, Mapping):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    observed, commands, proofs = read_inventory_runtime(root, inputs)
+    receipts = [{
+        "attemptId": row["attemptId"],
+        "parentSha256": proofs[f'proofs/category-command-{row["attemptId"]}-execution.json'],
+    } for row in observed["scopes"]]
+    if (inherited.get("scopeAdmissionSha256") != evidence.digest(observed)
+            or inherited.get("passedParameters") != observed["passedParameters"]
+            or inherited.get("scopes") != len(commands) or inherited.get("commands") != receipts):
+        raise evidence.ConformanceError("ProofMismatch")
+    controller_commands, controller_proofs, controller_count = read_controller_invocation_frame(
+        root, inputs, summary)
+    if (len(controller_commands) != 4 or not commands
+            or not (controller_commands[0][0] < command_sequence
+                    < controller_commands[1][0] < controller_commands[2][0] < commands[0][0])
+            or commands[-1][0] >= controller_commands[-1][0]
+            or any(path in proofs and proofs[path] != hashed
+                   for path, hashed in controller_proofs.items())):
+        raise evidence.ConformanceError("ProofMismatch")
+    proofs = {**proofs, **controller_proofs}
+    owner = evidence.load_json(_readonly(root / "runtime-owner.json", 65536))
+    tooling = inherited.get("tooling")
+    verify_controller_tooling(root, tooling, inputs, owner)
+    path = "proofs/inherited-controller-tooling.json"
+    proofs = {**proofs, path: evidence._readonly_report_proof(root, path)[0]}
+    return MappingProxyType({
+        "inputsSha256": evidence.digest(inputs), "summarySha256": evidence.digest(summary),
+        "commands": commands, "proofs": MappingProxyType(dict(proofs)),
+        "passedParameters": observed["passedParameters"], "toolingTests": tooling["tests"],
+        "controllerCommands": controller_commands, "controllerInvocations": controller_count,
+    })
+
+
 @dataclass(frozen=True, repr=False)
 class NativeCompositionEvaluation:
     _source: "NativeCompositionSources"
@@ -2392,48 +2433,14 @@ class NativeCompositionSources:
         return self._evaluation
 
     def _read_inherited_frame(self, inputs, summary):
-        from conformance_inherited import (
-            read_controller_invocation_frame, read_inventory_runtime, verify_controller_tooling)
-
         inputs = evidence.admit_entity("RunInputs", inputs)
         if (type(self._evaluation) is not NativeCompositionEvaluation or self._evaluation._source is not self
                 or inputs["runId"] != self._run.run_id or not isinstance(summary, Mapping)
                 or evidence.digest(inputs)
                 != evidence.digest(evidence.load_json(self._evaluation.report_data)["inputs"])):
             raise evidence.ConformanceError("OwnershipInvalid")
-        inherited = summary.get("inheritedRuntime")
-        if not isinstance(inherited, Mapping):
-            raise evidence.ConformanceError("OwnershipInvalid")
-        observed, commands, proofs = read_inventory_runtime(self._run.root, inputs)
-        receipts = [{
-            "attemptId": row["attemptId"],
-            "parentSha256": proofs[f'proofs/category-command-{row["attemptId"]}-execution.json'],
-        } for row in observed["scopes"]]
-        if (inherited.get("scopeAdmissionSha256") != evidence.digest(observed)
-                or inherited.get("passedParameters") != observed["passedParameters"]
-                or inherited.get("scopes") != len(commands) or inherited.get("commands") != receipts):
-            raise evidence.ConformanceError("ProofMismatch")
-        controller_commands, controller_proofs, controller_count = read_controller_invocation_frame(
-            self._run.root, inputs, summary)
-        if (len(controller_commands) != 4 or not commands
-                or not (controller_commands[0][0] < self._evaluation.command_sequence
-                        < controller_commands[1][0] < controller_commands[2][0] < commands[0][0])
-                or commands[-1][0] >= controller_commands[-1][0]
-                or any(path in proofs and proofs[path] != hashed
-                       for path, hashed in controller_proofs.items())):
-            raise evidence.ConformanceError("ProofMismatch")
-        proofs = {**proofs, **controller_proofs}
-        owner = evidence.load_json(_readonly(self._run.root / "runtime-owner.json", 65536))
-        tooling = inherited.get("tooling")
-        verify_controller_tooling(self._run.root, tooling, inputs, owner)
-        path = "proofs/inherited-controller-tooling.json"
-        proofs = {**proofs, path: evidence._readonly_report_proof(self._run.root, path)[0]}
-        return MappingProxyType({
-            "inputsSha256": evidence.digest(inputs), "summarySha256": evidence.digest(summary),
-            "commands": commands, "proofs": MappingProxyType(dict(proofs)),
-            "passedParameters": observed["passedParameters"], "toolingTests": tooling["tests"],
-            "controllerCommands": controller_commands, "controllerInvocations": controller_count,
-        })
+        return read_composition_inherited_frame(
+            self._run.root, inputs, summary, self._evaluation.command_sequence)
 
     def capture_inherited_runtime(self, inputs, summary):
         run = self._run

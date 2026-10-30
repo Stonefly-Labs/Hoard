@@ -10032,6 +10032,32 @@ The unchanged nine cases all pass with the guard restored. An initial archive
 comparison reused newer build output because archived source timestamps were
 older; it is not counted as red evidence.
 
+Complete public composition execution now selects qualification-mode inputs
+before any runtime observation; the direct `conformance_composition_checks.py`
+entry point retains its diagnostic default. Raw active/released CP reports and
+the diagnostic summary remain unchanged. After the original owner captures all
+58 runtime parents, four controller leaders and the complete tooling frame and
+actually releases resources, strict derivation publishes a separate
+`proofs/composition-fixture-qualification-report.json`. Its proof map includes
+the captured inherited/controller/tooling closure and readonly original summary.
+Missing capture, changed context/proofs, diagnostic inputs, incomplete outcomes,
+retained resources or a merely successful integer exit reject. Public completion
+also checks the original evaluation identity, destination/catalog, unchanged
+current source and exact qualified bytes before returning0 with an external
+original-owner receipt, explicitly denying baseline qualification.
+
+`inspect_receipted_composition_qualification` independently reconstructs that
+same closure from readonly evidence only when supplied the separately trusted
+receipt observed by the original owner. It shares the existing pure frame reader
+with active capture/released verification; it cannot reconstruct native
+authority or trust an artifact's own receipt. Complete hosted composition
+diagnostics now call the direct diagnostic script and require its exit0 plus
+unchanged independent false-qualification checks, rather than invoking the newly
+qualifying public route. Both raw transport modes retain all29 report mutations
+and two semantic challenges. Actual native qualification/receipt confirmation is
+pending; the earlier successful32426be diagnostic cannot be relabeled. No
+general native I/O tracing or altered input-closure flag is introduced.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

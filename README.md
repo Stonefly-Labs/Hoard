@@ -102,8 +102,15 @@ The next T071 boundary also checks the four original historical/preparation/
 reference/mutation parents against held native command bytes. Readonly replay
 confirms349 child observations/10 proofs from that successful root;277 focused
 checks pass. Native confirmation of this added custody check remains pending.
-Full inherited/controller profile evaluation remains unfinished.
-Other public routes remain nonqualifying and T071..T086 remain open.
+Complete public composition execution now freezes qualification-mode inputs
+before execution, requires that original complete runtime/controller/tooling
+capture and actual release, and publishes a separate finite qualified report.
+An independent readonly reader requires an externally trusted original-owner
+receipt and reconstructs the same proof closure; CP-only success and diagnostic
+inputs cannot qualify. Real native confirmation of this new boundary is pending.
+The hosted composition diagnostic remains explicitly diagnostic.
+Compatibility/harness, qualifying coordinator/aggregate and the full baseline
+remain unfinished; T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group
