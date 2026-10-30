@@ -9797,6 +9797,19 @@ its separate SDK `original-metadata-sqlite` MP46 host-integration test
 failure is not a tooling timeout or qualifying acceptance. See the
 [current checkpoint](../specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
+Unchanged `a71fab5` subsequently passes both diagnostic workflows, confirming
+that the prior SDK failure is intermittent rather than a deterministic timeout.
+A private250 ms SQLite worker-delay probe reproduces MP46's setup race:
+its100 ms read can expire before entering the shutdown barrier. MP46 now uses
+the existing finite operation default, cancels after barrier entry, and
+additionally asserts the cancelled caller has not released held native work.
+Every original shutdown/readiness/admission assertion and the separate deadline
+tests remain intact; the host application is asynchronously disposed.
+The identical delay now passes. Normal-worker package-only Memory and SQLite
+scenarios each pass their exact63 native parameters with two logical processors,
+and focused formatting passes. These local diagnostics do not replace fresh
+Linux acceptance or change the historical failed receipt.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

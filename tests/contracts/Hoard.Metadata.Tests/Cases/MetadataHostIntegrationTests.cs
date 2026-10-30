@@ -95,7 +95,7 @@ public sealed class MetadataHostIntegrationTests(ITestOutputHelper output)
             await using var evaluation = await builder.EvaluateConfigurationAsync(new(defaults), new("0.1.0", "0.1.0"), new());
             Assert.Equal(HoardConfigurationOutcome.Validated, evaluation.Outcome);
             await using var lease = await builder.ComposeHoardModulesAsync(evaluation.Configuration!);
-            var app = await web.BuildHoardApplicationAsync(lease);
+            await using var app = await web.BuildHoardApplicationAsync(lease);
             await app.MapHoardModulesAsync(lease);
             var module = app.Services.GetRequiredService<MetadataFixtureModule>();
             Assert.Single(app.Services.GetServices<MetadataFixtureModule>());
@@ -110,20 +110,31 @@ public sealed class MetadataHostIntegrationTests(ITestOutputHelper output)
                 using var response = await app.GetTestClient().GetAsync("/metadata-is-not-an-endpoint");
                 Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
                 await using var barrier = new MetadataTestBarrier();
+                using var cancellation = new CancellationTokenSource();
                 module.Session.Controls.SetObserver("read.item", () => new(barrier.HoldAsync()));
                 var reading = module.Session.Store.ReadAsync(new([Registry().Selector]),
-                    new(TimeSpan.FromMilliseconds(100)), default).AsTask();
-                await barrier.Entered;
-                var stopping = app.StopHoardApplicationAsync(lease);
+                    new(), cancellation.Token).AsTask();
+                Task? stopping = null;
                 try
                 {
+                    await barrier.Entered;
+                    cancellation.Cancel();
+                    Assert.Equal(Hoard.Abstractions.Metadata.MetadataFailureCode.CancelledBeforeCommit,
+                        Failed(await reading));
+                    Assert.True(barrier.IsActive);
+                    stopping = app.StopHoardApplicationAsync(lease);
                     await module.AdmissionClosedForTest;
                     Assert.False((await module.CheckReadinessAsync(default)).Ready);
                     Assert.False(stopping.IsCompleted);
                     Assert.Equal(Hoard.Abstractions.Metadata.MetadataFailureCode.Disposed,
                         Failed(await module.Session.Store.ReserveOperationAsync(new(), default)));
                 }
-                finally { barrier.Release(); await reading; await stopping; }
+                finally
+                {
+                    barrier.Release();
+                    await reading;
+                    if (stopping is not null) { await stopping; }
+                }
             }
             else
             {

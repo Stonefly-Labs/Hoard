@@ -40,7 +40,11 @@ from individual test-child commands' unchanged ten-minute limit. The suite
 still cannot exceed its remaining profile time. At `115a507`, hosted composition
 passes with all 844 tooling tests and actual resource release; standalone tooling
 also passes all 844 tests with zero skips in 16m27s. A separate SDK diagnostic
-fails a SQLite metadata-host integration test, so the overall workflow is not green.
+exposed an intermittent SQLite metadata-host test failure. A controlled worker
+delay reproduces a lifecycle setup race; the correction preserves every shutdown
+assertion and additionally verifies cancellation while native work remains held.
+Both original 63-parameter metadata scenarios pass locally; hosted confirmation
+of that correction remains required.
 Internal evaluator/receipt work is preserved, but public commands remain
 nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).

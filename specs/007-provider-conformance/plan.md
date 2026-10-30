@@ -12,6 +12,32 @@ unchanged; necessary fixture-private controls are extended as recorded below.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### MP46 lifecycle setup race
+
+The unchanged `a71fab5` source subsequently passes both hosted diagnostic
+workflows (runs41077819870 and41077819889); that does not repair or relabel the
+earlier SQLite failure. Local package-only diagnostics reproduce a concrete
+MP46 setup defect: delaying the private SQLite worker250 ms before execution
+expires the test's100 ms read before `read.item` can enter its barrier.
+The original test fails with one Failed witness/`UnknownDiagnostic`, matching
+the failed hosted identity. The delay is confined to an ignored diagnostic
+copy, never the tracked provider or acceptance implementation.
+
+MP46 now uses the existing finite five-second operation default and explicitly
+cancels its caller only after the actual read barrier is entered. It additionally
+asserts `CancelledBeforeCommit` and that the native read remains held, before
+running every original readiness/admission/draining assertion. This removes
+the incidental setup race rather than deleting an assertion or relaxing a
+deadline test; the separate deadline assertions and all product/provider
+budgets remain unchanged. The application is also asynchronously disposed.
+The same250 ms controlled delay now passes MP46. With the unmodified worker
+restored, both exact original Memory and SQLite scenario inventories pass
+63 parameters each through the existing safe package-only transport, with
+`DOTNET_PROCESSOR_COUNT=2`; focused `dotnet format --verify-no-changes
+--no-restore` passes. These macOS diagnostics are not Linux profile qualification
+or proof of the earlier hosted exception's exact cause; hosted confirmation
+and T071..T086 remain required.
+
 ### Authorized whole-suite timeout correction
 
 The maintainer explicitly authorized fixing the timeout scope and retesting.
