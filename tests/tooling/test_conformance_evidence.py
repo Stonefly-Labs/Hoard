@@ -11069,7 +11069,7 @@ def released_native_category_evaluation_tests(evaluation, *, inputs, record, sum
             checks._publish_category_fixture_qualification(owner, inputs, native_evaluation=evaluation)
             invocation = evidence.ConformanceInvocation(
                 "run", ROOT, "qualification", (inputs["profileId"],),
-                tuple(case.key for case in expected_cases(inputs["profileId"])), owner.root)
+                tuple(case.key for case in catalog.expected_cases(inputs["profileId"])), owner.root)
             with contextlib.redirect_stdout(io.StringIO()) as output:
                 self.assertEqual(evidence.complete_native_category_invocation(invocation, evaluation), 0)
             observed = evidence.load_json(output.getvalue().encode())

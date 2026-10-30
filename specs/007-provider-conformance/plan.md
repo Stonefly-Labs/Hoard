@@ -38,6 +38,16 @@ inventory and whitespace checks pass. Fresh Linux execution is pending; this
 does not close T071 or supply composition/compatibility/harness, offline or
 five-profile qualification.
 
+The first immutable Linux execution at `5cf1a1a` reaches the released native
+controls, where14 of15 pass. The new public-completion control fails before
+calling completion: its catalog lookup references unimported `expected_cases`
+instead of the module's existing `catalog.expected_cases`. This is a native-only
+test wiring defect, not permission to skip that control or accept the run.
+The failed run and its original proofs remain retained. The namespace correction
+passes the same187 focused checks in30.816 seconds; fresh native execution is
+still required. An earlier separate attempt rejected stale clone `origin/main`
+ancestry before execution; its evidence also remains preserved.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic
