@@ -234,17 +234,14 @@ def dispatch_invocation(invocation):
         elif profile == "compatibility":
             from conformance_sdk_checks import execute
             try:
-                result = execute(invocation.repository, invocation.evidence, compatibility_only=True)
+                result = execute(invocation.repository, invocation.evidence, compatibility_only=True, qualify=True)
             except RuntimeError:
                 raise ConformanceError("EvidenceIncomplete") from None
+            return complete_native_compatibility_invocation(invocation, result)
         else:
             from conformance_sdk_checks import execute
             result = execute(invocation.repository, invocation.evidence, category=profile, qualify=True)
             return complete_native_category_invocation(invocation, result)
-        if type(result) is not int or result != 0:
-            raise ConformanceError("CommandFailed")
-        # Native history admission is not the independent qualification evaluator.
-        raise ConformanceError("EvidenceIncomplete")
     if invocation.action in ("verify", "aggregate"):
         from conformance_ci import inspect_offline
         return inspect_offline(invocation)
@@ -343,6 +340,57 @@ def complete_native_composition_invocation(invocation, native_evaluation):
     }
     print(canonical_bytes({
         **inspected, "baselineQualification": False, "code": "None", "qualificationOrigin": origin}).decode("ascii"))
+    return 0
+
+
+def complete_native_compatibility_invocation(invocation, native_evaluation):
+    from conformance_case_catalog import expected_cases
+    from conformance_execution import OwnedRun
+    from conformance_sources import NativeCompatibilityEvaluation, NativeCompatibilitySources
+
+    if type(native_evaluation) is not NativeCompatibilityEvaluation:
+        raise ConformanceError(
+            "EvidenceIncomplete" if type(native_evaluation) is int and native_evaluation == 0 else "CommandFailed")
+    if (type(invocation) is not ConformanceInvocation or invocation.action != "run"
+            or invocation.mode != "qualification" or invocation.profiles != ("compatibility",)
+            or invocation.binding_project is not None
+            or type(native_evaluation._source) is not NativeCompatibilitySources):
+        raise ConformanceError("OwnershipInvalid")
+    run = native_evaluation._source._run
+    if (type(run) is not OwnedRun or run.root != invocation.evidence
+            or invocation.case_keys != tuple(case.key for case in expected_cases("compatibility"))):
+        raise ConformanceError("OwnershipInvalid")
+    _, inputs_data = _readonly_report_proof(run.root, "proofs/compatibility-runtime-inputs.json")
+    inputs = admit_entity("RunInputs", load_json(inputs_data))
+    ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+    if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
+        raise ConformanceError("InputChanged")
+    identity = source_identity(invocation.repository, ci_revision=ci_revision)
+    if (inputs["profileId"] != "compatibility" or inputs["runId"] != run.run_id
+            or any(inputs[key] != value for key, value in identity.items())
+            or digest(inputs["sourceManifest"]) != digest(source_manifest(invocation.repository))):
+        raise ConformanceError("InputChanged")
+    summary_path = "proofs/compatibility-diagnostic-summary.json"
+    summary_sha, summary = _readonly_report_proof(run.root, summary_path)
+    expected = derive_native_compatibility_qualification(
+        run, summary, expected_inputs=inputs, native_evaluation=native_evaluation)
+    original_path = "proofs/compatibility-runtime-released-report.json"
+    original_sha, _ = _readonly_report_proof(run.root, original_path)
+    _, qualified = _readonly_report_proof(run.root, "proofs/compatibility-fixture-qualification-report.json")
+    if admit_entity("QualificationReport", load_json(qualified)) != expected:
+        raise ConformanceError("ProofMismatch")
+    origin = {
+        "kind": "native-compatibility-fixture-qualification",
+        "inputsSha256": digest(inputs), "reportSha256": hashlib.sha256(qualified).hexdigest(),
+        "originalReportPath": original_path, "originalReportSha256": original_sha,
+        "summaryPath": summary_path, "summarySha256": summary_sha,
+        "resourcesSha256": digest(run.resource_projection()),
+    }
+    print(canonical_bytes({
+        "qualification": True, "baselineQualification": False, "code": "None",
+        "scope": origin["kind"], "profileId": "compatibility", "reportState": expected["state"],
+        "reportSha256": origin["reportSha256"], "caseCount": len(expected["results"]),
+        "witnessCount": len(expected["witnesses"]), "qualificationOrigin": origin}).decode("ascii"))
     return 0
 
 

@@ -76,10 +76,8 @@ jobs:
           set -euo pipefail
           private_parent="$(dirname "$GITHUB_WORKSPACE")/compatibility-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -m 700 "$private_parent"
-          status=0
-          bash scripts/validate-conformance.sh \
-            --profile compatibility --evidence "$private_parent/run" || status=$?
-          test "$status" -eq 2
+          python3 scripts/conformance_sdk_checks.py --root "$GITHUB_WORKSPACE" \
+            --compatibility-only --evidence "$private_parent/run"
           python3 - "$private_parent/run" <<'PY'
           import hashlib
           import sys

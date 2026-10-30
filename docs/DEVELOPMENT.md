@@ -10127,6 +10127,24 @@ is invented and the24 GiB gate remains unchanged. Provider examples, architectur
 diagrams, infrastructure and release guidance are unaffected by this transport
 compatibility correction.
 
+Complete public compatibility execution now selects qualification-mode inputs
+before runtime and preserves that mode through every scope/foundation recapture.
+After actual release, the original evaluator verifies all original runtime,
+historical/source/retained/source-break and foundation evidence before deriving
+separate qualified bytes. Public completion binds exact current source/catalog/
+destination and the original evaluation; integer success and altered qualified
+bytes reject. The direct SDK diagnostic keeps its original default, and hosted
+compatibility replay now explicitly calls that diagnostic rather than expecting
+the public command to remain nonqualifying. Original raw reports stay unchanged.
+The237-test CLI/composition/SDK/CI selector passes in35.931 seconds, including
+both modeled modes, immutable completion selection and foreign-authority
+controls. Fresh native public qualification and independent receipt verification
+remain pending. The corrected shared-boundary command
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence test_conformance_inherited test_conformance_execution test_conformance_cli test_conformance_composition test_conformance_sdk_checks test_conformance_ci test_conformance_sanitation`
+passes582 tests in137.135 seconds with27 native-only skips; frozen inventory,
+SDK/catalog and `git diff --check` pass. T071..T086 stay open. Provider contracts/examples, architecture
+diagrams, infrastructure and release behavior are unaffected.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

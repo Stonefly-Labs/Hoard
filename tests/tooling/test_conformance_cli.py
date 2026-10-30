@@ -213,13 +213,26 @@ class ConformanceCliTests(unittest.TestCase):
             execute.assert_called_once_with(ROOT, self.destination, qualify=True)
             complete.assert_called_once_with(invocation, token)
 
+    def test_complete_compatibility_dispatch_requires_original_qualification_completion(self):
+        invocation = evidence.admit_invocation(ROOT, [
+            "--profile", "compatibility", "--evidence", str(self.destination)])
+        token = object()
+        with patch("conformance_sdk_checks.execute", return_value=token) as execute, patch.object(
+                evidence, "complete_native_compatibility_invocation", return_value=0) as complete:
+            self.assertEqual(evidence.dispatch_invocation(invocation), 0)
+            execute.assert_called_once_with(ROOT, self.destination, compatibility_only=True, qualify=True)
+            complete.assert_called_once_with(invocation, token)
+        for forged in (0, 1, None, token):
+            with self.subTest(forged=forged), self.assertRaises(evidence.ConformanceError):
+                evidence.complete_native_compatibility_invocation(invocation, forged)
+
     def test_compatibility_dispatch_requires_the_complete_agreement_and_never_qualifies_diagnostics(self):
         invocation = evidence.admit_invocation(ROOT, [
             "--profile", "compatibility", "--evidence", str(self.destination)])
         with patch("conformance_sdk_checks.execute", return_value=0) as execute:
             with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
                 evidence.dispatch_invocation(invocation)
-            execute.assert_called_once_with(ROOT, self.destination, compatibility_only=True)
+            execute.assert_called_once_with(ROOT, self.destination, compatibility_only=True, qualify=True)
         unsupported = (
             replace(invocation, case_keys=invocation.case_keys[:-1]),
             replace(invocation, case_keys=(*invocation.case_keys, invocation.case_keys[0])),

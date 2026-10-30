@@ -4212,7 +4212,8 @@ def execute_foundation_runtime(run, repository, candidate, sources, config, feed
     current = capture_compatibility_runtime_inputs(
         run, repository, candidate, config, feed, prepared, seal_sha,
         invocation_group_id=inputs["invocationGroupId"],
-        observed_environment=environment(run, scope="compatibility-foundation"), ci_revision=ci_revision)
+        observed_environment=environment(run, scope="compatibility-foundation"), ci_revision=ci_revision,
+        mode=inputs["mode"])
     evidence.verify_input_recomputation(inputs, current)
     closure_path = run.root / prepared["inputMapPath"]
     root = run.root / FOUNDATION_RUNTIME_ROOT
@@ -4244,7 +4245,7 @@ def execute_foundation_runtime(run, repository, candidate, sources, config, feed
         run, repository, candidate, config, feed, prepared, seal_sha,
         invocation_group_id=inputs["invocationGroupId"],
         observed_environment=environment(run, phase="completion", scope="compatibility-foundation"),
-        ci_revision=ci_revision)
+        ci_revision=ci_revision, mode=inputs["mode"])
     evidence.verify_input_recomputation(inputs, post)
     write_new(run.root / "proofs/compatibility-foundation-completion-inputs.json", evidence.canonical_bytes(post))
     write_new(run.root / "proofs/foundation-scope-admission.json", evidence.canonical_bytes(admitted))
@@ -4257,9 +4258,12 @@ def execute_foundation_runtime(run, repository, candidate, sources, config, feed
 
 
 def capture_compatibility_runtime_inputs(run, repository, candidate, config, feed, prepared, seal_sha, *,
-                                         invocation_group_id, observed_environment, ci_revision=None):
+                                         invocation_group_id, observed_environment, ci_revision=None,
+                                         mode="diagnostic"):
     from conformance_inherited import admit_architecture_preparation
 
+    if mode not in ("diagnostic", "qualification"):
+        raise evidence.ConformanceError("UnsupportedProfile")
     _, selected = admit_architecture_preparation(run.root, prepared)
     paths = ["proofs/sdk-vstest-inputs.json", "proofs/foundation-inventory.json", "proofs/foundation-formatting-inputs.json",
              "proofs/foundation-formatting-projects.json"]
@@ -4280,7 +4284,7 @@ def capture_compatibility_runtime_inputs(run, repository, candidate, config, fee
         paths.extend(compatibility_runtime_paths(run, runtime))
     paths.extend(compatibility_runtime_paths(run, run.root / FOUNDATION_RUNTIME_ROOT / "driver"))
     base = evidence.capture_profile_inputs(
-        run, repository, candidate, profile_id="compatibility", mode="diagnostic",
+        run, repository, candidate, profile_id="compatibility", mode=mode,
         invocation_group_id=invocation_group_id,
         package_versions=[{"packageId": name, "version": "0.1.0"}
                           for name in sorted({*INPUT_PACKAGES, *VERSION_PACKAGES, "Hoard.Conformance.TestLogger"})],
@@ -4305,7 +4309,8 @@ def inspect_compatibility_runtime_scope(root, inputs, scope, summary, prepared):
         "binary": (binary_runtime_tests, TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll"),
     }
     inputs = evidence.admit_entity("RunInputs", inputs)
-    if scope not in definitions or inputs["profileId"] != "compatibility" or inputs["mode"] != "diagnostic":
+    if (scope not in definitions or inputs["profileId"] != "compatibility"
+            or inputs["mode"] not in ("diagnostic", "qualification")):
         raise evidence.ConformanceError("UnsupportedProfile")
     tests_factory, folder, name = definitions[scope]
     tests = tests_factory()
@@ -4497,7 +4502,7 @@ def inspect_foundation_runtime_scope(root, inputs, runtime_summary, formatting_s
         verify_controller_invocations)
 
     inputs = evidence.admit_entity("RunInputs", inputs)
-    if inputs["profileId"] != "compatibility" or inputs["mode"] != "diagnostic":
+    if inputs["profileId"] != "compatibility" or inputs["mode"] not in ("diagnostic", "qualification"):
         raise evidence.ConformanceError("UnsupportedProfile")
     hashes = {}
 
@@ -4825,7 +4830,8 @@ def _compatibility_report_material(root, inputs, summary, *, resources):
         results.append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
     post = scopes[-1]["postInputs"]
     evidence.verify_input_recomputation(inputs, post)
-    source_proofs["proofs/category-compatibility-diagnostic-completion-inputs.json"] = evidence.canonical_bytes(post)
+    completion = f'proofs/category-compatibility-{inputs["mode"]}-completion-inputs.json'
+    source_proofs[completion] = evidence.canonical_bytes(post)
     proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in source_proofs.items()})
     referenced = {execution for result in results for attempt in result["attempts"] for execution in attempt["witnessIds"]}
     report = evidence.admit_entity("QualificationReport", {
@@ -4932,7 +4938,7 @@ def _execute_compatibility_runtime_scope(run, repository, candidate, sources, co
     current = capture_compatibility_runtime_inputs(
         run, repository, candidate, config, feed, prepared, seal_sha,
         invocation_group_id=group, observed_environment=environment(run, scope="compatibility-" + scope),
-        ci_revision=ci_revision)
+        ci_revision=ci_revision, mode=inputs["mode"])
     evidence.verify_input_recomputation(inputs, current)
     assembly_path = assembly.relative_to(run.root).as_posix()
     manifest = {
@@ -4961,7 +4967,8 @@ def _execute_compatibility_runtime_scope(run, repository, candidate, sources, co
     post_inputs = capture_compatibility_runtime_inputs(
         run, repository, candidate, config, feed, prepared, seal_sha,
         invocation_group_id=group, observed_environment=environment(
-            run, phase="completion", scope="compatibility-" + scope), ci_revision=ci_revision)
+            run, phase="completion", scope="compatibility-" + scope), ci_revision=ci_revision,
+        mode=inputs["mode"])
     evidence.verify_input_recomputation(inputs, post_inputs)
     if inputs["sourceManifest"] != sources:
         raise evidence.ConformanceError("InputChanged")
@@ -5046,7 +5053,7 @@ def _execute_selected_category(run, repository, candidate, inputs, *, binding_so
     return reported
 
 
-def _release_compatibility_runtime(run, inputs, compatibility_summary, native_evaluation):
+def _release_compatibility_runtime(run, inputs, compatibility_summary, native_evaluation, *, qualify=False):
     run.transition("Settling")
     run.release()
     if any(resource["state"] != "Released" for resource in run.resource_projection()):
@@ -5065,12 +5072,19 @@ def _release_compatibility_runtime(run, inputs, compatibility_summary, native_ev
               evidence.canonical_bytes(summary))
     print(evidence.canonical_bytes({
         **summary, "runtimeOriginVerified": inspected["runtimeOriginVerified"]}).decode("ascii"), flush=True)
+    if qualify:
+        qualified = evidence.derive_native_compatibility_qualification(
+            run, evidence.canonical_bytes(summary), expected_inputs=inputs,
+            native_evaluation=native_evaluation)
+        write_new(run.root / "proofs/compatibility-fixture-qualification-report.json",
+                  evidence.canonical_bytes(qualified))
+        return native_evaluation
     return 0
 
 
 def execute(repository, destination, *, category=None, compatibility_only=False, qualify=False):
     if (category not in (None, "metadata", "artifacts") or compatibility_only and category is not None
-            or type(qualify) is not bool or qualify and (category is None or compatibility_only)):
+            or type(qualify) is not bool or qualify and category is None and not compatibility_only):
         raise evidence.ConformanceError("UnsupportedProfile")
     if not native_execution_supported() or not callable(getattr(evidence, "ingest_runtime_attempt", None)):
         raise evidence.ConformanceError("PrerequisiteMissing")
@@ -5302,7 +5316,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False,
                 frozen_inputs = capture_compatibility_runtime_inputs(
                     run, repository, candidate, config, feed, prepared, seal_sha,
                     invocation_group_id=group,
-                    observed_environment=environment(run, scope="compatibility-runtime"), ci_revision=ci_revision)
+                    observed_environment=environment(run, scope="compatibility-runtime"), ci_revision=ci_revision,
+                    mode="qualification" if qualify else "diagnostic")
                 write_new(run.root / "proofs/compatibility-runtime-inputs.json",
                           evidence.canonical_bytes(frozen_inputs))
                 write_new(run.root / "runtime-owner.json", evidence.canonical_bytes({
@@ -5334,7 +5349,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False,
                           evidence.canonical_bytes(compatibility_summary))
                 native_evaluation = native_sources.capture_evaluation(frozen_inputs, compatibility_summary)
                 return _release_compatibility_runtime(
-                    run, frozen_inputs, compatibility_summary, native_evaluation)
+                    run, frozen_inputs, compatibility_summary, native_evaluation, qualify=qualify)
         print(json.dumps({"qualification": False, "phase": "inspection-preparation"}), flush=True)
         inspection_records = build_inspection_projects(run, candidate, config, feed, msbuild=msbuild)
         verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",

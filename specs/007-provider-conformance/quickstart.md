@@ -12,9 +12,18 @@ At exact `984bb2e`, actual Linux artifact execution and separate-process receipt
 verification pass103 cases/263 witnesses; isolated metadata execution and
 independent verification pass102 cases/141 witnesses at that same source.
 An earlier concurrent metadata failure remains unexplained. Original diagnostic
-reports remain unchanged. Compatibility, focused/custom bindings,
+reports remain unchanged. Focused/custom bindings,
 harness and the full baseline remain nonqualifying; offline correspondence does
 not yet consume the separately trusted native-owner receipt.
+Complete public compatibility execution now also preselects qualification-mode
+inputs and requires its original released native evaluator, exact current
+source/catalog and separately derived qualified bytes before exit0.
+Architecture/version/binary and foundation scope readers preserve diagnostic
+defaults while admitting that preselected mode; completion inputs cannot switch
+modes. Its raw reports remain nonqualifying and unchanged, and the hosted replay
+uses `python3 scripts/conformance_sdk_checks.py --compatibility-only` explicitly.
+Fresh native public qualification and independent receipt confirmation remain
+required; no old diagnostic is relabeled.
 Complete public composition execution now has the same original-owner
 qualification boundary, additionally requiring all58 inherited runtime parents,
 four controller leaders and complete trusted tooling before actual release.

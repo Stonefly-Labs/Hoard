@@ -32,6 +32,17 @@ edit, cross-file substitution or resealed frozen inventory is accepted.
 These variants grant no exclusion or passing outcome and do not change
 product startup semantics.
 
+Complete public compatibility execution now freezes qualification-mode inputs
+before runtime, preserves that mode through every scope/completion recapture,
+and derives separate qualified bytes only after the original evaluator verifies
+all runtime, historical, source-recipe, retained-binary, source-break and
+foundation evidence and actually releases resources. Public completion also
+requires exact current source/catalog/destination and the original evaluation,
+not an integer success or an artifact's assertion. Original raw reports and the
+direct SDK/hosted diagnostic remain nonqualifying. Fresh native qualification
+and independent external-receipt confirmation are still required; no diagnostic
+is retrospectively accepted.
+
 An explicit capture-time `catalogBindingId` assignment connects each known
 fixture declaration to its frozen category slot without changing the
 declaration. Independent parent mapping checks category, original declaration

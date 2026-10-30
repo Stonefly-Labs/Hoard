@@ -82,6 +82,28 @@ the24 GiB prerequisite is unchanged and full five-profile acceptance remains ope
 README and development guidance reflect this correction. Provider contracts,
 examples, diagrams, infrastructure and release behavior are unaffected.
 
+### Compatibility qualification wiring
+
+The subsequent compatibility wiring applies the existing original-owner
+qualification derivation to the full public compatibility command. Qualification
+mode is selected before execution and retained by all runtime/foundation
+recaptures; diagnostic defaults remain unchanged. After actual release, the
+original evaluator verifies the complete runtime/historical/source/retained/
+source-break/foundation frame and derives separate qualified bytes. Public
+completion requires that same original evaluator, destination, catalog, current
+source and exact derived report; an integer success cannot qualify.
+The hosted replay explicitly calls the direct diagnostic script rather than the
+newly qualifying public route. Modeled cases exercise both modes with identical
+outcomes, preserve raw Incomplete/false reports and rejecting mutation controls,
+and reject mode-switching inputs and foreign public authority.
+The237-test CLI/composition/SDK/CI selector passes in35.931 seconds.
+The corrected eight-module shared evaluator/ownership/receipt selector passes
+582 tests in137.135 seconds with27 native-only skips; frozen inventory,
+SDK/catalog and `git diff --check` pass. An initial selector named a nonexistent
+`test_conformance_sources` module; that invocation is not counted as passing.
+Fresh native qualification and independent receipt verification remain required;
+no task checkbox or old diagnostic is advanced.
+
 ### Complete composition qualification boundary
 
 The public complete composition route now freezes qualification-mode inputs

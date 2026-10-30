@@ -371,7 +371,12 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch|InputChanged"):
                     inherited.foundation_inventory(evidence.canonical_bytes(changed), current)
 
-    def test_compatibility_common_report_replays_complete_scopes_without_qualifying_diagnostic_mode(self):
+    def test_compatibility_qualification_mode_replays_the_same_complete_cases_without_relabeling_raw_reports(self):
+        self.test_compatibility_common_report_replays_complete_scopes_without_qualifying_diagnostic_mode(
+            mode="qualification")
+
+    def test_compatibility_common_report_replays_complete_scopes_without_qualifying_diagnostic_mode(
+            self, mode="diagnostic"):
         import hashlib
         import uuid
         import conformance_case_catalog as catalog
@@ -384,6 +389,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
             (root / "proofs").mkdir()
             fixture = ConformanceAdmissionTests()
             inputs = fixture.compatibility_inputs()
+            inputs["mode"] = mode
+            if mode == "qualification":
+                inputs["sourceState"] = "clean-local"
             summary, scopes = {"architecturePreparation": {}}, {}
             for index, (scope, tests) in enumerate((
                     ("architecture", catalog.architecture_runtime_tests()),
@@ -427,6 +435,12 @@ class CompositionDiagnosticTests(unittest.TestCase):
                      if row["caseId"] in quality and row["status"] == "Passed"}, quality)
                 self.assertFalse(report["qualification"])
                 self.assertEqual(report["state"], "Incomplete")
+                self.assertIn(f"proofs/category-compatibility-{mode}-completion-inputs.json", report["proofs"])
+                if mode == "qualification":
+                    evidence._require_qualifying_outcomes(report)
+                else:
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                        evidence._require_qualifying_outcomes(report)
                 for case_id in quality:
                     material = evidence.compatibility_quality_case_material(
                         inputs, case_id=case_id, results=report["results"], witnesses=report["witnesses"],
@@ -697,7 +711,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
 
             def capture(*args, **kwargs):
                 return {
-                    **base, "invocationGroupId": kwargs["invocation_group_id"],
+                    **base, "mode": kwargs["mode"], "invocationGroupId": kwargs["invocation_group_id"],
                     "runtimeAssemblies": dict(evidence.input_manifest(root, kwargs["runtime_paths"])),
                     "locks": dict(evidence.input_manifest(root, kwargs["lock_paths"])),
                     "environment": kwargs["observed_environment"],
@@ -709,6 +723,17 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     invocation_group_id=base["invocationGroupId"], observed_environment=base["environment"])
                 frozen = sdk.capture_compatibility_runtime_inputs(
                     run, ROOT, candidate, root / "config", root / "feed", {}, "b" * 64, **options)
+                self.assertEqual(frozen["mode"], "diagnostic")
+                qualifying = sdk.capture_compatibility_runtime_inputs(
+                    run, ROOT, candidate, root / "config", root / "feed", {}, "b" * 64,
+                    mode="qualification", **options)
+                self.assertEqual(qualifying["mode"], "qualification")
+                with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                    evidence.verify_input_recomputation(frozen, qualifying)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^UnsupportedProfile$"):
+                    sdk.capture_compatibility_runtime_inputs(
+                        run, ROOT, candidate, root / "config", root / "feed", {}, "b" * 64,
+                        mode="preparation", **options)
                 self.assertEqual(set(frozen["runtimeAssemblies"]),
                                  {*runtime_paths, "proofs/sdk-vstest-inputs.json"})
                 self.assertEqual(frozen["locks"][lock.relative_to(root).as_posix()],
@@ -1272,7 +1297,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
         from test_conformance_evidence import ConformanceAdmissionTests
 
         workflow = (ROOT / ".github/workflows/conformance.yml").read_text()
-        script = workflow.split('--profile compatibility --evidence "$private_parent/run"', 1)[1].split(
+        self.assertIn('python3 scripts/conformance_sdk_checks.py --root "$GITHUB_WORKSPACE"', workflow)
+        script = workflow.split('--compatibility-only --evidence "$private_parent/run"', 1)[1].split(
             "<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
         code = compile(textwrap.dedent(script), "<architecture-workflow>", "exec")
         for defect in ("none", "live", "profile", "path", "manifest", "inputs", "qualification",

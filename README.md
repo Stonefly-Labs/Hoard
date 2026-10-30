@@ -128,8 +128,12 @@ the logger's bounded optional unknown-failure source-line event before its exact
 final control; every original outcome check remains required. All189 affected
 tooling checks pass (four native-only skips); hosted confirmation is pending.
 The hosted composition diagnostic remains explicitly diagnostic.
-Compatibility/harness, qualifying coordinator/aggregate and the full baseline
-remain unfinished; T071..T086 remain open.
+Complete public compatibility execution now also preselects qualification-mode
+inputs and requires the original released evaluator, unchanged source/catalog
+and exact separately derived qualified bytes. Its direct SDK diagnostic and
+hosted replay remain explicitly diagnostic. Fresh native qualification and
+independent receipt confirmation remain required; harness, qualifying
+coordinator/aggregate and the full baseline remain unfinished. T071..T086 stay open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group
