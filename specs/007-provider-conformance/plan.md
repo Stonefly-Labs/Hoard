@@ -56,6 +56,32 @@ observation at `validate_observation`: one actual failed witness, exit1 and
 zero status mismatches. Its strict response-event guard needs bounded diagnosis,
 not a blanket retry. Other profiles and T071..T086 remain open.
 
+### SDK response-event compatibility correction
+
+A focused regression reproduces the rejection at the same `validate_observation`
+guard: the intentional Unknown smoke failure has its original exact control plus
+the logger's optional bounded numeric source-line event. The guard now permits
+only that preceding closed event shape for expected Failed/UnknownDiagnostic/
+Unknown observations, at most one location per expected identity, with integer
+lines1..1000000. Its final control, exit, exact witness inventory/status and
+per-witness failure kind remain mandatory. Named assertion and passing protocols
+stay strict. Missing/reordered/extra/malformed events, bool/string/float/invalid
+line values and altered control reject; no test or outcome is weakened.
+
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_sdk_checks test_conformance_sanitation test_conformance_ci`
+passes189 tests in29.238 seconds with four native-only skips.
+`git diff --check` passes. Actual corrected-source hosted confirmation remains
+pending; the earlier SDK failure is not relabeled.
+
+The later exact `48faeec` foundations run41124448496 passes native tooling,
+metadata/artifact extraction, compatibility replay and lock preparation/fresh
+build replay, but still fails the uncorrected SDK job124304752982. Therefore the
+earlier insufficient-capacity observation is preserved, not generalized into
+an ongoing universal hosted blocker. Exact free bytes still are not retained;
+the24 GiB prerequisite is unchanged and full five-profile acceptance remains open.
+README and development guidance reflect this correction. Provider contracts,
+examples, diagrams, infrastructure and release behavior are unaffected.
+
 ### Complete composition qualification boundary
 
 The public complete composition route now freezes qualification-mode inputs

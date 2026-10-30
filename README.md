@@ -121,9 +121,12 @@ parameters/58 scopes, four original controller leaders/349 child observations,
 qualified publication pass unmocked. A fresh readonly process independently
 verifies the same report using the original external receipt and rejects four
 altered/missing-receipt controls. This is finite fixture qualification, explicitly
-not full-baseline qualification. Hosted lock preparation remains blocked by
-its24 GiB capacity gate; hosted SDK diagnostics have a separate rejecting
-observation guard.
+not full-baseline qualification. Hosted lock preparation at `68ef083` rejects
+the unchanged24 GiB gate; the later `48faeec` hosted lock replay passes, so this
+is not a universal hosted-capacity blocker. The SDK observation guard now admits
+the logger's bounded optional unknown-failure source-line event before its exact
+final control; every original outcome check remains required. All189 affected
+tooling checks pass (four native-only skips); hosted confirmation is pending.
 The hosted composition diagnostic remains explicitly diagnostic.
 Compatibility/harness, qualifying coordinator/aggregate and the full baseline
 remain unfinished; T071..T086 remain open.

@@ -10106,6 +10106,27 @@ diagnostics separately reject an expected Failed/UnknownDiagnostic observation
 at the response-event guard. No unrecorded free-byte count or full hosted
 acceptance is inferred. Other profiles/coordinator/full-baseline work remains open.
 
+The SDK transport regression reproduces rejection of the logger's valid optional
+unknown-failure source-line event before its original final control. The guard
+now accepts only that bounded closed shape for an expected Failed/
+UnknownDiagnostic/Unknown observation; all original exit, witness inventory/
+status, proof failure-kind and exact final-control checks remain required.
+Named assertion and passing protocols remain completion-only. The new controls
+reject missing/reordered/extra/malformed events, invalid numeric types/ranges and
+altered controls.
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_sdk_checks test_conformance_sanitation test_conformance_ci`
+passes189 tests in29.238 seconds with four native-only skips; `git diff --check`
+passes. Corrected-source hosted confirmation remains pending.
+
+Later foundations run41124448496 at exact `48faeec` passes tooling, both category
+extractions, compatibility replay and lock preparation/fresh build replay, but
+still fails its uncorrected SDK job124304752982. This does not erase the earlier
+capacity failure or establish full CI qualification. It does show capacity
+admission is not universally unavailable on hosted runners; no free-byte count
+is invented and the24 GiB gate remains unchanged. Provider examples, architecture
+diagrams, infrastructure and release guidance are unaffected by this transport
+compatibility correction.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

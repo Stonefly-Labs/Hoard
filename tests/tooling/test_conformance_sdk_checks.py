@@ -6553,6 +6553,46 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks.validate_observation(changed, command_result, identities, code, status,
                                                 exit_code, proof_data, kind)
 
+    def test_unknown_failure_locations_preserve_the_exact_control_and_all_original_outcomes(self):
+        _, identities, code, status, exit_code, kind = checks.SCENARIOS[3]
+        control = {"event": "control", "code": code, "value": len(identities)}
+        location = {"event": "test", "code": "UnknownDiagnostic", "value": 42}
+        ingested = {"diagnosticCode": code, "witnesses": (
+            {"testIdentity": identities[0], "status": status},)}
+        proofs = {"proof.json": b'{"failureKind":"Unknown"}'}
+        for events in ((control,), (location, control),
+                       ({**location, "value": 1}, control),
+                       ({**location, "value": 1_000_000}, control)):
+            checks.validate_observation(
+                ingested, SimpleNamespace(exit_code=exit_code, events=events),
+                identities, code, status, exit_code, proofs, kind)
+        mutations = (
+            (), (location,), (control, location), (location, location, control),
+            ({**location, "value": 0}, control), ({**location, "value": 1_000_001}, control),
+            ({**location, "value": True}, control), ({**location, "value": "42"}, control),
+            ({**location, "value": -1}, control), ({**location, "value": 42.0}, control),
+            ({**location, "event": "control"}, control), ({**location, "code": "None"}, control),
+            ({**location, "extra": "private-canary"}, control),
+            (location, {**control, "value": 0}), (location, {**control, "code": "None"}),
+        )
+        for events in mutations:
+            with self.subTest(events=events), self.assertRaises(checks.evidence.ConformanceError):
+                checks.validate_observation(
+                    ingested, SimpleNamespace(exit_code=exit_code, events=events),
+                    identities, code, status, exit_code, proofs, kind)
+        for expected_code, expected_status, expected_exit, expected_kind in (
+                ("UnknownDiagnostic", "Passed", 0, "None"),
+                ("AssertionFailed", "Failed", 1, "Assertion")):
+            changed = {"diagnosticCode": expected_code, "witnesses": (
+                {"testIdentity": identities[0], "status": expected_status},)}
+            result = SimpleNamespace(exit_code=expected_exit, events=(
+                location, {**control, "code": expected_code}))
+            with self.subTest(status=expected_status, kind=expected_kind), \
+                    self.assertRaises(checks.evidence.ConformanceError):
+                checks.validate_observation(
+                    changed, result, identities, expected_code, expected_status, expected_exit,
+                    {"proof.json": json.dumps({"failureKind": expected_kind}).encode()}, expected_kind)
+
     def test_unexpected_runtime_failure_retains_only_bounded_closed_observations(self):
         identities = tuple(f"PrivateCanary.Case{index}" for index in range(9))
         ingested = {"diagnosticCode": "AssertionFailed", "witnesses": tuple(

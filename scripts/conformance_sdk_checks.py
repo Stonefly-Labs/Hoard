@@ -4096,9 +4096,16 @@ class _RuntimeObservationError(evidence.ConformanceError):
 
 
 def validate_observation(ingested, result, identities, code, status, exit_code, proofs, failure_kind):
+    control = {"event": "control", "code": code, "value": len(identities)}
+    events = [dict(event) for event in result.events]
+    matches_events = events == [control] or (
+        code == "UnknownDiagnostic" and status == "Failed" and failure_kind == "Unknown"
+        and 1 <= len(events) - 1 <= len(identities) and events[-1:] == [control]
+        and all(set(event) == {"event", "code", "value"} and event["event"] == "test"
+                and event["code"] == "UnknownDiagnostic" and type(event["value"]) is int
+                and 1 <= event["value"] <= 1_000_000 for event in events[:-1]))
     if (result.exit_code != exit_code or ingested["diagnosticCode"] != code
-            or len(result.events) != 1 or dict(result.events[0]) !=
-            {"event": "control", "code": code, "value": len(identities)}
+            or not matches_events
             or len(ingested["witnesses"]) != len(identities)
             or {witness["testIdentity"] for witness in ingested["witnesses"]} != set(identities)
             or any(witness["status"] != status for witness in ingested["witnesses"])
