@@ -8517,6 +8517,14 @@ one local diagnostic measures364.947 ms versus101.991 ms, not a CI benchmark
 or qualification result. Byte-limit and deadline rejection now occupy distinct
 closed source locations so a future read-loop failure is not ambiguous.
 
+Inspection-resolution children use that same closed failure protocol. Their
+command, input-mutation and deadline errors no longer become unknown compiler
+output or a generic parent error; a failed child cannot admit a result.
+The existing receipt, owned-output, source-recheck and timeout requirements
+remain intact. Both internal child modes share one result check, while public
+failures retain the existing safe presentation. The SDK/CLI/sanitation selection
+passes188 tests with four explicit native-only skips.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

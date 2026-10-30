@@ -2206,6 +2206,15 @@ def probe_inspection_project(project, output, *, build_environment=None):
         "schemaVersion": 1, "project": str(project), "projectSha256": before, **selected}))
 
 
+def _require_probe_success(result, fallback_code):
+    if result.exit_code or result.events:
+        if result.exit_code and len(result.events) == 1:
+            event = result.events[0]
+            if event["event"] == "control" and event["value"] == 0 and event["code"] != "None":
+                raise evidence.ConformanceError(event["code"])
+        raise evidence.ConformanceError(fallback_code)
+
+
 def resolve_inspection_project(run, project, *, build_environment=None):
     project = Path(_inspection_path(str(project)))
     if not project.is_relative_to(run.root) or project.suffix != ".csproj":
@@ -2223,9 +2232,8 @@ def resolve_inspection_project(run, project, *, build_environment=None):
         no_symlinks(build_environment)
         arguments.extend(("--inspection-build-environment", str(build_environment)))
     result = run.command(arguments,
-        cwd=Path(__file__).resolve().parents[1], kind="build", timeout=120)
-    if result.exit_code or result.events:
-        raise evidence.ConformanceError("EvidenceIncomplete")
+        cwd=Path(__file__).resolve().parents[1], kind="events", timeout=120)
+    _require_probe_success(result, "EvidenceIncomplete")
     value = evidence.load_json(read_bounded(output, 1024 * 1024))
     selected = _inspection_resolution(value, project)
     if (type(value.get("schemaVersion")) is not int or value != {
@@ -2494,12 +2502,7 @@ def environment(run, *, phase="admission", candidate=None, scope=None):
         [sys.executable, str(Path(__file__).resolve()), "--probe", str(path)],
         cwd=Path(__file__).resolve().parents[1], kind="events", timeout=30, cache_id=f"environment-{phase}",
         env={"HOARD_RUNNER_IMAGE": image})
-    if result.exit_code or result.events:
-        if result.exit_code and len(result.events) == 1:
-            event = result.events[0]
-            if event["event"] == "control" and event["value"] == 0 and event["code"] != "None":
-                raise evidence.ConformanceError(event["code"])
-        raise evidence.ConformanceError("PrerequisiteMissing")
+    _require_probe_success(result, "PrerequisiteMissing")
     observed = evidence.admit_entity("Environment", evidence.load_json(read_bounded(path, 64 * 1024)))
     if candidate is not None:
         observed = sqlite_environment(run, candidate, observed, phase=phase)
@@ -4883,7 +4886,8 @@ def main():
     except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
         status = evidence.failure_status(code)
-        if options.probe is not None:
+        if (options.probe is not None or options.inspection_project is not None
+                or options.inspection_output is not None or options.inspection_build_environment is not None):
             print(json.dumps({"event": "control", "code": code, "value": 0}))
             return 2 if status == "Incomplete" else 1
         print(json.dumps({

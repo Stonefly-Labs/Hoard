@@ -1927,7 +1927,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         arguments, options = calls[0]
         self.assertEqual(arguments[arguments.index("--inspection-project") + 1], str(project))
         self.assertEqual(options["timeout"], 120)
-        self.assertEqual(options["kind"], "build")
+        self.assertEqual(options["kind"], "events")
         self.assertTrue(Path(arguments[arguments.index("--inspection-output") + 1]).is_relative_to(self.directory / "stores"))
         with self.assertRaises(checks.evidence.ConformanceError):
             checks.resolve_inspection_project(run, ROOT / "src/Hoard.Core/Hoard.Core.csproj")
@@ -1956,6 +1956,30 @@ class SdkDiagnosticTests(unittest.TestCase):
             return result
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
             checks.resolve_inspection_project(SimpleNamespace(root=self.directory, command=changed), project)
+
+    def test_inspection_probe_preserves_closed_child_failures_without_reading_a_result(self):
+        from conformance_execution import project_event
+
+        project = self.directory / "Actual.csproj"
+        project.write_text("<Project/>")
+        output_path = self.directory / "unused-inspection-result.json"
+        for expected, status in (
+                ("CommandFailed", 2), ("InputChanged", 1), ("DeadlineExceeded", 2)):
+            output = io.StringIO()
+            with self.subTest(code=expected), patch.object(sys, "argv", [
+                    "conformance_sdk_checks.py", "--inspection-project", str(project),
+                    "--inspection-output", str(output_path)]), patch.object(
+                    checks, "probe_inspection_project", side_effect=checks.evidence.ConformanceError(expected)), \
+                    contextlib.redirect_stdout(output):
+                self.assertEqual(checks.main(), status)
+            event = project_event(output.getvalue().encode())
+            result = SimpleNamespace(exit_code=status, events=(event,))
+            run = SimpleNamespace(root=self.directory, command=lambda *args, **kwargs: result)
+            with patch.object(checks, "_inspection_resolution",
+                              side_effect=AssertionError("Failed probes must not admit a result.")), \
+                    self.assertRaisesRegex(checks.evidence.ConformanceError, "^" + expected + "$"):
+                checks.resolve_inspection_project(run, project)
+            self.assertFalse(output_path.exists())
 
     def test_inspection_probe_projects_only_read_metadata_and_rejects_changed_or_malformed_inputs(self):
         self.assertTrue(callable(getattr(checks, "probe_inspection_project", None)),

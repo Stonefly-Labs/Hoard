@@ -956,8 +956,8 @@ Category presentation files now separate diagnostic and qualification-mode
 attempts instead of colliding at create-new publication. The recovered-capacity
 local tooling replay observes784 tests without failures/errors, with29 explicit
 native-only skips; native CI still has unresolved failures and budget limits.
-Environment probes now use closed control events rather than build output,
-preserving actual prerequisite, deadline and schema failures without raw text.
+SDK environment and inspection probes use closed control events rather than
+build output, preserving actual prerequisite, deadline and schema failures without raw text.
 This does not bypass admission or establish successful native execution.
 SDK runner capture now prunes unselected deep SDK tool subtrees, preserving
 the exact selected runner/extension/resource hashes and unchanged proof limits.

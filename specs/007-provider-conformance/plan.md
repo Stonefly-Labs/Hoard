@@ -3860,6 +3860,41 @@ the frozen source. README and DEVELOPMENT describe the delivered capture
 behavior; other provider/product/example/architecture/governance/IaC/release/UI
 documents are unaffected. Native CI diagnosis and T068--T086 remain open.
 
+### Consistent closed inspection-probe failures
+
+The other SDK child mode, inspection resolution, has the same reproduced
+presentation-JSON/build-projector mismatch. It now emits and consumes strict
+control events, preserving command, input-mutation and deadline failures.
+Both child modes share the same success/error admission; existing mode-specific
+fallback errors are unchanged. Failed children cannot read/admit a resolution
+receipt, and successful children still need exact owned outputs, source
+rehashing and closed receipt validation. Public presentation remains unchanged.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_cli test_conformance_sanitation`
+passes188 tests in78.359 seconds with four explicit native-only skips.
+README and DEVELOPMENT are affected; provider/product/example/architecture/
+governance/IaC/release/UI guides are unaffected by this private protocol repair.
+
+The original `cdb998b` timing packet is retained unchanged with SHA-256
+`1b994d75fdcb4c2ea18c7830f19a7ce0ae049948626b3758b889dd225d6f2b09`.
+It observes216/787 tests. Its slowest identities resolve to the distinct
+managed artifact and metadata contributor runtime controls (349220.810 ms and
+219860.274 ms), not solely the later native public contributor case.
+This measurement overlaps a host regression build and is diagnostic only.
+
+A fresh `b227e45` timing attempt without concurrent host builds admits its
+environment but rejects its initial cold SDK capture at the now-unambiguous
+deadline guard. Its admission owner releases. The unchanged600-second tooling
+run subsequently observes198 tests in615981.173 ms, with one artifact-component
+runtime `DeadlineExceeded`, zero assertion failures/skips/diagnostic bytes,
+and no full-suite pass. Its slowest case takes415460.958 ms.
+This is a distinct unsuccessful observation, not an accepted retry.
+At `cdb998b`, actual CI passes preparation, compatibility, metadata and artifacts;
+SDK and one native managed-artifact control instead reject at the original
+combined SDK read guard. Fresh `b227e45` CI remains active. All outcomes remain
+nonqualifying; native timing/runner-capture investigation and T068--T086
+continue without changing limits, coverage, checklists or implement/running.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
