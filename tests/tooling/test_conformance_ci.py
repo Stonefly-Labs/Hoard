@@ -138,6 +138,18 @@ class ConformanceProfileTransportTests(unittest.TestCase):
                     self.inspect()
                 self.reports["metadata"]["inputs"][field] = original
 
+    def test_matching_nonqualifying_assignments_reject_before_cross_profile_mismatch(self):
+        for field, value in (("mode", "diagnostic"), ("mode", "preparation"), ("sourceState", "dirty-local")):
+            reports, inputs = copy.deepcopy((self.reports, self.inputs))
+            for profile in evidence.PROFILES:
+                self.reports[profile]["inputs"][field] = value
+                self.inputs[profile][field] = value
+                self.reports[profile]["postInputSha256"] = evidence.digest(self.inputs[profile])
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^EvidenceIncomplete$"):
+                self.inspect()
+            self.reports, self.inputs = reports, inputs
+
     def test_foreign_evaluator_source_rejects_even_with_matching_revision_and_assignment(self):
         inputs = self.reports["harness"]["inputs"]
         inputs["sourceManifest"]["scripts/conformance_evidence.py"] = "f" * 64

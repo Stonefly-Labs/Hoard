@@ -191,7 +191,7 @@ and public files, not only upload text.
 ### Tests first
 
 - [ ] T068 [US5] Add generated-good-control mutation tests in `tests/tooling/test_conformance_evidence.py` for QC-38..44: every input class, exact keys/parameters, provenance/proofs, capability/exclusion changes, incomplete/skipped/unknown outcomes, append-only failed retries, optimistic summaries, duplicate/unknown schema fields, malformed Unicode/durations, oversize/path escapes and proof limits; samples alone cannot prove runtime origin (FR-018..020,022).
-- [ ] T069 [P] [US5] Add local/CI parity, all-five-report aggregation and job/upload/download/cancellation failure tests in `tests/tooling/test_conformance_ci.py`, including foreign invocation/SHA, missing profile and focused/preparation mode rejection (FR-017,020,021; QC-45..47).
+- [x] T069 [P] [US5] Add local/CI parity, all-five-report aggregation and job/upload/download/cancellation failure tests in `tests/tooling/test_conformance_ci.py`, including foreign invocation/SHA, missing profile and focused/preparation mode rejection (FR-017,020,021; QC-45..47).
 - [x] T070 [P] [US5] Add all-output canary challenges in `tests/tooling/test_conformance_sanitation.py` for retained private diagnostic/proof files, filenames, public JSON/JUnit/Markdown and CI summaries; unsafe provider errors/configuration/payloads/paths must not persist, and unknown text must fail safely rather than disappear into success (FR-022,024; QC-48).
 
 ### Implementation

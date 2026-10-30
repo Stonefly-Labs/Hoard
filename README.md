@@ -977,6 +977,9 @@ All nine finite sanitation controls now pass on source-pinned native Linux,
 including actual child-output floods, transient settings/build snapshots and
 whole-root filename/content scans. This completes the T070 test task, not
 all-profile sanitation acceptance or qualification.
+The T069 transport/parity challenge tests also pass, including all-five
+matching focused/preparation/dirty assignments. Their modeled reports do not
+replace actual five-profile execution or qualify a baseline.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

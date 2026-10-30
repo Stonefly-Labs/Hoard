@@ -8616,6 +8616,19 @@ absence certification is inferred. The same source's serial genuine metadata/
 artifact category controls are still running from their separate immutable
 clone; this native test result does not qualify those pending executions.
 
+T069's modeled transport/parity challenge-test task is also complete.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_ci`
+passes16 tests in0.781 seconds. The added control changes every report and its
+independently supplied expected assignment consistently to focused,
+preparation or dirty mode; rejection must be `EvidenceIncomplete`, not merely
+an input mismatch or inconsistent cross-profile context.
+The suite also checks all-five inventories and external report pins, unique
+assignments, local/CI expansion parity, foreign source/invocation/evaluator
+manifests, required job/upload/download failures/cancellations/missing statuses,
+configuration-policy preimages, full modeled CLI aggregation and preserved
+failed retries. These are finite modeled transport tests, not actual CI
+attestation, successful generic qualification or T078 execution.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

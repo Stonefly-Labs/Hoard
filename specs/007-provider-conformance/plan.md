@@ -4104,6 +4104,48 @@ README and DEVELOPMENT are affected; existing quickstart/example commands and
 all provider/product/architecture/ADR/diagram/governance/backlog/predecessor/
 IaC/release/UI guides need no command/API changes for this evidence checkpoint.
 
+### T069 modeled transport/parity challenge verification
+
+The transport/parity test task depends only on completed T018 and is separate
+from T073's generic qualification implementation and T078's actual five-profile
+CI execution. The existing suite checks all-five independent assignments and
+inventories, local/CI expansion parity, foreign invocation/source/evaluator
+manifests, external report pins, missing/duplicate/foreign profiles and run IDs,
+job/upload/download failure/cancellation/missing status, configuration preimages
+and common policy, full modeled CLI aggregation, missing cases in every profile
+and preservation of a failed modeled attempt after a passing modeled retry.
+
+A new control closes a coverage gap in focused/preparation/dirty rejection:
+every report and its supplied expected assignment now changes consistently,
+including completion hashes, across all five profiles. All report pins match
+and no cross-profile mismatch can reject first. The explicit qualification-
+scope guard must still reject with `EvidenceIncomplete`.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_ci`
+passes16 tests in0.781 seconds; `git diff --check` passes.
+
+T069's finite test task is now checked, advancing implementation to69/86.
+All positive fixtures remain explicitly modeled and nonqualifying; this does
+not claim current runtime-origin evaluation, actual CI attestation, QC-45..47
+feature acceptance, or T073/T078 completion. T068 remains pending the genuine
+category-control executions; its metadata run at immutable `bddb2a8` now
+passes four live-origin, six released-origin and eight retained-report controls,
+test-only exit0, while the production category still returns2/nonqualification.
+Its original safe packet SHA-256 is
+`122cc339014425fe3cb355b0c4b42d6459ff744d407bf20fbca408199a95c481`;
+elapsed423654.078 ms. Artifact controls are still executing independently.
+
+The original immutable `ae0a7fe` metadata attempt is preserved as failed:
+581188.754 ms, eight retained controls observed, zero skips/noise, one stale
+presentation-name error at `test_conformance_evidence.py:8723`.
+Original packet SHA-256:
+`f671153066ef7359c66fb8a3087ef82cea9b26ae12fb949d93a03b310cfa8bfb`.
+The repaired success does not erase or relabel that failed source-bound attempt.
+
+README and DEVELOPMENT are affected; quickstart/example commands and other
+provider/product/architecture/ADR/diagram/governance/backlog/predecessor/IaC/
+release/UI guides need no command/API changes for these test-only controls.
+Reviewer-owned checklists and implement/running remain unchanged.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
