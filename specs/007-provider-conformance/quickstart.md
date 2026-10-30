@@ -1374,6 +1374,12 @@ observations; it grants no native authority. Strict retained replay/held capture
 now has414 focused passing checks, but new13/14 controls and physical assertions
 are pending. Original SDK CI succeeds with the parallel reader; overall old CI
 still fails. CI scope counts derive from the catalog, including the ninth witness.
+The full408a2d3 host suite passes828 tests,31 native skips, but its original
+native attempt exits1 after release due to a bytes/dictionary name collision.
+The focused transport regression reproduces it; distinct locals restore the
+checks and239 focused tests pass. Fresh13/14 acceptance remains required.
+New CI artifact read-deadline rejection and tooling cancellation are preserved,
+not treated as passes or a local disk-capacity blocker.
 
 ## Offline Correspondence Inspection
 

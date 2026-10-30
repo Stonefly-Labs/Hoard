@@ -1334,6 +1334,13 @@ while Active. Original capture must match every executor-held record and the
 already held source frame; released replay must match that same original token
 without reopening deleted stores/feed.414 focused checks pass. New13/14 controls
 and physical retained assertions remain required; no logical case is promoted.
+The first408a2d3 native attempt exits1 after actual release because released
+verification overwrites its retained dictionary with active-summary bytes.
+Separate locals now preserve both original comparisons and retained-command
+inspection; the reproducing transport regression and239 focused checks pass.
+The full original host suite passes828 tests with31 native skips; fresh13/14
+acceptance remains required. Neither actual Released resources nor generated
+reports bypass a failed origin verifier.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

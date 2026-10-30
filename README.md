@@ -1173,6 +1173,13 @@ executor-held capture;414 focused checks pass. New13/14 native controls and
 retained physical assertions remain pending. The completed original SDK CI job
 also succeeds with the parallel reader; the overall old workflow still fails.
 CI scope counts now derive from the catalog rather than a stale eight-witness gate.
+The exact `408a2d3` host suite passes828 tests,31 native skips. Its original
+native attempt exits1 after actual release: active-summary bytes overwrite a local
+retained-observation dictionary in released verification. A focused regression
+reproduces that TypeError; the two values are now separate and239 focused checks
+pass. Fresh13/14 acceptance is still required. New CI also preserves a separate
+5.061-second artifact read rejection and a15-minute tooling cancellation; neither
+is a pass or a local disk-capacity blocker.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

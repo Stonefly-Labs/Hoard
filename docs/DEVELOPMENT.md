@@ -9394,6 +9394,29 @@ requires the ninth witness and rejects a missing binary parameter. The old
 workflow fails two cases; the repaired embedded workflow test passes. No full
 five-profile or600-second tooling acceptance is inferred.
 
+Exact-source408a2d3 full host tooling passes828 tests in453.127 seconds with31
+explicit native-only skips. Its original native attempt3e55e1b814504a7da950dc63b9b085e4
+instead exits1 after382144.88997100125ms, initial scratch192914419712 bytes.
+Original readonly inspection confirms actual Released ownership, deleted stores
+and both active/released reports; this is not successful native13/14 acceptance.
+The released verifier reuses `retained` for active-summary bytes, then indexes it
+as the retained-observation dictionary. A focused modeled transport regression
+reproduces the exact TypeError at that lookup. Keeping active-summary bytes in
+`active_raw` preserves both original comparisons and retained command replay.
+All239 baseline/composition/SDK/CI tests pass in32.252 seconds; fresh native
+acceptance remains required. Original packet SHA256:
+`1cd3e5032663fccf906efff896851bf7e94c61ee59bdb394698d92f5ca96e5ef`.
+
+Original0fd5115 CI preserves further failures: artifact123974955629 hits the
+unchanged proof deadline after355 files/72051695 bytes/1127 entries,
+5061.224584000001ms wall/205.2821189999996ms CPU/7937.166356997003ms summed reads.
+Native123974955522 is cancelled at the15-minute foundational job budget, without
+a final test result; metadata succeeds and SDK remains running. Compatibility
+123974955524 rejects EvidenceIncomplete at its embedded gate. Catalog-sized scope
+counts are already repaired in408a2d3, but fresh CI acceptance is not established.
+These failures do not imply a local capacity blocker; no bound or inventory is
+relaxed and no failed/cancelled outcome is erased.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

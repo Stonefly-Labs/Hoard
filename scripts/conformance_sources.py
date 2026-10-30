@@ -2025,9 +2025,9 @@ class NativeCompatibilityEvaluation:
                 or original.get("sourceBreakOrigin") != source_break
                 or original.get("sourceBreakSha256") != source_break["summarySha256"]):
             raise evidence.ConformanceError("ProofMismatch")
-        _, retained = evidence._readonly_report_proof(run.root, "proofs/compatibility-runtime-active-summary.json")
+        _, active_raw = evidence._readonly_report_proof(run.root, "proofs/compatibility-runtime-active-summary.json")
         if (evidence.digest(inputs) != self.inputs_sha256
-                or retained != self.summary_data
+                or active_raw != self.summary_data
                 or summary.get("phase") != "compatibility-replay-released"
                 or summary.get("profileComplete") is not False
                 or summary.get("processResourcesReleased") is not True

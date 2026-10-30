@@ -5333,6 +5333,28 @@ binary witnesses; all three scope counts now derive from the independent catalog
 The existing workflow regression requires nine and rejects an omitted binary
 parameter: old source has two failures, repaired embedded Python test passes.
 
+Exact408a2d3 `python3 -m unittest discover -s tests/tooling -q` passes828 tests
+in453.127 seconds,31 explicit native-only skips. Original native
+attempt3e55e1b814504a7da950dc63b9b085e4 exits1 after382144.88997100125ms, initial
+scratch192914419712 bytes; no13/14 success is claimed. Readonly original inspection
+confirms actual Released ownership, deleted stores and both report files. The
+released verifier overwrites `retained` with active-summary bytes and later
+indexes it as a dictionary. The new modeled transport regression reproduces
+the exact TypeError; `active_raw` now preserves the summary bytes separately
+from the retained observation. Both original comparisons and retained-command
+inspection remain required.239 baseline/composition/SDK/CI tests pass in32.252
+seconds; fresh native acceptance remains required. Original packet SHA256:
+`1cd3e5032663fccf906efff896851bf7e94c61ee59bdb394698d92f5ca96e5ef`.
+
+Original0fd CI artifact123974955629 fails the unchanged proof deadline at355
+files/72051695 bytes/1127 entries,5061.224584000001ms wall/205.2821189999996ms CPU/
+7937.166356997003ms summed reads. Native123974955522 cancels at the15-minute job
+budget without a final test result. Metadata succeeds; SDK remains running.
+Compatibility123974955524 rejects EvidenceIncomplete at the embedded gate.
+408a2d3 already derives scope counts from the catalog, but fresh CI acceptance
+remains open. No bound, selected inventory or failed/cancelled history is relaxed;
+these are not evidence of a local disk-capacity blocker.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

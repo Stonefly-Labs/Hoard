@@ -9202,6 +9202,64 @@ class ConformanceBaselineTests(unittest.TestCase):
                 elif touched is not None:
                     write(touched, evidence.canonical_bytes(records[2]))
 
+    def test_released_compatibility_origin_keeps_retained_records_separate_from_active_summary_bytes(self):
+        import conformance_execution as execution
+        import conformance_sdk_checks as checks
+        import conformance_sources as sources
+
+        run = execution.OwnedRun.allocate(self.root / "transport", ROOT, profile="harness")
+        run.transition("Active")
+        source = sources.NativeCompatibilitySources(run)
+        declarations = [
+            {"sequence": sequence, "executionSha256": hashlib.sha256(str(sequence).encode()).hexdigest()}
+            for sequence in range(1, 6)]
+        preparation = {"commands": declarations[:1]}
+        recipes = {
+            "commands": declarations[1:2], "summarySha256": "a" * 64,
+            "candidateSourceSha256": "b" * 64, "inputFrameSha256": "c" * 64}
+        retained = {
+            "commands": declarations[2:3], "summarySha256": "d" * 64,
+            "candidateSourceSha256": "b" * 64, "sourceInputFrameSha256": "c" * 64}
+        source_break = {"commands": declarations[3:4], "summarySha256": "e" * 64}
+        inputs = {"sourceManifestSha256": "b" * 64, "environment": {}}
+        active = {
+            "phase": "compatibility-replay-admitted", "baselineSealSha256": "f" * 64,
+            "historicalPreparation": preparation, "sourceRecipeOrigin": recipes,
+            "sourceSha256": recipes["summarySha256"], "retainedOrigin": retained,
+            "retainedSha256": retained["summarySha256"], "sourceBreakOrigin": source_break,
+            "sourceBreakSha256": source_break["summarySha256"]}
+        active_raw = evidence.canonical_bytes(active)
+        evaluation = sources.NativeCompatibilityEvaluation(
+            source, evidence.digest(inputs), active_raw,
+            ((declarations[-1]["sequence"], declarations[-1]["executionSha256"]),),
+            evidence.canonical_bytes(preparation), evidence.canonical_bytes(source_break),
+            evidence.canonical_bytes(recipes), evidence.canonical_bytes(retained))
+        source._evaluation = evaluation
+        run.transition("Settling")
+        run.release()
+        released = {
+            **active, "phase": "compatibility-replay-released", "resources": run.resource_projection(),
+            "profileComplete": False, "processResourcesReleased": True}
+
+        def proof(root, path):
+            if path == "proofs/compatibility-runtime-active-summary.json":
+                return hashlib.sha256(active_raw).hexdigest(), active_raw
+            for row in declarations:
+                if path == f'proofs/execution-command-{row["sequence"]:04}.json':
+                    return row["executionSha256"], b"modeled transport, not native execution"
+            return "0" * 64, b"modeled transport, not native execution"
+
+        with mock.patch.object(evidence, "_readonly_report_proof", side_effect=proof) as read, \
+                mock.patch.object(checks, "selected_msbuild", return_value=None), \
+                mock.patch.multiple(
+                    self.baselines,
+                    inspect_historical_binary_preparation=mock.Mock(return_value=preparation),
+                    inspect_source_recipes=mock.Mock(return_value=recipes),
+                    inspect_retained_consumers=mock.Mock(return_value=retained),
+                    inspect_source_break_control=mock.Mock(return_value=source_break)):
+            evaluation.verify_report_origin(run, inputs, released)
+        self.assertIn(mock.call(run.root, "proofs/execution-command-0003.json"), read.call_args_list)
+
     def test_retained_observation_requires_bound_bytes_exact_loaded_identities_and_finite_success(self):
         request = {"scenario": "registration", "required": ["RegistrationConsumer", "Hoard.Abstractions"],
                    "images": [{"path": "stores/runtime/RegistrationConsumer.dll", "sha256": "a" * 64},
