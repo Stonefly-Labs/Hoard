@@ -1278,6 +1278,10 @@ Source compiler output-slot parents are now explicitly prepared before native
 preflight after the original8/12 attempt rejected their absence. No-follow,
 no-overwrite and transient staging remain enforced;25 baseline tests pass.
 Fresh8/12 execution remains required.
+Fresh immutable `3c95c07` now passes all8 live/12 released controls, including
+actual source compiler rejection/repair. Reports remain nonqualifying:
+142 cases,136 Passed/six Incomplete,209 witnesses; only resources differ.
+The remaining logical baseline/QC cases and full CI acceptance are not complete.
 
 ## Offline Correspondence Inspection
 

@@ -1200,6 +1200,11 @@ descriptor-relative no-follow input helper before native output preflight.
 They do not change output namespaces, permit existing output files, follow
 symlinks or retain raw compiler images after staging. Baseline regressions pass;
 the original failed attempt remains distinct from fresh required verification.
+Fresh immutable `3c95c07` verifies that boundary with all8 live/12 released native
+controls passing. Original compiler rejection/repair, held receipt hashes and
+retained source/diagnostic frames survive actual cleanup. Original/released
+case reports differ only in actual resources and retain136 Passed/six Incomplete
+and209 witnesses; no additional logical case or qualification is inferred.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

@@ -4800,6 +4800,35 @@ test_conformance_evidence.ConformanceBaselineTests` passes25 tests in0.704 secon
 `python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
 `git diff --check` pass. Fresh immutable8/12 execution remains required.
 
+### Verified original source compiler authority at `3c95c07`
+
+The fresh immutable attempt `d522c096385140e5ae03ce574447f0b3` passes all8 live/
+12 released controls, exit0,422759.84782600065ms. Initial free scratch is
+202334208000 bytes; no extra SDK prewarming. Actual compiler CS0535 diagnostics,
+contract/consumer DLL/PDB outputs, compatible repair and retained correspondence
+are now exercised through original live/released authority. The earlier failed
+`e82daf7` attempt remains separate.
+
+All209 physical parameters and170 version observations share input SHA256
+`0d4b1a5840f3b228dde06092a20032712fbd145353e0c00081e3a078ad3c026e`.
+Original packet SHA256:
+`06058495306199e57b14a60e8a3bd94d2437a1b713d3ff9144c80112ccdad1b3`.
+Independent separate readonly-container inspection finds142 cases,136 Passed/
+six Incomplete and209 witnesses in both reports, qualification false:
+active SHA256 `1e49b9d2b2edb9294649f28cc05943c7265c174bcdb2978769a3d096f5fa7062`,
+released SHA256 `d221166d2b39d2a56abb26764e7a3289b0c1642978cf0f5ba6ae388e18b6b604`.
+Only actual resource projections differ. No completed diagnostic was restarted.
+The remaining logical baseline/QC rows, full orchestration, five qualifying
+profiles and full-tooling600-second acceptance remain unfinished.
+
+The completed `e82daf7` foundations run41010854650 separately passes preparation/
+artifacts and fails compatibility/SDK/metadata/native evidence. Its native job
+123916159733 executes818 tests, zero failures/skips, one error in
+`NuGetContentToolTests.test_managed_artifact_contributor_runtime_executes_component_rows_with_actual_package_origins`.
+Closed locations: contributors1435/1332 -> evidence1710/1693, the unchanged SDK
+proof-reader deadline, ProofMismatch. This reinforces the separate unfinished
+reader constraint; it is not acceptance or an environment-probe failure.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

@@ -1070,6 +1070,10 @@ The source compiler's first native attempt also rejects an absent proof output
 parent before launch. The producer now creates that parent through existing
 no-follow traversal;25 baseline regressions pass. Fresh8/12 verification remains
 required, not claimed.
+Immutable `3c95c07` now passes all8 live/12 released native controls, including
+actual compiler rejection/repair:142 cases,136 Passed/six Incomplete and209
+witnesses, still nonqualifying. Source-only cases and full CI qualification
+remain unfinished.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

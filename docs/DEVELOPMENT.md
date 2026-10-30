@@ -9049,6 +9049,19 @@ The producer now explicitly prepares each compiler proof-slot parent before its
 recorded build/repair, using the existing descriptor-relative no-follow helper.
 Execution keeps rejecting existing outputs and symlinked parents. All25 baseline
 regressions pass in0.704 seconds; a fresh immutable native run remains required.
+That fresh `3c95c07` attempt now passes all8 live/12 released controls, exit0,
+422759.847826ms, with202334208000 initially free scratch bytes and no extra SDK
+prewarming. All209 runtime parameters and170 observations share input SHA256
+`0d4b1a5840f3b228dde06092a20032712fbd145353e0c00081e3a078ad3c026e`.
+Original packet SHA256 is
+`06058495306199e57b14a60e8a3bd94d2437a1b713d3ff9144c80112ccdad1b3`.
+Independent readonly inspection finds142 cases,136 Passed/six Incomplete and209
+witnesses in both original/released reports; only resources differ.
+Actual source compiler output/diagnostic/repair authority survives cleanup.
+This does not promote the remaining logical rows or qualify a profile.
+The completed `e82daf7` foundations unit job separately executes818 tests with
+zero skips/failures and one managed-artifact contributor error: ProofMismatch at
+the unchanged five-second SDK proof-reader guard. It is not a passing job.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
