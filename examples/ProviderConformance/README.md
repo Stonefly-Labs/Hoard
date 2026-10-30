@@ -20,7 +20,9 @@ closed JSON/JUnit/Markdown/CI-summary projections under their owned
 Incomplete/NotQualified, including their explicit JUnit qualification error.
 Complete built-in runs now additionally require their original Released native
 owner/evaluation to publish finite fixture-qualified projections and return0;
-fresh Linux confirmation of that wiring is pending. They explicitly deny full
+at exact `984bb2e`, actual Linux artifact execution and separate-process receipt
+verification pass103 cases/263 witnesses. Metadata confirmation remains under
+investigation after a distinct native-control output failure. They deny full
 baseline qualification. Neither the qualified projections nor the native-owner
 receipt are wired into this separate contributor route or qualifying offline
 verification. Do not infer complete private-file sanitation from a safe summary.

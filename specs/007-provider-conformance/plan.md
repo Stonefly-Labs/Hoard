@@ -69,6 +69,33 @@ the affected CLI/SDK/native-runner selector passes188 tests in31.819 seconds.
 No native assertion is removed or mocked in the actual native entry point.
 Fresh immutable Linux acceptance is pending, and no task is marked complete.
 
+### First public artifact qualification and independent readback
+
+Exact `984bb2e` completes the actual Linux arm64 artifact public path with
+exit0:103 cases,99 Passed,4 frozen NotApplicable and263 native witnesses.
+All4 live-origin,15 released-origin and9 retained-report controls pass, including
+the formerly failing public-completion method with no native mocks. The full
+native transfer/recovery requirements remain intact; actual release precedes
+publication. The finite qualified report SHA-256 is
+`2c646c8ccc9856ef45e717c415616d13f125afb9fb62dff9aad882293233e09e`.
+
+A second fresh Python process, with readonly retained evidence and the
+separately preserved receipt observed directly from the original native
+command's stdout, passes `inspect_receipted_category_qualification`.
+It does not recreate a native token or trust a receipt downloaded from the
+artifact being inspected. It derives the same103 cases/263 witnesses and
+explicitly reports `baselineQualification:false`. This is a genuine finite
+artifact fixture result, not hosted/all-five/full-baseline qualification.
+
+The simultaneous metadata invocation rejects earlier, in native SQLite
+noncooperation: after45.013 seconds the exact child is forcibly stopped, its
+required producer file is absent, and output sealing reports `InputChanged`.
+Both source worktrees remain clean. This is separate from the corrected import;
+it has no accepted qualification and its original run remains retained.
+One unchanged-source, unchanged-budget comparison is now running without the
+artifact workload. A later pass would demonstrate intermittency, not silently
+repair or relabel this failed run. T071..T086 remain open.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

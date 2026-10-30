@@ -49,8 +49,12 @@ correction commit `288542d` ([run](https://github.com/Stonefly-Labs/Hoard/action
 The next T071 increment connects complete built-in category commands to original
 native-owner qualification and its receipt. The missing catalog import in its
 new native control is corrected, with a cheap regression exercising that exact
-generated control for both categories; fresh Linux confirmation remains pending.
-All earlier failed evidence remains retained.
+generated control for both categories. At exact `984bb2e`, the real Linux
+artifact command and separate-process receipt verification pass103 cases
+(99 Passed,4 frozen exclusions) and263 witnesses. Metadata instead encounters
+a separate native-control output failure and remains under investigation.
+This finite artifact result is not full-baseline qualification; all failed
+evidence remains retained.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

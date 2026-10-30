@@ -9840,6 +9840,17 @@ import correction in14 ms and the188-test affected selector passes afterward
 in31.819 seconds. This is not native qualification; fresh immutable Linux runs
 must still exercise all original live/released/retained controls without mocks.
 
+At exact `984bb2e`, the real Linux arm64 artifact invocation exits0 with103
+cases (99 Passed,4 frozen NotApplicable),263 witnesses and all4 live/15 released/
+9 retained controls passing. Separate-process readonly verification using the
+receipt observed from the original command's stdout also passes, with report
+SHA-256 `2c646c8ccc9856ef45e717c415616d13f125afb9fb62dff9aad882293233e09e`.
+Neither process claims full-baseline qualification. The simultaneous metadata
+invocation instead fails native noncooperation output sealing after45.013
+seconds; its producer file is absent and both source worktrees remain clean.
+The original failure is preserved while one isolated unchanged-source comparison
+runs with identical budgets. A pass would establish intermittency, not a repair.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

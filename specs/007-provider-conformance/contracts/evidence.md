@@ -1080,7 +1080,11 @@ checks its exact owned destination/profile/catalog and current clean source,
 rechecks the retained original/qualified reports and every rendered public byte,
 then emits a finite qualification receipt and exit0. A successful integer exit,
 copied token, modeled owner, changed source/publication or retained live resource
-cannot qualify. Fresh native confirmation of this wiring remains pending.
+cannot qualify. Exact `984bb2e` artifact execution now passes the actual public
+command, all4 live/15 released/9 retained controls and a separate-process reader
+using the externally observed original-owner receipt:103 cases/263 witnesses,
+with no baseline qualification. Metadata instead rejects a missing producer
+output in native noncooperation; its failed evidence remains retained.
 The coordinator schema and offline qualification remain unchanged.
 `native_category_qualification_receipt` first verifies the exact qualified
 derivation under its original Released owner/evaluation. Its closed record
