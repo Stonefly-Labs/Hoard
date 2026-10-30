@@ -1120,6 +1120,12 @@ Copied tokens or matching serialized owner maps cannot supply authority.
 Three live/nine released controls are connected; host checks pass and new native
 execution remains pending. Scope is runtime-origin diagnostic only: complete
 compatibility/QC/baseline attestation and qualification remain required.
+Logical runtime-backed compatibility attempts are now independently reconstructed
+from their exact fixed physical witness sets, successful status, scope/binding,
+input/group/window and control/observation-policy digests. Both attempt material
+and registered derivation hashes must match. This explicitly mapped linkage
+does not permit arbitrary cross-matrix witnesses or attest model origin.
+Baseline-only/QC derivations and a complete compatibility producer remain unbuilt.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

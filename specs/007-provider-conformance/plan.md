@@ -4575,6 +4575,52 @@ required. README, DEVELOPMENT and quickstart record the unsuccessful attempt;
 evidence/matrix contracts and other guides/diagrams remain accurate and unchanged.
 T071 stays open at70/86; implementation continues.
 
+### Compatibility logical case linkage and released presentation
+
+The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`
+Linux/aarch64 run reaches all three retained runtime summaries, actual owner
+release, independent released replay and retained released summary, then exits1
+before the released control suite. Elapsed349482.0426379993 ms, initial free
+scratch207362428928 bytes, no extra SDK prewarming. Original unsuccessful
+packet SHA-256:
+`c1b75f3c761f31bfdf9c78bfaa6bb1a1139e0eea92b2006784aac3f46522f1bd`.
+No finite-control pass is claimed. The focused release-transaction regression
+reproduces TypeError at standard JSON encoding of immutable ResourceOwnership
+records. The extracted transaction uses the existing canonical encoder; native
+inspection, actual release and original evidence remain unchanged.
+
+Independent compatibility case admission now reconstructs each runtime-backed
+logical catalog row from its exact physical witness identities, scope/binding,
+input/group/window and successful status, plus independently fixed control and
+observation-policy digests. Runtime witnesses retain their original scope rather
+than being relabeled. Passed logical attempts and derivation proof hashes must
+match recomputation. A new focused test first exposes the missing material
+builder, then checks all runtime-backed rows and rejecting mutations. This does
+not attest model origin, emit a complete compatibility producer or satisfy
+baseline-only/QC obligations.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes437 tests in107.230 seconds, four native-only skips.
+The earlier three-module selection passes248 tests in81.570 seconds.
+An initial check invocation used nonexistent `scripts/conformance_sdk.py`;
+the corrected documented
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` passes.
+`git diff --check` passes.
+
+Separately, immutable `b32f8a7` macOS
+`python3 scripts/conformance_unit_checks.py --all-tooling` finishes804 tests,
+zero failures/errors/expected failures/unexpected successes/diagnostic bytes,
+29 explicit native-only skips and nonqualifying exit2. This CLI has no
+600-second acceptance deadline and predates the namespace/presentation repairs;
+it cannot replace inherited tooling acceptance or their native controls.
+
+README, DEVELOPMENT, quickstart and the evidence contract are affected.
+Provider APIs, package/module graph, production architecture/ADR/diagrams,
+CustomHost, infrastructure, releases and UI guides are unchanged. T071 remains
+open at70/86; fresh immutable native verification and implementation continue.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

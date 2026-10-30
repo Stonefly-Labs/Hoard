@@ -1216,6 +1216,12 @@ fresh native execution remains pending. Exit0 means finite controls passed,
 not complete compatibility/QC/baseline attestation or profile qualification.
 The first `b32f8a7` attempt fails at a stale replay namespace before controls;
 that guard is repaired and its failed packet is retained separately.
+The next `b5b68c2` run reaches release/replay but exits1 while printing immutable
+resources; its retained failed packet is distinct. A focused host regression
+reproduces that presentation error, now fixed using the canonical encoder.
+Fresh native controls remain required. Logical compatibility case admission
+also rejects missing/duplicate/foreign/failed/retimed runtime witnesses and
+changed derivations; it does not yet emit a complete compatibility report.
 The original `proofs/compatibility-runtime-active-summary.json` remains unchanged
 beside `proofs/compatibility-diagnostic-summary.json`.
 

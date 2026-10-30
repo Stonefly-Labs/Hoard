@@ -4434,6 +4434,24 @@ def _execute_selected_category(run, repository, candidate, inputs, *, binding_so
                             native_evaluation=native_evaluation)
 
 
+def _release_compatibility_runtime(run, inputs, compatibility_summary, native_evaluation):
+    run.transition("Settling")
+    run.release()
+    if any(resource["state"] != "Released" for resource in run.resource_projection()):
+        raise evidence.ConformanceError("CleanupIncomplete")
+    summary = {**compatibility_summary, "phase": "compatibility-replay-released",
+               "profileComplete": False, "processResourcesReleased": True,
+               "resources": run.resource_projection()}
+    inspected = evidence.inspect_native_compatibility_report(
+        run, evidence.canonical_bytes(summary), expected_inputs=inputs,
+        native_evaluation=native_evaluation)
+    write_new(run.root / "proofs/compatibility-diagnostic-summary.json",
+              evidence.canonical_bytes(summary))
+    print(evidence.canonical_bytes({
+        **summary, "runtimeOriginVerified": inspected["runtimeOriginVerified"]}).decode("ascii"), flush=True)
+    return 0
+
+
 def execute(repository, destination, *, category=None, compatibility_only=False):
     if category not in (None, "metadata", "artifacts") or compatibility_only and category is not None:
         raise evidence.ConformanceError("UnsupportedProfile")
@@ -4651,20 +4669,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False)
                 write_new(run.root / "proofs/compatibility-runtime-active-summary.json",
                           evidence.canonical_bytes(compatibility_summary))
                 native_evaluation = native_sources.capture_evaluation(frozen_inputs, compatibility_summary)
-                run.transition("Settling")
-                run.release()
-                if any(resource["state"] != "Released" for resource in run.resource_projection()):
-                    raise evidence.ConformanceError("CleanupIncomplete")
-                summary = {**compatibility_summary, "phase": "compatibility-replay-released",
-                           "profileComplete": False, "processResourcesReleased": True,
-                           "resources": run.resource_projection()}
-                inspected = evidence.inspect_native_compatibility_report(
-                    run, evidence.canonical_bytes(summary), expected_inputs=frozen_inputs,
-                    native_evaluation=native_evaluation)
-                write_new(run.root / "proofs/compatibility-diagnostic-summary.json",
-                          evidence.canonical_bytes(summary))
-                print(json.dumps({**summary, "runtimeOriginVerified": inspected["runtimeOriginVerified"]}), flush=True)
-                return 0
+                return _release_compatibility_runtime(
+                    run, frozen_inputs, compatibility_summary, native_evaluation)
         print(json.dumps({"qualification": False, "phase": "inspection-preparation"}), flush=True)
         inspection_records = build_inspection_projects(run, candidate, config, feed, msbuild=msbuild)
         verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",

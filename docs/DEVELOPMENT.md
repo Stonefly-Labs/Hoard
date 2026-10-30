@@ -8813,6 +8813,34 @@ The repaired namespace regression now admits the actual snapshot and rejects
 the legacy alias. The live resealed-record challenge also expects the real
 executor's OwnershipInvalid rejection. All29 composition/compatibility host
 tests pass in1.237 seconds; fresh native origin controls remain required.
+The separate immutable `b5b68c2` run reaches all three runtime summaries,
+actual release, independent replay and retained released summary, then exits1
+at presentation. Its failed original packet SHA-256 is
+`c1b75f3c761f31bfdf9c78bfaa6bb1a1139e0eea92b2006784aac3f46522f1bd`;
+elapsed349482.042638 ms, initial free scratch207362428928 bytes, no extra SDK
+prewarming. No released control-suite pass is inferred. A focused regression
+reproduces TypeError when standard JSON printing encounters actual
+`ResourceOwnership` mapping proxies. The release transaction now uses the
+existing canonical encoder without changing resource evidence or the original
+active summary.
+
+Compatibility report admission also independently reconstructs logical VERSION,
+VERSION-INDEPENDENT, classification, architecture, identity-path and
+inspection-failure cases from exact fixed physical runtime witnesses, controls
+and observation-policy digests. Missing/duplicate/foreign/failed/retimed witnesses
+and substituted derivations reject. This is report admission, not native
+attestation or a complete compatibility producer; baseline-only and QC cases
+remain unfinished.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation test_conformance_sdk_checks`
+passes437 tests, four native-only skips, in107.230 seconds.
+`python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and
+`git diff --check` pass. Separately, the immutable `b32f8a7` macOS
+`python3 scripts/conformance_unit_checks.py --all-tooling` finishes804 tests with
+zero failures/errors and29 native-only skips, nonqualifying exit2. That command
+has no600-second acceptance deadline and does not cover subsequent repairs.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

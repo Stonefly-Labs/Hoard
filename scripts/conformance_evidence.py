@@ -620,6 +620,8 @@ def _validate_report_links(report):
     quality_basis = CATEGORY_QUALITY_BASIS.get(inputs["profileId"], {})
     composition_cases = ({case.key: case for case in expected_cases("composition")}
                          if inputs["profileId"] == "composition" else None)
+    compatibility_cases = ({case.key: case for case in expected_cases("compatibility")}
+                           if inputs["profileId"] == "compatibility" else None)
     input_sha = digest(inputs)
     executions = {witness["executionId"]: witness for witness in report["witnesses"]}
     packages = {package["sha256"] for package in inputs["packages"]}
@@ -655,6 +657,12 @@ def _validate_report_links(report):
                 result["profileId"], result["bindingId"], result["matrixId"], result["caseId"]))
             if composition_case is None or not result["applicable"]:
                 _invalid()
+        compatibility_case = None
+        if compatibility_cases is not None:
+            compatibility_case = compatibility_cases.get((
+                result["profileId"], result["bindingId"], result["matrixId"], result["caseId"]))
+            if compatibility_case is None or not result["applicable"]:
+                _invalid()
         for attempt in result["attempts"]:
             quality_link = False
             if (result["bindingId"] == result["matrixId"] == "none"
@@ -678,6 +686,20 @@ def _validate_report_links(report):
                                for path, raw in material["sourceProofs"].items())):
                     _invalid()
                 composition_link = True
+            compatibility_link = False
+            if (compatibility_case is not None and compatibility_case.witnesses
+                    and attempt["status"] == "Passed"):
+                if any(identity not in executions for identity in attempt["witnessIds"]):
+                    _invalid()
+                material = compatibility_case_material(
+                    inputs, case_id=result["caseId"], matrix_id=result["matrixId"],
+                    witnesses=[executions[identity] for identity in attempt["witnessIds"]],
+                    sequence=attempt["sequence"], started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"])
+                if (attempt != material["attempt"]
+                        or any(report["proofs"].get(path) != hashlib.sha256(raw).hexdigest()
+                               for path, raw in material["sourceProofs"].items())):
+                    _invalid()
+                compatibility_link = True
             if (composition_case is not None and composition_case.witnesses
                     and attempt["status"] == "Passed"
                     and any(executions.get(identity, {}).get("matrixId") != result["matrixId"]
@@ -697,7 +719,8 @@ def _validate_report_links(report):
                 witness = executions.get(execution_id)
                 if (witness is None or witness["proofSha256"] not in attempt["proofSha256"]
                         or (not quality_link and witness["bindingId"] != result["bindingId"])
-                        or (not composition_link and witness["matrixId"] != result["matrixId"])
+                        or (not composition_link and not compatibility_link
+                            and witness["matrixId"] != result["matrixId"])
                         or witness["startedMs"] < attempt["startedMs"] or witness["endedMs"] > attempt["endedMs"]
                         or (attempt["status"] == "Passed" and witness["status"] != "Passed")):
                     _invalid()
@@ -2639,6 +2662,59 @@ def composition_case_material(inputs, *, case_id, matrix_id, witnesses, sequence
         "witnesses": ordered,
         "policiesSha256": digest({
             identity: composition_snapshot_policy(identity) for identity in case.witnesses}),
+    })
+    attempt = admit_entity("Attempt", {
+        "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms, "status": "Passed",
+        "witnessIds": [row["executionId"] for row in ordered],
+        "proofSha256": sorted({hashlib.sha256(raw).hexdigest(), *(row["proofSha256"] for row in ordered)}),
+        "diagnosticCode": "None",
+    })
+    return MappingProxyType({"attempt": attempt, "sourceProofs": MappingProxyType({path: raw})})
+
+
+def compatibility_case_material(inputs, *, case_id, matrix_id, witnesses, sequence, started_ms, ended_ms):
+    from conformance_case_catalog import (
+        architecture_runtime_tests, binary_runtime_tests, expected_cases, version_observation_policy,
+        version_runtime_tests,
+    )
+
+    inputs = admit_entity("RunInputs", inputs)
+    if inputs["profileId"] != "compatibility":
+        raise ConformanceError("UnsupportedProfile")
+    sequence, started_ms, ended_ms = _integer(sequence), _number(started_ms), _number(ended_ms)
+    cases = {case.key: case for case in expected_cases("compatibility")}
+    case = cases.get(("compatibility", "none", stable_id(matrix_id), stable_id(case_id)))
+    if case is None or not case.witnesses:
+        raise ConformanceError("WitnessMissing")
+    witnesses = _list(_entity("RuntimeWitness"), MAX_WITNESSES)(witnesses)
+    selected = {row["testIdentity"]: row for row in witnesses}
+    if len(selected) != len(witnesses) or selected.keys() != set(case.witnesses):
+        raise ConformanceError("WitnessMissing")
+    physical = {
+        identity: (scope, binding)
+        for scope, rows in (("architecture", architecture_runtime_tests()),
+                            ("version", version_runtime_tests()), ("binary", binary_runtime_tests()))
+        for identity, (binding, _) in rows.items()}
+    ordered = tuple(selected[identity] for identity in case.witnesses)
+    input_sha = digest(inputs)
+    for row in ordered:
+        expected = physical.get(row["testIdentity"])
+        if (expected is None or row["bindingId"] != expected[1] or row["matrixId"] != expected[0] + "-runtime"
+                or row["status"] != "Passed" or row["runId"] != inputs["runId"]
+                or row["invocationGroupId"] != inputs["invocationGroupId"] or row["inputSha256"] != input_sha
+                or row["startedMs"] < started_ms or row["endedMs"] > ended_ms):
+            raise ConformanceError("ProofMismatch")
+    path = f"proofs/compatibility-{case_id}-{matrix_id}-attempt-{sequence}.json"
+    raw = canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "scope": "compatibility-case-derivation",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "inputSha256": input_sha, "caseId": case_id, "matrixId": matrix_id,
+        "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms,
+        "witnesses": ordered, "controls": case.controls,
+        "policiesSha256": digest({
+            identity: {"runtimeScope": physical[identity][0], "bindingId": physical[identity][1],
+                       "versionObservations": version_observation_policy(identity)}
+            for identity in case.witnesses}),
     })
     attempt = admit_entity("Attempt", {
         "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms, "status": "Passed",

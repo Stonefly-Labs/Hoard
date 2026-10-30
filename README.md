@@ -1011,6 +1011,13 @@ release and independently replays all three runtime transports. Host regressions
 pass; its first native attempt rejects a stale replay namespace, now repaired.
 Fresh native origin-control verification remains pending. Neither increment qualifies the
 full compatibility profile.
+The repaired `b5b68c2` attempt reaches actual release and independent replay,
+then exits unsuccessfully while printing immutable resource records. That
+presentation defect is reproduced and fixed with the existing canonical encoder;
+the failed packet remains separate. Compatibility report admission now also
+reconstructs fixed logical runtime cases from their exact physical witnesses,
+rejecting missing, duplicated, failed, foreign or retimed evidence. This does
+not yet produce a complete compatibility report or baseline/QC qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

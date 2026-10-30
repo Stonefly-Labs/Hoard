@@ -17,6 +17,43 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_released_compatibility_presentation_keeps_native_readonly_resource_projection(self):
+        import conformance_evidence as evidence
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / "proofs").mkdir()
+            original = b'{"qualification":false,"phase":"compatibility-replay-admitted"}'
+            sdk.write_new(root / "proofs/compatibility-runtime-active-summary.json", original)
+            inputs = ConformanceAdmissionTests().inputs()
+            resource = evidence.admit_entity("ResourceOwnership", {
+                "runId": inputs["runId"], "rootId": "modeled-root", "childPid": 0,
+                "childStartSha256": "0" * 64, "state": "Released",
+                "cleanupDurationMs": 1, "diagnosticCode": "None"})
+            run = SimpleNamespace(
+                root=root, transition=mock.Mock(), release=mock.Mock(),
+                resource_projection=mock.Mock(return_value=(resource,)))
+            token = object()
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output), mock.patch.object(
+                    evidence, "inspect_native_compatibility_report",
+                    return_value={"runtimeOriginVerified": True}) as inspect:
+                status = sdk._release_compatibility_runtime(
+                    run, inputs, evidence.load_json(original), token)
+            self.assertEqual(status, 0)
+            run.transition.assert_called_once_with("Settling")
+            run.release.assert_called_once_with()
+            self.assertIs(inspect.call_args.kwargs["native_evaluation"], token)
+            retained = evidence.load_json((root / "proofs/compatibility-diagnostic-summary.json").read_bytes())
+            shown = evidence.load_json(output.getvalue().encode("ascii"))
+            self.assertEqual(shown, {**retained, "runtimeOriginVerified": True})
+            self.assertEqual(retained["resources"], [dict(resource)])
+            self.assertFalse(shown["qualification"])
+            self.assertFalse(shown["profileComplete"])
+            self.assertEqual((root / "proofs/compatibility-runtime-active-summary.json").read_bytes(), original)
+
     def test_compatibility_replay_requires_actual_transient_snapshot_not_legacy_candidate_namespace(self):
         import hashlib
         import conformance_case_catalog as catalog

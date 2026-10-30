@@ -23,6 +23,77 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_compatibility_logical_cases_require_every_fixed_runtime_witness_and_recomputed_derivation(self):
+        import conformance_case_catalog as catalog
+
+        inputs = self.inputs()
+        inputs.update(profileId="compatibility", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        physical = {}
+        for scope, rows in (("architecture", catalog.architecture_runtime_tests()),
+                            ("version", catalog.version_runtime_tests()), ("binary", catalog.binary_runtime_tests())):
+            physical.update({identity: (scope, binding) for identity, (binding, _) in rows.items()})
+        report = self.report()
+        report.update(inputs=inputs, results=[], witnesses=[], proofs={}, state="Incomplete",
+                      scope=["compatibility-runtime-diagnostic"])
+        selected = {}
+        proofs = {}
+        for case in catalog.expected_cases("compatibility"):
+            if not case.witnesses:
+                continue
+            witnesses = []
+            for identity in case.witnesses:
+                if identity not in selected:
+                    scope, binding = physical[identity]
+                    raw = evidence.canonical_bytes({"scope": scope, "test": identity})
+                    hashed = hashlib.sha256(raw).hexdigest()
+                    path = f"proofs/modeled-compatibility-{len(selected)}.json"
+                    proofs[path] = hashed
+                    selected[identity] = evidence.admit_entity("RuntimeWitness", {
+                        "executionId": str(uuid.uuid4()), "runId": inputs["runId"],
+                        "invocationGroupId": inputs["invocationGroupId"], "testIdentity": identity,
+                        "bindingId": binding, "matrixId": scope + "-runtime",
+                        "packageSha256": inputs["packages"][0]["sha256"],
+                        "assemblySha256": next(iter(inputs["runtimeAssemblies"].values())),
+                        "inputSha256": evidence.digest(inputs), "startedMs": 1, "endedMs": 2,
+                        "status": "Passed", "proofSha256": hashed})
+                witnesses.append(selected[identity])
+            material = evidence.compatibility_case_material(
+                inputs, case_id=case.case_id, matrix_id=case.matrix_id,
+                witnesses=witnesses, sequence=1, started_ms=0, ended_ms=3)
+            report["results"].append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
+            proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in material["sourceProofs"].items()})
+        report.update(witnesses=list(selected.values()), proofs=proofs)
+        admitted = evidence.admit_entity("QualificationReport", report)
+        self.assertFalse(admitted["qualification"])
+        self.assertEqual(admitted["state"], "Incomplete")
+        case = next(case for case in catalog.expected_cases("compatibility") if len(case.witnesses) > 1)
+        witnesses = [selected[identity] for identity in case.witnesses]
+        for defect in ("missing", "duplicate", "matrix", "failed", "input", "time"):
+            changed = copy.deepcopy([dict(row) for row in witnesses])
+            if defect == "missing":
+                changed.pop()
+            elif defect == "duplicate":
+                changed[-1] = changed[0]
+            elif defect == "matrix":
+                changed[0]["matrixId"] = "foreign-runtime"
+            elif defect == "failed":
+                changed[0]["status"] = "Failed"
+            elif defect == "input":
+                changed[0]["inputSha256"] = "0" * 64
+            else:
+                changed[0]["endedMs"] = 4
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.compatibility_case_material(
+                    inputs, case_id=case.case_id, matrix_id=case.matrix_id,
+                    witnesses=changed, sequence=1, started_ms=0, ended_ms=3)
+        changed = evidence.load_json(evidence.canonical_bytes(report))
+        changed["results"][0]["attempts"][0]["proofSha256"] = [
+            selected[next(iter(selected))]["proofSha256"]]
+        changed["results"][0]["proofSha256"] = changed["results"][0]["attempts"][0]["proofSha256"]
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.admit_entity("QualificationReport", changed)
+
     def test_compatibility_recomputation_rejects_same_version_package_and_baseline_substitutions(self):
         before = self.inputs()
         before.update(profileId="compatibility", bindings=[], invocation=["profile", "compatibility"])
