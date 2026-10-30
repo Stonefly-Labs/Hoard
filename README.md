@@ -34,11 +34,12 @@ dependency management into another full-time job.
 [Follow the backlog](docs/HOARD_SPECKIT_MASTER_BACKLOG.md) ·
 [Contribute](CONTRIBUTING.md)
 
-**Current F-07 acceptance checkpoint:** implementation is blocked at the hosted
-composition tooling gate: 241/841 tests completed before its unchanged
-600-second deadline. Local tooling passes 843 tests with 31 native-only skips;
-that is not native acceptance. Internal evaluator/receipt work is preserved,
-but public commands remain nonqualifying and T071..T086 remain open.
+**Current F-07 acceptance checkpoint:** the maintainer-authorized timeout
+correction separates the complete Python tooling suite's 30-minute budget
+from individual test-child commands' unchanged ten-minute limit. The suite
+still cannot exceed its remaining profile time; fresh hosted retesting is pending.
+Internal evaluator/receipt work is preserved, but public commands remain
+nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

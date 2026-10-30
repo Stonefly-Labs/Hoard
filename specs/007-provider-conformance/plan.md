@@ -12,6 +12,34 @@ unchanged; necessary fixture-private controls are extended as recorded below.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### Authorized whole-suite timeout correction
+
+The maintainer explicitly authorized fixing the timeout scope and retesting.
+The original ten-minute ordinary child-command budget was incorrectly reused
+for the entire trusted Python tooling suite. The suite now has a distinct
+30-minute ceiling, capped by the remaining parent profile time; runner and
+independent verifier share it and both reject success at/after expiry.
+The observed standalone736-second run motivates suite-level headroom, not
+weakened correctness assertions. All child/control/recovery/transfer deadlines,
+complete test inventories, failure/skipped/output checks and source attribution
+remain unchanged. The standalone hosted tooling job also needs35 minutes
+including overhead: at `eed582b`, job124108507519 in run41069196405 was cancelled
+after approximately15 minutes under its old job cap. No runner or permission
+changes are made, and original failed/cancelled runs remain unsuccessful.
+
+A new focused control first reproduces rejection of a complete736-second suite,
+then verifies its acceptance under the corrected budget, parent-deadline
+precedence, no launch after expiry, rejection at suite expiry and independently
+resealed over-budget proof rejection. Existing mutation/failure controls are
+unchanged. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_inherited test_conformance_execution test_conformance_composition`
+passes134 tests in8.126 seconds with23 native-only skips. Fresh exact-source
+hosted composition/tooling results are pending; no T071..T086 task is closed.
+Quickstart/provider/host examples and product/architecture/ADR/diagrams remain
+unaffected because invocation, provider graph and product behavior are unchanged.
+
+### Original blocked checkpoint
+
 The maintainer authorized resumption after preserving the original work/evidence
 and reviewing acceptance-essential versus accumulated implementation. T071 remains
 unchecked; no stage completion, requirement relaxation or merge is authorized.

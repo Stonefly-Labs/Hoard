@@ -9777,10 +9777,16 @@ in507.625 seconds with31 native-only skips. Hosted composition run41060808083
 at `cc8e1ca` fails its mandatory600-second tooling gate after241/841 tests
 (626873.485049 ms, no observed failures/errors/skips/unexpected diagnostic bytes).
 The standalone tooling step at that source takes approximately736 seconds.
-Implementation stops at this measured blocker rather than changing budgets or
-omitting tests. The next bounded correction compares standard tooling execution
-in the standalone and owning-supervisor contexts; no repeated full-profile run
-is warranted without targeted evidence. See the
+The maintainer subsequently authorized correcting the budget's scope: the
+entire trusted Python tooling suite now has30 minutes, capped by the remaining
+profile deadline. Runner and independent verifier share that ceiling and reject
+success at/after expiry. Individual test-child commands retain ten minutes;
+all assertions, inventories and other operation/profile budgets are unchanged.
+The standalone hosted tooling job allows35 minutes including overhead, replacing
+its15-minute cap. The new focused regression accepts a complete736-second suite
+and still rejects expired suite/profile budgets and resealed over-budget proofs.
+The inherited/execution/composition selector passes134 tests with23 native-only
+skips; fresh exact-source hosted acceptance remains pending. See the
 [current checkpoint](../specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,

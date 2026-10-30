@@ -28,6 +28,7 @@ FOUNDATION_INVENTORY_SHA256 = "c8ba6c4d6ebe82c043ce22bb28dd65a6c1b0258d7490be74d
 GROUPS = frozenset(("lifecycle", "configuration", "discovery"))
 ASSEMBLIES = frozenset(("Hoard.Composition.Tests", "Hoard.Architecture.Tests"))
 FOUNDATION_ASSEMBLIES = ASSEMBLIES | {"Hoard.Foundation.Tests"}
+TOOLING_SUITE_SECONDS = 30 * 60
 CONTROLLER_ERROR_SOURCES = (
     "conformance_inherited.py", "conformance_legacy.py", "conformance_lock_preparation.py",
     "conformance_evidence.py", "conformance_sources.py", "foundation_evidence.py",
@@ -1063,7 +1064,7 @@ def verify_controller_tooling(root, summary, inputs, owner):
             or summary["sha256"] != hashlib.sha256(raw).hexdigest()
             or summary["sourceManifestSha256"] != inputs["sourceManifestSha256"]
             or type(summary["tests"]) is not int
-            or document["endedMs"] - document["startedMs"] > 600000):
+            or document["endedMs"] - document["startedMs"] >= TOOLING_SUITE_SECONDS * 1000):
         raise ConformanceError("ProofMismatch")
     if document["result"]["code"] != "None" or summary["tests"] != document["result"]["tests"]:
         raise ConformanceError("EvidenceIncomplete")
@@ -1082,7 +1083,7 @@ def run_controller_tooling(repository, run, sources):
     if dict(source_manifest(repository)) != dict(sources):
         raise ConformanceError("InputChanged")
     started = time.monotonic()
-    deadline = min(run.deadline, started + 600)
+    deadline = min(run.deadline, started + TOOLING_SUITE_SECONDS)
     if started >= deadline:
         raise ConformanceError("DeadlineExceeded")
     packet = checks.run_checks(all_tooling=True, deadline=deadline)

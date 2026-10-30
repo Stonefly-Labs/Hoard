@@ -478,6 +478,62 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                         if mutation in ("unsafe-runtime-failure", "foreign-runtime-failure"):
                             self.assertFalse((root / "proofs/inherited-controller-tooling.json").exists())
 
+    def test_complete_tooling_suite_has_its_own_budget_and_respects_the_profile_deadline(self):
+        import time
+        import conformance_evidence as evidence
+        import conformance_unit_checks as checks
+
+        identity = "test_control.Case.test_assertion"
+        sources = {"tests/tooling/test_control.py": "a" * 64}
+        packet = {
+            "mode": "diagnostic", "scope": "tooling", "qualification": False, "code": "None",
+            "tests": 1, "failures": 0, "errors": 0, "skipped": 0, "failedTests": [],
+            "expectedFailures": 0, "unexpectedSuccesses": 0, "unexpectedDiagnosticBytes": 0,
+            "freeScratchBytes": 123, "expectedTests": [identity], "observedTests": [identity],
+        }
+        for profile_deadline, ended, code in (
+                (3601, 737, None), (601, 601, "EvidenceIncomplete"),
+                (3601, 1801, "EvidenceIncomplete"), (1, 1, "DeadlineExceeded")):
+            with self.subTest(profile_deadline=profile_deadline, ended=ended), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                run = SimpleNamespace(root=root, state="Active", run_id="run", root_id="root",
+                                      deadline=profile_deadline, live_children=lambda: set())
+                with patch.object(evidence, "source_manifest", return_value=sources), \
+                        patch.object(checks, "run_checks", return_value=packet) as execute, \
+                        patch("conformance_legacy._borrowed_group", return_value=None), \
+                        patch.object(time, "monotonic", side_effect=[1, ended]):
+                    if code is not None:
+                        with self.assertRaisesRegex(ConformanceError, "^" + code + "$"):
+                            inherited.run_controller_tooling(ROOT, run, sources)
+                        self.assertFalse((root / "proofs/inherited-controller-tooling.json").exists())
+                    else:
+                        summary = inherited.run_controller_tooling(ROOT, run, sources)
+                if profile_deadline == 1:
+                    execute.assert_not_called()
+                    continue
+                execute.assert_called_once_with(all_tooling=True, deadline=min(profile_deadline, 1801))
+                if code is not None:
+                    continue
+                inputs = {"runId": "run", "sourceManifest": sources,
+                          "sourceManifestSha256": evidence.digest(sources)}
+                owner = {"rootId": "root"}
+                inherited.verify_controller_tooling(root, summary, inputs, owner)
+                observed = inherited.controller_tooling_observation(root, inputs, owner)
+                self.assertEqual(observed["elapsedMs"], 736000)
+                path = root / "proofs/inherited-controller-tooling.json"
+                original = evidence.load_json(path.read_bytes())
+                for elapsed in (1800000, 1800001):
+                    changed = {**original, "endedMs": original["startedMs"] + elapsed}
+                    path.chmod(0o600)
+                    path.write_bytes(canonical_bytes(changed))
+                    path.chmod(0o400)
+                    resealed = {**summary, "sha256": file_sha256(path)}
+                    with self.subTest(elapsed=elapsed), self.assertRaisesRegex(
+                            ConformanceError, "^ProofMismatch$"):
+                        inherited.verify_controller_tooling(root, resealed, inputs, owner)
+
     def test_selected_mutation_discovery_requires_actual_complete_unchanged_images(self):
         import conformance_legacy as legacy
         method = "Hoard.Composition.Tests.DiscoveryBoundsTests.Check"

@@ -2088,6 +2088,7 @@ Invoking this partial slice cannot qualify a metadata binding.
 | Ordinary harness control/authority operation | Five seconds; existing stricter contract limit wins |
 | Barrier arrival / deterministic contention observation | 15 seconds, monotonic; no sleep-based correctness proof |
 | Ordinary test child command | Ten minutes including queueing/output capture |
+| Complete trusted Python tooling suite | 30 minutes, capped by the remaining profile deadline; not an individual provider/test-child command |
 | Artifact measured transfer child | 40 minutes, preserving stricter inner transfer deadline |
 | Recovery/crash child | Five minutes; terminate only after required named barrier is observed |
 | Child termination and exit observation | Ten seconds, exact owned PID/start identity; inability to confirm exit retains root |
@@ -2106,6 +2107,12 @@ The baseline coordinator rejects budget configurations that cannot contain
 their scheduled children plus cleanup; watchdog expiry gives `Incomplete`,
 not an assertion pass. Inherited internal operation/streaming/queue/buffer
 limits remain authoritative; these outer budgets are not new provider limits.
+The whole-suite runner and independent proof verifier share the 30-minute
+ceiling; a complete result at or beyond that deadline rejects. The standalone
+hosted tooling job allows 35 minutes including checkout/catalog verification
+and runner cleanup. Its former 15-minute job cap must not prematurely cancel
+the whole suite. Individual child/control/recovery/transfer and outer profile
+budgets remain unchanged; no tests, assertions or required inventories are omitted.
 At most three explicit diagnostic attempts may be recorded, with no automatic
 retry erasing failure. Mutation challenges use separate child-run identities.
 
@@ -2295,7 +2302,7 @@ An unreadable composition summary may expose a bounded supervisor failure
 projection only after exact run/root/source and CI identity admission. Retain
 closed code, finite counts and elapsed time only; reject missing/unsafe packets
 without copying raw failures, names or paths. This observation does not admit
-incomplete tooling, change the600-second verification ceiling or relax summary
+incomplete tooling, bypass the whole-suite verification ceiling or relax summary
 read limits.
 Internal consumer-lock composition may only combine an existing frozen consumer graph
 with an explicit adapter archive and frozen archive dependency closure. Use
