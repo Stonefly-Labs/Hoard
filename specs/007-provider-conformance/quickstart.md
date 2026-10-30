@@ -1147,8 +1147,9 @@ executions at `bddb2a8` pass: each category runs four live-origin, six released-
 eight retained-report controls. These complete T068's mutation-test task, not
 the remaining generic evaluator or five-profile qualification. The original
 unsuccessful source-bound attempt is preserved separately in the plan.
-The following independent report-boundary change adds two released-origin
-controls; execution of that expanded native suite remains required.
+The following independent report-boundary/failure-classification changes add
+two released-origin controls and a failed-retry retained-report control;
+execution of that expanded native suite remains required.
 
 ## Offline Correspondence Inspection
 

@@ -1063,6 +1063,9 @@ It then runs the shared catalog/parameter/proof/completion inspection.
 The result's `runtimeOriginVerified: true` is a diagnostic observation from
 that original in-memory authority, not a transferable credential or permission
 for offline verification to trust a boolean. Reports remain nonqualifying.
+Category inspection and public JSON preserve the independently derived
+`AssertionFailed` code for a failed attempt even after a passing retry; an
+Incomplete qualification state must not downgrade that failure classification.
 Host rejection/completion regressions pass; expanded genuine native execution
 remains required. This is a category-only T071 component, not completion of the
 generic evaluator below.

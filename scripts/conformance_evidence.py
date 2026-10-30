@@ -975,7 +975,7 @@ def inspect_category_report(root, report_data, *, expected_inputs):
                                        expected_report_sha256=hashlib.sha256(report_data).hexdigest())
     return MappingProxyType({
         "qualification": False, "scope": "category-report-structure-diagnostic",
-        "code": "EvidenceIncomplete", "reportSha256": inspected["reportSha256"],
+        "code": inspected["code"], "reportSha256": inspected["reportSha256"],
         "caseCount": inspected["caseCount"], "witnessCount": inspected["witnessCount"],
     })
 
@@ -1074,7 +1074,7 @@ def render_category_diagnostics(root, report_data, *, expected_inputs, expected_
     states = {state: sum(row["status"] == state for row in report["results"]) for state in STATUSES}
     summary = {
         "schemaVersion": 1, "kind": "category-diagnostic-summary",
-        "qualification": False, "state": "Incomplete", "code": "EvidenceIncomplete",
+        "qualification": False, "state": "Incomplete", "code": inspected["code"],
         "scope": "category-report-structure-diagnostic", "profileId": profile,
         "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "sourceRevision": inputs["sourceRevision"], "inputsSha256": digest(inputs),

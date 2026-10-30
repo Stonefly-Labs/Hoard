@@ -4236,6 +4236,40 @@ example are affected. Provider APIs, SDK package graph and contributor
 commands are unchanged, so PROVIDERS/CustomHost and product/architecture/ADR/
 diagrams/governance/backlog/predecessor/IaC/release/UI guides need no changes.
 
+### Preserve failed history through category diagnostics
+
+The shared profile inspector already derives `AssertionFailed` from any failed
+attempt, even after a passing retry. Category inspection and its safe public
+diagnostic JSON nevertheless overwrite that code with `EvidenceIncomplete`.
+Both now retain the independent classification without changing report state
+or granting qualification.
+
+The new retained-report control deliberately makes dependent quality rows
+Incomplete before adding a modeled failed/passing retry; those original
+single-attempt composed quality receipts cannot be borrowed by changed history.
+Unused witnesses are removed consistently, and all original proof bytes remain
+unchanged. The ordinary generated metadata/artifact control then reproduces
+the actual classification downgrade before the fix, rather than merely failing
+invalid schema or quality-proof validation.
+This models the tainted history; it does not claim an original native provider
+failure occurred in the positive run.
+
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_evidence test_conformance_ci test_conformance_cli
+test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
+passes246 tests in83.216 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass. Sanitation presentation models now include
+the real inspector's required closed code instead of using a fallback.
+Expanded genuine native execution remains required: four live-origin, eight
+released-origin and nine retained-report controls per category.
+
+DEVELOPMENT, quickstart and the evidence contract are affected. README's
+pending-native disclaimer and example commands remain accurate; other provider/
+product/architecture/ADR/diagram/governance/backlog/predecessor/IaC/release/UI
+guides need no changes. T071 remains running/unchecked;70/86 tasks remain
+verified, with no stage, qualification, proof-budget or checklist change.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

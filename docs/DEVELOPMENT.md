@@ -8672,6 +8672,18 @@ challenge copied authority, substituted resources and extra unobserved proofs;
 their native execution remains required. T071 remains open because generic
 qualification and the remaining profile authorities/reports are unfinished.
 
+The shared profile inspector already derives `AssertionFailed` from any failed
+attempt, including one followed by a passing retry. Category inspection and its
+public diagnostic JSON previously overwrite that code with `EvidenceIncomplete`.
+Both now preserve the independently derived code without promoting
+qualification. A new retained-report mutation deliberately marks dependent
+quality projections Incomplete before adding a modeled failed/passing retry,
+so it cannot borrow the original single-attempt quality receipts. The generated
+metadata/artifact regression reproduces the downgrade before the fix.
+The same246-test selection passes in83.216 seconds with four explicit native
+skips; catalog/SDK and diff checks pass. Expanded native execution remains
+required, now including this ninth retained-report control.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

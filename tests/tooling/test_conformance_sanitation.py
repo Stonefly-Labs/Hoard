@@ -79,7 +79,7 @@ class ConformanceSanitationTests(unittest.TestCase):
         expected = hashlib.sha256(raw).hexdigest()
         # Isolate presentation; real native packet verification has separate integration controls.
         with mock.patch.object(evidence, "verify_retained_category_report", return_value={
-                "qualification": False, "reportSha256": expected}) as verify:
+                "qualification": False, "code": "EvidenceIncomplete", "reportSha256": expected}) as verify:
             outputs = render(self.parent, raw, expected_inputs=report["inputs"],
                              expected_report_sha256=expected)
         verify.assert_called_once_with(
@@ -111,7 +111,7 @@ class ConformanceSanitationTests(unittest.TestCase):
         raw = evidence.canonical_bytes(report)
         expected = hashlib.sha256(raw).hexdigest()
         with mock.patch.object(evidence, "verify_retained_category_report", return_value={
-                "qualification": False, "reportSha256": expected}):
+                "qualification": False, "code": "EvidenceIncomplete", "reportSha256": expected}):
             with self.assertRaises(evidence.ConformanceError):
                 render(self.parent, raw, expected_inputs=report["inputs"],
                        expected_report_sha256=expected)
@@ -130,7 +130,7 @@ class ConformanceSanitationTests(unittest.TestCase):
             raw = evidence.canonical_bytes(report)
             expected = hashlib.sha256(raw).hexdigest()
             with mock.patch.object(evidence, "verify_retained_category_report", return_value={
-                    "qualification": False, "reportSha256": expected}):
+                    "qualification": False, "code": "EvidenceIncomplete", "reportSha256": expected}):
                 outputs = evidence.render_category_diagnostics(
                     self.parent, raw, expected_inputs=report["inputs"], expected_report_sha256=expected)
             for name, contents in outputs.items():

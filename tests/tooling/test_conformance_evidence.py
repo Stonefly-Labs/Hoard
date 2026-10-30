@@ -8843,6 +8843,35 @@ class _RetainedNativeCategoryStructureControls:
                     report["allPassed"] = True
                 self.reject(report)
 
+    def test_failed_attempt_cannot_disappear_behind_a_passing_retry(self):
+        from conformance_case_catalog import CATEGORY_QUALITY_BASIS
+
+        report = copy.deepcopy(self.original)
+        for result in report["results"]:
+            if result["bindingId"] == "none" and result["caseId"] in CATEGORY_QUALITY_BASIS[self.profile]:
+                result.update(status="Incomplete", proofSha256=[], attempts=[{
+                    "sequence": 1, "startedMs": 0, "endedMs": 0, "status": "Incomplete",
+                    "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"}])
+        row = self.passed_row(report)
+        row["attempts"].insert(0, {
+            "sequence": 1, "startedMs": 0, "endedMs": 0, "status": "Failed",
+            "witnessIds": [], "proofSha256": [], "diagnosticCode": "AssertionFailed"})
+        for sequence, attempt in enumerate(row["attempts"], 1):
+            attempt["sequence"] = sequence
+        used = {identity for result in report["results"] for attempt in result["attempts"]
+                for identity in attempt["witnessIds"]}
+        report["witnesses"] = [witness for witness in report["witnesses"] if witness["executionId"] in used]
+        inspected = self.inspect(report)
+        self.assertFalse(inspected["qualification"])
+        self.assertEqual(inspected["code"], "AssertionFailed")
+        raw = evidence.canonical_bytes(report)
+        outputs = evidence.render_category_diagnostics(
+            self.root, raw, expected_inputs=self.inputs,
+            expected_report_sha256=hashlib.sha256(raw).hexdigest())
+        summary = evidence.load_json(outputs[f"category-{self.profile}-qualification-diagnostic.json"])
+        self.assertFalse(summary["qualification"])
+        self.assertEqual(summary["code"], "AssertionFailed")
+
     def test_nested_schema_unicode_duration_path_and_size_limits_reject_safely(self):
         for defect in ("unknown-attempt-field", "unknown-witness-field", "duplicate-report-field",
                        "duplicate-input-field", "invalid-utf8", "unpaired-surrogate", "nan-duration",
@@ -8965,7 +8994,7 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
                             [1, 1, 1])
                         self.assertFalse(packet["qualification"])
 
-    def test_retained_presentation_control_uses_the_generated_qualification_mode_names(self):
+    def test_retained_generated_presentation_and_failed_retry_controls(self):
         producer = ConformanceRuntimeIngestionTests()
         producer.setUp()
         self.addCleanup(producer.doCleanups)
@@ -8983,6 +9012,7 @@ class NativeCategoryControlRunnerTests(unittest.TestCase):
                 control.original, control.inputs = report, report["inputs"]
                 control.raw = evidence.canonical_bytes(report)
                 control.test_public_diagnostic_surfaces_recompute_exact_counts_without_claiming_qualification()
+                control.test_failed_attempt_cannot_disappear_behind_a_passing_retry()
 
     def test_explicit_native_control_cli_does_not_reflect_unavailable_private_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
