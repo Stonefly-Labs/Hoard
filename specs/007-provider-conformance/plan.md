@@ -350,6 +350,30 @@ without an original-context assertion diagnosis. A completion/shutdown
 scheduling race is the best current hypothesis, not an established cause.
 No product/test correction is guessed, and T071..T086 remain open.
 
+The maintainer explicitly directs autonomous resumption. The next change fixes
+missing failure observability rather than guessing a lifecycle repair.
+`RuntimeResultRecorder` preserves its existing `Observe(TestResult)` API and
+adds an optional diagnostic-callback overload. Only an unknown failed result's
+exact admitted method frame, mapped under `/_/tests/` to its declaring-type
+filename, may emit a bounded positive source-line integer. SafeRuntimeLogger
+projects that integer via the existing `test/UnknownDiagnostic` event, never
+raw errors, paths or stack text. Named assertions/guards keep their exact
+existing protocols. All result/proof/completion schemas and failure guarantees
+are unchanged.
+
+The focused logger regression is red with CS1501 before support. A preliminary
+missing-assets rejection is resolved by locked restore. Native .NET build,
+focused `dotnet format --verify-no-changes --no-restore`, and explicit
+SDK10.0.203/runtime10.0.7 VSTest execution of `RuntimeLoggerTests` pass all175
+parameters. Private/foreign/traversing/malformed/oversized frames and known
+assertions are covered. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_legacy test_conformance_sanitation test_conformance_inherited
+test_conformance_composition test_conformance_sdk_checks
+test_conformance_evidence.ConformanceCommandProofReplayTests` passes276 tests
+in36.339 seconds with five native-only skips. The next native run can now
+retain an actionable assertion location if the original ownership case fails;
+its original failed evidence remains unchanged.
+
 ### Original-owner inherited runtime capture
 
 The next T071 increment uses the existing finite composition evaluation identity,

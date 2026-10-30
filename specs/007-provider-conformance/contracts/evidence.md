@@ -1523,6 +1523,12 @@ readonly runtime/tooling proof frame only after actual resource release.
 Offline reconstruction, a copied evaluator or a later successful comparison
 cannot supply that missing capture. Inherited native containment remains
 distinct from full controller acceptance and profile qualification.
+For unknown failed tests only, an existing safe `test/UnknownDiagnostic`
+event may additionally carry a positive source-line integer bounded to1000000,
+derived from the exact admitted method's mapped `/_/tests/` declaring-type
+frame. These ordered diagnostics do not retain raw errors, stack text or
+paths, modify witness/proof schemas, or confer passing status. Named assertion/
+guard controls keep their original completion-only protocol.
 Pure CP settings remain retained and subject to their existing strict original
 byte replay. These distinctions do not close the all-output sanitation gate.
 Composition source/build and mutation snapshots also require transient

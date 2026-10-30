@@ -86,6 +86,11 @@ parameter:419 Passed/one Failed across420 observed parameters, with47 passing
 scopes. The original owner is Released. An unchanged24-case class comparison
 and150 original-method invocations pass; neither repairs the failed run.
 Further full retries are paused pending an original-context assertion diagnosis.
+The maintainer authorizes resumption with that missing observability addressed:
+unknown failed tests now emit only a bounded mapped-test source-line number
+through the existing safe event stream, never raw errors, paths or stack text.
+All175 logger parameters and276 focused tooling checks pass (five native-only
+skips). Known named assertion/guard protocols and every outcome remain unchanged.
 The next T071 increment captures inherited parents in the original active
 owner and independently checks the same runtime/tooling frame after release;
 236 focused checks pass, with fresh native confirmation still required.

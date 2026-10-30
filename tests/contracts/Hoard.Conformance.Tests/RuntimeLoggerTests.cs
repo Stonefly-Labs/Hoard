@@ -12,6 +12,58 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("mapped", 88)]
+    [InlineData("private-path", 0)]
+    [InlineData("foreign-method", 0)]
+    [InlineData("wrong-file", 0)]
+    [InlineData("traversal", 0)]
+    [InlineData("invalid-line", 0)]
+    [InlineData("oversized", 0)]
+    [InlineData("named-assertion", 0)]
+    public void Failed_test_locations_emit_only_a_bounded_line_of_the_admitted_mapped_test(
+        string mutation, int expectedLine)
+    {
+        using var owned = new OwnedInput();
+        if (mutation == "named-assertion")
+        {
+            owned.Input.Expected[0] = owned.Input.Expected[0] with
+            {
+                TestIdentity = "Hoard.Testing.Conformance.FrozenAssertion.Check",
+                FullyQualifiedName = "Hoard.Testing.Conformance.FrozenAssertion.Check"
+            };
+            owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        }
+        var result = owned.Result(0);
+        result.Outcome = TestOutcome.Failed;
+        result.ErrorMessage = "Assert.True() Failure seeded-canary";
+        result.ErrorStackTrace = mutation switch
+        {
+            "private-path" => "at Hoard.Frozen.Check() in /private/canary/Frozen.cs:line 88",
+            "foreign-method" => "at Hoard.Foreign.Check() in /_/tests/fixtures/Frozen.cs:line 88",
+            "wrong-file" => "at Hoard.Frozen.Check() in /_/tests/fixtures/Foreign.cs:line 88",
+            "traversal" => "at Hoard.Frozen.Check() in /_/tests/../private/Frozen.cs:line 88",
+            "invalid-line" => "at Hoard.Frozen.Check() in /_/tests/fixtures/Frozen.cs:line 1000001",
+            "oversized" => new string('x', 65537),
+            "named-assertion" => "at Hoard.Testing.Conformance.FrozenAssertion.Check()"
+                + " in /_/tests/fixtures/FrozenAssertion.cs:line 88",
+            _ => "at Hoard.Frozen.Check() in /_/tests/fixtures/Frozen.cs:line 88"
+        };
+        var locations = new List<int>();
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result, locations.Add);
+            recorder.Complete();
+            Assert.Equal(mutation == "named-assertion" ? ConformanceDiagnosticCode.AssertionFailed
+                : ConformanceDiagnosticCode.UnknownDiagnostic, recorder.Diagnostic);
+            Assert.Equal(1, recorder.ObservedCount);
+        }
+        Assert.Equal(expectedLine == 0 ? [] : new[] { expectedLine }, locations);
+        using var witness = JsonDocument.Parse(File.ReadAllText(Path.Combine(owned.Output, "witnesses.jsonl")));
+        Assert.Equal("Failed", witness.RootElement.GetProperty("status").GetString());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData("Runtime_matrix(axis: \"host\", row: \"inclusive-lower\")",
         "version/host/inclusive-lower: accepted=1; constructors=0; diagnostics=0")]
     [InlineData("Runtime_matrix(axis: \"required\", row: \"exclusive-upper\")",

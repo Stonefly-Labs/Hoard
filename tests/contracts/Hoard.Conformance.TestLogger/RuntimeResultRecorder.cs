@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -207,7 +208,9 @@ public sealed class RuntimeResultRecorder : IDisposable
         }
     }
 
-    public void Observe(TestResult result)
+    public void Observe(TestResult result) => Observe(result, null);
+
+    public void Observe(TestResult result, Action<int>? failureSourceLocation)
     {
         lock (gate)
         {
@@ -306,6 +309,8 @@ public sealed class RuntimeResultRecorder : IDisposable
                     failed = true;
                     if (kind == "Guard") { guardFailed = true; }
                     else if (kind != "Assertion") { unknownDiagnostic = true; }
+                    if (kind == "Unknown" && FailureSourceLine(result, entry) is { } sourceLine)
+                    { failureSourceLocation?.Invoke(sourceLine); }
                 }
             }
             catch (Exception error) { Fail(SafeCode(error)); }
@@ -424,6 +429,31 @@ public sealed class RuntimeResultRecorder : IDisposable
             }
         }
         return "Unknown";
+    }
+
+    private static int? FailureSourceLine(TestResult result, RuntimeExpectedTest entry)
+    {
+        if (result.ErrorStackTrace is not { Length: > 0 and <= 65_536 }) { return null; }
+        var type = entry.FullyQualifiedName[..entry.FullyQualifiedName.LastIndexOf('.')];
+        var fileName = "/" + type[(type.LastIndexOf('.') + 1)..] + ".cs";
+        var frame = "at " + entry.FullyQualifiedName + "(";
+        foreach (var span in result.ErrorStackTrace.AsSpan().EnumerateLines())
+        {
+            if (span.Length > 4096) { continue; }
+            var line = span.Trim().ToString();
+            if (!line.StartsWith(frame, StringComparison.Ordinal)) { continue; }
+            var source = line.LastIndexOf(" in ", StringComparison.Ordinal);
+            var number = line.LastIndexOf(":line ", StringComparison.Ordinal);
+            if (source < 0 || number <= source) { continue; }
+            var path = line[(source + 4)..number];
+            if (!path.StartsWith("/_/tests/", StringComparison.Ordinal)
+                || !path.EndsWith(fileName, StringComparison.Ordinal)
+                || path.Any(c => !char.IsAsciiLetterOrDigit(c) && c is not '/' and not '.' and not '_' and not '-')
+                || path.Split('/').Any(part => part is "." or "..")) { continue; }
+            if (int.TryParse(line.AsSpan(number + 6), NumberStyles.None, CultureInfo.InvariantCulture, out var value)
+                && value is > 0 and <= 1_000_000) { return value; }
+        }
+        return null;
     }
 
     public void Fail(ConformanceDiagnosticCode code)

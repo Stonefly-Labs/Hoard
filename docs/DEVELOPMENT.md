@@ -9972,6 +9972,21 @@ failure and two bounded comparisons preserved, further full retries stop
 pending an original-context assertion diagnosis. A completion/shutdown
 scheduling race is only a hypothesis; no specific cause is established.
 
+After explicit maintainer-directed resumption, unknown failed results can
+project the source line of their exact admitted method from a bounded mapped
+`/_/tests/` frame. Only an integer in1..1000000 is emitted as
+`{"event":"test","code":"UnknownDiagnostic","value":<line>}` before the usual
+completion event. Its order matches the corresponding failed witness.
+No error, path, stack text, new proof field or success classification is retained.
+Private/foreign/traversing/unmapped/oversized frames are not projected.
+Known named assertion and guard failures retain their existing exact event
+protocol, so diagnostic enrichment cannot disrupt required red controls.
+Locked missing-assets restore succeeds; the new regression is initially red
+at missing overload CS1501. Build, focused formatting and all175 logger
+parameters pass after implementation. The legacy/sanitation/inherited/
+composition/SDK/receipt selector passes276 tests in36.339 seconds with five
+native-only skips. Original-context native execution remains required.
+
 The next T071 increment binds inherited replay to the original native owner.
 After successful tooling, while still Active, it re-admits the frozen runtime
 and checks every scope parent against the owner's original held command bytes.

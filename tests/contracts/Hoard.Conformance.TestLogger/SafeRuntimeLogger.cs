@@ -43,7 +43,8 @@ public sealed class SafeRuntimeLogger : ITestLoggerWithParameters
             }
             else
             {
-                events.TestResult += (_, args) => recorder.Observe(args.Result);
+                events.TestResult += (_, args) => recorder.Observe(args.Result,
+                    line => Emit(ConformanceDiagnosticCode.UnknownDiagnostic, line, "test"));
                 events.TestRunMessage += (_, args) => recorder.ObserveMessage(args.Message);
                 events.TestRunComplete += (_, args) =>
                 {
@@ -55,6 +56,6 @@ public sealed class SafeRuntimeLogger : ITestLoggerWithParameters
         catch (Exception error) { Emit(RuntimeResultRecorder.SafeCode(error), 0); }
     }
 
-    private static void Emit(ConformanceDiagnosticCode code, int count) =>
-        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { @event = "control", code = code.ToString(), value = count }));
+    private static void Emit(ConformanceDiagnosticCode code, int count, string kind = "control") =>
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { @event = kind, code = code.ToString(), value = count }));
 }
