@@ -5616,6 +5616,20 @@ Formatting descriptors/closures join shared runtime inputs before any scope.
 passes242 tests in39.562 seconds; `git diff --check` passes. Fresh native
 formatting acceptance and executor-held independent settled foundation replay
 remain required. T071..T086 remain open; no qualification or stage completion.
+Original `a2ebcab` attempt `665970f65e66405a9be15485440beb15` exits1 after
+503564.668 ms, rejecting `ContractAssembly` at native environment admission
+before the first contract-consumer formatting launch. The original safe
+locations include `conformance_composition_checks.py:206` and
+`conformance_execution.py:151`; this is not capacity or a successful formatting
+acceptance. The new focused regression reproduces both contract failures.
+Only the two original owned contract paths are now admitted, with no-follow
+file verification; external, substituted, missing, symlinked and noncanonical
+paths remain rejected. The formatter regression invokes real environment
+admission instead of merely checking mocked keyword arguments.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_execution test_conformance_composition test_conformance_inherited test_conformance_sdk_checks test_conformance_ci`
+passes311 tests in42.567 seconds,23 native-prerequisite skips;
+`git diff --check` passes. Failed original evidence is retained unchanged.
+Fresh native acceptance and independent settled foundation authority remain open.
 
 ### Compatibility logical case linkage and released presentation
 

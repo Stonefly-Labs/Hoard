@@ -1440,6 +1440,11 @@ and isolated-solution formatting, binding the required/binary original contract
 DLLs and freezing formatting descriptors into common runtime inputs. Its fresh
 native acceptance and independent executor-held settled foundation authority
 remain required; this is still diagnostic mode, not profile qualification.
+The first formatting original rejects the contract-consumer environment before
+launch. The narrow repair admits only the two actual original owned contract
+DLL paths, verifying bytes without following symlinks. Its311 affected tests
+pass with23 host native-prerequisite skips; fresh immutable native acceptance
+is still required and the failed original is retained.
 
 ## Offline Correspondence Inspection
 

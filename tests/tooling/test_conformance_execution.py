@@ -30,6 +30,30 @@ class ConformanceExecutionTests(unittest.TestCase):
     def workspace(self):
         return execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
 
+    def test_formatting_contract_environment_accepts_only_original_owned_contracts(self):
+        run = self.workspace()
+        for scenario, contract in (("RequiredMember", "RequiredContract"), ("BinaryMemberRemoval", "BinaryContract")):
+            path = run.root / f"stores/compatibility-architecture/compatibility/{scenario}/Old/bin/Release/net10.0/{contract}.dll"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"frozen original contract")
+            path.chmod(0o400)
+            with self.subTest(scenario=scenario):
+                environment = execution.command_environment(
+                    run.root, run.root / "cache", {"ContractAssembly": str(path)})
+                self.assertEqual(environment["ContractAssembly"], str(path))
+                for value in (str(self.parent / path.name), str(path.with_name("OtherContract.dll")),
+                              str(path.parent / ".." / path.name), "private-canary"):
+                    with self.subTest(value_sha256=hashlib.sha256(value.encode()).hexdigest()):
+                        with self.assertRaisesRegex(ConformanceError, "^OwnershipInvalid$"):
+                            execution.command_environment(run.root, run.root / "cache", {"ContractAssembly": value})
+                path.unlink()
+                path.symlink_to(ROOT / "README.md")
+                with self.assertRaisesRegex(ConformanceError, "^InputChanged$"):
+                    execution.command_environment(run.root, run.root / "cache", {"ContractAssembly": str(path)})
+                path.unlink()
+                with self.assertRaisesRegex(ConformanceError, "^InputChanged$"):
+                    execution.command_environment(run.root, run.root / "cache", {"ContractAssembly": str(path)})
+
     def test_exact_sdk_workload_notice_does_not_authorize_other_diagnostics(self):
         import conformance_legacy as legacy
 

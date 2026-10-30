@@ -1295,7 +1295,10 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     self.assertEqual(3 if arguments[2].endswith(".slnx") else 5 if contract else 4,
                                      len(kwargs["execution_inputs"]))
                     if contract:
+                        from conformance_execution import command_environment
+
                         self.assertEqual(kwargs["env"], {"ContractAssembly": str(contract)})
+                        command_environment(root, root / "cache", kwargs["env"])
                     run.command_sequence += 1
                     now = time.monotonic() * 1000
                     record.update(

@@ -9644,6 +9644,19 @@ common runtime inputs. Composition/inherited/SDK/CI checks pass242 tests in
 39.562 seconds; `git diff --check` passes. Native formatting acceptance and
 executor-held independent settled foundation replay remain unfinished; no
 profile qualification is claimed.
+The first original formatting run at `a2ebcab`, attempt
+`665970f65e66405a9be15485440beb15`, exits1/503564.668 ms. It reaches original
+fixture formatting but rejects `ContractAssembly` in the native environment
+allowlist before launching the first contract consumer (`OwnershipInvalid`).
+A focused regression reproduces both required/binary consumer failures. The
+repair admits only their two exact original owned DLL paths, verifying file
+bytes through no-follow input traversal; foreign, substituted, missing,
+symlinked and noncanonical paths reject. The formatter test now exercises
+the actual environment admission too.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_execution test_conformance_composition test_conformance_inherited test_conformance_sdk_checks test_conformance_ci`
+passes311 tests in42.567 seconds with23 host native-prerequisite skips;
+`git diff --check` passes. No deadline or evidence guard changes. The failed
+original remains failed; fresh immutable native validation is required.
 
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/

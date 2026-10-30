@@ -145,10 +145,22 @@ def command_environment(root, cache, supplied):
                    if key in os.environ}
     for key, value in (supplied or {}).items():
         if (not isinstance(key, str) or not (
-                key.startswith(("HOARD_", "DOTNET_", "ASPNETCORE_", "COMPlus_")) or key in observer)
+                key.startswith(("HOARD_", "DOTNET_", "ASPNETCORE_", "COMPlus_"))
+                or key in observer or key == "ContractAssembly")
                 or re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]{0,127}", key) is None
                 or not isinstance(value, str) or "\x00" in value or len(value.encode("utf-8")) > 16384):
             raise ConformanceError("OwnershipInvalid")
+        if key == "ContractAssembly":
+            from conformance_evidence import input_manifest
+
+            contracts = {
+                str(root / f"stores/compatibility-architecture/compatibility/{scenario}/Old/bin/Release/net10.0/{name}.dll"):
+                f"stores/compatibility-architecture/compatibility/{scenario}/Old/bin/Release/net10.0/{name}.dll"
+                for scenario, name in (("RequiredMember", "RequiredContract"), ("BinaryMemberRemoval", "BinaryContract"))
+            }
+            if value not in contracts:
+                raise ConformanceError("OwnershipInvalid")
+            input_manifest(root, [contracts[value]])
         environment[key] = value
     if sum(len(key.encode("utf-8")) + len(value.encode("utf-8")) for key, value in environment.items()) > READ_BYTES:
         raise ConformanceError("OwnershipInvalid")

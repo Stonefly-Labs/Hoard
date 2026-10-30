@@ -1240,6 +1240,11 @@ original fixture roots plus the solution in its isolated source snapshot.
 Required/binary consumers bind their original contract DLLs; formatting receipts
 and closures enter the shared inputs. Fresh native formatting acceptance and
 executor-held independent settled foundation authority are still required.
+Original `a2ebcab` formatting stops at the first contract consumer: the native
+environment allowlist rejects `ContractAssembly`. The repair admits only the
+two original owned contract paths with no-follow input verification, not
+arbitrary environment variables or external assemblies. Fresh native validation
+is still required; the failed original remains failed.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
