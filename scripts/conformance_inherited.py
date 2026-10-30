@@ -23,6 +23,8 @@ from conformance_evidence import ConformanceError, DIAGNOSTIC_CODES, digest, loa
 INVENTORY_PATH = "tests/fixtures/conformance/baselines/composition-inventory.json"
 BASELINE = "9389016c0285c79f6f515f59805a5a41c69b0767"
 INVENTORY_SHA256 = "9b45196787d57b0437c14e73345b1a0ba4b1544a41d95f7fca3ea32b7635de50"
+FOUNDATION_INVENTORY_PATH = "tests/fixtures/conformance/baselines/foundation-inventory.json"
+FOUNDATION_INVENTORY_SHA256 = "c8ba6c4d6ebe82c043ce22bb28dd65a6c1b0258d7490be74dbbc36499753bb5e"
 GROUPS = frozenset(("lifecycle", "configuration", "discovery"))
 ASSEMBLIES = frozenset(("Hoard.Composition.Tests", "Hoard.Architecture.Tests"))
 CONTROLLER_ERROR_SOURCES = (
@@ -318,6 +320,54 @@ def controller_transport(repository, owner, *, sdk_package=None, logger_path=Non
         os.environ.update(environment)
 
 
+def foundation_inventory(data, sources):
+    from conformance_evidence import (
+        _constant, _hash_map, _integer, _list, _one_of, _record, _runtime_identity, relative_path, sha256)
+
+    value = load_json(data)
+    if digest(value) != FOUNDATION_INVENTORY_SHA256:
+        raise ConformanceError("ProofMismatch")
+    assemblies = ("Hoard.Architecture.Tests", "Hoard.Composition.Tests", "Hoard.Foundation.Tests")
+    value = _record({
+        "schemaVersion": _constant(1),
+        "originalRevision": _constant("837fdf3edf51c3df34710184d018479683c194c2"),
+        "executionRevision": _constant("69aac6578c7222493832125a7bc91b4950583db9"),
+        "baselineRevision": _constant(BASELINE), "qualification": _constant(False),
+        "identityOrigin": _constant("original-foundation-methods-with-complete-inherited-parameters"),
+        "sourceFiles": _hash_map, "executionSourceFiles": _hash_map, "controllerSources": _hash_map,
+        "entries": _list(_record({
+            "fullyQualifiedName": _runtime_identity,
+            "parameterCount": _integer, "assembly": _one_of(*assemblies),
+            "sourcePath": relative_path, "sourceSha256": sha256,
+            "executionSourceSha256": sha256,
+        }), 10000),
+        "assemblyParameters": _record({assembly: _integer for assembly in assemblies}),
+        "formatting": _constant({
+            "solution": "Hoard.slnx", "fixtureRoots": ["providers", "architecture", "hosts", "compatibility"]}),
+    })(value)
+    if (not value["sourceFiles"] or value["sourceFiles"].keys() != value["executionSourceFiles"].keys()
+            or set(value["controllerSources"]) != {
+            "scripts/foundation_evidence.py", "scripts/validate-foundation.sh"}):
+        raise ConformanceError("WitnessMissing")
+    for path, hashed in value["executionSourceFiles"].items():
+        if sources.get(path) != hashed:
+            raise ConformanceError("InputChanged")
+    methods, totals = {}, Counter()
+    for entry in value["entries"]:
+        name = entry["fullyQualifiedName"]
+        if (re.fullmatch(r"Hoard\.(?:Foundation|Composition|Architecture)\.Tests\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+",
+                         name) is None or name in methods or not name.startswith(entry["assembly"] + ".")
+                or not 1 <= entry["parameterCount"] <= 10000
+                or value["sourceFiles"].get(entry["sourcePath"]) != entry["sourceSha256"]
+                or value["executionSourceFiles"].get(entry["sourcePath"]) != entry["executionSourceSha256"]):
+            raise ConformanceError("WitnessMissing")
+        methods[name] = entry
+        totals[entry["assembly"]] += entry["parameterCount"]
+    if dict(totals) != value["assemblyParameters"]:
+        raise ConformanceError("WitnessMissing")
+    return methods
+
+
 def inventory(data, sources):
     value = load_json(data)
     if digest(value) != INVENTORY_SHA256:
@@ -372,9 +422,20 @@ def inventory(data, sources):
 
 
 def admit_discovery(data, methods, *, assembly):
+    return _admit_discovery(data, methods, assembly=assembly, assemblies=ASSEMBLIES)
+
+
+def admit_foundation_discovery(data, methods, *, assembly):
+    return _admit_discovery(
+        data, methods, assembly=assembly,
+        assemblies=frozenset(("Hoard.Foundation.Tests", "Hoard.Composition.Tests", "Hoard.Architecture.Tests")),
+        group="foundation")
+
+
+def _admit_discovery(data, methods, *, assembly, assemblies, group=None):
     from conformance_evidence import _uuid
 
-    if assembly not in ASSEMBLIES:
+    if assembly not in assemblies:
         raise ConformanceError("WitnessMissing")
     expected = {name: entry for name, entry in methods.items() if name.startswith(assembly + ".")}
     rows = load_json(data)
@@ -401,11 +462,12 @@ def admit_discovery(data, methods, *, assembly):
         seen.add(row["testIdentity"])
         counts[row["fullyQualifiedName"]] += 1
         entry = expected[row["fullyQualifiedName"]]
+        selected_group = entry["group"] if group is None else group
         admitted.append({
             **{key: row[key] for key in ("testIdentity", "fullyQualifiedName")},
             "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
-            "bindingId": "none", "matrixId": "inherited." + entry["group"],
-            "caseId": "inherited-" + entry["group"], "assertionSymbol": None,
+            "bindingId": "none", "matrixId": "inherited." + selected_group,
+            "caseId": "inherited-" + selected_group, "assertionSymbol": None,
         })
     if dict(counts) != {name: entry["parameterCount"] for name, entry in expected.items()}:
         raise ConformanceError("WitnessMissing")

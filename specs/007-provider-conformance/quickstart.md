@@ -1409,6 +1409,10 @@ failures/errors/unexpected bytes, in425.870 seconds under the unchanged600-secon
 bound. These remain diagnostics. The original `408a2d3` full composition CI
 trusted supervisor instead stops incomplete at237/828 tests after644.351 seconds;
 this is not a disk-capacity failure or a successful full-profile tooling proof.
+The required compatibility foundation-gate inventory is also now independently
+frozen:17 original methods/86 parameters, separate historical/current source
+hashes and the complete formatting policy. Inventory/discovery mutation checks
+pass; these are not the missing original foundation runtime/formatting witnesses.
 
 ## Offline Correspondence Inspection
 

@@ -9540,6 +9540,29 @@ failures/errors/skips/unexpected bytes and EvidenceIncomplete after
 reclassified. The current native accepts do not establish current GitHub timing
 acceptance or qualification; T071-T086 remain open.
 
+The narrow compatibility authority review identifies an additional assigned
+obligation: full foundation gates (`contracts/evidence.md`'s compatibility row),
+not merely all142 logical cases. Their immutable original surface is now frozen
+in `tests/fixtures/conformance/baselines/foundation-inventory.json`:17 methods,
+42 foundation/three composition/41 architecture parameters and the solution/
+four fixture-root formatting policy. Source origins are separate: original
+F-01 method membership, inherited F-06 source hashes and exact execution-source
+hashes pinned at `69aac6578c7222493832125a7bc91b4950583db9`. Four architecture
+files have existing F-07 instrumentation/additions and are explicitly different,
+never labeled unchanged baseline bytes.
+
+`python3 tests/fixtures/conformance/baselines/freeze_composition_inventory.py --check-foundation`
+reconstructs that inventory from the exact immutable revisions; `--check` still
+checks the existing192-entry composition inventory. Admission rejects changed/
+omitted methods, parameter counts, formatting policy and execution-source
+bytes. Separate foundation discovery requires every source-owned parameter
+exactly once in its declared assembly; omitted/duplicate/foreign rows reject.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_composition test_conformance_sdk_checks test_conformance_ci`
+passes211 tests in37.915 seconds; both inventory checks, embedded catalog and
+diff checks pass. This is inventory/discovery admission only. Original
+foundation execution/formatting capture and independent settled replay are
+still required before a compatibility-only qualified result can be derived.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

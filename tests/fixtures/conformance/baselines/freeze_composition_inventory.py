@@ -1,4 +1,4 @@
-"""Freeze inherited F-06 composition assertions without persisting argument displays."""
+"""Freeze inherited foundation/composition assertions without argument displays."""
 
 import ast
 import hashlib
@@ -9,14 +9,56 @@ import subprocess
 import sys
 
 REVISION = "9389016c0285c79f6f515f59805a5a41c69b0767"
+FOUNDATION_REVISION = "837fdf3edf51c3df34710184d018479683c194c2"
+FOUNDATION_EXECUTION_REVISION = "69aac6578c7222493832125a7bc91b4950583db9"
 ROOT = Path(__file__).resolve().parents[4]
 PREFIX = "tests/integration/Hoard.Composition.Tests/"
 
 
-def baseline_file(path):
+def baseline_file(path, revision=REVISION):
     return subprocess.run(
-        ["git", "show", f"{REVISION}:{path}"], cwd=ROOT, check=True,
+        ["git", "show", f"{revision}:{path}"], cwd=ROOT, check=True,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5).stdout
+
+
+def freeze_foundation():
+    paths = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", FOUNDATION_REVISION,
+         "tests/unit/Hoard.Foundation.Tests", "tests/integration/Hoard.Composition.Tests",
+         "tests/architecture/Hoard.Architecture.Tests"], cwd=ROOT, check=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5).stdout.decode().splitlines()
+    files = {path: baseline_file(path) for path in paths if path.endswith(".cs")}
+    execution_files = {path: baseline_file(path, FOUNDATION_EXECUTION_REVISION) for path in files}
+    entries = []
+    for path, raw in sorted(files.items()):
+        original = methods_in_source(baseline_file(path, FOUNDATION_REVISION))
+        baseline = methods_in_source(raw)
+        current = methods_in_source(execution_files[path])
+        if not original.keys() <= baseline.keys() or not original.keys() <= current.keys():
+            raise ValueError("Original foundation method was removed from the inherited baseline.")
+        for method in sorted(original):
+            entries.append({
+                "fullyQualifiedName": method, "parameterCount": current[method],
+                "assembly": Path(path).parts[2], "sourcePath": path,
+                "sourceSha256": hashlib.sha256(raw).hexdigest(),
+                "executionSourceSha256": hashlib.sha256(execution_files[path]).hexdigest(),
+            })
+    return {
+        "schemaVersion": 1, "originalRevision": FOUNDATION_REVISION, "baselineRevision": REVISION,
+        "executionRevision": FOUNDATION_EXECUTION_REVISION,
+        "qualification": False, "identityOrigin": "original-foundation-methods-with-complete-inherited-parameters",
+        "sourceFiles": {path: hashlib.sha256(raw).hexdigest() for path, raw in sorted(files.items())},
+        "executionSourceFiles": {
+            path: hashlib.sha256(raw).hexdigest() for path, raw in sorted(execution_files.items())},
+        "controllerSources": {path: hashlib.sha256(baseline_file(path)).hexdigest() for path in (
+            "scripts/foundation_evidence.py", "scripts/validate-foundation.sh")},
+        "entries": entries,
+        "assemblyParameters": {
+            assembly: sum(row["parameterCount"] for row in entries if row["assembly"] == assembly)
+            for assembly in sorted({row["assembly"] for row in entries})},
+        "formatting": {
+            "solution": "Hoard.slnx", "fixtureRoots": ["providers", "architecture", "hosts", "compatibility"]},
+    }
 
 
 def methods_in_source(raw):
@@ -109,13 +151,14 @@ def freeze():
 
 
 if __name__ == "__main__":
-    destination = Path(__file__).with_name("composition-inventory.json")
-    value = json.dumps(freeze(), indent=2, ensure_ascii=True) + "\n"
-    if sys.argv[1:] == ["--check"]:
+    foundation = sys.argv[1:] in (["--foundation"], ["--check-foundation"])
+    destination = Path(__file__).with_name("foundation-inventory.json" if foundation else "composition-inventory.json")
+    value = json.dumps(freeze_foundation() if foundation else freeze(), indent=2, ensure_ascii=True) + "\n"
+    if sys.argv[1:] in (["--check"], ["--check-foundation"]):
         if destination.read_text() != value:
-            raise SystemExit("Composition inventory differs from immutable F-06 sources.")
-    elif not sys.argv[1:]:
+            raise SystemExit("Inherited inventory differs from immutable baseline sources.")
+    elif not sys.argv[1:] or sys.argv[1:] == ["--foundation"]:
         with destination.open("x") as output:
             output.write(value)
     else:
-        raise SystemExit("Usage: freeze_composition_inventory.py [--check]")
+        raise SystemExit("Usage: freeze_composition_inventory.py [--check|--foundation|--check-foundation]")

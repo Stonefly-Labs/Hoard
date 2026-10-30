@@ -5488,6 +5488,45 @@ failures/errors/skips/unexpected bytes,644350.5989359999ms. Its original failure
 is retained. Current-source GitHub timing and full profile qualification remain
 unaccepted; no task completion, budget relaxation or authority substitution.
 
+### Remaining foundation authority and frozen inventory
+
+Narrow read-only `hoard-architecture-review` reference
+`4732fd2f-f105-4fb5-96a0-c79ae1cb3363` confirms that the compatibility assignment
+in `contracts/evidence.md:1503` includes foundation gates. Three successful
+runtime scopes/all142 logical cases alone do not satisfy that obligation.
+`foundation_evidence.py` also requires declaration/registration/package-consumer
+checks and formatting; current architecture preparation is not full foundation
+acceptance. This prospective authority review is not final T081 completion.
+The existing original NativeCompatibilitySources/Evaluation seam can support a
+future evaluator only after these gates, qualification-mode input/recomputation
+and independent exact report reconstruction. Existing diagnostics must not be
+promoted. No additional universal historical compiler-parent requirement was
+confirmed; physical PE/PDB pairing remains explicitly narrower than that claim.
+
+The existing inventory generator now separately freezes the original F-01
+method surface at837fdf3, inherited source bytes at9389016 and actual execution
+source bytes at immutable `69aac6578c7222493832125a7bc91b4950583db9`. The new
+foundation inventory contains17 methods/86 complete selected parameters:
+42 foundation,three composition and41 architecture, plus solution/four
+fixture-root formatting obligations. Four architecture source files have
+pre-existing F-07 instrumentation/additions; both hashes are retained, never
+silently treated as unchanged historical sources. Canonical inventory SHA256:
+`c8ba6c4d6ebe82c043ce22bb28dd65a6c1b0258d7490be74dbbc36499753bb5e`.
+
+The focused regression first fails for the missing producer. It then
+reconstructs the immutable inventory, checks declaration/registration/isolated
+Core/provider/host membership and rejects resealed omissions, reduced parameter
+counts, omitted formatting and changed/missing execution sources. Foundation
+discovery admission reuses the existing exact-cardinality/unique-identity
+checks with a separate allowed assembly set/group; all three assemblies'
+omitted/duplicate/foreign rows reject without relaxing inherited discovery.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_composition test_conformance_sdk_checks test_conformance_ci`
+passes211 tests in37.915 seconds. Both `freeze_composition_inventory.py --check`
+and `--check-foundation`, embedded SDK catalog and `git diff --check` pass.
+No foundation runtime, formatting, native origin or profile qualification is
+claimed from this admission work; actual owner-bound execution and settled
+replay remain the next implementation prerequisite. T071-T086 stay open.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

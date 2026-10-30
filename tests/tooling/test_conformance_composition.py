@@ -17,6 +17,59 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class CompositionDiagnosticTests(unittest.TestCase):
+    def test_foundation_gate_inventory_preserves_original_surface_and_rejects_resealed_omissions(self):
+        import importlib.util
+        import conformance_evidence as evidence
+        import conformance_inherited as inherited
+
+        path = ROOT / "tests/fixtures/conformance/baselines/freeze_composition_inventory.py"
+        module_spec = importlib.util.spec_from_file_location("freeze_foundation_test", path)
+        generator = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(generator)
+        frozen = generator.freeze_foundation()
+        raw = (path.parent / "foundation-inventory.json").read_bytes()
+        self.assertEqual(evidence.load_json(raw), frozen)
+        sources = evidence.source_manifest(ROOT)
+        methods = inherited.foundation_inventory(raw, sources)
+        required = {
+            "Hoard.Foundation.Tests.DeclarationContractTests.Public_consumers_enforce_declaration_shape",
+            "Hoard.Foundation.Tests.ModuleRegistrationTests.Null_arguments_are_explicit_errors_with_no_fallback",
+            "Hoard.Composition.Tests.CoreIndependenceTests.Isolated_core_has_only_abstractions_and_framework_reachable",
+            "Hoard.Composition.Tests.ProviderPackageTests.Five_packages_build_independently_and_match_resolved_dependencies",
+        }
+        self.assertTrue(required <= methods.keys())
+        self.assertTrue(any(name.startswith("Hoard.Composition.Tests.CustomHostTests.") for name in methods))
+        for assembly in frozen["assemblyParameters"]:
+            rows = [{
+                "fullyQualifiedName": name,
+                "testIdentity": name + '(testCaseSha256: "' + evidence.digest([name, index]) + '")',
+            } for name, entry in methods.items() if entry["assembly"] == assembly
+                for index in range(entry["parameterCount"])]
+            admitted = inherited.admit_foundation_discovery(evidence.canonical_bytes(rows), methods, assembly=assembly)
+            self.assertEqual(len(admitted), frozen["assemblyParameters"][assembly])
+            self.assertTrue(all(row["matrixId"] == "inherited.foundation" for row in admitted))
+            for mutation in (rows[:-1], [*rows, rows[0]], [{
+                    **rows[0], "fullyQualifiedName": "Hoard.Foundation.Tests.Foreign.test_omitted"}]):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^WitnessMissing$"):
+                    inherited.admit_foundation_discovery(
+                        evidence.canonical_bytes(mutation), methods, assembly=assembly)
+        for defect in ("omitted-method", "reduced-parameters", "omitted-formatting", "omitted-source", "changed-source"):
+            with self.subTest(defect=defect):
+                changed = evidence.load_json(raw)
+                current = dict(sources)
+                if defect == "omitted-method":
+                    changed["entries"].pop()
+                elif defect == "reduced-parameters":
+                    next(row for row in changed["entries"] if row["parameterCount"] > 1)["parameterCount"] -= 1
+                elif defect == "omitted-formatting":
+                    changed["formatting"]["fixtureRoots"].pop()
+                elif defect == "omitted-source":
+                    current.pop(next(iter(changed["sourceFiles"])))
+                else:
+                    current[next(iter(changed["sourceFiles"]))] = "0" * 64
+                with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch|InputChanged"):
+                    inherited.foundation_inventory(evidence.canonical_bytes(changed), current)
+
     def test_compatibility_common_report_replays_complete_scopes_without_qualifying_diagnostic_mode(self):
         import hashlib
         import uuid

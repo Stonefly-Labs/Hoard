@@ -1207,6 +1207,11 @@ zero skips/errors/unexpected bytes, in425.870 seconds under the600-second bound.
 These are diagnostic acceptances, not five-profile qualification. The original
 `408a2d3` full composition CI attempt remains incomplete: its trusted tooling
 supervisor stops at237/828 tests after644.351 seconds, without assertion failures.
+Architecture review also confirms a separate compatibility-profile gap: complete
+foundation gates, beyond the142 logical cases, still need original execution and
+settled replay. Their frozen inventory now preserves17 original methods/86
+parameters, explicit source adaptations and formatting obligations; inventory
+and discovery admission are not those missing runtime witnesses.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB
