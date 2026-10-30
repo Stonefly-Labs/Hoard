@@ -1084,6 +1084,9 @@ reader constraint; it does not relax or fix its five-second bound.
 The `3589481` native controls pass8/12, but independent inspection catches a
 remaining gap: only the default source fixture is frozen; its package-runtime
 copy is not. Full staging verification is not claimed.
+Common capture now includes that already-built package-consumer runtime too;
+the regression rejects omitted/changed package controls and PDBs. Host56 checks
+pass; fresh8/13 native verification is required.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

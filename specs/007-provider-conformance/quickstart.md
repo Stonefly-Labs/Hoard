@@ -1293,6 +1293,9 @@ The existing five-second limit and failure outcome remain unchanged.
 Original `3589481` passes8/12 controls, but readonly inspection catches missing
 package-runtime source capture (13 default files frozen, zero package files).
 That gap still requires correction and fresh verification.
+Common capture now adds the already-built package runtime, with omitted/changed
+control/PDB rejection and a new exact two-scope released control. Host56 tests
+pass; fresh8/13 native verification remains required.
 
 ## Offline Correspondence Inspection
 

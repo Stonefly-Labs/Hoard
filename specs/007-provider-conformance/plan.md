@@ -4918,6 +4918,19 @@ The initial inspection assertion and a follow-up missing-key failure expose the
 gap; neither is discarded or called passing. Correct package-scope capture and
 fresh corresponding verification remain required before staging acceptance.
 
+The correction explicitly captures the already-built package-consumer runtime
+alongside the prior three runtime trees, without adding/changing execution
+scopes or introducing an optional reduced inventory. The existing freeze test
+first reproduces missing package assembly/control/PDB entries, then checks exact
+selection, rejects later changes and still excludes unselected JSON. A new
+released native control requires both fixed13-file source scopes and their
+original exact hashes in common RunInputs; expected controls are now8 live/13
+released. `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence.ConformanceBaselineTests`
+passes56 tests in2.525 seconds; catalog/SDK and diff checks pass. Fresh immutable
+native8/13 verification remains required; no missing scope is relabeled passing
+and no logical baseline/QC result is promoted.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

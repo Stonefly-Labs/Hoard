@@ -1220,6 +1220,11 @@ deadline/byte/file/depth condition; private names and payloads are never project
 Original `3589481` control execution passes8/12 but does not establish both staged
 source scopes: readonly inspection finds13 default files frozen and no package
 copy files. Scope correction and a corresponding control remain required.
+Capture now includes the already-built package runtime before the same three
+execution scopes. Its omitted/changed assembly/control/PDB inputs reject; a new
+released control independently requires both exact13-file source scopes in the
+original common inventory. Host56 checks pass; fresh8/13 native controls remain
+required, without inferring any additional logical case or qualification.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

@@ -283,11 +283,22 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     (sdk.ARCHITECTURE_TESTS + "/bin/Release/net10.0", "Hoard.Architecture.Tests.dll"),
                     (sdk.VERSION_TESTS + "/" + sdk.PACKAGE_TEST_OUTPUT + "/Release/net10.0",
                      "Hoard.Composition.Tests.dll"),
-                    (sdk.TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll")):
+                    (sdk.TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll"),
+                    (sdk.TESTS + "/" + sdk.PACKAGE_TEST_OUTPUT + "/Release/net10.0",
+                     "Hoard.Conformance.Tests.dll")):
                 path = candidate / folder / name
                 path.parent.mkdir(parents=True)
                 path.write_bytes(name.encode("ascii"))
                 runtime_paths.append(path.relative_to(root).as_posix())
+            for folder in (sdk.TESTS + "/bin/Release/net10.0",
+                           sdk.TESTS + "/" + sdk.PACKAGE_TEST_OUTPUT + "/Release/net10.0"):
+                fixture = candidate / folder / sdk.baselines.SOURCE_BREAK_RUNTIME
+                for relative in ("control.json", "Consumer/RequiredConsumer.pdb"):
+                    path = fixture / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(("modeled source-control input " + relative).encode("ascii"))
+                    runtime_paths.append(path.relative_to(root).as_posix())
+                (fixture / "unselected.json").write_bytes(b"not a selected control")
             (root / "proofs").mkdir()
             (root / "proofs/sdk-vstest-inputs.json").write_bytes(b"selected-sdk")
             lock = candidate / sdk.VERSION_TESTS / "packages.lock.json"
@@ -1897,6 +1908,29 @@ def native_compatibility_origin_tests(evaluation, *, released):
                 (observed["architectureParameters"], observed["versionParameters"], observed["binaryParameters"]),
                 (88, 114, 7))
             self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (136, 6))
+
+        def test_both_original_source_fixture_scopes_are_frozen_in_common_inputs(self):
+            import conformance_sdk_checks as checks
+
+            _, raw = evidence._readonly_report_proof(owner.root, "proofs/source-break-staging.json")
+            stages = evidence.load_json(raw)
+            self.assertEqual(len(stages), 2)
+            names = {
+                "control.json", "sources.json", "inputs.json", "negative.json", "diagnostics.jsonl",
+                *(role + "/" + name + suffix for role, name in (
+                    ("Old", "RequiredContract"), ("New", "RequiredContract"),
+                    ("Consumer", "RequiredConsumer"), ("repair", "RequiredConsumer"))
+                  for suffix in (".dll", ".pdb"))}
+            for stage, folder in zip(stages, (
+                    checks.TESTS + "/bin/Release/net10.0",
+                    checks.TESTS + "/" + checks.PACKAGE_TEST_OUTPUT + "/Release/net10.0")):
+                prefix = "stores/snapshot/" + folder + "/source-break-fixtures/"
+                self.assertEqual(stage["baselineSealSha256"], report["baselineSealSha256"])
+                self.assertEqual(len(stage["files"]), 13)
+                self.assertEqual({row["runtime"] for row in stage["files"]},
+                                 {prefix + name for name in names})
+                self.assertTrue(all(inputs["runtimeAssemblies"].get(row["runtime"]) == row["sha256"]
+                                    for row in stage["files"]))
 
         def test_copied_evaluation_cannot_replace_original_identity(self):
             with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):

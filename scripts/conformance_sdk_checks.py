@@ -4070,7 +4070,8 @@ def capture_compatibility_runtime_inputs(run, repository, candidate, config, fee
     for folder, name in (
             (ARCHITECTURE_TESTS + "/bin/Release/net10.0", "Hoard.Architecture.Tests.dll"),
             (VERSION_TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0", "Hoard.Composition.Tests.dll"),
-            (TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll")):
+            (TESTS + "/bin/Release/net10.0", "Hoard.Conformance.Tests.dll"),
+            (TESTS + "/" + PACKAGE_TEST_OUTPUT + "/Release/net10.0", "Hoard.Conformance.Tests.dll")):
         runtime = candidate / folder
         no_symlinks(runtime / name)
         if not (runtime / name).is_file():

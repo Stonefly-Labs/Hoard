@@ -9096,6 +9096,14 @@ obligation. This remains an implementation gap, not complete staging acceptance.
 Reports still contain142 cases/136 Passed/six Incomplete/209 witnesses and differ
 only in resources. Completion differs only by actual freeBytes measurement and
 its derived environmentSha256, not source/runtime bytes.
+Common capture now explicitly freezes the already-built package-consumer tree
+alongside the three prior runtime trees; the three execution scopes are unchanged.
+The existing common-freeze regression first reproduces missing package assembly/
+control/PDB hashes, then rejects their later mutation while excluding unselected
+JSON. A new released native control requires both exact13-file source scopes in
+original common inputs, so its expected native control count is now8 live/13
+released. Composition/baseline host selection passes56 tests in2.525 seconds;
+catalog/SDK and diff checks pass. Fresh native verification remains required.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
