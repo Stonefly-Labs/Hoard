@@ -375,8 +375,10 @@ cancellation/cardinality variants, is mandatory within the selected bases.
 The quality proof binds reconstructed CP attempts, original witnesses/proofs,
 fixed QC controls and the execution window; missing/failed/retried/retimed bases
 cannot support it. Modeled regression passes do not establish native origin.
-Fresh native quality-proof execution, inherited/tooling acceptance and generic
-qualification remain required; diagnostic mode still cannot qualify.
+Separate immutable `904384b` native execution passes all3 live/8 released-origin
+controls, including changed-QC-proof rejection, and replays all50 finite CP/QC
+rows. Inherited/tooling acceptance and generic qualification remain required;
+diagnostic mode still cannot qualify.
 
 All packages use their actual local versions (initial repository baseline
 `0.1.0`) and exact content hashes. Normal platform host/abstractions versions

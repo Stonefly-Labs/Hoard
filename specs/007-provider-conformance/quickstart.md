@@ -1182,9 +1182,11 @@ composition/inherited/tooling acceptance, an offline attestation, a replacement
 for the full CI job or qualification. Host orchestration/rejection checks and
 all ten genuine controls pass at immutable `023aff8`, exit0 in99095.700287 ms.
 Initial free scratch is213162979328 bytes, with no extra SDK prewarming.
-That source predates the new QC-13..21 derivations and eleventh native control;
-fresh native execution of those changes remains pending. Complete finite case
-rows do not promote the diagnostic report to qualification.
+That source predates the new QC-13..21 derivations and eleventh native control.
+Their separate immutable `904384b` execution also passes all11 controls, exit0
+in117841.250533 ms, starting with212224888832 free scratch bytes and no extra
+SDK prewarming. All50 finite CP/QC rows replay successfully; complete finite
+case rows do not promote the diagnostic report to qualification.
 Ordinary unittest discovery needs no retained packet. Preserve unsuccessful
 roots and do not edit the frozen checkout.
 

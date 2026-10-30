@@ -8748,8 +8748,16 @@ quality proofs cannot invent observations or shrink catalog applicability.
 All finite rows may therefore pass while the overall diagnostic remains
 Incomplete/nonqualifying: full inherited/tooling execution and generic profile
 qualification are still separate obligations. Native composition controls now
-include a changed-QC-proof rejection, three live/eight released tests; fresh
-native execution of this increment remains required.
+include a changed-QC-proof rejection, three live/eight released tests.
+Their fresh immutable `904384b50015a489d3a2800e095d0a83083cb8ad`
+Linux/aarch64 execution passes all11 controls, test-only exit0 in117841.250533 ms.
+Initial free scratch is212224888832 bytes with no extra SDK prewarming.
+All50 finite CP/QC rows replay successfully with zero incomplete rows, but
+the overall report remains Incomplete/nonqualifying and inherited/tooling
+execution remains outside this run. Original closed packet SHA-256:
+`a96c37d013ef8c2f194327315cc99864f936d40788f23b9196130bc1eef0461e`.
+Neither this packet nor the earlier023aff8 packet is relabeled as full-profile
+acceptance; T071 remains open.
 
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with

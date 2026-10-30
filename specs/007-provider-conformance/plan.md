@@ -4396,6 +4396,22 @@ The genuine released factory gains a changed-QC-18-proof-byte rejection, now
 three live/eight released controls; its fresh native execution remains required.
 The earlier `023aff8`3/7 packet predates these derivations and is not relabeled.
 
+The subsequent immutable `904384b50015a489d3a2800e095d0a83083cb8ad`
+Linux/aarch64 execution now passes all3 live and8 released-origin controls,
+test-only exit0 in117841.25053299977 ms. It starts with212224888832 free scratch
+bytes and no extra SDK prewarming, using the same task-owned diagnostic tooling
+image and fresh separate source/root/caches. All50 independently expanded
+CP/QC rows replay successfully with zero incomplete rows. The new altered
+QC-18-proof-byte challenge rejects while the original report/token remains
+unchanged, then the original positive recheck passes after restoration.
+Original active report and final released report remain separately retained,
+and the full root fingerprint is unchanged by controls.
+The original closed packet SHA-256 is
+`a96c37d013ef8c2f194327315cc99864f936d40788f23b9196130bc1eef0461e`.
+The report remains Incomplete/nonqualifying, profileComplete false and
+inheritedRuntimeExecuted false: no full inherited/tooling/profile qualification
+is inferred. Earlier packets and source clones remain unchanged.
+
 An initial focused command uses a nonexistent test-class selector and produces
 no acceptance result. The corrected selector reproduces the intended missing-QC
 failure. A first wider run finds that the modeled failed-prefix fixture has
@@ -4407,6 +4423,8 @@ test_conformance_cli test_conformance_sanitation
 test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
 then passes271 tests in78.697 seconds with four explicit native-only skips.
 Catalog/SDK and diff checks pass.
+After final CP-18 basis inclusion, the two focused composition report/replay
+tests pass in1.829 seconds; catalog/SDK and diff checks pass again.
 
 README, DEVELOPMENT, quickstart and evidence/matrix contracts are affected.
 Public provider/contributor APIs, package/module graph, production architecture/

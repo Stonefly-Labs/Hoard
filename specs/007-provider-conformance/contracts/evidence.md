@@ -1093,7 +1093,10 @@ Failed/retried, missing or retimed bases reject. QC-21 includes the CP-18
 corrupt-manifest/sanitized-error repair alongside CP-19/20. Changed quality proof
 bytes must reject even if the original native report/token remain unchanged.
 These derivations do not supply missing inherited/tooling acceptance or turn
-diagnostic mode into qualification; their fresh native execution remains pending.
+diagnostic mode into qualification. Fresh immutable `904384b` native execution
+passes all3 live/8 released controls, including changed quality-proof bytes,
+and independently replays all50 finite CP/QC rows. Full-profile/inherited/
+tooling qualification is not inferred.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
