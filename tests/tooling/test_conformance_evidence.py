@@ -2013,6 +2013,88 @@ class ConformanceInputTests(unittest.TestCase):
         with self.assertRaises(evidence.ConformanceError):
             evidence.proof_manifest(actual)
 
+    def test_proof_reads_overlap_with_four_bounded_readers_without_omitting_any_bytes(self):
+        import threading
+
+        actual = self.parent / "parallel-proofs/nested"
+        actual.mkdir(parents=True)
+        for index in range(8):
+            (actual / f"proof-{index}.json").write_bytes(("actual proof " + str(index)).encode())
+        expected = {path.name: evidence.file_sha256(path) for path in actual.iterdir()}
+        original_fdopen = os.fdopen
+        gate, lock = threading.Event(), threading.Lock()
+        active = peak = 0
+
+        def fdopen(*args, **kwargs):
+            source = original_fdopen(*args, **kwargs)
+            original_read = source.read
+
+            def read(size):
+                nonlocal active, peak
+                with lock:
+                    active += 1
+                    peak = max(peak, active)
+                    if active == 4:
+                        gate.set()
+                try:
+                    if not gate.wait(1):
+                        raise OSError("Bounded proof reads did not overlap")
+                    return original_read(size)
+                finally:
+                    with lock:
+                        active -= 1
+
+            source.read = read
+            return source
+
+        with mock.patch.object(evidence.os, "fdopen", side_effect=fdopen):
+            observed = evidence.proof_manifest(actual)
+        self.assertEqual(observed, expected)
+        self.assertEqual(peak, 4)
+        self.assertEqual(active, 0)
+        changed = actual / "proof-0.json"
+        inode = changed.stat().st_ino
+        mutated = threading.Event()
+
+        def mutating_fdopen(*args, **kwargs):
+            source = original_fdopen(*args, **kwargs)
+            original_read = source.read
+
+            def read(size):
+                block = original_read(size)
+                if block and os.fstat(source.fileno()).st_ino == inode and not mutated.is_set():
+                    mutated.set()
+                    changed.write_bytes(b"changed during the admitted read")
+                return block
+
+            source.read = read
+            return source
+
+        with mock.patch.object(evidence.os, "fdopen", side_effect=mutating_fdopen), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            evidence.proof_manifest(actual)
+        self.assertTrue(mutated.is_set())
+
+    def test_proof_reader_submission_failure_releases_admitted_directory_descriptors(self):
+        actual = self.parent / "unavailable-reader-proofs"
+        actual.mkdir()
+        (actual / "proof.json").write_text("{}")
+        original_dup = os.dup
+        descriptors = []
+
+        def duplicate(descriptor):
+            copied = original_dup(descriptor)
+            descriptors.append(copied)
+            return copied
+
+        with mock.patch.object(evidence.os, "dup", side_effect=duplicate), mock.patch.object(
+                evidence.ThreadPoolExecutor, "submit", side_effect=RuntimeError("Reader unavailable")), \
+                self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            evidence.proof_manifest(actual)
+        self.assertEqual(len(descriptors), 1)
+        with self.assertRaises(OSError):
+            os.fstat(descriptors[0])
+
     def test_proof_walk_preserves_closed_guard_locations_without_private_diagnostics(self):
         from conformance_sdk_checks import _category_failure_locations
 

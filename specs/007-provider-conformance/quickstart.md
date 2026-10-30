@@ -1289,10 +1289,14 @@ verification and logical source assertions remain unfinished.
 On a rejected proof read, `proofRead` now exposes original numeric file/byte/
 entry counts, elapsed milliseconds and process CPU milliseconds through
 SDK/category CLI diagnostics.
-`readElapsedMs` additionally measures wall time inside the original read calls,
-not an extra read; scheduling delay inside those calls is included.
+`readElapsedMs` additionally sums wall time inside the original read calls,
+not an extra read; scheduling delay inside those calls is included. Proof reads
+now overlap on at most four workers with complete unchanged selection and original
+file/directory consistency checks. The sum can exceed elapsed wall time.
 It contains no private names and performs no additional reads or prewarming.
-The existing five-second limit and failure outcome remain unchanged.
+The existing five-second limit includes worker cleanup; every original bound and
+closed rejection remains. Focused234 checks pass; native budget acceptance remains
+unverified.
 Original `3589481` passes8/12 controls, but readonly inspection catches missing
 package-runtime source capture (13 default files frozen, zero package files).
 That gap still requires correction and fresh verification.

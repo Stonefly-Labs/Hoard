@@ -5161,7 +5161,26 @@ Artifacts123948658017 rejects227/58227482/919,
 Approximately98-99% of elapsed time is inside sequential read calls, not hashing
 or traversal. This supports bounded concurrent proof reads with all original
 paths/bytes/consistency checks and the same five-second budget, not SDK prewarming,
-inventory pruning or larger bounds. That reader repair is next and not yet delivered.
+inventory pruning or larger bounds.
+
+The reader now uses at most four concurrent files, reserving their complete
+selected file/byte totals before admission. Each retains no-follow open and
+original before/after identity/size/mtime checks; directory checks wait for admitted
+workers before descriptors close. Failure stops further reads, joins workers and
+closes admitted descriptors even on submission failure. The original five-second
+budget also checks after cleanup; no existing bound or inventory is changed.
+Cumulative `readElapsedMs` sums parallel calls, can exceed elapsed wall time and
+includes scheduling within calls. The new overlap regression first fails on the
+serial reader, then verifies all eight actual hashes, peak four readers, completed
+workers and mid-read mutation rejection; another checks failed-submission cleanup.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_cli
+test_conformance_evidence.ConformanceInputTests
+test_conformance_evidence.ConformanceBaselineTests` passes234 tests in36.278 seconds.
+Actual CI acceptance with the complete original closure remains required.
+Currentcc9f36d metadata job123953694593 instead rejects at the initial SDK probe
+deadline, before proof reads; no claim that parallel reads repair that distinct
+original failure is made.
 
 ### Compatibility logical case linkage and released presentation
 

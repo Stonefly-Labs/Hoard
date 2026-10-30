@@ -1,6 +1,7 @@
 """Strict test-only F-07 evidence admission; no production certification."""
 
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
 import argparse
@@ -14,6 +15,7 @@ from pathlib import PurePosixPath
 import re
 import stat
 import subprocess
+import threading
 import time
 from types import MappingProxyType
 import uuid
@@ -1676,16 +1678,76 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
         raise ConformanceError("ProofMismatch")
     directory = Path(directory).absolute()
     files = {}
-    total = 0
-    partial = 0
+    reserved_bytes = 0
+    selected_files = 0
+    bytes_read = 0
     entries_seen = 0
     read_elapsed_ms = 0
     started = time.monotonic()
     cpu_started = time.process_time()
     deadline = started + 5
+    progress = threading.Lock()
+    stopped = threading.Event()
+    pending = []
+    parent_descriptors = set()
 
-    def visit(descriptor, prefix="", depth=0):
-        nonlocal total, partial, entries_seen, read_elapsed_ms
+    def read_file(parent, name, relative, before):
+        nonlocal bytes_read, read_elapsed_ms
+        try:
+            if stopped.is_set():
+                raise ConformanceError("ProofMismatch")
+            child = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+            try:
+                with os.fdopen(child, "rb", closefd=False) as source:
+                    opened = os.fstat(source.fileno())
+                    if (not stat.S_ISREG(opened.st_mode)
+                            or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)):
+                        raise ConformanceError("ProofMismatch")
+                    hashed = hashlib.sha256()
+                    observed = 0
+                    while True:
+                        read_started = time.monotonic()
+                        if stopped.is_set() or read_started >= deadline:
+                            raise ConformanceError("ProofMismatch")
+                        try:
+                            block = source.read(64 * 1024)
+                        finally:
+                            read_ended = time.monotonic()
+                            with progress:
+                                read_elapsed_ms += (read_ended - read_started) * 1000
+                        if not block:
+                            break
+                        observed += len(block)
+                        with progress:
+                            bytes_read += len(block)
+                            if bytes_read > MAX_PROOF_BYTES:
+                                raise ConformanceError("ProofMismatch")
+                        if read_ended >= deadline:
+                            raise ConformanceError("ProofMismatch")
+                        hashed.update(block)
+                    if observed != before.st_size:
+                        raise ConformanceError("ProofMismatch")
+                after = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                if ((after.st_dev, after.st_ino, after.st_mode, after.st_size, after.st_mtime_ns)
+                        != (before.st_dev, before.st_ino, before.st_mode, before.st_size, before.st_mtime_ns)):
+                    raise ConformanceError("ProofMismatch")
+                with progress:
+                    files[relative] = hashed.hexdigest()
+            finally:
+                os.close(child)
+        except (ConformanceError, OSError):
+            stopped.set()
+            raise
+        finally:
+            with progress:
+                parent_descriptors.remove(parent)
+                os.close(parent)
+
+    def drain():
+        pending.pop(0).result()
+
+    def visit(descriptor, pool, prefix="", depth=0):
+        nonlocal reserved_bytes, selected_files, entries_seen
         if depth > 32 or time.monotonic() >= deadline:
             raise ConformanceError("ProofMismatch")
         with os.scandir(descriptor) as entries:
@@ -1704,74 +1766,70 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
                             opened = os.fstat(child)
                             if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
                                 raise ConformanceError("ProofMismatch")
-                            visit(child, relative + "/", depth + 1)
+                            visit(child, pool, relative + "/", depth + 1)
                         finally:
                             os.close(child)
                 elif stat.S_ISREG(before.st_mode) and (include_file is None or include_file(relative)):
-                    if len(files) >= MAX_PROOF_FILES or total + before.st_size > MAX_PROOF_BYTES:
+                    if selected_files >= MAX_PROOF_FILES or reserved_bytes + before.st_size > MAX_PROOF_BYTES:
                         raise ConformanceError("ProofMismatch")
-                    child = os.open(entry.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=descriptor)
-                    with os.fdopen(child, "rb") as source:
-                        opened = os.fstat(source.fileno())
-                        if (not stat.S_ISREG(opened.st_mode)
-                                or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)):
-                            raise ConformanceError("ProofMismatch")
-                        hashed = hashlib.sha256()
-                        observed = 0
-                        while True:
-                            read_started = time.monotonic()
-                            try:
-                                block = source.read(64 * 1024)
-                            finally:
-                                read_ended = time.monotonic()
-                                read_elapsed_ms += (read_ended - read_started) * 1000
-                            if not block:
-                                break
-                            observed += len(block)
-                            partial = observed
-                            if total + observed > MAX_PROOF_BYTES:
-                                raise ConformanceError("ProofMismatch")
-                            if read_ended >= deadline:
-                                raise ConformanceError("ProofMismatch")
-                            hashed.update(block)
-                        if observed != before.st_size:
-                            raise ConformanceError("ProofMismatch")
-                        files[relative] = hashed.hexdigest()
-                        total += observed
-                        partial = 0
+                    selected_files += 1
+                    reserved_bytes += before.st_size
+                    parent = os.dup(descriptor)
+                    with progress:
+                        parent_descriptors.add(parent)
+                    try:
+                        future = pool.submit(read_file, parent, entry.name, relative, before)
+                    except RuntimeError:
+                        raise ConformanceError("ProofMismatch") from None
+                    pending.append(future)
+                    if len(pending) >= 4:
+                        drain()
+                    continue
                 elif not stat.S_ISREG(before.st_mode):
                     raise ConformanceError("ProofMismatch")
                 after = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
                 if ((after.st_dev, after.st_ino, after.st_mode, after.st_size, after.st_mtime_ns)
                         != (before.st_dev, before.st_ino, before.st_mode, before.st_size, before.st_mtime_ns)):
                     raise ConformanceError("ProofMismatch")
+        while pending:
+            drain()
     try:
-        no_symlinks(directory)
-        root = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="hoard-proof")
         try:
-            original = os.fstat(root)
-            visit(root)
             no_symlinks(directory)
-            final = directory.stat()
-            if (final.st_dev, final.st_ino) != (original.st_dev, original.st_ino):
-                raise ConformanceError("ProofMismatch")
+            root = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                original = os.fstat(root)
+                visit(root, pool)
+                no_symlinks(directory)
+                final = directory.stat()
+                if ((final.st_dev, final.st_ino) != (original.st_dev, original.st_ino)
+                        or time.monotonic() >= deadline):
+                    raise ConformanceError("ProofMismatch")
+            finally:
+                os.close(root)
         finally:
-            os.close(root)
+            stopped.set()
+            pool.shutdown(wait=True)
+            for descriptor in parent_descriptors:
+                os.close(descriptor)
+        if time.monotonic() >= deadline:
+            raise ConformanceError("ProofMismatch")
     except ConformanceError as error:
         if str(error) == "ProofMismatch":
             error._proof_read = _ProofReadObservation(
-                len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
+                len(files), bytes_read, entries_seen, (time.monotonic() - started) * 1000,
                 (time.process_time() - cpu_started) * 1000, read_elapsed_ms)
             raise
         rejected = ConformanceError("ProofMismatch")
         rejected._proof_read = _ProofReadObservation(
-            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
+            len(files), bytes_read, entries_seen, (time.monotonic() - started) * 1000,
             (time.process_time() - cpu_started) * 1000, read_elapsed_ms)
         raise rejected from None
     except OSError:
         rejected = ConformanceError("ProofMismatch")
         rejected._proof_read = _ProofReadObservation(
-            len(files), total + partial, entries_seen, (time.monotonic() - started) * 1000,
+            len(files), bytes_read, entries_seen, (time.monotonic() - started) * 1000,
             (time.process_time() - cpu_started) * 1000, read_elapsed_ms)
         raise rejected from None
     if not files:

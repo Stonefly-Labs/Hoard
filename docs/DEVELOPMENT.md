@@ -9188,6 +9188,28 @@ original failure and safe SDK/public CLI projection. The focused SDK/CLI/input
 selection passes205 tests in34.021 seconds; actual new CI attribution is pending.
 This is diagnostic instrumentation, not a reader optimization or acceptance.
 
+Original6b44f97 CI subsequently attributes approximately98-99% of rejected
+SDK/metadata/artifact reads to time inside the original sequential read calls.
+The reader now admits at most four concurrent files, reserves their selected
+file/byte totals before submission, and verifies all selected bytes and original
+file/directory identities before returning. Directory descriptors remain owned
+through their workers; rejection stops pending reads, joins all workers and closes
+even a descriptor whose submission fails. The original five-second budget includes
+worker cleanup; all other existing bounds, no-follow checks and inventory remain
+unchanged. `readElapsedMs` is now cumulative across parallel calls and can exceed
+elapsed wall time. It is not disk service time and adds no I/O/prewarming.
+The overlap regression first fails on the serial implementation, then checks all
+eight real hashes, peak four readers, mid-read mutation rejection and completed
+workers. A second regression checks descriptor cleanup on submission failure.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_sdk_checks test_conformance_cli
+test_conformance_evidence.ConformanceInputTests
+test_conformance_evidence.ConformanceBaselineTests` passes234 tests in36.278 seconds.
+Fresh original CI with the unchanged complete closure is still required; modeled
+overlap does not establish native budget acceptance. The separate currentcc9f36d
+metadata job123953694593 fails its initial SDK probe deadline before proof reads;
+the parallel-reader repair does not claim to resolve that distinct failure.
+
 Source-recipe builds now freeze a complete source/package input frame, configuration,
 project and selected lock, record original compiler parents and exact DLL/PDB output
 hashes, and atomically stage images into transient stores using the same no-follow,

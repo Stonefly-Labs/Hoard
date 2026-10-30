@@ -1083,8 +1083,14 @@ and elapsed time, without private names or extra reads. This diagnoses the CI
 reader constraint; it does not relax or fix its five-second bound.
 Original process CPU time is also measured to distinguish CPU work from elapsed
 read/scheduling delay. Original CI measures111ms CPU versus5004ms wall, so hashing
-CPU is not the bottleneck. `readElapsedMs` now measures time inside original read
-calls without extra I/O; fresh CI attribution and the reader repair remain required.
+CPU is not the bottleneck. Original CI then attributes approximately98-99% of
+elapsed time to sequential read calls. The reader now uses at most four concurrent
+readers, with the same complete selection, byte/entry/depth bounds, no-follow and
+before/after identity checks, and five-second budget including worker cleanup.
+`readElapsedMs` sums original read-call wall time across workers and can exceed
+total elapsed time; it adds no reads or prewarming. Focused SDK/CLI/source/input
+checks pass234 tests. Fresh actual CI must verify the unchanged closure and budget;
+this is not qualification or full acceptance.
 The `3589481` native controls pass8/12, but independent inspection catches a
 remaining gap: only the default source fixture is frozen; its package-runtime
 copy is not. Full staging verification is not claimed.
