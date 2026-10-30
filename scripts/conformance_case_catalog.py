@@ -1564,6 +1564,18 @@ CATEGORY_QUALITY_BASIS = MappingProxyType({
     }),
 })
 
+COMPOSITION_QUALITY_BASIS = MappingProxyType({
+    "QC-13": (1, 2),
+    "QC-14": tuple(range(4, 12)),
+    "QC-15": (3, 9, 10),
+    "QC-16": (12,),
+    "QC-17": (14, 18),
+    "QC-18": (15, 16),
+    "QC-19": (17,),
+    "QC-20": (12, 13),
+    "QC-21": (18, 19, 20),
+})
+
 
 def obligation_controls(number):
     if set(QC_CONTROLS) != set(range(1, 49)) or number not in QC_CONTROLS or not QC_CONTROLS[number]:

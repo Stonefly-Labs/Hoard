@@ -1273,7 +1273,7 @@ def native_composition_origin_tests(evaluation, *, released):
             self.assertFalse(inspected["qualification"])
             self.assertEqual(inspected["reportState"], "Incomplete")
             self.assertGreater(inspected["passedCases"], 0)
-            self.assertGreater(inspected["incompleteCases"], 0)
+            self.assertEqual(inspected["incompleteCases"], 0)
 
         def test_equal_token_copy_cannot_replace_the_original_held_identity(self):
             with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
@@ -1307,6 +1307,21 @@ def native_composition_origin_tests(evaluation, *, released):
 
         def test_resealed_execution_bytes_cannot_replace_the_held_command_hash(self):
             path = owner.root / f"proofs/execution-command-{evaluation.command_sequence:04}.json"
+            raw = path.read_bytes()
+            try:
+                path.chmod(0o600)
+                path.write_bytes(raw + b"\n")
+                path.chmod(0o400)
+                with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    inspect(report)
+            finally:
+                path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+            self.assertTrue(inspect(report)["runtimeOriginVerified"])
+
+        def test_changed_quality_derivation_bytes_cannot_borrow_the_original_report(self):
+            path = owner.root / "proofs/composition-QC-18-attempt-1.json"
             raw = path.read_bytes()
             try:
                 path.chmod(0o600)

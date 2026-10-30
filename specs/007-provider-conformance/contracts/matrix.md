@@ -367,6 +367,17 @@ full-controller acceptance and profile qualification remain explicitly
 incomplete. The [plan](../plan.md#complete-native-composition-execution-t047)
 records immutable inputs/report references and the remaining gates.
 
+The next partial T071 increment derives QC-13..21 from complete independently
+expanded CP bases:13 from01/02;14 from04..11;15 from03/09/10;16 from12;
+17 from14/18;18 from15/16;19 from17;20 from12/13;21 from18/19/20.
+Every logical variant, including paired rejection/repair and reordered/
+cancellation/cardinality variants, is mandatory within the selected bases.
+The quality proof binds reconstructed CP attempts, original witnesses/proofs,
+fixed QC controls and the execution window; missing/failed/retried/retimed bases
+cannot support it. Modeled regression passes do not establish native origin.
+Fresh native quality-proof execution, inherited/tooling acceptance and generic
+qualification remain required; diagnostic mode still cannot qualify.
+
 All packages use their actual local versions (initial repository baseline
 `0.1.0`) and exact content hashes. Normal platform host/abstractions versions
 are `0.1.0`; illustrative version-policy cases below are distinct.

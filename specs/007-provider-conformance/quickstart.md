@@ -1170,9 +1170,9 @@ python3 tests/tooling/test_conformance_composition.py \
 This test-only command executes the actual packaged composition runtime and
 captures its original executor-held authority. It then deliberately stops
 before inherited acceptance/tooling, releases through the real owner's cleanup
-path, and runs three live and seven released-origin controls. Copied authority,
+path, and runs three live and eight released-origin controls. Copied authority,
 modeled owners, stale/missing settlement, changed observations, extra authentic
-proofs and resealed execution bytes must reject; the original released transport
+proofs, changed QC derivations and resealed execution bytes must reject; the original released transport
 must pass independent replay while remaining Incomplete/nonqualifying.
 The original active diagnostic is retained unchanged beside the new
 `proofs/composition-runtime-released-report.json`.
@@ -1182,6 +1182,9 @@ composition/inherited/tooling acceptance, an offline attestation, a replacement
 for the full CI job or qualification. Host orchestration/rejection checks and
 all ten genuine controls pass at immutable `023aff8`, exit0 in99095.700287 ms.
 Initial free scratch is213162979328 bytes, with no extra SDK prewarming.
+That source predates the new QC-13..21 derivations and eleventh native control;
+fresh native execution of those changes remains pending. Complete finite case
+rows do not promote the diagnostic report to qualification.
 Ordinary unittest discovery needs no retained packet. Preserve unsuccessful
 roots and do not edit the frozen checkout.
 

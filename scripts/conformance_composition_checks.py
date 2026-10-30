@@ -670,31 +670,32 @@ def verify_composition_case_report(root, inputs, owner, *, report_data=None):
     registered = set(retained) | required | {snapshot_path}
     registered.update(runtime_directory + "/" + path for path in observed["proofs"])
     selected = {row["testIdentity"]: row for row in observed["witnesses"]}
+    verified_results = []
     for case in cases:
         if case.witnesses:
             material = evidence.composition_case_material(
                 inputs, case_id=case.case_id, matrix_id=case.matrix_id,
                 witnesses=[selected[identity] for identity in case.witnesses],
                 sequence=1, started_ms=started_ms, ended_ms=ended_ms)
-            expected = evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]])
-            if any(report["proofs"].get(path) != hashlib.sha256(data).hexdigest()
-                   or read_bounded(root / path, 512 * 1024) != data
-                   for path, data in material["sourceProofs"].items()):
-                raise evidence.ConformanceError("ProofMismatch")
-            registered.update(material["sourceProofs"])
         else:
-            expected = evidence._catalog_case_result(inputs, case, "Incomplete", [{
-                "sequence": 1, "startedMs": started_ms, "endedMs": ended_ms, "status": "Incomplete",
-                "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"}])
+            material = evidence.composition_quality_case_material(
+                inputs, case_id=case.case_id, results=verified_results, witnesses=observed["witnesses"],
+                sequence=1, started_ms=started_ms, ended_ms=ended_ms)
+        expected = evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]])
+        if any(report["proofs"].get(path) != hashlib.sha256(data).hexdigest()
+               or read_bounded(root / path, 512 * 1024) != data
+               for path, data in material["sourceProofs"].items()):
+            raise evidence.ConformanceError("ProofMismatch")
+        registered.update(material["sourceProofs"])
         if results[case.case_id + "/" + case.matrix_id] != expected:
             raise evidence.ConformanceError("ProofMismatch")
+        verified_results.append(expected)
     if report["proofs"].keys() != registered:
         raise evidence.ConformanceError("ProofMismatch")
     evidence.verify_completion_inputs(root, report)
     return {
         "qualification": False, "reportState": "Incomplete", "reportSha256": hashlib.sha256(raw).hexdigest(),
-        "passedCases": sum(bool(case.witnesses) for case in cases),
-        "incompleteCases": sum(not case.witnesses for case in cases),
+        "passedCases": len(cases), "incompleteCases": 0,
     }
 
 
@@ -842,14 +843,14 @@ def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_dire
                 inputs, case_id=case.case_id, matrix_id=case.matrix_id,
                 witnesses=[selected[identity] for identity in case.witnesses],
                 sequence=1, started_ms=started_ms, ended_ms=ended_ms)
-            for path, raw in material["sourceProofs"].items():
-                write_new(run.root / path, raw)
-                proofs[path] = hashlib.sha256(raw).hexdigest()
-            results.append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
         else:
-            results.append(evidence._catalog_case_result(inputs, case, "Incomplete", [{
-                "sequence": 1, "startedMs": started_ms, "endedMs": ended_ms, "status": "Incomplete",
-                "witnessIds": [], "proofSha256": [], "diagnosticCode": "EvidenceIncomplete"}]))
+            material = evidence.composition_quality_case_material(
+                inputs, case_id=case.case_id, results=results, witnesses=witnesses,
+                sequence=1, started_ms=started_ms, ended_ms=ended_ms)
+        for path, raw in material["sourceProofs"].items():
+            write_new(run.root / path, raw)
+            proofs[path] = hashlib.sha256(raw).hexdigest()
+        results.append(evidence._catalog_case_result(inputs, case, "Passed", [material["attempt"]]))
     completion = "proofs/category-composition-diagnostic-completion-inputs.json"
     raw = evidence.canonical_bytes(post_inputs)
     write_new(run.root / completion, raw)

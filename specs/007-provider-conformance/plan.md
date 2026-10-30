@@ -4371,6 +4371,48 @@ architecture/ADR/diagrams, CustomHost, governance/backlog/predecessor, IaC,
 release and UI guides are unchanged. No reviewer checklist, proof/budget limit,
 failed packet or driver stage is modified. T071 remains open at70/86.
 
+### Independent composition quality-source derivations (partial T071)
+
+The composition report still previously leaves QC-13..21 Incomplete despite
+retaining the complete actual CP source scope. A closed independently maintained
+basis now expands every required logical CP variant for each QC:13 uses01/02;
+14 uses04..11;15 uses03/09/10;16 uses12;17 uses14/18;18 uses15/16;19 uses17;
+20 uses12/13;21 uses18/19/20. CP-18 supplies its actual corrupt-manifest,
+sanitized failure and exact same-root repair to QC-21.
+
+`composition_quality_case_material` reconstructs each required CP row from
+original witness identities/input/time/proof material, requires exact
+single-attempt equality, and binds the full basis plus fixed QC controls into a
+readonly derivation proof. Both report-schema links and independent retained
+replay recompute that material. Production derives the quality rows rather than
+trusting booleans; every finite row can now pass while report state remains
+Incomplete/nonqualifying, mode diagnostic, with full inherited/tooling and
+generic qualification still absent.
+
+The existing generated-report test first reproduces the placeholder quality
+rows. Focused mutations reject a missing readiness-cancellation variant, a valid
+failed/passing history, a missing original witness and a changed execution window.
+The genuine released factory gains a changed-QC-18-proof-byte rejection, now
+three live/eight released controls; its fresh native execution remains required.
+The earlier `023aff8`3/7 packet predates these derivations and is not relabeled.
+
+An initial focused command uses a nonexistent test-class selector and produces
+no acceptance result. The corrected selector reproduces the intended missing-QC
+failure. A first wider run finds that the modeled failed-prefix fixture has
+overlapping attempt windows; the corrected failed attempt is an admitted
+zero-duration initial failure followed by its separate passing attempt.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q
+test_conformance_composition test_conformance_evidence test_conformance_ci
+test_conformance_cli test_conformance_sanitation
+test_conformance_sdk_checks.SdkDiagnosticTests.test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting`
+then passes271 tests in78.697 seconds with four explicit native-only skips.
+Catalog/SDK and diff checks pass.
+
+README, DEVELOPMENT, quickstart and evidence/matrix contracts are affected.
+Public provider/contributor APIs, package/module graph, production architecture/
+ADR/diagrams, CustomHost, governance/backlog/predecessor, IaC, release and UI
+guides are unchanged. No task/checklist/stage advances;70/86 remain verified.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33

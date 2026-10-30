@@ -614,7 +614,7 @@ def _validate_input_links(inputs):
 
 
 def _validate_report_links(report):
-    from conformance_case_catalog import CATEGORY_QUALITY_BASIS, expected_cases
+    from conformance_case_catalog import CATEGORY_QUALITY_BASIS, COMPOSITION_QUALITY_BASIS, expected_cases
 
     inputs = report["inputs"]
     quality_basis = CATEGORY_QUALITY_BASIS.get(inputs["profileId"], {})
@@ -668,6 +668,16 @@ def _validate_report_links(report):
                     _invalid()
                 quality_link = True
             composition_link = False
+            if (composition_case is not None and result["caseId"] in COMPOSITION_QUALITY_BASIS
+                    and attempt["status"] == "Passed"):
+                material = composition_quality_case_material(
+                    inputs, case_id=result["caseId"], results=report["results"], witnesses=report["witnesses"],
+                    sequence=attempt["sequence"], started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"])
+                if (attempt != material["attempt"]
+                        or any(report["proofs"].get(path) != hashlib.sha256(raw).hexdigest()
+                               for path, raw in material["sourceProofs"].items())):
+                    _invalid()
+                composition_link = True
             if (composition_case is not None and composition_case.witnesses
                     and attempt["status"] == "Passed"
                     and any(executions.get(identity, {}).get("matrixId") != result["matrixId"]
@@ -2594,6 +2604,50 @@ def composition_case_material(inputs, *, case_id, matrix_id, witnesses, sequence
         "witnessIds": [row["executionId"] for row in ordered],
         "proofSha256": sorted({hashlib.sha256(raw).hexdigest(), *(row["proofSha256"] for row in ordered)}),
         "diagnosticCode": "None",
+    })
+    return MappingProxyType({"attempt": attempt, "sourceProofs": MappingProxyType({path: raw})})
+
+
+def composition_quality_case_material(inputs, *, case_id, results, witnesses, sequence, started_ms, ended_ms):
+    from conformance_case_catalog import COMPOSITION_QUALITY_BASIS, expected_cases, obligation_controls
+
+    inputs = admit_entity("RunInputs", inputs)
+    if inputs["profileId"] != "composition" or case_id not in COMPOSITION_QUALITY_BASIS:
+        raise ConformanceError("UnsupportedProfile")
+    sequence, started_ms, ended_ms = _integer(sequence), _number(started_ms), _number(ended_ms)
+    basis_ids = {f"CP-{number:02}" for number in COMPOSITION_QUALITY_BASIS[case_id]}
+    cases = tuple(case for case in expected_cases("composition") if case.case_id in basis_ids)
+    selected = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row for row in results}
+    executions = {row["testIdentity"]: row for row in witnesses}
+    if len(selected) != len(results) or len(executions) != len(witnesses) or not cases:
+        raise ConformanceError("WitnessMissing")
+    basis, proofs, identities = [], set(), set()
+    for case in cases:
+        if case.key not in selected or not set(case.witnesses) <= executions.keys():
+            raise ConformanceError("WitnessMissing")
+        material = composition_case_material(
+            inputs, case_id=case.case_id, matrix_id=case.matrix_id,
+            witnesses=[executions[identity] for identity in case.witnesses],
+            sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
+        expected = _catalog_case_result(inputs, case, "Passed", [material["attempt"]])
+        if selected[case.key] != expected:
+            raise ConformanceError("ProofMismatch")
+        basis.append(expected)
+        proofs.update(material["attempt"]["proofSha256"])
+        identities.update(case.witnesses)
+    ordered = tuple(executions[identity] for identity in sorted(identities))
+    path = f"proofs/composition-{case_id}-attempt-{sequence}.json"
+    raw = canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "scope": "composition-quality-derivation",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "inputSha256": digest(inputs), "caseId": case_id, "sequence": sequence,
+        "startedMs": started_ms, "endedMs": ended_ms, "basis": basis,
+        "controls": obligation_controls(int(case_id[3:])),
+    })
+    attempt = admit_entity("Attempt", {
+        "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms, "status": "Passed",
+        "witnessIds": [row["executionId"] for row in ordered],
+        "proofSha256": sorted({hashlib.sha256(raw).hexdigest(), *proofs}), "diagnosticCode": "None",
     })
     return MappingProxyType({"attempt": attempt, "sourceProofs": MappingProxyType({path: raw})})
 

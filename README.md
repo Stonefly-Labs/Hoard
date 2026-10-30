@@ -991,6 +991,11 @@ against that held identity and actual Released resources; the original active
 diagnostic is preserved. Host regressions and all ten genuine composition-origin
 controls pass at `023aff8`. Neither report qualifies the composition profile
 or replaces inherited/tooling acceptance.
+The next composition increment independently derives QC-13..21 from their
+complete CP source bases, including paired variants and append-only history,
+instead of leaving those rows as placeholder Incomplete outcomes. Modeled
+regressions pass; fresh native confirmation remains pending, and diagnostic
+mode/full-profile gaps still prevent qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

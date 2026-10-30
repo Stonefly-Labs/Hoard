@@ -939,8 +939,33 @@ class ConformanceAdmissionTests(unittest.TestCase):
             self.assertFalse(report["qualification"])
             self.assertEqual(len(report["witnesses"]), len(witnesses))
             self.assertEqual(len(report["results"]), len(catalog.expected_cases("composition")))
-            self.assertTrue(all(row["status"] == ("Passed" if row["caseId"].startswith("CP-") else "Incomplete")
-                                for row in report["results"]))
+            self.assertTrue(all(row["status"] == "Passed" for row in report["results"]))
+            for defect in ("missing-cancellation", "failed-prefix", "missing-witness", "retimed"):
+                selected_results = evidence.load_json(evidence.canonical_bytes(report["results"]))
+                selected_witnesses = evidence.load_json(evidence.canonical_bytes(report["witnesses"]))
+                ended = 1
+                if defect == "missing-cancellation":
+                    selected_results = [
+                        row for row in selected_results
+                        if (row["caseId"], row["matrixId"]) != ("CP-15", "cancel-readiness.observe")]
+                elif defect == "failed-prefix":
+                    index = next(index for index, row in enumerate(selected_results) if row["caseId"] == "CP-16")
+                    row = selected_results[index]
+                    case = next(case for case in catalog.expected_cases("composition")
+                                if (case.case_id, case.matrix_id) == (row["caseId"], row["matrixId"]))
+                    selected_results[index] = evidence._catalog_case_result(inputs, case, "Passed", [
+                        {**row["attempts"][0], "endedMs": 0, "witnessIds": [], "proofSha256": [],
+                         "status": "Failed", "diagnosticCode": "AssertionFailed"},
+                        {**row["attempts"][0], "sequence": 2}])
+                elif defect == "missing-witness":
+                    identity = catalog.composition_witnesses("CP-15", "cancel-readiness")[0]
+                    selected_witnesses = [row for row in selected_witnesses if row["testIdentity"] != identity]
+                else:
+                    ended = 0.5
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    evidence.composition_quality_case_material(
+                        inputs, case_id="QC-18", results=selected_results, witnesses=selected_witnesses,
+                        sequence=1, started_ms=0, ended_ms=ended)
             self.assertEqual(dict(evidence.input_manifest(root, list(report["proofs"]))), report["proofs"])
             self.assertEqual(report["proofs"][transport_path], hashlib.sha256(transport).hexdigest())
             evidence.verify_completion_inputs(root, report)

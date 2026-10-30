@@ -1078,11 +1078,22 @@ actual release, permits only replacement of the original Active resource
 projection with the current actual Released projection, and independently
 replays the retained transport. Original report bytes remain unchanged; the
 settled report is published separately. Copied tokens and merely matching
-serialized owner maps cannot supply authority. This remains diagnostic with
-incomplete non-runtime cases; neither a cached verification flag nor the finite
+serialized owner maps cannot supply authority. This remains diagnostic;
+neither a cached verification flag nor the finite
 test-only runtime boundary qualifies the composition profile. All3 live and7
 released-origin controls genuinely pass at immutable `023aff8`; inherited/
 tooling and full-profile acceptance remain outside that finite boundary.
+
+Composition QC-13..21 additionally derive from their independently expanded CP
+bases, never merely a cached Passed flag. Every required CP variant must match
+its freshly reconstructed single-attempt case material, actual witness identity,
+input hash and time window. The QC proof binds those complete rows and fixed
+controls; schema admission and retained replay independently recompute it.
+Failed/retried, missing or retimed bases reject. QC-21 includes the CP-18
+corrupt-manifest/sanitized-error repair alongside CP-19/20. Changed quality proof
+bytes must reject even if the original native report/token remain unchanged.
+These derivations do not supply missing inherited/tooling acceptance or turn
+diagnostic mode into qualification; their fresh native execution remains pending.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

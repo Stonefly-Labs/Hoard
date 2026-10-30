@@ -8736,6 +8736,21 @@ inheritedRuntimeExecuted remain false. Original closed packet SHA-256:
 This finite result does not cover inherited/tooling execution or complete T071,
 which remains unchecked at70/86.
 
+Composition reports now also derive QC-13..21 from independently enumerated CP
+bases rather than placeholder Incomplete rows. Each derivation binds every
+required logical variant, exact original CP attempt/proof/witness material,
+fixed QC controls and one execution window. Missing cancellation variants,
+failed prefixes, missing witnesses or retiming cannot borrow successful source
+rows. QC-21 includes CP-18's real corrupt-manifest/sanitized-error repair, not
+only authority/restart observations.
+Report schema and independent retained replay both recompute those derivations;
+quality proofs cannot invent observations or shrink catalog applicability.
+All finite rows may therefore pass while the overall diagnostic remains
+Incomplete/nonqualifying: full inherited/tooling execution and generic profile
+qualification are still separate obligations. Native composition controls now
+include a changed-QC-proof rejection, three live/eight released tests; fresh
+native execution of this increment remains required.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently
