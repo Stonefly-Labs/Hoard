@@ -9895,6 +9895,30 @@ rejects other drift, missing/cross-file sources and resealed baseline data.
 The231-test affected selector and frozen inventory check pass. This is a
 verified setup correction, not yet full composition/profile qualification.
 
+The full immutable `4240185` composition run confirms the bounds correction
+and22 subsequent scopes, then rejects one of two `LifecycleConcurrencyTests`
+parameters at original command157. The original failed evidence stays
+preserved; isolated passing comparisons do not establish a repair.
+A private widened-scheduling comparison exposes a real readiness handoff
+gap: drain can observe quiescence before assessment cleanup registers, then
+skip a module's stop callback. The unchanged original stop-count assertion
+fails with artifact stopCount0; the identical comparison passes after the
+correction. The original native witness has no exception details, so this is
+not proof that its failure had that unique cause.
+
+Initial and later readiness now acquire composition Phase ownership before
+queueing, under the lifecycle gate, and retain it through registration of
+the existing disposal owner. No new assessment starts after stopping, and
+no drain/cleanup deadline or noncooperative safeguard is relaxed. A new
+clock-gated ownership regression is red against unchanged product source;
+the corrected product passes95 exact lifecycle/bounds/worker cases, focused
+formatting and231 conformance tooling tests. A broader method-substring
+selector also selected a discovery restart journey without its required
+prepared evidence; that standalone rejection stays recorded in the plan.
+The prepared journey is still mandatory in full execution.
+Targeted architecture review finds no actionable defects; final T081 and
+fresh full native confirmation remain outstanding.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

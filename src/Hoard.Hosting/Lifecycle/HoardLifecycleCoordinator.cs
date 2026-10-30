@@ -200,7 +200,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 await InvokeStartupAsync(id, HoardLifecyclePhase.Initializing,
                     token => Entries[id].Module!.InitializeAsync(Lease.Application!.Services, token).AsTask()).ConfigureAwait(false);
             }
-            await AssessCoreAsync(true).ConfigureAwait(false);
+            await QueueAssessmentAsync(true).ConfigureAwait(false);
             lock (Gate)
             {
                 CheckCanDispatch("composition", HoardLifecyclePhase.Running);
@@ -267,8 +267,24 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         lock (Gate)
         {
             if (stopping || !admission) { return Task.FromResult(Snapshot); }
-            if (assessment is null || assessment.IsCompleted) { assessment = Task.Run(() => AssessCoreAsync(false)); }
+            if (assessment is null || assessment.IsCompleted) { assessment = QueueAssessmentAsync(false); }
             return assessment.WaitAsync(cancellationToken);
+        }
+    }
+
+    private Task<HoardLifecycleSnapshot> QueueAssessmentAsync(bool initial)
+    {
+        lock (Gate)
+        {
+            if (stopping) { return Task.FromResult(Snapshot); }
+            var activity = Activities.Enter("composition", HoardActivityKind.Phase);
+            return Task.Run(async () =>
+            {
+                using (activity)
+                {
+                    return await AssessCoreAsync(initial).ConfigureAwait(false);
+                }
+            });
         }
     }
 

@@ -214,6 +214,59 @@ seconds; `freeze_composition_inventory.py --check` and `git diff --check`
 pass. Fresh immutable full composition execution remains required; no
 T071..T086 task is marked complete, and all prior failures stay rejected.
 
+### Readiness assessment settlement handoff
+
+The immutable full `4240185` composition run confirms all9 corrected bounds
+parameters and22 later inherited scopes, then exits2/`WitnessMissing` at
+original command157, `LifecycleConcurrencyTests`: one Passed/one Failed,
+group Exited,1387.729 ms. The failed witness lasts42.365 ms; no exception
+details are retained. The original source and `/validation/work/run-2` remain
+preserved in `hoard-f07-composition-f6eee7f`. An original-class comparison
+passes2/2; a bounded private repetition passes200 original invocations.
+These passes demonstrate intermittency, not repair.
+
+Code tracing identifies an unowned interval between queued assessment/probe
+completion and disposal-activity registration in `AssessCoreAsync.finally`.
+A private controlled comparison widens that interval50 ms, holds disposal
+300 ms and uses100 ms cooperative stop callbacks. Every original concurrency
+assertion remains unchanged. It produces one Passed/one Failed, specifically
+an artifact stop count of0: drain observes a transient empty activity set,
+then newly registered composition cleanup makes module cleanup unsafe.
+The same scheduling comparison passes2/2 with the ownership correction.
+These hooks are private diagnostics only, never tracked product code.
+This proves a real handoff defect; absent retained exception details, it does
+not retrospectively prove the unique cause of command157's failed witness.
+
+Both initial and subsequent readiness now acquire composition Phase ownership
+under `Gate` before queueing and retain it until the assessment has registered
+its existing disposal ownership. New dispatch is rejected after stopping.
+The wrapper does not await stop or deferred noncooperative callbacks; existing
+bounded drain/cleanup and late-activity protection remain unchanged.
+No public contract, provider boundary, assertion or acceptance budget changes.
+
+The new `LifecycleAssessmentOwnershipTests` gates the assessment's first clock
+read before probe entry. It deterministically fails unchanged product source
+at absent composition ownership, then passes the correction and verifies
+pending drain, no premature stop, settled cleanup and exactly-once module stops.
+It is a new regression, not a rewrite/refreeze of inherited assertions.
+Validation in Linux SDK10.0.203/runtime10.0.7:
+
+- `dotnet build tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore` -- passed.
+- `dotnet format Hoard.slnx --verify-no-changes --no-restore --include src/Hoard.Hosting/Lifecycle/HoardLifecycleCoordinator.cs tests/integration/Hoard.Composition.Tests/LifecycleAssessmentOwnershipTests.cs` -- passed.
+- From the composition output directory, `dotnet exec --fx-version 10.0.7 /usr/share/dotnet/sdk/10.0.203/vstest.console.dll Hoard.Composition.Tests.dll --TestAdapterPath:. "--TestCaseFilter:FullyQualifiedName~Hoard.Composition.Tests.Lifecycle|FullyQualifiedName~Hoard.Composition.Tests.DiscoveryBoundsTests|FullyQualifiedName~Hoard.Composition.Tests.WorkerAdmissionTests" "--Logger:console;verbosity=detailed"` -- passed,95/95.
+- An earlier broad `FullyQualifiedName~Lifecycle` selector included unrelated `DiscoveryRestartTests`:102 Passed/one Failed at its explicit missing `HOARD_DISCOVERY_EVIDENCE` preparation guard. No test was altered or bypassed for acceptance; the prepared controller journey remains required in the full profile.
+- `PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_inherited test_conformance_composition test_conformance_sdk_checks test_conformance_evidence.ConformanceCommandProofReplayTests` -- passed,231 tests in36.368 seconds.
+- `python3 tests/fixtures/conformance/baselines/freeze_composition_inventory.py --check`, `python3 scripts/conformance_evidence.py --check-catalog --check-sdk` and `git diff --check` -- passed.
+
+A targeted `hoard-architecture-review` reports no actionable findings and
+confirms the ownership transfer, noncooperative protection and absence of a
+new stop/drain cycle. This is not final T081 review. README and development
+guidance record the correction; provider examples, public architecture/ADR
+diagrams, API contracts, infrastructure and release guides remain unchanged
+because the existing lifecycle guarantee is restored without changing them.
+Fresh immutable full composition execution remains required. T071..T086 stay
+open; no qualification is inferred from these focused checks.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

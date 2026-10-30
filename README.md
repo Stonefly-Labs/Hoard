@@ -62,8 +62,15 @@ Their logger outputs are sealed independently too. The isolated composition
 run rejects two inherited HTTP projection parameters at the module callback-log
 stability assertion. Authorized bounded diagnosis identifies late startup
 worker entry; synchronizing the test's initial snapshot preserves every
-assertion and passes all9 bounds parameters. Prior failures remain preserved;
-fresh full composition execution is pending.
+assertion and passes all9 bounds parameters. The full `4240185` run confirms
+that correction, then rejects one later lifecycle concurrency parameter.
+A controlled comparison exposes a readiness ownership gap: shutdown can
+observe false quiescence before readiness registers cleanup. Assessment
+ownership now spans queueing through that handoff. A deterministic red/green
+regression,95 focused lifecycle/bounds/worker cases and231 tooling checks
+pass; fresh full native confirmation remains required. Prior failures stay
+preserved, and the original concurrency failure lacks a retained exception
+that would uniquely establish its cause.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
