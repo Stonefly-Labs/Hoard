@@ -973,6 +973,10 @@ execution remains required and does not promote these reports to qualification.
 See [native report controls](specs/007-provider-conformance/quickstart.md#native-generated-report-controls).
 The held native evaluation also binds the entire original history record,
 not only its results/witness/proof projections; borrowed summary fields reject.
+All nine finite sanitation controls now pass on source-pinned native Linux,
+including actual child-output floods, transient settings/build snapshots and
+whole-root filename/content scans. This completes the T070 test task, not
+all-profile sanitation acceptance or qualification.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

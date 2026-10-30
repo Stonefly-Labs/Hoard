@@ -8602,6 +8602,20 @@ passes244 tests in92.099 seconds with four explicit native-only skips.
 Catalog/SDK and diff checks pass. This strengthens the original in-memory
 authority; it does not mint offline origin or complete generic qualification.
 
+At immutable `bddb2a8`, native Linux/aarch64 executes all nine
+`ConformanceSanitationTests` through the bounded `_run_native_control_suite`
+helper:239.883 ms, code `None`, no skipped/missing/noisy controls. This includes
+real owned child unknown-output/flood failures, input-bound private settings and
+build snapshots through actual release, recursive private filename/content and
+encoded-canary scans, public JSON/JUnit/Markdown/CI projections, and explicit
+unknown-field/error rejection. The original safe result packet SHA-256 is
+`65b46e62e86af8f5e3d15825c4f442e9a4062cea6d4f8d026b5089f54cddedea`.
+T070's finite challenge-test task is complete; T077's integrated acceptance
+and generic/five-profile output guarantees remain open. No broader secret-
+absence certification is inferred. The same source's serial genuine metadata/
+artifact category controls are still running from their separate immutable
+clone; this native test result does not qualify those pending executions.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

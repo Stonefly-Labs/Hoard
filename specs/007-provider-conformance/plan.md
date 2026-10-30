@@ -4071,6 +4071,39 @@ CustomHost and all product/architecture/ADR/diagram/governance/backlog/
 predecessor/IaC/release/UI guides are unaffected by this private record-binding
 repair. No task/checklist marker, proof budget or qualification claim changes.
 
+### T070 native finite sanitation challenge verification
+
+The immutable `bddb2a8f88e226b8bcc2bbde6eef2fc689e5872a` Linux/aarch64
+attempt executes the entire `ConformanceSanitationTests` class through the
+existing bounded `_run_native_control_suite` helper before its separate
+category commands. It observes nine complete passing controls in239.883 ms
+with code `None`; the helper rejects skips, incomplete selection, expected
+failures, unexpected successes and any diagnostic bytes. The original closed
+packet is retained unchanged with SHA-256
+`65b46e62e86af8f5e3d15825c4f442e9a4062cea6d4f8d026b5089f54cddedea`.
+Initial free scratch is212261007360 bytes, SDK/runtime10.0.203/10.0.7,
+native btrfs, and no extra SDK prewarming.
+
+These tests cover public JSON/JUnit/Markdown/CI projections and unknown report
+fields; safe public exception projection; actual contained unknown-output and
+flooding children; input-bound private executable settings and generated build
+metadata retained while Active and removed on actual release. Recursive scans
+check every private retained filename/file byte and encoded synthetic canaries,
+plus public outputs, with no raw diagnostic spooling. Presentation fixtures are
+explicitly modeled; actual process/retention challenges execute on native Linux.
+Their previous four macOS skips are not counted as successful native evidence.
+
+T070 adds these finite challenge tests and depends only on completed T018.
+It is now checked on this evidence, advancing implementation to68/86 tasks.
+This does not complete T068/T069, T077's integrated acceptance, full-profile
+output guarantees, QC-48 feature acceptance, generic evaluation, or five-profile
+qualification. Reviewer-owned checklists and implement/running remain unchanged.
+The same source's separate metadata/artifact executions remain active.
+
+README and DEVELOPMENT are affected; existing quickstart/example commands and
+all provider/product/architecture/ADR/diagram/governance/backlog/predecessor/
+IaC/release/UI guides need no command/API changes for this evidence checkpoint.
+
 ### Retained composition failure diagnostics
 
 Exact55c94dc composition run40802490632/job123219196444 now fails after33
