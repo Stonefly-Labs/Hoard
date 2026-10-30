@@ -482,6 +482,46 @@ def stage_source_recipe_fixture(run, runtime, seal_sha256, *, msbuild=None):
         "inputFrameSha256": observed["inputFrameSha256"], "runtime": target, "sha256": hashed}
 
 
+def inspect_source_recipe_fixture(root, inputs, observed):
+    """Verify metadata fixture correspondence without supplying native-origin authority."""
+    import conformance_evidence as evidence
+
+    binding = evidence._compatibility_source_recipe_binding(inputs)
+    hashed, raw = evidence._readonly_report_proof(root, "proofs/source-compatibility.json")
+    if hashed != observed["summarySha256"]:
+        raise ConformanceError("ProofMismatch")
+    expected = _source_recipe_fixture_files(load_json(raw), observed)
+    for path in binding["runtimePaths"]:
+        hashed, raw = evidence._readonly_report_proof(root, path)
+        if hashed != binding["sha256"]:
+            raise ConformanceError("ProofMismatch")
+        try:
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                entries = archive.infolist()
+                if (not 0 < len(entries) <= 128 or len(entries) != len(expected)
+                        or {row.filename for row in entries} != expected.keys()
+                        or sum(row.file_size for row in entries) > 16 * 1024**2
+                        or any(row.compress_type != zipfile.ZIP_STORED or row.flag_bits
+                               or row.date_time != (1980, 1, 1, 0, 0, 0)
+                               or row.create_system != 3
+                               or row.external_attr >> 16 != stat.S_IFREG | 0o400
+                               or not 0 < row.file_size <= 16 * 1024**2 for row in entries)):
+                    raise ConformanceError("ProofMismatch")
+                for row in entries:
+                    data = archive.read(row)
+                    if hashlib.sha256(data).hexdigest() != expected[row.filename][1]:
+                        raise ConformanceError("ProofMismatch")
+                    if row.filename == "inputs.json":
+                        frame = load_json(data)
+                        if (digest(frame["sources"]["historical-f06"]) != binding["sourceSha256"]
+                                or digest(frame["sources"]["candidate-source-manifest"])
+                                != binding["candidateSourceSha256"]):
+                            raise ConformanceError("ProofMismatch")
+        except zipfile.BadZipFile:
+            raise ConformanceError("ProofMismatch") from None
+    return binding
+
+
 def verify_source_break_result(result):
     _verify_source_break_events(result.exit_code, result.events)
 

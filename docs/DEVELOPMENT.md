@@ -9253,6 +9253,43 @@ The images will be inspected as PE/PDB streams, not loaded as runtime dependenci
 Host staging/strict-feed/dependent checks pass237 tests in33.149 seconds.
 Runtime assertions, common capture and logical source-case promotion remain pending.
 
+Immutable `cc9f36d` original attempt
+`d26622eb0cb746659f71397bd9ec9b3a` subsequently passes all10 live/13 released
+controls, exit0,471526.4642120019ms, initial scratch197135413248 bytes and no
+extra SDK prewarming. A separate readonly container reconstructs all24 original
+compiler records, current-source equality,142 cases/138 Passed/four Incomplete/
+210 witnesses, QC-26 Passed, both13-file source scopes and resources-only report
+differences. Original packet SHA256:
+`165949df98a5b3c5d330bdce57ccd7b11ed25c5ecef17f5238a0fb94e60fe976`.
+Active/released report SHA256:
+`da214d5e5a1bbb72f6ecb0f652234f6ccb6688740609ce4279ac767bcf901307` /
+`a0093344a5cb15b4d68aef195e7bcdb00446fa2bbdd03915fd7985b2c502cfa6`.
+Readonly correspondence supplies no new native authority.
+At reader checkpoint `9697ba5`,
+`python3 -m unittest discover -s tests/tooling -q` passes825 tests in428.906
+seconds with30 explicit native-only skips. This does not satisfy native tooling
+or the full-profile600-second wrapper.
+
+The next source-case increment now stages the bounded bundle into both existing
+consumer runtimes before common capture. Only its fixed root ZIP name is selected;
+the complete original runtime inventory and128-image limit remain unchanged.
+Before the first original scope, native capture verifies exact stored entries,
+metadata, actual image/compiler/frame hashes and historical/current source-map
+correspondence against its original held recipe observation. Rehashed changed
+images still reject. A shared C# PE/PDB helper preserves the existing source-break
+assertion and verifies all24 source recipe outputs as streams, including assembly
+identity, CodeView/PDB identity, canonical authored source hashes, generated
+document boundaries and original compiler inputs/output/exit/order/owner fields.
+The logical source row binds this actual physical witness and both frozen bundles;
+released controls additionally check those bindings and source derivation bytes.
+The missing-admission, missing-runtime-capture and missing-source-witness
+regressions each fail first. The focused admission/baseline/composition/SDK/CI
+selection passes279 tests in36.702 seconds. Managed `dotnet build` with
+`--no-restore --no-dependencies` and targeted `dotnet format whitespace
+--no-restore --verify-no-changes` pass; SDK catalog and diff checks pass.
+Fresh11 live/13 released native controls are required before claiming the new
+source case: expected142 cases/139 Passed/three Incomplete/211 witnesses.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

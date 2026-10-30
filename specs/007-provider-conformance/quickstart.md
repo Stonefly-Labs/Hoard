@@ -1335,6 +1335,18 @@ The first original10/13 attempt rejects later Host packing against the exact
 source-feed frame. Version preparation is now moved before source compilation,
 without relaxing that invariant. Bounded metadata-only fixture staging is delivered;
 its physical assertion/common capture/native acceptance remain unfinished.
+Immutable `cc9f36d` subsequently passes all10 live/13 released controls. Separate
+readonly inspection verifies24 original compiler records and142 cases/138 Passed/
+four Incomplete/210 witnesses, with both source scopes and resources-only report
+differences. Reader checkpoint `9697ba5` passes825 host tooling tests in428.906
+seconds with30 native-only skips, not native full-profile acceptance.
+The source bundle is now selected in both common runtime inventories and checked
+against the original held compiler records before scope capture. Its new shared
+C# assertion checks all24 actual PE/PDB/source maps and original compiler parents
+as metadata, without loading those images as runtime dependencies. The source
+logical row binds that witness and both frozen ZIPs. Host279 focused checks,
+managed compilation and formatting pass; fresh11/13 native verification remains
+required before claiming the expected139 Passed/three Incomplete/211 witnesses.
 
 ## Offline Correspondence Inspection
 

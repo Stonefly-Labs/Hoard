@@ -1122,11 +1122,23 @@ independent source-recipe admission and native verification remain unfinished.
 Immutable `babad47` now passes all8/13 native controls; separate readonly replay
 verifies all24 original compiler records and current-source binding. Independent
 source-recipe inspection and original live-to-released ownership are implemented
-with237 focused checks passing; fresh10/13 native controls remain required.
+with237 focused checks passing. Immutable `cc9f36d` now passes all10 live/
+13 released native controls; separate readonly replay verifies24 original compiler
+records,142 cases/138 Passed/four Incomplete/210 witnesses, both source scopes and
+resources-only report differences.
 Their first original run rejects a later Host archive added after the source feed
 was frozen. Version preparation now occurs before source compilation; the exact
-feed invariant is preserved. Bounded metadata-only fixture staging is implemented,
-but its physical source-case assertion and native acceptance remain unfinished.
+feed invariant is preserved. At the pushed `9697ba5` reader checkpoint, the full
+host tooling suite passes825 tests in428.906 seconds with30 explicit native skips;
+this is not native full-profile acceptance.
+The source metadata bundle now freezes in both existing runtimes, with exact
+entry/image/compiler checks against original held records before scope capture.
+A shared C# assertion inspects all24 actual PE/PDB pairs, canonical source documents
+and original compiler parents without loading these images as dependencies.
+Source-case derivation binds that physical witness and both frozen bundles.
+Host279 focused checks, managed compilation and formatting pass; fresh11/13 native
+controls must establish the expected139 Passed/three Incomplete/211 witnesses.
+No new native source-case pass or full qualification is claimed yet.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

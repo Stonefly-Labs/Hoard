@@ -318,6 +318,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     path.write_bytes(("modeled source-control input " + relative).encode("ascii"))
                     runtime_paths.append(path.relative_to(root).as_posix())
                 (fixture / "unselected.json").write_bytes(b"not a selected control")
+                bundle = candidate / folder / sdk.baselines.SOURCE_RECIPE_RUNTIME
+                bundle.write_bytes(b"original metadata-only source fixture")
+                runtime_paths.append(bundle.relative_to(root).as_posix())
             (root / "proofs").mkdir()
             (root / "proofs/sdk-vstest-inputs.json").write_bytes(b"selected-sdk")
             lock = candidate / sdk.VERSION_TESTS / "packages.lock.json"
@@ -1948,6 +1951,39 @@ def native_compatibility_origin_tests(evaluation, *, released):
                     receipt_path.chmod(0o400)
                 self.assertEqual(owner.read_execution_record(sequence), record_raw)
 
+            def test_resealed_source_fixture_cannot_replace_original_compiler_images(self):
+                import io
+                import zipfile
+                import conformance_baselines as baselines
+
+                observation = evidence.load_json(evaluation.source_recipes_data)
+                binding = baselines.inspect_source_recipe_fixture(owner.root, inputs, observation)
+                originals = {owner.root / path: (owner.root / path).read_bytes()
+                             for path in binding["runtimePaths"]}
+                try:
+                    with zipfile.ZipFile(io.BytesIO(next(iter(originals.values())))) as archive:
+                        entries = [(entry, archive.read(entry)) for entry in archive.infolist()]
+                    changed = io.BytesIO()
+                    with zipfile.ZipFile(changed, "w", compression=zipfile.ZIP_STORED) as archive:
+                        for entry, raw in entries:
+                            archive.writestr(entry, raw + b"changed" if entry.filename.endswith(".dll") else raw)
+                    frame = evidence.load_json(evidence.canonical_bytes(inputs))
+                    for path in originals:
+                        path.chmod(0o600)
+                        path.write_bytes(changed.getvalue())
+                        path.chmod(0o400)
+                        frame["runtimeAssemblies"][path.relative_to(owner.root).as_posix()] = (
+                            hashlib.sha256(changed.getvalue()).hexdigest())
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                        baselines.inspect_source_recipe_fixture(owner.root, frame, observation)
+                finally:
+                    for path, raw in originals.items():
+                        path.chmod(0o600)
+                        path.write_bytes(raw)
+                        path.chmod(0o400)
+                self.assertEqual(
+                    baselines.inspect_source_recipe_fixture(owner.root, inputs, observation), binding)
+
         return unittest.TestLoader().loadTestsFromTestCase(LiveNativeCompatibilityOriginTests)
 
     report = evidence.load_json((owner.root / "proofs/compatibility-diagnostic-summary.json").read_bytes())
@@ -1962,8 +1998,8 @@ def native_compatibility_origin_tests(evaluation, *, released):
             self.assertFalse(observed["profileComplete"])
             self.assertEqual(
                 (observed["architectureParameters"], observed["versionParameters"], observed["binaryParameters"]),
-                (88, 114, 8))
-            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (138, 4))
+                (88, 114, 9))
+            self.assertEqual((observed["passedCases"], observed["incompleteCases"]), (139, 3))
 
         def test_both_original_source_fixture_scopes_are_frozen_in_common_inputs(self):
             import conformance_sdk_checks as checks
@@ -1987,6 +2023,14 @@ def native_compatibility_origin_tests(evaluation, *, released):
                                  {prefix + name for name in names})
                 self.assertTrue(all(inputs["runtimeAssemblies"].get(row["runtime"]) == row["sha256"]
                                     for row in stage["files"]))
+            binding = evidence._compatibility_source_recipe_binding(inputs)
+            _, raw = evidence._readonly_report_proof(owner.root, "proofs/source-recipe-staging.json")
+            staged = evidence.load_json(raw)
+            self.assertEqual(len(staged), 2)
+            self.assertEqual({row["runtime"] for row in staged}, set(binding["runtimePaths"]))
+            self.assertTrue(all(row["sha256"] == binding["sha256"] for row in staged))
+            self.assertTrue(all(row["sourceSummarySha256"] == report["sourceRecipeOrigin"]["summarySha256"]
+                                for row in staged))
 
         def test_copied_evaluation_cannot_replace_original_identity(self):
             with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
@@ -2068,7 +2112,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
             raw = path.read_bytes()
             report = evidence.load_json(raw)
             for defect in ("missing-case", "optimistic", "resources", "derivation", "quality-derivation",
-                           "binary-derivation", "source-derivation", "break-quality-derivation"):
+                           "binary-derivation", "source-derivation", "recipe-derivation", "break-quality-derivation"):
                 changed = evidence.load_json(raw)
                 if defect == "missing-case":
                     changed["results"].pop(0)
@@ -2082,6 +2126,7 @@ def native_compatibility_origin_tests(evaluation, *, released):
                         "quality-derivation": "proofs/compatibility-QC-22-",
                         "binary-derivation": "proofs/compatibility-COMPATIBILITY-binary-break-",
                         "source-derivation": "proofs/compatibility-COMPATIBILITY-source-break-",
+                        "recipe-derivation": "proofs/compatibility-COMPATIBILITY-source-attempt-",
                         "break-quality-derivation": "proofs/compatibility-QC-26-"}[defect]
                     name = next(name for name in changed["proofs"] if name.startswith(prefix))
                     changed["proofs"][name] = "0" * 64
@@ -2101,6 +2146,9 @@ def native_compatibility_origin_tests(evaluation, *, released):
                     "proofs/compatibility-COMPATIBILITY-source-break-", "proofs/compatibility-QC-26-"):
                 name = next(name for name in report["proofs"] if name.startswith(prefix))
                 self.mutate_and_restore(owner.root / name, "ProofMismatch")
+            name = next(name for name in report["proofs"] if name.startswith(
+                "proofs/compatibility-COMPATIBILITY-source-attempt-"))
+            self.mutate_and_restore(owner.root / name, "ProofMismatch")
 
     return unittest.TestLoader().loadTestsFromTestCase(ReleasedNativeCompatibilityOriginTests)
 

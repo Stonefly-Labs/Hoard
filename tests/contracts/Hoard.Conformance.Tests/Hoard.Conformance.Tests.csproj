@@ -13,6 +13,8 @@
                       LogicalName="Hoard.Conformance.FrozenInventory" />
     <EmbeddedResource Include="../../fixtures/conformance/Compatibility/source-baseline.json"
                       LogicalName="Hoard.Conformance.CompatibilitySourceBaseline" />
+    <EmbeddedResource Include="../../fixtures/conformance/baselines/source-consumers.json"
+                      LogicalName="Hoard.Conformance.SourceRecipePolicy" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj"

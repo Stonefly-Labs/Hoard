@@ -2127,6 +2127,7 @@ class NativeCompatibilitySources:
         return evidence.load_json(self._source_break)
 
     def capture_scope(self, inputs, scope, summary, prepared):
+        from conformance_baselines import inspect_source_recipe_fixture
         from conformance_sdk_checks import inspect_compatibility_runtime_scope
 
         run = self._run
@@ -2142,6 +2143,8 @@ class NativeCompatibilitySources:
                 or inputs["sourceManifestSha256"]
                 != evidence.load_json(self._source_recipes)["candidateSourceSha256"]):
             raise evidence.ConformanceError("ProofMismatch")
+        if not self._scopes:
+            inspect_source_recipe_fixture(run.root, inputs, evidence.load_json(self._source_recipes))
         observed, commands, _ = inspect_compatibility_runtime_scope(run.root, inputs, scope, summary, prepared)
         if evidence.canonical_bytes(observed) != evidence.canonical_bytes(summary):
             raise evidence.ConformanceError("ProofMismatch")

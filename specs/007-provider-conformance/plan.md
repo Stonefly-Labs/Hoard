@@ -5182,6 +5182,48 @@ Currentcc9f36d metadata job123953694593 instead rejects at the initial SDK probe
 deadline, before proof reads; no claim that parallel reads repair that distinct
 original failure is made.
 
+The separate immutable `cc9f36d` phase repair now passes all10 live/13 released
+controls in original attemptd26622eb0cb746659f71397bd9ec9b3a: exit0,
+471526.4642120019ms, initial scratch197135413248 bytes, no extra SDK prewarming.
+A separate readonly container reconstructs24 original compiler records, exact
+source correspondence and142 cases/138 Passed/four Incomplete/210 witnesses,
+QC-26 Passed, both13-file source scopes and resources-only differences.
+Original packet SHA256:
+`165949df98a5b3c5d330bdce57ccd7b11ed25c5ecef17f5238a0fb94e60fe976`.
+Source packet/frame SHA256:
+`a7740b5859761aef5a8e3f0f5b63cd2ba71b3f93af5a63e74f0e25f09e2f92c3` /
+`94b68b62c98f5a1b86b987a63c11077fbfb4370a170b7d57e70ae1d39df86484`.
+Active/released report SHA256:
+`da214d5e5a1bbb72f6ecb0f652234f6ccb6688740609ce4279ac767bcf901307` /
+`a0093344a5cb15b4d68aef195e7bcdb00446fa2bbdd03915fd7985b2c502cfa6`.
+This correspondence replay supplies no new native authority.
+At reader checkpoint9697ba5, `python3 -m unittest discover -s tests/tooling -q`
+passes825 tests in428.906 seconds with30 explicit native-only skips. It is not
+native full-profile tooling acceptance. Originalcc9f36d artifact job123953694676
+also passes4 live/8 released/9 retained controls; its separate initial metadata
+probe failure remains a failed original attempt.
+
+The source ZIP now stages in both existing consumer runtimes and its fixed root
+filename is selected in common RunInputs. Before the first original scope, held
+source-recipe authority independently verifies exact ZIP metadata/entry set and
+original image/compiler/frame hashes, plus baseline/current source-map equality.
+The new C# fact reads all24 PE/PDB pairs as metadata, checks canonical authored
+source documents and generated boundaries, and verifies compiler parent
+inputs/outputs/exit/order/owner correspondence. Shared PE/PDB identity extraction
+preserves the prior source-break assertion. The logical source row now binds that
+physical witness and both frozen bundle paths/hash, without adding loaded images
+or changing128-image/ZIP/read bounds. Native controls additionally reseal changed
+image bytes, check both bundle scopes and challenge source-case derivations.
+The missing-admission/capture/witness regressions each fail first; the focused
+admission/baseline/composition/SDK/CI selection passes279 tests in36.702 seconds.
+`dotnet build tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj
+--no-restore --no-dependencies --verbosity quiet -p:UseSharedCompilation=false
+-nodeReuse:false` passes with zero warnings/errors. Targeted
+`dotnet format whitespace` with `--no-restore --verify-no-changes` passes;
+refreshed `python3 scripts/conformance_case_catalog.py --check-sdk` and
+`git diff --check` pass. Fresh11 live/13 released native verification is required:
+expected142 cases/139 Passed/three Incomplete/211 witnesses, not yet observed.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

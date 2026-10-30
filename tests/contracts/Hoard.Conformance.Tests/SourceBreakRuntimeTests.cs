@@ -1,6 +1,4 @@
 using System.Reflection;
-using System.Reflection.Metadata;
-using System.Reflection.PortableExecutable;
 using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text;
@@ -102,20 +100,14 @@ public sealed class SourceBreakRuntimeTests
     private static void VerifySource(string image, string source, JsonElement sources)
     {
         using var imageStream = File.OpenRead(Image(image));
-        using var pe = new PEReader(imageStream);
-        var entry = Assert.Single(pe.ReadDebugDirectory(), value => value.Type == DebugDirectoryEntryType.CodeView);
-        var codeView = pe.ReadCodeViewDebugDirectoryData(entry);
         using var pdbStream = File.OpenRead(Image(Path.ChangeExtension(image, ".pdb")));
-        using var provider = MetadataReaderProvider.FromPortablePdbStream(pdbStream);
-        var reader = provider.GetMetadataReader();
-        var header = reader.DebugMetadataHeader ?? throw new InvalidOperationException("ProofMismatch");
-        var content = new BlobContentId(header.Id);
-        Assert.Equal(codeView.Guid, content.Guid);
-        Assert.Equal(entry.Stamp, content.Stamp);
-        var document = Assert.Single(reader.Documents.Select(reader.GetDocument),
-            value => reader.GetString(value.Name).Replace('\\', '/') == "/_/" + source);
-        Assert.Equal(new Guid("8829d00f-11b8-4213-878b-770e8597ac16"), reader.GetGuid(document.HashAlgorithm));
-        Assert.Equal(sources.GetProperty(source).GetString(), Convert.ToHexStringLower(reader.GetBlobBytes(document.Hash)));
+        SourceImageProvenance.Verify(imageStream, pdbStream, (_, reader) =>
+        {
+            var document = Assert.Single(reader.Documents.Select(reader.GetDocument),
+                value => reader.GetString(value.Name).Replace('\\', '/') == "/_/" + source);
+            Assert.Equal(new Guid("8829d00f-11b8-4213-878b-770e8597ac16"), reader.GetGuid(document.HashAlgorithm));
+            Assert.Equal(sources.GetProperty(source).GetString(), Convert.ToHexStringLower(reader.GetBlobBytes(document.Hash)));
+        });
     }
 
     private static string Image(string relative)

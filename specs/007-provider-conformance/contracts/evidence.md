@@ -1287,6 +1287,21 @@ fixture data, not loaded code. It does not prune any existing runtime closure or
 raise its limits. Physical stream assertions/common capture and native verification
 remain unfinished; no logical case is promoted.
 
+The phase-repaired immutable `cc9f36d` now passes all10 live/13 released original
+controls. Independent readonly replay reconstructs24 original compiler records,
+current-source equality and142 cases/138 Passed/four Incomplete/210 witnesses,
+with resources-only report differences. This does not qualify a profile.
+The next source-case increment binds the fixed source ZIP in both runtime
+inventories. Original capture must verify its exact stored entries, metadata,
+image/compiler/frame hashes and historical/current source maps against the held
+recipe observation before the first scope. Rehashed changed images still reject.
+A shared actual C# witness checks all24 PE/PDB pairs, authored/generated document
+boundaries and original compiler parents as streams, not loaded dependencies.
+Source derivation includes both frozen bundle paths/hash and baseline/current
+source bindings; retained controls check its original transport and derivations.
+Host checks/build/format pass. Fresh11/13 native controls and actual139/3/211
+report counts remain unverified; binary/predecessor/QC-25 still lack completion.
+
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite
    durations. Treat import exceptions as safe classified failures, not success.

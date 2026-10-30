@@ -44,7 +44,43 @@ class ConformanceAdmissionTests(unittest.TestCase):
             inputs["runtimeAssemblies"].update({
                 prefix + baselines.SOURCE_BREAK_RUNTIME + "/" + name: hashlib.sha256(name.encode()).hexdigest()
                 for name in baselines.SOURCE_BREAK_RUNTIME_FILES})
+            inputs["runtimeAssemblies"][prefix + baselines.SOURCE_RECIPE_RUNTIME] = "d" * 64
         return inputs
+
+    def test_source_case_requires_the_physical_recipe_witness_and_both_frozen_metadata_bundles(self):
+        import conformance_case_catalog as catalog
+        import conformance_baselines as baselines
+
+        inputs = self.compatibility_inputs()
+        case = next(row for row in catalog.expected_cases("compatibility")
+                    if row.case_id == "COMPATIBILITY" and row.matrix_id == "source")
+        self.assertEqual(len(case.witnesses), 1)
+
+        def material(frame):
+            return evidence.compatibility_case_material(
+                frame, case_id="COMPATIBILITY", matrix_id="source", witnesses=[{
+                    **self.report()["witnesses"][0], "executionId": str(uuid.uuid4()),
+                    "testIdentity": case.witnesses[0], "bindingId": "none", "matrixId": "binary-runtime",
+                    "inputSha256": evidence.digest(frame), "startedMs": 1, "endedMs": 2}],
+                sequence=1, started_ms=0, ended_ms=3)
+
+        observed = material(inputs)
+        proof, = observed["sourceProofs"].values()
+        binding = evidence.load_json(proof)["sourceRecipes"]
+        self.assertEqual(len(binding["runtimePaths"]), 2)
+        self.assertEqual(binding["sha256"], "d" * 64)
+        self.assertEqual(binding["candidateSourceSha256"], inputs["sourceManifestSha256"])
+        for defect in ("default-omitted", "package-omitted", "changed-package"):
+            changed = copy.deepcopy(inputs)
+            paths = [path for path in changed["runtimeAssemblies"]
+                     if path.endswith("/" + baselines.SOURCE_RECIPE_RUNTIME)]
+            if defect == "changed-package":
+                changed["runtimeAssemblies"][paths[1]] = "e" * 64
+            else:
+                del changed["runtimeAssemblies"][paths[1 if defect == "package-omitted" else 0]]
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    evidence.ConformanceError, "^ProofMismatch$"):
+                material(changed)
 
     def test_binary_break_case_rejects_resealed_baseline_or_runtime_substitutions(self):
         import conformance_case_catalog as catalog
@@ -9227,13 +9263,15 @@ class ConformanceBaselineTests(unittest.TestCase):
         packet_path = self.root / "proofs/source-compatibility.json"
         packet_path.write_bytes(raw)
         packet_path.chmod(0o400)
-        runtime = self.root / "stores/snapshot/runtime"
+        runtime = self.root / (
+            "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/bin/Release/net10.0")
         runtime.mkdir(parents=True)
         staged = self.baselines.stage_source_recipe_fixture(run, runtime, seal_sha, msbuild=prefix)
         bundle = self.root / staged["runtime"]
         self.assertEqual(staged["sourceSummarySha256"], observed["summarySha256"])
         self.assertEqual(staged["sha256"], evidence.file_sha256(bundle))
         with zipfile.ZipFile(bundle) as archive:
+            fixture_entries = archive.infolist()
             expected = {"control.json": raw, "inputs.json": (
                 self.root / self.baselines.SOURCE_COMPATIBILITY_INPUTS).read_bytes()}
             for index, row in enumerate(packet["recipes"]):
@@ -9251,6 +9289,37 @@ class ConformanceBaselineTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             self.baselines.stage_source_recipe_fixture(run, runtime, seal_sha, msbuild=prefix)
         self.assertEqual(staged["sha256"], evidence.file_sha256(bundle))
+        package_runtime = self.root / (
+            "stores/snapshot/tests/contracts/Hoard.Conformance.Tests/bin/package-diagnostic/Release/net10.0")
+        package_runtime.mkdir(parents=True)
+        package_staged = self.baselines.stage_source_recipe_fixture(
+            run, package_runtime, seal_sha, msbuild=prefix)
+        inputs = ConformanceAdmissionTests().compatibility_inputs()
+        inputs["sourceManifest"], inputs["sourceManifestSha256"] = sources, evidence.digest(sources)
+        baseline = next(row for row in inputs["baselines"] if row["apiScope"] == "f06")
+        baseline["sourceSha256"] = entry["sourceSha256"]
+        inputs["runtimeAssemblies"].update({
+            row["runtime"]: row["sha256"] for row in (staged, package_staged)})
+        binding = self.baselines.inspect_source_recipe_fixture(self.root, inputs, observed)
+        self.assertEqual(binding["sha256"], staged["sha256"])
+        self.assertEqual(len(binding["runtimePaths"]), 2)
+        omitted = copy.deepcopy(inputs)
+        del omitted["runtimeAssemblies"][package_staged["runtime"]]
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            self.baselines.inspect_source_recipe_fixture(self.root, omitted, observed)
+        corrupted = copy.deepcopy(expected)
+        image = next(name for name in corrupted if name.endswith(".dll"))
+        corrupted[image] += b"changed original compiler image"
+        bundle.chmod(0o600)
+        with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_STORED) as archive:
+            for info in fixture_entries:
+                archive.writestr(info, corrupted[info.filename])
+        bundle.chmod(0o400)
+        resealed = copy.deepcopy(inputs)
+        for row in (staged, package_staged):
+            resealed["runtimeAssemblies"][row["runtime"]] = evidence.file_sha256(bundle)
+        with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+            self.baselines.inspect_source_recipe_fixture(self.root, resealed, observed)
         (feed / "Hoard.LaterRuntime.0.1.0.nupkg").write_bytes(b"later isolated runtime preparation")
         with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
             self.baselines.inspect_source_recipes(
