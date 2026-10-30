@@ -1180,6 +1180,10 @@ reproduces that TypeError; the two values are now separate and239 focused checks
 pass. Fresh13/14 acceptance is still required. New CI also preserves a separate
 5.061-second artifact read rejection and a15-minute tooling cancellation; neither
 is a pass or a local disk-capacity blocker.
+Proof admission now refills a completed reader slot instead of waiting for the
+oldest read while other readers sit idle. The slow-first/fifth-read regression
+fails the old FIFO drain;224 focused checks pass. Four-reader, complete-inventory,
+five-second and256MiB bounds are unchanged; fresh CI timing remains unverified.
 A compiled-document reader also binds closed source-document receipts to the
 selected compiler row and current DLL/PDB bytes. The repository-owned BuildInputs
 `pdb-documents` producer verifies the actual DLL's CodeView identity, portable-PDB

@@ -1341,6 +1341,10 @@ inspection; the reproducing transport regression and239 focused checks pass.
 The full original host suite passes828 tests with31 native skips; fresh13/14
 acceptance remains required. Neither actual Released resources nor generated
 reports bypass a failed origin verifier.
+Proof admission drains a completed reader, not necessarily the oldest one,
+before refilling a bounded slot. The slow-first/fifth-file regression preserves
+every hash and the four-reader/five-second/256MiB bounds;224 focused checks pass.
+No failed original CI deadline is relabeled, and fresh timing remains required.
 
 1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
    Reject unknown field/status/schema versions, malformed Unicode or non-finite

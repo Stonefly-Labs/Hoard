@@ -2111,6 +2111,61 @@ class ConformanceInputTests(unittest.TestCase):
             evidence.proof_manifest(actual)
         self.assertTrue(mutated.is_set())
 
+    def test_proof_reader_refills_completed_slots_before_the_oldest_read_finishes(self):
+        import threading
+
+        actual = self.parent / "slow-first-proofs"
+        actual.mkdir()
+        for index in range(8):
+            (actual / f"proof-{index}.json").write_bytes(("actual proof " + str(index)).encode())
+        expected = {path.name: evidence.file_sha256(path) for path in actual.iterdir()}
+        original_fdopen = os.fdopen
+        original_submit = evidence.ThreadPoolExecutor.submit
+        fifth_read, lock = threading.Event(), threading.Lock()
+        admissions = active = peak = 0
+        first_inode = fifth_inode = None
+
+        def submit(pool, function, *args, **kwargs):
+            nonlocal admissions, first_inode, fifth_inode
+            admissions += 1
+            if admissions == 1:
+                first_inode = args[-1].st_ino
+            elif admissions == 5:
+                fifth_inode = args[-1].st_ino
+            return original_submit(pool, function, *args, **kwargs)
+
+        def fdopen(*args, **kwargs):
+            source = original_fdopen(*args, **kwargs)
+            original_read = source.read
+            inode = os.fstat(source.fileno()).st_ino
+
+            def read(size):
+                nonlocal active, peak
+                with lock:
+                    active += 1
+                    peak = max(peak, active)
+                try:
+                    if inode == fifth_inode:
+                        fifth_read.set()
+                    if inode == first_inode and not fifth_read.wait(1):
+                        raise OSError("Completed proof readers were not refilled")
+                    return original_read(size)
+                finally:
+                    with lock:
+                        active -= 1
+
+            source.read = read
+            return source
+
+        with mock.patch.object(evidence.os, "fdopen", side_effect=fdopen), mock.patch.object(
+                evidence.ThreadPoolExecutor, "submit", new=submit):
+            observed = evidence.proof_manifest(actual)
+        self.assertTrue(fifth_read.is_set())
+        self.assertEqual(observed, expected)
+        self.assertEqual(admissions, 8)
+        self.assertLessEqual(peak, 4)
+        self.assertEqual(active, 0)
+
     def test_proof_reader_submission_failure_releases_admitted_directory_descriptors(self):
         actual = self.parent / "unavailable-reader-proofs"
         actual.mkdir()

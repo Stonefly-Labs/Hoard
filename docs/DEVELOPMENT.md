@@ -9417,6 +9417,17 @@ counts are already repaired in408a2d3, but fresh CI acceptance is not establishe
 These failures do not imply a local capacity blocker; no bound or inventory is
 relaxed and no failed/cancelled outcome is erased.
 
+Proof admission now consumes any completed future, in stable admission order
+among completed futures, before refilling one of its four bounded slots. The
+old FIFO drain could wait on the first slow read while three completed readers
+sat idle. A deterministic actual-file regression holds the first read until
+the fifth file is read: old FIFO rejects ProofMismatch; completion-driven
+refill succeeds with all eight exact hashes and at most four concurrent reads.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceInputTests test_conformance_sdk_checks test_conformance_cli test_conformance_ci`
+passes224 tests in33.840 seconds; `git diff --check` passes. All existing mutation,
+descriptor cleanup, byte/count/depth/entry/selection guards and the five-second/
+256MiB bounds remain. This is not yet a fresh CI deadline acceptance claim.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

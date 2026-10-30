@@ -1380,6 +1380,9 @@ The focused transport regression reproduces it; distinct locals restore the
 checks and239 focused tests pass. Fresh13/14 acceptance remains required.
 New CI artifact read-deadline rejection and tooling cancellation are preserved,
 not treated as passes or a local disk-capacity blocker.
+Completion-driven proof-reader refill fixes reproduced FIFO slot starvation;
+224 focused checks pass with unchanged four-reader/five-second/256MiB and full
+inventory guards. Fresh CI deadline acceptance is still required.
 
 ## Offline Correspondence Inspection
 

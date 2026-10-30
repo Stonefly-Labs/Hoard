@@ -5355,6 +5355,18 @@ Compatibility123974955524 rejects EvidenceIncomplete at the embedded gate.
 remains open. No bound, selected inventory or failed/cancelled history is relaxed;
 these are not evidence of a local disk-capacity blocker.
 
+The proof reader's FIFO drain has a separately reproduced head-of-line stall.
+A deterministic actual-file test holds the first read until the fifth file is
+read: old FIFO rejects ProofMismatch after completed workers remain idle; the
+completion-driven drain reads all eight files with exact hashes and no more than
+four active reads. Stable admission order chooses among already completed
+futures; one slot is refilled at a time. Full selection, no-follow/inode/mode/
+size/mtime, count/bytes/depth/entry, cancellation/descriptor cleanup and five-second/
+256MiB guards remain unchanged. No pruning, prewarming or bound changes.
+`PYTHONPATH=scripts:tests/tooling python3 -m unittest -q test_conformance_evidence.ConformanceInputTests test_conformance_sdk_checks test_conformance_cli test_conformance_ci`
+passes224 tests in33.840 seconds; `git diff --check` passes. Fresh actual CI timing
+is still required; original failures remain failures.
+
 ### Compatibility logical case linkage and released presentation
 
 The separate immutable `b5b68c28221f40dd9bec0e708bb374790d389f63`

@@ -1,7 +1,7 @@
 """Strict test-only F-07 evidence admission; no production certification."""
 
 from collections.abc import Mapping
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from contextlib import contextmanager
 from dataclasses import dataclass
 import argparse
@@ -1744,7 +1744,10 @@ def proof_manifest(directory, *, exclude_outputs=False, include_file=None, inclu
                 os.close(parent)
 
     def drain():
-        pending.pop(0).result()
+        completed, _ = wait(pending, return_when=FIRST_COMPLETED)
+        finished = next(future for future in pending if future in completed)
+        pending.remove(finished)
+        finished.result()
 
     def visit(descriptor, pool, prefix="", depth=0):
         nonlocal reserved_bytes, selected_files, entries_seen
