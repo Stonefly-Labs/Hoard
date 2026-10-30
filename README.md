@@ -51,10 +51,11 @@ native-owner qualification and its receipt. The missing catalog import in its
 new native control is corrected, with a cheap regression exercising that exact
 generated control for both categories. At exact `984bb2e`, the real Linux
 artifact command and separate-process receipt verification pass103 cases
-(99 Passed,4 frozen exclusions) and263 witnesses. Metadata instead encounters
-a separate native-control output failure and remains under investigation.
-This finite artifact result is not full-baseline qualification; all failed
-evidence remains retained.
+(99 Passed,4 frozen exclusions) and263 witnesses. The isolated metadata command
+and separate verification also pass102 cases (93 Passed,9 exclusions) and141
+witnesses. An earlier concurrent metadata output failure remains retained and
+unexplained; no timing repair is claimed. These finite category results are not
+full-baseline qualification.
 Other public routes remain nonqualifying and T071..T086 remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

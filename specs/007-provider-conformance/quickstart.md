@@ -9,8 +9,9 @@ original native execution to strict finite fixture qualification: exit0 requires
 the original Released owner/evaluation, unchanged source, complete immutable
 catalog/results/proofs and exact retained qualified JSON/JUnit/Markdown outputs.
 At exact `984bb2e`, actual Linux artifact execution and separate-process receipt
-verification pass103 cases/263 witnesses. Metadata confirmation remains under
-investigation after a distinct native-control output failure. Original diagnostic
+verification pass103 cases/263 witnesses; isolated metadata execution and
+independent verification pass102 cases/141 witnesses at that same source.
+An earlier concurrent metadata failure remains unexplained. Original diagnostic
 reports remain unchanged. Composition, compatibility, focused/custom bindings,
 harness and the full baseline remain nonqualifying; offline correspondence does
 not yet consume the separately trusted native-owner receipt.

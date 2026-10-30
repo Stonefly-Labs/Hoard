@@ -9851,6 +9851,16 @@ seconds; its producer file is absent and both source worktrees remain clean.
 The original failure is preserved while one isolated unchanged-source comparison
 runs with identical budgets. A pass would establish intermittency, not a repair.
 
+The isolated comparison at unchanged `984bb2e` then exits0:102 metadata cases
+(93 Passed,9 frozen NotApplicable),141 witnesses and all4 live/15 released/
+9 retained controls. Separate-process readonly external-receipt verification
+passes report SHA-256
+`825a513093d233c65cf73e4470fcbbdcbec145ad7c1882df46f11fa95a38c50f`.
+Both categories therefore verify the import correction through the actual
+public path. The earlier metadata failure stays failed and unexplained; neither
+concurrency causation nor a timing repair is proven. Separate invocation groups
+are not a five-profile/shared-context baseline.
+
 Original `bba48b8` foundations native job also passes821 tests, zero skips,
 failures, errors or unexpected diagnostic bytes; the artifact job passes4 live/
 8 released/9 retained controls too. The overall workflow fails only SDK's reader

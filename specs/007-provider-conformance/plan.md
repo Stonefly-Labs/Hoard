@@ -96,6 +96,19 @@ One unchanged-source, unchanged-budget comparison is now running without the
 artifact workload. A later pass would demonstrate intermittency, not silently
 repair or relabel this failed run. T071..T086 remain open.
 
+That isolated metadata comparison at the same `984bb2e` source exits0:
+102 cases,93 Passed,9 frozen NotApplicable,141 witnesses and all4 live/
+15 released/9 retained controls pass. A separate fresh Python process with
+readonly evidence and the externally observed original-owner receipt also
+verifies report SHA-256
+`825a513093d233c65cf73e4470fcbbdcbec145ad7c1882df46f11fa95a38c50f`.
+Both categories now exercise the corrected public-completion method genuinely,
+not only its unit wiring stub. The earlier concurrent metadata failure remains
+failed and unexplained; this comparison does not establish a timing repair or
+prove that concurrency caused it. These separate invocations do not establish
+a shared-context five-profile baseline, offline CLI qualification or T071
+completion.
+
 ### MP46 lifecycle setup race
 
 The unchanged `a71fab5` source subsequently passes both hosted diagnostic

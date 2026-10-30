@@ -21,8 +21,9 @@ Incomplete/NotQualified, including their explicit JUnit qualification error.
 Complete built-in runs now additionally require their original Released native
 owner/evaluation to publish finite fixture-qualified projections and return0;
 at exact `984bb2e`, actual Linux artifact execution and separate-process receipt
-verification pass103 cases/263 witnesses. Metadata confirmation remains under
-investigation after a distinct native-control output failure. They deny full
+verification pass103 cases/263 witnesses; isolated metadata execution and
+independent verification pass102 cases/141 witnesses at that same source.
+An earlier concurrent metadata failure remains unexplained. They deny full
 baseline qualification. Neither the qualified projections nor the native-owner
 receipt are wired into this separate contributor route or qualifying offline
 verification. Do not infer complete private-file sanitation from a safe summary.

@@ -1083,8 +1083,11 @@ copied token, modeled owner, changed source/publication or retained live resourc
 cannot qualify. Exact `984bb2e` artifact execution now passes the actual public
 command, all4 live/15 released/9 retained controls and a separate-process reader
 using the externally observed original-owner receipt:103 cases/263 witnesses,
-with no baseline qualification. Metadata instead rejects a missing producer
-output in native noncooperation; its failed evidence remains retained.
+with no baseline qualification. The isolated metadata comparison at that source
+also passes its public path, all28 controls and separate-process readback:
+102 cases/141 witnesses. The earlier concurrent metadata invocation's missing
+native-noncooperation output remains a retained, unexplained failure; no timing
+repair or shared-context baseline is inferred.
 The coordinator schema and offline qualification remain unchanged.
 `native_category_qualification_receipt` first verifies the exact qualified
 derivation under its original Released owner/evaluation. Its closed record
