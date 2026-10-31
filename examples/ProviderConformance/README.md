@@ -153,6 +153,9 @@ Its explicit faulty mode requires all three named assertions, not unknown
 failures, and preserves the same 76-row/86-origin inventory. The inputs below
 come from the diagnostic packet itself, not an independently trusted profile
 assignment; this does not grant qualification or reconstruct an original owner.
+Replay also requires all 16 exact metadata-argument observations. The consumer
+emits its origin and recorded arguments in `finally`, including after a named
+assertion failure; older packets missing those arguments cannot be reused.
 
 ```bash
 PYTHONPATH=scripts python3 - "$work" <<'PY'

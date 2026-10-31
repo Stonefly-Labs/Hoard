@@ -413,11 +413,15 @@ def category_common_consumer_tests(profile):
         if f'(provider: "{binding}"' in identity})
 
 
-def metadata_argument_expectations(*, original):
+def metadata_argument_expectations(*, original, binding_ids=None):
     """Frozen (source-node index, argument kind, argument value) assignments."""
     if type(original) is not bool:
         raise ConformanceError("WitnessMissing")
-    identities = ORIGINAL_METADATA_WITNESSES if original else metadata_common_consumer_tests()
+    if original and binding_ids is not None:
+        raise ConformanceError("WitnessMissing")
+    bindings = ("memory", "sqlite") if binding_ids is None else binding_ids
+    identities = (ORIGINAL_METADATA_WITNESSES if original else
+                  metadata_common_consumer_origin_counts(binding_ids=bindings))
     expected = {identity: () for identity in identities}
     continuation = (("null", "Null"), ("omitted", "Omitted"), ("wrong-type", "WrongType"),
                     ("empty", "Empty"), ("odd-hex", "OddHex"), ("invalid-hex", "InvalidHex"))
@@ -444,7 +448,7 @@ def metadata_argument_expectations(*, original):
                      (0, "schema-layout", "unrelated"), (1, "schema-layout", "partial"))
     else:
         prefix = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
-        for provider in ("memory", "sqlite"):
+        for provider in bindings:
             for method, kind, values in (
                     ("Observed_continuation_corruption_preserves_actual_pages", "continuation-corruption",
                      tuple(value for _, value in continuation)),

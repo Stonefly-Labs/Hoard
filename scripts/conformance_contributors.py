@@ -1066,6 +1066,15 @@ def inspect_metadata_binding_runtime(root, *, expected_inputs, expected_fault="n
             raise evidence.ConformanceError("ProofMismatch")
     if sequences != sorted(set(sequences)) or observed is None or discovery_completion is None:
         raise evidence.ConformanceError("ProofMismatch")
+    from conformance_case_catalog import metadata_argument_expectations
+    from conformance_sources import _metadata_argument_parameters
+
+    parameters = metadata_argument_expectations(original=False, binding_ids=(binding_id,))
+    for witness in observed["witnesses"]:
+        execution = witness["executionId"]
+        _metadata_argument_parameters(
+            parameters[witness["testIdentity"]], observed["sessionOrigins"][execution],
+            observed["metadataArguments"][execution], original=False)
     witnesses = observed["witnesses"]
     failed = {row["testIdentity"] for row in witnesses if row["status"] == "Failed"}
     expected_failures = ({identity for identity in expected if any(

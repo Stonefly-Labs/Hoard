@@ -16,6 +16,7 @@ CATALOG_FRAME = "proofs/harness-catalog.json"
 CATALOG_INPUTS = "proofs/harness-inputs.json"
 FROZEN_INPUTS = "proofs/harness-frozen-inputs/"
 CONTRIBUTOR_FRAME = "proofs/harness-contributors.json"
+CATEGORY_CONTROL_FRAME = "proofs/harness-category-controls.json"
 
 
 def _frozen_inputs(inputs):
@@ -410,5 +411,143 @@ def inspect_contributor_journey(root, *, expected_inputs):
         raise evidence.ConformanceError("InputChanged")
     return MappingProxyType({
         "qualification": False, "scope": "harness-contributor-journey", "code": "None",
+        "runs": tuple(results), "proofs": MappingProxyType(proofs),
+    })
+
+
+def execute_category_controls(repository, run, inputs):
+    import importlib.util
+    import conformance_sdk_checks as sdk
+    from conformance_sources import NativeCategoryEvaluation, read_bounded
+
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    if (type(run) is not OwnedRun or run.state != "Active" or run.live_children()
+            or inputs["profileId"] != "harness" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id
+            or evidence.source_manifest(repository) != inputs["sourceManifest"]):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    if inputs["sourceState"] not in ("clean-local", "clean-ci"):
+        raise evidence.ConformanceError("InputChanged")
+    source_path = "tests/tooling/test_conformance_evidence.py"
+    source = Path(repository) / source_path
+    if hashlib.sha256(read_bounded(source, 1024 * 1024)).hexdigest() != inputs["sourceManifest"][source_path]:
+        raise evidence.ConformanceError("InputChanged")
+    spec = importlib.util.spec_from_file_location("test_conformance_evidence", source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    destination = run.root / "proofs/category-controls"
+    destination.mkdir(mode=0o700)
+    evaluations, rows = [], []
+    for profile in ("metadata", "artifacts"):
+        child, child_root = None, destination / profile
+
+        def execute(invocation):
+            nonlocal child
+            if invocation.profiles != (profile,) or invocation.evidence != child_root or child is not None:
+                raise evidence.ConformanceError("InputChanged")
+            child = OwnedRun.allocate(child_root, repository, profile=profile)
+            child.deadline = min(child.deadline, run.deadline)
+            native = sdk.execute_owned(
+                repository, child, category=profile, qualify=True, group_id=inputs["invocationGroupId"])
+            if type(native) is not NativeCategoryEvaluation or native._source._run is not child:
+                raise evidence.ConformanceError("OwnershipInvalid")
+            evaluations.append(native)
+            return evidence.complete_native_category_invocation(invocation, native)
+
+        try:
+            status = module.run_native_category_controls(
+                ["--profile", profile, "--evidence", str(child_root)], executor=execute)
+            if (type(status) is not int or status != 0 or child is None
+                    or len(evaluations) != len(rows) + 1):
+                raise evidence.ConformanceError("EvidenceIncomplete")
+        finally:
+            if child is not None and child.state in ("Allocated", "Active"):
+                child.transition("Settling")
+            if child is not None and child.state == "Settling":
+                child.release()
+        child_inputs = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+            child.root / f"proofs/category-{profile}-qualification-run-inputs.json", evidence.MAX_REPORT_BYTES)))
+        original_path = f"proofs/category-{profile}-qualification-report.json"
+        report_path = f"proofs/category-{profile}-fixture-qualification-report.json"
+        _, original = evidence._readonly_report_proof(child.root, original_path)
+        report_sha, report = evidence._readonly_report_proof(child.root, report_path)
+        origin = evidence.native_category_qualification_receipt(
+            child, report, original_report_data=original, expected_inputs=child_inputs,
+            native_evaluation=evaluations[-1])
+        control_path = f"proofs/category-{profile}-native-controls.json"
+        control_sha, _ = evidence._readonly_report_proof(child.root, control_path)
+        rows.append({
+            "profileId": profile, "path": child.root.relative_to(run.root).as_posix(), "inputs": child_inputs,
+            "reportPath": report_path, "qualificationOrigin": origin,
+            "controlOrigin": {
+                "kind": "native-category-control-observation", "inputsSha256": evidence.digest(child_inputs),
+                "reportSha256": report_sha, "proofPath": control_path, "proofSha256": control_sha,
+            },
+        })
+    sdk.write_new(run.root / CATEGORY_CONTROL_FRAME, evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "scope": "harness-native-category-controls",
+        "inputsSha256": evidence.digest(inputs), "runs": rows,
+    }))
+    inspect_category_controls(run.root, expected_inputs=inputs)
+    return tuple(evaluations)
+
+
+def inspect_category_controls(root, *, expected_inputs):
+    root = Path(root)
+    inputs = evidence.admit_entity("RunInputs", expected_inputs)
+    if inputs["profileId"] != "harness" or inputs["mode"] != "qualification":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    if inputs["sourceState"] not in ("clean-local", "clean-ci"):
+        raise evidence.ConformanceError("InputChanged")
+    hashed, raw = evidence._readonly_report_proof(root, CATEGORY_CONTROL_FRAME)
+    frame = evidence._runtime_json(raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "scope": evidence._constant("harness-native-category-controls"),
+        "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        "runs": evidence._list(evidence._record({
+            "profileId": evidence._one_of("metadata", "artifacts"), "path": evidence.relative_path,
+            "inputs": lambda row: evidence.admit_entity("RunInputs", row),
+            "reportPath": evidence.relative_path,
+            "qualificationOrigin": evidence.admit_qualification_origin,
+            "controlOrigin": evidence._record({
+                "kind": evidence._constant("native-category-control-observation"),
+                "inputsSha256": evidence.sha256, "reportSha256": evidence.sha256,
+                "proofPath": evidence.relative_path, "proofSha256": evidence.sha256,
+            }),
+        }), 2, minimum=2),
+    }, limit=evidence.MAX_REPORT_BYTES)
+    results, proofs, identities = [], {CATEGORY_CONTROL_FRAME: hashed}, {inputs["runId"]}
+    for row, profile in zip(frame["runs"], ("metadata", "artifacts")):
+        child = row["inputs"]
+        if (row["profileId"] != child["profileId"] or row["profileId"] != profile
+                or row["path"] != "proofs/category-controls/" + profile
+                or child["mode"] != "qualification" or child["runId"] in identities
+                or any(child[key] != inputs[key] for key in (
+                    "invocationGroupId", "sourceRevision", "sourceState", "sourceManifest",
+                    "catalogSha256", "sdkSha256"))
+                or row["reportPath"] != f"proofs/category-{profile}-fixture-qualification-report.json"):
+            raise evidence.ConformanceError("InputChanged")
+        identities.add(child["runId"])
+        child_root = root / row["path"]
+        _, report = evidence._readonly_report_proof(child_root, row["reportPath"])
+        inspected = evidence.inspect_receipted_native_category_controls(
+            child_root, report, expected_inputs=child,
+            expected_report_sha256=row["qualificationOrigin"]["reportSha256"],
+            qualification_origin=row["qualificationOrigin"], control_origin=row["controlOrigin"])
+        original_path = row["qualificationOrigin"]["originalReportPath"]
+        original_sha, original = evidence._readonly_report_proof(child_root, original_path)
+        original = evidence.admit_entity("QualificationReport", evidence.load_json(original))
+        child_proofs = {
+            **original["proofs"], original_path: original_sha,
+            row["reportPath"]: row["qualificationOrigin"]["reportSha256"],
+            row["controlOrigin"]["proofPath"]: row["controlOrigin"]["proofSha256"],
+        }
+        source_path = f"proofs/category-{profile}-native-controls-source.py"
+        source_sha, _ = evidence._readonly_report_proof(child_root, source_path)
+        child_proofs[source_path] = source_sha
+        proofs.update({row["path"] + "/" + path: value for path, value in child_proofs.items()})
+        results.append(inspected)
+    return MappingProxyType({
+        "qualification": False, "scope": "harness-native-category-controls", "code": "None",
         "runs": tuple(results), "proofs": MappingProxyType(proofs),
     })

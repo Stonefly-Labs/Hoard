@@ -11666,7 +11666,7 @@ def _run_native_control_suite(factory, *, deadline=None):
     }
 
 
-def run_native_category_controls(arguments):
+def run_native_category_controls(arguments, *, executor=None):
     import conformance_cli
     import conformance_sdk_checks as checks
     from conformance_execution import native_execution_supported
@@ -11718,7 +11718,7 @@ def run_native_category_controls(arguments):
 
     with mock.patch.object(evidence.CategoryRuntimeHistory, "replay_joint", replay), mock.patch.object(
             checks, "_category_report", publish):
-        status = conformance_cli.main(arguments)
+        status = conformance_cli.main(arguments) if executor is None else executor(invocation)
     if type(status) is not int or status not in (0, 1, 2):
         raise evidence.ConformanceError("CommandFailed")
     if status == 1:

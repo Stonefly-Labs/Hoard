@@ -4668,6 +4668,27 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+**Metadata evidence correction and category controls:** moving origin output
+before assertions also flushed argument evidence too early. Origins now emit
+in `finally`, preserving failed-test origins and all 16 required argument
+observations without changing common assertions. Contributor replay checks
+the same frozen parameter assignments as the built-in category reader,
+including custom binding IDs. Earlier 11-argument packets remain preserved
+and now reject. Fresh readonly good/faulty/corrected replay has all 76 rows,
+86 origins and 16 arguments per run, with only the three intended faulty
+assertions. The Linux affected selection passes 343 tests; 413 SDK/evidence
+regressions also pass.
+
+The harness can invoke the existing actual live/released/retained category
+control factories using caller-held child owners, a shared invocation group
+and parent-bounded deadlines. This integration is not yet a successful full
+run: the latest attempt passes metadata runtime ingestion, then seven released
+qualification controls correctly reject dirty source. Clean-source admission
+now fails before allocating those category children. Full harness authority,
+remaining cases and five-profile acceptance stay unfinished; no test or
+qualification requirement is relaxed. Exact attempts and retained roots are in
+the [correction record](../specs/007-provider-conformance/plan.md#t073-metadata-argument-correction-and-native-category-integration).
+
 **Harness-owned contributor integration:** the catalog and good/faulty/corrected
 adapter journey now execute under one actual harness owner and invocation
 group, with child deadlines bounded by the parent. The harness retains the
@@ -4691,8 +4712,8 @@ assertions and all 86 actual session origins across 76 rows. Ordinary positive
 replay still requires every row to pass; unknown failures cannot substitute
 for the intended assertions.
 
-The common consumer emits its already-captured session origin before invoking
-the unchanged assertions, so a failed assertion does not hide its actual
+The common consumer emits its already-captured session origin in `finally`
+after invoking the unchanged assertions, so a failed assertion does not hide its actual
 factory/components. The safe logger correlates xUnit's mirrored `Output:`
 lines only with the actual result's fully validated output packets. Unknown
 provider/adapter output, foreign packets and unrelated diagnostics still

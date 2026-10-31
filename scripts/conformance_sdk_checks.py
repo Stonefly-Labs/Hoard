@@ -5155,6 +5155,27 @@ def execute(repository, destination, *, category=None, compatibility_only=False,
         raise evidence.ConformanceError("PrerequisiteMissing")
     run = OwnedRun.allocate(
         destination, repository, profile="compatibility" if compatibility_only else category or "baseline")
+    return _execute_run(
+        repository, run, category=category, compatibility_only=compatibility_only, qualify=qualify)
+
+
+def execute_owned(repository, run, *, category=None, compatibility_only=False, qualify=False, group_id=None):
+    if (type(run) is not OwnedRun or run.state != "Allocated" or run.command_sequence != 0
+            or run.live_children()):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    run._check_ledger()
+    if (category not in (None, "metadata", "artifacts") or compatibility_only and category is not None
+            or type(qualify) is not bool or qualify and category is None and not compatibility_only):
+        raise evidence.ConformanceError("UnsupportedProfile")
+    if not native_execution_supported() or not callable(getattr(evidence, "ingest_runtime_attempt", None)):
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    return _execute_run(
+        repository, run, category=category, compatibility_only=compatibility_only, qualify=qualify,
+        group_id=group_id)
+
+
+def _execute_run(repository, run, *, category, compatibility_only, qualify, group_id=None):
+    group_id = str(uuid.uuid4()) if group_id is None else evidence._uuid(group_id)
     if not qualify:
         minutes = 30 if compatibility_only else 60 if category is not None else 100
         run.deadline = min(run.deadline, time.monotonic() + minutes * 60)
@@ -5377,7 +5398,7 @@ def execute(repository, destination, *, category=None, compatibility_only=False,
 
                 write_new(run.root / "proofs/foundation-inventory.json",
                           read_bounded(candidate / FOUNDATION_INVENTORY_PATH, 2 * 1024**2))
-                group = str(uuid.uuid4())
+                group = group_id
                 frozen_inputs = capture_compatibility_runtime_inputs(
                     run, repository, candidate, config, feed, prepared, seal_sha,
                     invocation_group_id=group,
@@ -5447,7 +5468,8 @@ def execute(repository, destination, *, category=None, compatibility_only=False,
         write_new(run.root / "proofs/sdk-vstest-inputs.json", runner_material)
         print(json.dumps({"qualification": False, "phase": "runtime-input-capture"}), flush=True)
         inputs = make_inputs(run, repository, candidate, sources, admitted_environment, identity, seal_sha,
-                             ci_revision=ci_revision, binding_sources=binding_sources, inspection_inputs=inspection_inputs)
+                             group_id=group_id, ci_revision=ci_revision, binding_sources=binding_sources,
+                             inspection_inputs=inspection_inputs)
         catalog_bindings = {declaration: binding for _, binding, declaration, _ in CATEGORY_BINDING_SLOTS}
         original_binding_sources = [
             {**source, **({"catalogBindingId": catalog_bindings[source["adapterId"]]}

@@ -1076,8 +1076,11 @@ requires exactly `receipts`, `time-ticket` and `publication-replay` to fail
 with their predeclared common assertion symbols; all other rows pass and the
 same 86 actual origins remain mandatory. Unknown/nonzero-only failures reject.
 
-The consumer emits the actual already-captured origin before invoking shared
-assertions. The logger correlates mirrored adapter output only after the actual
+The consumer emits the actual already-captured origin in `finally` after shared
+assertions, preserving failure origins and flushing arguments recorded during
+execution. Replay requires the same exact frozen metadata-argument assignments
+as built-in categories, parameterized only by the admitted binding IDs.
+The logger correlates mirrored adapter output only after the actual
 result's output has passed the existing closed packet parser. Only exact
 hashes and the actual nonempty output's `Output:` wrapper are correlated;
 foreign packets and unrelated/unknown text still fail without raw persistence.
@@ -1093,6 +1096,16 @@ per child. Independent replay requires identical platform source/catalog/SDK
 identities and all non-adapter packages, restored binding inputs, a distinct
 faulty adapter archive, and each child's complete original runtime inspection.
 This reader never recreates authority and always returns `qualification:false`.
+
+The harness's internal category-control integration invokes the existing actual
+live/released/retained suite factories through their owned-executor seam. Public
+invocation admission precedes allocation of each child. Both children use the
+parent's invocation group and remaining deadline; failure cleanup retains the
+original resource authority. Clean source is mandatory before category-child
+allocation. Its closed frame carries original category/control receipts and
+inputs; independent inspection replays both complete category closures and
+source-bound control inventories. Frame inspection remains nonqualifying;
+it cannot substitute for an externally trusted full-harness receipt.
 
 ### Trusted original-receipt verification
 

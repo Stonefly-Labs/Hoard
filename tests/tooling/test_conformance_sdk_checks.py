@@ -28,6 +28,84 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_harness_category_controls_admit_the_absent_destination_before_allocating_and_settle_failure(self):
+        import conformance_harness as harness
+        import conformance_execution as execution
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            parent.chmod(0o700)
+            run = execution.OwnedRun.allocate(parent / "run", ROOT, profile="harness")
+            run.transition("Active")
+            inputs = ConformanceAdmissionTests().inputs()
+            sources = checks.evidence.source_manifest(ROOT)
+            inputs.update(
+                profileId="harness", mode="qualification", runId=run.run_id, bindings=[],
+                sourceManifest=sources, sourceManifestSha256=checks.evidence.digest(sources))
+            inputs["budgets"]["profileSeconds"] = 3600
+            allocated = []
+
+            def execute(repository, child, **options):
+                allocated.append(child)
+                self.assertEqual(repository, ROOT)
+                self.assertEqual(child.state, "Allocated")
+                self.assertEqual(child.root, run.root / "proofs/category-controls/metadata")
+                self.assertLessEqual(child.deadline, run.deadline)
+                self.assertEqual(options, {
+                    "category": "metadata", "qualify": True, "group_id": inputs["invocationGroupId"]})
+                raise checks.evidence.ConformanceError("PrerequisiteMissing")
+
+            try:
+                with patch.object(checks, "execute_owned") as preparation:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "^InputChanged$"):
+                        harness.execute_category_controls(ROOT, run, inputs)
+                    preparation.assert_not_called()
+                    self.assertFalse((run.root / "proofs/category-controls").exists())
+                inputs["sourceState"] = "clean-local"
+                with patch.object(execution, "native_execution_supported", return_value=True), patch.object(
+                        execution, "scratch_filesystem", return_value="test"), patch.object(
+                        checks, "execute_owned", side_effect=execute):
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "^PrerequisiteMissing$"):
+                        harness.execute_category_controls(ROOT, run, inputs)
+                self.assertEqual(len(allocated), 1)
+                self.assertEqual(allocated[0].state, "Released")
+                self.assertFalse(allocated[0].live_children())
+                self.assertFalse((run.root / harness.CATEGORY_CONTROL_FRAME).exists())
+            finally:
+                run.transition("Settling")
+                run.release()
+
+    def test_owned_sdk_requires_the_original_unstarted_executor_before_any_preparation(self):
+        from conformance_execution import OwnedRun
+
+        with patch.object(checks, "native_execution_supported", return_value=True), patch.object(
+                checks.baselines, "prepare", side_effect=AssertionError("Invalid owner reached preparation")):
+            for value in (None, SimpleNamespace(state="Allocated", command_sequence=0, live_children=lambda: ())):
+                with self.subTest(owner=type(value).__name__):
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                        checks.execute_owned(ROOT, value, category="metadata", qualify=True)
+            with tempfile.TemporaryDirectory() as temporary:
+                parent = Path(temporary).resolve()
+                parent.chmod(0o700)
+                run = OwnedRun.allocate(parent / "run", ROOT, profile="metadata")
+                try:
+                    with patch.object(run, "live_children", return_value=(1,)):
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                            checks.execute_owned(ROOT, run, category="metadata", qualify=True)
+                    run.command_sequence = 1
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                        checks.execute_owned(ROOT, run, category="metadata", qualify=True)
+                    run.command_sequence = 0
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks.execute_owned(ROOT, run, category="metadata", qualify=True, group_id="foreign")
+                    run.transition("Active")
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                        checks.execute_owned(ROOT, run, category="metadata", qualify=True)
+                finally:
+                    run.transition("Settling")
+                    run.release()
+
     def test_harness_contributor_frame_requires_exact_inputs_paths_groups_and_distinct_runs(self):
         import conformance_harness as harness
         import conformance_contributors as contributors

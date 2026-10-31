@@ -15,6 +15,76 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T073 metadata-argument correction and native-category integration
+
+The harness now invokes the existing actual category control factories through
+an explicit owned-executor seam. Public argument/destination admission occurs
+before allocating each actual child owner. The metadata/artifact child shares
+the parent invocation group, with its deadline narrowed to the parent's.
+Original public SDK execution/lifecycle behavior is preserved through the same
+implementation; the owned entry point additionally rejects foreign, started or
+live executors. The category frame replays original qualification and
+source-bound control receipts, rather than fabricating passes from unit totals.
+Full harness authority/remaining cases and five-profile acceptance are open.
+
+Three distinct diagnostic attempts are preserved on
+`hoard-f07-transfer-c4e36cb-diag`:
+
+| Root under `/probe/work/` | Observation |
+| --- | --- |
+| `harness-category-b4cc102-1` | Rejected `OwnershipInvalid`: category destination was allocated before public invocation admission. Allocation now occurs inside the admitted executor callback; a focused regression verifies both ordering and actual release on rejected preparation. |
+| `harness-category-b4cc102-2` | Metadata common-consumer replay rejected `ProofMismatch` at `_metadata_argument_parameters`. Earlier origin emission flushed arguments before assertions recorded them. |
+| `harness-category-b4cc102-3` | Corrected catalog/triplet and metadata runtime proceed. All four live-origin controls pass; seven of fifteen released controls correctly reject `InputChanged` because this source is dirty-local. Retained controls, artifact controls and final tooling are not reached. No qualification is claimed. |
+
+The consumer now writes its captured origin in `finally` around unchanged
+preparation/assertions. This preserves named failure origins while flushing all
+arguments after execution. Contributor replay now uses the same frozen
+argument expectations as the category reader, with admitted custom binding IDs.
+This closes a real gap: earlier `harness-tooling-b4cc102-1` contributor packets
+contain 11, not 16, required argument observations. The stricter reader now
+rejects them; they are not repaired or relabeled. Historical 76-row/86-origin,
+843-proof and 885-tooling observations below remain accurate for their earlier
+reader, but do not establish completeness under this corrected requirement.
+
+Fresh independent readonly catalog/contributor replay at
+`harness-category-b4cc102-3` verifies 843 proofs, ten catalog witnesses and all
+three 76-row/86-origin/16-argument contributor runs, with exactly three named
+faulty failures and no good/corrected failures. Parent input SHA-256:
+`e8a9e2659ab788509b3670bf5f9ac39df64d3ed6bea5f54c76ae83822730ea5a`.
+This is finite component replay after actual release, not completion of the
+failed parent qualification. Clean-source category admission now rejects before
+allocating category children; the clean-source gate itself is unchanged.
+
+The preceding clean `b4cc102` component/tooling run is retained at
+`harness-tooling-b4cc102-1`, with parent input SHA-256
+`1952afc80fff40cc57193a196039b08ed1488cdc7d54be9fbb53932ef8f62f79`.
+It completes 885 tooling tests and its catalog/triplet in 756.575 seconds,
+recomputes inputs, releases all four owners and has separately verified
+readonly tooling custody. Its missing five contributor arguments are the
+explicit limitation above, not erased by its passing tooling count.
+
+Hosted metadata job `124404102670` in
+[run 41156292488](https://github.com/Stonefly-Labs/Hoard/actions/runs/41156292488)
+rejects at the identical four-source `ProofMismatch` chain. Hosted artifact,
+compatibility, tooling and lock-preparation jobs pass at that older source;
+this is not all-five acceptance or a successful current-source retry.
+
+Validation:
+
+- Linux `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_contributors test_conformance_sdk_checks test_conformance_ci test_conformance_cli -q`: **343 passed**, 412.020 seconds, zero skips, including actual positive/faulty contributor replay with the stricter argument guard.
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_sdk_checks test_conformance_evidence -q`: **413 passed**, 108.203 seconds. An earlier extraction incorrectly sent existing public lifecycle models through owned-caller admission; the public allocator and owned API now share the implementation without changing those tests or their lifecycle assertions.
+- The final dirty-source early-rejection and allocation/cleanup regressions:
+  **two focused tests passed**.
+- Scoped consumer whitespace verification, frozen baseline inventory,
+  embedded SDK catalog and `git diff --check`: **passed**.
+
+README/development/contributor-guide/evidence-contract updates record the
+correction and incomplete control integration. Provider/custom-host guides,
+public product contracts, charter/product spec/architecture/ADR/diagrams,
+predecessor guides, governance/backlog, IaC, release and UI documents are
+unaffected: no corresponding API, dependency graph, product or deployment
+behavior changes. T073..T086 remain unchecked.
+
 ### T073 harness-owned contributor integration
 
 The harness now executes its existing native catalog and actual copied-adapter

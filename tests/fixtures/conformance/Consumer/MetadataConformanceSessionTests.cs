@@ -290,100 +290,106 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
         }
         await using var session = await ConformanceObservedMetadataSession.OpenAsync(binding, context, default);
         var origin = session.CaptureOrigin();
-        ConformanceSessionOriginOutput.Write(output, origin);
-        if (consumer is not ("layout-empty" or "layout-partial" or "admission" or "invalid-budget"))
+        try
         {
-            Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
-                await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+            if (consumer is not ("layout-empty" or "layout-partial" or "admission" or "invalid-budget"))
+            {
+                Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+                    await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+            }
+            await (consumer switch
+            {
+                "capacity" => MetadataFailureAssertions.StorageCapacityAsync(session.Store,
+                    token => session.Faults.ArmAsync(ConformanceFault.Capacity, token), default),
+                "writer" => MetadataDeadlineAssertions.WriterBudgetAsync(
+                    session.Store, session.Faults.HoldWriterAsync, session.Faults.AwaitSettlementAsync, default),
+                "publication" => MetadataPublicationAssertions.ProtectionThroughSettlementAsync(
+                    session.Store, session.Authority, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
+                "entities" => MetadataEntityAssertions.RoundTripAndInvalidRelationshipsAsync(
+                    session.Store, session.Authority, default),
+                "graph" => MetadataEntityAssertions.FinalGraphDeletionAndDisabledRetentionAsync(
+                    session.Store, session.Authority, default),
+                "independent" => MetadataAtomicityAssertions.IndependentCandidateAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.ObserveIndependentSnapshotAsync, default),
+                "atomic" => MetadataAtomicityAssertions.FaultedCandidatesAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, default),
+                "grouped" => MetadataAtomicityAssertions.GroupedReadsAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, default),
+                "lease-generation" => MetadataLeaseAssertions.GenerationOverflowAsync(
+                    session.Store, session.Faults.SetLeaseGenerationAsync, default),
+                "lease-fences" => MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(session.Store, default),
+                "lease-renew" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
+                    session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Renew, default),
+                "lease-release" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
+                    session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Release, default),
+                "lease-guard" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
+                    session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Guard, default),
+                "text" => MetadataIdentityAssertions.CanonicalTextAndForbiddenValuesAsync(session.Store, default),
+                "registry" => MetadataIdentityAssertions.RegistryIsolationAsync(session.Store, session.Authority, default),
+                "authorization" => MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync(
+                    session.Store, session.Authority, default),
+                "references" => MetadataReferenceAssertions.EntryReplacementAndRemovalAsync(
+                    session.Store, session.Authority, default),
+                "reference-aba" => MetadataReferenceAssertions.ZeroReferenceAbaFencingAsync(
+                    session.Store, session.Authority, default),
+                "telemetry" => MetadataReferenceAssertions.InvalidTelemetryRollsBackEntryAndReferencesAsync(
+                    session.Store, session.Authority, default),
+                "create-race" => MetadataConcurrencyAssertions.CompetingCreatesAsync(session.Store, default),
+                "revision-race" => MetadataConcurrencyAssertions.RevisionRacesAsync(session.Store, default),
+                "reconcile-writer" => MetadataReconciliationAssertions.WriterContentionAsync(
+                    session.Store, session.Faults.HoldWriterAsync, session.Faults.AwaitSettlementAsync, default),
+                "reconcile-io" => MetadataReconciliationAssertions.IoFailureAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, default),
+                "reconcile-ack" => MetadataReconciliationAssertions.LostAcknowledgmentAndAbandonmentAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, default),
+                "contributions" => MetadataReconciliationAssertions.DistinctContributionsAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, default),
+                "receipts" => MetadataReconciliationAssertions.CorruptReceiptsAsync(
+                    session.Store, session.Faults.CorruptAsync, default),
+                "layout-empty" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, false, default),
+                "layout-partial" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, true, default),
+                "bounds" => MetadataBoundsAssertions.ExactBoundsAsync(session.Store, default),
+                "scopes" => MetadataBoundsAssertions.ScopesAndIntervalsAsync(session.Store, default),
+                "page-kinds" => MetadataPagingAssertions.AllQueryKindsAsync(session.Store, session.Authority, default),
+                "page-size" => MetadataPagingAssertions.OversizedRequestsAndResultsAsync(
+                    session.Store, session.Authority, default),
+                "page-datasets" => MetadataPagingAssertions.BoundedDatasetsAsync(session.Store, default),
+                "time-ticket" => MetadataTimeAssertions.TicketExpiryAndRollbackAsync(session.Store, clock, default),
+                "time-lease" => MetadataTimeAssertions.LeaseRollbackAsync(session.Store, clock, default),
+                "cancel" => MetadataDeadlineAssertions.CancellationDecisionsAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
+                "queue" => MetadataDeadlineAssertions.QueueCapacityAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
+                "exceptions" => MetadataDeadlineAssertions.KnownExceptionsAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, default),
+                "ledger" => MetadataFailureAssertions.LedgerCapacityAsync(session.Store, session.Faults.FillLedgerAsync, default),
+                "diagnostics" => MetadataFailureAssertions.DiagnosticsAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, () => session.Faults.Counters, default),
+                "evidence" => MetadataPublicationAssertions.MatchingEvidenceAsync(session.Store, session.Authority, default),
+                "publication-replay" => MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync(
+                    session.Store, session.Authority, default),
+                "publication-orphan" => MetadataPublicationAssertions.OrphanNotRollbackAsync(
+                    session.Store, session.Authority, session.Faults.ObserveBoundaryAsync, default),
+                "corrupt-groups" => MetadataCorruptionAssertions.AbsenceAndCorruptGroupsAsync(
+                    session.Store, session.Faults.CorruptRecordAsync, default),
+                "corrupt-pages" => MetadataCorruptionAssertions.PageRecordsAsync(
+                    session.Store, session.Faults.CorruptAsync, session.Faults.CorruptRecordAsync, default),
+                "admission" => MetadataAdmissionAssertions.ExplicitAdmissionAsync(
+                    session.Store, session.Schema, () => session.Faults.Counters, default),
+                "invalid-budget" => MetadataAdmissionAssertions.InvalidBudgetsAsync(
+                    session.Store, session.Schema, () => session.Faults.Counters, session.Store.DisposeAsync, default),
+                "incomplete-cleanup" => MetadataDeadlineAssertions.IncompleteCleanupAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, () => session.Faults.Counters,
+                    session.Store.DisposeAsync, session.Faults.AwaitSettlementAsync, default),
+                "disposal" => MetadataDeadlineAssertions.DisposalOwnershipAsync(
+                    session.Store, session.Faults.ObserveBoundaryAsync, session.Store.DisposeAsync, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
         }
-        await (consumer switch
+        finally
         {
-            "capacity" => MetadataFailureAssertions.StorageCapacityAsync(session.Store,
-                token => session.Faults.ArmAsync(ConformanceFault.Capacity, token), default),
-            "writer" => MetadataDeadlineAssertions.WriterBudgetAsync(
-                session.Store, session.Faults.HoldWriterAsync, session.Faults.AwaitSettlementAsync, default),
-            "publication" => MetadataPublicationAssertions.ProtectionThroughSettlementAsync(
-                session.Store, session.Authority, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
-            "entities" => MetadataEntityAssertions.RoundTripAndInvalidRelationshipsAsync(
-                session.Store, session.Authority, default),
-            "graph" => MetadataEntityAssertions.FinalGraphDeletionAndDisabledRetentionAsync(
-                session.Store, session.Authority, default),
-            "independent" => MetadataAtomicityAssertions.IndependentCandidateAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.ObserveIndependentSnapshotAsync, default),
-            "atomic" => MetadataAtomicityAssertions.FaultedCandidatesAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, default),
-            "grouped" => MetadataAtomicityAssertions.GroupedReadsAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, default),
-            "lease-generation" => MetadataLeaseAssertions.GenerationOverflowAsync(
-                session.Store, session.Faults.SetLeaseGenerationAsync, default),
-            "lease-fences" => MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(session.Store, default),
-            "lease-renew" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
-                session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Renew, default),
-            "lease-release" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
-                session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Release, default),
-            "lease-guard" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
-                session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Guard, default),
-            "text" => MetadataIdentityAssertions.CanonicalTextAndForbiddenValuesAsync(session.Store, default),
-            "registry" => MetadataIdentityAssertions.RegistryIsolationAsync(session.Store, session.Authority, default),
-            "authorization" => MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync(
-                session.Store, session.Authority, default),
-            "references" => MetadataReferenceAssertions.EntryReplacementAndRemovalAsync(
-                session.Store, session.Authority, default),
-            "reference-aba" => MetadataReferenceAssertions.ZeroReferenceAbaFencingAsync(
-                session.Store, session.Authority, default),
-            "telemetry" => MetadataReferenceAssertions.InvalidTelemetryRollsBackEntryAndReferencesAsync(
-                session.Store, session.Authority, default),
-            "create-race" => MetadataConcurrencyAssertions.CompetingCreatesAsync(session.Store, default),
-            "revision-race" => MetadataConcurrencyAssertions.RevisionRacesAsync(session.Store, default),
-            "reconcile-writer" => MetadataReconciliationAssertions.WriterContentionAsync(
-                session.Store, session.Faults.HoldWriterAsync, session.Faults.AwaitSettlementAsync, default),
-            "reconcile-io" => MetadataReconciliationAssertions.IoFailureAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, default),
-            "reconcile-ack" => MetadataReconciliationAssertions.LostAcknowledgmentAndAbandonmentAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, default),
-            "contributions" => MetadataReconciliationAssertions.DistinctContributionsAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, default),
-            "receipts" => MetadataReconciliationAssertions.CorruptReceiptsAsync(
-                session.Store, session.Faults.CorruptAsync, default),
-            "layout-empty" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, false, default),
-            "layout-partial" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, true, default),
-            "bounds" => MetadataBoundsAssertions.ExactBoundsAsync(session.Store, default),
-            "scopes" => MetadataBoundsAssertions.ScopesAndIntervalsAsync(session.Store, default),
-            "page-kinds" => MetadataPagingAssertions.AllQueryKindsAsync(session.Store, session.Authority, default),
-            "page-size" => MetadataPagingAssertions.OversizedRequestsAndResultsAsync(
-                session.Store, session.Authority, default),
-            "page-datasets" => MetadataPagingAssertions.BoundedDatasetsAsync(session.Store, default),
-            "time-ticket" => MetadataTimeAssertions.TicketExpiryAndRollbackAsync(session.Store, clock, default),
-            "time-lease" => MetadataTimeAssertions.LeaseRollbackAsync(session.Store, clock, default),
-            "cancel" => MetadataDeadlineAssertions.CancellationDecisionsAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
-            "queue" => MetadataDeadlineAssertions.QueueCapacityAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
-            "exceptions" => MetadataDeadlineAssertions.KnownExceptionsAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, default),
-            "ledger" => MetadataFailureAssertions.LedgerCapacityAsync(session.Store, session.Faults.FillLedgerAsync, default),
-            "diagnostics" => MetadataFailureAssertions.DiagnosticsAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, () => session.Faults.Counters, default),
-            "evidence" => MetadataPublicationAssertions.MatchingEvidenceAsync(session.Store, session.Authority, default),
-            "publication-replay" => MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync(
-                session.Store, session.Authority, default),
-            "publication-orphan" => MetadataPublicationAssertions.OrphanNotRollbackAsync(
-                session.Store, session.Authority, session.Faults.ObserveBoundaryAsync, default),
-            "corrupt-groups" => MetadataCorruptionAssertions.AbsenceAndCorruptGroupsAsync(
-                session.Store, session.Faults.CorruptRecordAsync, default),
-            "corrupt-pages" => MetadataCorruptionAssertions.PageRecordsAsync(
-                session.Store, session.Faults.CorruptAsync, session.Faults.CorruptRecordAsync, default),
-            "admission" => MetadataAdmissionAssertions.ExplicitAdmissionAsync(
-                session.Store, session.Schema, () => session.Faults.Counters, default),
-            "invalid-budget" => MetadataAdmissionAssertions.InvalidBudgetsAsync(
-                session.Store, session.Schema, () => session.Faults.Counters, session.Store.DisposeAsync, default),
-            "incomplete-cleanup" => MetadataDeadlineAssertions.IncompleteCleanupAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, () => session.Faults.Counters,
-                session.Store.DisposeAsync, session.Faults.AwaitSettlementAsync, default),
-            "disposal" => MetadataDeadlineAssertions.DisposalOwnershipAsync(
-                session.Store, session.Faults.ObserveBoundaryAsync, session.Store.DisposeAsync, default),
-            _ => throw new ArgumentException("BindingInvalid")
-        });
+            ConformanceSessionOriginOutput.Write(output, origin);
+        }
     }
 
     private sealed class OriginSession(
