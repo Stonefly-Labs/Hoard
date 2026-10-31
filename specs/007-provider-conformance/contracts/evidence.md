@@ -1058,7 +1058,10 @@ A serialized evaluation or copied object cannot supply that authority.
 
 The original Released report stays nonqualifying. Only successful reconstruction
 with actual original authority can derive its separate
-`harness-fixture-qualification` report and finite presentations. An external
+`harness-fixture-qualification` report and finite presentations. The original
+producer writes every finite presentation only after Released authority and
+report verification; public completion compares all four files against a fresh
+verified rendering before exporting its receipt. An external
 coordinator may transfer the observed result with a
 `native-harness-fixture-qualification` receipt, pinning input/report/original
 report/resource hashes exactly as for other profiles. Receipt-free structural

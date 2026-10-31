@@ -15,6 +15,37 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T073 harness presentation publication
+
+The preserved clean `f4628e2` attempt at
+`hoard-f07-transfer-c4e36cb-diag:/probe/work/harness-qualified-f4628e2-2`
+finishes all 21 harness cases, 892 tooling tests, both category qualifications
+and all 56 controls in **1672.192 seconds**. All six original owners are
+Released. Its derived report SHA-256 is
+`1c1053cb7d89897980a734483e00e994a8f34f3c8a7106100c025849218f9c90`.
+The public command then rejects `InputChanged` because its four finite
+presentation files are absent. This is preserved failed public acceptance,
+not an externally receipted whole-harness success.
+
+The producer now publishes the existing verified JSON/JUnit/Markdown/CI summary
+after release and original report verification, matching other profiles.
+The focused regression reproduces the exact missing-file failure before the
+fix. No assertions, proof requirements, restore policy or budgets change.
+The earlier `harness-qualified-f4628e2-1` NU1301 failure stays preserved;
+fresh locked baseline recovery passes 43 commands in 74.319 seconds with its
+original owner Released. All seven hosted checks at `f4628e2` pass, but remain
+the existing nonqualifying jobs. Fresh public harness acceptance, independent
+receipt replay and five-profile/baseline acceptance are still required.
+
+Validation: Linux `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling
+python3 -B -m unittest test_conformance_sdk_checks test_conformance_evidence
+test_conformance_cli test_conformance_ci -q`: **461 passed**, 109.607 seconds,
+zero skips. `python3 tests/fixtures/conformance/baselines/freeze_inventory.py
+--check`, `python3 scripts/conformance_case_catalog.py --check-sdk` and
+`git diff --check`: **passed**. README, development guide and evidence contract
+are updated. Other documents remain unaffected for the product-scope reasons
+recorded in the preceding wiring checkpoint.
+
 ### T073 whole-harness wiring and clean component completion
 
 The clean `cf9f62a` parent-owned component run is preserved on

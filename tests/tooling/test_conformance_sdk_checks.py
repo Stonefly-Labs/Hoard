@@ -28,6 +28,59 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_harness_public_execution_publishes_verified_presentations_after_release(self):
+        import conformance_harness as harness
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        captured = []
+
+        def execute(source, repository, *, group_id):
+            report = ConformanceAdmissionTests().report()
+            inputs = report["inputs"]
+            inputs.update(
+                profileId="harness", mode="qualification", sourceState="clean-local", bindings=[],
+                runId=source._run.run_id, invocationGroupId=group_id)
+            inputs["budgets"]["profileSeconds"] = 3600
+            report["postInputSha256"] = checks.evidence.digest(inputs)
+            report["proofs"][harness.COMPLETION_INPUTS] = report["postInputSha256"]
+            report["results"][0].update(
+                runId=inputs["runId"], profileId="harness", bindingId="none", caseId="QC-01")
+            report["witnesses"][0].update(
+                runId=inputs["runId"], invocationGroupId=group_id, bindingId="none",
+                inputSha256=checks.evidence.digest(inputs))
+            native = SimpleNamespace(report_data=checks.evidence.canonical_bytes(report))
+            captured.append((source._run, native))
+            return native
+
+        def derive(run, raw, *, expected_inputs, native_evaluation):
+            self.assertEqual(run.state, "Released")
+            self.assertIs(native_evaluation, captured[0][1])
+            original = checks.evidence.load_json(raw)
+            self.assertEqual(original["resources"], checks.evidence.load_json(
+                checks.evidence.canonical_bytes(run.resource_projection())))
+            return checks.evidence.admit_entity("QualificationReport", {
+                **original, "state": "Complete", "qualification": True,
+                "scope": ["harness-fixture-qualification"]})
+
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            parent.chmod(0o700)
+            with patch("conformance_execution.native_execution_supported", return_value=True), patch.object(
+                    checks.evidence, "source_identity", return_value={"sourceState": "clean-local"}), patch.object(
+                    harness.NativeHarnessSources, "execute", autospec=True, side_effect=execute), patch.object(
+                    harness, "derive_native_qualification", side_effect=derive):
+                native = harness.execute(ROOT, parent / "run")
+                run = captured[0][0]
+                self.assertIs(native, captured[0][1])
+                _, original = checks.evidence._readonly_report_proof(run.root, harness.ORIGINAL_REPORT)
+                _, qualified = checks.evidence._readonly_report_proof(run.root, harness.QUALIFIED_REPORT)
+                inputs = checks.evidence.load_json(original)["inputs"]
+                inspected = harness.inspect_native_qualification(
+                    run, qualified, original_report_data=original, expected_inputs=inputs,
+                    native_evaluation=native)
+                outputs = checks.evidence._render_verified_fixture_qualification(qualified, inspected)
+                checks.evidence._verify_qualified_presentations(run, outputs)
+
     def test_harness_dirty_source_rejects_before_allocating_or_building(self):
         import conformance_harness as harness
 

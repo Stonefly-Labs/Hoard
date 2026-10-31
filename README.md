@@ -207,8 +207,12 @@ its 21 fixed cases. Control derivations name exact observed tooling methods,
 original contributor packets and actual category mutation methods; catalog
 executions are explicitly anchors, not fabricated runtime executions for those
 controls. Original in-memory authority and actual release are required before
-qualification. The 460 affected Linux tests pass; fresh clean-source full-harness
+qualification. The 461 affected Linux tests pass; fresh clean-source full-harness
 execution and all-five baseline/hosted acceptance remain open.
+The preserved `f4628e2` whole-harness attempt passes all 21 cases and 892 tooling
+tests with all six owners Released, but public completion rejects missing
+presentation files. The producer now publishes its verified finite outputs;
+fresh public-command acceptance remains required.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

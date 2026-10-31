@@ -926,7 +926,13 @@ def execute(repository, destination, *, group_id=None):
     sdk.write_new(run.root / ORIGINAL_REPORT, raw)
     qualified = derive_native_qualification(
         run, raw, expected_inputs=original["inputs"], native_evaluation=native)
-    sdk.write_new(run.root / QUALIFIED_REPORT, evidence.canonical_bytes(qualified))
+    qualified_data = evidence.canonical_bytes(qualified)
+    sdk.write_new(run.root / QUALIFIED_REPORT, qualified_data)
+    inspected = inspect_native_qualification(
+        run, qualified_data, original_report_data=raw, expected_inputs=original["inputs"],
+        native_evaluation=native)
+    for name, contents in evidence._render_verified_fixture_qualification(qualified_data, inspected).items():
+        sdk.write_new(run.root / "diagnostics" / name, contents)
     return native
 
 
