@@ -1,10 +1,11 @@
-name: Conformance foundations
+name: Conformance qualification and diagnostics
 
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,6 +15,152 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  assignment:
+    name: Declare original five-profile source and invocation group
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      assignment: ${{ steps.assignment.outputs.assignment }}
+    steps:
+      - name: Check out exact workflow event source and full history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Declare common assignments before any native producer
+        id: assignment
+        env:
+          HOARD_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 -B scripts/conformance_hosted.py assignment
+
+  metadata:
+    name: Mandatory original metadata qualification
+    needs: assignment
+    uses: ./.github/workflows/conformance-profile.yml
+    with:
+      profile: metadata
+      budget: 120
+      assignment: ${{ needs.assignment.outputs.assignment }}
+
+  artifacts:
+    name: Mandatory original artifact qualification
+    needs: assignment
+    uses: ./.github/workflows/conformance-profile.yml
+    with:
+      profile: artifacts
+      budget: 210
+      assignment: ${{ needs.assignment.outputs.assignment }}
+
+  composition:
+    name: Mandatory original composition qualification
+    needs: assignment
+    uses: ./.github/workflows/conformance-profile.yml
+    with:
+      profile: composition
+      budget: 120
+      assignment: ${{ needs.assignment.outputs.assignment }}
+
+  compatibility:
+    name: Mandatory original compatibility qualification
+    needs: assignment
+    uses: ./.github/workflows/conformance-profile.yml
+    with:
+      profile: compatibility
+      budget: 120
+      assignment: ${{ needs.assignment.outputs.assignment }}
+
+  harness:
+    name: Mandatory original harness qualification
+    needs: assignment
+    uses: ./.github/workflows/conformance-profile.yml
+    with:
+      profile: harness
+      budget: 120
+      assignment: ${{ needs.assignment.outputs.assignment }}
+
+  aggregate:
+    name: Mandatory independent hosted five-profile acceptance
+    if: ${{ always() }}
+    needs: [assignment, metadata, artifacts, composition, compatibility, harness]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact workflow event source and full history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Retain a closed incomplete summary before attempting transport
+        run: |
+          mkdir -p .foundation/hosted/aggregate
+          printf '%s\n' '{"schemaVersion":1,"qualification":false,"state":"Incomplete","code":"EvidenceIncomplete"}' > .foundation/hosted/aggregate/summary.json
+      - name: Install the pinned SDK needed to inspect original MSBuild and VSTest inputs
+        timeout-minutes: 3
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Download exact metadata packet from this run
+        id: metadata
+        if: ${{ always() }}
+        timeout-minutes: 1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: conformance-qualified-metadata-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .foundation/hosted/aggregate/downloads/metadata
+      - name: Download exact artifacts packet from this run
+        id: artifacts
+        if: ${{ always() }}
+        timeout-minutes: 1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: conformance-qualified-artifacts-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .foundation/hosted/aggregate/downloads/artifacts
+      - name: Download exact composition packet from this run
+        id: composition
+        if: ${{ always() }}
+        timeout-minutes: 1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: conformance-qualified-composition-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .foundation/hosted/aggregate/downloads/composition
+      - name: Download exact compatibility packet from this run
+        id: compatibility
+        if: ${{ always() }}
+        timeout-minutes: 1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: conformance-qualified-compatibility-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .foundation/hosted/aggregate/downloads/compatibility
+      - name: Download exact harness packet from this run
+        id: harness
+        if: ${{ always() }}
+        timeout-minutes: 1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: conformance-qualified-harness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .foundation/hosted/aggregate/downloads/harness
+      - name: Reject missing authority or failed jobs and independently replay original receipts
+        if: ${{ always() }}
+        env:
+          HOARD_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HOARD_ASSIGNMENT: ${{ needs.assignment.outputs.assignment }}
+          HOARD_NEEDS: ${{ toJSON(needs) }}
+          HOARD_DOWNLOADS: '{"metadata":"${{ steps.metadata.outcome }}","artifacts":"${{ steps.artifacts.outcome }}","composition":"${{ steps.composition.outcome }}","compatibility":"${{ steps.compatibility.outcome }}","harness":"${{ steps.harness.outcome }}"}'
+        run: python3 -B scripts/conformance_hosted.py aggregate
+      - name: Always retain only the bounded safe aggregate summary
+        if: ${{ always() }}
+        timeout-minutes: 1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: conformance-qualified-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: true
+          path: .foundation/hosted/aggregate/summary.json
+
   foundations:
     name: Native ownership and evidence regressions
     runs-on: ubuntu-24.04
@@ -165,6 +312,7 @@ jobs:
           bash scripts/validate-conformance.sh \
             --update-locks --evidence "$private_parent/run"
       - name: Retain only reviewable source locks
+        timeout-minutes: 5
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: conformance-prepared-locks

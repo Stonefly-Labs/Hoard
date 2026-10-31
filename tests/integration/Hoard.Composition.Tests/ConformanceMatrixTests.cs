@@ -1068,6 +1068,42 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     }
 
 #if CONFORMANCE_PROVIDER_PACKAGES
+    [Fact]
+    public async Task Packaged_fixture_disposal_preserves_scratch_of_an_incomplete_enclosed_lease()
+    {
+        var fixture = new PackagedComposition();
+        var sentinel = Path.Combine(fixture.Root, "retained-worker.txt");
+        await File.WriteAllTextAsync(sentinel, "retained worker");
+        var callback = new OwnershipFixtures.ControlledCallback(false);
+        var registry = new Registry();
+        var clock = new LifecycleTestTimeProvider();
+        registry.Probes["artifact"].Worker = _ => callback.RunAsync();
+        var composition = registry.Validate(
+            options: new() { DrainTimeout = TimeSpan.FromSeconds(1) }, clock: clock).Composition!;
+        var running = await registry.BuildAsync(composition);
+        try
+        {
+            await running.StartAsync();
+            await callback.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+            var stopping = running.Lease.Lifecycle.StopAsync();
+            await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1));
+            clock.Advance(TimeSpan.FromSeconds(1));
+            var result = await stopping.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.False(result.Complete);
+            await Assert.ThrowsAsync<HoardLifecycleException>(() => running.DisposeAsync().AsTask());
+            await fixture.DisposeAsync();
+            Assert.False(callback.Settled.IsCompleted);
+            Assert.True(Directory.Exists(fixture.Root));
+            Assert.Equal("retained worker", await File.ReadAllTextAsync(sentinel));
+        }
+        finally
+        {
+            callback.Release();
+            await callback.Settled.WaitAsync(TimeSpan.FromSeconds(5));
+            await running.Lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
     [Theory]
     [InlineData("CP-01", "sqlite", "local", "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Fixtures.Artifacts.Local")]
     [InlineData("CP-02", "memory", "object", "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Artifacts.ObjectSemantics")]

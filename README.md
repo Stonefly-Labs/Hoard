@@ -34,6 +34,14 @@ dependency management into another full-time job.
 [Follow the backlog](docs/HOARD_SPECKIT_MASTER_BACKLOG.md) ·
 [Contribute](CONTRIBUTING.md)
 
+**Hosted F-07 qualification wiring:** five mandatory isolated original-owner
+profiles now share a predeclared source/group assignment, with an always-run
+independent aggregate and bounded exact proof transport. Existing nonqualifying
+diagnostics remain separate. Ubuntu 24.04 image/runtime/filesystem observations
+and the real 24 GiB scratch prerequisite are enforced, not worked around.
+This is implementation, **not observed hosted acceptance**; T075/T076 remain open.
+See the [hosted qualification handoff](specs/007-provider-conformance/quickstart.md#hosted-five-profile-qualification-handoff).
+
 **Current F-07 acceptance checkpoint:** the maintainer-authorized timeout
 correction separates the complete Python tooling suite's 30-minute budget
 from individual test-child commands' unchanged ten-minute limit. The suite

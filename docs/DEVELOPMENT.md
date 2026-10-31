@@ -4725,6 +4725,25 @@ now report admitted nonpassing test identities/statuses and the completion
 diagnostic alongside the existing safe events; private exception text remains
 excluded and the original rejection is unchanged.
 
+Hosted qualification is now wired in `conformance.yml` and its isolated
+`conformance-profile.yml` reusable job, but actual hosted acceptance remains
+pending. A pre-producer assignment pins the common source/group/catalog/SDK;
+original job-output receipts pin the exact bounded proof bundle independently
+of downloaded reports. The always-on aggregate rejects any failed/missing
+job, producer, upload or download and replays all original receipts at their
+unchanged root paths. Both producer and aggregate install the pinned SDK;
+actual Ubuntu24 image/filesystem/free scratch is measured and >=24 GiB remains
+mandatory. The local default route still rejects hosted invocation rather than
+fabricating transport success. See the feature quickstart for reproduction and
+the plan for retained readonly transport evidence and open final gates.
+
+Packaged composition fixtures no longer delete scratch during their own
+disposal: an enclosed incomplete lifecycle lease can still own live callbacks.
+Their containing original native controller removes its owned stores only
+after confirmed child exit/settlement; caller-supplied roots remain caller-owned.
+This does not change any platform/provider lifecycle contract or authorize
+deleting an incompletely settled root.
+
 **Metadata evidence correction and category controls:** moving origin output
 before assertions also flushed argument evidence too early. Origins now emit
 in `finally`, preserving failed-test origins and all 16 required argument

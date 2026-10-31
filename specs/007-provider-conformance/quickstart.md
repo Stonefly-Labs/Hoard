@@ -1668,3 +1668,83 @@ directories, kill by name or claim cancellation released a live guard.
 After changing inputs, start a new run; old reports cannot qualify new bytes.
 Only intentional dependency-manifest changes use `--update-locks`; preparation
 does not qualify and requires a separate fresh default locked baseline replay.
+## Hosted five-profile qualification handoff
+
+The hosted route is now wired in `.github/workflows/conformance.yml`, with
+`.github/workflows/conformance-profile.yml` isolating metadata, artifacts,
+composition, compatibility and harness. Existing foundation/SDK/compatibility/
+lock/category diagnostics and the separate composition diagnostic remain
+nonqualifying and unchanged. **T075/T076 are not complete until hosted acceptance
+is genuinely observed.** The verified local baseline is not a CI success.
+
+The assignment job checks full history, the exact checkout SHA, the workflow
+source SHA and (for PRs) the distinct merge/head relationship before declaring
+the common invocation group, source manifest, catalog and SDK hashes. Every
+producer uses its original group-aware owned API and original completion object.
+Job outputs independently pin input preimages, the original receipt, report,
+manifest and transport hashes; downloaded artifacts cannot supply that authority.
+The aggregate requires actual required-job, producer-step, upload-step and
+individual download-step successes and calls the existing public receipt/offline
+readers. Missing, failed, cancelled or foreign context stays incomplete.
+The aggregate installs the same pinned SDK because its pure readers inspect
+original MSBuild/VSTest SDK input bytes and paths; they do not execute new native
+tests. Profile uploads are bounded to five minutes, each aggregate download to
+one minute and the aggregate summary upload to one minute. The overall 15-minute
+aggregate job remains the hard outer bound; these transport limits do not alter
+native execution deadlines.
+
+Native roots are deterministic private checkout siblings on every runner.
+Strict uncompressed USTAR bundles use opaque hash-named archive members mapped
+to their unchanged original paths, so long proof basenames need no permissive
+PAX handling. Only the verified declared proof closure, exact dependencies
+actually consumed by unchanged independent readers, original/qualified reports,
+input/owner files and four byte-verified finite presentations travel. The
+baseline seal directly consumed by compatibility is an explicit reader input.
+Extraction validates the independently pinned bytes, exact manifest, bounds,
+canonical headers, hashes and sizes before create-new publication, forbids
+links/traversal/duplicates/path conflicts and rechecks the exact reader closure
+and finite render bytes afterward. No raw TRX, logs, databases, credentials or
+whole-workspace globs are uploaded. Always-on artifacts retain only the verified
+bundle and closed safe summary for seven days; partial bundles remain private.
+Expected evidence/I/O failures retain the primary code and explicit
+`diagnostics.preflightReadCode` / `diagnostics.persistenceCode` fields. Unexpected
+programmer failures propagate to callers and retain a separate `driver` failure
+projection; the standalone entrypoint suppresses raw exception text/tracebacks,
+never the nonzero failure.
+
+Each profile observes the actual Ubuntu 24.04 image, .NET SDK/runtime, filesystem
+and initial free bytes before native execution. Less than 24 GiB is an explicit
+`InsufficientCapacity` prerequisite, not qualification; do not remove runner
+software, reduce transfers or relax assertions. Profile job budgets are 120
+minutes, artifacts 210 minutes, aggregate 15 minutes. Existing real transfer and
+native admission controls are unchanged.
+
+Focused validation:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling \
+  python3 -B -m unittest test_conformance_ci test_conformance_cli -q
+actionlint .github/workflows/conformance.yml .github/workflows/conformance-profile.yml
+```
+
+Run ownership tests with private writable scratch **outside the checkout** on
+supported Linux; a readonly checkout may use a writable ignored `.foundation`
+submount. Transport-only replay of an already qualified original packet is not
+a new native baseline or observed hosted acceptance.
+
+After the maintainer reviews, freezes, commits and pushes the implementation,
+the PR trigger starts the five-profile run. A manual launch, once the default
+branch exposes `workflow_dispatch`, is:
+
+```bash
+gh workflow run conformance.yml --ref feature/007-provider-conformance
+```
+
+Retain the exact source/run/job identities and failed summaries. The earlier
+hosted composition response-completion failure remains preserved; the later
+docs-only `8ee8805` composition diagnostic passed without establishing its cause.
+A separate `8ee8805` SDK diagnostic retains a failed native object-provider
+noncooperation parameter. The first qualifying hosted run must expose any
+failures/capacity prerequisite honestly; this wiring does not repair tests.
+If the same Hoard error occurs after three deliberate
+attempts, stop and preserve failures rather than automatically retrying.

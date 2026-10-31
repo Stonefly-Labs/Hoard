@@ -6,9 +6,11 @@ import hashlib
 import importlib
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
+import tarfile
 import unittest
 from unittest import mock
 import uuid
@@ -17,6 +19,612 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_case_catalog as catalog
 import conformance_evidence as evidence
+
+
+class ConformanceHostedTests(unittest.TestCase):
+    """Modeled trust/transport controls; these never claim hosted/native acceptance."""
+
+    def fixture(self, parent):
+        import conformance_ci as ci
+        import conformance_hosted as hosted
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        root = parent / "private" / "profiles" / "harness"
+        root.parent.parent.mkdir(mode=0o700)
+        root.parent.mkdir(mode=0o700)
+        root.mkdir(mode=0o700)
+        report = ConformanceAdmissionTests().report()
+        inputs = report["inputs"]
+        inputs.update(profileId="harness", mode="qualification", sourceState="clean-ci", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        case = catalog.expected_cases("harness")[0]
+        result = report["results"][0]
+        result.update(profileId="harness", bindingId=case.binding_id,
+                      matrixId=case.matrix_id, caseId=case.case_id)
+        resources = [{
+            "runId": inputs["runId"], "rootId": "modeled-root", "childPid": 0,
+            "childStartSha256": "0" * 64, "state": "Released", "cleanupDurationMs": 1,
+            "diagnosticCode": "None",
+        }]
+        report.update(results=[result], resources=resources, state="Complete",
+                      qualification=True, scope=["harness-fixture-qualification"],
+                      postInputSha256=evidence.digest(inputs))
+        # Real proof names include extensionless binaries, claims/Python and runtime/discovery trees.
+        contents = {
+            "runtime-" + str(uuid.uuid4()) + "/witnesses.jsonl": b'{"safe":true}\n',
+            "discovery-" + str(uuid.uuid4()) + "/completion.json": b'{"safe":true}',
+            "proofs/" + "a" * 64: b"bounded-binary",
+            "proofs/control.claim": b'{"safe":true}',
+            "proofs/control.py": b"pass\n",
+            "proofs/original.runsettings": b"<RunSettings />",
+            "proofs/" + "selected-" * 16 + ".json": b'{"safe":true}',
+            "proofs/category-harness-qualification-completion-inputs.json": evidence.canonical_bytes(inputs),
+        }
+        report["proofs"] = {path: hashlib.sha256(raw).hexdigest() for path, raw in contents.items()}
+        result["proofSha256"] = [next(iter(report["proofs"].values()))]
+        result["attempts"][0].update(proofSha256=result["proofSha256"])
+        report["witnesses"][0].update(
+            bindingId=case.binding_id, matrixId=case.matrix_id,
+            inputSha256=evidence.digest(inputs), proofSha256=result["proofSha256"][0])
+        input_path, report_path = ci.profile_paths("harness")
+        original_path = "proofs/harness-runtime-released-report.json"
+        original_raw = evidence.canonical_bytes({
+            **report, "qualification": False, "state": "Incomplete", "scope": ["harness-runtime-diagnostic"]})
+        report_raw = evidence.canonical_bytes(report)
+        origin = {
+            "kind": "native-harness-fixture-qualification",
+            "inputsSha256": evidence.digest(inputs), "reportSha256": hashlib.sha256(report_raw).hexdigest(),
+            "originalReportPath": original_path, "originalReportSha256": hashlib.sha256(original_raw).hexdigest(),
+            "resourcesSha256": evidence.digest(resources),
+        }
+        self.inspected = {
+            "qualification": True, "code": "None", "reportSha256": origin["reportSha256"],
+            "caseStates": {"Passed": 1, "Failed": 0, "NotApplicable": 0, "Incomplete": 0},
+        }
+        contents.update({
+            input_path: evidence.canonical_bytes(inputs), report_path: report_raw,
+            original_path: original_raw, "ownership.json": b'{"safe":true}',
+        })
+        contents.update({
+            "diagnostics/" + name: raw for name, raw in
+            evidence._render_verified_fixture_qualification(report_raw, self.inspected).items()})
+        for path, raw in contents.items():
+            target = root / path
+            target.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
+            target.write_bytes(raw)
+            target.chmod(0o400)
+        # An unrelated physical workspace file is never part of the transport.
+        (root / "unsafe.log").write_bytes(b"not public")
+        entry = {
+            "inputs": inputs, "reportPath": report_path, "reportSha256": origin["reportSha256"],
+            "qualificationOrigin": origin,
+        }
+        bundle = parent / "harness.tar"
+        with mock.patch.object(ci, "inspect_receipted_profile_qualification", return_value=self.inspected):
+            pin = hosted.pack_profile(root, entry, bundle)
+        return root, entry, pin, bundle, contents
+
+    def rewrite(self, bundle, pin, mutate):
+        import conformance_hosted as hosted
+
+        with tarfile.open(bundle, mode="r:") as archive:
+            rows = [(member.name, archive.extractfile(member).read()) for member in archive]
+        manifest = evidence.load_json(rows[0][1])
+        archive_paths = {hosted._archive_name(path): path for path in manifest["files"]}
+        rows = [rows[0], *((archive_paths[name], raw) for name, raw in rows[1:])]
+        rows = mutate(rows, manifest)
+        raw_manifest = evidence.canonical_bytes(manifest)
+        rows[0] = (hosted.MANIFEST, raw_manifest)
+        with bundle.open("wb") as output:
+            for name, raw in rows:
+                hosted._write_member(output, name if name == hosted.MANIFEST else hosted._archive_name(name), raw)
+            output.write(b"\0" * 1024)
+        pin["manifestSha256"] = hashlib.sha256(raw_manifest).hexdigest()
+        pin["transportSha256"] = hashlib.sha256(bundle.read_bytes()).hexdigest()
+
+    def test_exact_transport_preserves_original_root_finite_bytes_and_all_declared_proof_kinds(self):
+        import conformance_ci as ci
+        import conformance_hosted as hosted
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root, entry, pin, bundle, contents = self.fixture(Path(temporary).resolve())
+            # Simulate a fresh aggregate runner without changing any packet bytes or root labels.
+            root.rename(root.with_name("retained-original"))
+            with mock.patch.object(ci, "inspect_receipted_profile_qualification",
+                                   return_value=self.inspected) as reader:
+                observed = hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"])
+            reader.assert_called_once()
+            self.assertEqual(evidence.canonical_bytes(observed), evidence.canonical_bytes(entry))
+            files = {str(path.relative_to(root)) for path in root.rglob("*") if path.is_file()}
+            self.assertEqual(files, set(contents))
+            self.assertNotIn("unsafe.log", files)
+            for path, raw in contents.items():
+                self.assertEqual((root / path).read_bytes(), raw)
+                self.assertEqual((root / path).stat().st_mode & 0o777, 0o400)
+            with self.assertRaisesRegex(evidence.ConformanceError, "^OwnershipInvalid$"):
+                hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"])
+
+    def test_download_hash_original_root_foreign_inputs_and_receipt_pins_reject_before_extraction(self):
+        import conformance_hosted as hosted
+
+        for defect in ("bytes", "root", "inputs", "origin", "missing-input"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root, entry, pin, bundle, _ = self.fixture(Path(temporary).resolve())
+                root.rename(root.with_name("retained-original"))
+                target = root
+                common = copy.deepcopy(entry["inputs"])
+                if defect == "bytes":
+                    data = bytearray(bundle.read_bytes())
+                    data[1024] ^= 1
+                    bundle.write_bytes(data)
+                elif defect == "root":
+                    target = root.with_name("relabeled")
+                elif defect == "inputs":
+                    common["invocationGroupId"] = str(uuid.uuid4())
+                elif defect == "origin":
+                    pin["qualificationOrigin"]["resourcesSha256"] = "f" * 64
+                else:
+                    input_path = hosted.ci.profile_paths("harness")[0]
+
+                    def remove_input(rows, manifest):
+                        del manifest["files"][input_path]
+                        return [row for row in rows if row[0] != input_path]
+
+                    self.rewrite(bundle, pin, remove_input)
+                with self.assertRaises(evidence.ConformanceError):
+                    hosted.unpack_profile(bundle, pin, target, common_context=common)
+                self.assertFalse(target.exists())
+
+    def test_resealed_traversal_links_duplicates_raw_outputs_undeclared_files_and_size_tricks_reject(self):
+        import conformance_hosted as hosted
+
+        for defect in ("traversal", "absolute", "duplicate", "symlink", "hardlink", "raw",
+                       "extra", "casefold", "prefix", "size", "tail"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root, entry, pin, bundle, _ = self.fixture(Path(temporary).resolve())
+                root.rename(root.with_name("retained-original"))
+                if defect in ("symlink", "hardlink", "tail"):
+                    data = bytearray(bundle.read_bytes())
+                    if defect == "tail":
+                        data.extend(b"foreign-trailing-bytes")
+                    else:
+                        info = tarfile.TarInfo(hosted.MANIFEST)
+                        info.mode, info.size = 0o600, 1
+                        info.type = tarfile.SYMTYPE if defect == "symlink" else tarfile.LNKTYPE
+                        info.linkname = "outside"
+                        data[:512] = info.tobuf(format=tarfile.USTAR_FORMAT)
+                    bundle.write_bytes(data)
+                    pin["transportSha256"] = hashlib.sha256(data).hexdigest()
+                else:
+                    def mutate(rows, manifest):
+                        if defect == "duplicate":
+                            return [*rows, rows[-1]]
+                        if defect == "size":
+                            manifest["files"][rows[-1][0]]["size"] += 1
+                            return rows
+                        path = {
+                            "traversal": "../outside.json", "absolute": "/outside.json",
+                            "raw": "proofs/raw.trx", "extra": "proofs/unselected.py",
+                            "casefold": rows[-1][0].upper(), "prefix": rows[-1][0] + "/child.json",
+                        }[defect]
+                        raw = b"unselected"
+                        manifest["files"][path] = {"sha256": hashlib.sha256(raw).hexdigest(), "size": len(raw)}
+                        return [rows[0], *sorted([*rows[1:], (path, raw)])]
+
+                    self.rewrite(bundle, pin, mutate)
+                with self.assertRaises(evidence.ConformanceError):
+                    hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"])
+                self.assertFalse(root.exists())
+
+    def test_finite_presentation_mutation_is_rejected_after_independent_receipt_replay(self):
+        import conformance_ci as ci
+        import conformance_hosted as hosted
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root, entry, pin, bundle, _ = self.fixture(Path(temporary).resolve())
+            root.rename(root.with_name("retained-original"))
+
+            def mutate(rows, manifest):
+                path = next(path for path in manifest["files"] if path.endswith("-ci-summary.md"))
+                raw = b"optimistic-summary"
+                manifest["files"][path] = {"sha256": hashlib.sha256(raw).hexdigest(), "size": len(raw)}
+                return [(name, raw if name == path else data) for name, data in rows]
+
+            self.rewrite(bundle, pin, mutate)
+            with mock.patch.object(ci, "inspect_receipted_profile_qualification", return_value=self.inspected):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"])
+
+    def test_transport_bounds_and_deadline_reject_before_extraction(self):
+        import conformance_hosted as hosted
+
+        for bound, value in (("MAX_FILES", 1), ("MAX_BYTES", 1), ("MAX_BUNDLE_BYTES", 1)):
+            with self.subTest(bound=bound), tempfile.TemporaryDirectory() as temporary:
+                root, entry, pin, bundle, _ = self.fixture(Path(temporary).resolve())
+                root.rename(root.with_name("retained-original"))
+                with mock.patch.object(hosted, bound, value), self.assertRaises(evidence.ConformanceError):
+                    hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"])
+                self.assertFalse(root.exists())
+        with tempfile.TemporaryDirectory() as temporary:
+            root, entry, pin, bundle, _ = self.fixture(Path(temporary).resolve())
+            root.rename(root.with_name("retained-original"))
+            with self.assertRaisesRegex(evidence.ConformanceError, "^DeadlineExceeded$"):
+                hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"], deadline=0)
+
+    def test_exact_existing_reader_dependencies_travel_without_workspace_globs_or_authority_reconstruction(self):
+        import conformance_ci as ci
+        import conformance_hosted as hosted
+        import conformance_sdk_checks as sdk
+
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            root, entry, _, _, contents = self.fixture(parent)
+            support = "proofs/original-runtime-context.json"
+            settings = "proofs/settings-" + str(uuid.uuid4()) + ".runsettings"
+            (root / support).write_bytes(b'{"safe":true}')
+            (root / support).chmod(0o400)
+            contents[support] = (root / support).read_bytes()
+            (root / settings).write_bytes(b"<RunSettings />")
+            (root / settings).chmod(0o400)
+            contents[settings] = (root / settings).read_bytes()
+
+            def reader(selected_root, *args, **options):
+                self.assertEqual(evidence._readonly_report_proof(selected_root, support)[1], contents[support])
+                self.assertEqual(sdk.read_bounded(selected_root / settings, 65536), contents[settings])
+                return self.inspected
+
+            with mock.patch.object(ci, "inspect_receipted_profile_qualification", side_effect=reader):
+                bundle = parent / "with-reader.tar"
+                pin = hosted.pack_profile(root, entry, bundle)
+                root.rename(root.with_name("retained-original"))
+                hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"])
+            self.assertEqual((root / support).read_bytes(), contents[support])
+            self.assertEqual((root / settings).read_bytes(), contents[settings])
+            self.assertFalse((root / "unsafe.log").exists())
+
+    def test_reader_failure_preserves_original_assertion_and_restores_all_observed_readers(self):
+        import conformance_ci as ci
+        import conformance_hosted as hosted
+        import conformance_sdk_checks as sdk
+        import conformance_sources as sources
+
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            root, entry, _, _, _ = self.fixture(parent)
+            originals = (evidence._readonly_report_proof, sdk.read_bounded, sources.read_bounded)
+            with mock.patch.object(ci, "inspect_receipted_profile_qualification",
+                                   side_effect=evidence.ConformanceError("WitnessMissing")):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^WitnessMissing$"):
+                    hosted.pack_profile(root, entry, parent / "failed.tar")
+            self.assertFalse((parent / "failed.tar").exists())
+            self.assertEqual(originals, (evidence._readonly_report_proof, sdk.read_bounded, sources.read_bounded))
+
+    def test_external_reader_catalog_requires_exact_predeclared_source_hash_not_workspace_transport(self):
+        import conformance_hosted as hosted
+        import conformance_sdk_checks as sdk
+
+        data = (ROOT / "README.md").read_bytes()
+        for hashed in (hashlib.sha256(data).hexdigest(), "0" * 64):
+            with self.subTest(hashed=hashed), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                with hosted._reader_files(root, {"README.md": hashed}) as files:
+                    if hashed == "0" * 64:
+                        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                            sdk.read_bounded(ROOT / "README.md", evidence.MAX_REPORT_BYTES)
+                    else:
+                        self.assertEqual(sdk.read_bounded(ROOT / "README.md", evidence.MAX_REPORT_BYTES), data)
+                    self.assertEqual(files, {})
+
+    def test_falsely_claimed_reader_dependency_is_rejected_by_the_unchanged_reader(self):
+        import conformance_ci as ci
+        import conformance_hosted as hosted
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root, entry, pin, bundle, _ = self.fixture(Path(temporary).resolve())
+            root.rename(root.with_name("retained-original"))
+
+            def mutate(rows, manifest):
+                path, raw = "proofs/unselected.json", b'{"safe":true}'
+                hashed = hashlib.sha256(raw).hexdigest()
+                manifest["files"][path] = {"sha256": hashed, "size": len(raw)}
+                manifest["readerFiles"][path] = hashed
+                return [rows[0], *sorted([*rows[1:], (path, raw)])]
+
+            self.rewrite(bundle, pin, mutate)
+            with mock.patch.object(ci, "inspect_receipted_profile_qualification", return_value=self.inspected):
+                with self.assertRaisesRegex(evidence.ConformanceError, "^ProofMismatch$"):
+                    hosted.unpack_profile(bundle, pin, root, common_context=entry["inputs"])
+
+    def test_missing_failed_cancelled_upload_download_and_foreign_receipt_never_create_coordinator(self):
+        import conformance_hosted as hosted
+
+        for defect in ("failed", "cancelled", "skipped", "upload", "download", "producer",
+                       "missing", "receipt", "assignment"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                staging = Path(temporary).resolve()
+                _, _, pin, _, _ = self.fixture(staging)
+                needs = {"assignment": {"result": "success"}}
+                needs.update({profile: {"result": "success", "outputs": {
+                    "producer": "success", "upload": "success",
+                    "receipt": evidence.canonical_bytes({**pin, "profileId": profile}).decode("ascii"),
+                }} for profile in evidence.PROFILES})
+                downloads = {profile: "success" for profile in evidence.PROFILES}
+                # This profile's original receipt kind must still match its independent slot.
+                if defect in ("failed", "cancelled", "skipped"):
+                    needs["metadata"]["result"] = defect
+                elif defect in ("upload", "producer"):
+                    needs["metadata"]["outputs"][defect] = "failure"
+                elif defect == "download":
+                    downloads["metadata"] = "failure"
+                elif defect == "missing":
+                    del needs["metadata"]
+                elif defect == "receipt":
+                    needs["metadata"]["outputs"]["receipt"] = "{}"
+                else:
+                    needs["assignment"]["result"] = "failure"
+                with mock.patch.object(hosted, "admit_assignment", return_value={}), mock.patch.object(
+                        hosted, "unpack_profile") as unpack, mock.patch.object(
+                        hosted.ci, "inspect_offline") as inspect:
+                    with self.assertRaises(evidence.ConformanceError):
+                        hosted.aggregate(ROOT, {}, needs, downloads, staging)
+                unpack.assert_not_called()
+                inspect.assert_not_called()
+                self.assertFalse((staging / "coordinator.json").exists())
+
+    def test_original_hosted_completion_uses_exact_group_owner_and_native_object_for_each_profile(self):
+        import conformance_ci as ci
+        import conformance_composition_checks as composition
+        import conformance_execution as execution
+        import conformance_harness as harness
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        sources = {"tests/contracts/Hoard.Testing.Conformance/Catalog/catalog.json": "a" * 64}
+        identity = {"sourceRevision": "c" * 40, "sourceState": "clean-ci"}
+        common = {
+            **identity, "sourceManifestSha256": evidence.digest(sources),
+            "catalogRevision": evidence.CATALOG_REVISION, "catalogSha256": "a" * 64,
+            "sdkSha256": evidence.digest(sources), "invocationGroupId": str(uuid.uuid4()),
+        }
+        for profile in evidence.PROFILES:
+            for defect in ("none", "producer", "foreign-native-input", "completion"):
+                with self.subTest(profile=profile, defect=defect):
+                    run = mock.Mock(root=Path("/modeled") / profile, state="Allocated", run_id=str(uuid.uuid4()))
+                    run.live_children.return_value = []
+                    run.transition.side_effect = lambda state: setattr(run, "state", state)
+                    run.release.side_effect = lambda: setattr(run, "state", "Released")
+                    native = object()
+                    inputs = ConformanceAdmissionTests().inputs()
+                    inputs.update(**common, profileId=profile, mode="qualification",
+                                  sourceManifest=sources, runId=run.run_id, bindings=[])
+                    inputs["budgets"]["profileSeconds"] = 3600
+                    if defect == "foreign-native-input":
+                        inputs["runId"] = str(uuid.uuid4())
+                    origin = {
+                        "kind": "native-" + ("category" if profile in ("metadata", "artifacts") else profile)
+                        + "-fixture-qualification", "inputsSha256": evidence.digest(inputs),
+                        "reportSha256": "d" * 64, "originalReportSha256": "e" * 64,
+                        "originalReportPath": "proofs/original.json", "resourcesSha256": "f" * 64,
+                    }
+                    if profile == "compatibility":
+                        origin.update(summaryPath="proofs/summary.json", summarySha256="a" * 64)
+
+                    def complete(selected, observed):
+                        self.assertIs(observed, native)
+                        print(evidence.canonical_bytes({
+                            "qualification": True, "profileId": profile,
+                            "reportSha256": origin["reportSha256"], "qualificationOrigin": origin,
+                        }).decode("ascii"))
+                        return 2 if defect == "completion" else 0
+
+                    producer = mock.Mock(return_value=native)
+                    if defect == "producer":
+                        producer.side_effect = RuntimeError("private-canary")
+                    with mock.patch.dict(evidence.os.environ, {"GITHUB_ACTIONS": "true"}), mock.patch.object(
+                            execution, "native_execution_supported", return_value=True), mock.patch.object(
+                            evidence, "source_identity", return_value=identity), mock.patch.object(
+                            evidence, "source_manifest", return_value=sources), mock.patch.object(
+                            execution.OwnedRun, "allocate", return_value=run), mock.patch.object(
+                            evidence, "admit_invocation", return_value=object()), mock.patch.object(
+                            evidence, "_readonly_report_proof", return_value=("", evidence.canonical_bytes(inputs))), \
+                            mock.patch.object(sdk, "execute_owned", producer), mock.patch.object(
+                                composition, "execute_owned", producer), mock.patch.object(
+                                harness, "execute_owned", producer), mock.patch.object(
+                                evidence, "complete_native_category_invocation", side_effect=complete), mock.patch.object(
+                                evidence, "complete_native_composition_invocation", side_effect=complete), mock.patch.object(
+                                evidence, "complete_native_compatibility_invocation", side_effect=complete), mock.patch.object(
+                                evidence, "complete_native_harness_invocation", side_effect=complete):
+                        if defect == "none":
+                            result = ci.execute_hosted_profile(ROOT, profile, run.root, common_context=common)
+                            self.assertEqual(result["qualificationOrigin"], origin)
+                        else:
+                            with self.assertRaises(evidence.ConformanceError):
+                                ci.execute_hosted_profile(ROOT, profile, run.root, common_context=common)
+                    self.assertEqual(run.state, "Released")
+                    args, options = producer.call_args
+                    self.assertEqual(args, (ROOT, run))
+                    self.assertEqual(options["group_id"], common["invocationGroupId"])
+                    if profile != "harness":
+                        self.assertTrue(options["qualify"])
+
+    def test_capacity_failure_retains_measured_prerequisite_and_does_not_start_native_work(self):
+        import conformance_hosted as hosted
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        with tempfile.TemporaryDirectory() as temporary:
+            staging = Path(temporary).resolve()
+            profiles = staging / "private" / "profiles"
+            observed = ConformanceAdmissionTests().inputs()["environment"]
+            observed.update(runnerImage="ubuntu24.20261026.1.0", freeBytes=24 * 1024**3 - 1)
+            with mock.patch.object(hosted, "admit_assignment", return_value={}), mock.patch.object(
+                    hosted, "roots", return_value=profiles), mock.patch.dict(
+                    os.environ, {"ImageOS": "ubuntu24", "ImageVersion": "20261026.1.0"}), mock.patch.object(
+                    sdk, "probe", side_effect=lambda path: path.write_bytes(evidence.canonical_bytes(observed))), \
+                    mock.patch.object(hosted.ci, "execute_hosted_profile") as execute:
+                with self.assertRaisesRegex(evidence.ConformanceError, "^InsufficientCapacity$"):
+                    hosted.produce(ROOT, "artifacts", {}, staging)
+            execute.assert_not_called()
+            summary = evidence.load_json((staging / "summary.json").read_bytes())
+            self.assertFalse(summary["qualification"])
+            self.assertEqual(summary["code"], "InsufficientCapacity")
+            self.assertEqual(summary["environment"], observed)
+            self.assertFalse((staging / "profile.tar").exists())
+
+    def test_aggregate_uses_real_job_channels_and_public_original_receipt_reader(self):
+        import conformance_ci as ci
+        import conformance_hosted as hosted
+
+        fixtures = ConformanceProfileTransportTests()
+        fixtures.setUp()
+        coordinator = fixtures.qualified_coordinator(fixtures.coordinator(), evidence.PROFILES)
+        needs = {"assignment": {"result": "success"}}
+        entries, pins = {}, {}
+        for profile, entry in coordinator["profiles"].items():
+            entry["reportPath"] = ci.profile_paths(profile)[1]
+            entries[profile] = {key: value for key, value in entry.items() if key != "jobResults"}
+            pin = {
+                "schemaVersion": 1, "profileId": profile,
+                "inputsSha256": evidence.digest(entry["inputs"]), "reportSha256": entry["reportSha256"],
+                "qualificationOrigin": entry["qualificationOrigin"],
+                "qualificationOriginSha256": evidence.digest(entry["qualificationOrigin"]),
+                "transportSha256": "a" * 64, "manifestSha256": "b" * 64, "rootPathSha256": "c" * 64,
+            }
+            pins[profile] = pin
+            needs[profile] = {"result": "success", "outputs": {
+                "producer": "success", "upload": "success", "receipt": evidence.canonical_bytes(pin).decode()}}
+        downloads = {profile: "success" for profile in evidence.PROFILES}
+        with tempfile.TemporaryDirectory() as temporary:
+            staging = Path(temporary).resolve()
+            context = {"common": entries["metadata"]["inputs"]}
+
+            def inspect(selected):
+                self.assertEqual(selected.action, "aggregate")
+                self.assertEqual(selected.input_path, staging / "private/profiles")
+                trusted = ci.admit_coordinator(
+                    evidence.load_json(selected.coordinator_path.read_bytes()), require_all=True)
+                self.assertEqual(set(trusted["profiles"]), set(evidence.PROFILES))
+                print('{"qualification":true,"code":"None","scope":"modeled-test-only"}')
+                return 0
+
+            def unpack(bundle, pin, root, **options):
+                profile = root.name
+                self.assertEqual(bundle, staging / "downloads" / profile / "profile.tar")
+                self.assertEqual(pin, pins[profile])
+                self.assertEqual(options["common_context"], context["common"])
+                return entries[profile]
+
+            with mock.patch.object(hosted, "admit_assignment", return_value=context), mock.patch.object(
+                    hosted, "roots", return_value=staging / "private/profiles"), mock.patch.object(
+                    hosted, "unpack_profile", side_effect=unpack) as reader, mock.patch.object(
+                    ci, "inspect_offline", side_effect=inspect) as public, mock.patch.object(
+                    evidence, "admit_invocation", side_effect=lambda repository, args: mock.Mock(
+                        action="aggregate", input_path=Path(args[1]), coordinator_path=Path(args[3]))), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                hosted.aggregate(ROOT, context, needs, downloads, staging)
+            self.assertEqual(reader.call_count, 5)
+            public.assert_called_once()
+
+    def test_source_context_rejects_shallow_history_foreign_workflow_and_wrong_merge_head(self):
+        import conformance_hosted as hosted
+
+        revision, workflow, head = "a" * 40, "b" * 40, "c" * 40
+        environ = {
+            "GITHUB_ACTIONS": "true", "GITHUB_SHA": revision, "GITHUB_WORKFLOW_SHA": workflow,
+            "HOARD_HEAD_SHA": head, "GITHUB_EVENT_NAME": "pull_request", "GITHUB_RUN_ID": "12",
+            "GITHUB_RUN_ATTEMPT": "2",
+        }
+        for defect in ("none", "merge", "history", "workflow", "sha"):
+            with self.subTest(defect=defect):
+                selected = {**environ, "GITHUB_SHA": "unknown" if defect == "sha" else revision}
+
+                def git(repository, args):
+                    if args[0] == "rev-list":
+                        return f'{revision} {"d" * 40} {head if defect != "merge" else "e" * 40}\n'.encode()
+                    if args[0] == "rev-parse":
+                        return b"true\n" if defect == "history" else b"false\n"
+                    return b"foreign" if defect == "workflow" else b"exact-workflow"
+
+                with mock.patch.dict(os.environ, selected), mock.patch.object(hosted, "_git", side_effect=git), \
+                        mock.patch.object(hosted, "read_bounded", return_value=b"exact-workflow"), \
+                        mock.patch.object(evidence, "source_identity", return_value={
+                            "sourceRevision": revision, "sourceState": "clean-ci"}):
+                    if defect == "none":
+                        identity = hosted._host_identity(ROOT)
+                        self.assertEqual(identity["sourceRevision"], revision)
+                        self.assertEqual(identity["headRevision"], head)
+                        self.assertEqual(identity["workflowRevision"], workflow)
+                    else:
+                        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+                            hosted._host_identity(ROOT)
+
+    def test_unknown_driver_failures_emit_only_closed_incomplete_status_and_no_success_receipt(self):
+        import conformance_hosted as hosted
+
+        for error, code in ((OSError("private-error-canary"), "CommandFailed"),
+                            (evidence.ConformanceError("UnknownDiagnostic"), "UnknownDiagnostic")):
+            with self.subTest(code=code), mock.patch.object(
+                    hosted, "assignment", side_effect=error), mock.patch.object(
+                    hosted, "_outputs") as outputs, contextlib.redirect_stdout(io.StringIO()) as observed:
+                self.assertEqual(hosted.main(["assignment"]), 2)
+            outputs.assert_not_called()
+            value = evidence.load_json(observed.getvalue().encode())
+            self.assertEqual(value, {
+                "schemaVersion": 1, "qualification": False, "state": "Incomplete", "code": code,
+                "failurePhase": "boundary",
+                "diagnostics": {"preflightReadCode": "None", "persistenceCode": "None"},
+            })
+            self.assertNotIn("private-error-canary", observed.getvalue())
+
+    def test_programmer_failure_propagates_and_retains_safe_driver_failure_without_raw_error_text(self):
+        import conformance_hosted as hosted
+
+        error = AttributeError("private-error-canary")
+        with mock.patch.object(hosted, "assignment", side_effect=error), mock.patch.object(
+                hosted, "_outputs") as outputs, contextlib.redirect_stdout(io.StringIO()) as observed:
+            with self.assertRaises(AttributeError) as raised:
+                hosted.main(["assignment"])
+        self.assertIs(raised.exception, error)
+        outputs.assert_not_called()
+        self.assertNotIn("private-error-canary", observed.getvalue())
+        summary = evidence.load_json((ROOT / ".foundation/hosted/assignment/summary.json").read_bytes())
+        self.assertEqual(summary["code"], "CommandFailed")
+        self.assertEqual(summary["failurePhase"], "driver")
+        self.assertFalse(summary["qualification"])
+        with contextlib.redirect_stderr(io.StringIO()) as retained:
+            hosted._unexpected_driver_failure(type(error), error, error.__traceback__)
+        self.assertNotIn("private-error-canary", retained.getvalue())
+        self.assertEqual(evidence.load_json(retained.getvalue().encode())["failurePhase"], "driver")
+
+    def test_preflight_read_and_diagnostic_persistence_failures_are_explicit_without_masking_primary_failure(self):
+        import conformance_hosted as hosted
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        for defect in ("read", "preflight", "persistence", "read-and-persistence"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                path = Path(temporary) / "summary.json"
+                preflight = ConformanceAdmissionTests().inputs()["environment"]
+                if defect == "preflight":
+                    preflight["private-unadmitted-canary"] = "not-public"
+                path.write_bytes(evidence.canonical_bytes({"environment": preflight}))
+                with contextlib.ExitStack() as stack:
+                    if defect in ("read", "read-and-persistence"):
+                        stack.enter_context(mock.patch.object(
+                            hosted, "read_bounded", side_effect=OSError("private-read-canary")))
+                    if defect in ("persistence", "read-and-persistence"):
+                        stack.enter_context(mock.patch.object(
+                            Path, "write_bytes", side_effect=OSError("private-write-canary")))
+                    value = hosted._failure_projection(path, "WitnessMissing")
+                self.assertEqual(value["code"], "WitnessMissing")
+                self.assertFalse(value["qualification"])
+                expected_read = ("CommandFailed" if defect in ("read", "read-and-persistence") else
+                                 "EvidenceSchemaInvalid" if defect == "preflight" else "None")
+                expected_write = "CommandFailed" if defect in ("persistence", "read-and-persistence") else "None"
+                self.assertEqual(value["diagnostics"], {
+                    "preflightReadCode": expected_read, "persistenceCode": expected_write})
+                self.assertNotIn("canary", evidence.canonical_bytes(value).decode())
+                if expected_write == "None":
+                    self.assertEqual(evidence.load_json(path.read_bytes())["diagnostics"], value["diagnostics"])
 
 
 class ConformanceProfileTransportTests(unittest.TestCase):

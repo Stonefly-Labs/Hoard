@@ -210,7 +210,6 @@ public static class CompositionFixtures
 #if CONFORMANCE_PROVIDER_PACKAGES
 public sealed class PackagedComposition : IAsyncDisposable
 {
-    private readonly bool ownsRoot;
     public string Root { get; }
     public string ArtifactRoot => Path.Combine(Root, "artifacts");
     public string DatabasePath => Path.Combine(Root, "metadata.db");
@@ -221,7 +220,6 @@ public sealed class PackagedComposition : IAsyncDisposable
 
     public PackagedComposition(string? root = null)
     {
-        ownsRoot = root is null;
         Root = root ?? Path.GetFullPath(Path.Combine("ConformanceRuns", Guid.NewGuid().ToString("N")));
         if (OperatingSystem.IsWindows()) { Directory.CreateDirectory(Root); }
         else { Directory.CreateDirectory(Root, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute); }
@@ -256,7 +254,7 @@ public sealed class PackagedComposition : IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
-        if (ownsRoot) { Directory.Delete(Root, true); }
+        // Only the containing native controller can prove child settlement before removing scratch.
         return ValueTask.CompletedTask;
     }
 }

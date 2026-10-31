@@ -149,6 +149,96 @@ def _read_packet(root, relative):
     return contents.getvalue()
 
 
+def execute_hosted_profile(repository, profile, destination, *, common_context):
+    """Capture completion from the original isolated owner, not serialized evidence."""
+    import conformance_composition_checks as composition
+    import conformance_evidence as evidence
+    import conformance_harness as harness
+    import conformance_sdk_checks as sdk
+    from conformance_execution import OwnedRun, native_execution_supported
+
+    if profile not in PROFILES or evidence.os.environ.get("GITHUB_ACTIONS") != "true":
+        raise ConformanceError("UnsupportedProfile")
+    if not native_execution_supported():
+        raise ConformanceError("PrerequisiteMissing")
+    identity = evidence.source_identity(repository, ci_revision=common_context["sourceRevision"])
+    sources = evidence.source_manifest(repository)
+    observed_common = _common_context({
+        **identity, "invocationGroupId": common_context["invocationGroupId"],
+        "sourceManifestSha256": digest(sources), "catalogRevision": evidence.CATALOG_REVISION,
+        "catalogSha256": sources["tests/contracts/Hoard.Testing.Conformance/Catalog/catalog.json"],
+        "sdkSha256": digest({path: hashed for path, hashed in sources.items()
+                             if path.startswith("tests/contracts/Hoard.Testing.Conformance/")}),
+    })
+    if observed_common != _common_context(common_context):
+        raise ConformanceError("InputChanged")
+    selected = evidence.admit_invocation(repository, [
+        "--profile", profile, "--evidence", str(destination)])
+    run = OwnedRun.allocate(destination, repository, profile=profile)
+    input_path, report_path = profile_paths(profile)
+    complete = {
+        "metadata": evidence.complete_native_category_invocation,
+        "artifacts": evidence.complete_native_category_invocation,
+        "composition": evidence.complete_native_composition_invocation,
+        "compatibility": evidence.complete_native_compatibility_invocation,
+        "harness": evidence.complete_native_harness_invocation,
+    }[profile]
+    try:
+        group = common_context["invocationGroupId"]
+        try:
+            if profile in ("metadata", "artifacts"):
+                native = sdk.execute_owned(repository, run, category=profile, qualify=True, group_id=group)
+            elif profile == "composition":
+                native = composition.execute_owned(repository, run, qualify=True, group_id=group)
+            elif profile == "compatibility":
+                native = sdk.execute_owned(
+                    repository, run, compatibility_only=True, qualify=True, group_id=group)
+            else:
+                native = harness.execute_owned(repository, run, group_id=group)
+        except RuntimeError:
+            raise ConformanceError("EvidenceIncomplete") from None
+        output = io.StringIO()
+        with redirect_stdout(output):
+            status = complete(selected, native)
+        if status != 0:
+            raise ConformanceError("EvidenceIncomplete")
+        observation = load_json(output.getvalue().encode("ascii"))
+        origin = admit_qualification_origin(observation["qualificationOrigin"], profile=profile)
+        _, raw = evidence._readonly_report_proof(run.root, input_path)
+        inputs = admit_entity("RunInputs", load_json(raw))
+        if (inputs["runId"] != run.run_id or _common_context(inputs) != observed_common
+                or digest(inputs) != origin["inputsSha256"]
+                or observation["profileId"] != profile or observation["qualification"] is not True
+                or observation["reportSha256"] != origin["reportSha256"]):
+            raise ConformanceError("InputChanged")
+    finally:
+        if run.state in ("Allocated", "Active"):
+            run.transition("Settling")
+        if run.state == "Settling":
+            run.release()
+    if (run.state != "Released" or run.live_children()
+            or evidence.source_identity(repository, ci_revision=common_context["sourceRevision"]) != identity
+            or evidence.source_manifest(repository) != sources):
+        raise ConformanceError("InputChanged")
+    return {
+        "inputs": inputs, "reportSha256": origin["reportSha256"], "reportPath": report_path,
+        "qualificationOrigin": origin,
+    }
+
+
+def profile_paths(profile):
+    if profile not in PROFILES:
+        raise ConformanceError("UnsupportedProfile")
+    if profile in ("metadata", "artifacts"):
+        return (f"proofs/category-{profile}-qualification-run-inputs.json",
+                f"proofs/category-{profile}-fixture-qualification-report.json")
+    return ({
+        "composition": "proofs/composition-inputs.json",
+        "compatibility": "proofs/compatibility-runtime-inputs.json",
+        "harness": "proofs/harness-inputs.json",
+    }[profile], f"proofs/{profile}-fixture-qualification-report.json")
+
+
 def execute_baseline(invocation):
     """Run the original local five-profile sequence, never synthesize CI transport."""
     import conformance_composition_checks as composition

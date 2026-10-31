@@ -18,6 +18,104 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T075/T076 hosted transport implementation (acceptance pending)
+
+The workflow now declares one original invocation/source/catalog/SDK assignment
+before five isolated mandatory producer jobs. Each original-owned producer
+exports independently observed receipt/transport pins through job outputs;
+the `always()` aggregate checks actual job/producer/upload/download outcomes
+before admitting artifact-carried input preimages. Exact bounded tar members,
+create-new extraction at the original absolute roots and unchanged independent
+receipt/finite-presentation readers reject foreign, missing or altered packets.
+Existing nonqualifying diagnostic jobs remain; no assertion or coverage is
+removed. Job budgets remain 120/210/15 minutes, profile upload is bounded to
+five minutes, and aggregate transfers to one minute each; retention is seven
+days with exact artifact file allowlists and `contents: read` only.
+
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest
+test_conformance_ci test_conformance_cli -q`: **62 Linux tests passed**.
+`actionlint .github/workflows/conformance.yml
+.github/workflows/conformance-profile.yml`: **passed**.
+Four full action pins were verified against upstream commit/tag objects with
+`.foundation/hosted-tests/verify-action-pins.sh`; exact output is retained in
+`action-pins.stdout`.
+
+The bounded readonly commands in
+`.foundation/hosted-tests/readonly-replay-commands.sh` pack the original
+`e4365e1` packets from readonly `hoard-f07-transfer-c4e36cb-diag` into
+`hoard-f07-hosted-followup-transport-150953c`, then unpack them into the distinct
+`hoard-f07-hosted-followup-replay-150953c` volume at their unchanged original
+absolute roots. **All five external receipts, 4,635 declared proofs and twenty
+presentations re-verify; public aggregate passes, 405 Passed/13 exclusions.**
+This is correspondence/replay of existing local evidence, not fresh native or
+hosted acceptance. Original packets are unchanged.
+
+The actual public aggregate rejects a missing .NET SDK; the aggregate job
+therefore installs the same pinned SDK as producers. The first metadata-only
+prerequisite helper had an incorrect expectation and failed; it remains
+preserved. The corrected public aggregate prerequisite check passes, retained
+in `readonly-aggregate-sdk-prerequisite.stdout`. Narrow evidence/I/O errors
+emit explicit diagnostic persistence/read failures; unexpected programmer
+failures propagate without reflecting raw exception text.
+
+Ubuntu24 capacity and real hosted job/upload/download observations are still
+unobserved for this workflow. T075/T076 remain unchecked until that run
+qualifies; no lowered admission, runner-software deletion or CI success is
+inferred from the local transport replay.
+
+### T081 managed cleanup boundary correction
+
+The bounded managed architecture review finds one concrete retention bypass:
+`PackagedComposition.DisposeAsync` recursively deleted its root during
+unwinding even when an enclosed lifecycle lease rejected incomplete shutdown.
+Default roots are within the original child's `stores/composition-runtime`;
+the containing native controller already gates removal on actual child
+exit/settlement and identity-checked cleanup. Fixture deletion is removed;
+no permission flags, second lifecycle framework or common assertion changes
+are introduced. Supplied roots remain caller-owned.
+
+The added package-conditional regression encloses an actual held worker and
+incomplete lease, then checks its scratch sentinel survives fixture disposal.
+A bounded source-based Linux projection reproduces the old deletion's intended
+`Assert.True` failure and passes the correction; both diagnostic owners release.
+Driver: session `fixture-root-retention-check.py`; original volume roots
+`/probe/work/root-fixture-projection-150953c-1` and `-2`.
+The first build failed before the test; the second attempt gives each owner
+its own CLI home/package cache and passes the red/green check. The first cause
+is not proven because its original private compiler text was not retained.
+Local Hoard package references are replaced with project references only in
+this private projection, so this is **source-based regression evidence**, not
+fresh packaged/native/CI qualification.
+
+The same bounded `hoard-architecture-review` finishes its final authority/
+transport pass with **no additional architectural blocker**. Review reference:
+agent `dab53d5b-3fa8-4934-987f-fb007971a93e`, final turn 5. It verifies actual
+in-process native evaluation identity and release gates, separate assignment/
+job-output pins, fail-closed job/producer/upload/download checks and exact
+bounded transport followed by independent original-receipt replay. The managed
+retention finding above is corrected; the review does not certify hosted
+execution or fresh packaged/compiled acceptance. T081's T080 documentation
+prerequisite and T082/T083 final-source acceptance remain open.
+
+Final combined Linux check:
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest
+test_conformance_ci test_conformance_cli test_conformance_inherited -q`:
+**97 passed in 5.102 seconds**. Source is mounted readonly with a separately
+writable ignored `.foundation` scratch mount. An initial invocation without
+that writable mount fails two CLI diagnostic-persistence tests; the corrected
+environment passes unchanged tests. Both workflow `actionlint` and
+`git diff --check` pass. These checks are not final-source native qualification.
+
+The previous docs-only `8ee8805` composition diagnostic
+`41225694462` subsequently **passes**, without a lifecycle assertion change;
+the earlier source-line102 failure remains preserved and unexplained.
+Its SDK diagnostic `41225694452`/job`124609253414` instead fails one of183
+original wrapper rows:182 Passed/one Failed, `UnknownDiagnostic`, source93.
+The independent declared-name digest maps that row to
+`ArtifactNonCooperationTests.Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state(provider: "object")`.
+No assertion is relaxed and no repeated attempt is erased; its exact cause
+remains unproven.
+
 ### T073/T074 qualifying common-source local baseline
 
 At exact clean `e4365e1`, the original public default dispatcher succeeds at
