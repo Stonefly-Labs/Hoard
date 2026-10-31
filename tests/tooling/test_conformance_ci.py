@@ -20,6 +20,143 @@ import conformance_evidence as evidence
 
 
 class ConformanceProfileTransportTests(unittest.TestCase):
+    def test_sequential_baseline_rejects_dirty_source_and_cannot_invent_hosted_transports(self):
+        import conformance_ci as ci
+        import conformance_execution as execution
+
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            parent.chmod(0o700)
+            invocation = evidence.admit_invocation(ROOT, ["--evidence", str(parent / "baseline")])
+            for hosted, source, code in (("false", "dirty-local", "InputChanged"),
+                                         ("true", "clean-ci", "UnsupportedProfile")):
+                with self.subTest(hosted=hosted), mock.patch.dict(
+                        evidence.os.environ, {"GITHUB_ACTIONS": hosted}), mock.patch.object(
+                        execution, "native_execution_supported", return_value=True), mock.patch.object(
+                        evidence, "source_identity", return_value={"sourceState": source}), mock.patch.object(
+                        execution.OwnedRun, "allocate") as allocate:
+                    with self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$"):
+                        ci.execute_baseline(invocation)
+                    allocate.assert_not_called()
+
+    def test_original_local_baseline_uses_one_bounded_context_and_stops_on_the_first_failure(self):
+        import conformance_ci as ci
+        import conformance_composition_checks as composition
+        import conformance_execution as execution
+        import conformance_harness as harness
+        import conformance_sdk_checks as sdk
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        sources = {"tests/contracts/Hoard.Testing.Conformance/Catalog/catalog.json": "a" * 64}
+        identity = {"sourceRevision": "c" * 40, "sourceState": "clean-local"}
+        original_allocate = execution.OwnedRun.allocate
+        original_release = execution.OwnedRun.release
+        for defect in ("none", "composition", "composition-legacy", "compatibility-legacy", "baseline-cleanup"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                parent = Path(temporary).resolve()
+                parent.chmod(0o700)
+                invocation = evidence.admit_invocation(ROOT, ["--evidence", str(parent / "baseline")])
+                owners, calls = [], []
+
+                def allocate(*args, **kwargs):
+                    run = original_allocate(*args, **kwargs)
+                    owners.append(run)
+                    return run
+
+                def release(owner):
+                    if owner is owners[0] and defect == "baseline-cleanup":
+                        owner.transition("Retained")
+                        raise evidence.ConformanceError("CleanupIncomplete")
+                    return original_release(owner)
+
+                def produce(repository, child, **options):
+                    profile = child.root.name
+                    self.assertEqual(repository, ROOT)
+                    self.assertEqual(child.state, "Allocated")
+                    self.assertLessEqual(child.deadline, owners[0].deadline - 40)
+                    calls.append((profile, options["group_id"]))
+                    if profile == defect:
+                        raise evidence.ConformanceError("PrerequisiteMissing")
+                    if defect == profile + "-legacy":
+                        raise RuntimeError("private-canary")
+                    return object()
+
+                def complete(selected, native):
+                    child = owners[-1]
+                    profile, = selected.profiles
+                    inputs = ConformanceAdmissionTests().inputs()
+                    inputs.update(
+                        **identity, profileId=profile, mode="qualification", bindings=[],
+                        sourceManifest=sources, sourceManifestSha256=evidence.digest(sources),
+                        invocationGroupId=calls[-1][1], runId=child.run_id,
+                        sdkSha256=evidence.digest(sources))
+                    inputs["budgets"]["profileSeconds"] = execution.profile_budget(profile)
+                    paths = {
+                        "metadata": "proofs/category-metadata-qualification-run-inputs.json",
+                        "artifacts": "proofs/category-artifacts-qualification-run-inputs.json",
+                        "composition": "proofs/composition-inputs.json",
+                        "compatibility": "proofs/compatibility-runtime-inputs.json",
+                        "harness": harness.CATALOG_INPUTS,
+                    }
+                    sdk.write_new(child.root / paths[profile], evidence.canonical_bytes(inputs))
+                    kind = ("native-category-fixture-qualification" if profile in ("metadata", "artifacts")
+                            else "native-" + profile + "-fixture-qualification")
+                    origin = {
+                        "kind": kind, "inputsSha256": evidence.digest(inputs),
+                        "reportSha256": "d" * 64, "originalReportSha256": "e" * 64,
+                        "originalReportPath": "proofs/original.json", "resourcesSha256": "f" * 64,
+                    }
+                    if profile == "compatibility":
+                        origin.update(summaryPath="proofs/summary.json", summarySha256="a" * 64)
+                    print(evidence.canonical_bytes({
+                        "qualification": True, "profileId": profile,
+                        "reportSha256": origin["reportSha256"], "qualificationOrigin": origin,
+                    }).decode())
+                    return 0
+
+                def aggregate(selected):
+                    self.assertEqual(selected.action, "aggregate")
+                    self.assertEqual(selected.input_path, parent / "baseline/proofs/profiles")
+                    context = ci.admit_coordinator(
+                        evidence.load_json(selected.coordinator_path.read_bytes()), require_all=True)
+                    self.assertEqual(set(context["profiles"]), set(evidence.PROFILES))
+                    self.assertTrue(all(owner.state == "Released" for owner in owners))
+                    return 0
+
+                with mock.patch.dict(evidence.os.environ, {"GITHUB_ACTIONS": "false"}), mock.patch.object(
+                        execution, "native_execution_supported", return_value=True), mock.patch.object(
+                        execution, "scratch_filesystem", return_value="test"), mock.patch.object(
+                        execution.OwnedRun, "allocate", side_effect=allocate), mock.patch.object(
+                        execution.OwnedRun, "release", autospec=True, side_effect=release), mock.patch.object(
+                        evidence, "source_identity", return_value=identity), mock.patch.object(
+                        evidence, "source_manifest", return_value=sources), mock.patch.object(
+                        sdk, "execute_owned", side_effect=produce), mock.patch.object(
+                        composition, "execute_owned", side_effect=produce), mock.patch.object(
+                        harness, "execute_owned", side_effect=produce), mock.patch.object(
+                        evidence, "complete_native_category_invocation", side_effect=complete), mock.patch.object(
+                        evidence, "complete_native_composition_invocation", side_effect=complete), mock.patch.object(
+                        evidence, "complete_native_compatibility_invocation", side_effect=complete), mock.patch.object(
+                        evidence, "complete_native_harness_invocation", side_effect=complete), mock.patch.object(
+                        evidence, "dispatch_invocation", side_effect=aggregate) as dispatch, contextlib.redirect_stdout(
+                        io.StringIO()):
+                    if defect == "none":
+                        self.assertEqual(ci.execute_baseline(invocation), 0)
+                        dispatch.assert_called_once()
+                        self.assertEqual([profile for profile, _ in calls], list(evidence.PROFILES))
+                    else:
+                        code = ("CleanupIncomplete" if defect == "baseline-cleanup" else
+                                "EvidenceIncomplete" if defect.endswith("-legacy") else "PrerequisiteMissing")
+                        with self.assertRaisesRegex(evidence.ConformanceError, "^" + code + "$"):
+                            ci.execute_baseline(invocation)
+                        dispatch.assert_not_called()
+                        expected = evidence.PROFILES if defect == "baseline-cleanup" else evidence.PROFILES[
+                            :evidence.PROFILES.index(defect.removesuffix("-legacy")) + 1]
+                        self.assertEqual([profile for profile, _ in calls], list(expected))
+                        self.assertFalse((parent / "baseline/proofs/baseline-coordinator.json").exists())
+                self.assertEqual(len({group for _, group in calls}), 1)
+                self.assertEqual(owners[0].state, "Retained" if defect == "baseline-cleanup" else "Released")
+                self.assertTrue(all(owner.state == "Released" for owner in owners[1:]))
+
     def setUp(self):
         from test_conformance_evidence import ConformanceAdmissionTests
 

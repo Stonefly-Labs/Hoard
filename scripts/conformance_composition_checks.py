@@ -829,7 +829,8 @@ def _composition_case_report(run, inputs, post_inputs, observed, *, runtime_dire
     }
 
 
-def _runtime(run, repository, source, sources, config, feed, records, replay, *, native_sources=None, qualify=False):
+def _runtime(run, repository, source, sources, config, feed, records, replay, *, native_sources=None, qualify=False,
+             group_id=None):
     print(json.dumps({"qualification": False, "phase": "runtime-staging"}), flush=True)
     project = replay / PROJECT
     runtime = project.parent / "bin/Release/net10.0"
@@ -861,7 +862,8 @@ def _runtime(run, repository, source, sources, config, feed, records, replay, *,
     ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
     if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
         raise evidence.ConformanceError("InputChanged")
-    group, attempt = str(uuid.uuid4()), str(uuid.uuid4())
+    group = str(uuid.uuid4()) if group_id is None else evidence._uuid(group_id)
+    attempt = str(uuid.uuid4())
     print(json.dumps({"qualification": False, "phase": "runtime-inputs"}), flush=True)
     inputs = evidence.admit_entity("RunInputs", {
         "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group,
@@ -1030,6 +1032,23 @@ def execute(repository, destination, *, qualify=False):
     if not native_execution_supported():
         raise evidence.ConformanceError("PrerequisiteMissing")
     run = OwnedRun.allocate(destination, repository, profile="composition")
+    return _execute_run(repository, run, qualify=qualify)
+
+
+def execute_owned(repository, run, *, qualify=False, group_id=None):
+    if (type(run) is not OwnedRun or run.state != "Allocated" or run.command_sequence != 0
+            or run.live_children()):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    run._check_ledger()
+    if type(qualify) is not bool:
+        raise evidence.ConformanceError("UnsupportedProfile")
+    if not native_execution_supported():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    group_id = None if group_id is None else evidence._uuid(group_id)
+    return _execute_run(repository, run, qualify=qualify, group_id=group_id)
+
+
+def _execute_run(repository, run, *, qualify, group_id=None):
     try:
         (run.root / "cache/.local/share").mkdir(parents=True, mode=0o700)
         (run.root / "cache/.local").chmod(0o700)
@@ -1080,7 +1099,7 @@ def execute(repository, destination, *, qualify=False):
         native_sources = NativeCompositionSources(run)
         summary = _runtime(
             run, repository, source, sources, config, feed, records, replay,
-            native_sources=native_sources, qualify=qualify)
+            native_sources=native_sources, qualify=qualify, group_id=group_id)
         summary["historicalPreparationParentSha256"] = historical_parent
         summary["historicalNativeInvocations"] = historical_invocations
         summary["inheritedRuntime"] = _inherited_runtime(

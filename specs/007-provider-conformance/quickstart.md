@@ -2,8 +2,9 @@
 
 **Status**: Future acceptance guide with partial implementation foundations.
 The SDK, focused tests, fixture project manifests, preparation command and
-CLI admission and fifty-three initial executable metadata consumers now exist; complete profile execution,
-shared suites, complete adapters, contributor journey and CI qualification do not.
+CLI admission now exist, together with complete common suites, packaged bindings,
+contributor diagnostics and finite built-in qualification. Full-baseline and
+qualifying hosted acceptance remain unfinished.
 Complete built-in metadata/artifact runs on supported Linux hosts now connect
 original native execution to strict finite fixture qualification: exit0 requires
 the original Released owner/evaluation, unchanged source, complete immutable
@@ -12,9 +13,10 @@ At exact `984bb2e`, actual Linux artifact execution and separate-process receipt
 verification pass103 cases/263 witnesses; isolated metadata execution and
 independent verification pass102 cases/141 witnesses at that same source.
 An earlier concurrent metadata failure remains unexplained. Original diagnostic
-reports remain unchanged. Focused/custom bindings,
-harness and the full baseline remain nonqualifying; offline correspondence does
-not yet consume the separately trusted native-owner receipt.
+reports remain unchanged. Focused/custom bindings remain nonqualifying.
+The public harness qualifies all 21 cases at `a7fc113`; a fresh readonly public
+`--verify` replays its externally observed receipt and 1,965 declared proofs.
+Full-baseline acceptance remains unverified.
 Complete public compatibility execution now also preselects qualification-mode
 inputs and requires its original released native evaluator, exact current
 source/catalog and separately derived qualified bytes before exit0.
@@ -1577,16 +1579,21 @@ runtime-origin/settlement qualification and trusted coordinator generation for
 the full local/CI baseline are not. No sample-only manifest or these commands
 can promote incomplete observations into support.
 
-## Planned Baseline and Verification
+## Sequential local baseline (native acceptance unverified)
 
-After implementation, with a fresh destination:
+The default/`baseline` producer now wires all five original profiles, one
+predeclared group and bounded source-stable schedule. Use a clean supported
+Linux checkout and fresh destination; do not edit inputs during execution.
+The coordinator is generated from original native completions, not inferred
+from report files. This route does not substitute local statuses for hosted
+job/upload/download observations; hosted qualification needs its separate jobs.
 
 ```bash
 bash scripts/validate-conformance.sh \
   --profile baseline --evidence "$HOARD_PRIVATE_PARENT/f07-baseline"
 bash scripts/validate-conformance.sh \
-  --verify "$HOARD_PRIVATE_PARENT/f07-baseline/public/report.json" \
-  --coordinator "$HOARD_PRIVATE_PARENT/trusted-coordinator.json"
+  --aggregate "$HOARD_PRIVATE_PARENT/f07-baseline/proofs/profiles" \
+  --coordinator "$HOARD_PRIVATE_PARENT/f07-baseline/proofs/baseline-coordinator.json"
 ```
 
 Expected: complete category entries for all four bindings, every required

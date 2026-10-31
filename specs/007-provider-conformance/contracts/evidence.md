@@ -1068,6 +1068,24 @@ report/resource hashes exactly as for other profiles. Receipt-free structural
 inspection cannot qualify. Wiring and model-test success do not establish a
 native full-harness run, successful all-five aggregate or baseline acceptance.
 
+### Sequential original local baseline
+
+The default baseline predeclares a common invocation group, source/catalog/SDK
+context and unchanged finite baseline deadline. Metadata, artifacts,
+composition, compatibility and harness retain distinct original owners,
+packages, configurations and environments. Child deadlines cannot exceed the
+remaining parent deadline less the shared termination/cleanup reserve.
+Failures stop the sequence without erasing evidence or automatic retries.
+
+The controller receives each receipt only from that original native
+completion, checks it against the held child/run and predeclared common
+context, and creates a schema-2 coordinator outside `proofs/profiles/`.
+Public aggregation replays all five retained original closures after child and
+parent release. Local upload/download statuses are explicitly `not-required`;
+hosted invocation of this local sequence rejects instead of inventing successful
+CI transport. Qualifying hosted jobs/transport remain separate acceptance gates.
+Modeled orchestration does not establish a successful native baseline.
+
 ### Original harness catalog component
 
 The internal QC-01 component in `conformance_harness.py` reuses existing locked

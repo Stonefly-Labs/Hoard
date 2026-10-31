@@ -16,6 +16,46 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T074 original common-source baseline wiring
+
+The default clean-local baseline now invokes all five original producers in
+order, with one predeclared group/source/catalog/SDK context and the unchanged
+28800-second parent budget. Child deadlines are narrowed to the parent less
+shared termination/cleanup reserves. Composition and harness accept only
+original unstarted caller-owned executors; ordinary public paths still use the
+same underlying implementation. Composition writes the supplied group into
+its actual inputs, owner and manifests.
+
+Only successful original native completion can export a stage receipt.
+The controller checks original child identity and common context, then creates
+the schema-2 coordinator outside the five-profile aggregation directory.
+Every child and the parent release before public exact-five replay.
+Failures retain evidence and stop the sequence; no automatic retry or
+downloaded-report authority inference is introduced. Hosted execution of this
+local sequence rejects: five separate actual job/upload/download outcomes are
+still required by T075..T078, not fabricated as local success.
+
+Linux `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m
+unittest test_conformance_sdk_checks test_conformance_composition
+test_conformance_evidence test_conformance_cli test_conformance_ci -q`:
+**501 passed**, 119.995 seconds, zero skips. Focused modeled scheduling covers
+all five stages, shared group/deadline narrowing, exact local coordinator and
+actual release on success/first failure; dirty/hosted admission rejects before
+allocation. Foreign/started/nonexecutor admission rejects. Legacy composition/
+compatibility failures preserve the public closed-error projection.
+Frozen inventory/catalog and `git diff --check`: **passed**.
+Final Linux `python3 -B -m unittest test_conformance_ci test_conformance_cli
+test_conformance_sdk_checks.SdkDiagnosticTests.test_owned_composition_and_harness_preserve_original_context_without_admitting_foreign_or_started_runs
+test_conformance_sdk_checks.SdkDiagnosticTests.test_harness_public_execution_publishes_verified_presentations_after_release
+-q` under the same environment: **47 passed**, 3.908 seconds.
+The injected parent-cleanup failure initially left a coordinator; its regression
+failed before moving publication after successful parent release and now passes.
+These are wiring/regression results, not a native baseline pass.
+T073/T074 remain unchecked pending fresh original full-baseline/aggregate
+acceptance. README, development, quickstart and evidence contract are updated;
+contributor commands and unrelated product/provider/infrastructure documents
+are unaffected for the earlier recorded scope reasons.
+
 ### T073 genuinely qualifying public harness and independent replay
 
 At clean `a7fc113`, the original public dispatcher with

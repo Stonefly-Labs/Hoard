@@ -216,6 +216,11 @@ A fresh readonly public `--verify` replays the externally observed receipt and
 all 1,965 declared proofs without changes. The observer helper failed afterward;
 its six extra authority controls were not reached and are not claimed passed.
 Common-source all-five baseline/hosted acceptance remains open.
+The clean-local default baseline now wires all five original producers into
+one bounded group and builds its coordinator from verified native completions.
+Scheduling, admission and failure cleanup are regression-tested; a fresh native
+baseline is still required. Hosted qualification still requires separate
+profile jobs and actual upload/download outcomes, not fabricated local statuses.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

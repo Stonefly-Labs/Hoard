@@ -85,8 +85,9 @@ def invocation_parser():
     parser = _Arguments(
         description="Conformance admission and native metadata/artifact/composition/compatibility execution. "
                     "Complete built-in metadata/artifact/composition/compatibility runs require original native authority for finite fixture "
-                    "qualification; full baseline, focused/custom bindings, harness "
-                    "qualification and five-profile aggregation remain incomplete. "
+                    "qualification. Clean-local sequential baseline wiring uses all five profiles "
+                    "under one original group and deadline; baseline acceptance and five-job hosted "
+                    "qualification remain unverified. Focused/custom bindings remain nonqualifying. "
                     "Offline --verify with a separately trusted receipt replays finite fixture qualification; "
                     "schema-1 --coordinator manifests inspect correspondence only.",
         add_help=False, allow_abbrev=False)
@@ -250,6 +251,10 @@ def dispatch_invocation(invocation):
     if invocation.action in ("verify", "aggregate"):
         from conformance_ci import inspect_offline
         return inspect_offline(invocation)
+    if (invocation.action == "run" and invocation.profiles == PROFILES
+            and invocation.mode == "qualification" and invocation.binding_project is None):
+        from conformance_ci import execute_baseline
+        return execute_baseline(invocation)
     if invocation.action == "run":
         raise ConformanceError("EvidenceIncomplete")
     raise ConformanceError()

@@ -28,6 +28,45 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_owned_composition_and_harness_preserve_original_context_without_admitting_foreign_or_started_runs(self):
+        import conformance_composition_checks as composition
+        import conformance_execution as execution
+        import conformance_harness as harness
+
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            parent.chmod(0o700)
+            for module, profile in ((composition, "composition"), (harness, "harness")):
+                run = execution.OwnedRun.allocate(parent / profile, ROOT, profile=profile)
+                deadline = run.deadline
+                group = str(uuid.uuid4())
+                options = {"group_id": group, **({"qualify": True} if profile == "composition" else {})}
+                try:
+                    with patch.object(execution, "native_execution_supported", return_value=True), patch.object(
+                            composition, "native_execution_supported", return_value=True), patch.object(
+                            checks.evidence, "source_identity", return_value={"sourceState": "clean-local"}), patch.object(
+                            module, "_execute_run", return_value=object()) as execute:
+                        module.execute_owned(ROOT, run, **options)
+                        execute.assert_called_once_with(ROOT, run, **options)
+                        self.assertEqual(run.deadline, deadline)
+                        execute.reset_mock()
+                        for owner in (None, SimpleNamespace(state="Allocated"), run):
+                            if owner is run:
+                                run.command_sequence = 1
+                            with self.subTest(profile=profile, owner=type(owner).__name__):
+                                with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                                    module.execute_owned(ROOT, owner, **options)
+                        run.command_sequence = 0
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                            module.execute_owned(ROOT, run, **{**options, "group_id": "foreign"})
+                        run.transition("Active")
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                            module.execute_owned(ROOT, run, **options)
+                        execute.assert_not_called()
+                finally:
+                    run.transition("Settling")
+                    run.release()
+
     def test_harness_public_execution_publishes_verified_presentations_after_release(self):
         import conformance_harness as harness
         from test_conformance_evidence import ConformanceAdmissionTests

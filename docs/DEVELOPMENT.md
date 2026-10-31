@@ -4697,6 +4697,19 @@ That original parent remains nonqualifying; adding the full-harness producer
 does not retrospectively promote it. The exact source IDs selected for the new
 control derivations are present in those original observations.
 
+**Sequential local baseline:** on a clean supported Linux checkout,
+`bash scripts/validate-conformance.sh --evidence <fresh-private-path>` now
+executes metadata, artifacts, composition, compatibility and harness in order.
+It predeclares one group/source/catalog/SDK context and bounds child deadlines
+by the unchanged eight-hour baseline budget, reserving termination/cleanup.
+Original native completions supply receipts; no report-only inference or
+automatic retry is used. All child and parent owners must release before public
+aggregation using `proofs/baseline-coordinator.json` and `proofs/profiles/`.
+Native full-baseline acceptance is unverified. This local route rejects hosted
+execution: CI must report genuine separate job/upload/download outcomes.
+The affected Linux selection passes 501 tests; modeled scheduling checks are
+not qualification evidence.
+
 **Metadata evidence correction and category controls:** moving origin output
 before assertions also flushed argument evidence too early. Origins now emit
 in `finally`, preserving failed-test origins and all 16 required argument

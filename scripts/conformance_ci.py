@@ -1,12 +1,14 @@
 """Trusted finite-profile verification and closed five-profile correspondence."""
 
 from collections.abc import Mapping
+from contextlib import redirect_stdout
 import hashlib
 import io
 from pathlib import Path
 from pathlib import PurePosixPath
 from types import MappingProxyType
 import time
+import uuid
 
 from conformance_case_catalog import expected_cases
 from conformance_evidence import (
@@ -145,6 +147,141 @@ def _read_packet(root, relative):
         _source_file(descriptor, relative, remaining=MAX_REPORT_BYTES,
                      deadline=time.monotonic() + 5, target=contents)
     return contents.getvalue()
+
+
+def execute_baseline(invocation):
+    """Run the original local five-profile sequence, never synthesize CI transport."""
+    import conformance_composition_checks as composition
+    import conformance_evidence as evidence
+    import conformance_harness as harness
+    import conformance_sdk_checks as sdk
+    from conformance_execution import OwnedRun, native_execution_supported
+
+    if (invocation.mode != "qualification" or invocation.profiles != PROFILES
+            or invocation.binding_project is not None
+            or invocation.case_keys != tuple(case.key for profile in PROFILES for case in expected_cases(profile))):
+        raise ConformanceError("WitnessMissing")
+    if not native_execution_supported():
+        raise ConformanceError("PrerequisiteMissing")
+    if evidence.os.environ.get("GITHUB_ACTIONS") == "true":
+        raise ConformanceError("UnsupportedProfile")
+    identity = evidence.source_identity(invocation.repository)
+    if identity["sourceState"] != "clean-local":
+        raise ConformanceError("InputChanged")
+    sources = evidence.source_manifest(invocation.repository)
+    group = str(uuid.uuid4())
+    common = _common_context({
+        **identity, "invocationGroupId": group, "sourceManifestSha256": digest(sources),
+        "catalogRevision": evidence.CATALOG_REVISION,
+        "catalogSha256": sources["tests/contracts/Hoard.Testing.Conformance/Catalog/catalog.json"],
+        "sdkSha256": digest({path: hashed for path, hashed in sources.items()
+                             if path.startswith("tests/contracts/Hoard.Testing.Conformance/")}),
+    })
+    run = OwnedRun.allocate(invocation.evidence, invocation.repository, profile="baseline")
+    profiles_root = run.root / "proofs/profiles"
+    coordinator_path = run.root / "proofs/baseline-coordinator.json"
+    cleanup_reserve = sdk.BUDGETS["terminationSeconds"] + sdk.BUDGETS["cleanupSeconds"]
+    assignments = {}
+    children = []
+    input_paths = {
+        "metadata": "proofs/category-metadata-qualification-run-inputs.json",
+        "artifacts": "proofs/category-artifacts-qualification-run-inputs.json",
+        "composition": "proofs/composition-inputs.json",
+        "compatibility": "proofs/compatibility-runtime-inputs.json",
+        "harness": harness.CATALOG_INPUTS,
+    }
+    report_paths = {
+        "metadata": "proofs/category-metadata-fixture-qualification-report.json",
+        "artifacts": "proofs/category-artifacts-fixture-qualification-report.json",
+        "composition": "proofs/composition-fixture-qualification-report.json",
+        "compatibility": "proofs/compatibility-fixture-qualification-report.json",
+        "harness": harness.QUALIFIED_REPORT,
+    }
+    complete = {
+        "metadata": evidence.complete_native_category_invocation,
+        "artifacts": evidence.complete_native_category_invocation,
+        "composition": evidence.complete_native_composition_invocation,
+        "compatibility": evidence.complete_native_compatibility_invocation,
+        "harness": evidence.complete_native_harness_invocation,
+    }
+    try:
+        run.transition("Active")
+        profiles_root.mkdir(mode=0o700)
+        for profile in PROFILES:
+            if time.monotonic() + cleanup_reserve >= run.deadline:
+                raise ConformanceError("DeadlineExceeded")
+            print(canonical_bytes({
+                "qualification": False, "phase": "baseline-profile", "profileId": profile,
+            }).decode("ascii"), flush=True)
+            destination = profiles_root / profile
+            selected = evidence.admit_invocation(invocation.repository, [
+                "--profile", profile, "--evidence", str(destination)])
+            child = OwnedRun.allocate(destination, invocation.repository, profile=profile)
+            children.append(child)
+            child.deadline = min(child.deadline, run.deadline - cleanup_reserve)
+            try:
+                if profile in ("metadata", "artifacts"):
+                    native = sdk.execute_owned(
+                        invocation.repository, child, category=profile, qualify=True, group_id=group)
+                elif profile == "composition":
+                    try:
+                        native = composition.execute_owned(
+                            invocation.repository, child, qualify=True, group_id=group)
+                    except RuntimeError:
+                        raise ConformanceError("EvidenceIncomplete") from None
+                elif profile == "compatibility":
+                    try:
+                        native = sdk.execute_owned(
+                            invocation.repository, child, compatibility_only=True, qualify=True, group_id=group)
+                    except RuntimeError:
+                        raise ConformanceError("EvidenceIncomplete") from None
+                else:
+                    native = harness.execute_owned(invocation.repository, child, group_id=group)
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    status = complete[profile](selected, native)
+                if status != 0:
+                    raise ConformanceError("EvidenceIncomplete")
+                observation = load_json(output.getvalue().encode("ascii"))
+                origin = admit_qualification_origin(observation["qualificationOrigin"], profile=profile)
+                _, data = evidence._readonly_report_proof(child.root, input_paths[profile])
+                inputs = admit_entity("RunInputs", load_json(data))
+                if (inputs["runId"] != child.run_id or _common_context(inputs) != common
+                        or digest(inputs) != origin["inputsSha256"]
+                        or observation["profileId"] != profile
+                        or observation["qualification"] is not True
+                        or observation["reportSha256"] != origin["reportSha256"]):
+                    raise ConformanceError("InputChanged")
+                assignments[profile] = {
+                    "inputs": inputs, "reportSha256": origin["reportSha256"],
+                    "reportPath": report_paths[profile], "qualificationOrigin": origin,
+                    "jobResults": {
+                        "job": "success", "upload": "not-required", "download": "not-required",
+                    },
+                }
+                print(output.getvalue(), end="", flush=True)
+            finally:
+                if child.state in ("Allocated", "Active"):
+                    child.transition("Settling")
+                if child.state == "Settling":
+                    child.release()
+        if (evidence.source_identity(invocation.repository) != identity
+                or evidence.source_manifest(invocation.repository) != sources
+                or any(child.state != "Released" or child.live_children() for child in children)):
+            raise ConformanceError("InputChanged")
+        coordinator = {
+            "schemaVersion": 2, "configurationPolicy": configuration_policy(), "profiles": assignments,
+        }
+        admit_coordinator(coordinator, require_all=True)
+    finally:
+        if run.state in ("Allocated", "Active"):
+            run.transition("Settling")
+        if run.state == "Settling":
+            run.release()
+    sdk.write_new(coordinator_path, canonical_bytes(coordinator))
+    return evidence.dispatch_invocation(evidence.admit_invocation(invocation.repository, [
+        "--aggregate", str(profiles_root), "--coordinator", str(coordinator_path),
+    ]))
 
 
 def inspect_offline(invocation):

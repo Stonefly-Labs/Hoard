@@ -900,7 +900,6 @@ class NativeHarnessSources:
 
 
 def execute(repository, destination, *, group_id=None):
-    import conformance_sdk_checks as sdk
     from conformance_execution import native_execution_supported
 
     if not native_execution_supported():
@@ -912,6 +911,30 @@ def execute(repository, destination, *, group_id=None):
             not in ("clean-local", "clean-ci")):
         raise evidence.ConformanceError("InputChanged")
     run = OwnedRun.allocate(destination, repository, profile="harness")
+    return _execute_run(repository, run, group_id=group_id)
+
+
+def execute_owned(repository, run, *, group_id):
+    from conformance_execution import native_execution_supported
+
+    if (type(run) is not OwnedRun or run.state != "Allocated" or run.command_sequence != 0
+            or run.live_children()):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    run._check_ledger()
+    if not native_execution_supported():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    group_id = evidence._uuid(group_id)
+    ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+    if (os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None
+            or evidence.source_identity(repository, ci_revision=ci_revision)["sourceState"]
+            not in ("clean-local", "clean-ci")):
+        raise evidence.ConformanceError("InputChanged")
+    return _execute_run(repository, run, group_id=group_id)
+
+
+def _execute_run(repository, run, *, group_id):
+    import conformance_sdk_checks as sdk
+
     try:
         run.transition("Active")
         native = NativeHarnessSources(run).execute(repository, group_id=group_id)
