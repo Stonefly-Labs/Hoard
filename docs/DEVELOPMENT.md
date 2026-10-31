@@ -4676,12 +4676,17 @@ catalog executions remain explicitly identified anchors; no tooling observation
 is invented as a C# execution or assigned a child run's identity. Qualification
 requires the original evaluation reference, original parent command bytes and
 all five actual released child owners; serialized/copy state cannot replace it.
-Fresh full-profile native acceptance remains unverified. The affected Linux
-evidence/SDK/CLI/coordinator selection passes 461 tests.
+The affected Linux evidence/SDK/CLI/coordinator selection passes 461 tests.
 The preserved `f4628e2` attempt completes all 21 harness cases and 892 tooling
 tests in 1672.192 seconds, with all six owners Released. Public completion then
-rejects absent presentation files. The producer now writes the four verified
-finite outputs after release; fresh public acceptance is still required.
+rejects absent presentation files. At `a7fc113`, the corrected public producer
+qualifies all 21 cases and completes 893 tooling tests in 1602.496 seconds.
+Separately pinned public `--verify` passes in a fresh readonly process, checking
+1,965 declared proofs and all four finite presentations without changes.
+The session observer failed after public success by counting a modeled tooling
+call; its six extra parent-authority controls were not reached. They are not
+claimed passed. Common-source baseline and qualifying hosted acceptance remain
+unfinished.
 
 At clean `cf9f62a`, the preceding combined component run finishes in 1538.128
 seconds: both category qualifications, all 56 actual mutation controls, the

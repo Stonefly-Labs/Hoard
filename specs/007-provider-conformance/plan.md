@@ -9,11 +9,53 @@ the resolved CP-11 timing clarification recorded below. Finite native metadata/
 artifact fixture qualifications at `984bb2e`, composition at `48faeec` and
 compatibility at `c012f7b` have
 separate readonly external-receipt verification. These different-source results
-do not establish a common baseline. Complete harness, qualifying coordinator/
+do not establish a common baseline. The public harness qualifies at `a7fc113`
+with separately pinned readonly receipt replay. Qualifying common coordinator/
 five-profile CI, custom checklist approval and full-baseline qualification remain
 unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
+
+### T073 genuinely qualifying public harness and independent replay
+
+At clean `a7fc113`, the original public dispatcher with
+`--profile harness --evidence /probe/work/harness-qualified-a7fc113-1`
+returns success and exports `native-harness-fixture-qualification`.
+All **21 cases pass**, with ten actual catalog anchors, both category
+qualifications/all 56 controls and **893 tooling tests**. All six original
+owners are Released. Execution takes **1602.496 seconds**, within the
+unchanged 3600-second harness deadline.
+
+The externally observed original receipt pins:
+
+| Field | SHA-256 |
+| --- | --- |
+| Inputs | `40c3ab1198b6eb6b3913eabc93581797a98c2581afbdee97544228037d64782f` |
+| Qualified report | `16f844d47730a3b426e70996a238c968e5816cc47f30ab533f78e86619532507` |
+| Original Released report | `0247a31c238e09fbd0a1f30c61d475fed55abac91194a3363805cdac32b68149` |
+| Resources | `da45855a0bc0e61f82e48067f73032d4780492fcd82deedf0118fc8659009033` |
+
+A new readonly container invokes public `--verify` with a separately held
+schema-2 coordinator using these observed pins: **passed**, all 21 cases,
+`qualification:true`, `baselineQualification:false`. Its independently
+measured **1,965 declared proofs** match the report before and after replay.
+All four finite presentations exactly match fresh verified rendering.
+The evidence volume is mounted readonly; original bytes are unchanged.
+
+The session driver's shell exit is **1**, after public success: its observer
+also counted a modeled harness call executed by the tooling suite. Its six
+extra parent-authority controls were therefore **not reached**, not passed.
+The observer now scopes capture to the actual evaluation/type/original root;
+no repository test is changed or bypassed. Independent replay initially tried
+to hash the entire physical evidence workspace, including duplicated data
+outside the report closure, and exceeded the proof ceiling. The corrected
+helper hashes exactly the report's declared closure under unchanged limits;
+the public verifier and all original proof checks are unchanged.
+
+This establishes one genuinely qualifying end-to-end harness run, not a
+common-source five-profile baseline or qualifying hosted aggregate.
+T073 stays unchecked until its exact-five acceptance is delivered.
+T074..T086 and the unreached extra authority controls remain explicit.
 
 ### T073 harness presentation publication
 
