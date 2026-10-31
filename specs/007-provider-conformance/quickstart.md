@@ -16,7 +16,9 @@ An earlier concurrent metadata failure remains unexplained. Original diagnostic
 reports remain unchanged. Focused/custom bindings remain nonqualifying.
 The public harness qualifies all 21 cases at `a7fc113`; a fresh readonly public
 `--verify` replays its externally observed receipt and 1,965 declared proofs.
-Full-baseline acceptance remains unverified.
+At clean `e4365e1`, the common-source five-profile local baseline/public
+aggregate and independent readonly replay pass for all 418 cases.
+Qualifying hosted acceptance and final feature gates remain unfinished.
 Complete public compatibility execution now also preselects qualification-mode
 inputs and requires its original released native evaluator, exact current
 source/catalog and separately derived qualified bytes before exit0.
@@ -1579,7 +1581,7 @@ runtime-origin/settlement qualification and trusted coordinator generation for
 the full local/CI baseline are not. No sample-only manifest or these commands
 can promote incomplete observations into support.
 
-## Sequential local baseline (native acceptance unverified)
+## Sequential local baseline
 
 The default/`baseline` producer now wires all five original profiles, one
 predeclared group and bounded source-stable schedule. Use a clean supported
@@ -1587,6 +1589,8 @@ Linux checkout and fresh destination; do not edit inputs during execution.
 The coordinator is generated from original native completions, not inferred
 from report files. This route does not substitute local statuses for hosted
 job/upload/download observations; hosted qualification needs its separate jobs.
+At exact `e4365e1`, the original sequence and separate readonly aggregate pass:
+418 cases, all 4,635 declared proofs/20 presentations and eleven Released owners.
 
 ```bash
 bash scripts/validate-conformance.sh \

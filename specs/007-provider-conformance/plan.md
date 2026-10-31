@@ -10,11 +10,58 @@ artifact fixture qualifications at `984bb2e`, composition at `48faeec` and
 compatibility at `c012f7b` have
 separate readonly external-receipt verification. These different-source results
 do not establish a common baseline. The public harness qualifies at `a7fc113`
-with separately pinned readonly receipt replay. Qualifying common coordinator/
+with separately pinned readonly receipt replay. At `e4365e1`, the full original
+common-source local baseline and separate readonly five-profile aggregate pass.
+Qualifying hosted coordinator/
 five-profile CI, custom checklist approval and full-baseline qualification remain
 unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
+
+### T073/T074 qualifying common-source local baseline
+
+At exact clean `e4365e1`, the original public default dispatcher succeeds at
+`hoard-f07-transfer-c4e36cb-diag:/probe/work/baseline-qualified-e4365e1-1`.
+Metadata, artifacts, composition, compatibility and harness share one
+predeclared invocation/source/catalog/SDK context. The original public
+aggregate returns `qualification:true`, `baselineQualification:true`,
+`scope:five-profile-fixture-qualification`, `code:None`. The shell exits **0**.
+Every original owner releases; the unchanged eight-hour runtime budget and
+profile/cleanup ceilings are preserved.
+
+| Profile | Cases | Passed / declared exclusions | Witnesses | Declared proofs | Qualified report SHA-256 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Metadata | 102 | 93 / 9 | 141 | 468 | `e5c849ffb2be06ea22a4863f276acb05fef8730e717499113b6f4163affe8124` |
+| Artifacts | 103 | 99 / 4 | 263 | 620 | `7fbad5906d2818e874f53abaf2ff90a067c1c8ef50679c0f6f119b7993845998` |
+| Composition | 50 | 50 / 0 | 36 | 1187 | `3f62eec598d0f54892c79ed10f991a989b1f865f98b33205f9ef65221d14dbba` |
+| Compatibility | 142 | 142 / 0 | 212 | 395 | `759a01d4f1e8e0a6c10b799358532c035d20c2a8086d4ac4821b671a46aff343` |
+| Harness | 21 | 21 / 0 | 10 | 1965 | `e23eae44ffbd9420e6c18e609f9cfb962443b1fb6f7c16d7e4c106bdb0bbc1f4` |
+
+The externally observed first original per-profile stdout receipts are retained
+separately in `baseline-e4365e1-external-origins.json`, not inferred from later
+downloaded reports. A new readonly container checks each input/original/report/
+resource pin, invokes public `--aggregate` with a separately held coordinator,
+and verifies **all 4,635 declared proofs and 20 finite presentations unchanged**:
+**passed**, all 418 cases (405 passed/13 declared exclusions). It independently
+observes **eleven Released owners**: the baseline parent, five profile owners,
+three contributor owners and two inner category owners.
+
+The six previously unreached parent-harness authority controls now all run
+against the actual held original evaluation and reject as intended:
+copied/missing evaluation -> `OwnershipInvalid`; foreign inputs ->
+`ProofMismatch`; foreign resources -> `CleanupIncomplete`; altered results ->
+`EvidenceSchemaInvalid`; optimistic original report -> `ProofMismatch`.
+The original qualified result re-verifies afterward.
+
+T073 and T074 are now complete. This is a genuine local baseline, not successful
+hosted qualification or final feature acceptance. T075..T086 remain open.
+The existing hosted composition diagnostic at run `41218438268`/job
+`124593158673` fails in inherited `LifecycleOwnershipTests`:
+`WitnessMissing`, test `UnknownDiagnostic` value 102/control value 24.
+Tooling was not reached; the fallback file reader reports
+`OutputLimitExceeded` for its absent tooling file. The original failure is
+preserved; its precise method/cause is not yet established, and no retry,
+relaxed test, inferred CI success or merge is authorized.
 
 ### T074 original common-source baseline wiring
 

@@ -215,11 +215,14 @@ presentation files. At `a7fc113`, the corrected public producer qualifies all
 A fresh readonly public `--verify` replays the externally observed receipt and
 all 1,965 declared proofs without changes. The observer helper failed afterward;
 its six extra authority controls were not reached and are not claimed passed.
-Common-source all-five baseline/hosted acceptance remains open.
+At clean `e4365e1`, the common-source five-profile local baseline and public
+aggregate pass: **418 cases, 405 passed/13 declared exclusions**. A fresh readonly
+aggregate verifies all 4,635 declared proofs and 20 finite presentations;
+all eleven owners are Released. All six extra harness-authority controls reject
+their intended mutations. Qualifying hosted acceptance and final gates remain.
 The clean-local default baseline now wires all five original producers into
 one bounded group and builds its coordinator from verified native completions.
-Scheduling, admission and failure cleanup are regression-tested; a fresh native
-baseline is still required. Hosted qualification still requires separate
+Scheduling, admission and failure cleanup are regression-tested. Hosted qualification still requires separate
 profile jobs and actual upload/download outcomes, not fabricated local statuses.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 

@@ -4705,10 +4705,20 @@ by the unchanged eight-hour baseline budget, reserving termination/cleanup.
 Original native completions supply receipts; no report-only inference or
 automatic retry is used. All child and parent owners must release before public
 aggregation using `proofs/baseline-coordinator.json` and `proofs/profiles/`.
-Native full-baseline acceptance is unverified. This local route rejects hosted
+At clean `e4365e1`, the original local sequence/public aggregate succeeds for
+all 418 cases (405 passed/13 declared exclusions). A separate readonly public
+aggregate replays the external original receipts, all 4,635 declared proofs and
+20 finite presentations unchanged. All eleven original owners are Released;
+all six parent-harness authority controls reject their intended mutations.
+This local route rejects hosted
 execution: CI must report genuine separate job/upload/download outcomes.
 The affected Linux selection passes 501 tests; modeled scheduling checks are
-not qualification evidence.
+not themselves qualification evidence. Qualifying hosted acceptance remains
+open. The existing hosted composition diagnostic at run `41218438268` fails
+in inherited `LifecycleOwnershipTests` with `WitnessMissing`/`UnknownDiagnostic`
+before tooling; its fallback `OutputLimitExceeded` means the tooling file is
+absent, not that a tooling size limit was exceeded. This failure is preserved
+and must not be bypassed.
 
 **Metadata evidence correction and category controls:** moving origin output
 before assertions also flushed argument evidence too early. Origins now emit
