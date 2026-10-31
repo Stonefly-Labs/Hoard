@@ -4668,6 +4668,29 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+**Contributor original replay:** the internal metadata contributor reader now
+reconstructs the retained binding descriptor, exact discovery/execution
+manifests, selected SDK runner, native command parents, immutable runtime
+images, original packets, actual component origins and completion inputs.
+Its explicit stale-replay control requires exactly the three named failed
+assertions and all 86 actual session origins across 76 rows. Ordinary positive
+replay still requires every row to pass; unknown failures cannot substitute
+for the intended assertions.
+
+The common consumer emits its already-captured session origin before invoking
+the unchanged assertions, so a failed assertion does not hide its actual
+factory/components. The safe logger correlates xUnit's mirrored `Output:`
+lines only with the actual result's fully validated output packets. Unknown
+provider/adapter output, foreign packets and unrelated diagnostics still
+reject; raw text is not retained. The copied good/faulty/corrected CLI journey
+and fresh readonly replay pass, with identical provider/SDK/common-source
+bytes and actual release. All 340 affected Linux tests and 181 managed logger
+tests pass without skips. Eight original-packet mutations reject and restored
+bytes replay successfully. Public contributor commands remain exit2/
+`qualification:false`; this does not complete the harness or five-profile
+baseline. Exact roots, failures and validation commands are in the
+[implementation record](../specs/007-provider-conformance/plan.md#t073-contributor-seam-original-goodfaultycorrected-replay).
+
 **Harness catalog component:** the original QC-01 transport now reuses the
 existing locked builder, native command receipts and HoardSafe discovery/
 execution protocol. Ten actual C# witnesses pass; fresh readonly replay after

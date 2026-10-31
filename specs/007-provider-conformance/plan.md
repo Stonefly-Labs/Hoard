@@ -15,6 +15,84 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T073 contributor seam: original good/faulty/corrected replay
+
+The internal contributor reader now replays original metadata diagnostics from
+caller-pinned complete inputs, a sealed declarative binding descriptor,
+original build/runner/runtime pins and exact native discovery/execution
+parents. It reconstructs the complete common manifest and reingests original
+packets with actual component origins, not a row-count summary. Normal replay
+requires all 76 rows to pass. The explicitly isolated stale-replay control
+requires exactly three named failed assertions (`receipts`, `time-ticket`,
+`publication-replay`), 73 passing rows and all 86 actual session origins.
+No native owner is reconstructed; every component result stays nonqualifying.
+
+The actual copied-adapter good/faulty/corrected CLI journey is retained at
+`hoard-f07-transfer-c4e36cb-diag:/probe/work/contributor-original-b5033be-3/`.
+All three run 76 rows with 86 origins and actually release their resources.
+Good/corrected pass every row; faulty has exactly the three intended named
+assertion failures. The provider package, SDK/provider/binding images and
+common consumer/assertion source bytes match across all three. Only the copied
+adapter source/input identity changes and is restored; its compiled driver/
+PDB provenance is separately bound per run, not claimed invariant.
+
+The separately observed packet has SHA-256
+`cd715cdf8a8e51e1afca86e079fb4ad18bd4a48519c0ee2ae3759ebfddb36b05`.
+A fresh process mounts the original evidence volume readonly, checks that
+external pin, replays all three original roots and independently observes
+Released with zero children/groups. Input digests are:
+
+| Run | Original input SHA-256 |
+| --- | --- |
+| good | `e2e9322d98ceaae4d2b1142deb31eb7f15d2a021b9af79ccd2099064c2a623d7` |
+| faulty | `67534652bac15ea1f1a6cd5d92b46508d54a09848b485c7be0e0d400296baabd` |
+| corrected | `67b3b43a98013583826c99c7844a5922dc52ad9921a77b4c73295fa0ca5077fc` |
+
+These are dirty-local finite component observations, not current clean-source,
+full harness or baseline qualification. Every public contributor invocation
+still returns exit2/`EvidenceIncomplete`; successful runtime is not promoted
+to profile success.
+
+The preceding `contributor-original-b5033be-1` and `-2` triplets remain
+preserved and Released. First, the existing consumer writes origins only after
+the assertion returns; the three real assertion failures therefore leave 83,
+not the required 86 origins. Moving the existing already-captured origin write
+before execution fixes that omission without changing a shared assertion.
+Second, all 86 origins are present but xUnit mirrors their valid packet lines
+under its `Output:` failure wrapper; the safe logger initially treats those
+unmatched adapter messages as unknown. It now correlates exact hashes only
+after the actual result's output passes the existing closed packet parser.
+Unknown result text, foreign origin packets and unrelated adapter diagnostics
+still reject. Raw text is never persisted. The third triplet passes; neither
+earlier triplet is rewritten or accepted.
+
+An earlier reader regression rejects the logger's two real retained
+reuse-prevention claim files as unknown attempts. The reader now explicitly
+requires those two exact empty sealed claims alongside the two exact native
+attempts; it does not ignore arbitrary claims or additional attempts.
+The original 339-test Linux selection has 338 passes and this one reader
+error. After the correction, its targeted native replay passes, including
+eight physical mutations (input pin, duplicate/overlapping attempts, unknown
+frame field, binding sources, runtime image, completion input, optimistic
+summary) and a successful restored replay after each mutation.
+
+Final validation:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_contributors test_conformance_sdk_checks test_conformance_ci test_conformance_cli -q`: **340 passed**, 417.630 seconds, zero skips on Linux.
+- `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --filter FullyQualifiedName~RuntimeLoggerTests --verbosity quiet -p:UseSharedCompilation=false -nodeReuse:false`: **181 passed**, zero skips.
+- `dotnet format whitespace --folder --verify-no-changes --include tests/contracts/Hoard.Conformance.TestLogger/RuntimeResultRecorder.cs tests/contracts/Hoard.Conformance.Tests/RuntimeLoggerTests.cs tests/fixtures/conformance/Consumer/MetadataConformanceSessionTests.cs`: **passed**.
+- `python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+  `python3 scripts/conformance_case_catalog.py --check-sdk` and
+  `git diff --check`: **passed**.
+
+README/development/contributor-guide/evidence-contract changes describe this
+finite replay and its unchanged nonqualifying CLI boundary. Provider/product
+contracts, charter/product spec/architecture/ADR/diagrams, custom-host and
+predecessor guides, governance/backlog, IaC, release and UI documents are
+unaffected: there is no corresponding public API, package graph, deployment or
+product behavior change. T073 remains unchecked; full harness authority,
+remaining harness cases and successful exact-five aggregation are still open.
+
 ### T073 harness catalog seam: original component verified, profile still open
 
 `conformance_harness.py` now supplies the original QC-01 component using the

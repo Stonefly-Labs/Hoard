@@ -1582,6 +1582,46 @@ public sealed class RuntimeLoggerTests
         AssertSafe(owned.Output);
     }
 
+    [Theory]
+    [InlineData("before", ConformanceDiagnosticCode.AssertionFailed)]
+    [InlineData("after", ConformanceDiagnosticCode.AssertionFailed)]
+    [InlineData("unrelated-adapter", ConformanceDiagnosticCode.UnknownDiagnostic)]
+    [InlineData("unknown-result-output", ConformanceDiagnosticCode.UnknownDiagnostic)]
+    [InlineData("foreign-origin-output", ConformanceDiagnosticCode.UnknownDiagnostic)]
+    public async Task Mirrored_failure_output_requires_the_actual_validated_result_packets(
+        string mutation, ConformanceDiagnosticCode expected)
+    {
+        using var owned = new OwnedInput();
+        var origin = await BindingContractTests.CaptureMetadataOriginAsync(owned.Input.RunId, "runtime");
+        var packets = ConformanceSessionOriginOutput.Render(origin).ToArray();
+        var mirrored = mutation == "foreign-origin-output"
+            ? ConformanceSessionOriginOutput.Render(await BindingContractTests.CaptureMetadataOriginAsync(
+                owned.Input.RunId, "runtime")).ToArray() : packets;
+        var result = owned.Result(0, TestOutcome.Failed);
+        result.ErrorMessage = "Assert.True() Failure";
+        result.ErrorStackTrace = "   at Hoard.Testing.Conformance.FrozenAssertion.Check()";
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', packets)));
+        if (mutation == "unknown-result-output")
+        { result.Messages.Add(new(TestResultMessage.StandardOutCategory, "private-canary")); }
+        using (var recorder = owned.Open())
+        {
+            if (mutation == "after") { recorder.Observe(result); }
+            recorder.ObserveMessage("[xUnit.net 00:00:00.01]       Output:");
+            foreach (var line in mirrored)
+            { recorder.ObserveMessage("[xUnit.net 00:00:00.01]         " + line); }
+            if (mutation == "unrelated-adapter")
+            { recorder.ObserveMessage("[xUnit.net 00:00:00.01]         private-canary"); }
+            if (mutation != "after") { recorder.Observe(result); }
+            recorder.Complete();
+            Assert.Equal(expected, recorder.Diagnostic);
+            Assert.Equal(1, recorder.ObservedCount);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        Assert.Equal("Assertion", proof.RootElement.GetProperty("failureKind").GetString());
+        Assert.Single(proof.RootElement.GetProperty("sessionOrigins").EnumerateArray());
+        AssertSafe(owned.Output);
+    }
+
     private static void AssertSafe(string output)
     {
         foreach (var file in Directory.GetFiles(output))

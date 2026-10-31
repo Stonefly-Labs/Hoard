@@ -147,6 +147,12 @@ only hash-named original runtime image copies remain for this inspection.
 Adapter-specific compiled-driver/PDB provenance remains bound separately to
 each run; do not claim those artifacts are invariant merely because the common
 assertion source is unchanged.
+The inspection now uses the internal original-packet reader to reconstruct
+manifests, native command parents, runtime/component images and actual origins.
+Its explicit faulty mode requires all three named assertions, not unknown
+failures, and preserves the same 76-row/86-origin inventory. The inputs below
+come from the diagnostic packet itself, not an independently trusted profile
+assignment; this does not grant qualification or reconstruct an original owner.
 
 ```bash
 PYTHONPATH=scripts python3 - "$work" <<'PY'
@@ -155,6 +161,7 @@ from pathlib import Path
 import sys
 import conformance_case_catalog as catalog
 import conformance_evidence as evidence
+from conformance_contributors import inspect_metadata_binding_runtime
 from conformance_sdk_checks import read_bounded
 
 def require(condition):
@@ -167,10 +174,10 @@ def inspect(root, faulty):
     binding = "example.metadata.forwarding"
     require(inputs["bindings"][0]["bindingId"] == binding)
     expected = catalog.metadata_common_consumer_origin_counts(binding_ids=(binding,))
-    attempts = tuple(root.glob("runtime-*/witnesses.jsonl"))
-    require(len(attempts) == 1)
-    witnesses = [evidence.load_json(line) for line in read_bounded(
-        attempts[0], 1024 * 1024).splitlines()]
+    inspected = inspect_metadata_binding_runtime(
+        root, expected_inputs=inputs, expected_fault="stale-replay" if faulty else "none")
+    require(inspected["qualification"] is False and inspected["sessionOrigins"] == 86)
+    witnesses = inspected["witnesses"]
     require(len(witnesses) == len(expected))
     require({row["testIdentity"] for row in witnesses} == set(expected))
     require(all(row["status"] in ("Passed", "Failed") for row in witnesses))

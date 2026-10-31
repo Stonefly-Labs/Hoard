@@ -58,20 +58,9 @@ def artifact_binding_profile(declaration):
     return profile
 
 
-def admit_binding_project(project, category):
+def _admit_binding_registration(value, category):
     if category not in ("metadata", "artifacts"):
         raise evidence.ConformanceError("UnsupportedProfile")
-    project = Path(project).absolute()
-    if project.suffix != ".csproj":
-        raise evidence.ConformanceError("BindingInvalid")
-    sidecar = project.with_suffix(".conformance.json")
-    deadline = time.monotonic() + 5
-    captured = io.BytesIO()
-    with evidence._input_root(project.parent) as (_, directory):
-        evidence._source_file(
-            directory, sidecar.name, remaining=2 * 1024 * 1024, deadline=deadline, target=captured)
-    raw = captured.getvalue()
-    value = evidence.load_json(raw)
     if not isinstance(value, dict) or not isinstance(value.get("components"), dict):
         raise evidence.ConformanceError("BindingInvalid")
     image = evidence._record({
@@ -86,17 +75,55 @@ def admit_binding_project(project, category):
     if category == "artifacts":
         artifact_binding_profile(registration["declaration"])
     relative = Path(registration["project"])
-    if (relative.suffix != ".csproj" or relative.name != project.name
-            or len(relative.parts) > min(32, len(project.parents))
+    registration_path = relative.with_suffix(".conformance.json").as_posix()
+    if (relative.suffix != ".csproj" or len(relative.parts) > 32
             or registration["declaration"]["category"] != category
             or registration["components"]["factory"] != registration["adapterPackage"]):
+        raise evidence.ConformanceError("BindingInvalid")
+    if not {relative.as_posix(), registration_path}.issubset(registration["sourceFiles"]):
+        raise evidence.ConformanceError("BindingInvalid")
+    return registration
+
+
+def admit_binding_snapshot(root, raw, *, category, expected_inputs_sha256):
+    expected = evidence.sha256(expected_inputs_sha256)
+    if (not isinstance(raw, bytes) or len(raw) > evidence.MAX_REPORT_BYTES
+            or hashlib.sha256(raw).hexdigest() != expected):
+        raise evidence.ConformanceError("InputChanged")
+    value = evidence._record({
+        "registration": lambda item: _admit_binding_registration(item, category),
+        "sources": evidence._hash_map,
+    })(evidence.load_json(raw))
+    registration, sources = value["registration"], value["sources"]
+    if sources.keys() != set(registration["sourceFiles"]):
+        raise evidence.ConformanceError("BindingInvalid")
+    binding = BindingProject(Path(root) / "stores/binding-source", registration["project"], registration, sources)
+    if binding.inputs_sha256 != expected:
+        raise evidence.ConformanceError("InputChanged")
+    return binding
+
+
+def admit_binding_project(project, category):
+    if category not in ("metadata", "artifacts"):
+        raise evidence.ConformanceError("UnsupportedProfile")
+    project = Path(project).absolute()
+    if project.suffix != ".csproj":
+        raise evidence.ConformanceError("BindingInvalid")
+    sidecar = project.with_suffix(".conformance.json")
+    deadline = time.monotonic() + 5
+    captured = io.BytesIO()
+    with evidence._input_root(project.parent) as (_, directory):
+        evidence._source_file(
+            directory, sidecar.name, remaining=2 * 1024 * 1024, deadline=deadline, target=captured)
+    raw = captured.getvalue()
+    registration = _admit_binding_registration(evidence.load_json(raw), category)
+    relative = Path(registration["project"])
+    if relative.name != project.name or len(relative.parts) > len(project.parents):
         raise evidence.ConformanceError("BindingInvalid")
     root = project.parents[len(relative.parts) - 1]
     if root / relative != project:
         raise evidence.ConformanceError("BindingInvalid")
     registration_path = relative.with_suffix(".conformance.json").as_posix()
-    if not {relative.as_posix(), registration_path}.issubset(registration["sourceFiles"]):
-        raise evidence.ConformanceError("BindingInvalid")
     sources, total = {}, 0
     with evidence._input_root(root) as (_, directory):
         for path in sorted(registration["sourceFiles"]):
@@ -726,6 +753,8 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
         (run.root / "cache/.local").chmod(0o700)
         candidate, sources = evidence.snapshot_sources(repository, run, transient=True)
         binding = snapshot_binding_project(project, category, expected, run)
+        _write_owned_input(run, run.root / "proofs/contributor-binding-inputs.json", evidence.canonical_bytes({
+            "registration": binding.registration, "sources": binding.sources}))
         config, feed = run.root / "stores/contributor.NuGet.Config", run.root / "feed/contributor"
         feed.mkdir(mode=0o700)
         _write_owned_input(run, config, evidence.synthetic_nuget_configuration(feed))
@@ -762,6 +791,7 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
             run, inputs, consumer["assemblyPath"], manifest,
             {identity: (binding_id, "none") for identity in counts}, {"contributor_binding": binding},
             origin_inputs={binding_id: consumer["components"]})
+        retain_binding_transport(run, binding, inputs, result, transport)
         sdk.validate_observation(
             observed, result, tuple(counts), "None", "Passed", 0, transport["proofs"], "None")
         sdk.validate_full_binding_origins(observed, inputs, counts)
@@ -818,6 +848,242 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
     _write_owned_input(run, run.root / "proofs/contributor-runtime-summary.json", evidence.canonical_bytes(summary))
     print(evidence.canonical_bytes(summary).decode("utf-8"))
     return 0
+
+
+def retain_binding_transport(run, binding, inputs, result, transport):
+    from conformance_sources import read_bounded
+
+    run._check_ledger()
+    if (run.state != "Active" or run.live_children() or result.execution_record_sha256 is None
+            or inputs["runId"] != run.run_id or binding.inputs_sha256 != inputs["invocation"][1]):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    phases = evidence._record({name: evidence._record({
+        "attemptId": evidence._uuid, "startedMs": evidence._number, "endedMs": evidence._number})
+        for name in ("discovery", "execution")})(transport["nativeTransports"])
+    execution = run.root / ("runtime-" + phases["execution"]["attemptId"])
+    for name, raw in {
+            "witnesses.jsonl": transport["witnesses_data"], "completion.json": transport["completion_data"],
+            **transport["proofs"]}.items():
+        if read_bounded(execution / name, 1024 * 1024) != raw:
+            raise evidence.ConformanceError("InputChanged")
+        (execution / name).chmod(0o400)
+    discovery = run.root / ("discovery-" + phases["discovery"]["attemptId"])
+    for name in ("completion.json", "discovered.jsonl"):
+        read_bounded(discovery / name, 1024 * 1024)
+        (discovery / name).chmod(0o400)
+    for bounds in phases.values():
+        claim = run.root / f'runtime-{bounds["attemptId"]}.claim'
+        if read_bounded(claim, 1) != b"":
+            raise evidence.ConformanceError("ProofMismatch")
+        claim.chmod(0o400)
+    _write_owned_input(run, run.root / "proofs/contributor-runtime-transport.json", evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "scope": "contributor-runtime-transport",
+        "inputsSha256": evidence.digest(inputs), "bindingInputsSha256": binding.inputs_sha256, **phases}))
+
+
+def inspect_metadata_binding_runtime(root, *, expected_inputs, expected_fault="none"):
+    import conformance_sdk_checks as sdk
+    from conformance_case_catalog import metadata_common_consumer_origin_counts
+    from conformance_sources import runtime_arguments, runtime_settings
+
+    root = Path(root)
+    inputs = evidence.admit_entity("RunInputs", expected_inputs)
+    expected_fault = evidence._one_of("none", "stale-replay")(expected_fault)
+    if inputs["profileId"] != "metadata" or inputs["mode"] != "diagnostic" or len(inputs["invocation"]) != 3:
+        raise evidence.ConformanceError("UnsupportedProfile")
+    hashes = {}
+
+    def read(path, limit=evidence.MAX_REPORT_BYTES):
+        hashed, raw = evidence._readonly_report_proof(root, path)
+        if len(raw) > limit:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        hashes[path] = hashed
+        return raw
+
+    if evidence.canonical_bytes(inputs) != read("proofs/contributor-inputs.json"):
+        raise evidence.ConformanceError("InputChanged")
+    binding = admit_binding_snapshot(
+        root, read("proofs/contributor-binding-inputs.json"), category="metadata",
+        expected_inputs_sha256=inputs["invocation"][1])
+    _binding_consumer_inputs(binding, inputs)
+    binding_id = binding.registration["declaration"]["bindingId"]
+    if expected_fault == "stale-replay" and binding_id != "example.metadata.forwarding":
+        raise evidence.ConformanceError("BindingInvalid")
+    phase = evidence._record({
+        "attemptId": evidence._uuid, "startedMs": evidence._number, "endedMs": evidence._number})
+    frame = evidence._runtime_json(read("proofs/contributor-runtime-transport.json"), {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "scope": evidence._constant("contributor-runtime-transport"),
+        "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        "bindingInputsSha256": evidence._constant(binding.inputs_sha256),
+        "discovery": phase, "execution": phase,
+    })
+    if (frame["discovery"]["attemptId"] == frame["execution"]["attemptId"]
+            or frame["discovery"]["endedMs"] > frame["execution"]["startedMs"]
+            or any(not 0 <= bounds["endedMs"] - bounds["startedMs"]
+                   <= min(180, inputs["budgets"]["childSeconds"]) * 1000
+                   for bounds in (frame["discovery"], frame["execution"]))):
+        raise evidence.ConformanceError("ProofMismatch")
+    attempts = set()
+    for path in root.iterdir():
+        if (path.name.startswith(("discovery-", "runtime-")) and path.name != "runtime-owner.json"
+                and not path.name.startswith("runtime-input-")):
+            attempts.add(path.name)
+            if len(attempts) > 4:
+                raise evidence.ConformanceError("ProofMismatch")
+    if attempts != {
+            "discovery-" + frame["discovery"]["attemptId"], "runtime-" + frame["execution"]["attemptId"],
+            *(f'runtime-{bounds["attemptId"]}.claim' for bounds in (frame["discovery"], frame["execution"]))}:
+        raise evidence.ConformanceError("ProofMismatch")
+    for bounds in (frame["discovery"], frame["execution"]):
+        if read(f'runtime-{bounds["attemptId"]}.claim', 1) != b"":
+            raise evidence.ConformanceError("ProofMismatch")
+    for hashed in set(inputs["runtimeAssemblies"].values()):
+        if hashlib.sha256(read("proofs/contributor-runtime-inputs/" + hashed, 32 * 1024**2)).hexdigest() != hashed:
+            raise evidence.ConformanceError("InputChanged")
+    controls_raw = read("proofs/contributor-build-controls.json")
+    controls = evidence._runtime_json(controls_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "bindingInputsSha256": evidence._constant(binding.inputs_sha256),
+        "inputs": evidence._hash_map, "runtimeAssemblies": evidence._hash_map,
+    }, limit=evidence.MAX_REPORT_BYTES)
+    if (hashlib.sha256(controls_raw).hexdigest() != inputs["invocation"][2]
+            or controls["runtimeAssemblies"] != inputs["runtimeAssemblies"]
+            or any(controls["inputs"].get("stores/binding-source/" + path) != hashed
+                   for path, hashed in binding.sources.items())):
+        raise evidence.ConformanceError("InputChanged")
+    toolchain = sdk.inspection_reference_roots()["Microsoft.NETCore.App"].parents[1]
+    runner_raw = read("proofs/contributor-vstest-inputs.json")
+    if (controls["inputs"].get("proofs/contributor-vstest-inputs.json") != hashlib.sha256(runner_raw).hexdigest()
+            or runner_raw != evidence.canonical_bytes(vstest_runner_inputs(toolchain, inputs["environment"]["sdk"]))):
+        raise evidence.ConformanceError("InputChanged")
+    owner_data = read("runtime-owner.json", 64 * 1024)
+    owner = evidence._runtime_json(owner_data, {
+        "schemaVersion": evidence._constant(1), "runId": evidence._constant(inputs["runId"]),
+        "invocationGroupId": evidence._constant(inputs["invocationGroupId"]), "rootId": evidence.stable_id,
+        "rootPathSha256": evidence._constant(hashlib.sha256(str(root).encode()).hexdigest()),
+    })
+    counts = metadata_common_consumer_origin_counts(binding_ids=(binding_id,))
+    expected = {identity: (binding_id, "none") for identity in counts}
+    components = binding_runtime_components(
+        binding, inputs["packages"], inputs["runtimeAssemblies"], "stores/binding-consumer/bin/Release/net10.0")
+    sequences, observed, native_record, discovery_completion = [], None, None, None
+    for purpose in ("discovery", "execution"):
+        bounds = frame[purpose]
+        attempt = bounds["attemptId"]
+        manifest_data = read(f"runtime-input-{attempt}.json")
+        manifest = {**binding_consumer_manifest_snapshot(binding, inputs, attempt_id=attempt), "purpose": purpose}
+        if evidence.canonical_bytes(manifest) != manifest_data:
+            raise evidence.ConformanceError("ProofMismatch")
+        assembly = root / manifest["assemblies"][0]["path"]
+        environment = (
+            "<EnvironmentVariables><HOARD_ORIGIN_RUN_ID>" + inputs["runId"]
+            + "</HOARD_ORIGIN_RUN_ID></EnvironmentVariables>")
+        settings = runtime_settings(
+            root, assembly, attempt, hashlib.sha256(manifest_data).hexdigest(),
+            hashlib.sha256(owner_data).hexdigest(), environment)
+        arguments = runtime_arguments(
+            assembly, root / f"stores/settings-{attempt}.runsettings",
+            tuple(row["testIdentity"] for row in manifest["expected"]),
+            discovery=purpose == "discovery")
+        arguments = [
+            "dotnet", "exec", "--fx-version", inputs["environment"]["runtime"],
+            str(toolchain / "sdk" / inputs["environment"]["sdk"] / "vstest.console.dll"), *arguments[2:]]
+        receipt, record = sdk.verify_category_command_proof(
+            root, run_id=inputs["runId"], root_id=owner["rootId"], arguments=arguments,
+            cwd=assembly.parent, manifest=manifest, settings_data=settings,
+            started_ms=bounds["startedMs"], ended_ms=bounds["endedMs"], settings_directory="stores",
+            expected_exit_code=1 if purpose == "execution" and expected_fault == "stale-replay" else 0)
+        sequence = receipt["commandSequence"]
+        sequences.append(sequence)
+        read(f"proofs/category-command-{attempt}-{purpose}.json", 64 * 1024)
+        native_record = read(f"proofs/execution-command-{sequence:04}.json", 64 * 1024)
+        frozen = {
+            "proofs/contributor-inputs.json": evidence.digest(inputs),
+            "proofs/contributor-build-controls.json": inputs["invocation"][2],
+            "runtime-owner.json": hashlib.sha256(owner_data).hexdigest(),
+            f"runtime-input-{attempt}.json": hashlib.sha256(manifest_data).hexdigest(),
+            **{row["path"]: row["sha256"] for row in manifest["assemblies"]
+               if Path(row["path"]).name in (
+                   assembly.name, "Hoard.Testing.Conformance.dll", "Hoard.Abstractions.dll",
+                   "Hoard.Conformance.TestLogger.dll")},
+        }
+        if any(record.get("inputFiles", {}).get(path) != hashed for path, hashed in frozen.items()):
+            raise evidence.ConformanceError("ProofMismatch")
+        folder = ("discovery-" if purpose == "discovery" else "runtime-") + attempt
+        completion = read(folder + "/completion.json", 64 * 1024)
+        transport = {
+            "inputs": inputs, "expected_tests": expected, "manifest_data": manifest_data, "owner_data": owner_data,
+            "manifest_sha256": hashlib.sha256(manifest_data).hexdigest(),
+            "owner_sha256": hashlib.sha256(owner_data).hexdigest(), "completion_data": completion,
+            "started_ms": bounds["startedMs"], "ended_ms": bounds["endedMs"],
+        }
+        if purpose == "discovery":
+            discovery_completion = completion
+            discovered = evidence.ingest_runtime_discovery(
+                **transport, discoveries_data=read(folder + "/discovered.jsonl", 1024 * 1024))
+            if (discovered["diagnosticCode"] != "None"
+                    or {row["testIdentity"] for row in discovered["discoveries"]} != set(expected)):
+                raise evidence.ConformanceError("WitnessMissing")
+            packet_files = {"completion.json", "discovered.jsonl"}
+        else:
+            witness_data = read(folder + "/witnesses.jsonl", 1024 * 1024)
+            rows = [evidence.admit_entity("RuntimeWitness", evidence.load_json(line))
+                    for line in witness_data.splitlines()]
+            if len(rows) != len(expected):
+                raise evidence.ConformanceError("WitnessMissing")
+            proofs = {f'proof-{evidence._uuid(row["executionId"])}.json': read(
+                folder + f'/proof-{row["executionId"]}.json', 64 * 1024) for row in rows}
+            observed = evidence.ingest_runtime_attempt(
+                **transport, witnesses_data=witness_data, proofs=proofs, origin_inputs={binding_id: components})
+            sdk.validate_full_binding_origins(observed, inputs, counts)
+            packet_files = {"completion.json", "witnesses.jsonl", *proofs}
+        actual_files = set()
+        for path in (root / folder).iterdir():
+            actual_files.add(path.name)
+            if len(actual_files) > len(packet_files):
+                raise evidence.ConformanceError("ProofMismatch")
+        if actual_files != packet_files:
+            raise evidence.ConformanceError("ProofMismatch")
+    if sequences != sorted(set(sequences)) or observed is None or discovery_completion is None:
+        raise evidence.ConformanceError("ProofMismatch")
+    witnesses = observed["witnesses"]
+    failed = {row["testIdentity"] for row in witnesses if row["status"] == "Failed"}
+    expected_failures = ({identity for identity in expected if any(
+        f'consumer: "{consumer}"' in identity for consumer in ("receipts", "time-ticket", "publication-replay"))}
+        if expected_fault == "stale-replay" else set())
+    if (failed != expected_failures or expected_fault == "stale-replay" and len(failed) != 3
+            or any(row["status"] not in ("Passed", "Failed") for row in witnesses)
+            or observed["diagnosticCode"] != ("AssertionFailed" if failed else "None")):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    if not failed:
+        post_raw = read("proofs/contributor-completion-inputs.json")
+        post = evidence.admit_entity("RunInputs", evidence.load_json(post_raw))
+        evidence.verify_input_recomputation(inputs, post)
+        summary = evidence._runtime_json(read("proofs/contributor-runtime-summary.json"), {
+            "qualification": evidence._constant(False), "profileComplete": evidence._constant(False),
+            "scope": evidence._constant("contributor-metadata-runtime-diagnostic"),
+            "bindingId": evidence._constant(binding_id),
+            "bindingInputsSha256": evidence._constant(binding.inputs_sha256),
+            "inputsSha256": evidence._constant(evidence.digest(inputs)),
+            "postInputsSha256": evidence._constant(hashlib.sha256(post_raw).hexdigest()),
+            "passedParameters": evidence._constant(len(counts)),
+            "sessionOrigins": evidence._constant(sum(len(rows) for rows in observed["sessionOrigins"].values())),
+            "discoverySha256": evidence._constant(hashlib.sha256(discovery_completion).hexdigest()),
+            "completionSha256": evidence._constant(hashlib.sha256(completion).hexdigest()),
+            "runtimeProofsSha256": evidence._constant(evidence.digest(observed["proofs"])),
+            "nativeParentSha256": evidence._constant(hashlib.sha256(native_record).hexdigest()),
+            "resources": evidence._list(lambda row: evidence.admit_entity("ResourceOwnership", row), 4),
+        })
+        if any(row["state"] != "Released" or row["runId"] != inputs["runId"]
+               or row["rootId"] != owner["rootId"] for row in summary["resources"]):
+            raise evidence.ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "qualification": False, "scope": "contributor-metadata-runtime-inspection", "code": "None",
+        "inputsSha256": evidence.digest(inputs), "bindingInputsSha256": binding.inputs_sha256,
+        "witnesses": tuple(witnesses), "failedTests": tuple(sorted(failed)), "proofs": MappingProxyType(hashes),
+        "sessionOrigins": sum(len(rows) for rows in observed["sessionOrigins"].values()),
+    })
 
 
 def capture_binding_restore_graphs(binding, owned_run, built, tool, runtime_version, package_root):
@@ -1465,16 +1731,37 @@ def prepare_binding_consumer_runtime(binding, owned_run, repository, candidate, 
             raise evidence.ConformanceError("InputChanged")
 
 
-def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
-    from conformance_case_catalog import contributor_artifact_component_origin_counts, metadata_common_consumer_origin_counts
-
+def _binding_consumer_inputs(binding, inputs):
     inputs = evidence.admit_entity("RunInputs", inputs)
     declaration = binding.registration["declaration"]
     category, binding_id = declaration["category"], declaration["bindingId"]
-    if (inputs["profileId"] != category or inputs["mode"] != "diagnostic" or inputs["runId"] != owned_run.run_id
+    if (inputs["profileId"] != category or inputs["mode"] != "diagnostic"
             or len(inputs["bindings"]) != 1 or inputs["bindings"][0]["bindingId"] != binding_id
             or tuple(inputs["invocation"][:2]) != ("binding-project", binding.inputs_sha256)
             or len(inputs["invocation"]) != 3):
+        raise evidence.ConformanceError("BindingInvalid")
+    provider = inputs["bindings"][0]
+    captured_declaration = {key: declaration[key] for key in (
+        "schemaVersion", "bindingId", "category", "packageId", "packageVersion", "capabilities", "faults")}
+    captured_declaration["packageSha256"] = provider["package"]["sha256"]
+    ordered = {key: captured_declaration[key] for key in (
+        "schemaVersion", "bindingId", "category", "packageId", "packageVersion",
+        "packageSha256", "capabilities", "faults")}
+    raw = json.dumps(ordered, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+    if (provider["category"] != category
+            or provider["package"]["packageId"].casefold() != declaration["packageId"].casefold()
+            or provider["package"]["version"].casefold() != declaration["packageVersion"].casefold()
+            or provider["descriptorSha256"] != hashlib.sha256(raw).hexdigest()
+            or provider["capabilitySha256"] != evidence.digest({
+                key: declaration[key] for key in ("category", "capabilities", "faults")})
+            or provider["adapterId"] != binding.registration["adapterPackage"]["packageId"]):
+        raise evidence.ConformanceError("BindingInvalid")
+    return inputs
+
+
+def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
+    inputs = _binding_consumer_inputs(binding, inputs)
+    if inputs["runId"] != owned_run.run_id:
         raise evidence.ConformanceError("BindingInvalid")
     raw = read_binding_runtime_controls(owned_run, binding, inputs)
     if hashlib.sha256(raw).hexdigest() != inputs["invocation"][2]:
@@ -1487,6 +1774,17 @@ def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
     runtime = _binding_consumer_images(owned_run)
     if runtime != inputs["runtimeAssemblies"]:
         raise evidence.ConformanceError("InputChanged")
+    return binding_consumer_manifest_snapshot(binding, inputs, attempt_id=attempt_id)
+
+
+def binding_consumer_manifest_snapshot(binding, inputs, *, attempt_id):
+    """Reconstruct expected transport without restoring an owned run."""
+    from conformance_case_catalog import contributor_artifact_component_origin_counts, metadata_common_consumer_origin_counts
+
+    inputs = _binding_consumer_inputs(binding, inputs)
+    declaration = binding.registration["declaration"]
+    category, binding_id = declaration["category"], declaration["bindingId"]
+    runtime = inputs["runtimeAssemblies"]
     directory = "stores/binding-consumer/bin/Release/net10.0"
     components = binding_runtime_components(binding, inputs["packages"], runtime, directory)
     for package in inputs["packages"]:
@@ -1509,6 +1807,11 @@ def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
     counts = (metadata_common_consumer_origin_counts(binding_ids=(binding_id,)) if category == "metadata"
               else contributor_artifact_component_origin_counts(
                   binding_id, profile=artifact_binding_profile(declaration)))
+    assertions = ({
+        "receipts": "Hoard.Testing.Conformance.Metadata.MetadataReconciliationAssertions.CorruptReceiptsAsync",
+        "time-ticket": "Hoard.Testing.Conformance.Metadata.MetadataTimeAssertions.TicketExpiryAndRollbackAsync",
+        "publication-replay": "Hoard.Testing.Conformance.Metadata.MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync",
+    } if category == "metadata" else {})
     provider = inputs["bindings"][0]["package"]
     return {
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -1522,7 +1825,9 @@ def binding_consumer_manifest(binding, owned_run, inputs, *, attempt_id):
         "expected": [{
             "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
             "assemblyId": "contributor-component-0", "packageId": provider["packageId"],
-            "bindingId": binding_id, "matrixId": "none", "assertionSymbol": None,
+            "bindingId": binding_id, "matrixId": "none",
+            "assertionSymbol": next((symbol for consumer, symbol in assertions.items()
+                                     if f'consumer: "{consumer}"' in identity), None),
             "caseId": "full-metadata-binding" if category == "metadata" else "contributor-artifact-component",
         } for identity in sorted(counts)],
     }

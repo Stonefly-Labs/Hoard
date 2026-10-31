@@ -290,6 +290,7 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
         }
         await using var session = await ConformanceObservedMetadataSession.OpenAsync(binding, context, default);
         var origin = session.CaptureOrigin();
+        ConformanceSessionOriginOutput.Write(output, origin);
         if (consumer is not ("layout-empty" or "layout-partial" or "admission" or "invalid-budget"))
         {
             Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
@@ -383,7 +384,6 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
                 session.Store, session.Faults.ObserveBoundaryAsync, session.Store.DisposeAsync, default),
             _ => throw new ArgumentException("BindingInvalid")
         });
-        ConformanceSessionOriginOutput.Write(output, origin);
     }
 
     private sealed class OriginSession(

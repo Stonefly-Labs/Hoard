@@ -184,6 +184,11 @@ T073 is not marked complete.
 The internal harness catalog component now executes its ten actual C# witnesses,
 replays original released proofs independently and rejects ten altered packets.
 It is not a harness/profile qualification or a new public command.
+The copied contributor good/faulty/corrected journey also has independently
+replayed original packets: all three execute 76 rows with 86 actual session
+origins; only the faulty adapter fails the three intended named assertions.
+The affected Linux selection passes 340 tests without skips, and all 181
+managed logger regressions pass. Contributor diagnostics remain nonqualifying.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

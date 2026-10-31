@@ -961,6 +961,59 @@ class SdkDiagnosticTests(unittest.TestCase):
     def test_metadata_category_batch_keeps_predeclared_transports_and_failure_history(self):
         self._assert_category_batch("metadata", 134)
 
+    def test_native_command_reader_requires_explicit_negative_exit_without_relaxing_default(self):
+        run_id, root_id, attempt = (str(uuid.uuid4()) for _ in range(3))
+        arguments, settings = ["dotnet", "vstest", "controlled-negative"], b"<RunSettings/>"
+        manifest = {
+            "runId": run_id, "invocationGroupId": str(uuid.uuid4()),
+            "attemptId": attempt, "purpose": "execution", "inputSha256": "a" * 64}
+        (self.directory / "proofs").mkdir()
+        (self.directory / "stores").mkdir()
+        record_path = self.directory / "proofs/execution-command-0001.json"
+        receipt_path = self.directory / f"proofs/category-command-{attempt}-execution.json"
+        record = {
+            "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
+            "startedMs": 2, "endedMs": 3, "exitCode": 1, "diagnosticCode": "None",
+            "groupState": "Exited", "scope": "ordinary", "runId": run_id, "rootId": root_id,
+            "argvSha256": checks.evidence.digest(arguments),
+            "cwdSha256": hashlib.sha256(str(self.directory).encode()).hexdigest(),
+            "inputFiles": {f"stores/settings-{attempt}.runsettings": hashlib.sha256(settings).hexdigest()},
+        }
+        receipt = {
+            "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+            "runId": run_id, "rootId": root_id, "invocationGroupId": manifest["invocationGroupId"],
+            "attemptId": attempt, "purpose": "execution", "commandSequence": 1,
+            "inputsSha256": manifest["inputSha256"], "executionRecordSha256": checks.evidence.digest(record),
+            "manifestSha256": checks.evidence.digest(manifest), "settingsSha256": hashlib.sha256(settings).hexdigest(),
+        }
+        checks.write_new(record_path, checks.evidence.canonical_bytes(record))
+        checks.write_new(receipt_path, checks.evidence.canonical_bytes(receipt))
+        options = {
+            "run_id": run_id, "root_id": root_id, "arguments": arguments, "cwd": self.directory,
+            "manifest": manifest, "settings_data": settings, "started_ms": 1, "ended_ms": 4,
+            "settings_directory": "stores",
+        }
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.verify_category_command_proof(self.directory, **options)
+        admitted, parent = checks.verify_category_command_proof(
+            self.directory, **options, expected_exit_code=1)
+        self.assertEqual(admitted["executionRecordSha256"], checks.evidence.digest(record))
+        self.assertEqual(parent["exitCode"], 1)
+        for invalid in (True, False, -1, 2, "1"):
+            with self.subTest(invalid=invalid), self.assertRaises(checks.evidence.ConformanceError):
+                checks.verify_category_command_proof(self.directory, **options, expected_exit_code=invalid)
+        record["exitCode"] = 0
+        record_path.chmod(0o600)
+        record_path.write_bytes(checks.evidence.canonical_bytes(record))
+        record_path.chmod(0o400)
+        receipt["executionRecordSha256"] = checks.evidence.digest(record)
+        receipt_path.chmod(0o600)
+        receipt_path.write_bytes(checks.evidence.canonical_bytes(receipt))
+        receipt_path.chmod(0o400)
+        checks.verify_category_command_proof(self.directory, **options)
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.verify_category_command_proof(self.directory, **options, expected_exit_code=1)
+
     def test_artifact_category_batch_keeps_predeclared_transports_and_failure_history(self):
         self._assert_category_batch("artifacts", 227)
 

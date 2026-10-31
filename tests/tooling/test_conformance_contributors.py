@@ -2133,10 +2133,110 @@ public sealed class ArtifactFactory : IArtifactRecoveryConformanceBinding
             (destination / "proofs/contributor-runtime-summary.json").read_bytes()))
         self.assertTrue(all(resource["state"] == "Released" for resource in summary["resources"]))
         self.assertFalse(any((destination / directory).exists() for directory in ("stores", "cache", "feed")))
+        inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+            (destination / "proofs/contributor-inputs.json").read_bytes()))
+        replayed = contributors.inspect_metadata_binding_runtime(destination, expected_inputs=inputs)
+        self.assertFalse(replayed["qualification"])
+        self.assertEqual(len(replayed["witnesses"]), 76)
+        self.assertEqual(replayed["sessionOrigins"], 86)
+        self.assertEqual(replayed["failedTests"], ())
+        with self.assertRaises(evidence.ConformanceError):
+            contributors.inspect_metadata_binding_runtime(
+                destination, expected_inputs=inputs, expected_fault="stale-replay")
+        for defect in ("input-pin", "duplicate-attempt", "overlapping-attempts", "unknown-field",
+                       "binding-source", "runtime-image", "completion-input", "optimistic-summary"):
+            if defect == "input-pin":
+                changed = evidence.load_json(evidence.canonical_bytes(inputs))
+                changed["sourceSha256"] = "0" * 64
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    contributors.inspect_metadata_binding_runtime(destination, expected_inputs=changed)
+                continue
+            relative = {
+                "binding-source": "proofs/contributor-binding-inputs.json",
+                "runtime-image": next(path for path in replayed["proofs"]
+                                      if path.startswith("proofs/contributor-runtime-inputs/")),
+                "completion-input": "proofs/contributor-completion-inputs.json",
+                "optimistic-summary": "proofs/contributor-runtime-summary.json",
+            }.get(defect, "proofs/contributor-runtime-transport.json")
+            path = destination / relative
+            original = path.read_bytes()
+            if defect == "runtime-image":
+                mutated = original + b"changed"
+            else:
+                changed = evidence.load_json(original)
+                if defect == "duplicate-attempt":
+                    changed["execution"]["attemptId"] = changed["discovery"]["attemptId"]
+                elif defect == "overlapping-attempts":
+                    changed["discovery"]["endedMs"] = changed["execution"]["endedMs"]
+                elif defect == "unknown-field":
+                    changed["extra"] = True
+                elif defect == "binding-source":
+                    changed["sources"].pop(next(iter(changed["sources"])))
+                elif defect == "completion-input":
+                    changed["runtimeAssemblies"][next(iter(changed["runtimeAssemblies"]))] = "0" * 64
+                else:
+                    changed["qualification"] = True
+                mutated = evidence.canonical_bytes(changed)
+            try:
+                path.chmod(0o600)
+                path.write_bytes(mutated)
+                path.chmod(0o400)
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    contributors.inspect_metadata_binding_runtime(destination, expected_inputs=inputs)
+            finally:
+                path.chmod(0o600)
+                path.write_bytes(original)
+                path.chmod(0o400)
+            restored = contributors.inspect_metadata_binding_runtime(destination, expected_inputs=inputs)
+            self.assertEqual(restored["proofs"], replayed["proofs"])
         from test_conformance_sanitation import ConformanceSanitationTests
         inspection = ConformanceSanitationTests()
         inspection.canaries = (os.fsencode(destination),)
         inspection.assert_clean(destination, output.getvalue().encode())
+
+    @unittest.skipUnless(native_execution_supported(), "Native contributor runtime requires supported Linux containment")
+    def test_native_faulty_contributor_retains_named_assertions_with_actual_session_origins(self):
+        registration = evidence.load_json(
+            (ROOT / "tests/fixtures/conformance/Contributor/Contributor.conformance.json").read_bytes())
+        author = self.case / "faulty-adapter"
+        for relative in registration["sourceFiles"]:
+            target = author / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        project = author / registration["project"]
+        source = project.parent / "ForwardingMetadataBinding.cs"
+        raw = source.read_bytes()
+        needle = b"inner = new(providerPackageSha256);\n        this.injectStaleReplay = injectStaleReplay;"
+        self.assertEqual(raw.count(needle), 1)
+        source.write_bytes(raw.replace(needle, needle.replace(b"= injectStaleReplay;", b"= true;")))
+        binding = contributors.admit_binding_project(project, "metadata")
+        destination = self.case / "faulty-contributor"
+        with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+            contributors.execute(
+                ROOT, destination, project=project, category="metadata",
+                binding_inputs_sha256=binding.inputs_sha256)
+        inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+            (destination / "proofs/contributor-inputs.json").read_bytes()))
+        replayed = contributors.inspect_metadata_binding_runtime(
+            destination, expected_inputs=inputs, expected_fault="stale-replay")
+        self.assertFalse(replayed["qualification"])
+        self.assertEqual(len(replayed["witnesses"]), 76)
+        self.assertEqual(len(replayed["failedTests"]), 3)
+        self.assertEqual(replayed["sessionOrigins"], 86)
+        frame = evidence.load_json((destination / "proofs/contributor-runtime-transport.json").read_bytes())
+        failed_symbols = set()
+        for witness in replayed["witnesses"]:
+            if witness["status"] == "Failed":
+                proof = evidence.load_json((destination / ("runtime-" + frame["execution"]["attemptId"])
+                                           / f'proof-{witness["executionId"]}.json').read_bytes())
+                self.assertEqual(proof["failureKind"], "Assertion")
+                failed_symbols.add(proof["assertionSymbol"])
+        self.assertEqual(len(failed_symbols), 3)
+        self.assertTrue(any(symbol.endswith(".TicketExpiryAndRollbackAsync") for symbol in failed_symbols))
+        with self.assertRaises(evidence.ConformanceError):
+            contributors.inspect_metadata_binding_runtime(destination, expected_inputs=inputs)
+        self.assertEqual(evidence.load_json((destination / "ownership.json").read_bytes())["state"], "Released")
+        self.assertFalse((destination / "proofs/contributor-runtime-summary.json").exists())
 
     def test_managed_evaluation_task_rejects_links_foreign_toolchains_and_sanitizes_project_errors(self):
         value, source, receipt = self.evaluation_request()
@@ -2195,6 +2295,36 @@ class ContributorAdmissionTests(unittest.TestCase):
         return evidence.admit_invocation(ROOT, [
             "--profile", profile, "--binding-project", str(self.project),
             "--evidence", str(self.parent / "fresh")])
+
+    def test_retained_binding_descriptor_replays_without_live_source_and_rejects_resealed_omissions(self):
+        binding = contributors.admit_binding_project(self.project, "metadata")
+        raw = evidence.canonical_bytes({"registration": binding.registration, "sources": binding.sources})
+        retained = self.parent / "released"
+        shutil.rmtree(self.source)
+        replayed = contributors.admit_binding_snapshot(
+            retained, raw, category="metadata", expected_inputs_sha256=binding.inputs_sha256)
+        self.assertEqual(replayed.registration, binding.registration)
+        self.assertEqual(replayed.sources, binding.sources)
+        self.assertEqual(replayed.inputs_sha256, binding.inputs_sha256)
+        self.assertFalse(replayed.root.exists())
+        with self.assertRaisesRegex(evidence.ConformanceError, "^InputChanged$"):
+            contributors.admit_binding_snapshot(
+                retained, raw, category="metadata", expected_inputs_sha256="0" * 64)
+        for defect in ("omitted-source", "extra-source", "unknown-field", "foreign-category"):
+            value = evidence.load_json(raw)
+            if defect == "omitted-source":
+                del value["sources"]["Binding.cs"]
+            elif defect == "extra-source":
+                value["sources"]["Foreign.cs"] = "0" * 64
+            elif defect == "unknown-field":
+                value["qualification"] = True
+            else:
+                value["registration"]["declaration"]["category"] = "artifacts"
+            altered = evidence.canonical_bytes(value)
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                contributors.admit_binding_snapshot(
+                    retained, altered, category="metadata",
+                    expected_inputs_sha256=hashlib.sha256(altered).hexdigest())
 
     def test_retained_runtime_images_keep_original_bytes_without_private_workspaces(self):
         from test_conformance_evidence import ConformanceAdmissionTests

@@ -226,11 +226,11 @@ public sealed class RuntimeResultRecorder : IDisposable
                     && result.Duration <= TimeSpan.FromHours(8) && result.Duration <= ended);
                 var started = ended - result.Duration;
                 var kind = FailureKind(result, entry);
-                if (result.Outcome == TestOutcome.Failed) { CorrelateFailureMessages(result); }
-                RuntimeSafety.Require(diagnostic == ConformanceDiagnosticCode.None, diagnostic.ToString());
                 var (sessionOrigins, originalObservations, metadataArguments, compositionObservations,
                     versionObservations, unknownOutput, instances) =
                     RuntimeOriginOutput.Read(result, input, entry, seenSessions, seenInstances);
+                if (result.Outcome == TestOutcome.Failed) { CorrelateFailureMessages(result, !unknownOutput); }
+                RuntimeSafety.Require(diagnostic == ConformanceDiagnosticCode.None, diagnostic.ToString());
                 if (unknownOutput || (result.Outcome == TestOutcome.Passed
                     && (!string.IsNullOrEmpty(result.ErrorMessage) || !string.IsNullOrEmpty(result.ErrorStackTrace))))
                 { unknownDiagnostic = true; }
@@ -362,7 +362,7 @@ public sealed class RuntimeResultRecorder : IDisposable
         { Fail(ConformanceDiagnosticCode.OutputLimitExceeded); }
     }
 
-    private void CorrelateFailureMessages(TestResult result)
+    private void CorrelateFailureMessages(TestResult result, bool knownOutput)
     {
         if (result.ErrorMessage is not { Length: <= 16_384 }
             || result.ErrorStackTrace is not { Length: <= 65_536 }) { return; }
@@ -384,6 +384,18 @@ public sealed class RuntimeResultRecorder : IDisposable
                 }
             }
         }
+        if (!knownOutput) { return; }
+        var hasOutput = false;
+        foreach (var message in result.Messages)
+        {
+            foreach (var line in message.Text.AsSpan().EnumerateLines())
+            {
+                if (line.IsEmpty) { continue; }
+                hasOutput = true;
+                AddFailureLine(line.ToString());
+            }
+        }
+        if (hasOutput) { AddFailureLine("Output:"); }
     }
 
     private void AddFailureLine(string line)

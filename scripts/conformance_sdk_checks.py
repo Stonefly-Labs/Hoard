@@ -2732,8 +2732,9 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
             path.chmod(0o400)
     if runtime_options.get("category_scope", (None,))[0] == "compatibility":
         data["discovery_manifest_path"] = f'runtime-input-{discovery_manifest["attemptId"]}.json'
-    if runtime_options.get("category_scope") == ("harness", "catalog"):
-        data["catalogTransports"] = {
+    if (runtime_options.get("category_scope") == ("harness", "catalog")
+            or runtime_options.get("contributor_binding") is not None):
+        data["nativeTransports"] = {
             "discovery": {"attemptId": discovery_manifest["attemptId"],
                           "startedMs": discovery_transport["started_ms"], "endedMs": discovery_transport["ended_ms"]},
             "execution": {"attemptId": manifest["attemptId"],
@@ -3659,8 +3660,10 @@ def _category_command_record(root, raw, *, record_sha, sequence, run_id, root_id
 
 
 def verify_category_command_proof(root, *, run_id, root_id, arguments, cwd, manifest, settings_data,
-                                  started_ms, ended_ms, settings_directory="proofs"):
+                                  started_ms, ended_ms, settings_directory="proofs", expected_exit_code=0):
     if settings_directory not in ("proofs", "stores"):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    if type(expected_exit_code) is not int or expected_exit_code not in (0, 1):
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
     attempt = evidence._uuid(manifest["attemptId"])
     purpose = manifest["purpose"]
@@ -3694,7 +3697,7 @@ def verify_category_command_proof(root, *, run_id, root_id, arguments, cwd, mani
     record = _category_command_record(
         root, read_bounded(root / f"proofs/execution-command-{sequence:04}.json", 64 * 1024),
         record_sha=receipt["executionRecordSha256"], sequence=sequence, run_id=run_id, root_id=root_id,
-        exit_code=0, arguments=arguments, cwd=cwd, started_ms=started_ms, ended_ms=ended_ms)
+        exit_code=expected_exit_code, arguments=arguments, cwd=cwd, started_ms=started_ms, ended_ms=ended_ms)
     if (settings_directory == "stores" and record.get("inputFiles", {}).get(
             settings_path.relative_to(root).as_posix()) != receipt["settingsSha256"]):
         raise evidence.ConformanceError("ProofMismatch")

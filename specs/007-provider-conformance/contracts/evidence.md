@@ -1055,6 +1055,35 @@ The internal result is always `qualification:false`; it supplies neither the
 twenty other harness cases nor a trusted harness origin or five-profile
 baseline. No public harness command is added by this component.
 
+### Original contributor metadata component
+
+The internal `inspect_metadata_binding_runtime` reader requires a caller's
+complete expected `RunInputs`; it never restores an `OwnedRun` from retained
+bytes. A sealed binding descriptor contains exactly the admitted registration
+and registered source hashes. Its canonical digest, registered paths,
+provider/adapter/capability identity and complete native build-control pins
+must match the original inputs. Retained actual runtime images are checked
+against their hashes and package/component assignments.
+
+The sealed transport frame binds distinct ordered, finite discovery/execution
+attempts. Exact manifests, selected SDK runner/settings, original native command
+parents, retained reuse-prevention claims, complete discovery and original
+witness/completion/proof bytes are reconstructed and reingested. The positive
+component requires all 76 rows and 86 origins, original completion-input
+recomputation and a closed nonqualifying Released summary. Explicit
+`stale-replay` inspection is limited to the example forwarding adapter and
+requires exactly `receipts`, `time-ticket` and `publication-replay` to fail
+with their predeclared common assertion symbols; all other rows pass and the
+same 86 actual origins remain mandatory. Unknown/nonzero-only failures reject.
+
+The consumer emits the actual already-captured origin before invoking shared
+assertions. The logger correlates mirrored adapter output only after the actual
+result's output has passed the existing closed packet parser. Only exact
+hashes and the actual nonempty output's `Output:` wrapper are correlated;
+foreign packets and unrelated/unknown text still fail without raw persistence.
+The component always returns `qualification:false`. It supplies neither
+native harness authority nor a public qualifying contributor route.
+
 ### Trusted original-receipt verification
 
 Public `--verify` now replays finite native metadata/artifact/composition/

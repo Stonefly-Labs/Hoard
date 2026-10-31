@@ -136,7 +136,7 @@ def execute_catalog(run, inputs, assembly):
         observed, result, tuple(expected), "None", "Passed", 0, transport["proofs"], "None")
     if result.execution_record_sha256 is None:
         raise evidence.ConformanceError("OwnershipInvalid")
-    for purpose, bounds in transport["catalogTransports"].items():
+    for purpose, bounds in transport["nativeTransports"].items():
         folder = run.root / (("discovery-" if purpose == "discovery" else "runtime-") + bounds["attemptId"])
         names = ({"completion.json", "discovered.jsonl"} if purpose == "discovery" else
                  {"completion.json", "witnesses.jsonl", *transport["proofs"]})
@@ -144,7 +144,7 @@ def execute_catalog(run, inputs, assembly):
             (folder / name).chmod(0o400)
     sdk.write_new(run.root / CATALOG_FRAME, evidence.canonical_bytes({
         "schemaVersion": 1, "qualification": False, "scope": "harness-native-catalog",
-        "inputsSha256": evidence.digest(inputs), "assemblyPath": assembly, **transport["catalogTransports"],
+        "inputsSha256": evidence.digest(inputs), "assemblyPath": assembly, **transport["nativeTransports"],
     }))
     inspected = inspect_catalog(run.root, inputs)
     if tuple(inspected["witnesses"]) != tuple(observed["witnesses"]):
