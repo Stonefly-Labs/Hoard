@@ -1037,6 +1037,34 @@ baseline artifacts are a different explicit entity, not current-run evidence.
 
 ## Deterministic Evaluation
 
+### Whole-harness qualification
+
+The harness producer assembles all 21 independently expanded cases from its
+original catalog execution, copied-adapter good/faulty/corrected journey,
+actual metadata/artifact live/released/retained mutation suites and complete
+trusted tooling execution. Each `harness-QC-*-sources.json` derivation binds the
+exact case controls to original component proofs and named observed methods.
+Tooling totals are not a case witness. The ten actual catalog executions are
+explicitly identified as derivation anchors; no tooling observation is
+fabricated as a C# execution, and no child execution is relabeled as the parent.
+
+Readonly replay reconstructs every derivation, exact proof union, input
+completion, whole-profile time bounds and five subordinate Released owners.
+Publication additionally requires the original held `NativeHarnessEvaluation`
+reference, original parent command bytes and original subordinate owners/native
+category evaluations. Parent resources remain its own resource projection;
+subordinate resources retain their original identities in component frames.
+A serialized evaluation or copied object cannot supply that authority.
+
+The original Released report stays nonqualifying. Only successful reconstruction
+with actual original authority can derive its separate
+`harness-fixture-qualification` report and finite presentations. An external
+coordinator may transfer the observed result with a
+`native-harness-fixture-qualification` receipt, pinning input/report/original
+report/resource hashes exactly as for other profiles. Receipt-free structural
+inspection cannot qualify. Wiring and model-test success do not establish a
+native full-harness run, successful all-five aggregate or baseline acceptance.
+
 ### Original harness catalog component
 
 The internal QC-01 component in `conformance_harness.py` reuses existing locked

@@ -28,6 +28,75 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_harness_dirty_source_rejects_before_allocating_or_building(self):
+        import conformance_harness as harness
+
+        with patch("conformance_execution.native_execution_supported", return_value=True), patch.object(
+                checks.evidence, "source_identity", return_value={"sourceState": "dirty-local"}), patch.object(
+                harness.OwnedRun, "allocate") as allocate:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "^InputChanged$"):
+                harness.execute(ROOT, Path("/unused/fresh-harness"))
+            allocate.assert_not_called()
+
+    def test_harness_control_attribution_names_exist_in_the_frozen_source_inventory(self):
+        import ast
+        import conformance_harness as harness
+        from conformance_case_catalog import expected_cases
+
+        for identities in harness.TOOLING_BASIS.values():
+            for identity in identities:
+                module, name, method = identity.split(".")
+                syntax = ast.parse((ROOT / "tests/tooling" / (module + ".py")).read_bytes())
+                classes = [node for node in syntax.body if isinstance(node, ast.ClassDef) and node.name == name]
+                self.assertEqual(len(classes), 1, identity)
+                self.assertIn(method, {node.name for node in classes[0].body
+                                      if isinstance(node, ast.FunctionDef)}, identity)
+        inventory = checks.evidence.native_category_control_inventory(
+            (ROOT / "tests/tooling/test_conformance_evidence.py").read_bytes())
+        for selected in harness.NATIVE_CONTROL_BASIS.values():
+            for phase, method in selected:
+                self.assertIn(method, inventory[phase])
+        self.assertEqual(
+            {"QC-01", "QC-30", "QC-31", *harness.TOOLING_BASIS, *harness.NATIVE_CONTROL_BASIS},
+            {case.case_id for case in expected_cases("harness")})
+
+    def test_harness_control_sources_require_exact_observed_tests_not_success_counts(self):
+        import conformance_harness as harness
+
+        packet = {
+            "code": "None", "expectedTests": sorted(set(harness.TOOLING_BASIS["QC-34"])),
+            "observedTests": sorted(set(harness.TOOLING_BASIS["QC-34"])),
+        }
+        selected = harness._tooling_case_sources("QC-34", packet)
+        self.assertEqual(selected, harness.TOOLING_BASIS["QC-34"])
+        for defect in ("missing", "foreign", "failed", "undeclared"):
+            changed = json.loads(json.dumps(packet))
+            if defect == "missing":
+                changed["observedTests"].pop()
+            elif defect == "foreign":
+                changed["observedTests"][0] += "_foreign"
+            elif defect == "failed":
+                changed["code"] = "AssertionFailed"
+            else:
+                changed["expectedTests"].pop()
+            with self.subTest(defect=defect), self.assertRaises(checks.evidence.ConformanceError):
+                harness._tooling_case_sources("QC-34", changed)
+
+    def test_harness_native_authority_cannot_be_restored_from_serialized_or_copied_state(self):
+        import conformance_harness as harness
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(profileId="harness", mode="qualification", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        for value in (None, {}, SimpleNamespace(_run=SimpleNamespace(state="Released"))):
+            with self.subTest(source=type(value).__name__):
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                    harness.NativeHarnessSources(value)
+                forged = harness.NativeHarnessEvaluation(value, b"{}", ())
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "^OwnershipInvalid$"):
+                    forged.verify_report_origin(value, inputs, {})
+
     def test_harness_category_controls_admit_the_absent_destination_before_allocating_and_settle_failure(self):
         import conformance_harness as harness
         import conformance_execution as execution

@@ -4668,6 +4668,26 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+**Whole-harness wiring:** the producer, 21-case derivation, native held-owner
+evaluation, finite renderer, public dispatcher and separately receipted reader
+are connected. Derivations identify exact observed tooling methods, original
+contributor packets and the actual metadata/artifact mutation methods. The ten
+catalog executions remain explicitly identified anchors; no tooling observation
+is invented as a C# execution or assigned a child run's identity. Qualification
+requires the original evaluation reference, original parent command bytes and
+all five actual released child owners; serialized/copy state cannot replace it.
+Fresh full-profile native acceptance remains unverified. The affected Linux
+evidence/SDK/CLI/coordinator selection passes 460 tests.
+
+At clean `cf9f62a`, the preceding combined component run finishes in 1538.128
+seconds: both category qualifications, all 56 actual mutation controls, the
+catalog/contributor journey and 887 tooling tests pass under one parent.
+All six owners release. Separately pinned readonly replay verifies 1,940
+component proofs (149,809,194 bytes), plus the original tooling observation.
+That original parent remains nonqualifying; adding the full-harness producer
+does not retrospectively promote it. The exact source IDs selected for the new
+control derivations are present in those original observations.
+
 **Metadata evidence correction and category controls:** moving origin output
 before assertions also flushed argument evidence too early. Origins now emit
 in `finally`, preserving failed-test origins and all 16 required argument
@@ -4681,11 +4701,12 @@ regressions also pass.
 
 The harness can invoke the existing actual live/released/retained category
 control factories using caller-held child owners, a shared invocation group
-and parent-bounded deadlines. This integration is not yet a successful full
-run: the latest attempt passes metadata runtime ingestion, then seven released
-qualification controls correctly reject dirty source. Clean-source admission
-now fails before allocating those category children. Full harness authority,
-remaining cases and five-profile acceptance stay unfinished; no test or
+and parent-bounded deadlines. The earlier dirty-source attempt passed metadata
+runtime ingestion, then seven released qualification controls correctly rejected
+dirty source. The clean component run above resolves that admission blocker,
+without rewriting any failed packet. Clean-source admission now fails before
+allocating category children. Fresh whole-harness qualification and
+five-profile acceptance stay unfinished; no test or
 qualification requirement is relaxed. Exact attempts and retained roots are in
 the [correction record](../specs/007-provider-conformance/plan.md#t073-metadata-argument-correction-and-native-category-integration).
 

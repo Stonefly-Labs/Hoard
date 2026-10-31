@@ -179,8 +179,8 @@ Public `--verify` now also replays these four finite profiles from a separate
 schema-2 trusted coordinator and original-owner receipt; readonly actual
 metadata/artifact/composition/compatibility replay passes, with 16 rejecting
 public-CLI controls. Schema-1 inspection remains nonqualifying. The harness
-reader/producer and successful five-profile aggregate are still missing, so
-T073 is not marked complete.
+reader/producer is now wired, but native full-profile qualification and a
+successful five-profile aggregate remain unverified; T073 stays open.
 The internal harness catalog component now executes its ten actual C# witnesses,
 replays original released proofs independently and rejects ten altered packets.
 It is not a harness/profile qualification or a new public command.
@@ -196,8 +196,19 @@ harness component, not the unfinished full harness or baseline qualification.
 Origins now emit in `finally`: failed assertions retain their origins, while
 successful assertions retain all 16 required metadata-argument observations.
 The stricter reader rejects earlier 11-argument packets rather than relabeling
-them complete. Harness-owned category controls are in progress and require
-clean source; the latest combined attempt rejected dirty-source qualification.
+them complete. At clean `cf9f62a`, one parent-owned run completes both category
+qualifications, all 56 actual mutation controls, the catalog/contributor journey
+and 887 tooling tests in 1538.128 seconds. All six owners release; independent
+readonly replay verifies 1,940 component proofs. This remains component evidence,
+not whole-harness qualification.
+
+The public harness producer and independent original-receipt reader now cover
+its 21 fixed cases. Control derivations name exact observed tooling methods,
+original contributor packets and actual category mutation methods; catalog
+executions are explicitly anchors, not fabricated runtime executions for those
+controls. Original in-memory authority and actual release are required before
+qualification. The 460 affected Linux tests pass; fresh clean-source full-harness
+execution and all-five baseline/hosted acceptance remain open.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

@@ -219,13 +219,17 @@ def dispatch_invocation(invocation):
             raise ConformanceError("CommandFailed")
         raise ConformanceError("EvidenceIncomplete")
     if (invocation.action == "run" and invocation.profiles in (
-            ("metadata",), ("artifacts",), ("composition",), ("compatibility",))
+            ("metadata",), ("artifacts",), ("composition",), ("compatibility",), ("harness",))
             and invocation.mode == "qualification" and invocation.binding_project is None):
         from conformance_case_catalog import expected_cases
         profile = invocation.profiles[0]
         if invocation.case_keys != tuple(case.key for case in expected_cases(profile)):
             raise ConformanceError("WitnessMissing")
-        if profile == "composition":
+        if profile == "harness":
+            from conformance_harness import execute
+            result = execute(invocation.repository, invocation.evidence)
+            return complete_native_harness_invocation(invocation, result)
+        elif profile == "composition":
             from conformance_composition_checks import execute
             try:
                 result = execute(invocation.repository, invocation.evidence, qualify=True)
@@ -249,6 +253,46 @@ def dispatch_invocation(invocation):
     if invocation.action == "run":
         raise ConformanceError("EvidenceIncomplete")
     raise ConformanceError()
+
+
+def complete_native_harness_invocation(invocation, native_evaluation):
+    import conformance_harness as harness
+    from conformance_case_catalog import expected_cases
+    from conformance_execution import OwnedRun
+
+    if type(native_evaluation) is not harness.NativeHarnessEvaluation:
+        raise ConformanceError(
+            "EvidenceIncomplete" if type(native_evaluation) is int and native_evaluation == 0 else "CommandFailed")
+    if (type(invocation) is not ConformanceInvocation or invocation.action != "run"
+            or invocation.mode != "qualification" or invocation.profiles != ("harness",)
+            or invocation.binding_project is not None
+            or type(native_evaluation._source) is not harness.NativeHarnessSources):
+        raise ConformanceError("OwnershipInvalid")
+    run = native_evaluation._source._run
+    if (type(run) is not OwnedRun or run.root != invocation.evidence
+            or invocation.case_keys != tuple(case.key for case in expected_cases("harness"))):
+        raise ConformanceError("OwnershipInvalid")
+    _, inputs_data = _readonly_report_proof(run.root, harness.CATALOG_INPUTS)
+    inputs = admit_entity("RunInputs", load_json(inputs_data))
+    ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+    if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
+        raise ConformanceError("InputChanged")
+    if (inputs["runId"] != run.run_id
+            or any(inputs[key] != value for key, value in source_identity(
+                invocation.repository, ci_revision=ci_revision).items())
+            or digest(inputs["sourceManifest"]) != digest(source_manifest(invocation.repository))):
+        raise ConformanceError("InputChanged")
+    _, original = _readonly_report_proof(run.root, harness.ORIGINAL_REPORT)
+    _, qualified = _readonly_report_proof(run.root, harness.QUALIFIED_REPORT)
+    inspected = harness.inspect_native_qualification(
+        run, qualified, original_report_data=original, expected_inputs=inputs,
+        native_evaluation=native_evaluation)
+    _verify_qualified_presentations(run, _render_verified_fixture_qualification(qualified, inspected))
+    origin = harness.qualification_receipt(
+        run, qualified, original_report_data=original, expected_inputs=inputs,
+        native_evaluation=native_evaluation)
+    print(canonical_bytes({**inspected, "qualificationOrigin": origin}).decode("ascii"))
+    return 0
 
 
 def complete_native_category_invocation(invocation, native_evaluation):
@@ -1286,7 +1330,7 @@ def native_category_qualification_receipt(
 def admit_qualification_origin(value, *, profile=None):
     if profile in (None, "metadata", "artifacts"):
         kind = "category"
-    elif profile in ("composition", "compatibility"):
+    elif profile in ("composition", "compatibility", "harness"):
         kind = profile
     else:
         raise ConformanceError("UnsupportedProfile")
@@ -1521,6 +1565,7 @@ def _render_verified_fixture_qualification(report_data, inspected):
         "artifacts": {"local": "durable-local-fixture", "object": "object-semantics-fixture"},
         "composition": {"none": "composition-lifecycle-fixture"},
         "compatibility": {"none": "finite-compatibility-fixture"},
+        "harness": {"none": "harness-control-fixture"},
     }[profile]
     category = profile in ("metadata", "artifacts")
     bindings = sorted({row["bindingId"] for row in report["results"]
@@ -1842,12 +1887,15 @@ def inspect_receipted_compatibility_qualification(
 
 def inspect_receipted_profile_qualification(
         root, report_data, *, expected_inputs, expected_report_sha256, qualification_origin):
+    from conformance_harness import inspect_receipted_qualification
+
     inputs = admit_entity("RunInputs", expected_inputs)
     readers = {
         "metadata": inspect_receipted_category_qualification,
         "artifacts": inspect_receipted_category_qualification,
         "composition": inspect_receipted_composition_qualification,
         "compatibility": inspect_receipted_compatibility_qualification,
+        "harness": inspect_receipted_qualification,
     }
     reader = readers.get(inputs["profileId"])
     if reader is None:

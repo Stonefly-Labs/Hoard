@@ -226,6 +226,31 @@ class ConformanceCliTests(unittest.TestCase):
             with self.subTest(forged=forged), self.assertRaises(evidence.ConformanceError):
                 evidence.complete_native_compatibility_invocation(invocation, forged)
 
+    def test_harness_dispatch_requires_complete_controls_and_original_native_completion(self):
+        invocation = evidence.admit_invocation(ROOT, [
+            "--profile", "harness", "--evidence", str(self.destination)])
+        token = object()
+        with patch("conformance_harness.execute", return_value=token) as execute, patch.object(
+                evidence, "complete_native_harness_invocation", return_value=0) as complete:
+            self.assertEqual(evidence.dispatch_invocation(invocation), 0)
+            execute.assert_called_once_with(ROOT, self.destination)
+            complete.assert_called_once_with(invocation, token)
+        for forged in (0, 1, None, False, token):
+            with self.subTest(forged=forged), self.assertRaises(evidence.ConformanceError):
+                evidence.complete_native_harness_invocation(invocation, forged)
+        for changed in (
+                replace(invocation, case_keys=invocation.case_keys[:-1]),
+                replace(invocation, case_keys=(*invocation.case_keys, invocation.case_keys[0])),
+                replace(invocation, mode="diagnostic"),
+                replace(invocation, profiles=("harness", "composition"))):
+            with self.subTest(invocation=changed), patch("conformance_harness.execute") as execute:
+                with self.assertRaises(evidence.ConformanceError):
+                    evidence.dispatch_invocation(changed)
+                execute.assert_not_called()
+        with patch("conformance_harness.execute", return_value=0):
+            with self.assertRaisesRegex(evidence.ConformanceError, "^EvidenceIncomplete$"):
+                evidence.dispatch_invocation(invocation)
+
     def test_compatibility_dispatch_requires_the_complete_agreement_and_never_qualifies_diagnostics(self):
         invocation = evidence.admit_invocation(ROOT, [
             "--profile", "compatibility", "--evidence", str(self.destination)])

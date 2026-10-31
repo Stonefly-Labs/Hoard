@@ -15,6 +15,69 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T073 whole-harness wiring and clean component completion
+
+The clean `cf9f62a` parent-owned component run is preserved on
+`hoard-f07-transfer-c4e36cb-diag` at
+`/probe/work/harness-category-cf9f62a-1`. Externally observed parent input SHA-256:
+`8ae6d45f30d9b9ddbbf5b0fb689fff988ed33befb3c381e4b8c808dc575b6f6b`.
+It completes in **1538.128 seconds** within the unchanged 3600-second harness
+deadline. Metadata qualifies with 93 passed cases/nine declared exclusions and
+141 witnesses; artifacts qualifies with 99 passed/four declared exclusions and
+263 witnesses, including the actual required transfers. Each original category
+passes four live, fifteen released and nine retained controls: **56 controls**.
+All 887 tooling tests pass without accepted failures/skips. The catalog has ten
+passing actual witnesses; the contributor triplet has 76 rows/86 origins/16
+arguments per run, with exactly the three predeclared faulty assertions.
+All six actual owners release.
+
+A separate readonly process replays the original externally observed category/
+control receipts and complete components/tooling custody. The union contains
+**1,940 component proofs / 149,809,194 bytes**, excluding the tooling proof from
+that union. The earlier 843 count covers only catalog/contributors. The original
+parent still has `qualification:false`: no full-harness report/native authority
+is added to or retrospectively inferred for it.
+
+Whole-harness implementation now connects the fixed 21-case report, exact
+source-bound case/control attribution, live-to-released evaluation, finite
+renderer, public `--profile harness` dispatch and externally receipted reader.
+QC-30..32 derive from actual original contributor packets. QC-33..37/45..48
+identify exact methods in the complete trusted tooling observation; QC-38..44
+identify exact methods/phases in both original category control packets. The
+ten original catalog executions are explicitly named anchors, not relabeled
+tooling/child runtime witnesses. The reader reconstructs every derivation and
+original proof, timing, input completion and child closure. Native publication
+additionally requires the exact original evaluation object, held parent command
+bytes and all five original released child owners. Bytes/copy state alone
+cannot mint native authority.
+
+Validation:
+
+- Linux `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_sdk_checks test_conformance_evidence test_conformance_cli test_conformance_ci -q`: **459 passed**, 104.677 seconds, zero skips.
+- The same command after final dirty-source preallocation coverage:
+  **460 passed**, 104.794 seconds, zero skips. Dirty source rejects before root
+  allocation/build, not after the contributor journey.
+- New attribution/authority tests failed before implementation; exact declared/
+  observed IDs are required rather than success totals. Source AST inventory
+  checks every selected method and the complete 21-case coverage. Public
+  dispatch rejects reduced/duplicate/focused/mixed agreements and forged
+  completion values.
+- Readonly retained-control attribution check against the separately observed
+  `cf9f62a` input/category/control pins: **passed**, all selected exact source IDs
+  are present; the 1,940-proof union is below unchanged proof ceilings. This is
+  nonqualifying retained component validation, not a new original-owner receipt.
+- Frozen predecessor inventory and embedded SDK catalog checks: **passed**.
+
+Fresh full-harness native execution, independent original-receipt replay,
+successful exact-five aggregate and T074..T086 remain open. No task is marked
+complete on wiring/model tests alone. The Hoard-only requested "When stuck"
+rules are now explicit in `.github/copilot-instructions.md`.
+README/development/evidence-contract updates distinguish this implementation
+from unverified acceptance. Provider interfaces, custom-host/contributor
+commands, charter/product/architecture/ADR/diagrams, governance/backlog,
+predecessor guides, IaC, release and UI are unaffected: no corresponding product
+contract, graph or operational behavior changes.
+
 ### T073 metadata-argument correction and native-category integration
 
 The harness now invokes the existing actual category control factories through

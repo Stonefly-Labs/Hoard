@@ -1,8 +1,10 @@
-"""Original harness observations; component success is not profile qualification."""
+"""Source-bound harness controls and original live-to-released qualification."""
 
+from dataclasses import dataclass
 import hashlib
 import os
 from pathlib import Path
+import time
 from types import MappingProxyType
 import uuid
 
@@ -17,6 +19,115 @@ CATALOG_INPUTS = "proofs/harness-inputs.json"
 FROZEN_INPUTS = "proofs/harness-frozen-inputs/"
 CONTRIBUTOR_FRAME = "proofs/harness-contributors.json"
 CATEGORY_CONTROL_FRAME = "proofs/harness-category-controls.json"
+OBSERVATION = "proofs/harness-observation.json"
+TOOLING_SUMMARY = "proofs/harness-tooling-summary.json"
+COMPLETION_INPUTS = "proofs/category-harness-qualification-completion-inputs.json"
+ORIGINAL_REPORT = "proofs/harness-runtime-released-report.json"
+QUALIFIED_REPORT = "proofs/harness-fixture-qualification-report.json"
+
+_EXECUTION = "test_conformance_execution.ConformanceExecutionTests."
+_CI = "test_conformance_ci.ConformanceProfileTransportTests."
+_CLI = "test_conformance_cli.ConformanceCliTests."
+_SANITATION = "test_conformance_sanitation.ConformanceSanitationTests."
+_INGESTION = "test_conformance_evidence.ConformanceRuntimeIngestionTests."
+
+TOOLING_BASIS = MappingProxyType({
+    "QC-29": (
+        _INGESTION + "test_compatibility_presentations_reconstruct_the_candidate_and_bound_support_to_exact_inputs",
+        _CI + "test_public_aggregate_checks_all_five_complete_inventories_but_never_qualifies_empty_models"),
+    "QC-32": (
+        _CLI + "test_explicit_category_project_cannot_change_the_selected_common_agreement",
+        _EXECUTION + "test_child_environment_is_explicit_and_cannot_inject_a_native_loader"),
+    "QC-33": (
+        _EXECUTION + "test_private_roots_and_subresources_are_run_owned_and_single_writer",
+        _EXECUTION + "test_concurrent_runs_isolate_cache_inputs_and_containment_does_not_end_the_other_child",
+        _EXECUTION + "test_preflight_parent_swap_cannot_create_a_workspace_under_an_outside_sentinel"),
+    "QC-34": (
+        _EXECUTION + "test_insufficient_artifact_capacity_and_invalid_budgets_fail_explicitly",
+        _EXECUTION + "test_profile_reserves_termination_and_cleanup_before_admitting_another_child",
+        _EXECUTION + "test_child_deadline_includes_admission_work_instead_of_restarting_after_it",
+        _EXECUTION + "test_control_barrier_and_caller_limits_cannot_expand_or_bypass_command_budgets",
+        _EXECUTION + "test_output_flood_is_failure_not_truncated_success_and_child_exits",
+        _EXECUTION + "test_safe_event_size_is_bounded_before_json_expansion_without_truncation",
+        _EXECUTION + "test_expired_cleanup_records_retention_without_deleting_synthetic_resources",
+        _EXECUTION + "test_transfer_peak_and_protocol_failures_cannot_become_measured_success",
+        _EXECUTION + "test_observed_barrier_precedes_owned_signal_and_confirmed_process_tree_exit"),
+    "QC-35": (
+        _EXECUTION + "test_live_work_is_retained_then_retry_records_exit_without_erasing_the_failure",
+        _EXECUTION + "test_failed_release_publication_cannot_claim_release_and_retry_keeps_evidence",
+        _EXECUTION + "test_partial_directory_cleanup_retries_only_unlinked_pins_and_preserves_retained_history"),
+    "QC-36": (
+        _EXECUTION + "test_rejects_existing_foreign_symlink_and_nonprivate_roots",
+        _EXECUTION + "test_foreign_process_identity_cannot_be_terminated_or_cleaned",
+        _EXECUTION + "test_ledger_tampering_and_symlink_swap_prevent_cleanup",
+        _EXECUTION + "test_replacing_a_top_level_directory_does_not_recreate_its_ownership",
+        _EXECUTION + "test_one_owned_writer_rejects_overlapping_commands_and_cleanup_before_admission"),
+    "QC-37": (
+        _CLI + "test_invalid_modes_and_paths_never_allocate_or_fall_back_to_a_profile",
+        _EXECUTION + "test_child_environment_is_explicit_and_cannot_inject_a_native_loader",
+        _EXECUTION + "test_remote_or_unknown_artifact_scratch_rejects_before_workspace_creation",
+        _EXECUTION + "test_artifact_and_baseline_capacity_preflight_prevents_root_creation",
+        _EXECUTION + "test_local_scratch_observation_is_bounded_and_rejects_failed_or_malformed_controls"),
+    "QC-45": (
+        _CI + "test_local_and_ci_use_the_same_independent_profile_inventories",
+        _CI + "test_foreign_evaluator_source_rejects_even_with_matching_revision_and_assignment",
+        _CI + "test_public_aggregate_checks_all_five_complete_inventories_but_never_qualifies_empty_models",
+        _CI + "test_aggregate_rejects_resealed_missing_cases_in_each_profile"),
+    "QC-46": (
+        _CI + "test_job_upload_download_failure_cancellation_and_missing_status_reject",
+        _CI + "test_missing_extra_and_misassigned_profiles_reject",
+        _CI + "test_foreign_common_context_rejects_even_when_each_assignment_matches",
+        _CI + "test_coordinator_does_not_infer_missing_jobs_or_profiles_from_green_reports",
+        _CI + "test_receipted_aggregate_cannot_promote_four_profiles_without_harness_authority"),
+    "QC-47": (
+        _CI + "test_focused_preparation_dirty_and_changed_original_inputs_reject",
+        _CI + "test_external_report_pins_and_unique_run_identities_are_required",
+        _CI + "test_coordinator_rejects_foreign_configuration_policy_and_changed_preimages",
+        _CI + "test_aggregate_keeps_failed_attempt_after_passing_modeled_retry",
+        _INGESTION + "test_compatibility_presentations_reconstruct_the_candidate_and_bound_support_to_exact_inputs"),
+    "QC-48": tuple(_SANITATION + name for name in (
+        "test_diagnostic_json_junit_markdown_and_ci_surfaces_do_not_repeat_private_inputs",
+        "test_unknown_diagnostic_report_fields_reject_instead_of_disappearing_into_public_success",
+        "test_public_failure_projection_never_renders_provider_errors_or_private_paths",
+        "test_unknown_provider_text_never_persists_in_any_owned_file_or_filename",
+        "test_private_executable_settings_remain_bound_until_real_settlement_and_do_not_persist",
+        "test_build_snapshot_private_metadata_is_transient_without_weakening_source_binding",
+        "test_output_flood_is_incomplete_without_spooling_or_truncating_into_success")),
+})
+
+NATIVE_CONTROL_BASIS = MappingProxyType({
+    "QC-38": (
+        ("retainedReportTests", "test_every_admission_field_is_required_and_independently_bound"),
+        ("liveOriginTests", "test_predeclared_partitions_and_original_scope_identities")),
+    "QC-39": (
+        ("retainedReportTests", "test_exact_case_and_parameter_sets_reject_missing_duplicate_and_unknown_rows"),
+        ("liveOriginTests", "test_predeclared_partitions_and_original_scope_identities")),
+    "QC-40": (
+        ("retainedReportTests", "test_runtime_provenance_and_unsupported_outcomes_cannot_be_substituted"),
+        ("liveOriginTests", "test_original_transports_cannot_be_substituted"),
+        ("liveOriginTests", "test_rehashed_command_and_parent_cannot_replace_executor_held_bytes")),
+    "QC-41": (
+        ("retainedReportTests", "test_exclusion_reclassification_retry_reuse_and_optimistic_flags_reject"),
+        ("retainedReportTests", "test_every_admission_field_is_required_and_independently_bound")),
+    "QC-42": (
+        ("retainedReportTests", "test_runtime_provenance_and_unsupported_outcomes_cannot_be_substituted"),
+        ("retainedReportTests", "test_exclusion_reclassification_retry_reuse_and_optimistic_flags_reject"),
+        ("liveOriginTests", "test_optimistic_history_and_retimed_parent_cannot_replace_observation")),
+    "QC-43": (
+        ("retainedReportTests", "test_failed_attempt_cannot_disappear_behind_a_passing_retry"),
+        ("retainedReportTests", "test_exclusion_reclassification_retry_reuse_and_optimistic_flags_reject")),
+    "QC-44": (
+        ("retainedReportTests", "test_nested_schema_unicode_duration_path_and_size_limits_reject_safely"),
+        ("retainedReportTests", "test_real_proof_bytes_presence_links_completion_sealing_and_byte_budget")),
+})
+
+
+def _tooling_case_sources(case_id, packet):
+    selected = TOOLING_BASIS.get(case_id, ())
+    if (packet["code"] != "None" or packet["expectedTests"] != packet["observedTests"]
+            or not set(selected) <= set(packet["observedTests"])):
+        raise evidence.ConformanceError("WitnessMissing")
+    return selected
 
 
 def _frozen_inputs(inputs):
@@ -551,3 +662,345 @@ def inspect_category_controls(root, *, expected_inputs):
         "qualification": False, "scope": "harness-native-category-controls", "code": "None",
         "runs": tuple(results), "proofs": MappingProxyType(proofs),
     })
+
+
+def _read_frame(root, path):
+    _, raw = evidence._readonly_report_proof(root, path)
+    return evidence.load_json(raw)
+
+
+def _report_material(root, inputs):
+    import conformance_inherited as inherited
+    from conformance_case_catalog import expected_cases
+
+    root = Path(root)
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    catalog = inspect_catalog(root, inputs)
+    contributors = inspect_contributor_journey(root, expected_inputs=inputs)
+    categories = inspect_category_controls(root, expected_inputs=inputs)
+    owner = _read_frame(root, "runtime-owner.json")
+    observation_sha, observation_data = evidence._readonly_report_proof(root, OBSERVATION)
+    observation = evidence._runtime_json(observation_data, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "scope": evidence._constant("harness-control-observation"),
+        "runId": evidence._constant(inputs["runId"]), "rootId": evidence._constant(owner["rootId"]),
+        "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        "startedMs": evidence._number, "endedMs": evidence._number,
+    })
+    started, ended = observation["startedMs"], observation["endedMs"]
+    if not 0 <= ended - started < inputs["budgets"]["profileSeconds"] * 1000:
+        raise evidence.ConformanceError("DeadlineExceeded")
+    tooling = _read_frame(root, TOOLING_SUMMARY)
+    inherited.verify_controller_tooling(root, tooling, inputs, owner)
+    _, tooling_document = inherited._read_controller_tooling(root, inputs, owner)
+    if not started <= tooling_document["startedMs"] <= tooling_document["endedMs"] <= ended:
+        raise evidence.ConformanceError("ProofMismatch")
+    contributor_frame = _read_frame(root, CONTRIBUTOR_FRAME)
+    category_frame = _read_frame(root, CATEGORY_CONTROL_FRAME)
+    controls, child_resources = {}, []
+    all_witnesses = [*catalog["witnesses"]]
+    for row, observed in zip(contributor_frame["runs"], contributors["runs"]):
+        all_witnesses.extend(observed["witnesses"])
+        child_resources.extend(row["resources"])
+    for row in category_frame["runs"]:
+        child_root = root / row["path"]
+        report = _read_frame(child_root, row["qualificationOrigin"]["originalReportPath"])
+        all_witnesses.extend(report["witnesses"])
+        child_resources.extend(report["resources"])
+        controls[row["profileId"]] = _read_frame(child_root, row["controlOrigin"]["proofPath"])
+    if (any(row["startedMs"] < started or row["endedMs"] > ended for row in all_witnesses)
+            or len({row["rootId"] for row in child_resources}) != 5
+            or any(row["rootId"] == owner["rootId"] or row["state"] != "Released"
+                   or row["childPid"] != 0 for row in child_resources)):
+        raise evidence.ConformanceError("CleanupIncomplete")
+    proofs = {**catalog["proofs"], **contributors["proofs"], **categories["proofs"],
+              OBSERVATION: observation_sha}
+    for path in (TOOLING_SUMMARY, "proofs/inherited-controller-tooling.json", COMPLETION_INPUTS):
+        proofs[path] = evidence._readonly_report_proof(root, path)[0]
+    results, source_proofs = [], {}
+    anchors = catalog["witnesses"]
+    anchor_hashes = {row["proofSha256"] for row in anchors}
+    for case in expected_cases("harness"):
+        sources = {}
+        if case.case_id == "QC-01":
+            sources["catalog"] = proofs[CATALOG_FRAME]
+        if case.case_id in ("QC-30", "QC-31", "QC-32"):
+            sources["contributorJourney"] = proofs[CONTRIBUTOR_FRAME]
+        if case.case_id in TOOLING_BASIS:
+            sources["tooling"] = {
+                "proofPath": "proofs/inherited-controller-tooling.json",
+                "proofSha256": proofs["proofs/inherited-controller-tooling.json"],
+                "tests": _tooling_case_sources(case.case_id, tooling_document["result"]),
+            }
+        if case.case_id in NATIVE_CONTROL_BASIS:
+            selected = NATIVE_CONTROL_BASIS[case.case_id]
+            for profile, document in controls.items():
+                if any(method not in document["phases"][phase]["observedTests"]
+                       for phase, method in selected):
+                    raise evidence.ConformanceError("WitnessMissing")
+                row = next(row for row in category_frame["runs"] if row["profileId"] == profile)
+                sources[profile] = {
+                    "proofPath": row["path"] + "/" + row["controlOrigin"]["proofPath"],
+                    "proofSha256": row["controlOrigin"]["proofSha256"],
+                    "methods": [{"phase": phase, "method": method} for phase, method in selected],
+                }
+        if not sources:
+            raise evidence.ConformanceError("WitnessMissing")
+        path = f"proofs/harness-{case.case_id}-sources.json"
+        raw = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "scope": "harness-control-derivation",
+            "inputsSha256": evidence.digest(inputs), "caseId": case.case_id,
+            "controls": case.controls, "sources": sources,
+            "catalogAnchorExecutions": [row["executionId"] for row in anchors],
+            "startedMs": started, "endedMs": ended,
+        })
+        hashed = hashlib.sha256(raw).hexdigest()
+        source_proofs[path], proofs[path] = raw, hashed
+        attempt = evidence.admit_entity("Attempt", {
+            "sequence": 1, "startedMs": started, "endedMs": ended, "status": "Passed",
+            "witnessIds": [row["executionId"] for row in anchors],
+            "proofSha256": sorted({hashed, *anchor_hashes}), "diagnosticCode": "None",
+        })
+        results.append(evidence._catalog_case_result(inputs, case, "Passed", (attempt,)))
+    return {
+        "results": results, "witnesses": anchors, "proofs": proofs, "sourceProofs": source_proofs,
+        "postInputSha256": proofs[COMPLETION_INPUTS], "childResources": child_resources,
+    }
+
+
+def inspect_harness_report(root, report_data, *, expected_inputs):
+    report = evidence.admit_entity("QualificationReport", evidence.load_json(report_data))
+    inputs = evidence.admit_entity("RunInputs", expected_inputs)
+    if (inputs["profileId"] != "harness" or inputs["mode"] != "qualification"
+            or report["inputs"] != inputs or report["qualification"]
+            or report["state"] != "Incomplete" or report["scope"] != ("harness-runtime-diagnostic",)):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    material = _report_material(root, inputs)
+    if any(evidence.digest(report[key]) != evidence.digest(material[key])
+           for key in ("results", "witnesses", "proofs", "postInputSha256")):
+        raise evidence.ConformanceError("ProofMismatch")
+    for path, raw in material["sourceProofs"].items():
+        if evidence._readonly_report_proof(root, path)[1] != raw:
+            raise evidence.ConformanceError("ProofMismatch")
+    return evidence.inspect_profile_report(
+        root, report_data, expected_inputs=inputs,
+        expected_report_sha256=hashlib.sha256(report_data).hexdigest())
+
+
+@dataclass(frozen=True, repr=False)
+class NativeHarnessEvaluation:
+    _source: "NativeHarnessSources"
+    report_data: bytes
+    commands: tuple
+
+    def verify_report_origin(self, run, inputs, report):
+        if (type(run) is not OwnedRun or type(self._source) is not NativeHarnessSources
+                or self._source._run is not run or self._source._evaluation is not self
+                or run.state != "Released"):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        if (not report.get("resources")
+                or evidence.canonical_bytes(report["resources"])
+                != evidence.canonical_bytes(run.resource_projection())
+                or any(row["state"] != "Released" for row in report["resources"])):
+            raise evidence.ConformanceError("CleanupIncomplete")
+        original = evidence.load_json(self.report_data)
+        if (evidence.digest(inputs) != evidence.digest(original["inputs"])
+                or evidence.digest({key: value for key, value in report.items() if key != "resources"})
+                != evidence.digest({key: value for key, value in original.items() if key != "resources"})):
+            raise evidence.ConformanceError("ProofMismatch")
+        for path, hashed in self.commands:
+            if evidence._readonly_report_proof(run.root, path)[0] != hashed or report["proofs"].get(path) != hashed:
+                raise evidence.ConformanceError("ProofMismatch")
+        self._source._verify_children(inputs)
+
+
+class NativeHarnessSources:
+    def __init__(self, run):
+        if (type(run) is not OwnedRun or run.state != "Active"
+                or run.command_sequence != 0 or run.live_children()):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        self._run = run
+        self._evaluation = None
+        self._contributors = ()
+        self._categories = ()
+
+    def _verify_children(self, inputs):
+        run = self._run
+        contributor_frame = _read_frame(run.root, CONTRIBUTOR_FRAME)
+        category_frame = _read_frame(run.root, CATEGORY_CONTROL_FRAME)
+        if len(self._contributors) != 3 or len(self._categories) != 2:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        for owner, row in zip(self._contributors, contributor_frame["runs"]):
+            if (type(owner) is not OwnedRun or owner.root != run.root / row["path"]
+                    or owner.run_id != row["inputs"]["runId"] or owner.state != "Released"
+                    or owner.live_children()
+                    or evidence.digest(owner.resource_projection()) != evidence.digest(row["resources"])):
+                raise evidence.ConformanceError("CleanupIncomplete")
+        for native, row in zip(self._categories, category_frame["runs"]):
+            owner = native._source._run
+            if owner.root != run.root / row["path"] or row["inputs"]["invocationGroupId"] != inputs["invocationGroupId"]:
+                raise evidence.ConformanceError("OwnershipInvalid")
+            _, original = evidence._readonly_report_proof(owner.root, row["qualificationOrigin"]["originalReportPath"])
+            _, qualified = evidence._readonly_report_proof(owner.root, row["reportPath"])
+            observed = evidence.native_category_qualification_receipt(
+                owner, qualified, original_report_data=original, expected_inputs=row["inputs"],
+                native_evaluation=native)
+            if observed != row["qualificationOrigin"]:
+                raise evidence.ConformanceError("ProofMismatch")
+
+    def execute(self, repository, *, group_id):
+        import conformance_inherited as inherited
+        import conformance_sdk_checks as sdk
+
+        run = self._run
+        if run.state != "Active" or run.command_sequence != 0 or self._evaluation is not None:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        inputs, assembly, source, capture = prepare_catalog(repository, run, group_id=group_id)
+        execute_catalog(run, inputs, assembly)
+        self._contributors = execute_contributor_journey(repository, run, inputs, source)
+        self._categories = execute_category_controls(repository, run, inputs)
+        tooling = inherited.run_controller_tooling(repository, run, inputs["sourceManifest"])
+        sdk.write_new(run.root / TOOLING_SUMMARY, evidence.canonical_bytes(tooling))
+        post = evidence.capture_profile_inputs(run, repository, source, **{
+            **capture, "observed_environment": sdk.environment(run, phase="completion")})
+        evidence.verify_input_recomputation(inputs, post)
+        sdk.write_new(run.root / COMPLETION_INPUTS, evidence.canonical_bytes(post))
+        self._verify_children(inputs)
+        ended = time.monotonic()
+        if ended >= run.deadline or run.live_children():
+            raise evidence.ConformanceError("DeadlineExceeded")
+        sdk.write_new(run.root / OBSERVATION, evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "scope": "harness-control-observation",
+            "runId": run.run_id, "rootId": run.root_id, "inputsSha256": evidence.digest(inputs),
+            "startedMs": run.started * 1000, "endedMs": ended * 1000,
+        }))
+        material = _report_material(run.root, inputs)
+        for path, raw in material["sourceProofs"].items():
+            sdk.write_new(run.root / path, raw)
+        report = evidence.admit_entity("QualificationReport", {
+            "schemaVersion": 1, "catalogRevision": inputs["catalogRevision"], "inputs": inputs,
+            **{key: material[key] for key in ("results", "witnesses", "proofs", "postInputSha256")},
+            "resources": run.resource_projection(), "state": "Incomplete", "qualification": False,
+            "scope": ["harness-runtime-diagnostic"],
+        })
+        raw = evidence.canonical_bytes(report)
+        sdk.write_new(run.root / "proofs/harness-runtime-report.json", raw)
+        inspect_harness_report(run.root, raw, expected_inputs=inputs)
+        commands = []
+        for path, hashed in report["proofs"].items():
+            if path.startswith("proofs/execution-command-") and path.endswith(".json"):
+                sequence = int(Path(path).stem.rsplit("-", 1)[1])
+                if hashlib.sha256(run.read_execution_record(sequence)).hexdigest() != hashed:
+                    raise evidence.ConformanceError("ProofMismatch")
+                commands.append((path, hashed))
+        if len(commands) != 2:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        self._evaluation = NativeHarnessEvaluation(self, raw, tuple(commands))
+        return self._evaluation
+
+
+def execute(repository, destination, *, group_id=None):
+    import conformance_sdk_checks as sdk
+    from conformance_execution import native_execution_supported
+
+    if not native_execution_supported():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    group_id = str(uuid.uuid4()) if group_id is None else evidence._uuid(group_id)
+    ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+    if (os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None
+            or evidence.source_identity(repository, ci_revision=ci_revision)["sourceState"]
+            not in ("clean-local", "clean-ci")):
+        raise evidence.ConformanceError("InputChanged")
+    run = OwnedRun.allocate(destination, repository, profile="harness")
+    try:
+        run.transition("Active")
+        native = NativeHarnessSources(run).execute(repository, group_id=group_id)
+    finally:
+        if run.state in ("Allocated", "Active"):
+            run.transition("Settling")
+        if run.state == "Settling":
+            run.release()
+    original = evidence.admit_entity("QualificationReport", {
+        **evidence.load_json(native.report_data), "resources": run.resource_projection()})
+    raw = evidence.canonical_bytes(original)
+    sdk.write_new(run.root / ORIGINAL_REPORT, raw)
+    qualified = derive_native_qualification(
+        run, raw, expected_inputs=original["inputs"], native_evaluation=native)
+    sdk.write_new(run.root / QUALIFIED_REPORT, evidence.canonical_bytes(qualified))
+    return native
+
+
+def derive_native_qualification(run, original_report_data, *, expected_inputs, native_evaluation):
+    if type(native_evaluation) is not NativeHarnessEvaluation:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    original = evidence.admit_entity("QualificationReport", evidence.load_json(original_report_data))
+    native_evaluation.verify_report_origin(run, expected_inputs, original)
+    inspect_harness_report(run.root, original_report_data, expected_inputs=expected_inputs)
+    evidence._require_qualifying_outcomes(original)
+    return evidence.admit_entity("QualificationReport", {
+        **original, "state": "Complete", "qualification": True, "scope": ["harness-fixture-qualification"]})
+
+
+def inspect_native_qualification(
+        run, report_data, *, original_report_data, expected_inputs, native_evaluation):
+    expected = derive_native_qualification(
+        run, original_report_data, expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    report = evidence.admit_entity("QualificationReport", evidence.load_json(report_data))
+    if report != expected:
+        raise evidence.ConformanceError("ProofMismatch")
+    return _qualification_summary(report_data, report, scope="native-harness-fixture-qualification")
+
+
+def _qualification_summary(report_data, report, *, scope):
+    return MappingProxyType({
+        "qualification": True, "baselineQualification": False, "code": "None", "scope": scope,
+        "profileId": "harness", "reportSha256": hashlib.sha256(report_data).hexdigest(),
+        "caseCount": len(report["results"]), "witnessCount": len(report["witnesses"]),
+        "caseStates": MappingProxyType({
+            state: sum(row["status"] == state for row in report["results"]) for state in evidence.STATUSES}),
+    })
+
+
+def qualification_receipt(
+        run, report_data, *, original_report_data, expected_inputs, native_evaluation):
+    inspected = inspect_native_qualification(
+        run, report_data, original_report_data=original_report_data,
+        expected_inputs=expected_inputs, native_evaluation=native_evaluation)
+    original_sha, original = evidence._readonly_report_proof(run.root, ORIGINAL_REPORT)
+    if original != original_report_data:
+        raise evidence.ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "kind": "native-harness-fixture-qualification", "inputsSha256": evidence.digest(expected_inputs),
+        "reportSha256": inspected["reportSha256"], "originalReportPath": ORIGINAL_REPORT,
+        "originalReportSha256": original_sha, "resourcesSha256": evidence.digest(run.resource_projection()),
+    })
+
+
+def inspect_receipted_qualification(
+        root, report_data, *, expected_inputs, expected_report_sha256, qualification_origin):
+    if qualification_origin is None:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", expected_inputs)
+    origin = evidence.admit_qualification_origin(qualification_origin, profile="harness")
+    if (inputs["profileId"] != "harness" or origin["inputsSha256"] != evidence.digest(inputs)
+            or origin["reportSha256"] != evidence.sha256(expected_report_sha256)
+            or origin["originalReportPath"] != ORIGINAL_REPORT):
+        raise evidence.ConformanceError("InputChanged")
+    if (not isinstance(report_data, bytes) or len(report_data) > evidence.MAX_REPORT_BYTES
+            or hashlib.sha256(report_data).hexdigest() != origin["reportSha256"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    original_sha, original_data = evidence._readonly_report_proof(root, ORIGINAL_REPORT)
+    if original_sha != origin["originalReportSha256"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    original = evidence.admit_entity("QualificationReport", evidence.load_json(original_data))
+    inspect_harness_report(root, original_data, expected_inputs=inputs)
+    evidence._require_qualifying_outcomes(original)
+    if (not original["resources"] or any(row["state"] != "Released" for row in original["resources"])
+            or evidence.digest(original["resources"]) != origin["resourcesSha256"]):
+        raise evidence.ConformanceError("CleanupIncomplete")
+    report = evidence.admit_entity("QualificationReport", evidence.load_json(report_data))
+    expected = evidence.admit_entity("QualificationReport", {
+        **original, "state": "Complete", "qualification": True, "scope": ["harness-fixture-qualification"]})
+    if report != expected:
+        raise evidence.ConformanceError("ProofMismatch")
+    return _qualification_summary(report_data, report, scope="trusted-native-harness-fixture-qualification")
