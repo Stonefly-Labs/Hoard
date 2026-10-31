@@ -4668,6 +4668,20 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+**Harness-owned contributor integration:** the catalog and good/faulty/corrected
+adapter journey now execute under one actual harness owner and invocation
+group, with child deadlines bounded by the parent. The harness retains the
+three actual child owners and their original proofs outside transient stores.
+All four roots actually release, and a fresh readonly process replays 843
+original proofs after parent cleanup. Each contributor run has 76 rows/86
+origins; only the faulty adapter has the three expected named failures.
+Fourteen altered-frame controls reject on an isolated copy, with successful
+restored replay after each; original evidence is not changed. The affected
+Linux selection passes 341 tests without skips. This remains an internal,
+nonqualifying component; full harness, baseline and hosted five-profile
+acceptance are still open. See the
+[retained run and exact validation](../specs/007-provider-conformance/plan.md#t073-harness-owned-contributor-integration).
+
 **Contributor original replay:** the internal metadata contributor reader now
 reconstructs the retained binding descriptor, exact discovery/execution
 manifests, selected SDK runner, native command parents, immutable runtime

@@ -28,6 +28,91 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_harness_contributor_frame_requires_exact_inputs_paths_groups_and_distinct_runs(self):
+        import conformance_harness as harness
+        import conformance_contributors as contributors
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(profileId="harness", mode="qualification", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        observed = {
+            "qualification": False, "sessionOrigins": 86, "witnesses": tuple(range(76)),
+            "proofs": {"proofs/original.json": "a" * 64},
+        }
+        rows, owners = [], {}
+        for label in ("good", "faulty", "corrected"):
+            child = ConformanceAdmissionTests().inputs()
+            child.update(runId=str(uuid.uuid4()), invocationGroupId=inputs["invocationGroupId"],
+                         invocation=["binding-project", ("b" if label == "faulty" else "a") * 64, "c" * 64])
+            child["packages"].append({
+                **child["packages"][0], "packageId": child["bindings"][0]["adapterId"],
+                "sha256": ("e" if label == "faulty" else "d") * 64})
+            root_id = str(uuid.uuid4())
+            owners[label] = checks.evidence.canonical_bytes({"rootId": root_id})
+            rows.append({
+                "label": label, "path": "proofs/contributors/" + label, "inputs": child,
+                "proofsSha256": checks.evidence.digest(observed["proofs"]),
+                "resources": [{
+                    "runId": child["runId"], "rootId": root_id, "childPid": 0, "childStartSha256": "0" * 64,
+                    "state": "Released", "cleanupDurationMs": 1, "diagnosticCode": "None"}],
+            })
+        frame = {
+            "schemaVersion": 1, "qualification": False, "scope": "harness-contributor-journey",
+            "inputsSha256": checks.evidence.digest(inputs), "runs": rows,
+        }
+        for defect in ("none", "missing", "unknown", "group", "source", "sdk", "path", "label",
+                       "reused-run", "resource", "missing-resource", "live-resource",
+                       "proof", "repair", "same-package"):
+            value = json.loads(checks.evidence.canonical_bytes(frame))
+            changed = value["runs"][1]
+            if defect == "missing":
+                value["runs"].pop()
+            elif defect == "unknown":
+                value["qualificationOrigin"] = {}
+            elif defect == "group":
+                changed["inputs"]["invocationGroupId"] = str(uuid.uuid4())
+            elif defect == "source":
+                changed["inputs"]["sourceRevision"] = "0" * 40
+            elif defect == "sdk":
+                changed["inputs"]["sdkSha256"] = "0" * 64
+            elif defect == "path":
+                changed["path"] = "proofs/contributors/foreign"
+            elif defect == "label":
+                changed["label"] = "good"
+            elif defect == "reused-run":
+                changed["inputs"]["runId"] = value["runs"][0]["inputs"]["runId"]
+            elif defect == "resource":
+                changed["resources"][0]["state"] = "Retained"
+            elif defect == "missing-resource":
+                changed["resources"] = []
+            elif defect == "live-resource":
+                changed["resources"][0]["childPid"] = 1
+            elif defect == "proof":
+                changed["proofsSha256"] = "0" * 64
+            elif defect == "repair":
+                value["runs"][2]["inputs"]["invocation"][1] = "b" * 64
+            elif defect == "same-package":
+                changed["inputs"]["packages"][-1]["sha256"] = "d" * 64
+            raw = checks.evidence.canonical_bytes(value)
+
+            def read(root, path):
+                data = raw if path == harness.CONTRIBUTOR_FRAME else owners[Path(root).name]
+                return hashlib.sha256(data).hexdigest(), data
+
+            with self.subTest(defect=defect), patch.object(
+                    checks.evidence, "_readonly_report_proof", side_effect=read), patch.object(
+                    contributors, "inspect_metadata_binding_runtime", return_value=observed) as replay:
+                if defect == "none":
+                    result = harness.inspect_contributor_journey(self.directory, expected_inputs=inputs)
+                    self.assertFalse(result["qualification"])
+                    self.assertEqual(len(result["runs"]), 3)
+                    self.assertEqual([call.kwargs["expected_fault"] for call in replay.call_args_list],
+                                     ["none", "stale-replay", "none"])
+                else:
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        harness.inspect_contributor_journey(self.directory, expected_inputs=inputs)
+
     def test_harness_catalog_transport_requires_every_native_catalog_witness(self):
         from conformance_case_catalog import catalog_admission_witnesses
 

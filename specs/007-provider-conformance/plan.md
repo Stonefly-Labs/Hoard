@@ -15,6 +15,56 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T073 harness-owned contributor integration
+
+The harness now executes its existing native catalog and actual copied-adapter
+good/faulty/corrected journey under one real parent owner and common invocation
+group. Contributor execution reuses the existing producer with an explicitly
+held allocated owner; the public wrapper keeps its original diagnostic
+semantics. Three distinct actual child owners are retained, their deadlines
+bounded by the parent's, with original packets beneath retained `proofs/`
+rather than deleted transient stores. The trusted controller stays outside
+provider process groups. No owner is reconstructed from serialized bytes.
+
+The original run is retained at
+`hoard-f07-transfer-c4e36cb-diag:/probe/work/harness-contributor-ca08816-1`,
+with caller-observed parent input SHA-256
+`b8016cde800b1cb590f8b81d21073c7762a7a239e056fd8a9ff94bddbdbf7e47`.
+The ten catalog witnesses and all three contributor runs complete in
+253.794 seconds. Each contributor runs 76 rows with 86 actual session origins;
+good/corrected pass and faulty has exactly three intended named failures.
+All non-adapter package identities are identical; good/corrected restore the
+same binding inputs. All four original owners actually release with no live
+children. Completion inputs recompute before parent cleanup.
+
+A fresh process mounts the original evidence volume readonly, checks the
+external parent-input pin and replays all 843 proofs after parent release
+(184 catalog, 659 contributor/frame). Fourteen physical altered-frame controls
+on the isolated `hoard-f07-harness-contributor-controls-ca08816` volume reject:
+missing child, unknown field, foreign group/source/SDK/path, wrong label,
+reused run, retained/missing/live resource, altered proof digest, false repair
+and substituted package. Each restored packet replays successfully. The
+original volume is never mutated. The reader remains explicitly nonqualifying.
+
+Validation:
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_contributors test_conformance_sdk_checks test_conformance_ci test_conformance_cli -q`: **341 passed**, 400.149 seconds, zero skips on Linux.
+- The final resource-cardinality/live-PID guards are additionally covered by
+  the focused frame test and the physical original-packet controls.
+- `python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+  `python3 scripts/conformance_case_catalog.py --check-sdk` and
+  `git diff --check`: **passed**.
+
+README/development/evidence-contract updates distinguish this internal seam
+from full acceptance. The contributor walkthrough's public commands and
+inspection block are unchanged; provider/custom-host guides, public product
+contracts, charter/product spec/architecture/ADR/diagrams, predecessor guides,
+governance/backlog, IaC, release and UI documents are unaffected because no
+corresponding API, dependency graph, product or deployment behavior changes.
+T073 remains open: complete harness authority/cases and exact-five acceptance
+are not yet delivered. This dirty-local observation is not clean-source or
+hosted CI acceptance.
+
 ### T073 contributor seam: original good/faulty/corrected replay
 
 The internal contributor reader now replays original metadata diagnostics from

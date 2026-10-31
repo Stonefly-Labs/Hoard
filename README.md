@@ -187,8 +187,12 @@ It is not a harness/profile qualification or a new public command.
 The copied contributor good/faulty/corrected journey also has independently
 replayed original packets: all three execute 76 rows with 86 actual session
 origins; only the faulty adapter fails the three intended named assertions.
-The affected Linux selection passes 340 tests without skips, and all 181
+The affected Linux selection passes 341 tests without skips, and all 181
 managed logger regressions pass. Contributor diagnostics remain nonqualifying.
+The catalog and contributor triplet also execute together under an actual
+harness owner and shared invocation group. All four roots release; a fresh
+readonly process replays 843 original proofs after cleanup. This is a verified
+harness component, not the unfinished full harness or baseline qualification.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group

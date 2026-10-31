@@ -1084,6 +1084,16 @@ foreign packets and unrelated/unknown text still fail without raw persistence.
 The component always returns `qualification:false`. It supplies neither
 native harness authority nor a public qualifying contributor route.
 
+The internal harness journey allocates and retains three actual child owners
+under its retained proof namespace, sharing the parent's invocation group and
+bounded by its remaining deadline. Only copied adapter sources are changed.
+Its closed frame binds ordered good/faulty/corrected original inputs, distinct
+run/root identities, original proof digests and one settled resource projection
+per child. Independent replay requires identical platform source/catalog/SDK
+identities and all non-adapter packages, restored binding inputs, a distinct
+faulty adapter archive, and each child's complete original runtime inspection.
+This reader never recreates authority and always returns `qualification:false`.
+
 ### Trusted original-receipt verification
 
 Public `--verify` now replays finite native metadata/artifact/composition/

@@ -733,9 +733,7 @@ def prepare_binding_project_consumer(binding, owned_run, candidate, candidate_so
 
 
 def execute(repository, destination, *, project, category, binding_inputs_sha256):
-    import conformance_sdk_checks as sdk
-    from conformance_case_catalog import contributor_artifact_component_origin_counts, metadata_common_consumer_origin_counts
-    from conformance_execution import OwnedRun, native_execution_supported, profile_budget
+    from conformance_execution import OwnedRun, native_execution_supported
 
     if category not in ("metadata", "artifacts"):
         raise evidence.ConformanceError("BindingInvalid")
@@ -745,6 +743,28 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
     if not native_execution_supported():
         raise evidence.ConformanceError("PrerequisiteMissing")
     run = OwnedRun.allocate(destination, repository, profile=category)
+    summary = execute_owned(
+        repository, run, project=project, category=category,
+        binding_inputs_sha256=expected, group_id=str(uuid.uuid4()))
+    print(evidence.canonical_bytes(summary).decode("utf-8"))
+    return 0
+
+
+def execute_owned(repository, run, *, project, category, binding_inputs_sha256, group_id):
+    import conformance_sdk_checks as sdk
+    from conformance_case_catalog import contributor_artifact_component_origin_counts, metadata_common_consumer_origin_counts
+    from conformance_execution import OwnedRun, native_execution_supported, profile_budget
+
+    if (type(run) is not OwnedRun or run.state != "Allocated" or run.command_sequence != 0
+            or run.live_children()):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    run._check_ledger()
+    group_id = evidence._uuid(group_id)
+    if category not in ("metadata", "artifacts"):
+        raise evidence.ConformanceError("BindingInvalid")
+    expected = evidence.sha256(binding_inputs_sha256)
+    if not native_execution_supported():
+        raise evidence.ConformanceError("PrerequisiteMissing")
     seconds = profile_budget("artifacts") if category == "artifacts" else 60 * 60
     run.deadline = min(run.deadline, time.monotonic() + seconds)
     captured, binding, feed, toolchain_root = None, None, None, None
@@ -774,7 +794,7 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
             raise evidence.ConformanceError("InputChanged")
         prepared = prepare_binding_consumer_runtime(
             binding, run, repository, candidate, consumer, feed, observed_environment,
-            group_id=str(uuid.uuid4()), budgets={**sdk.BUDGETS, "profileSeconds": seconds}, ci_revision=ci_revision,
+            group_id=group_id, budgets={**sdk.BUDGETS, "profileSeconds": seconds}, ci_revision=ci_revision,
             captured_build=captured, toolchain_root=toolchain_root)
         inputs = prepared["inputs"]
         _write_owned_input(run, run.root / "proofs/contributor-inputs.json", evidence.canonical_bytes(inputs))
@@ -846,8 +866,7 @@ def execute(repository, destination, *, project, category, binding_inputs_sha256
                 run.release()
     summary["resources"] = run.resource_projection()
     _write_owned_input(run, run.root / "proofs/contributor-runtime-summary.json", evidence.canonical_bytes(summary))
-    print(evidence.canonical_bytes(summary).decode("utf-8"))
-    return 0
+    return MappingProxyType(summary)
 
 
 def retain_binding_transport(run, binding, inputs, result, transport):

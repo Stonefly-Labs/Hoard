@@ -15,6 +15,7 @@ from conformance_sources import runtime_arguments, runtime_runner, runtime_setti
 CATALOG_FRAME = "proofs/harness-catalog.json"
 CATALOG_INPUTS = "proofs/harness-inputs.json"
 FROZEN_INPUTS = "proofs/harness-frozen-inputs/"
+CONTRIBUTOR_FRAME = "proofs/harness-contributors.json"
 
 
 def _frozen_inputs(inputs):
@@ -263,4 +264,151 @@ def inspect_catalog(root, inputs):
         "qualification": False, "scope": "harness-native-catalog", "code": "None",
         "witnesses": tuple(witnesses), "proofs": MappingProxyType(hashes),
         "startedMs": frame["discovery"]["startedMs"], "endedMs": frame["execution"]["endedMs"],
+    })
+
+
+def execute_contributor_journey(repository, run, inputs, source):
+    import conformance_contributors as contributors
+    import conformance_sdk_checks as sdk
+    from conformance_sources import read_bounded
+
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    if (type(run) is not OwnedRun or run.state != "Active" or run.live_children()
+            or inputs["profileId"] != "harness" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id
+            or Path(source) != run.root / "stores/snapshot"
+            or evidence.source_manifest(repository) != inputs["sourceManifest"]):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    evidence.verify_snapshot(source, inputs["sourceManifest"])
+    registration_path = "tests/fixtures/conformance/Contributor/Contributor.conformance.json"
+    original = contributors.admit_binding_project(
+        Path(source) / registration_path.replace(".conformance.json", ".csproj"), "metadata")
+    adapter = run.root / "stores/contributor-source"
+    adapter.mkdir(mode=0o700)
+    for relative, hashed in original.sources.items():
+        target = adapter / relative
+        target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        raw = read_bounded(Path(source) / relative, evidence.MAX_PROOF_BYTES)
+        if hashlib.sha256(raw).hexdigest() != hashed:
+            raise evidence.ConformanceError("InputChanged")
+        sdk.write_new(target, raw)
+        target.chmod(0o600)
+    project = adapter / original.project
+    forwarding = project.parent / "ForwardingMetadataBinding.cs"
+    good = read_bounded(forwarding, 64 * 1024)
+    needle = b"inner = new(providerPackageSha256);\n        this.injectStaleReplay = injectStaleReplay;"
+    if good.count(needle) != 1:
+        raise evidence.ConformanceError("InputChanged")
+    destination = run.root / "proofs/contributors"
+    destination.mkdir(mode=0o700)
+    owners, rows = [], []
+    for label in ("good", "faulty", "corrected"):
+        if evidence.source_manifest(repository) != inputs["sourceManifest"]:
+            raise evidence.ConformanceError("InputChanged")
+        forwarding.write_bytes(good.replace(needle, needle.replace(b"= injectStaleReplay;", b"= true;"))
+                               if label == "faulty" else good)
+        binding = contributors.admit_binding_project(project, "metadata")
+        child = OwnedRun.allocate(destination / label, repository, profile="metadata")
+        child.deadline = min(child.deadline, run.deadline)
+        owners.append(child)
+        try:
+            contributors.execute_owned(
+                repository, child, project=project, category="metadata",
+                binding_inputs_sha256=binding.inputs_sha256, group_id=inputs["invocationGroupId"])
+        except sdk._RuntimeObservationError:
+            if label != "faulty":
+                raise
+        else:
+            if label == "faulty":
+                raise evidence.ConformanceError("EvidenceIncomplete")
+        resources = child.resource_projection()
+        if (child.state != "Released" or child.live_children()
+                or any(row["state"] != "Released" for row in resources)):
+            raise evidence.ConformanceError("CleanupIncomplete")
+        child_inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+            read_bounded(child.root / "proofs/contributor-inputs.json", evidence.MAX_REPORT_BYTES)))
+        observed = contributors.inspect_metadata_binding_runtime(
+            child.root, expected_inputs=child_inputs, expected_fault="stale-replay" if label == "faulty" else "none")
+        for path in evidence.proof_manifest(child.root):
+            (child.root / path).chmod(0o400)
+        rows.append({
+            "label": label, "path": child.root.relative_to(run.root).as_posix(), "inputs": child_inputs,
+            "proofsSha256": evidence.digest(observed["proofs"]), "resources": resources,
+        })
+    if (evidence.source_manifest(repository) != inputs["sourceManifest"]
+            or contributors.admit_binding_project(project, "metadata").inputs_sha256 != original.inputs_sha256):
+        raise evidence.ConformanceError("InputChanged")
+    sdk.write_new(run.root / CONTRIBUTOR_FRAME, evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "scope": "harness-contributor-journey",
+        "inputsSha256": evidence.digest(inputs), "runs": rows,
+    }))
+    inspect_contributor_journey(run.root, expected_inputs=inputs)
+    return tuple(owners)
+
+
+def inspect_contributor_journey(root, *, expected_inputs):
+    import conformance_contributors as contributors
+
+    root = Path(root)
+    inputs = evidence.admit_entity("RunInputs", expected_inputs)
+    if inputs["profileId"] != "harness" or inputs["mode"] != "qualification":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    hashed, raw = evidence._readonly_report_proof(root, CONTRIBUTOR_FRAME)
+    frame = evidence._runtime_json(raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "scope": evidence._constant("harness-contributor-journey"),
+        "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        "runs": evidence._list(evidence._record({
+            "label": evidence._one_of("good", "faulty", "corrected"), "path": evidence.relative_path,
+            "inputs": lambda row: evidence.admit_entity("RunInputs", row),
+            "proofsSha256": evidence.sha256,
+            "resources": evidence._list(lambda row: evidence.admit_entity("ResourceOwnership", row), 1, minimum=1),
+        }), 3, minimum=3),
+    }, limit=evidence.MAX_REPORT_BYTES)
+    proofs, results, invariants, bindings, packages, run_ids, root_ids = (
+        {CONTRIBUTOR_FRAME: hashed}, [], [], [], [], set(), set())
+    for row, label in zip(frame["runs"], ("good", "faulty", "corrected")):
+        child = row["inputs"]
+        if (row["label"] != label or row["path"] != "proofs/contributors/" + label
+                or child["profileId"] != "metadata" or child["mode"] != "diagnostic"
+                or child["invocationGroupId"] != inputs["invocationGroupId"]
+                or child["sourceManifest"] != inputs["sourceManifest"]
+                or child["sourceRevision"] != inputs["sourceRevision"]
+                or child["sourceState"] != inputs["sourceState"]
+                or child["catalogSha256"] != inputs["catalogSha256"]
+                or child["sdkSha256"] != inputs["sdkSha256"]
+                or child["runId"] in run_ids or child["runId"] == inputs["runId"]):
+            raise evidence.ConformanceError("InputChanged")
+        run_ids.add(child["runId"])
+        observed = contributors.inspect_metadata_binding_runtime(
+            root / row["path"], expected_inputs=child, expected_fault="stale-replay" if label == "faulty" else "none")
+        owner_hash, owner_raw = evidence._readonly_report_proof(root / row["path"], "runtime-owner.json")
+        owner = evidence.load_json(owner_raw)
+        if (evidence.digest(observed["proofs"]) != row["proofsSha256"]
+                or owner["rootId"] in root_ids
+                or any(resource["runId"] != child["runId"] or resource["rootId"] != owner["rootId"]
+                       or resource["state"] != "Released" or resource["childPid"] != 0
+                       or resource["childStartSha256"] != "0" * 64
+                       or resource["diagnosticCode"] != "None" for resource in row["resources"])):
+            raise evidence.ConformanceError("ProofMismatch")
+        root_ids.add(owner["rootId"])
+        proofs.update({row["path"] + "/" + path: value for path, value in observed["proofs"].items()})
+        proofs[row["path"] + "/runtime-owner.json"] = owner_hash
+        adapter = child["bindings"][0]["adapterId"]
+        common_packages = tuple(sorted(
+            (package for package in child["packages"] if package["packageId"] != adapter),
+            key=lambda package: package["packageId"]))
+        selected = [package["sha256"] for package in child["packages"] if package["packageId"] == adapter]
+        if len(selected) != 1 or observed["sessionOrigins"] != 86 or len(observed["witnesses"]) != 76:
+            raise evidence.ConformanceError("WitnessMissing")
+        invariants.append(evidence.digest(common_packages))
+        bindings.append(child["invocation"][1])
+        packages.append(selected[0])
+        results.append(observed)
+    if (len(set(invariants)) != 1 or bindings[0] != bindings[2] or bindings[0] == bindings[1]
+            or packages[0] == packages[1] or packages[1] == packages[2]):
+        raise evidence.ConformanceError("InputChanged")
+    return MappingProxyType({
+        "qualification": False, "scope": "harness-contributor-journey", "code": "None",
+        "runs": tuple(results), "proofs": MappingProxyType(proofs),
     })
