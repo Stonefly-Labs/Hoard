@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Hoard.Conformance.Tests/BindingContractTests.cs" Link="BindingContractTests.cs" />
+    <PackageVersion Include="Hoard.Conformance.TestLogger" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Conformance.TestLogger" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

@@ -56,6 +56,7 @@ public sealed partial class LocalArtifactStore
                     LocalOperation? previous;
                     lock (stateSync) { operations.TryGetValue(current.Operation, out previous); }
                     if (previous?.State == "deciding") { await ResolvePublicationAsync(previous, token); }
+                    await faults.ObserveAsync("publish.direct");
                     if (!await VerifyPayloadAsync(current.Content, options, token, async () =>
                     {
                         await faults.ObserveAsync("publish.progress");
@@ -112,6 +113,7 @@ public sealed partial class LocalArtifactStore
                     FinalizePublication(operation);
                     ReleaseStaging(operation);
                 }
+                await faults.ObserveAsync("publish.direct");
                 await using (var direct = OpenCommittedPayload(operation.Content!))
                 {
                     if (direct.Length != operation.Content!.Length) { throw Quarantine(operation.Content); }

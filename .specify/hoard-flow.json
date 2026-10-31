@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
-  "status": "ready",
-  "branch": null,
-  "active": null,
+  "stage": "implement",
+  "status": "running",
+  "branch": "feature/007-provider-conformance",
+  "active": {
+    "id": "F-07",
+    "feature_directory": "specs/007-provider-conformance",
+    "pr": null
+  },
   "completed": [
     {
       "id": "F-01",
@@ -657,6 +661,48 @@
       "branch": "chore/spec-progress-f-06",
       "at": "2026-10-23T02:05:51.725814+00:00",
       "evidence": "F-06 await_merge verified PR #16 merged at 9389016c0285c79f6f515f59805a5a41c69b0767 reachable from fetched origin/main; all 90 tasks and existing 16/16 built-in plus 40/40 reviewer-owned checklist approvals remain complete and unchanged. Retained full acceptance run 49189bab-9010-4ec6-a825-2b4d2f2de31b independently revalidated against unchanged source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4 (96 entries); prior qualification and architecture reviews remain historical, not newly executed. Running progress checkpoint f46b561 committed/pushed in draft PR #17 before tagging. Installed hoard-release under standing authorization published v0.0.6-alpha at exact feature merge; annotated remote tag a2b7124ab826c04b43f3dcfc809e1d891f2271bd peels to that commit. Source release run 39887599522 succeeded; non-draft prerelease, generated PR-linked notes/changelog, ZIP full-commit comment and four exact-merge file comparisons in both automatic source archives verified. python3 scripts/release.py v0.0.6-alpha and --check-main passed; python3 -m unittest discover -s tests/tooling -v passed all 105 tests. No product/dependency/runtime support change, package publication, infrastructure plan/apply, cloud mutation, governance change or deployment. Completion PR #17 must merge before another invocation begins specify; no new spec or PR merge performed."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T02:13:12.350457+00:00",
+      "evidence": "F-07 specify completed through installed speckit-specify using the exact master-backlog prompt and pinned specs/007-provider-conformance, from fetched main after verifying merged F-06 completion PR #17, shared checkpoint and ratified constitution. Core template resolved; five stories, 23 scenarios, 14 edge cases, 24 FRs and eight measurable SCs; built-in quality checklist passed 16/16, no unresolved clarification markers. Shared category cases, safe composition/lifecycle, optional-target policy, version/source/retained-binary/architecture proof, contributor onboarding and complete input-bound local/CI reporting specified. Existing two independent metadata and two artifact fixtures are future baseline obligations; logical, actual durable-local and simulated/service scopes remain distinct; no operational protocol/identity or native-client certification invented. README/development updated with unaffected-document reasons. python3 -m unittest discover -s tests/tooling -v passed all 105 tests; structural/context/stage-isolation assertions, 317 local links/anchors and git diff --check passed. No extension hooks, custom reviewer approval, later-stage artifacts, product implementation, CI workflow, qualification execution, infrastructure action, release or merge. Next stage clarify via separate invocation; no blocker."
+    },
+    {
+      "stage": "clarify",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T02:15:29.619787+00:00",
+      "evidence": "F-07 clarify completed through installed speckit-clarify with pinned specs/007-provider-conformance. Structured review of all ten ambiguity categories against constitution v1.0.0 found no critical ambiguities, zero questions and no requirement, acceptance or scope changes. Dated clarification record preserves mandatory logical versus real durable-local/simulated/service claims, existing composition/optional-target/source-retained-binary/dependency policy, finite observation versus retained ownership and fail-closed input-bound evidence. Exact interfaces, report formats, finite budgets, CI structure and bounded composition/version matrix remain constrained planning decisions. Built-in checklist revalidated byte-for-byte unchanged at 16/16 to 16/16, no newly passing items, regressions or unchecked items; no custom reviewer approval. No pre/post extension hooks. README/development synchronized with unaffected-document reasons; no later-stage artifacts or implementation. python3 -m unittest discover -s tests/tooling -v passed all 105 tests; clarification-only, unchanged-checklist, pinned-context and stage-isolation assertions, three added local links/anchors and git diff --check passed. Draft PR #18 retained; next stage plan via separate invocation. No qualification execution, CI workflow, product/provider/API change, infrastructure action, publication or merge."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T02:42:11.773068+00:00",
+      "evidence": "F-07 plan completed through installed speckit-plan with pinned specs/007-provider-conformance. Eight design artifacts define test-only shared SDK/bindings, immutable input-bound runtime witnesses, strict evidence schema/evaluator, finite ownership/output budgets, five local/CI profiles, 20 composition rows and explicit version/architecture/source/retained-binary expansions. Preserved 192 inherited category entries (179 applicable/13 exclusions), all prior guarantees and independent mechanisms; 48 QC obligations trace all 24 FRs/eight SCs/23 scenarios/14 edges. Custom architecture review identified retained-diagnostics sanitation and missing output byte bounds; corrected private/public sanitation-before-persistence, no raw spooling, finite incremental capture/overflow failure, QC-34/QC-48; direct contract checks confirm corrections. Constitution pre/post design gates pass without exceptions. Python tooling passed 105 tests; 23 feature local links/anchors, sequential 48 QC/20 CP rows, FR/SC mappings, unchanged specification/checklist and 11-file stage-isolation assertions passed. No extension hooks. README/development updated with unaffected-document reasons; no tasks/custom approval/product code/workflow/qualification/publication/infrastructure or merge. Draft PR #18 retained; next stage checklist."
+    },
+    {
+      "stage": "checklist",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T02:47:52.704873+00:00",
+      "evidence": "Installed speckit-checklist created conformance.md and evidence.md, 20 requirements-quality criteria each. Requested assisted assessment finds written support for all 40 with no unresolved requirements blocker; all reviewer-owned markers remain unchecked and implementation approval remains pending. README/development updated. All 105 tooling tests passed; git diff --check and checklist integrity/link/100-percent traceability assertions passed; nine existing feature artifacts unchanged. No extension hooks, tasks, implementation or runtime qualification. Draft PR #18; next stage tasks."
+    },
+    {
+      "stage": "tasks",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T02:57:02.979663+00:00",
+      "evidence": "F-07 tasks completed through installed speckit-tasks with explicitly pinned specs/007-provider-conformance and canonical setup-tasks template. Generated 86 unchecked sequential tasks: setup 6, foundations 12, US1 20, US2 11, US3 12, US4 6, US5 13, final closure 6; 18 marked different-file parallel opportunities. Exact prerequisite graph is acyclic and all 86 tasks reach final closure; shared-file edits serialized, genuine old baselines sealed before candidate builds, immutable-input acceptance isolated. All 24 FRs, eight SCs and QC-01..48 mapped to implementation and focused proof; 192 inherited entries, every CP/version/architecture subvariant, real SQLite/Local recovery, actual 256 MiB/4 GiB RSS proof, package-only contributor red/green and five actual CI profiles preserved. Model/budget/sanitation/ownership limits retained; inadequate runner capacity or incomplete evidence blocks acceptance. MVP is category-scoped US1, not full qualification. All 12 prior feature artifacts including all checklist bytes unchanged; custom 40/40 markers remain unchecked and reviewer-owned, no self-approval. No before/after extension hooks configured. python3 -m unittest discover -s tests/tooling -v passed all 105 tests; pinned check-prerequisites --require-tasks --include-tasks, task format/DAG/closure/artifact-scope checks, 11 new local links/anchors and git diff --check passed. README/development synchronized; other provider/compatibility/example/baseline/governance/architecture/diagrams/IaC/release/UI documents unaffected because no requirement, design, API, package graph, runtime/support claim or operational procedure changes. No implementation, qualification, workflow, product project, publication, infrastructure action, release or merge. Draft PR #18 remains incomplete; next separately authorized stage analyze; later implementation requires reviewer approval or explicit authorization."
+    },
+    {
+      "stage": "analyze",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T03:01:18.618701+00:00",
+      "evidence": "F-07 analyze executed through installed speckit-analyze with explicitly pinned specs/007-provider-conformance; prerequisite check resolved complete required artifacts. Read-only review of spec/plan/tasks and model/harness/evidence/matrix/acceptance contracts against constitution found zero actionable duplication, ambiguity, underspecification, inconsistency, coverage gaps or constitutional conflicts; no remediation needed. All 24 FR/eight buildable SC mapped to implementation and focused proof tasks (32/32, 100%); QC-01..48, 23 scenarios, 14 edges, all 192 inherited entries and finite matrix subvariants retain future proof obligations. All 86 tasks remain unchecked, 18 parallel, story counts 20/11/12/6/13; 86 exact prerequisite rows complete, execution-ordered and acyclic, every task reaches T086 and shared edits serialized. All 13 feature artifacts including task/checklist bytes unchanged from pre-analysis HEAD. No extension hooks. Structured report published with draft PR #18 handoff. README/development analysis status updated; provider/example/predecessor and baseline product/architecture/diagrams/ADR/governance/backlog/IaC/release/UI docs unaffected because requirements/design/APIs/dependency graph/behavior/operations unchanged. Python tooling passed all 105 tests; 332 README/development local references and git diff --check passed. No product/.NET/native-client/IaC qualification run or implementation/merge/release/deployment. Next stage implement via separate invocation, execution blocked on reviewer approval or explicit reviewer authorization for all 40 unchecked custom checklist items; advisory support/analysis is not approval."
     }
   ]
 }

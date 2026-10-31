@@ -1,0 +1,74 @@
+name: Original isolated conformance profile
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        type: string
+      budget:
+        required: true
+        type: number
+      assignment:
+        required: true
+        type: string
+    outputs:
+      receipt:
+        value: ${{ jobs.profile.outputs.receipt }}
+      producer:
+        value: ${{ jobs.profile.outputs.producer }}
+      upload:
+        value: ${{ jobs.profile.outputs.upload }}
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ inputs.budget }}
+    outputs:
+      receipt: ${{ steps.produce.outputs.receipt }}
+      producer: ${{ steps.produce.outcome }}
+      upload: ${{ steps.upload.outcome }}
+    steps:
+      - name: Check out exact event source and full history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Initialize a closed safe summary before SDK admission
+        env:
+          HOARD_PROFILE: ${{ inputs.profile }}
+        run: |
+          case "$HOARD_PROFILE" in metadata|artifacts|composition|compatibility|harness) ;; *) exit 2 ;; esac
+          mkdir -p ".foundation/hosted/$HOARD_PROFILE"
+          printf '%s\n' '{"schemaVersion":1,"qualification":false,"state":"Incomplete","code":"EvidenceIncomplete"}' > ".foundation/hosted/$HOARD_PROFILE/summary.json"
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Admit actual Ubuntu image, SDK, runtime, filesystem and 24 GiB before original execution
+        id: produce
+        env:
+          HOARD_PROFILE: ${{ inputs.profile }}
+          HOARD_ASSIGNMENT: ${{ inputs.assignment }}
+          HOARD_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 -B scripts/conformance_hosted.py produce --profile "$HOARD_PROFILE"
+      - name: Always retain only the closed safe summary and verified exact proof bundle
+        id: upload
+        if: ${{ always() }}
+        timeout-minutes: 5
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: conformance-qualified-${{ inputs.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: true
+          compression-level: 0
+          path: |
+            .foundation/hosted/${{ inputs.profile }}/summary.json
+            .foundation/hosted/${{ inputs.profile }}/profile.tar

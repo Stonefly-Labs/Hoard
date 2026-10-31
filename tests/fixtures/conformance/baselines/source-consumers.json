@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "qualification": false,
+  "baselineRevision": "9389016c0285c79f6f515f59805a5a41c69b0767",
+  "recipes": [
+    {"project": "tests/fixtures/lifecycle/registration/RegistrationConsumer/RegistrationConsumer.csproj", "sourceKind": "historical-f06", "role": "api-consumer"},
+    {"project": "tests/fixtures/configuration/LifecycleConsumer/LifecycleConsumer.csproj", "sourceKind": "historical-f06", "role": "api-consumer"},
+    {"project": "tests/fixtures/discovery/RetainedConfiguration/RetainedConfiguration.csproj", "sourceKind": "historical-f06", "role": "api-consumer"},
+    {"project": "tests/fixtures/metadata/RetainedMarker/RetainedMarker.csproj", "sourceKind": "historical-f06", "role": "marker-consumer"},
+    {"project": "tests/fixtures/artifacts/RetainedMarker/RetainedMarker.csproj", "sourceKind": "historical-f06", "role": "marker-consumer"},
+    {"project": "tests/fixtures/lifecycle/Protocol.One/Hoard.Fixtures.Lifecycle.Protocol.One.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/lifecycle/Protocol.Two/Hoard.Fixtures.Lifecycle.Protocol.Two.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/lifecycle/Metadata/Hoard.Fixtures.Lifecycle.Metadata.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/lifecycle/Artifact.One/Hoard.Fixtures.Lifecycle.Artifact.One.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/lifecycle/Artifact.Two/Hoard.Fixtures.Lifecycle.Artifact.Two.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/lifecycle/Identity/Hoard.Fixtures.Lifecycle.Identity.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/configuration/LegacyOptions/LegacyOptions.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/metadata/Sqlite/Sqlite.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/metadata/Memory/Memory.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/metadata/HostAdapters/HostAdapters.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/metadata/Consumer/Consumer.csproj", "sourceKind": "historical-f06", "role": "operational-consumer"},
+    {"project": "tests/fixtures/artifacts/Local/Local.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/artifacts/ObjectSemantics/ObjectSemantics.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/artifacts/HostAdapters/HostAdapters.csproj", "sourceKind": "historical-f06", "role": "provider-implementer"},
+    {"project": "tests/fixtures/artifacts/Consumer/Consumer.csproj", "sourceKind": "historical-f06", "role": "operational-consumer"},
+    {"project": "tests/fixtures/conformance/Bindings/Memory/Memory.csproj", "sourceKind": "candidate-source-manifest", "role": "sdk-binding-current"},
+    {"project": "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj", "sourceKind": "candidate-source-manifest", "role": "sdk-binding-current"},
+    {"project": "tests/fixtures/conformance/Bindings/Local/Local.csproj", "sourceKind": "candidate-source-manifest", "role": "sdk-binding-current"},
+    {"project": "tests/fixtures/conformance/Bindings/ObjectSemantics/ObjectSemantics.csproj", "sourceKind": "candidate-source-manifest", "role": "sdk-binding-current"}
+  ]
+}

@@ -34,6 +34,7 @@ public sealed partial class ObjectArtifactStore
                 { throw new ObjectOperationException(ArtifactFailureCode.CorruptState); }
                 pointer = current;
             }
+            await faults.ObserveAsync("object.reconcile-before-resolution");
             await faults.ObserveAsync("object.direct");
             lock (pointerSync)
             {
@@ -51,6 +52,7 @@ public sealed partial class ObjectArtifactStore
             }
             if (pointer.Corrupt || !await VerifyObjectAsync(pointer, new(), token))
             { throw Quarantine(pointer); }
+            await faults.ObserveAsync("object.reconcile-verified");
             lock (pointerSync)
             {
                 token.ThrowIfCancellationRequested();

@@ -6,15 +6,17 @@ using Hoard.Fixtures.Metadata.Hosting;
 using Hoard.Hosting;
 using Hoard.Hosting.Configuration;
 using Hoard.Hosting.Lifecycle;
+using Hoard.Testing.Conformance.Artifacts;
+using Hoard.Testing.Conformance.Evidence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactCompositionTests
+public sealed class ArtifactCompositionTests(ITestOutputHelper output)
 {
     public sealed class DisabledArtifact : IArtifactProvider;
 
@@ -28,7 +30,7 @@ public sealed class ArtifactCompositionTests
         using var disabled = new ArtifactTestRoot();
         ArtifactMutationReceipt? committed = null;
         ArtifactFixtureModule? previousModule = null;
-        var bytes = "configured selected-store recovery"u8.ToArray();
+        ConformanceOriginalObservation? previousObservation = null;
         for (var pass = 0; pass < 2; pass++)
         {
             var root = pass == 0 || provider == "local" ? first.Path : replacement.Path;
@@ -63,34 +65,24 @@ public sealed class ArtifactCompositionTests
             var old = committed;
             if (old is null)
             {
-                using var source = new ShortSource(bytes);
-                var ticket = Success(await module.Session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-                var staged = Success(await module.Session.Store.StageAsync(ticket, source, new(), default));
-                committed = Success(await module.Session.Store.CommitAsync(staged, new(), default));
+                committed = await ArtifactCompositionAssertions.ConfiguredPublicationAsync(module.Session.Store, default);
             }
             else if (provider == "local")
             {
-                Assert.Equal(old.Stamp.Store, module.Session.Identity);
-                Assert.Equal(old, Assert.IsType<ArtifactResolution.Committed>(
-                    Success(await module.Session.Store.ReconcileAsync(old.Ticket, new(), default))).Receipt);
-                await using var read = Success(await module.Session.Store.OpenReadAsync(
-                    new(old.Stamp.Identity.Digest, expectedStamp: new ArtifactOption<ArtifactStamp>.Some(old.Stamp)), new(), default));
-                using var destination = new MemoryStream();
-                Success(await read.CopyToAsync(destination, new(), default));
-                Assert.Equal(bytes, destination.ToArray());
+                await ArtifactCompositionAssertions.CompatibleReopenAsync(
+                    module.Session.Store, module.Session.Identity, old, default);
             }
             else
             {
-                Assert.NotEqual(old.Stamp.Store.Epoch, module.Session.Identity.Epoch);
-                Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
-                    await module.Session.Store.ReconcileAsync(old.Ticket, new(), default));
-                Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-                    await module.Session.Store.OpenReadAsync(new(old.Stamp.Identity.Digest), new(), default)).Code);
+                await ArtifactCompositionAssertions.FreshEpochAsync(
+                    module.Session.Store, module.Session.Identity, old, default);
             }
             Assert.False(Directory.Exists(disabled.Path));
             await app.StopAsync();
             Assert.False((await module.CheckReadinessAsync(default)).Ready);
             Assert.False(module.Session.Ready);
+            previousObservation = ArtifactProviderDriver.ObserveOriginalSession(output,
+                nameof(ArtifactCompositionTests), provider, module.Session, module, previousObservation);
             previousModule = module;
         }
     }
@@ -129,6 +121,7 @@ public sealed class ArtifactCompositionTests
         Assert.Throws<InvalidOperationException>(() => module.Session);
         Assert.False(Directory.Exists(selected.Path));
         Assert.False(Directory.Exists(disabled.Path));
+        ArtifactProviderDriver.ObserveOriginalOwner(output, nameof(ArtifactCompositionTests), module, provider: provider);
     }
 
     private static string Defaults(string provider, string root, string disabled) => JsonSerializer.Serialize(new

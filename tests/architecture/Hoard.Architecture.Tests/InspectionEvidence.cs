@@ -44,7 +44,7 @@ internal sealed class InspectionEvidence : IDisposable
         var ownership = input.GetProperty("ownership").Deserialize<Dictionary<string, string>>()!;
         foreach (var project in Projects.EnumerateArray())
         {
-            using var assets = JsonDocument.Parse(File.ReadAllText(project.GetProperty("assets").GetString()!));
+            using var assets = JsonDocument.Parse(InspectionInput.ReadAllText(project.GetProperty("assets").GetString()!));
             foreach (var library in assets.RootElement.GetProperty("targets").GetProperty("net10.0").EnumerateObject())
             {
                 var id = library.Name.Split('/')[0];
@@ -67,7 +67,7 @@ internal sealed class InspectionEvidence : IDisposable
             {
                 throw new InspectionException("Missing resolved framework/reference inputs.");
             }
-            using var assets = JsonDocument.Parse(File.ReadAllText(project.GetProperty("assets").GetString()!));
+            using var assets = JsonDocument.Parse(InspectionInput.ReadAllText(project.GetProperty("assets").GetString()!));
             foreach (var reference in references.EnumerateArray())
             {
                 var file = reference.GetProperty("Identity").GetString()!;
@@ -78,7 +78,7 @@ internal sealed class InspectionEvidence : IDisposable
                 }
                 if (AssemblyOwners.TryGetValue(name, out var known))
                 {
-                    using var resolved = AssemblyDefinition.ReadAssembly(file);
+                    using var resolved = InspectionInput.ReadAssembly(file);
                     if (resolved.Name.FullName != Nodes[known].Identity)
                     {
                         throw new InspectionException($"Resolved assembly identity disagreement: {name}.");
@@ -121,7 +121,7 @@ internal sealed class InspectionEvidence : IDisposable
                     continue;
                 }
                 var suffix = Path.GetDirectoryName(normalized[(index + 1)..])!.Replace('/', '.');
-                var text = File.ReadAllText(path);
+                var text = InspectionInput.ReadAllText(path);
                 var match = System.Text.RegularExpressions.Regex.Match(text, @"namespace\s+([\w.]+)\s*[;{]");
                 if (!match.Success || !match.Groups[1].Value.EndsWith("." + suffix, StringComparison.Ordinal))
                 {
@@ -160,7 +160,7 @@ internal sealed class InspectionEvidence : IDisposable
         {
             throw new InspectionException($"Missing assembly input: {Path.GetFileName(path)}.");
         }
-        var assembly = AssemblyDefinition.ReadAssembly(path);
+        var assembly = InspectionInput.ReadAssembly(path);
         var name = assembly.Name.Name;
         if (name != Path.GetFileNameWithoutExtension(path))
         {

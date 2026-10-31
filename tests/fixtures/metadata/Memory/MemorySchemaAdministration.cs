@@ -9,6 +9,7 @@ public sealed partial class MemoryMetadataStore
         await observe("schema.inspect");
         activity.Check();
         var captured = Volatile.Read(ref state);
+        VerifyStoredState(captured, activity);
         if (captured.Schema == applicationSchema)
         {
             return Success(new MetadataSchemaInspection(MetadataSchemaState.Compatible, "fixture.metadata.memory",
@@ -31,6 +32,7 @@ public sealed partial class MemoryMetadataStore
         try
         {
             var current = state;
+            VerifyStoredState(current, activity);
             switch (current.Schema)
             {
                 case 0 when request is MetadataSchemaRequest.CreateIfEmpty:
@@ -65,6 +67,20 @@ public sealed partial class MemoryMetadataStore
             return Success(new MetadataSchemaAdmission("fixture.metadata.memory", $"fixture-memory-v{applicationSchema}", state.Epoch, false));
         }
         finally { writer.Release(); }
+    }
+
+    private static void VerifyStoredState(MemoryState captured, MemoryActivity activity)
+    {
+        foreach (var record in captured.Records.Values)
+        {
+            activity.Check();
+            _ = record;
+        }
+        foreach (var operation in captured.Operations.Values)
+        {
+            activity.Check();
+            ValidateOperation(operation);
+        }
     }
 
     public MetadataRecoveryPoint AuthorizeLogicalUpgrade()

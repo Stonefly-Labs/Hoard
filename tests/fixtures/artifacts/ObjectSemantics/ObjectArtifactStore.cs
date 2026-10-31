@@ -187,7 +187,7 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
             lock (workSync)
             {
                 stopRequested = true;
-                pending = [.. ownedWork.Values, stopToken.CancelAsync()];
+                pending = [.. settlements.Values, stopToken.CancelAsync()];
             }
             var remaining = options.Deadline - time.GetElapsedTime(start);
             if (remaining <= TimeSpan.Zero)

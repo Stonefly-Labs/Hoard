@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "originalRevision": "837fdf3edf51c3df34710184d018479683c194c2",
+  "baselineRevision": "9389016c0285c79f6f515f59805a5a41c69b0767",
+  "executionRevision": "69aac6578c7222493832125a7bc91b4950583db9",
+  "qualification": false,
+  "identityOrigin": "original-foundation-methods-with-complete-inherited-parameters",
+  "sourceFiles": {
+    "tests/architecture/Hoard.Architecture.Tests/ArchitectureInspection.cs": "f6b52418e4647467ff5b64d8e10b259ba6ddf70e741382680dc6ca80322ac532",
+    "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf",
+    "tests/architecture/Hoard.Architecture.Tests/BoundaryOwnership.cs": "0a95c44e5d659f356f5c8b8152cd4498ace3426110c26b232ce6db28fefe970f",
+    "tests/architecture/Hoard.Architecture.Tests/DependencyGraphInspector.cs": "fec6bf657434d02ed34a7a764ed3a8245ad480ecc1f1ac737e983a11369f096e",
+    "tests/architecture/Hoard.Architecture.Tests/InspectionEvidence.cs": "feaadcb921da0f02c62d4f9691bd44d68809a2dc8bec4675fedbc7d337d7a780",
+    "tests/architecture/Hoard.Architecture.Tests/InspectionFailureTests.cs": "896c4229eb16ac1483e1c7b2a437e57b6f3a55a85d1bbdccbe8a2c8f37dd56e7",
+    "tests/architecture/Hoard.Architecture.Tests/PublicSurfaceInspector.cs": "e1c014557859b203b66a64a9b523796ca51c4750bd2489183ef56b819b6ea647",
+    "tests/architecture/Hoard.Architecture.Tests/SliceUsageInspector.cs": "4289eacba244cbf9a9f66f15afcb7c79f2b6f709ca952ab8d11f825d4c57013f",
+    "tests/integration/Hoard.Composition.Tests/CoreIndependenceTests.cs": "3c91a5b712ecf3b52f4616e9178f82b1e561e644e424723461a72439e7be451c",
+    "tests/integration/Hoard.Composition.Tests/CustomHostTests.cs": "f48efd26f12cd9e9fb03a0e8d6f741321502360a03c69b93358e42e10bcd7fe4",
+    "tests/integration/Hoard.Composition.Tests/ProviderPackageTests.cs": "6ec2b4f8f38a11dac6ec98ce66c825aa5e580703d638e496c581143cf1f594fb",
+    "tests/unit/Hoard.Foundation.Tests/CompatibilityExampleEvaluator.cs": "df354a60ae475e5d9745fcfcd9c1983da87a586b6ffdb0ea17ea3f770e8f43bf",
+    "tests/unit/Hoard.Foundation.Tests/CompatibilityExamplesTests.cs": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68",
+    "tests/unit/Hoard.Foundation.Tests/ContractChangeExamples.cs": "19f02f1d0325bb5eac2ff9455d7378d78b4c331b40b9eb3df70d9e67f06b0b70",
+    "tests/unit/Hoard.Foundation.Tests/ContractChangeExamplesTests.cs": "a28ff273cabbd96190e05591d6ca2f8b4460ff89be66ee6c8338ce2496babe37",
+    "tests/unit/Hoard.Foundation.Tests/DeclarationContractTests.cs": "fe959aaf59425d5c80749cc2f3e7812926f52b752bf5321b8b62f79d9231c6fd",
+    "tests/unit/Hoard.Foundation.Tests/ModuleRegistrationTests.cs": "29fbf624fff0e1397f37d177f02a45d3a11e20f066aae695bf3797cd8dcee4f8"
+  },
+  "executionSourceFiles": {
+    "tests/architecture/Hoard.Architecture.Tests/ArchitectureInspection.cs": "62551daee26a617f9ee6766d5730517ad8f5b83bb82f035e213b8c0984abf7e5",
+    "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf",
+    "tests/architecture/Hoard.Architecture.Tests/BoundaryOwnership.cs": "0a95c44e5d659f356f5c8b8152cd4498ace3426110c26b232ce6db28fefe970f",
+    "tests/architecture/Hoard.Architecture.Tests/DependencyGraphInspector.cs": "94ef7faf68e8ae7af0db410c35279446ec4da76b83884e0323383086f28e9967",
+    "tests/architecture/Hoard.Architecture.Tests/InspectionEvidence.cs": "427f419937b990e852a3b8c27ab8aee80bff5c3949fb3a51d36355d9aca4392b",
+    "tests/architecture/Hoard.Architecture.Tests/InspectionFailureTests.cs": "2fc82a53b7dd163ecf2bdf4f97ef4bff1fcbf85e122415b61cd8b9133ad613c1",
+    "tests/architecture/Hoard.Architecture.Tests/PublicSurfaceInspector.cs": "e1c014557859b203b66a64a9b523796ca51c4750bd2489183ef56b819b6ea647",
+    "tests/architecture/Hoard.Architecture.Tests/SliceUsageInspector.cs": "4289eacba244cbf9a9f66f15afcb7c79f2b6f709ca952ab8d11f825d4c57013f",
+    "tests/integration/Hoard.Composition.Tests/CoreIndependenceTests.cs": "3c91a5b712ecf3b52f4616e9178f82b1e561e644e424723461a72439e7be451c",
+    "tests/integration/Hoard.Composition.Tests/CustomHostTests.cs": "f48efd26f12cd9e9fb03a0e8d6f741321502360a03c69b93358e42e10bcd7fe4",
+    "tests/integration/Hoard.Composition.Tests/ProviderPackageTests.cs": "6ec2b4f8f38a11dac6ec98ce66c825aa5e580703d638e496c581143cf1f594fb",
+    "tests/unit/Hoard.Foundation.Tests/CompatibilityExampleEvaluator.cs": "df354a60ae475e5d9745fcfcd9c1983da87a586b6ffdb0ea17ea3f770e8f43bf",
+    "tests/unit/Hoard.Foundation.Tests/CompatibilityExamplesTests.cs": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68",
+    "tests/unit/Hoard.Foundation.Tests/ContractChangeExamples.cs": "19f02f1d0325bb5eac2ff9455d7378d78b4c331b40b9eb3df70d9e67f06b0b70",
+    "tests/unit/Hoard.Foundation.Tests/ContractChangeExamplesTests.cs": "a28ff273cabbd96190e05591d6ca2f8b4460ff89be66ee6c8338ce2496babe37",
+    "tests/unit/Hoard.Foundation.Tests/DeclarationContractTests.cs": "fe959aaf59425d5c80749cc2f3e7812926f52b752bf5321b8b62f79d9231c6fd",
+    "tests/unit/Hoard.Foundation.Tests/ModuleRegistrationTests.cs": "29fbf624fff0e1397f37d177f02a45d3a11e20f066aae695bf3797cd8dcee4f8"
+  },
+  "controllerSources": {
+    "scripts/foundation_evidence.py": "e7d09749f1857ca73a7b8236cb110cbf0a5f11043f03a300d36141aad5a1a9af",
+    "scripts/validate-foundation.sh": "c4b14d96db4dc13583024251c185ea63e45a720359d63f2afcf45db9ed5e6e39"
+  },
+  "entries": [
+    {
+      "fullyQualifiedName": "Hoard.Architecture.Tests.ArchitectureRuleTests.Actual_platform_provider_packages_and_both_hosts_are_permitted",
+      "parameterCount": 1,
+      "assembly": "Hoard.Architecture.Tests",
+      "sourcePath": "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs",
+      "sourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf",
+      "executionSourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Architecture.Tests.ArchitectureRuleTests.Approved_hosting_path_does_not_hide_an_alternate_forbidden_core_path",
+      "parameterCount": 2,
+      "assembly": "Hoard.Architecture.Tests",
+      "sourcePath": "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs",
+      "sourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf",
+      "executionSourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Architecture.Tests.ArchitectureRuleTests.Both_project_and_package_cycles_are_rejected",
+      "parameterCount": 1,
+      "assembly": "Hoard.Architecture.Tests",
+      "sourcePath": "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs",
+      "sourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf",
+      "executionSourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Architecture.Tests.ArchitectureRuleTests.Identity_can_use_approved_hosting_with_its_transitive_core_dependency",
+      "parameterCount": 1,
+      "assembly": "Hoard.Architecture.Tests",
+      "sourcePath": "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs",
+      "sourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf",
+      "executionSourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Architecture.Tests.ArchitectureRuleTests.Isolated_forbidden_input_is_rejected_by_its_intended_rule",
+      "parameterCount": 20,
+      "assembly": "Hoard.Architecture.Tests",
+      "sourcePath": "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs",
+      "sourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf",
+      "executionSourceSha256": "c504f07036cb20595c0793e0809f2ca3b8bfe1a58c20255542f75929cb4563bf"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Architecture.Tests.InspectionFailureTests.Incomplete_inputs_are_inspection_errors_not_clean_scans",
+      "parameterCount": 8,
+      "assembly": "Hoard.Architecture.Tests",
+      "sourcePath": "tests/architecture/Hoard.Architecture.Tests/InspectionFailureTests.cs",
+      "sourceSha256": "896c4229eb16ac1483e1c7b2a437e57b6f3a55a85d1bbdccbe8a2c8f37dd56e7",
+      "executionSourceSha256": "2fc82a53b7dd163ecf2bdf4f97ef4bff1fcbf85e122415b61cd8b9133ad613c1"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Architecture.Tests.InspectionFailureTests.Omitting_any_required_real_scan_is_an_error",
+      "parameterCount": 8,
+      "assembly": "Hoard.Architecture.Tests",
+      "sourcePath": "tests/architecture/Hoard.Architecture.Tests/InspectionFailureTests.cs",
+      "sourceSha256": "896c4229eb16ac1483e1c7b2a437e57b6f3a55a85d1bbdccbe8a2c8f37dd56e7",
+      "executionSourceSha256": "2fc82a53b7dd163ecf2bdf4f97ef4bff1fcbf85e122415b61cd8b9133ad613c1"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Composition.Tests.CoreIndependenceTests.Isolated_core_has_only_abstractions_and_framework_reachable",
+      "parameterCount": 1,
+      "assembly": "Hoard.Composition.Tests",
+      "sourcePath": "tests/integration/Hoard.Composition.Tests/CoreIndependenceTests.cs",
+      "sourceSha256": "3c91a5b712ecf3b52f4616e9178f82b1e561e644e424723461a72439e7be451c",
+      "executionSourceSha256": "3c91a5b712ecf3b52f4616e9178f82b1e561e644e424723461a72439e7be451c"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Composition.Tests.CustomHostTests.Both_hosts_compile_with_only_the_artifact_reference_and_registration_changed",
+      "parameterCount": 1,
+      "assembly": "Hoard.Composition.Tests",
+      "sourcePath": "tests/integration/Hoard.Composition.Tests/CustomHostTests.cs",
+      "sourceSha256": "f48efd26f12cd9e9fb03a0e8d6f741321502360a03c69b93358e42e10bcd7fe4",
+      "executionSourceSha256": "f48efd26f12cd9e9fb03a0e8d6f741321502360a03c69b93358e42e10bcd7fe4"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Composition.Tests.ProviderPackageTests.Five_packages_build_independently_and_match_resolved_dependencies",
+      "parameterCount": 1,
+      "assembly": "Hoard.Composition.Tests",
+      "sourcePath": "tests/integration/Hoard.Composition.Tests/ProviderPackageTests.cs",
+      "sourceSha256": "6ec2b4f8f38a11dac6ec98ce66c825aa5e580703d638e496c581143cf1f594fb",
+      "executionSourceSha256": "6ec2b4f8f38a11dac6ec98ce66c825aa5e580703d638e496c581143cf1f594fb"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Foundation.Tests.CompatibilityExamplesTests.Axis_examples_follow_bounded_intervals_and_explicit_prerelease_flags",
+      "parameterCount": 19,
+      "assembly": "Hoard.Foundation.Tests",
+      "sourcePath": "tests/unit/Hoard.Foundation.Tests/CompatibilityExamplesTests.cs",
+      "sourceSha256": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68",
+      "executionSourceSha256": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Foundation.Tests.CompatibilityExamplesTests.Dependency_examples_never_enable_or_repair_unavailable_or_incompatible_targets",
+      "parameterCount": 9,
+      "assembly": "Hoard.Foundation.Tests",
+      "sourcePath": "tests/unit/Hoard.Foundation.Tests/CompatibilityExamplesTests.cs",
+      "sourceSha256": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68",
+      "executionSourceSha256": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Foundation.Tests.CompatibilityExamplesTests.Host_and_abstractions_axes_have_independent_flags",
+      "parameterCount": 3,
+      "assembly": "Hoard.Foundation.Tests",
+      "sourcePath": "tests/unit/Hoard.Foundation.Tests/CompatibilityExamplesTests.cs",
+      "sourceSha256": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68",
+      "executionSourceSha256": "714569d15f04f360eeef13d410781f71e4b0f7400a42916638c3d300ac906b68"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Foundation.Tests.ContractChangeExamplesTests.Breaking_changes_require_policy_transition_and_migration_not_just_one_compiling_consumer",
+      "parameterCount": 4,
+      "assembly": "Hoard.Foundation.Tests",
+      "sourcePath": "tests/unit/Hoard.Foundation.Tests/ContractChangeExamplesTests.cs",
+      "sourceSha256": "a28ff273cabbd96190e05591d6ca2f8b4460ff89be66ee6c8338ce2496babe37",
+      "executionSourceSha256": "a28ff273cabbd96190e05591d6ca2f8b4460ff89be66ee6c8338ce2496babe37"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Foundation.Tests.DeclarationContractTests.Public_consumers_enforce_declaration_shape",
+      "parameterCount": 5,
+      "assembly": "Hoard.Foundation.Tests",
+      "sourcePath": "tests/unit/Hoard.Foundation.Tests/DeclarationContractTests.cs",
+      "sourceSha256": "fe959aaf59425d5c80749cc2f3e7812926f52b752bf5321b8b62f79d9231c6fd",
+      "executionSourceSha256": "fe959aaf59425d5c80749cc2f3e7812926f52b752bf5321b8b62f79d9231c6fd"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Foundation.Tests.ModuleRegistrationTests.Metadata_and_repeated_registrations_do_not_activate_or_install_provider_services",
+      "parameterCount": 1,
+      "assembly": "Hoard.Foundation.Tests",
+      "sourcePath": "tests/unit/Hoard.Foundation.Tests/ModuleRegistrationTests.cs",
+      "sourceSha256": "29fbf624fff0e1397f37d177f02a45d3a11e20f066aae695bf3797cd8dcee4f8",
+      "executionSourceSha256": "29fbf624fff0e1397f37d177f02a45d3a11e20f066aae695bf3797cd8dcee4f8"
+    },
+    {
+      "fullyQualifiedName": "Hoard.Foundation.Tests.ModuleRegistrationTests.Null_arguments_are_explicit_errors_with_no_fallback",
+      "parameterCount": 1,
+      "assembly": "Hoard.Foundation.Tests",
+      "sourcePath": "tests/unit/Hoard.Foundation.Tests/ModuleRegistrationTests.cs",
+      "sourceSha256": "29fbf624fff0e1397f37d177f02a45d3a11e20f066aae695bf3797cd8dcee4f8",
+      "executionSourceSha256": "29fbf624fff0e1397f37d177f02a45d3a11e20f066aae695bf3797cd8dcee4f8"
+    }
+  ],
+  "assemblyParameters": {
+    "Hoard.Architecture.Tests": 41,
+    "Hoard.Composition.Tests": 3,
+    "Hoard.Foundation.Tests": 42
+  },
+  "formatting": {
+    "solution": "Hoard.slnx",
+    "fixtureRoots": [
+      "providers",
+      "architecture",
+      "hosts",
+      "compatibility"
+    ]
+  }
+}

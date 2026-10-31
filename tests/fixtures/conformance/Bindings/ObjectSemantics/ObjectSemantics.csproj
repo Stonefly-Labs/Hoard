@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Bindings.ObjectSemantics</AssemblyName>
+    <PackageId>Hoard.Fixtures.Conformance.Bindings.ObjectSemantics</PackageId>
+    <Description>Test-only adapter for the independent object-semantics simulation.</Description>
+    <IsPackable>true</IsPackable>
+    <DefineConstants>$(DefineConstants);HOARD_CONFORMANCE_BINDING</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ArtifactAssertionSessions.cs" Link="ArtifactAssertionSessions.cs" />
+    <Compile Include="../Shared/ArtifactConformanceSessions.cs" Link="ArtifactConformanceSessions.cs" />
+    <Compile Include="../../../artifacts/HostAdapters/ArtifactCoordinationAuthority.cs" Link="ArtifactCoordinationAuthority.cs" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.ObjectSemantics" />
+  </ItemGroup>
+</Project>

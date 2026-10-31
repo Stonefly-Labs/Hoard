@@ -2,9 +2,13 @@ using Hoard.Abstractions.Storage;
 
 namespace Hoard.Fixtures.Artifacts.HostAdapters;
 
+#if HOARD_CONFORMANCE_BINDING
+internal sealed record ArtifactReferenceDecision(bool Available, long LiveReferences, Guid Revision);
+internal sealed class ArtifactCoordinationAuthority : IArtifactCoordinationAuthority
+#else
 public sealed record ArtifactReferenceDecision(bool Available, long LiveReferences, Guid Revision);
-
 public sealed class ArtifactCoordinationAuthority : IArtifactCoordinationAuthority
+#endif
 {
     private readonly ArtifactStoreIdentity store;
     private readonly TimeProvider clock;
@@ -17,9 +21,39 @@ public sealed class ArtifactCoordinationAuthority : IArtifactCoordinationAuthori
     private DateTimeOffset timeFloor = DateTimeOffset.UnixEpoch;
     private long generation;
     private int waiting;
+    private bool closing;
+    private TaskCompletionSource settlement = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public bool HasRetainedWork { get { lock (sync) { return retainedWork.Count > 0; } } }
     public int WaitingAdmissions { get { lock (sync) { return waiting; } } }
+
+    /// <summary>Fences new admissions immediately; the stable task joins guards, waiters and retained reference work.</summary>
+    public Task CloseAdmissionsAndObserveSettlementForQualificationAsync()
+    {
+        lock (sync)
+        {
+            closing = true;
+            CompleteSettlement();
+            return settlement.Task;
+        }
+    }
+
+    public void ReopenAdmissionsForQualification()
+    {
+        lock (sync)
+        {
+            if (!closing || !settlement.Task.IsCompletedSuccessfully)
+            { throw new InvalidOperationException("Artifact authority ownership has not settled."); }
+            settlement = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            closing = false;
+        }
+    }
+
+    private void CompleteSettlement()
+    {
+        if (closing && operations.Count == 0 && waiting == 0 && retainedWork.Count == 0)
+        { settlement.TrySetResult(); }
+    }
 
     public async ValueTask<bool> DrainRetainedAsync(TimeSpan timeout, CancellationToken ct = default)
     {
@@ -56,6 +90,7 @@ public sealed class ArtifactCoordinationAuthority : IArtifactCoordinationAuthori
         Waiter waiter;
         lock (sync)
         {
+            if (closing) { return Failure(ArtifactFailureCode.Unavailable); }
             if (retainedWork.Count > 0) { return Failure(ArtifactFailureCode.CleanupIncomplete); }
             if (waiting >= 32 || operations.Count >= 100000 || generation == long.MaxValue)
             { return Failure(ArtifactFailureCode.Capacity); }
@@ -188,6 +223,7 @@ public sealed class ArtifactCoordinationAuthority : IArtifactCoordinationAuthori
             if (gate.Exclusive) { break; }
         }
         if (!gate.Exclusive && gate.Shared == 0 && gate.Pending.Count == 0) { gates.Remove(gate.Key); }
+        CompleteSettlement();
     }
 
     private void Release(Guard guard)
@@ -217,6 +253,7 @@ public sealed class ArtifactCoordinationAuthority : IArtifactCoordinationAuthori
             {
                 Release(guard);
                 retainedWork.Remove(guard.Holding.Request.OperationId);
+                CompleteSettlement();
             }
         }
     }

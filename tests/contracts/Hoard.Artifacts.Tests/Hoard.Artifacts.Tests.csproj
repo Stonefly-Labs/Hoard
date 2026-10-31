@@ -18,8 +18,10 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(ArtifactPackageAcceptance)' == 'true'">
     <PackageVersion Include="Hoard.Abstractions" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Testing.Conformance" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Artifacts.HostAdapters" Version="[0.1.0]" />
     <PackageReference Include="Hoard.Abstractions" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Hoard.Fixtures.Artifacts.HostAdapters" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" PrivateAssets="all" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

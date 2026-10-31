@@ -16,11 +16,12 @@ public sealed class ArtifactFixtureSession : IAsyncDisposable
 {
     private readonly IArtifactStoreLifetime lifetime;
     private ArtifactFixtureSession(IArtifactStoreLifetime lifetime, ArtifactStoreIdentity identity,
-        ArtifactCoordinationAuthority authority)
+        ArtifactCoordinationAuthority authority, object controls)
     {
         this.lifetime = lifetime;
         Identity = identity;
         Authority = authority;
+        Controls = controls;
         Store = (IArtifactStore)lifetime;
         Validator = (IArtifactEvidenceValidator)lifetime;
         Maintenance = (IArtifactMaintenance)lifetime;
@@ -28,6 +29,7 @@ public sealed class ArtifactFixtureSession : IAsyncDisposable
 
     public ArtifactStoreIdentity Identity { get; }
     public ArtifactCoordinationAuthority Authority { get; }
+    public object Controls { get; }
     public IArtifactStore Store { get; }
     public IArtifactEvidenceValidator Validator { get; }
     public IArtifactMaintenance Maintenance { get; }
@@ -60,10 +62,13 @@ public sealed class ArtifactFixtureSession : IAsyncDisposable
             || profile is { Mode: ArtifactInitializationMode.ReopenCompatible, Store: null })
         { throw new ArgumentException("Artifact fixture reopen requires its exact selected store identity."); }
         var authority = new ArtifactCoordinationAuthority(identity, references: references);
+        var local = provider == "local" ? new LocalFaultControls { CapabilitiesForAdmission = profile?.CapabilitiesForAdmission } : null;
+        var objects = provider == "object" ? new ObjectFaultControls { CapabilitiesForAdmission = profile?.CapabilitiesForAdmission } : null;
         IArtifactStoreLifetime lifetime = provider == "local"
-            ? new LocalArtifactStore(root, controls: new() { CapabilitiesForAdmission = profile?.CapabilitiesForAdmission })
-            : new ObjectArtifactStore(root, controls: new() { CapabilitiesForAdmission = profile?.CapabilitiesForAdmission });
-        var session = new ArtifactFixtureSession(lifetime, identity, authority);
+            ? new LocalArtifactStore(root, controls: local)
+            : new ObjectArtifactStore(root, controls: objects);
+        var session = new ArtifactFixtureSession(lifetime, identity, authority,
+            local is { } controls ? controls : (object)objects!);
         var result = await lifetime.InitializeAsync(new(profile?.Mode ?? ArtifactInitializationMode.CreateEmpty,
             identity, authority, limits), new(), cancellationToken);
         if (result is ArtifactResult<ArtifactAdmission>.Success) { return session; }

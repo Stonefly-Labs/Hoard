@@ -34,6 +34,27 @@ class LifecycleEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Empty"):
             lifecycle.focused_tests(self.root, self.root, " ")
 
+    def test_graph_preparation_defers_boundary_execution_to_the_runtime_owner(self):
+        registration = self.root / "registration/RegistrationConsumer.csproj"
+        with patch.object(lifecycle.foundation, "inspection_graph",
+                          side_effect=lambda *_: {"projects": [], "ownership": {}}), \
+                patch.object(lifecycle, "run") as run, patch.dict(lifecycle.os.environ):
+            graphs = lifecycle.prepare_lifecycle_graphs(self.root, self.root, [], [], registration)
+            run.assert_not_called()
+            self.assertEqual(["platform", "registration"], [graph["scanId"] for graph in graphs])
+            manifest = Path(lifecycle.os.environ["HOARD_LIFECYCLE_EVIDENCE"])
+            self.assertEqual(graphs, json.loads(manifest.read_text())["graphs"])
+
+    def test_standalone_lifecycle_graphs_still_execute_and_validate_boundary_results(self):
+        with patch.object(lifecycle, "prepare_lifecycle_graphs") as prepare, \
+                patch.object(lifecycle, "run") as run, \
+                patch.object(lifecycle, "test_count", return_value=9) as count:
+            self.assertEqual(9, lifecycle.lifecycle_graphs(self.root, self.root, [], [], self.root))
+        prepare.assert_called_once_with(self.root, self.root, [], [], self.root)
+        run.assert_called_once()
+        self.assertIn("FullyQualifiedName~LifecycleBoundaryTests", run.call_args.args)
+        count.assert_called_once_with(self.root / "results/architecture.trx")
+
     def test_subprocess_error_and_timeout_are_explicit_without_payloads(self):
         with patch("subprocess.run", return_value=subprocess.CompletedProcess([], 1, "secret")):
             with self.assertRaisesRegex(RuntimeError, "^Lifecycle command failed: probe$"):

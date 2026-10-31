@@ -1,0 +1,161 @@
+name: Conformance composition diagnostics
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conformance-composition-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  composition-diagnostics:
+    name: Non-qualifying native packaged composition observations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Admit selected exact-child observations and release process resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/composition-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          status=0
+          python3 scripts/conformance_composition_checks.py \
+            --evidence "$private_parent/run" || status=$?
+          python3 - "$private_parent/run" "$GITHUB_SHA" <<'PY'
+          import hashlib
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          import conformance_evidence as evidence
+          from conformance_composition_checks import verify_composition_report_controls
+          from conformance_inherited import (
+              BASELINE, CONTROLLER_BASELINES, controller_tooling_observation,
+              verify_controller_tooling, verify_controller_invocations)
+          from conformance_legacy import verify_borrowed_invocation
+          from conformance_sources import read_bounded
+          root = Path(sys.argv[1])
+          inputs = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+              root / "proofs/composition-inputs.json", 2 * 1024**2)))
+          owner = evidence.load_json(read_bounded(root / "runtime-owner.json", 65536))
+          try:
+              summary = evidence.load_json(read_bounded(root / "proofs/composition-diagnostic-summary.json", 65536))
+          except evidence.ConformanceError as error:
+              failure = {"qualification": False, "status": "Incomplete", "code": "WitnessMissing"}
+              try:
+                  if (inputs["sourceRevision"] != sys.argv[2] or inputs["sourceState"] != "clean-ci"
+                          or inputs["mode"] != "diagnostic" or inputs["profileId"] != "composition"
+                          or owner["runId"] != inputs["runId"]):
+                      raise evidence.ConformanceError("ProofMismatch")
+                  failure["tooling"] = controller_tooling_observation(root, inputs, owner)
+                  failure["summaryCode"] = str(error)
+              except (evidence.ConformanceError, KeyError, TypeError) as tooling_error:
+                  failure["toolingCode"] = (str(tooling_error) if isinstance(
+                      tooling_error, evidence.ConformanceError) else "WitnessMissing")
+              print(evidence.canonical_bytes(failure).decode("utf-8"))
+              raise SystemExit("WitnessMissing") from None
+          baseline_raw = read_bounded(root / CONTROLLER_BASELINES, 16 * 1024**2)
+          baseline = evidence.load_json(baseline_raw)
+          inherited = summary["inheritedRuntime"]
+          mutations = inherited["discoveryMutations"]
+          scenarios = inherited["discoveryScenarios"]
+          materials = inherited["discoveryMaterials"]
+          reference = inherited["referenceConsumer"]
+          if type(reference.get("sequence")) is not int or reference["sequence"] <= 0:
+              raise SystemExit("WitnessMissing")
+          reference_parent_raw = read_bounded(
+              root / f"proofs/execution-command-{reference['sequence']:04}.json", 65536)
+          reference_parent = evidence.load_json(reference_parent_raw)
+          reference_output = read_bounded(root / "proofs/inherited-reference-result.json", 65536)
+          reference_observation = evidence.load_json(reference_output)
+          reference_inputs = read_bounded(root / "proofs/inherited-reference-inputs.json", 2 * 1024**2)
+          try:
+              controls = verify_composition_report_controls(root, inputs, owner, summary["caseReport"])
+              if controls != {"qualification": False, "reportMutations": 29, "semanticMutations": 2}:
+                  raise evidence.ConformanceError("WitnessMissing")
+              verify_controller_tooling(root, inherited["tooling"], inputs, owner)
+              for phase, observed in (
+                      ("historical", summary["historicalNativeInvocations"]),
+                      ("controllers", inherited["nativeInvocations"]["controllers"]),
+                      ("mutations", inherited["nativeInvocations"]["mutations"]),
+                      ("reference", reference["nativeInvocations"])):
+                  verify_controller_invocations(root, observed, phase, inputs["runId"], owner["rootId"])
+              verify_borrowed_invocation(
+                  reference["invocation"], argv_sha256=reference["argvSha256"],
+                  cwd_sha256=reference["cwdSha256"], stdin_sha256=reference["responseSha256"],
+                  group_pid=reference_parent["childPid"],
+                  group_start_sha256=reference_parent["childStartSha256"])
+          except (evidence.ConformanceError, KeyError, TypeError):
+              raise SystemExit("WitnessMissing") from None
+          if (summary["qualification"] is not False or summary["profileComplete"] is not False
+                  or summary["passedComponents"] != 36 or summary["admittedSnapshots"] != 110
+                  or summary["processResourcesReleased"] is not True
+                  or inputs["sourceRevision"] != sys.argv[2] or inputs["sourceState"] != "clean-ci"
+                  or inputs["mode"] != "diagnostic" or inputs["profileId"] != "composition"
+                  or summary["inputSha256"] != evidence.digest(inputs)
+                  or owner["runId"] != inputs["runId"]
+                  or type(baseline["schemaVersion"]) is not int or baseline["schemaVersion"] != 2
+                  or baseline["runId"] != inputs["runId"] or baseline["rootId"] != owner["rootId"]
+                  or baseline["qualification"] is not False or baseline["nativeContainment"] is not False
+                  or baseline["mode"] != "preparation" or baseline["baselineRevision"] != BASELINE
+                  or hashlib.sha256(baseline_raw).hexdigest() != inherited["historicalBaselineSealSha256"]
+                  or inherited["qualification"] is not False or inherited["profileComplete"] is not False
+                  or inherited["executionComplete"] is not True or inherited["nativeContainment"] is not True
+                  or inherited["controllerNativeContainment"] is not False
+                  or inherited["fullControllerAcceptance"] is not False
+                  or inherited["historicalBinariesPreparedBeforeCandidate"] is not True
+                  or mutations["qualification"] is not False or mutations["mutations"] != 12
+                  or mutations["negativeParameters"] != 29 or mutations["repairedParameters"] != 29
+                  or scenarios["qualification"] is not False or scenarios["parameters"] != 137
+                  or scenarios["adapterScenarios"] != 4 or scenarios["suites"] != 10
+                  or materials["qualification"] is not False
+                  or materials["feedPackages"] != 11 or materials["retainedBinaries"] != 3
+                  or materials["graphs"] != 18 or materials["journeys"] != 9
+                  or materials["manifestSha256"] != inherited["controllerPreparation"]["discovery"]["manifestSha256"]
+                  or reference["qualification"] is not False or reference["nativeContainment"] is not True
+                  or reference["moduleCount"] != 6 or reference["inputCount"] < 8
+                  or len(evidence.load_json(reference_inputs)) != reference["inputCount"]
+                  or reference["inputMapSha256"] != hashlib.sha256(reference_inputs).hexdigest()
+                  or reference["parentSha256"] != hashlib.sha256(reference_parent_raw).hexdigest()
+                  or set(reference_observation) != {
+                      "schemaVersion", "qualification", "phase", "runId", "rootId", "result",
+                      "invocations", "inputSnapshots"}
+                  or type(reference_observation["schemaVersion"]) is not int
+                  or reference_observation["schemaVersion"] != 3
+                  or reference_observation["qualification"] is not False
+                  or reference_observation["phase"] != "reference"
+                  or reference_observation["runId"] != inputs["runId"]
+                  or reference_observation["rootId"] != owner["rootId"]
+                  or reference_observation["result"] != {
+                      key: value for key, value in reference.items()
+                      if key not in ("nativeContainment", "parentSha256", "sequence", "inputCount", "nativeInvocations")}
+                  or reference_parent["runId"] != inputs["runId"] or reference_parent["rootId"] != owner["rootId"]
+                  or reference_parent["sequence"] != reference["sequence"]
+                  or reference_parent["groupState"] != "Exited" or reference_parent["exitCode"] != 0
+                  or reference_parent["diagnosticCode"] != "None"
+                  or reference_parent["inputFiles"].get(
+                      "proofs/inherited-reference-inputs.json") != reference["inputMapSha256"]
+                  or reference_parent["outputFiles"] != {
+                      "proofs/inherited-reference-result.json": hashlib.sha256(reference_output).hexdigest()}
+                  or inherited["passedParameters"] != 525 or inherited["scopes"] != 58
+                  or len(inherited["commands"]) != 58):
+              raise SystemExit("WitnessMissing")
+          print('{"qualification":false,"status":"Incomplete","code":"EvidenceIncomplete"}')
+          PY
+          test "$status" -eq 0

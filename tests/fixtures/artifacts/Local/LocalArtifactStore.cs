@@ -146,7 +146,7 @@ public sealed partial class LocalArtifactStore(string root, TimeProvider? clock 
             lock (activitySync)
             {
                 stopping = true;
-                pending = [.. activities.Values, shutdown.CancelAsync()];
+                pending = [.. settlements.Values, shutdown.CancelAsync()];
             }
             var remaining = options.Deadline - time.GetElapsedTime(started);
             if (remaining <= TimeSpan.Zero)

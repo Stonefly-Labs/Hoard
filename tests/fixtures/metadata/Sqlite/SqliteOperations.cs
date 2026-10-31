@@ -195,7 +195,11 @@ public sealed partial class SqliteMetadataStore
                         if (mutation is MetadataMutation.ReleaseLease release)
                         { originalLeases.Add(release.Resource, OwnedLease(release.Resource, release.Owner, release.Generation, release.Revision, now)); }
                         Apply(mutation, now, touchedArtifacts);
-                        if (Interlocked.Exchange(ref failNextWrite, 0) != 0) { throw new SqliteNativeFailure(13); }
+                        if (Interlocked.Exchange(ref failNextWrite, 0) != 0)
+                        {
+                            await observe("sqlite.storage_capacity");
+                            throw new SqliteNativeFailure(13);
+                        }
                         await observe("mutation.applied");
                     }
                     foreach (var digest in touchedArtifacts) { UpdateReferenceCount(digest); }

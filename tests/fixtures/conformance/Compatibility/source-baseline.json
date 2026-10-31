@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "baselineRevision": "9389016c0285c79f6f515f59805a5a41c69b0767",
+  "scope": "controlled-binary-member-removal-fixture-sources",
+  "sources": {
+    "tests/fixtures/compatibility/BinaryMemberRemoval/Consumer/Program.cs": "3d9cd7ccd71d263ba57f4eda2fabf951222e23c83189ed306fa26609cf0d5865",
+    "tests/fixtures/compatibility/BinaryMemberRemoval/Old/Contract.cs": "0d9499b12085dd0bec3b0f47d26163d08ffed9920fbe7b7ce2f2561186a8856f",
+    "tests/fixtures/compatibility/BinaryMemberRemoval/New/Contract.cs": "952baa6e7e2c1ab983e8f7c1e51282bde7b368eec907d673791c990797ab62ba"
+  }
+}

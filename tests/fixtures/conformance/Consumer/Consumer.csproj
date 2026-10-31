@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Consumer</AssemblyName>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)/obj/**;$(MSBuildProjectDirectory)/bin/**</DefaultItemExcludes>
+    <DefineConstants Condition="'$(ConformanceContributorCategory)' == 'metadata'">$(DefineConstants);HOARD_METADATA_CONTRIBUTOR</DefineConstants>
+    <DefineConstants Condition="'$(ConformanceContributorCategory)' == 'artifacts'">$(DefineConstants);HOARD_ARTIFACT_CONTRIBUTOR</DefineConstants>
+    <OutputType Condition="'$(ConformanceContributorCategory)' == 'artifacts'">Exe</OutputType>
+    <StartupObject Condition="'$(ConformanceContributorCategory)' == 'artifacts'">Hoard.Fixtures.Conformance.Consumer.ArtifactContributorProcess</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="SqliteEnvironmentProbe.cs;SqliteNativeOwnershipProbe.cs" />
+    <Compile Include="../../../contracts/Hoard.Conformance.Tests/AuthorityIntegrationTests.cs" Link="AuthorityIntegrationTests.cs" />
+    <Compile Include="../../../contracts/Hoard.Conformance.Tests/ContributorJourneyTests.cs" Link="ContributorJourneyTests.cs" />
+    <Compile Include="../../../contracts/Hoard.Conformance.Tests/CategoryMutationTests.cs" Link="CategoryMutationTests.cs"
+             Condition="'$(ConformanceCategoryMutations)' == 'true'" />
+    <Compile Include="../Bindings/Mutations/*.cs" Link="Mutations/%(Filename)%(Extension)"
+             Condition="'$(ConformanceCategoryMutations)' == 'true'" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.HostAdapters" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Local" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.ObjectSemantics" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Contributor" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup Condition="('$(ConformanceContributorCategory)' == 'metadata' Or '$(ConformanceContributorCategory)' == 'artifacts') And '$(ConformanceContributorFactory)' != '' And '$(ConformanceContributorPackageId)' != '' And '$(ConformanceContributorPackageVersion)' != ''">
+    <Compile Include="$(ConformanceContributorFactory)" Link="ContributorBindingFactory.cs" />
+    <PackageReference Remove="$(ConformanceContributorPackageId)" />
+    <PackageReference Include="$(ConformanceContributorPackageId)" VersionOverride="[$(ConformanceContributorPackageVersion)]" />
+  </ItemGroup>
+  <Target Name="ValidateContributorInputs" BeforeTargets="CollectPackageReferences;CoreCompile"
+          Condition="'$(ConformanceContributorCategory)' != '' Or '$(ConformanceContributorFactory)' != '' Or '$(ConformanceContributorPackageId)' != '' Or '$(ConformanceContributorPackageVersion)' != ''">
+    <Error Condition="'$(ConformanceContributorCategory)' != 'metadata' And '$(ConformanceContributorCategory)' != 'artifacts'"
+           Text="BindingInvalid" />
+    <Error Condition="'$(ConformanceContributorFactory)' == '' Or !Exists('$(ConformanceContributorFactory)') Or '$(ConformanceContributorPackageId)' == '' Or '$(ConformanceContributorPackageVersion)' == ''"
+           Text="BindingInvalid" />
+  </Target>
+</Project>

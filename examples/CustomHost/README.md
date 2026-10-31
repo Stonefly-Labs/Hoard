@@ -137,3 +137,100 @@ There are no migrations, runtime state, infrastructure changes, permissions,
 release tags, or deployments here. Roll back source and matching locks together
 through a reviewed change; the script's feeds, caches, binaries, and manifests
 are temporary and must not be committed.
+
+## F-07 finite packaged composition and recovery limits
+
+This project remains registration-only. The separate package-only conformance
+consumer selects SQLite/Local as its baseline and Memory/ObjectSemantics as its
+replacement through the same fixture Host and unchanged consumer image.
+The host and bindings are independently packed local `[0.1.0]` packages, not
+published providers or a deployable cache. TestServer invokes protocol/identity
+probes in process; those probes supply lifecycle observations, not NuGet/native
+client compatibility or authentication/authorization implementations.
+
+The fixture explicitly enables its selected metadata/artifact and protocol/
+identity modules. Merely referencing or registering a package does not enable
+it. Disabled modules must have no routes, workers, connections or store effects.
+Invalid cardinality/declarations, incompatible enabled dependencies, authority
+identity or required guarantees reject; no fallback selects another provider
+or silently disables the incompatible target.
+
+Changing the active selection requires settled stop and an explicit fresh
+restart. An active request continues using its admitted configuration; this is
+not runtime installation, hot replacement or arbitrary assembly loading.
+Finite cancellation/stop return is not proof of cleanup. If initialization,
+requests or shutdown callbacks remain owned, the root remains retained and
+unsafe disposal/restart is refused. Observe actual settlement and the existing
+lifecycle ownership result before attempting a fresh run; deleting an evidence
+directory, losing a callback reference or terminating a child does not prove a
+cooperatively released module root. Native process containment is a separate
+diagnostic and is not equivalent to provider cleanup or durable-store recovery.
+
+At exact `0e49db1`, [run40620701197](https://github.com/Stonefly-Labs/Hoard/actions/runs/40620701197)
+job122595970901 confirms all36 CP parameters/110 ordered snapshots, independent
+post-release replay,29 generated-report rejection controls and two semantic
+readiness/retained-stop controls. Successful host labels cannot override those
+observations. The public composition command still returns non-qualifying
+`Incomplete`/exit2: nine quality-source rows and full-controller/profile
+qualification remain open. No command in this example starts an operational
+host. See [current evidence and limits](../../docs/PROVIDERS.md#finite-packaged-composition-and-ownership-limits).
+
+### Earlier F-07 diagnostic checkpoints
+
+F-07's separate test-only conformance Host is not this compile-only example.
+Its package-mode consumer explicitly references the packed
+`Hoard.Fixtures.Conformance.Host` and exercises both SQLite/Local and
+Memory/ObjectSemantics using one unchanged consumer image and TestServer.
+These component rows observe initialization, readiness, in-process declaration/
+lifecycle probes, disabled-store inactivity and complete stop. They do not
+certify providers, implement a production protocol/identity system, or supply a
+qualifying composition CLI. The two rows now emit bounded, owner-linked safe
+snapshots with independent input/image/stage validation; this diagnostic check
+does not complete remaining composition transport, inherited inventories or
+profile evaluation.
+Shared packaged ownership callbacks additionally cover cancellation, retained
+initialization and shutdown late faults, without treating finite caller return
+or eventual callback settlement as a released lifecycle root. All seven rows now
+have independently checked safe observations; this does not supply native child
+containment or a complete qualifying profile.
+The initializer-failure row extends actual safe component admission to ten
+proofs/twenty-one snapshots. The separate native diagnostic records an owned
+command and checks process-resource cleanup, not module-root qualification.
+Its first Linux attempt rejects writable command inputs; its sealed successor
+then rejects test output through the build projector. The corrected test
+projector passes Linux native replay at exact `e9a1589`. Distinct actual owners now cover schema denial
+and corrupt-manifest recovery with repaired worker entry, bringing safe component
+admission to thirteen proofs/thirty-three snapshots. This compile-only
+custom-host example is unchanged. The separate short native diagnostic workflow
+does not qualify SQLite provenance, which remains explicitly unobserved.
+Exact `f6e9db4` passes all thirteen selected native cases with actual
+process-resource release, closing bounded T044 probes, not the qualifying
+composition profile. Shared Host authority/guarantee admission and active-request
+controls now pass all four CP-19/20 package cases, preserving denial before store
+I/O and settled explicit restart. Their safe transport/full-profile integration
+remains open; this compile-only custom-host example is unaffected.
+The selected CP-19/20 safe component now passes independent ingestion as part of
+seventeen proofs/fifty-one snapshots, retaining actual store I/O, request drain
+and distinct restart owners. Complete inherited/profile integration and native
+replay of the expanded scope remain open.
+Exact `cb8d6eb` subsequently passes the seventeen-row native replay. The full
+CP-01..20 safe component now admits thirty-six exact package identities/110
+snapshots; declaration rejection/repair, disabled effects and route publication
+remain separate observations. Full inherited/profile acceptance and native
+replay of the larger scope remained open at that checkpoint. Exact `59d9eff`
+now passes the 36-proof/110-snapshot native replay with real process release.
+Twenty unchanged historical configuration-theory cases also pass independent
+safe runtime admission in a bounded source-mode experiment; private argument
+displays remain in memory and adapter case IDs disambiguate truncated names.
+This compile-only example is unaffected; complete inherited/profile acceptance
+remains open.
+Committed safe discovery subsequently admits all 509 inherited composition
+parameters from an independent frozen source/count catalog. Six architecture
+methods/16 parameters and prepared controller journeys remain required; this
+is discovery, not full execution or profile acceptance, and adds no host behavior.
+Exact `6178a77` subsequently passes that native discovery replay. A scoped safe
+controller experiment also prepares both compile-only CustomHosts and fresh
+Core/provider evidence; all 509 inherited composition and 16 boundary parameters
+then pass independent local runtime ingestion. Neither result qualifies a
+profile or completes native/controller acceptance. The example's project,
+compile-only behavior and provider selection remain unchanged.

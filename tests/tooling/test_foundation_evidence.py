@@ -56,8 +56,26 @@ class AcceptanceArchiveTests(unittest.TestCase):
                 self.archive("external.nupkg", (2026, 1, 1, 0, 0, 0), "external", package_id="External.Test")):
             with self.subTest(path=path.name):
                 original = path.read_bytes()
-                with self.assertRaisesRegex(RuntimeError, "unsigned local Hoard"):
+                with self.assertRaisesRegex(RuntimeError, "unsigned local"):
                     foundation.canonicalize_acceptance_archive(path)
+                self.assertEqual(path.read_bytes(), original)
+
+    def test_explicit_external_identity_canonicalizes_only_the_selected_unsigned_local_archive(self):
+        first = self.archive("first.nupkg", (2026, 1, 1, 1, 1, 0), "first", package_id="Acme.Adapter")
+        second = self.archive("second.nupkg", (2026, 2, 2, 2, 2, 0), "second", package_id="Acme.Adapter")
+        payload = b"unchanged assembly payload"
+        for path in (first, second):
+            foundation.canonicalize_acceptance_archive(path, expected_package_id="acme.adapter")
+            with zipfile.ZipFile(path) as archive:
+                self.assertEqual(archive.read("lib/net10.0/Fixture.dll"), payload)
+        self.assertEqual(first.read_bytes(), second.read_bytes())
+        signed = self.archive("signed.nupkg", (2026, 1, 1, 0, 0, 0), "signed",
+                              package_id="Acme.Adapter", signed=True)
+        for path, selected in ((first, "Acme.Foreign"), (signed, "Acme.Adapter")):
+            with self.subTest(path=path.name):
+                original = path.read_bytes()
+                with self.assertRaisesRegex(RuntimeError, "unsigned local"):
+                    foundation.canonicalize_acceptance_archive(path, expected_package_id=selected)
                 self.assertEqual(path.read_bytes(), original)
 
     def test_incomplete_opc_inputs_fail_explicitly(self):

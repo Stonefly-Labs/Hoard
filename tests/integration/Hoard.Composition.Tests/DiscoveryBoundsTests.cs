@@ -37,7 +37,14 @@ public sealed class DiscoveryBoundsTests
             new() { Exposure = HoardDiscoveryExposure.SecuredNetwork, TimeProvider = clock });
         await using (lease)
         {
+            var workers = LifecycleFixtures.Controls.ToDictionary(pair => pair.Key,
+                _ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
+            foreach (var (id, entered) in workers)
+            {
+                LifecycleFixtures.For(id).Worker = _ => { entered.SetResult(); return Task.CompletedTask; };
+            }
             await app.StartAsync();
+            await Task.WhenAll(workers.Values.Select(entered => entered.Task)).WaitAsync(TimeSpan.FromSeconds(5));
             var before = LifecycleFixtures.Controls.ToDictionary(pair => pair.Key, pair => pair.Value.Calls.ToArray());
             using var cancellation = new CancellationTokenSource();
             clock.DuringProjection = () =>

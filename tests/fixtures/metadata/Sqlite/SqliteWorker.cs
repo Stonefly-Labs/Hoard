@@ -27,7 +27,7 @@ internal sealed class SqliteBudgetFailure(bool cancelled) : Exception("Private m
     public bool Cancelled { get; } = cancelled;
 }
 
-internal sealed class SqliteWorker(Func<ValueTask> cleanup, Action<string> diagnostic)
+internal sealed partial class SqliteWorker(Func<ValueTask> cleanup, Action<string> diagnostic)
 {
     private readonly Channel<IWork> queue = Channel.CreateBounded<IWork>(new BoundedChannelOptions(32)
     { SingleReader = true, FullMode = BoundedChannelFullMode.Wait });
@@ -98,12 +98,37 @@ internal sealed class SqliteWorker(Func<ValueTask> cleanup, Action<string> diagn
             }
 
         }
-        finally { await cleanup(); }
+        finally
+        {
+            Task independentSettlement;
+            lock (startLock)
+            {
+                closed = 1;
+                queue.Writer.TryComplete();
+                foreach (var lease in independentLeases) { lease.Release(); }
+                independentSettlement = independentIdle?.Task ?? Task.CompletedTask;
+            }
+            try { await independentSettlement; }
+            finally { await cleanup(); }
+            lock (startLock)
+            {
+                if (independentCleanupFailed) { throw new InvalidOperationException("CleanupIncomplete"); }
+            }
+        }
     }
 
     public Task WhenIdleAsync()
     {
-        lock (startLock) { return (idle?.Task ?? Task.CompletedTask).WaitAsync(TimeSpan.FromSeconds(10)); }
+        lock (startLock)
+        {
+            return Task.WhenAll(idle?.Task ?? Task.CompletedTask, independentReadsIdle?.Task ?? Task.CompletedTask)
+                .WaitAsync(TimeSpan.FromSeconds(10));
+        }
+    }
+
+    public Task ObserveLifetimeSettlementForTest()
+    {
+        lock (startLock) { return owned ?? Task.CompletedTask; }
     }
 
     public async ValueTask StopAsync()
@@ -113,6 +138,7 @@ internal sealed class SqliteWorker(Func<ValueTask> cleanup, Action<string> diagn
         {
             closed = 1;
             currentWork?.Budget.Abandon();
+            foreach (var lease in independentLeases) { lease.Release(); }
             queue.Writer.TryComplete();
             current = owned;
         }

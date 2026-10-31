@@ -7,6 +7,7 @@ public sealed partial class SqliteMetadataStore
 {
     private int failNextWrite;
     public void InjectStorageCapacityForTest() => Interlocked.Exchange(ref failNextWrite, 1);
+    public void ClearStorageCapacityForTest() => Interlocked.Exchange(ref failNextWrite, 0);
 
     public ValueTask<MetadataResult<MetadataId>> CreateUnrecognizedLayoutForTestAsync(bool partial) =>
         worker.Submit(TimeSpan.FromSeconds(5), default, MetadataPhase.Schema, null, budget =>
@@ -28,6 +29,30 @@ public sealed partial class SqliteMetadataStore
             return independent;
         }
         catch { independent.Dispose(); throw; }
+    }
+
+    public ValueTask<IAsyncDisposable> HoldIndependentWriterForTestAsync(CancellationToken cancellationToken) =>
+        worker.HoldIndependentAsync(async () =>
+        {
+            await observe("writer.independent");
+            return HoldIndependentWriterForTest();
+        }, cancellationToken);
+
+    public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotForTestAsync(
+        MetadataReadGroup request, CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref disposed) != 0)
+        { return ValueTask.FromResult(Fail<MetadataReadSnapshot>(MetadataFailureCode.Disposed, MetadataPhase.Read)); }
+        if (Volatile.Read(ref admitted) == 0)
+        { return ValueTask.FromResult(Fail<MetadataReadSnapshot>(MetadataFailureCode.IncompatibleSchema, MetadataPhase.Read)); }
+        return worker.SubmitIndependent(cancellationToken, async budget =>
+        {
+            await observe("read.independent");
+            budget.Check();
+            var snapshot = ObserveCommittedSnapshot(request);
+            budget.Check();
+            return Ok(snapshot);
+        });
     }
 
     public void StallNativeCallForTest(Action entered)

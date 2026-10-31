@@ -27,6 +27,7 @@ internal sealed class SqliteStatement : IDisposable
                     string text => raw.sqlite3_bind_text(statement, index + 1, text),
                     int number => raw.sqlite3_bind_int(statement, index + 1, number),
                     long number => raw.sqlite3_bind_int64(statement, index + 1, number),
+                    double number when double.IsFinite(number) => raw.sqlite3_bind_double(statement, index + 1, number),
                     _ => throw new ArgumentException("Unsupported private SQL parameter.")
                 };
                 if (code != raw.SQLITE_OK) { throw new SqliteNativeFailure(code); }
@@ -46,6 +47,8 @@ internal sealed class SqliteStatement : IDisposable
         };
     }
     public long Number(int index) => raw.sqlite3_column_int64(statement, index);
+    public double Real(int index) => raw.sqlite3_column_double(statement, index);
+    public int ByteLength(int index) => raw.sqlite3_column_bytes(statement, index);
     public string Text(int index) => raw.sqlite3_column_text(statement, index).utf8_to_string();
     public byte[] Bytes(int index) => raw.sqlite3_column_blob(statement, index).ToArray();
     public bool IsNull(int index) => raw.sqlite3_column_type(statement, index) == raw.SQLITE_NULL;
