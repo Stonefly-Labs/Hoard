@@ -17,7 +17,8 @@ public sealed class ArtifactTransferProofTests
             ?? throw new InvalidOperationException("Current artifact run attribution is required.");
         var path = Path.Combine(root, $"transfer-{provider}-{size}", "proof.json");
         Assert.InRange(new FileInfo(path).Length, 1, 16384);
-        var proof = Assert.IsType<JsonObject>(JsonNode.Parse(File.ReadAllText(path)));
+        var sourceBytes = File.ReadAllBytes(path);
+        var proof = Assert.IsType<JsonObject>(JsonNode.Parse(sourceBytes));
         Verify(proof);
         foreach (var (field, value) in new (string, JsonNode?)[]
         {
@@ -30,13 +31,17 @@ public sealed class ArtifactTransferProofTests
             ("independentExpectedHash", JsonValue.Create(false)), ("baselineRssBytes", JsonValue.Create(0L)),
             ("osPeakRssBytes", JsonValue.Create(proof["baselineRssBytes"]!.GetValue<long>() + 67108865)),
             ("bufferBytes", JsonValue.Create(4194304)), ("slots", JsonValue.Create(4)),
-            ("samples", JsonValue.Create(0)), ("exitCode", JsonValue.Create(1))
+            ("samples", JsonValue.Create(0)), ("exitCode", JsonValue.Create(1)),
+            ("osPeakMethod", JsonValue.Create("declared"))
         })
         {
             var changed = Assert.IsType<JsonObject>(proof.DeepClone());
             changed[field] = value;
             Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => Verify(changed));
         }
+        ArtifactSourceCapture.PublishIfRequested(FormattableString.Invariant(
+            $"{typeof(ArtifactTransferProofTests).FullName}.{nameof(Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak)}(provider: \"{provider}\", size: {size})"),
+            (path, sourceBytes));
 
         void Verify(JsonObject value)
         {
@@ -61,7 +66,7 @@ public sealed class ArtifactTransferProofTests
             Assert.True(value["pid"]!.GetValue<int>() > 0);
             Assert.Equal(0, value["exitCode"]!.GetValue<int>());
             Assert.Equal("bytes", value["rssUnits"]!.GetValue<string>());
-            Assert.Contains(value["osPeakMethod"]!.GetValue<string>(), new[] { "time-l", "time-v" });
+            Assert.Contains(value["osPeakMethod"]!.GetValue<string>(), new[] { "time-l", "time-v", "getrusage", "proc-status" });
             Assert.False(string.IsNullOrWhiteSpace(value["runtime"]!.GetValue<string>()));
             Assert.Equal(262144, value["bufferBytes"]!.GetValue<int>());
             Assert.Equal(2097152, value["providerBufferLimit"]!.GetValue<int>());

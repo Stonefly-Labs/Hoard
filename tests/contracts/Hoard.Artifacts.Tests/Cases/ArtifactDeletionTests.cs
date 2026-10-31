@@ -1,10 +1,12 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
+using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactDeletionTests
+public sealed class ArtifactDeletionTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local")]
@@ -13,30 +15,9 @@ public sealed class ArtifactDeletionTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
-        using var source = new ShortSource("pending physical reclamation"u8.ToArray());
-        var committed = await PublishAsync(driver, source, new(1024));
-        var ticket = Success(await driver.Store.ReserveDeleteAsync(new(committed.Stamp), new(), default));
-        ValueTask LostAck() => ValueTask.FromException(new IOException(ArtifactTestData.Canary));
-        if (driver.LocalControls is { } local) { local.SetObserver("delete.removed", LostAck); }
-        else { driver.ObjectControls!.SetObserver("pointer.tombstone", LostAck); }
-        Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.DeleteAsync(ticket, new(), default)).Code);
-        var pending = Assert.IsType<ArtifactResolution.Removed>(
-            Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
-        Assert.Equal(ArtifactReclamation.Pending, pending.Reclamation);
-        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-            await driver.Store.OpenReadAsync(new(committed.Stamp.Identity.Digest), new(), default)).Code);
-        var cleaned = Success(await driver.Maintenance.CleanupAsync(new(driver.Identity,
-            [new ArtifactCleanupTarget.RemovedIncarnation(committed.Stamp)]), new(), default));
-        Assert.Equal(1, cleaned.Completed);
-        Assert.Equal(committed.Stamp.Identity.Length, cleaned.ReclaimedBytes);
-        var settled = Assert.IsType<ArtifactResolution.Removed>(
-            Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
-        Assert.Equal(pending.ReceiptId, settled.ReceiptId);
-        Assert.Equal(pending.Stamp, settled.Stamp);
-        Assert.Equal(pending.Outcome, settled.Outcome);
-        Assert.Equal(ArtifactReclamation.Reclaimed, settled.Reclamation);
-        Assert.Equal(settled, Success(await driver.Store.DeleteAsync(ticket, new(), default)));
+        await ArtifactDeletionAssertions.PendingReclamationAsync(driver.Store, driver.Maintenance, driver.Identity,
+            observer => SetObserver(driver, "delete.removed", "pointer.tombstone", observer), default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 
     [Theory]
@@ -46,28 +27,9 @@ public sealed class ArtifactDeletionTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
-        var bytes = "delete then recreate"u8.ToArray();
-        using var first = new ShortSource(bytes);
-        var original = await PublishAsync(driver, first, new(1024));
-        var ticket = Success(await driver.Store.ReserveDeleteAsync(new(original.Stamp), new(), default));
-        var removed = Success(await driver.Store.DeleteAsync(ticket, new(), default));
-        Assert.Equal(ArtifactMutationOutcome.Removed, removed.Outcome);
-        Assert.Equal(removed, Success(await driver.Store.DeleteAsync(ticket, new(), default)));
-        Assert.Equal(removed, Assert.IsType<ArtifactResolution.Removed>(
-            Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt);
-        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-            await driver.Store.OpenReadAsync(new(original.Stamp.Identity.Digest), new(), default)).Code);
-        var repeat = Success(await driver.Store.ReserveDeleteAsync(new(original.Stamp), new(), default));
-        Assert.Equal(ArtifactMutationOutcome.AlreadyAbsent, Success(await driver.Store.DeleteAsync(repeat, new(), default)).Outcome);
-        using var next = new ShortSource(bytes);
-        var recreated = await PublishAsync(driver, next, new(1024));
-        Assert.NotEqual(original.Stamp.Incarnation, recreated.Stamp.Incarnation);
-        var stale = Success(await driver.Store.ReserveDeleteAsync(new(original.Stamp), new(), default));
-        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.DeleteAsync(stale, new(), default)).Code);
-        var cleanup = new ArtifactCleanupRequest(driver.Identity, [new ArtifactCleanupTarget.RemovedIncarnation(original.Stamp)]);
-        Success(await driver.Maintenance.CleanupAsync(cleanup, new(), default));
-        Assert.Equal(bytes, await ReadAsync(driver, recreated.Stamp));
+        await ArtifactDeletionAssertions.ExactReceiptsAndRecreationAsync(
+            driver.Store, driver.Maintenance, driver.Identity, default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 
     [Theory]
@@ -79,18 +41,9 @@ public sealed class ArtifactDeletionTests
         var available = true;
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceDecision(available, count, Guid.NewGuid())));
-        using var source = new ShortSource("protected reference"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        var ticket = Success(await driver.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), default));
-        Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.DeleteAsync(ticket, new(), default)).Code);
-        count = 0;
-        available = false;
-        Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.DeleteAsync(ticket, new(), default)).Code);
-        Assert.Equal("protected reference"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
-        available = true;
-        Assert.Equal(ArtifactMutationOutcome.Removed, Success(await driver.Store.DeleteAsync(ticket, new(), default)).Outcome);
+        await ArtifactDeletionAssertions.LiveReferencesAsync(driver.Store,
+            value => count = value, value => available = value, default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 
     [Theory]
@@ -100,19 +53,7 @@ public sealed class ArtifactDeletionTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
-        var bytes = "reader exclusion"u8.ToArray();
-        using var source = new ShortSource(bytes);
-        var receipt = await PublishAsync(driver, source, new(1024));
-        var reader = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default));
-        var ticket = Success(await driver.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), default));
-        var deletion = driver.Store.DeleteAsync(ticket, new(), default).AsTask();
-        using var destination = new MemoryStream();
-        Success(await reader.CopyToAsync(destination, new(), default));
-        Assert.False(deletion.IsCompleted);
-        Assert.Equal(bytes, destination.ToArray());
-        await reader.DisposeAsync();
-        Assert.Equal(ArtifactMutationOutcome.Removed, Success(await deletion).Outcome);
-        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-            await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)).Code);
+        await ArtifactDeletionAssertions.HeldReaderExcludesDeletionAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 }

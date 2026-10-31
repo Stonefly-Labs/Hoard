@@ -8,9 +8,10 @@ public sealed class ArtifactBoundaryTests
     [Fact]
     public void Prepared_artifact_packages_preserve_independence_and_existing_public_members()
     {
+        using var capture = InspectionInput.BeginIfRequested($"{typeof(ArtifactBoundaryTests).FullName}.{nameof(Prepared_artifact_packages_preserve_independence_and_existing_public_members)}");
         var path = Environment.GetEnvironmentVariable("HOARD_ARTIFACT_BOUNDARIES");
         Assert.False(string.IsNullOrWhiteSpace(path), "Run validate-artifacts.sh --phase packages to prepare actual artifact package graphs.");
-        using var document = JsonDocument.Parse(File.ReadAllText(path!));
+        using var document = JsonDocument.Parse(InspectionInput.ReadAllText(path!));
         var graphs = document.RootElement.GetProperty("graphs").EnumerateArray().ToArray();
         Assert.Equal(new[] { "platform", "local", "object", "host-adapters", "consumer", "crash-runner", "transfer-runner", "boundary-leak" }.Order(),
             graphs.Select(graph => graph.GetProperty("scanId").GetString()!).Order());
@@ -31,8 +32,8 @@ public sealed class ArtifactBoundaryTests
             }
             else { Assert.Empty(violations); }
         }
-        using var baseline = AssemblyDefinition.ReadAssembly(document.RootElement.GetProperty("baselineAbstractions").GetString()!);
-        using var current = AssemblyDefinition.ReadAssembly(document.RootElement.GetProperty("currentAbstractions").GetString()!);
+        using var baseline = InspectionInput.ReadAssembly(document.RootElement.GetProperty("baselineAbstractions").GetString()!);
+        using var current = InspectionInput.ReadAssembly(document.RootElement.GetProperty("currentAbstractions").GetString()!);
         var types = PublicSurfaceInspector.Types(current.MainModule).ToDictionary(type => type.FullName);
         foreach (var old in PublicSurfaceInspector.Types(baseline.MainModule).Where(type => type.IsPublic || type.IsNestedPublic))
         {
@@ -49,14 +50,16 @@ public sealed class ArtifactBoundaryTests
             { Assert.Contains(actual.Interfaces, candidate => candidate.InterfaceType.FullName == contract.InterfaceType.FullName); }
         }
         Assert.Empty(types["Hoard.Abstractions.Providers.IArtifactProvider"].Methods);
+        capture?.Complete();
     }
 
     [Fact]
     public void Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename()
     {
+        using var capture = InspectionInput.BeginIfRequested($"{typeof(ArtifactBoundaryTests).FullName}.{nameof(Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename)}");
         var path = Environment.GetEnvironmentVariable("HOARD_ARTIFACT_BOUNDARIES");
         Assert.False(string.IsNullOrWhiteSpace(path), "Prepare actual artifact package graphs first.");
-        using var document = JsonDocument.Parse(File.ReadAllText(path!));
+        using var document = JsonDocument.Parse(InspectionInput.ReadAllText(path!));
         var graphs = document.RootElement.GetProperty("graphs").EnumerateArray()
             .ToDictionary(graph => graph.GetProperty("scanId").GetString()!);
         using var consumer = InspectionEvidence.Load(graphs["consumer"]);
@@ -77,6 +80,7 @@ public sealed class ArtifactBoundaryTests
         Assert.Empty(RenameCalls(objects.Assemblies["ObjectSemantics"]));
         Assert.DoesNotContain(objects.Assemblies["ObjectSemantics"].MainModule.AssemblyReferences,
             reference => reference.Name == "Hoard.Fixtures.Artifacts.Local");
+        capture?.Complete();
     }
 
     private static string[] ConsumerCouplings(InspectionEvidence evidence, string assembly, string root)

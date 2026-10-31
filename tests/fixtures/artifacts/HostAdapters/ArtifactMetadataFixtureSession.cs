@@ -7,6 +7,8 @@ namespace Hoard.Fixtures.Artifacts.HostAdapters;
 
 public sealed class ArtifactMetadataFixtureSession : IAsyncDisposable
 {
+    private readonly object shutdownSync = new();
+    private Task? shutdown;
     private ArtifactMetadataFixtureSession(ArtifactFixtureSession artifacts, IMetadataStore metadata,
         ArtifactMetadataPublicationAuthority publication, MetadataFixtureControls controls)
     {
@@ -63,6 +65,25 @@ public sealed class ArtifactMetadataFixtureSession : IAsyncDisposable
         MemoryMetadataStore memory => memory.WhenIdleAsync(),
         _ => throw new InvalidOperationException("Unknown artifact metadata fixture.")
     };
+
+    public Task CloseAdmissionsAndObserveSettlementForQualificationAsync()
+    {
+        lock (shutdownSync) { return shutdown ??= CloseAndSettleAsync(); }
+    }
+
+    private async Task CloseAndSettleAsync()
+    {
+        var authoritySettlement = Artifacts.Authority.CloseAdmissionsAndObserveSettlementForQualificationAsync();
+        var metadataDisposal = Metadata.DisposeAsync().AsTask();
+        var metadataSettlement = Metadata switch
+        {
+            SqliteMetadataStore sqlite => sqlite.ObserveLifetimeSettlementForTest(),
+            MemoryMetadataStore memory => memory.ObserveWorkSettlementForTest(),
+            _ => throw new InvalidOperationException("Unknown artifact metadata fixture.")
+        };
+        var artifactDisposal = Artifacts.DisposeAsync().AsTask();
+        await Task.WhenAll(authoritySettlement, metadataDisposal, metadataSettlement, artifactDisposal);
+    }
 
     public async ValueTask DisposeAsync()
     {

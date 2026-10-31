@@ -24,16 +24,17 @@ public sealed class ArtifactCrashTests
             ?? throw new InvalidOperationException("Artifact crash proof directory is required."));
         Directory.CreateDirectory(capture);
         string? barrierProof = null;
+        byte[] capturedState = [];
         var killedExit = 0;
         var killedPid = 0;
         using (var child = Start("crash"))
         {
             root.AllowCleanup = false;
             control.AllowCleanup = false;
-            var errors = child.StandardError.ReadToEndAsync();
+            var errors = ArtifactChildOutput.ReadToEndAsync(child.StandardError);
             try
             {
-                var line = await child.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(60));
+                var line = await ArtifactChildOutput.ReadLineAsync(child.StandardOutput);
                 Assert.NotNull(line);
                 Assert.InRange(line.Length, 1, 16384);
                 using var document = JsonDocument.Parse(line);
@@ -42,11 +43,15 @@ public sealed class ArtifactCrashTests
                 Assert.Equal(child.Id, observed.GetProperty("pid").GetInt32());
                 Assert.Equal(barrier, observed.GetProperty("barrier").GetString());
                 Assert.Equal(run, observed.GetProperty("runId").GetString());
-                Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(state))),
+                Assert.InRange(new FileInfo(state).Length, 1, 16384);
+                capturedState = File.ReadAllBytes(state);
+                Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(capturedState)),
                     observed.GetProperty("stateSha256").GetString());
                 Assert.Equal(barrier == "B3", observed.GetProperty("acknowledged").GetBoolean());
                 barrierProof = line;
-                File.Copy(state, System.IO.Path.Combine(capture, barrier + "-state.json"), overwrite: false);
+                using (var snapshot = new FileStream(System.IO.Path.Combine(capture, barrier + "-state.json"),
+                    FileMode.CreateNew, FileAccess.Write))
+                { snapshot.Write(capturedState); }
                 killedPid = child.Id;
                 child.Kill();
                 await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
@@ -62,14 +67,14 @@ public sealed class ArtifactCrashTests
         }
         using var reopened = Start("recover");
         root.AllowCleanup = control.AllowCleanup = false;
-        var output = reopened.StandardOutput.ReadToEndAsync();
-        var recoveryErrors = reopened.StandardError.ReadToEndAsync();
+        var output = ArtifactChildOutput.ReadToEndAsync(reopened.StandardOutput);
+        var recoveryErrors = ArtifactChildOutput.ReadToEndAsync(reopened.StandardError);
         try
         {
             await reopened.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(60));
             var errors = await recoveryErrors;
-            File.WriteAllText(System.IO.Path.Combine(capture, barrier + "-recovery-errors.txt"), errors);
             Assert.True(errors.Length == 0, errors);
+            File.WriteAllText(System.IO.Path.Combine(capture, barrier + "-recovery-errors.txt"), "");
             Assert.Equal(0, reopened.ExitCode);
             Assert.NotEqual(killedPid, reopened.Id);
             var text = await output;
@@ -82,7 +87,7 @@ public sealed class ArtifactCrashTests
             foreach (var check in new[] { "controlReadback", "controlReceipt", "exactReceipt", "contentReadback" })
             { Assert.True(proof.GetProperty(check).GetBoolean()); }
             if (barrier is "B0" or "B1" or "D0" or "D1") { Assert.True(proof.GetProperty("ownerFenced").GetBoolean()); }
-            File.WriteAllText(System.IO.Path.Combine(capture, barrier + ".json"), JsonSerializer.Serialize(new
+            var sourceBytes = JsonSerializer.SerializeToUtf8Bytes(new
             {
                 provider = "local",
                 qualification = false,
@@ -96,7 +101,13 @@ public sealed class ArtifactCrashTests
                 reopenedExitCode = reopened.ExitCode,
                 barrierProof = JsonSerializer.Deserialize<JsonElement>(barrierProof!),
                 recovery = proof.Clone()
-            }));
+            });
+            var sourcePath = System.IO.Path.Combine(capture, barrier + ".json");
+            File.WriteAllBytes(sourcePath, sourceBytes);
+            ArtifactSourceCapture.PublishIfRequested(
+                $"{typeof(ArtifactCrashTests).FullName}.{nameof(Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes)}(barrier: \"{barrier}\")",
+                (sourcePath, sourceBytes), (System.IO.Path.Combine(capture, barrier + "-state.json"), capturedState),
+                (System.IO.Path.Combine(capture, barrier + "-recovery-errors.txt"), []));
         }
         finally
         {

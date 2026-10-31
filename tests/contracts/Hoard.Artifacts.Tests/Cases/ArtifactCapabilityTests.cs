@@ -2,11 +2,12 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Fixtures.Artifacts.ObjectSemantics;
-using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
+using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactCapabilityTests
+public sealed class ArtifactCapabilityTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local", "version")]
@@ -37,22 +38,16 @@ public sealed class ArtifactCapabilityTests
             conditionalPublication: gap != "publication", conditionalDeletion: gap != "deletion",
             stagingRecovery: gap != "recovery", ownerFencing: gap != "fencing",
             readerProtection: gap != "readers", boundedStreaming: gap != "streaming");
+        var local = provider == "local" ? new LocalFaultControls { CapabilitiesForAdmission = Inject } : null;
+        var objects = provider == "object" ? new ObjectFaultControls { CapabilitiesForAdmission = Inject } : null;
         IArtifactStoreLifetime lifetime = provider == "local"
-            ? new LocalArtifactStore(root.Path, controls: new() { CapabilitiesForAdmission = Inject })
-            : new ObjectArtifactStore(root.Path, controls: new() { CapabilitiesForAdmission = Inject });
-        try
-        {
-            var failed = Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await lifetime.InitializeAsync(
-                new(ArtifactInitializationMode.CreateEmpty, identity, authority), new(), default));
-            Assert.Equal(gap == "authority" ? ArtifactFailureCode.Denied : ArtifactFailureCode.Unsupported, failed.Code);
-            Assert.False(Directory.Exists(root.Path));
-            Assert.False(Ready(lifetime));
-        }
-        finally
-        {
-            var stopped = Success(await lifetime.StopAsync(new(), default));
-            Assert.Equal(ArtifactCleanupState.Released, stopped.State);
-        }
+            ? new LocalArtifactStore(root.Path, controls: local)
+            : new ObjectArtifactStore(root.Path, controls: objects);
+        await ArtifactCapabilityAssertions.MissingGuaranteeAsync(lifetime,
+            new(ArtifactInitializationMode.CreateEmpty, identity, authority), gap,
+            () => Directory.Exists(root.Path), () => Ready(lifetime), default);
+        ArtifactProviderDriver.ObserveOriginalStore(output, nameof(ArtifactCapabilityTests), provider,
+            lifetime, authority, local is { } controls ? controls : (object)objects!, parameter: $"gap: \"{gap}\"");
     }
 
     [Theory]
@@ -63,23 +58,11 @@ public sealed class ArtifactCapabilityTests
         using var root = new ArtifactTestRoot();
         var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
         var authority = new ArtifactCoordinationAuthority(identity);
-        var limits = new ArtifactLimits(artifactBytes: 1024, stagingBytes: 2048, transferSlots: 1, waitingCalls: 0);
         ArtifactCapabilities Complete(ArtifactCapabilities value) => new(1, value.Durability, value.Enumeration, value.Limits);
         IArtifactStoreLifetime lifetime = provider == "local"
             ? new LocalArtifactStore(root.Path, controls: new() { CapabilitiesForAdmission = Complete })
             : new ObjectArtifactStore(root.Path, controls: new() { CapabilitiesForAdmission = Complete });
-        try
-        {
-            var admission = Success(await lifetime.InitializeAsync(
-                new(ArtifactInitializationMode.CreateEmpty, identity, authority, limits), new(), default));
-            Assert.True(admission.Capabilities.MeetsBaseline);
-            Assert.Equal(limits, admission.Capabilities.Limits);
-            Assert.False(admission.Capabilities.RangeReads);
-            Assert.True(admission.Capabilities.Sha512);
-            Assert.True(Ready(lifetime));
-        }
-        finally { Assert.Equal(ArtifactCleanupState.Released, Success(await lifetime.StopAsync(new(), default)).State); }
-        Assert.False(Ready(lifetime));
+        await ArtifactCapabilityAssertions.CompleteProfileAsync(lifetime, identity, authority, () => Ready(lifetime), default);
     }
 
     private static bool Ready(IArtifactStoreLifetime lifetime) => lifetime switch

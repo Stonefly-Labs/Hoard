@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Hoard.Abstractions.Metadata;
 
 namespace Hoard.Fixtures.Metadata.Sqlite;
@@ -7,6 +8,50 @@ public sealed record SqliteFixtureConfiguration(
 
 public sealed partial class SqliteMetadataStore
 {
+    private readonly object physicalObservationLock = new();
+    private bool? initialPhysicalWal;
+
+    public ValueTask<MetadataResult<string>> ObservePhysicalStateForTestAsync(CancellationToken cancellationToken) =>
+        worker.SubmitIndependent(cancellationToken, async budget =>
+        {
+            budget.Check();
+            var wal = path + "-wal";
+            bool requireWal;
+            lock (physicalObservationLock)
+            {
+                initialPhysicalWal ??= File.Exists(wal);
+                requireWal = initialPhysicalWal.Value;
+            }
+            using var fingerprint = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            fingerprint.AppendData(await DigestAsync(path));
+            // A read-only reopen can create a new empty WAL; previously observed files remain mandatory.
+            var includeWal = requireWal || File.Exists(wal) && new FileInfo(wal).Length != 0;
+            fingerprint.AppendData([includeWal ? (byte)1 : (byte)0]);
+            if (includeWal) { fingerprint.AppendData(await DigestAsync(wal)); }
+            budget.Check();
+            return Ok(Convert.ToHexStringLower(fingerprint.GetHashAndReset()));
+
+            async ValueTask<byte[]> DigestAsync(string file)
+            {
+                await using var input = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+                var buffer = new byte[64 * 1024];
+                while (true)
+                {
+                    budget.Check();
+                    await observe("physical.read");
+                    int count;
+                    try { count = await input.ReadAsync(buffer, cancellationToken); }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    { throw new SqliteBudgetFailure(true); }
+                    if (count == 0) { break; }
+                    digest.AppendData(buffer.AsSpan(0, count));
+                }
+                budget.Check();
+                return digest.GetHashAndReset();
+            }
+        });
+
     public ValueTask<MetadataResult<string>> LogicalDigestForTestAsync() =>
         worker.Submit(TimeSpan.FromSeconds(30), default, MetadataPhase.Schema, null, budget =>
         {

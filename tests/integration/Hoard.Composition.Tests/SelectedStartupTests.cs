@@ -88,6 +88,12 @@ public class SelectedStartupTests
     public async Task Endpoint_free_selected_modules_initialize_then_become_ready_once()
     {
         LifecycleFixtures.Reset();
+        var workers = new[] { "artifact", "metadata" }.ToDictionary(id => id,
+            _ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
+        foreach (var (id, entered) in workers)
+        {
+            LifecycleFixtures.For(id).Worker = _ => { entered.SetResult(); return Task.CompletedTask; };
+        }
         var web = LifecycleFixtures.WebBuilder();
         var builder = LifecycleFixtures.Registry(web.Services);
         var validated = builder.ValidateComposition(LifecycleFixtures.Selection(), LifecycleFixtures.Versions, new()).Composition!;
@@ -99,6 +105,7 @@ public class SelectedStartupTests
         await app.StartAsync();
         Assert.True(lifecycle.Snapshot.Ready);
         Assert.True((await lifecycle.StartAsync()).Ready);
+        await Task.WhenAll(workers.Values.Select(entered => entered.Task)).WaitAsync(TimeSpan.FromSeconds(5));
         foreach (var id in new[] { "artifact", "metadata" })
         {
             Assert.Equal(new[] { "construct", "services", "map", "initialize", "readiness", "worker" },

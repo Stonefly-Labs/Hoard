@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Test-only provider conformance contracts and shared assertions. Not a product runtime dependency.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Hoard.Abstractions/Hoard.Abstractions.csproj" />
+    <PackageReference Include="xunit" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Catalog/catalog.json" LogicalName="Hoard.Conformance.Catalog" />
+    <InternalsVisibleTo Include="Hoard.Conformance.Tests" />
+  </ItemGroup>
+</Project>

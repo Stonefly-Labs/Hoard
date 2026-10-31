@@ -1,0 +1,236 @@
+name: Conformance foundations
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conformance-foundations-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  foundations:
+    name: Native ownership and evidence regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run non-qualifying foundational regressions
+        run: python3 scripts/conformance_unit_checks.py --all-tooling
+      - name: Verify source-owned catalogs
+        run: |
+          python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check
+          python3 scripts/conformance_case_catalog.py --check-sdk
+
+  sdk-diagnostics:
+    name: Non-qualifying Linux SDK and safe logger diagnostics
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Seal six baselines before candidate SDK and logger diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/sdk-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          python3 scripts/conformance_sdk_checks.py \
+            --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run"
+
+  compatibility-replay:
+    name: Non-qualifying native unchanged-source and retained-binary replay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Replay unchanged inputs and release every owned process and store
+        shell: bash
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/compatibility-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          python3 scripts/conformance_sdk_checks.py --root "$GITHUB_WORKSPACE" \
+            --compatibility-only --evidence "$private_parent/run"
+          python3 - "$private_parent/run" <<'PY'
+          import hashlib
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          import conformance_evidence as evidence
+          from conformance_case_catalog import architecture_runtime_tests, binary_runtime_tests, version_runtime_tests
+          from conformance_inherited import verify_controller_invocations
+          from conformance_sources import read_bounded
+          root = Path(sys.argv[1])
+          try:
+              summary = evidence.load_json(read_bounded(
+                  root / "proofs/compatibility-diagnostic-summary.json", 65536))
+              owner = evidence.load_json(read_bounded(root / "ownership.json", 65536))
+              preflight = evidence.load_json(read_bounded(root / "proofs/preflight.json", 65536))
+              architecture = summary["architecturePreparation"]
+              frozen = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+                  root / "proofs/compatibility-runtime-inputs.json", 16 * 1024**2)))
+              if (frozen["profileId"] != "compatibility" or frozen["mode"] != "diagnostic"
+                      or frozen["runId"] != owner["runId"]):
+                  raise evidence.ConformanceError("InputChanged")
+              for key, scope, count in (("architectureRuntime", "architecture", len(architecture_runtime_tests())),
+                                        ("versionRuntime", "version", len(version_runtime_tests())),
+                                        ("binaryRuntime", "binary", len(binary_runtime_tests()))):
+                  observed = summary[key]
+                  retained = evidence.load_json(read_bounded(
+                      root / f"proofs/compatibility-{scope}-runtime-summary.json", 65536))
+                  completion = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+                      root / f"proofs/compatibility-{scope}-completion-inputs.json", 16 * 1024**2)))
+                  if (observed != retained or observed["qualification"] is not False
+                          or observed["profileComplete"] is not False
+                          or observed["scope"] != f"{scope}-runtime-diagnostic"
+                          or observed["inputsSha256"] != evidence.digest(frozen)
+                          or observed["postInputsSha256"] != evidence.digest(completion)
+                          or observed["passedParameters"] != count
+                          or scope == "version" and observed["admittedObservations"] != 170):
+                      raise evidence.ConformanceError("ProofMismatch")
+                  evidence.verify_input_recomputation(frozen, completion)
+                  for field in ("inputsSha256", "postInputsSha256", "discoverySha256",
+                                "completionSha256", "runtimeProofsSha256", "nativeParentSha256"):
+                      evidence.sha256(observed[field])
+              if (architecture["inputMapPath"] != "proofs/compatibility-architecture-inputs.json"
+                      or architecture["manifestPath"] != "stores/compatibility-architecture/manifest.json"):
+                  raise evidence.ConformanceError("ProofMismatch")
+              inputs = read_bounded(root / "proofs/compatibility-architecture-inputs.json", 2 * 1024**2)
+              selected = evidence._hash_map(evidence.load_json(inputs))
+              if (summary["qualification"] is not False or summary["profileComplete"] is not False
+                      or summary["processResourcesReleased"] is not True or owner["state"] != "Released"
+                      or preflight["profileId"] != "compatibility"
+                      or architecture["qualification"] is not False or architecture["profileComplete"] is not False
+                      or architecture["fixtureGraphs"] != 22 or architecture["requiredRealScans"] != 8
+                      or hashlib.sha256(inputs).hexdigest() != architecture["inputMapSha256"]
+                      or len(selected) != architecture["inputCount"]
+                      or selected.get(architecture["manifestPath"]) != evidence.sha256(architecture["manifestSha256"])
+                      or architecture["parentSha256"] != architecture["nativeInvocations"]["parentSha256"]):
+                  raise evidence.ConformanceError("ProofMismatch")
+              verify_controller_invocations(
+                  root, architecture["nativeInvocations"], "architecture", owner["runId"], owner["rootId"])
+          except (evidence.ConformanceError, OSError, ValueError, KeyError, TypeError):
+              raise SystemExit("WitnessMissing") from None
+          print('{"qualification":false,"status":"Incomplete","code":"EvidenceIncomplete"}')
+          PY
+
+  lock-preparation:
+    name: Non-qualifying lock preparation and fresh build replay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Prepare reviewable locks only after independent locked replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/lock-preparation-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          bash scripts/validate-conformance.sh \
+            --update-locks --evidence "$private_parent/run"
+      - name: Retain only reviewable source locks
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: conformance-prepared-locks
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            tests/contracts/Hoard.Testing.Conformance/packages.lock.json
+            tests/contracts/Hoard.Conformance.TestLogger/**/packages.lock.json
+            tests/contracts/Hoard.Conformance.Tests/**/packages.lock.json
+            tests/fixtures/conformance/**/packages.lock.json
+            tests/integration/Hoard.Composition.Tests/PackageAcceptance/packages.lock.json
+
+  category-extraction:
+    name: Non-qualifying isolated ${{ matrix.category }} extraction and cleanup
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        category: [metadata, artifacts]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Execute only the selected native category and release synthetic resources
+        shell: bash
+        env:
+          CONFORMANCE_CATEGORY: ${{ matrix.category }}
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/category-extraction-${CONFORMANCE_CATEGORY}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          status=0
+          PYTHONPATH=scripts:tests/tooling python3 tests/tooling/test_conformance_evidence.py \
+            --native-category-controls \
+            --profile "$CONFORMANCE_CATEGORY" --evidence "$private_parent/run" || status=$?
+          test "$status" -eq 0
+          python3 - "$private_parent/run" "$CONFORMANCE_CATEGORY" <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, "scripts")
+          import conformance_evidence as evidence
+          from conformance_case_catalog import expected_cases
+          from conformance_sources import read_bounded
+
+          root, profile = Path(sys.argv[1]), sys.argv[2]
+          path = root / f"proofs/category-{profile}-qualification-report.json"
+          report = evidence.admit_entity(
+              "QualificationReport", evidence.load_json(read_bounded(path, evidence.MAX_REPORT_BYTES)))
+          expected = {case.key for case in expected_cases(profile)}
+          observed = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"])
+                      for row in report["results"]}
+          if (report["inputs"]["profileId"] != profile or report["inputs"]["mode"] != "qualification"
+                  or report["state"] != "Incomplete" or report["qualification"]
+                  or observed != expected
+                  or any(row["status"] not in ("Passed", "NotApplicable") for row in report["results"])
+                  or not report["resources"] or any(row["state"] != "Released" for row in report["resources"])
+                  or evidence.input_manifest(root, list(report["proofs"])) != report["proofs"]):
+              raise evidence.ConformanceError("EvidenceIncomplete")
+          evidence.verify_completion_inputs(root, report)
+          print('{"qualification":false,"code":"None","mode":"category-cli-diagnostic"}')
+          PY

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Bindings.Sqlite</AssemblyName>
+    <PackageId>Hoard.Fixtures.Conformance.Bindings.Sqlite</PackageId>
+    <Description>Test-only adapter for the independent SQLite metadata fixture.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/FixturePublicationAuthority.cs" Link="FixturePublicationAuthority.cs" />
+    <Compile Include="../Shared/MetadataCorruptionOwnership.cs" Link="MetadataCorruptionOwnership.cs" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.Sqlite" />
+  </ItemGroup>
+</Project>

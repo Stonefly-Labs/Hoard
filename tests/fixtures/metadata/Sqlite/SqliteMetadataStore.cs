@@ -204,4 +204,6 @@ public sealed partial class SqliteMetadataStore : IMetadataStore, IMetadataSchem
     }
 
     public Task WhenIdleAsync() => worker.WhenIdleAsync();
+    // Includes native handle cleanup; an idle but open worker has not settled its lifetime.
+    public Task ObserveLifetimeSettlementForTest() => worker.ObserveLifetimeSettlementForTest();
 }

@@ -29,7 +29,88 @@ class ArtifactEvidenceTests(unittest.TestCase):
         path.write_text(json.dumps(value))
         return {"proof": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
+    def test_current_preparation_uses_current_metadata_and_sdk_not_a_rebuilt_historical_recipe(self):
+        root = self.work / "source"
+        work = self.work / "prepared"
+        root.mkdir()
+        work.mkdir()
+        shared_sources = (
+            *(f"tests/contracts/Hoard.Testing.Conformance/Artifacts/{name}.cs" for name in (
+                "ArtifactCrashAssertions", "ArtifactNonCooperationAssertions", "ArtifactTransferAssertions",
+                "GeneratedArtifactSource", "ArtifactHashingSink")),
+            "tests/contracts/Hoard.Testing.Conformance/Bindings/ArtifactControlObservations.cs")
+        for relative in (
+                "Directory.Build.props", "Directory.Packages.props", "global.json",
+                "specs/004-module-discovery/contracts/openapi.json",
+                *(f"src/Hoard.{name}/Hoard.{name}.csproj"
+                  for name in ("Abstractions", "Core", "Hosting", "Application")),
+                *(f"tests/fixtures/artifacts/{name}/{name}.csproj" for name in (
+                    "Local", "ObjectSemantics", "HostAdapters", "Consumer",
+                    "CrashRunner", "TransferRunner", "BoundaryLeak")),
+                "tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj",
+                *shared_sources):
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("tooling-only-current-source")
+            if relative.endswith(".csproj"):
+                for lock in (target.parent / "packages.lock.json",
+                             target.parent / "PackageAcceptance/packages.lock.json"):
+                    lock.parent.mkdir(parents=True, exist_ok=True)
+                    lock.write_text('{"version":2,"dependencies":{"net10.0":{}}}')
+                    if target.stem == "Hoard.Artifacts.Tests" and lock.parent.name == "PackageAcceptance":
+                        lock.write_text('{"version":2,"dependencies":{"net10.0":{'
+                            '"Hoard.Testing.Conformance":{"resolved":"0.1.0","contentHash":"original"}}}}')
+        commands = []
+
+        def metadata_packages(source, destination, update):
+            self.assertEqual(source, root)
+            self.assertFalse(update)
+            (destination / "feed").mkdir()
+            for name in ("Sqlite", "Memory", "HostAdapters"):
+                (destination / "feed" / f"Hoard.Fixtures.Metadata.{name}.0.1.0.nupkg").write_bytes(
+                    b"tooling-only-current-metadata")
+            (destination / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").write_bytes(
+                b"tooling-only-current-sdk")
+
+        def command(*args, **kwargs):
+            self.assertEqual(args[0], "dotnet",
+                             "Current source preparation must not rebuild a historical metadata recipe.")
+            commands.append(args)
+            project = Path(args[2])
+            self.assertTrue(project.is_file())
+            if project.stem in ("CrashRunner", "TransferRunner"):
+                for shared in shared_sources:
+                    self.assertEqual((work / "current" / shared).read_bytes(), (root / shared).read_bytes())
+            if project.stem == "Hoard.Artifacts.Tests":
+                self.assertEqual((work / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").read_bytes(),
+                                 b"tooling-only-current-sdk")
+                if "-p:ArtifactPackageAcceptance=true" in args:
+                    self.assertTrue(any(arg.startswith("-p:NuGetLockFilePath=") for arg in args))
+            if args[1] == "pack":
+                name = ("Hoard.Fixtures.Artifacts." + project.stem
+                        if "fixtures" in project.parts else project.stem)
+                (work / "feed" / f"{name}.0.1.0.nupkg").write_bytes(b"tooling-only-current-package")
+            return ""
+
+        with (patch.object(artifact.metadata, "prepare_packages", side_effect=metadata_packages) as metadata,
+              patch.object(artifact, "run", side_effect=command),
+              patch.object(artifact.foundation, "canonicalize_acceptance_archive"),
+              patch.object(artifact, "source_hash", return_value="a" * 64),
+              patch.object(artifact, "lock_hashes", return_value={})):
+            inputs = artifact.prepare_packages(root, work, False)
+        metadata.assert_called_once_with(root, work / "metadata-packages", False)
+        self.assertFalse(inputs["qualification"])
+        self.assertEqual({item["id"] for item in inputs["packages"]}, set(artifact.PACKAGES))
+        self.assertEqual(len(inputs["lockDerivations"]), 1)
+        self.assertIn('"contentHash":"original"',
+                      (root / "tests/contracts/Hoard.Artifacts.Tests/PackageAcceptance/packages.lock.json").read_text())
+        self.assertTrue(any("-p:ArtifactPackageAcceptance=true" in args for args in commands))
+
     def cases(self):
+        # Synthetic parser fixtures are not runtime-attribution or qualification evidence.
+        projection = patch.object(artifact.legacy, "verify_projection")
+        projection.start()
+        self.addCleanup(projection.stop)
         witness = self.work / "synthetic.trx"
         bindings = {key: "a" * 64 for key in artifact.CASE_BINDINGS}
         entries = [
@@ -439,38 +520,20 @@ class ArtifactEvidenceTests(unittest.TestCase):
 
     def test_failed_child_and_timeout_fail_without_exposing_output(self):
         for timed_out in (False, True):
-            child = MagicMock(pid=42, returncode=7)
-            child.__enter__.return_value = child
-            child.communicate.side_effect = (
-                [subprocess.TimeoutExpired("child", 600), ("synthetic-private-canary", None)]
-                if timed_out else [("synthetic-private-canary", None)])
+            command = "print('synthetic-private-canary',flush=True); " + (
+                "import time; time.sleep(60)" if timed_out else "raise SystemExit(7)")
             with self.subTest(timed_out=timed_out), \
-                    patch.object(artifact.subprocess, "Popen", return_value=child) as start, \
-                    patch.object(artifact, "command_processes", create=True,
-                                 side_effect=[{42, 43}, set()]) as processes, \
-                    patch.object(artifact.os, "kill") as kill, \
+                    patch.object(artifact, "COMMAND_TIMEOUT_SECONDS", 0.2), \
                     self.assertRaises(RuntimeError) as caught:
-                artifact.run("fixture")
+                artifact.run(sys.executable, "-c", command)
             self.assertNotIn("synthetic-private-canary", str(caught.exception))
-            self.assertIs(True, start.call_args.kwargs.get("start_new_session"))
-            if timed_out:
-                self.assertEqual({42, 43}, {call.args[0] for call in kill.call_args_list})
-                self.assertTrue(all(call.args[1] == artifact.signal.SIGKILL for call in kill.call_args_list))
-                self.assertLessEqual(child.communicate.call_args.kwargs["timeout"], 10)
-            else:
-                kill.assert_not_called()
-                processes.assert_not_called()
+            self.assertIn("finite deadline" if timed_out else "CommandFailed", str(caught.exception))
 
     def test_timeout_with_unsettled_pipe_reports_cleanup_incomplete_not_success(self):
-        child = MagicMock(pid=42, returncode=None)
-        child.__enter__.return_value = child
-        child.communicate.side_effect = subprocess.TimeoutExpired("child", 600)
-        with patch.object(artifact.subprocess, "Popen", return_value=child), \
-                patch.object(artifact, "command_processes", create=True, return_value={42}), \
-                patch.object(artifact.os, "kill") as kill, \
+        with patch.object(artifact.legacy, "capture",
+                          side_effect=RuntimeError("Legacy command cleanup incomplete; private stores retained.")), \
                 self.assertRaisesRegex(RuntimeError, "cleanup incomplete"):
             artifact.run("fixture")
-        kill.assert_called_once_with(child.pid, artifact.signal.SIGKILL)
 
     def test_actual_timeout_stops_owned_descendant_and_preserves_unrelated_child(self):
         marker = self.work / "descendant.json"
@@ -504,15 +567,10 @@ class ArtifactEvidenceTests(unittest.TestCase):
                 unrelated.kill()
             unrelated.wait(timeout=10)
 
-    def test_interrupted_command_settles_owned_children_before_propagating(self):
-        child = MagicMock(pid=42, returncode=-9)
-        child.communicate.side_effect = [KeyboardInterrupt(), ("private-canary", None)]
-        with patch.object(artifact.subprocess, "Popen", return_value=child), \
-                patch.object(artifact, "command_processes", side_effect=[{42, 43}, set()]), \
-                patch.object(artifact.os, "kill") as kill, \
+    def test_interrupted_command_propagates_after_transport_cleanup(self):
+        with patch.object(artifact.legacy, "capture", side_effect=KeyboardInterrupt()), \
                 self.assertRaises(KeyboardInterrupt):
             artifact.run("fixture")
-        self.assertEqual({42, 43}, {call.args[0] for call in kill.call_args_list})
 
     def test_command_processes_selects_only_live_members_of_its_owned_session(self):
         output = "42 42 S\n43 42 R\n44 42 Z\n99 99 S\n"
@@ -554,6 +612,7 @@ class ArtifactEvidenceTests(unittest.TestCase):
                 patch.object(artifact, "prepare_baseline"), patch.object(artifact, "prepare_packages"), \
                 patch.object(artifact, "package_checks", create=True, return_value={"testsPassed": 1}) as checks, \
                 patch.object(artifact, "source_hash", return_value="a" * 64), \
+                patch("builtins.print"), \
                 patch.object(sys, "argv", ["artifact_evidence", str(ROOT), "--phase", "packages",
                                           "--evidence", str(destination)]):
             self.assertEqual(0, artifact.main())

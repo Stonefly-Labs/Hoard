@@ -4,7 +4,7 @@ using Hoard.Fixtures.Metadata.Sqlite;
 
 namespace Hoard.Fixtures.Metadata.Hosting;
 
-public sealed class MetadataFixtureSession : IAsyncDisposable
+public sealed partial class MetadataFixtureSession : IAsyncDisposable
 {
     private string? ownedDirectory;
     private readonly TimeProvider clock;
@@ -49,6 +49,47 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
     public MetadataFixtureControls Controls { get; }
     public ControlledPublicationAuthority Authority { get; }
 
+    public IAsyncDisposable ObserveBeforeSchemaUpgrade(Func<ValueTask> observer) =>
+        Controls.RegisterObserver(Store switch
+        {
+            SqliteMetadataStore => "U0",
+            MemoryMetadataStore => "memory.upgrade.before_decision",
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        }, observer);
+
+    public IAsyncDisposable ObserveSchemaCandidatePrepared(Func<ValueTask> observer) =>
+        Controls.RegisterObserver(Store switch
+        {
+            SqliteMetadataStore => "U1",
+            MemoryMetadataStore => "memory.upgrade.before_decision",
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        }, observer);
+
+    public MetadataContinuation CorruptContinuationForTest(
+        MetadataContinuation continuation, string component, string shape) => Store switch
+        {
+            SqliteMetadataStore => SqlitePayloadDamage.Continuation(continuation, component switch
+            {
+                "ContractVersion" => "ContractVersion",
+                "Epoch" => "Epoch",
+                "Schema" => "Schema",
+                "Query" => "Query",
+                "PageSize" => "PageSize",
+                "Position" => "LastKey",
+                _ => throw new ArgumentException("Unknown continuation component.", nameof(component))
+            }, shape),
+            MemoryMetadataStore => MemoryPayloadDamage.Continuation(continuation, component switch
+            {
+                "ContractVersion" => "Contract",
+                "Epoch" or "Schema" => "Epoch",
+                "Query" => "Query",
+                "PageSize" => "Size",
+                "Position" => "After",
+                _ => throw new ArgumentException("Unknown continuation component.", nameof(component))
+            }, shape),
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        };
+
     public static MetadataFixtureSession Create(string provider, TimeProvider clock, string? databasePath = null,
         int initialSchema = 0, string compatibleSchema = "fixture-sqlite-v2") =>
         new(provider, clock, databasePath, initialSchema, compatibleSchema);
@@ -64,23 +105,46 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
         _ => throw new InvalidOperationException("Unknown metadata fixture.")
     };
 
-    public async ValueTask<MetadataFixtureSession> ReopenAsync(string compatibleSchema = "fixture-sqlite-v2")
+    public ValueTask<MetadataFixtureSession> ReopenAsync(string compatibleSchema = "fixture-sqlite-v2") =>
+        ReopenAsync(compatibleSchema, default);
+
+    public async ValueTask<MetadataFixtureSession> ReopenAsync(string compatibleSchema, CancellationToken cancellationToken)
     {
-        await WhenIdleAsync();
+        cancellationToken.ThrowIfCancellationRequested();
+        BeginCorruptionClosure();
+        await WhenIdleAsync().WaitAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         var image = Store is MemoryMetadataStore memory ? memory.CaptureLogicalImage() : null;
         await Store.DisposeAsync();
+        cancellationToken.ThrowIfCancellationRequested();
         var reopened = new MetadataFixtureSession(Provider, clock, DatabasePath, 0, compatibleSchema, image)
         { ownedDirectory = ownedDirectory };
         ownedDirectory = null;
         return reopened;
     }
 
-    public async ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync()
+    public ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync() => AuthorizeUpgradeAsync(default);
+
+    public async ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (Store is MemoryMetadataStore memory) { return memory.AuthorizeLogicalUpgrade(); }
-        var result = await ((SqliteMetadataStore)Store).CaptureRecoveryPointAsync(new(), default);
+        var result = await ((SqliteMetadataStore)Store).CaptureRecoveryPointAsync(new(), cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         return result is MetadataResult<MetadataRecoveryPoint>.Success success ? success.Value
             : throw new InvalidOperationException("Fixture recovery authorization failed.");
+    }
+
+    public async ValueTask<string> ObserveSchemaStateForTestAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await WhenIdleAsync().WaitAsync(cancellationToken);
+        return Store switch
+        {
+            SqliteMetadataStore sqlite => PayloadValue(await sqlite.ObservePhysicalStateForTestAsync(cancellationToken)),
+            MemoryMetadataStore memory => memory.CaptureLogicalImage().ComputeFingerprint(cancellationToken),
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        };
     }
 
     public ValueTask<MetadataResult<MetadataId>> FillLedgerForTestAsync() => Store switch
@@ -105,16 +169,29 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
     };
 
     public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(MetadataReadGroup request) =>
-        Store is SqliteMetadataStore sqlite
-            ? ValueTask.FromResult<MetadataResult<MetadataReadSnapshot>>(new MetadataResult<MetadataReadSnapshot>.Success(sqlite.ObserveCommittedSnapshot(request)))
-            : Store.ReadAsync(request, new(), default);
+        ObserveIndependentSnapshotAsync(request, default);
 
-    public ValueTask<IDisposable> HoldWriterForTestAsync() => Store switch
+    public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(
+        MetadataReadGroup request, CancellationToken cancellationToken)
     {
-        SqliteMetadataStore sqlite => ValueTask.FromResult(sqlite.HoldIndependentWriterForTest()),
-        MemoryMetadataStore memory => memory.HoldWriterForTestAsync(),
-        _ => throw new InvalidOperationException("Unknown metadata fixture.")
-    };
+        cancellationToken.ThrowIfCancellationRequested();
+        return Store is SqliteMetadataStore sqlite
+            ? ValueTask.FromResult<MetadataResult<MetadataReadSnapshot>>(new MetadataResult<MetadataReadSnapshot>.Success(sqlite.ObserveCommittedSnapshot(request)))
+            : Store.ReadAsync(request, new(), cancellationToken);
+    }
+
+    public ValueTask<IDisposable> HoldWriterForTestAsync() => HoldWriterForTestAsync(default);
+
+    public ValueTask<IDisposable> HoldWriterForTestAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Store switch
+        {
+            SqliteMetadataStore sqlite => ValueTask.FromResult(sqlite.HoldIndependentWriterForTest()),
+            MemoryMetadataStore memory => memory.HoldWriterForTestAsync(cancellationToken),
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        };
+    }
 
     public ValueTask<MetadataResult<MetadataId>> SetLeaseGenerationForTestAsync(CanonicalText resource, long generation) => Store switch
     {
@@ -142,6 +219,7 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        BeginCorruptionClosure();
         await Store.DisposeAsync();
         if (ownedDirectory is not null && Directory.Exists(ownedDirectory)) { Directory.Delete(ownedDirectory, recursive: true); }
     }

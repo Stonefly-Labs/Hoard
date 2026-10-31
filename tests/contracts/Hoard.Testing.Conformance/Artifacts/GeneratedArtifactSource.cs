@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 
-namespace Hoard.Fixtures.Artifacts.TransferRunner;
+namespace Hoard.Testing.Conformance.Artifacts;
 
-internal sealed class GeneratedSource(long size) : Stream
+internal sealed class GeneratedArtifactSource(long size) : Stream
 {
     private readonly byte[] pattern = Enumerable.Range(0, 262144).Select(index => (byte)((index * 31 + 7) % 251)).ToArray();
     private readonly IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);

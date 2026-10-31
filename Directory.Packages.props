@@ -10,6 +10,8 @@
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.TestPlatform.ObjectModel" Version="18.11.0"
+                    Condition="'$(MSBuildProjectName)' == 'Hoard.Conformance.TestLogger'" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
   </ItemGroup>
 </Project>

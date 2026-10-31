@@ -82,6 +82,15 @@
 - Read `docs/DEVELOPMENT.md` for invocation, stage gates, recovery, and handoff.
   Do not launch fleets or multi-agent workflow engines as part of these skills.
 
+## When stuck
+
+- If the same error persists after 3 attempts, STOP. Report what you tried,
+  what you observed, and your best hypothesis. Do not keep iterating.
+- Never weaken, skip, or delete a test to make it pass without asking.
+- If the spec/plan conflicts with what's technically possible, stop and flag it
+  rather than working around it silently.
+- Don't expand scope beyond the current task in tasks.md.
+
 ## Validation and safety
 
 - Repository tools: `python3 -m unittest discover -s tests/tooling -v`.

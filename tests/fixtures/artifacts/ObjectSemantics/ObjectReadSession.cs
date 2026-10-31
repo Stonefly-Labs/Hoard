@@ -38,6 +38,7 @@ public sealed partial class ObjectArtifactStore
                 }
                 await faults.ObserveAsync("object.direct");
                 stream = OpenCommittedObject(pointer, FileOptions.Asynchronous | FileOptions.SequentialScan);
+                await faults.ObserveAsync("object.read-opened");
                 token.ThrowIfCancellationRequested();
                 var session = new ObjectReadSession(this, pointer, stream, guard, lease);
                 lock (pointerSync)

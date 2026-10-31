@@ -18,6 +18,12 @@
           "Microsoft.TestPlatform.TestHost": "18.11.0"
         }
       },
+      "NuGet.Versioning": {
+        "type": "Direct",
+        "requested": "[7.9.0, )",
+        "resolved": "7.9.0",
+        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
+      },
       "xunit": {
         "type": "Direct",
         "requested": "[2.9.3, )",
@@ -120,12 +126,6 @@
       },
       "referenceconsumer": {
         "type": "Project"
-      },
-      "NuGet.Versioning": {
-        "type": "CentralTransitive",
-        "requested": "[7.9.0, )",
-        "resolved": "7.9.0",
-        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
       }
     }
   }

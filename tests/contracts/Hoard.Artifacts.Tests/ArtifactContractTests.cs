@@ -5,8 +5,10 @@ using Hoard.Abstractions.Storage;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactContractTests
+public sealed partial class ArtifactContractTests
 {
+    partial void ObserveContract(string method, Type contract);
+
     private static ArtifactStoreIdentity Store() => new("fixture.artifact", Guid.NewGuid(), Guid.NewGuid());
     private static readonly ArtifactDigest Digest = new(new string('a', 64));
     private static ArtifactStamp Stamp() => new(Store(), new ArtifactIdentity(Digest, 1), Guid.NewGuid());
@@ -24,6 +26,7 @@ public sealed class ArtifactContractTests
         Assert.Equal(2, typeof(IArtifactCoordinationAuthority).GetMethods().Length);
         Assert.Empty(typeof(IArtifactStore).GetInterfaces());
         Assert.Empty(typeof(IArtifactMaintenance).GetInterfaces());
+        ObserveContract(nameof(Marker_and_historical_digest_remain_separate_from_operational_contracts), typeof(IArtifactProvider));
     }
 
     [Fact]
@@ -164,6 +167,7 @@ public sealed class ArtifactContractTests
         Assert.Throws<ArgumentException>(() => Record(durable, exclusions));
         foreach (var partial in new[] { Array.Empty<string>(), new[] { "AS-41" }, exclusions[..3] })
         { Assert.Throws<ArgumentException>(() => Record(simulated, partial)); }
+        ObserveContract(nameof(Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models), typeof(ArtifactQualificationRecord));
     }
 
     [Fact]
@@ -176,6 +180,7 @@ public sealed class ArtifactContractTests
         Assert.Throws<ArgumentException>(() => new ArtifactQualificationRecord(
             "fixture.artifact", "0.1.0", hash, hash, hash, hash, hash,
             capabilities, cases, [hash], ["AS-41", "AS-42", "AS-43", "AS-44"]));
+        ObserveContract(nameof(Flat_case_names_and_unattributed_hashes_cannot_claim_qualification), typeof(ArtifactQualificationRecord));
     }
 
     [Fact]
@@ -202,6 +207,7 @@ public sealed class ArtifactContractTests
             TimeSpan.Zero, Enumerable.Range(0, 32).Select(index => index.ToString("x64"))));
         Assert.Throws<ArgumentException>(() => new ArtifactQualificationCaseResult(
             "AS-01", ArtifactQualificationCaseStatus.Passed, TimeSpan.Zero, default(ImmutableArray<string>)));
+        ObserveContract(nameof(Qualification_case_results_reject_missing_or_unbounded_attribution), typeof(ArtifactQualificationCaseResult));
     }
 
     [Fact]
@@ -241,6 +247,7 @@ public sealed class ArtifactContractTests
             ArtifactEnumerationConsistency.Snapshot, new ArtifactLimits(), conditionalPublication: false)));
         results.Clear();
         Assert.Equal(48, record.CaseResults.Length);
+        ObserveContract(nameof(Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable), typeof(ArtifactQualificationRecord));
     }
 
     [Fact]
@@ -257,5 +264,6 @@ public sealed class ArtifactContractTests
         Assert.Throws<ArgumentNullException>(() => new ArtifactQualificationEnvironment(null!, "runtime", "filesystem", "flush"));
         ArtifactTestData.AssertSanitized(new ArtifactQualificationEnvironment(
             ArtifactTestData.Canary, "runtime", "filesystem", "flush").ToString());
+        ObserveContract(nameof(Qualification_environment_is_bounded_unambiguous_and_redacted), typeof(ArtifactQualificationEnvironment));
     }
 }

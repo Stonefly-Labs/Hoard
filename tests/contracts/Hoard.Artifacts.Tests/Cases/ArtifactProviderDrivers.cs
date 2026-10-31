@@ -1,7 +1,10 @@
+using System.Runtime.CompilerServices;
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Fixtures.Artifacts.ObjectSemantics;
+using Hoard.Testing.Conformance.Evidence;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
@@ -9,6 +12,7 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
 {
     private readonly ArtifactTestRoot root;
     private readonly IArtifactStoreLifetime lifetime;
+    private IArtifactCoordinationAuthority coordination;
     private ArtifactProviderDriver(string providerId, ArtifactTestRoot root, IArtifactStoreLifetime lifetime,
         ArtifactStoreIdentity identity, ArtifactCoordinationAuthority authority,
         LocalFaultControls? local, ObjectFaultControls? objects)
@@ -18,6 +22,7 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
         this.lifetime = lifetime;
         Identity = identity;
         Authority = authority;
+        coordination = authority;
         Store = (IArtifactStore)lifetime;
         Validator = (IArtifactEvidenceValidator)lifetime;
         Maintenance = (IArtifactMaintenance)lifetime;
@@ -32,6 +37,67 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public IArtifactMaintenance Maintenance { get; }
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
+    public ConformanceOriginalObservation? ObserveOriginal(ITestOutputHelper output, string testClass, [CallerMemberName] string method = "",
+        string? parameter = null, bool providerParameter = true) =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            OriginalIdentity(testClass, method, ProviderId, parameter, providerParameter),
+            ProviderId, "original-instance", null, null, ("owner", this), ("store", Store),
+            ("validator", Validator), ("maintenance", Maintenance), ("lifetime", lifetime), ("authority", coordination),
+            ("controls", LocalControls is { } local ? local : (object)ObjectControls!));
+
+    private static string OriginalIdentity(string testClass, string method, string provider, string? parameter, bool providerParameter)
+    {
+        var parameters = providerParameter ? $"provider: \"{provider}\"{(parameter is null ? "" : ", " + parameter)}" : parameter;
+        return $"Hoard.Artifacts.Tests.{testClass}.{method}{(parameters is null ? "" : "(" + parameters + ")")}";
+    }
+
+    internal static void ObserveOriginalStore(ITestOutputHelper output, string testClass, string provider,
+        IArtifactStoreLifetime lifetime, IArtifactCoordinationAuthority authority, object controls,
+        [CallerMemberName] string method = "", string? parameter = null) =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            OriginalIdentity(testClass, method, provider, parameter, providerParameter: true),
+            provider, "original-instance", ("owner", lifetime), ("store", lifetime), ("validator", lifetime),
+            ("maintenance", lifetime), ("lifetime", lifetime), ("authority", authority), ("controls", controls));
+
+    internal static ConformanceOriginalObservation? ObserveOriginalSession(
+        ITestOutputHelper output, string testClass, string provider, ArtifactFixtureSession session, object owner,
+        ConformanceOriginalObservation? previous = null, [CallerMemberName] string method = "", string? parameter = null) =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            OriginalIdentity(testClass, method, provider, parameter, providerParameter: true),
+            provider, "original-instance", null, previous, ("owner", owner), ("store", session.Store),
+            ("validator", session.Validator), ("maintenance", session.Maintenance),
+            ("lifetime", (IArtifactStoreLifetime)session.Store), ("authority", session.Authority), ("controls", session.Controls));
+
+    internal static ConformanceOriginalObservation? ObserveOriginalOwner(
+        ITestOutputHelper output, string testClass, object owner, ConformanceOriginalObservation? previous = null,
+        [CallerMemberName] string method = "", string? provider = null) =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            $"Hoard.Artifacts.Tests.{testClass}.{method}{(provider is null ? "" : $"(provider: \"{provider}\")")}",
+            provider, "original-owner", null, previous, ("owner", owner));
+
+    internal sealed class OriginalObservationSequence(
+        ITestOutputHelper output, string testClass, [CallerMemberName] string method = "", string? parameter = null,
+        bool providerParameter = true)
+    {
+        private readonly List<(LocalArtifactStore Store, LocalFaultControls Controls)> reopened = [];
+
+        public void RecordReopened(LocalArtifactStore store, LocalFaultControls controls) => reopened.Add((store, controls));
+
+        public void Observe(ArtifactProviderDriver driver)
+        {
+            var parent = driver.ObserveOriginal(output, testClass, method, parameter, providerParameter);
+            var previous = parent;
+            foreach (var (store, controls) in reopened)
+            {
+                previous = ConformanceOriginalObservationOutput.WriteIfRequested(output,
+                    OriginalIdentity(testClass, method, driver.ProviderId, parameter, providerParameter),
+                    driver.ProviderId, "original-instance", parent, previous,
+                    ("owner", store), ("store", store), ("validator", store), ("maintenance", store),
+                    ("lifetime", store), ("authority", driver.Authority), ("controls", controls));
+            }
+        }
+    }
+
     public string PayloadDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "data" : "objects");
     public string StagingDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "staging" : "multipart");
     public bool Ready => lifetime switch
@@ -58,6 +124,44 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
         file.Flush(flushToDisk: true);
     }
 
+    public async ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
+        PayloadValue(await (lifetime switch
+        {
+            LocalArtifactStore local => local.CapturePayloadForQualificationAsync(stamp, maximumBytes, cancellationToken),
+            ObjectArtifactStore objects => objects.CapturePayloadForQualificationAsync(stamp, maximumBytes, cancellationToken),
+            _ => throw new InvalidOperationException("Unknown artifact fixture.")
+        }));
+
+    public async ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken) =>
+        _ = PayloadValue(await (lifetime switch
+        {
+            LocalArtifactStore local => local.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken),
+            ObjectArtifactStore objects => objects.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken),
+            _ => throw new InvalidOperationException("Unknown artifact fixture.")
+        }));
+
+    public async ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken) =>
+        _ = PayloadValue(await (lifetime switch
+        {
+            LocalArtifactStore local => local.ReplacePayloadForQualificationAsync(stamp, payload, cancellationToken),
+            ObjectArtifactStore objects => objects.ReplacePayloadForQualificationAsync(stamp, payload, cancellationToken),
+            _ => throw new InvalidOperationException("Unknown artifact fixture.")
+        }));
+
+    public void ObserveCommitProgress(Func<ValueTask> observer)
+    {
+        if (LocalControls is { } local) { local.SetObserver("publish.progress", observer); }
+        else if (ObjectControls is { } objects) { objects.SetObserver("object.commit-progress", observer); }
+        else { throw new InvalidOperationException("Unknown artifact fixture."); }
+    }
+
+    private static T PayloadValue<T>(ArtifactResult<T> result) where T : notnull => result switch
+    {
+        ArtifactResult<T>.Success success => success.Value,
+        ArtifactResult<T>.Failure failure => throw new InvalidOperationException("FaultControl." + failure.Code),
+        _ => throw new InvalidOperationException("Unknown artifact outcome.")
+    };
+
     public static async Task<ArtifactProviderDriver> CreateAsync(string providerId, TimeProvider? clock = null,
         ArtifactLimits? limits = null,
         Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceDecision>>? references = null,
@@ -74,8 +178,9 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
         var driver = new ArtifactProviderDriver(providerId, root, lifetime, identity, authority, local, objects);
         try
         {
+            driver.coordination = decorate?.Invoke(authority) ?? authority;
             var admission = await lifetime.InitializeAsync(
-                new(ArtifactInitializationMode.CreateEmpty, identity, decorate?.Invoke(authority) ?? authority, limits), new(), default);
+                new(ArtifactInitializationMode.CreateEmpty, identity, driver.coordination, limits), new(), default);
             Assert.True(admission is ArtifactResult<ArtifactAdmission>.Success,
                 admission is ArtifactResult<ArtifactAdmission>.Failure failure
                     ? $"Artifact initialization failed ({failure.Code}, {local?.InitializationFailure})." : "Unexpected artifact admission result.");

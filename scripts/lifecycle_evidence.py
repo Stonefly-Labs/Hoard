@@ -182,7 +182,8 @@ def host_journeys(root, work, config, update):
     return total, projects
 
 
-def registration_compatibility(root, work, config, update, baseline_directory="baseline"):
+def prepare_registration_baseline(root, work, config, update, baseline_directory="baseline"):
+    os.environ["NUGET_PACKAGES"] = str(work / "old-platform-cache")
     baseline = work / baseline_directory
     baseline.mkdir()
     commit = "837fdf3edf51c3df34710184d018479683c194c2"
@@ -216,6 +217,25 @@ def registration_compatibility(root, work, config, update, baseline_directory="b
     digest = hashlib.sha256(old_binary.read_bytes()).hexdigest()
     if run("dotnet", str(old_binary)).strip() != "registration-compatible":
         raise RuntimeError("Baseline registration consumer did not run.")
+    os.environ["NUGET_PACKAGES"] = str(work / "cache")
+    return {"assembly": str(old_binary), "sha256": digest}
+
+
+def registration_compatibility(root, work, config, update, baseline_directory="baseline", *, prepared=None):
+    if prepared is None:
+        retained = prepare_registration_baseline(root, work, config, update, baseline_directory)
+        old_binary = Path(retained["assembly"])
+    else:
+        if (not isinstance(prepared, dict) or set(prepared) != {"assembly", "sha256"}
+                or not isinstance(prepared["assembly"], str) or not isinstance(prepared["sha256"], str)
+                or hashlib.sha256(Path(prepared["assembly"]).read_bytes()).hexdigest() != prepared["sha256"]):
+            raise RuntimeError("Retained registration baseline changed.")
+        retained = prepared
+        replay = work / "registration-old"
+        foundation.copy_source(Path(prepared["assembly"]).parent, replay)
+        old_binary = replay / Path(prepared["assembly"]).name
+    digest = retained["sha256"]
+    source = root / "tests/fixtures/lifecycle/registration/RegistrationConsumer"
     os.environ["NUGET_PACKAGES"] = str(work / "new-registration-cache")
     target = work / "registration-new"
     foundation.copy_source(source, target)
@@ -239,7 +259,7 @@ def registration_compatibility(root, work, config, update, baseline_directory="b
     return project
 
 
-def lifecycle_graphs(root, work, proofs, hosts, registration):
+def prepare_lifecycle_graphs(root, work, proofs, hosts, registration):
     ownership = {
         "Hoard.Abstractions": "Abstractions", "Hoard.Core": "Core", "Hoard.Hosting": "Hosting",
         "Hoard.Application": "Application", "NuGet.Versioning": "Versioning",
@@ -263,6 +283,11 @@ def lifecycle_graphs(root, work, proofs, hosts, registration):
     manifest = work / "lifecycle-evidence.json"
     manifest.write_text(json.dumps({"graphs": graphs}, indent=2))
     os.environ["HOARD_LIFECYCLE_EVIDENCE"] = str(manifest)
+    return graphs
+
+
+def lifecycle_graphs(root, work, proofs, hosts, registration):
+    prepare_lifecycle_graphs(root, work, proofs, hosts, registration)
     architecture = root / "tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj"
     run("dotnet", "test", str(architecture), "-c", "Release", "--no-build", "--no-restore",
         "--filter", "FullyQualifiedName~LifecycleBoundaryTests", "--logger", "trx;LogFileName=architecture.trx",

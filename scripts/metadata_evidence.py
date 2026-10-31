@@ -19,6 +19,8 @@ from xml.sax.saxutils import escape
 
 import foundation_evidence as foundation
 import lifecycle_evidence as lifecycle
+from conformance_lock_preparation import prepare_project_lock, verify_project_lock
+import conformance_legacy as legacy
 
 
 BASELINE = "10ce78851b97b02bd83a8ef7da7ffdc2381d6519"
@@ -28,7 +30,8 @@ PROVIDERS = ("sqlite", "memory")
 BARRIERS = ("M0", "M1", "M2", "U0", "U1", "U2", "U3", "U4")
 PACKAGES = tuple(f"Hoard.{name}.0.1.0.nupkg" for name in (
     "Abstractions", "Core", "Hosting", "Application",
-    "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters"))
+    "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters",
+    "Testing.Conformance"))
 create_workspace = lifecycle.create_workspace
 cleanup_workspace = lifecycle.cleanup_workspace
 lock_hashes = lifecycle.lock_hashes
@@ -36,17 +39,9 @@ verify_locks = lifecycle.verify_locks
 
 
 def run(*args, cwd=None, env=None):
-    try:
-        result = subprocess.run(
-            args, cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            check=False, timeout=600, env={**os.environ, **(env or {})})
-    except subprocess.TimeoutExpired:
-        raise RuntimeError(f"Metadata command timed out: {Path(args[0]).name}.") from None
-    if result.returncode:
-        codes = re.findall(r"error (?:CS|NU|MSB)\d+|error WHITESPACE", result.stdout)
-        detail = " [" + ", ".join(sorted(set(codes))[:10]) + "]" if codes else ""
-        raise RuntimeError(f"Metadata command failed: {Path(args[0]).name}{detail}.")
-    return result.stdout
+    if args[:2] in (("dotnet", "test"), ("dotnet", "vstest")):
+        return legacy.test_command(args, cwd=cwd, env=env).stdout.decode()
+    return legacy.command(args, cwd=cwd, env=env)
 
 
 def sha256(path):
@@ -272,6 +267,8 @@ def prepare_packages(root, work, update):
     foundation.copy_source(root / "tests/fixtures/metadata", current / "tests/fixtures/metadata")
     foundation.copy_source(root / "tests/contracts/Hoard.Metadata.Tests",
                            current / "tests/contracts/Hoard.Metadata.Tests")
+    foundation.copy_source(root / "tests/contracts/Hoard.Testing.Conformance",
+                           current / "tests/contracts/Hoard.Testing.Conformance")
     feed = work / "feed"
     feed.mkdir()
     config = work / "NuGet.Config"
@@ -283,9 +280,17 @@ def prepare_packages(root, work, update):
         '<package pattern="Hoard.*"/></packageSource><packageSource key="nuget.org">'
         '<package pattern="*"/></packageSource></packageSourceMapping></configuration>')
     environment = {"NUGET_PACKAGES": str(work / "cache")}
+    derivations = []
 
     def build(relative, pack=False, properties=()):
         project = current / relative
+        record = None
+        if not update:
+            lock, record = prepare_project_lock(
+                project, current, feed, "metadata-current",
+                acceptance="-p:MetadataPackageAcceptance=true" in properties)
+            if lock is not None:
+                properties = (*properties, "-p:NuGetLockFilePath=" + str(lock))
         run("dotnet", "restore", str(project), "--configfile", str(config),
             "--force-evaluate" if update else "--locked-mode", *properties, "-v", "quiet", env=environment)
         if update:
@@ -302,9 +307,13 @@ def prepare_packages(root, work, update):
                 "--no-restore", "-o", str(feed), "-v", "quiet", env=environment)
             name = ("Hoard.Fixtures.Metadata." + project.stem if "fixtures" in project.parts else project.stem)
             foundation.canonicalize_acceptance_archive(feed / f"{name}.0.1.0.nupkg")
+        if record is not None:
+            verify_project_lock(record, current, feed)
+            derivations.append(record)
 
     for name in ("Abstractions", "Core", "Hosting", "Application"):
         build(f"src/Hoard.{name}/Hoard.{name}.csproj", pack=True)
+    build("tests/contracts/Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj", pack=True)
     for name in ("Sqlite", "Memory", "HostAdapters", "Consumer", "CrashRunner", "BoundaryLeak"):
         build(f"tests/fixtures/metadata/{name}/{name}.csproj", pack=name in ("Sqlite", "Memory", "HostAdapters"))
     build("tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj",
@@ -314,7 +323,7 @@ def prepare_packages(root, work, update):
     verify_packages(packages, work)
     inputs = {"sourceSha256": source_hash(root), "baseline": True, "packages": True,
               "schemaVersion": 1, "qualification": False, "packageInventory": packages,
-              "locks": lock_hashes(root)}
+              "locks": lock_hashes(root), "lockDerivations": derivations}
     (work / "prerequisites.json").write_text(json.dumps(inputs, indent=2) + "\n")
     return inputs
 
@@ -330,6 +339,8 @@ def runtime_json(binary, mode, database, directory, barrier):
     value = json.loads(run("dotnet", str(binary), mode, str(database), str(directory), barrier))
     if not isinstance(value, dict):
         raise RuntimeError("Invalid metadata recovery result.")
+    if "barrier" in value and value["barrier"] != barrier:
+        raise RuntimeError("Foreign metadata recovery barrier.")
     return value
 
 
@@ -379,8 +390,7 @@ def recovery_cases(work):
         if runtime_json(binary, "seed-" + family, database, directory, barrier) != {"seeded": True}:
             raise RuntimeError("Metadata recovery baseline was not seeded.")
         started = time.monotonic()
-        with subprocess.Popen(["dotnet", str(binary), "run-" + family, str(database), str(directory), barrier],
-                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as child:
+        with legacy.silent_child(["dotnet", str(binary), "run-" + family, str(database), str(directory), barrier]) as child:
             try:
                 await_barrier(child, directory, barrier)
                 if barrier in ("U1", "U2"):
@@ -420,8 +430,7 @@ def recovery_cases(work):
     directory = work / "recovery" / "ownership"
     directory.mkdir()
     database = directory / "metadata.db"
-    with subprocess.Popen(["dotnet", str(binary), "hold-owner", str(database), str(directory), "owner"],
-                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as child:
+    with legacy.silent_child(["dotnet", str(binary), "hold-owner", str(database), str(directory), "owner"]) as child:
         try:
             await_barrier(child, directory, "owner")
             if runtime_json(binary, "try-owner", database, directory, "owner") != {"competingOwnerRejected": True}:
@@ -439,8 +448,7 @@ def recovery_cases(work):
     directory.mkdir()
     database = directory / "metadata.db"
     started = time.monotonic()
-    with subprocess.Popen(["dotnet", str(binary), "stuck-native", str(database), str(directory), "native-step"],
-                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as child:
+    with legacy.silent_child(["dotnet", str(binary), "stuck-native", str(database), str(directory), "native-step"]) as child:
         try:
             await_barrier(child, directory, "native-step")
             deadline = time.monotonic() + 45
@@ -469,8 +477,7 @@ def recovery_cases(work):
         database = directory / "metadata.db"
         if runtime_json(binary, "seed-restore", database, directory, barrier) != {"seeded": True}:
             raise RuntimeError("Interrupted restore baseline was not seeded.")
-        with subprocess.Popen(["dotnet", str(binary), "run-restore", str(database), str(directory), barrier],
-                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as child:
+        with legacy.silent_child(["dotnet", str(binary), "run-restore", str(database), str(directory), barrier]) as child:
             try:
                 await_barrier(child, directory, barrier)
                 code = kill_owned_child(child)
@@ -495,7 +502,11 @@ def recovery_cases(work):
     return cases, crashes, environment
 
 
-def trx_results(path):
+def trx_results(path, *, require_safe=True, provider="legacy", environment=None):
+    if path.stat().st_size > 16 * 1024**2:
+        raise RuntimeError("Metadata runtime report exceeds its finite bound.")
+    legacy.verify_projection(path, required=require_safe, expected_binding=provider,
+                             expected_environment=environment)
     namespace = {"t": "http://microsoft.com/schemas/VisualStudio/TeamTest/2010"}
     document = ET.parse(path)
     results = document.findall(".//t:UnitTestResult", namespace)
@@ -514,8 +525,10 @@ def trx_results(path):
 def logical_cases(work):
     output = work / "current/tests/contracts/Hoard.Metadata.Tests/bin/Release/net10.0"
     binary = output / "Hoard.Metadata.Tests.dll"
+    common = output / "Hoard.Testing.Conformance.dll"
     consumer = work / "current/tests/fixtures/metadata/Consumer/bin/Release/net10.0/Hoard.Fixtures.Metadata.Consumer.dll"
-    frozen = {str(path): sha256(path) for path in (binary, consumer)}
+    binaries = (binary, consumer, common)
+    frozen = {str(path): sha256(path) for path in binaries}
     inventories = {}
     required = set(CASES) - DURABLE_CASES - {"MP-47", "MP-48"}
     for provider in PROVIDERS:
@@ -523,7 +536,7 @@ def logical_cases(work):
         run("dotnet", "vstest", str(binary), f"/Logger:trx;LogFileName={provider}.trx",
             f"/ResultsDirectory:{work / 'results'}", env=environment)
         proof = f"results/{provider}.trx"
-        tests = trx_results(work / proof)
+        tests = trx_results(work / proof, require_safe=True, provider=provider, environment=environment)
         cases = {}
         for test in tests:
             match = re.search(r"\bMP(\d{2})_", test["test"])
@@ -540,24 +553,16 @@ def logical_cases(work):
             raise RuntimeError("Unchanged metadata consumer did not execute.")
         cases["MP-46"]["tests"].append("unchanged-package-consumer")
         inventories[provider] = cases
-    if frozen != {str(path): sha256(path) for path in (binary, consumer)}:
-        raise RuntimeError("Metadata common suite or consumer binary changed between compositions.")
+        if frozen != {str(path): sha256(path) for path in binaries}:
+            raise RuntimeError("Metadata common suite, SDK or consumer binary changed between compositions.")
     write_proof(work, "unchanged-consumers.json", {
         "testAssemblySha256": frozen[str(binary)], "consumerSha256": frozen[str(consumer)],
+        "commonAssemblySha256": frozen[str(common)],
         "providers": list(PROVIDERS), "unchanged": True})
     return inventories
 
 
-def compatibility_cases(root, work):
-    retained = json.loads((work / "retained-binaries.json").read_text())
-    runtime = work / "compatible-runtime"
-    shutil.copytree(work / "retained/bin/Release/net10.0", runtime)
-    for name in ("Abstractions", "Core", "Hosting", "Application"):
-        shutil.copy2(work / f"current/src/Hoard.{name}/bin/Release/net10.0/Hoard.{name}.dll", runtime)
-    if (sha256(runtime / "RetainedMarker.dll") != retained["binarySha256"]
-            or run("dotnet", str(runtime / "RetainedMarker.dll")).strip() != "metadata-marker-compatible"
-            or any(sha256(proof_file(work, path)) != digest for path, digest in retained["files"].items())):
-        raise RuntimeError("Frozen pre-F-05 metadata binary compatibility failed.")
+def inspection_recipe(current):
     ownership = {
         "Hoard.Abstractions": "Abstractions", "Hoard.Core": "Core", "Hoard.Hosting": "Hosting",
         "Hoard.Application": "Application", "NuGet.Versioning": "Versioning",
@@ -570,18 +575,32 @@ def compatibility_cases(root, work):
             "SQLitePCLRaw.bundle_e_sqlite3", "SQLitePCLRaw.core", "SQLitePCLRaw.provider.e_sqlite3",
             "SQLitePCLRaw.lib.e_sqlite3", "System.Memory")}
     }
-    graphs = []
-    current = work / "current"
     projects = [("platform", [current / f"src/Hoard.{name}/Hoard.{name}.csproj"
                              for name in ("Abstractions", "Core", "Hosting", "Application")])]
     projects += [(scan, [current / f"tests/fixtures/metadata/{name}/{name}.csproj"])
                  for scan, name in (("sqlite", "Sqlite"), ("memory", "Memory"), ("host-adapters", "HostAdapters"),
                                     ("consumer", "Consumer"), ("crash-runner", "CrashRunner"), ("boundary-leak", "BoundaryLeak"))]
+    return ownership, projects
+
+
+def compatibility_cases(root, work):
+    retained = json.loads((work / "retained-binaries.json").read_text())
+    runtime = work / "compatible-runtime"
+    shutil.copytree(work / "retained/bin/Release/net10.0", runtime)
+    for name in ("Abstractions", "Core", "Hosting", "Application"):
+        shutil.copy2(work / f"current/src/Hoard.{name}/bin/Release/net10.0/Hoard.{name}.dll", runtime)
+    if (sha256(runtime / "RetainedMarker.dll") != retained["binarySha256"]
+            or run("dotnet", str(runtime / "RetainedMarker.dll")).strip() != "metadata-marker-compatible"
+            or any(sha256(proof_file(work, path)) != digest for path, digest in retained["files"].items())):
+        raise RuntimeError("Frozen pre-F-05 metadata binary compatibility failed.")
+    current = work / "current"
+    ownership, projects = inspection_recipe(current)
+    graphs = []
     previous = os.environ.get("NUGET_PACKAGES")
     os.environ["NUGET_PACKAGES"] = str(work / "cache")
     try:
         for scan, inputs in projects:
-            graph = foundation.inspection_graph(inputs, ownership)
+            graph = foundation.inspection_graph(inputs, ownership, resolve=legacy.resolve_project)
             graph["scanId"] = scan
             for project in graph["projects"]:
                 if project["id"] in ("Sqlite", "Memory", "HostAdapters", "Consumer", "CrashRunner", "BoundaryLeak"):
@@ -603,7 +622,7 @@ def compatibility_cases(root, work):
         "--filter", "FullyQualifiedName~MetadataBoundaryTests", "--logger", "trx;LogFileName=boundaries.trx",
         "--results-directory", str(work / "results"), "-v", "quiet",
         env={"HOARD_METADATA_BOUNDARIES": str(manifest)})
-    tests = trx_results(work / "results/boundaries.trx")
+    tests = trx_results(work / "results/boundaries.trx", require_safe=True)
     proof = write_proof(work, "compatibility.json", {
         "retainedBinarySha256": retained["binarySha256"], "baseline": BASELINE,
         "unchangedRetainedBinaryExecuted": True, "scans": [graph["scanId"] for graph in graphs], "tests": tests})
@@ -615,8 +634,8 @@ def verifier_cases(root, work):
     directory = work / "verifier-mutation"
     (directory / "scripts").mkdir(parents=True)
     (directory / "tests/tooling").mkdir(parents=True)
-    for name in ("metadata_evidence.py", "foundation_evidence.py", "lifecycle_evidence.py"):
-        shutil.copy2(root / "scripts" / name, directory / "scripts" / name)
+    for path in (root / "scripts").glob("*.py"):
+        shutil.copy2(path, directory / "scripts" / path.name)
     shutil.copy2(root / "tests/tooling/test_metadata_evidence.py", directory / "tests/tooling")
     source = directory / "scripts/metadata_evidence.py"
     baseline = sha256(source)
@@ -627,14 +646,17 @@ def verifier_cases(root, work):
     source.write_text(original.replace(needle, "\n        elif False:\n"))
     mutation = sha256(source)
     command = ["python3", "-m", "unittest", "discover", "-s", "tests/tooling", "-p", "test_metadata_evidence.py", "-v"]
-    red = subprocess.run(command, cwd=directory, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600)
+    red_exit, red_result = legacy.python_tests(command, cwd=directory)
     test = "test_stale_failed_unpaired_foreign_and_false_memory_durability_reject"
-    if (red.returncode <= 0 or f"FAIL: {test}" not in red.stdout or "AssertionError" not in red.stdout
-            or "ImportError" in red.stdout or "SyntaxError" in red.stdout):
+    if (red_exit <= 0 or not any(item["test"].endswith("." + test) and item["kind"] == "Assertion"
+                                for item in red_result["failures"])
+            or any(item["kind"] != "Assertion" for item in red_result["failures"])):
         raise RuntimeError("Metadata verifier mutation did not produce its intended assertion failure.")
     source.write_text(original)
-    run(*command, cwd=directory)
-    red_green = {"id": "failed-case-refusal", "test": test, "redExit": red.returncode, "redOutcome": "Failed",
+    green_exit, _ = legacy.python_tests(command, cwd=directory)
+    if green_exit:
+        raise RuntimeError("Metadata verifier repair did not pass.")
+    red_green = {"id": "failed-case-refusal", "test": test, "redExit": red_exit, "redOutcome": "Failed",
                  "redAssertion": True, "greenOutcome": "Passed", "mutationSha256": mutation, "baselineSha256": baseline}
     proof = write_proof(work, "qualification-verifier.json", {
         "positive": True, "negative": True, "redGreen": red_green,
@@ -676,17 +698,13 @@ def runtime_red_green(work):
     command = ["dotnet", "vstest", str(output / "Hoard.Metadata.Tests.dll"), f"/TestCaseFilter:FullyQualifiedName~{test}",
                f"/ResultsDirectory:{directory}", "/Logger:trx;LogFileName=red.trx"]
     environment.update({"HOARD_METADATA_PROVIDER": "sqlite", "HOARD_METADATA_WORKSPACE": str(work)})
-    red = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600,
-                         env={**os.environ, **environment})
-    document = ET.parse(directory / "red.trx")
-    results = document.findall(".//{*}UnitTestResult")
-    message = document.findtext(".//{*}ErrorInfo/{*}Message", "")
-    if (red.returncode <= 0 or len(results) != 1 or results[0].get("outcome") != "Failed"
-            or test not in results[0].get("testName", "") or "Assert.Equal" not in message or "Uncertain" not in message):
+    assertion = "Hoard.Testing.Conformance.Metadata.MetadataDeadlineAssertions.KnownExceptionsAsync"
+    red = legacy.test_command(command, env=environment, assertion=assertion, allow_failure=True)
+    if (red.returncode <= 0 or len(red.stderr) != 1 or not red.stderr[0].endswith("." + test)):
         raise RuntimeError("Metadata runtime mutation did not produce its intended assertion failure.")
     shutil.copy2(current / "tests/contracts/Hoard.Metadata.Tests/bin/Release/net10.0" / sqlite, output)
     run(*command[:-1], "/Logger:trx;LogFileName=green.trx", env=environment)
-    if len(trx_results(directory / "green.trx")) != 1:
+    if len(trx_results(directory / "green.trx", require_safe=True, provider="sqlite", environment=environment)) != 1:
         raise RuntimeError("Metadata runtime mutation green pair was incomplete.")
     evidence = {"id": "post-commit-classification", "test": test, "redExit": red.returncode,
                 "redOutcome": "Failed", "redAssertion": True, "greenOutcome": "Passed",

@@ -2,12 +2,14 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Fixtures.Artifacts.ObjectSemantics;
+using Hoard.Testing.Conformance.Artifacts;
 using System.Diagnostics;
 using System.Text.Json;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactAdmissionTests
+public sealed class ArtifactAdmissionTests(ITestOutputHelper output)
 {
     private static readonly ArtifactMaintenanceOptions Options = new();
     private static readonly ArtifactCleanupOptions Cleanup = new();
@@ -28,39 +30,19 @@ public sealed class ArtifactAdmissionTests
     public async Task Noncooperative_initialization_returns_with_owned_work_and_stop_does_not_release_it(string provider)
     {
         using var root = new ArtifactTestRoot();
-        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        ValueTask Pause() { entered.TrySetResult(); return new(release.Task); }
-        var local = new LocalFaultControls();
-        var objects = new ObjectFaultControls();
-        local.SetObserver("initialize.before-root", Pause);
-        objects.SetObserver("object.initialize", Pause);
-        var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
-        IArtifactStoreLifetime store = provider == "local" ? new LocalArtifactStore(root.Path, controls: local)
-            : new ObjectArtifactStore(root.Path, controls: objects);
-        var initialization = store.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity,
-            new ArtifactCoordinationAuthority(identity)), new(TimeSpan.FromMilliseconds(100)), default).AsTask();
-        try
-        {
-            await entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            var failure = Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(
-                await initialization.WaitAsync(TimeSpan.FromSeconds(2)));
-            Assert.Equal(ArtifactFailureCode.DeadlineExceeded, failure.Code);
-            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failure.Cleanup);
-            Assert.False(Directory.Exists(root.Path));
-            var stop = Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
-                await store.StopAsync(new(TimeSpan.FromMilliseconds(20)), default).AsTask().WaitAsync(TimeSpan.FromSeconds(2)));
-            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, stop.Code);
-        }
-        finally
-        {
-            release.TrySetResult();
-            await initialization;
-            var stopped = await store.StopAsync(new(), default);
-            root.AllowCleanup = stopped is ArtifactResult<ArtifactShutdown>.Success;
-            Assert.True(root.AllowCleanup);
-        }
-        Assert.False(Directory.Exists(root.Path));
+        await ArtifactAdmissionAssertions.NoncooperativeInitializationAsync(
+            pause =>
+            {
+                var local = new LocalFaultControls();
+                var objects = new ObjectFaultControls();
+                local.SetObserver("initialize.before-root", pause);
+                objects.SetObserver("object.initialize", pause);
+                var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
+                IArtifactStoreLifetime store = provider == "local" ? new LocalArtifactStore(root.Path, controls: local)
+                    : new ObjectArtifactStore(root.Path, controls: objects);
+                return (store, identity, new ArtifactCoordinationAuthority(identity));
+            }, () => Directory.Exists(root.Path),
+            allowed => root.AllowCleanup = allowed, () => root.AllowCleanup, default);
     }
 
     [Theory]
@@ -71,14 +53,18 @@ public sealed class ArtifactAdmissionTests
         using var root = new ArtifactTestRoot();
         var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
         var foreign = new ArtifactStoreIdentity(identity.ProviderModuleId, Guid.NewGuid(), Guid.NewGuid());
-        var lifetime = Create(provider, root.Path);
-        var store = Assert.IsAssignableFrom<IArtifactStore>(lifetime);
-        Assert.Equal(ArtifactFailureCode.Disposed, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
-            await store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)).Code);
-        Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await lifetime.InitializeAsync(
-            new(ArtifactInitializationMode.CreateEmpty, identity, new ArtifactCoordinationAuthority(foreign)), Options, default));
-        Assert.False(Directory.Exists(root.Path));
-        await lifetime.StopAsync(Cleanup, default);
+        var local = provider == "local" ? new LocalFaultControls() : null;
+        var objects = provider == "object" ? new ObjectFaultControls() : null;
+        IArtifactStoreLifetime? lifetime = null;
+        ArtifactCoordinationAuthority? authority = null;
+        await ArtifactAdmissionAssertions.BeforeAdmissionAsync(identity,
+            () => lifetime = Create(provider, root.Path, local, objects),
+            () => authority = new ArtifactCoordinationAuthority(foreign),
+            () => Directory.Exists(root.Path), Options, Cleanup, default);
+        ArtifactProviderDriver.ObserveOriginalStore(output, nameof(ArtifactAdmissionTests), provider,
+            lifetime ?? throw new InvalidOperationException("Original store factory did not run."),
+            authority ?? throw new InvalidOperationException("Original authority factory did not run."),
+            local is { } controls ? controls : (object)objects!);
     }
 
     [Theory]
@@ -89,19 +75,8 @@ public sealed class ArtifactAdmissionTests
         using var root = new ArtifactTestRoot();
         var store = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
         var authority = new ArtifactCoordinationAuthority(store);
-        var first = Create(provider, root.Path);
-        var second = Create(provider, root.Path);
-        Assert.False(Directory.Exists(root.Path));
-        var result = await first.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, store, authority), Options, default);
-        var admitted = Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(result);
-        Assert.True(admitted.Value.Capabilities.MeetsBaseline);
-        Assert.True(Directory.Exists(root.Path));
-        Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await second.InitializeAsync(
-            new(ArtifactInitializationMode.CreateEmpty, store, authority), Options, default));
-        await second.StopAsync(Cleanup, default);
-        await first.StopAsync(Cleanup, default);
-        Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await second.InitializeAsync(
-            new(ArtifactInitializationMode.CreateEmpty, store, authority), Options, default));
+        await ArtifactAdmissionAssertions.ExclusiveCreateAsync(store, authority, () => Create(provider, root.Path),
+            () => Directory.Exists(root.Path), Options, Cleanup, default);
     }
 
     [Theory]
@@ -112,26 +87,15 @@ public sealed class ArtifactAdmissionTests
         using var root = new ArtifactTestRoot();
         var store = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
         var authority = new ArtifactCoordinationAuthority(store);
-        var first = Create(provider, root.Path);
-        Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await first.InitializeAsync(
-            new(ArtifactInitializationMode.ReopenCompatible, store, authority), Options, default));
-        Assert.False(Directory.Exists(root.Path));
-        Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(await first.InitializeAsync(
-            new(ArtifactInitializationMode.CreateEmpty, store, authority), Options, default));
-        await first.StopAsync(Cleanup, default);
-        var second = Create(provider, root.Path);
-        var foreign = new ArtifactStoreIdentity(store.ProviderModuleId, store.InstanceId, Guid.NewGuid());
-        Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await second.InitializeAsync(
-            new(ArtifactInitializationMode.ReopenCompatible, foreign, new ArtifactCoordinationAuthority(foreign)), Options, default));
-        await second.StopAsync(Cleanup, default);
-        var manifest = Directory.GetFiles(root.Path, "*manifest*").Single();
-        var original = File.ReadAllBytes(manifest);
-        File.WriteAllBytes(manifest, [1, 2, 3]);
-        Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await second.InitializeAsync(
-            new(ArtifactInitializationMode.ReopenCompatible, store, authority), Options, default));
-        Assert.Equal(new byte[] { 1, 2, 3 }, File.ReadAllBytes(manifest));
-        await second.StopAsync(Cleanup, default);
-        File.WriteAllBytes(manifest, original);
+        await ArtifactAdmissionAssertions.RejectedRootChangesAsync(store, authority, () => Create(provider, root.Path),
+            foreign => new ArtifactCoordinationAuthority(foreign), () => Directory.Exists(root.Path),
+            bytes =>
+            {
+                var manifest = Directory.GetFiles(root.Path, "*manifest*").Single();
+                var original = File.ReadAllBytes(manifest);
+                File.WriteAllBytes(manifest, bytes);
+                return (() => File.ReadAllBytes(manifest), () => File.WriteAllBytes(manifest, original));
+            }, Options, Cleanup, default);
     }
 
     [Fact]
@@ -142,15 +106,8 @@ public sealed class ArtifactAdmissionTests
             using var root = new ArtifactTestRoot();
             var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
             var authority = new ArtifactCoordinationAuthority(identity);
-            var first = Create(provider, root.Path);
-            Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(await first.InitializeAsync(
-                new(ArtifactInitializationMode.CreateEmpty, identity, authority), Options, default));
-            await first.StopAsync(Cleanup, default);
-            var second = Create(provider, root.Path);
-            var result = await second.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible, identity, authority), Options, default);
-            if (provider == "local") { Assert.Equal(identity, Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(result).Value.Store); }
-            else { Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(result); }
-            await second.StopAsync(Cleanup, default);
+            await ArtifactAdmissionAssertions.ReopenGuaranteeAsync(identity, authority, provider == "local",
+                () => Create(provider, root.Path), Options, Cleanup, default);
         }
     }
 
@@ -176,8 +133,8 @@ public sealed class ArtifactAdmissionTests
             identity.InstanceId.ToString(), identity.Epoch.ToString() }) { start.ArgumentList.Add(argument); }
         root.AllowCleanup = false;
         using var process = Process.Start(start) ?? throw new InvalidOperationException("Artifact owned child did not start.");
-        var output = process.StandardOutput.ReadToEndAsync();
-        var errors = process.StandardError.ReadToEndAsync();
+        var output = ArtifactChildOutput.ReadToEndAsync(process.StandardOutput);
+        var errors = ArtifactChildOutput.ReadToEndAsync(process.StandardError);
         try { await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(15)); }
         finally
         {
@@ -211,18 +168,22 @@ public sealed class ArtifactAdmissionTests
         {
             var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
             var authority = new ArtifactCoordinationAuthority(identity);
-            var first = Create(provider, System.IO.Path.Combine(link, "child"));
-            Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await first.InitializeAsync(
-                new(ArtifactInitializationMode.CreateEmpty, identity, authority), Options, default));
-            Assert.Equal(ArtifactTestData.Canary, File.ReadAllText(sentinel));
-            Assert.False(Directory.Exists(System.IO.Path.Combine(root.Path, "child")));
-            await first.StopAsync(Cleanup, default);
+            var local = provider == "local" ? new LocalFaultControls() : null;
+            var objects = provider == "object" ? new ObjectFaultControls() : null;
+            IArtifactStoreLifetime? lifetime = null;
+            await ArtifactAdmissionAssertions.RejectedSymlinkAsync(identity, authority,
+                () => lifetime = Create(provider, System.IO.Path.Combine(link, "child"), local, objects), () => File.ReadAllText(sentinel),
+                () => Directory.Exists(System.IO.Path.Combine(root.Path, "child")), Options, Cleanup, default);
+            ArtifactProviderDriver.ObserveOriginalStore(output, nameof(ArtifactAdmissionTests), provider,
+                lifetime ?? throw new InvalidOperationException("Original store factory did not run."),
+                authority, local is { } controls ? controls : (object)objects!);
         }
         finally { Directory.Delete(link); }
     }
 
-    private static IArtifactStoreLifetime Create(string provider, string root)
-        => provider == "local" ? new LocalArtifactStore(root) : new ObjectArtifactStore(root);
+    private static IArtifactStoreLifetime Create(string provider, string root,
+        LocalFaultControls? local = null, ObjectFaultControls? objects = null)
+        => provider == "local" ? new LocalArtifactStore(root, controls: local) : new ObjectArtifactStore(root, controls: objects);
 }
 
 internal sealed class ArtifactTestRoot : IDisposable

@@ -19,8 +19,10 @@
   <ItemGroup Condition="'$(MetadataPackageAcceptance)' == 'true'">
     <PackageVersion Include="Hoard.Abstractions" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Metadata.HostAdapters" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Testing.Conformance" Version="[0.1.0]" />
     <PackageReference Include="Hoard.Abstractions" />
     <PackageReference Include="Hoard.Fixtures.Metadata.HostAdapters" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" PrivateAssets="all" />
   </ItemGroup>
 </Project>

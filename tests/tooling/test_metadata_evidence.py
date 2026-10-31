@@ -19,6 +19,71 @@ class MetadataEvidenceTests(unittest.TestCase):
         SPEC.loader.exec_module(module)
         return module
 
+    def test_preparation_packs_shared_sdk_before_package_only_wrappers(self):
+        module = self.load()
+        commands = []
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve() / "source"
+            work = Path(directory).resolve() / "work"
+            root.mkdir()
+            work.mkdir()
+            for name in ("Directory.Build.props", "Directory.Packages.props", "global.json", "Hoard.slnx"):
+                (root / name).write_text("tooling-only")
+            projects = [
+                *(f"src/Hoard.{name}/Hoard.{name}.csproj"
+                  for name in ("Abstractions", "Core", "Hosting", "Application")),
+                *(f"tests/fixtures/metadata/{name}/{name}.csproj"
+                  for name in ("Sqlite", "Memory", "HostAdapters", "Consumer", "CrashRunner", "BoundaryLeak")),
+                "tests/contracts/Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj",
+                "tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj",
+                "tests/contracts/Hoard.Testing.Conformance/Catalog/catalog.json",
+                "specs/004-module-discovery/contracts/openapi.json",
+            ]
+            for relative in projects:
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("tooling-only")
+                if relative.endswith(".csproj"):
+                    lock = target.parent / ("PackageAcceptance/packages.lock.json"
+                        if target.stem == "Hoard.Metadata.Tests" else "packages.lock.json")
+                    lock.parent.mkdir(parents=True, exist_ok=True)
+                    lock.write_text('{"version":2,"dependencies":{"net10.0":{}}}')
+                    if target.stem == "HostAdapters":
+                        lock.write_text('{"version":2,"dependencies":{"net10.0":{'
+                            '"Hoard.Fixtures.Metadata.Sqlite":{"resolved":"0.1.0","contentHash":"original"}}}}')
+
+            def command(*args, **kwargs):
+                commands.append(args)
+                if args[:2] == ("dotnet", "pack"):
+                    project = Path(args[2])
+                    self.assertTrue(project.is_file())
+                    if project.stem == "Hoard.Testing.Conformance":
+                        self.assertTrue((project.parent / "Catalog/catalog.json").is_file())
+                    name = ("Hoard.Fixtures.Metadata." + project.stem
+                            if "fixtures" in project.parts else project.stem)
+                    (work / "feed" / f"{name}.0.1.0.nupkg").write_bytes(b"tooling-only")
+                return ""
+
+            with (patch.object(module, "run", side_effect=command),
+                  patch.object(module.foundation, "canonicalize_acceptance_archive"),
+                  patch.object(module, "source_hash", return_value="a" * 64),
+                  patch.object(module, "lock_hashes", return_value={})):
+                inputs = module.prepare_packages(root, work, False)
+            sdk = next(index for index, args in enumerate(commands)
+                       if args[:2] == ("dotnet", "pack")
+                       and Path(args[2]).stem == "Hoard.Testing.Conformance")
+            wrappers = next(index for index, args in enumerate(commands)
+                            if args[:2] == ("dotnet", "restore")
+                            and Path(args[2]).stem == "Hoard.Metadata.Tests")
+            self.assertLess(sdk, wrappers)
+            self.assertIn("Hoard.Testing.Conformance.0.1.0.nupkg",
+                          [item["id"] for item in inputs["packageInventory"]])
+            self.assertEqual(len(inputs["lockDerivations"]), 1)
+            self.assertTrue(any(any(arg.startswith("-p:NuGetLockFilePath=") for arg in args)
+                                for args in commands if Path(args[2]).stem == "HostAdapters"))
+            self.assertIn('"contentHash":"original"',
+                          (root / "tests/fixtures/metadata/HostAdapters/packages.lock.json").read_text())
+
     def cases(self, module, work):
         proof = work / "proof.json"
         proof.write_text('{"synthetic":"tooling-only"}')
@@ -32,6 +97,37 @@ class MetadataEvidenceTests(unittest.TestCase):
              "proof": "proof.json", "sha256": digest}
             for provider in module.PROVIDERS for case in module.CASES
         ]
+
+    def test_logical_compositions_freeze_shared_sdk_binary(self):
+        module = self.load()
+        for mutate in (False, True):
+            with self.subTest(mutate=mutate), tempfile.TemporaryDirectory() as directory:
+                work = Path(directory)
+                output = work / "current/tests/contracts/Hoard.Metadata.Tests/bin/Release/net10.0"
+                consumer = (work / "current/tests/fixtures/metadata/Consumer/bin/Release/net10.0"
+                            / "Hoard.Fixtures.Metadata.Consumer.dll")
+                output.mkdir(parents=True)
+                consumer.parent.mkdir(parents=True)
+                sdk = output / "Hoard.Testing.Conformance.dll"
+                for path in (output / "Hoard.Metadata.Tests.dll", sdk, consumer):
+                    path.write_bytes(b"synthetic-tooling-only")
+                tests = [{"test": "MP" + case[3:] + "_synthetic", "durationMs": 1}
+                         for case in set(module.CASES) - module.DURABLE_CASES - {"MP-47", "MP-48"}]
+
+                def command(*args, **kwargs):
+                    if args[1] == str(consumer):
+                        if mutate:
+                            sdk.write_bytes(b"changed-tooling-only")
+                        return "metadata-package-consumer-compatible"
+                    return ""
+
+                with (patch.object(module, "run", side_effect=command),
+                      patch.object(module, "trx_results", return_value=tests)):
+                    if mutate:
+                        with self.assertRaisesRegex(RuntimeError, "binary changed"):
+                            module.logical_cases(work)
+                    else:
+                        self.assertEqual(set(module.PROVIDERS), set(module.logical_cases(work)))
 
     def test_case_inventory_requires_every_applicable_case_exactly_once(self):
         module = self.load()
@@ -147,10 +243,10 @@ class MetadataEvidenceTests(unittest.TestCase):
 
     def test_subprocess_failure_and_timeout_are_sanitized_and_explicit(self):
         module = self.load()
-        for result in (subprocess.CompletedProcess([], 7, "private-canary"),
-                       subprocess.TimeoutExpired("fixture", 600)):
+        for result in (subprocess.CompletedProcess([], 7, b"private-canary"),
+                       RuntimeError("Legacy command exceeded its finite deadline.")):
             with self.subTest(result=type(result).__name__):
-                with patch.object(module.subprocess, "run",
+                with patch.object(module.legacy, "capture",
                                   side_effect=result if isinstance(result, Exception) else None,
                                   return_value=result):
                     with self.assertRaisesRegex(RuntimeError, "command") as caught:

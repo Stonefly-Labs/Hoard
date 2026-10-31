@@ -9,6 +9,2508 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
+F-07 shared conformance is partially implemented, not available as provider
+certification. Its artifact test-only fault drivers now distinguish explicit
+`InjectPublicationAcknowledgmentLossAsync` from ordinary boundary observers:
+only the exact registered injected exception is expected; other exceptions
+continue to fault ownership settlement.
+
+The public `scripts/validate-conformance.sh --profile metadata|artifacts
+--evidence <fresh-private-path>` entry now dispatches the complete built-in
+category batch on supported Linux hosts. It preserves independently selected
+case keys, exact native source/witness admission, immutable applicability and
+actual resource cleanup. Even a successful component batch retains an
+`Incomplete`, non-qualifying report and returns exit 2 (`EvidenceIncomplete`):
+the independent evaluator is unfinished. Unsupported native hosts fail
+`PrerequisiteMissing` before allocation. Focused/custom-binding commands and
+other profiles remain explicitly incomplete, without fallback. This is not yet
+the external contributor entry point or category certification.
+Both built-in jobs at exact `ef82218` now pass complete component execution on
+Linux, including real SQLite schema/backup/recovery, Local abrupt-process
+recovery and both paced 256 MiB/4 GiB transfer sizes on each artifact fixture.
+The 192 inherited entries retain exactly 179 applicable passes and thirteen
+exclusions: Memory MP-36/38..45 and ObjectSemantics AS-41..44. Memory claims
+logical behavior only; ObjectSemantics claims no durable process restart.
+Package-only consumer/source controls use identical consumer/SDK images across
+the respective bindings and independently checked package resolution. Reports
+still do not qualify providers. Protocol/identity fixtures remain declaration/
+lifecycle checks, not native-client or production support.
+
+The complete category runtime acceptance is independently confirmed again at
+feature head `44fd370b221aaf247eee52b1fad28a647370d772`,
+[run40612965869](https://github.com/Stonefly-Labs/Hoard/actions/runs/40612965869):
+metadata job122569229740 and artifacts job122569229921 both succeed through the
+public profile commands and post-release report/proof/completion checks.
+
+| Category | Passed catalog results | Authorized exclusions | Runtime scopes / parameters |
+| --- | --- | --- | --- |
+| Metadata: SQLite and Memory | 93 | 9 Memory durability cases | 10 / 141 |
+| Artifacts: Local and ObjectSemantics | 99 | 4 ObjectSemantics restart cases | 9 / 263 |
+
+These totals include thirteen additional category quality results; the frozen
+inherited inventory is still exactly192 entries,179 applicable passes and13
+exclusions, not a smaller replacement inventory. Native recovery, paced real
+256MiB/4GiB transfers, authority integration, package-only common consumers and
+intended-failure/corrected mutation sources remain independently bound to the
+current attempt. Frozen-wrapper parity and omitted/renamed-parameter controls
+pass in the full tooling suite. The [implementation evidence](../specs/007-provider-conformance/plan.md#complete-category-runtime-acceptance-t037t038)
+records input/result/report hashes and the exact checks.
+
+SQLite exercises actual file-backed transactions, schemas, backup/recovery and
+abrupt-process cases; Local exercises actual files and recovery. These fixtures
+are not production persistence/storage modules. Memory has no crash-durability
+claim; ObjectSemantics is an independent logical simulation, not an object-service
+client, durable remote restart, HA or distributed consistency claim. No protocol
+native-client, authentication/identity, upstream cache or untested cross-product
+support is implied. Source wrapper assertions remain shared with the test SDK;
+concrete setup/fault/cleanup belongs to bindings, not provider-selected expected
+outcomes. T037/T038 are complete execution/documentation tasks, not provider
+qualification: reports remain `Incomplete`, exit2, and independent full-profile
+evaluation, compatibility, contributor and five-profile aggregation remain open.
+
+Architecture checks additionally keep the test SDK outside all nine production
+owner classes, permit explicit test owners, require complete scan inventories,
+and reject malformed entries through the inspection-error boundary. Actual
+direct/helper Identity-to-Core paths remain forbidden in either traversal order
+even with the permitted Identity-to-Hosting-to-Core route present.
+
+Finite composition execution is now confirmed at exact `44fd370`,
+run40612965874/job122568697750: all 36 physical CP parameters and 110 snapshots
+support 41 logical passing subvariants after independent post-release replay.
+This includes explicit baseline/replacement, disabled-effect counters,
+rejection/repair, actual readiness/admission and retained/eventually settled
+ownership. T047 is an execution checkpoint, not a new qualified provider scope:
+nine quality-source rows, full-controller acceptance and qualification remain
+incomplete. The version logger's local 114-parameter/170-observation protocol
+replay likewise does not establish historical SDK or untested version support;
+the release-classifier rows remain policy-only, never runtime claims.
+
+## Finite packaged composition and ownership limits
+
+The test-only packaged Host selects SQLite/Local for its baseline and
+Memory/ObjectSemantics for its replacement, using one unchanged package-only
+consumer. Host/binding images must match their independently packed local
+`[0.1.0]` archives. SQLite/Local exercise file-backed stores; Memory and
+ObjectSemantics do not acquire durable restart guarantees from composition.
+Protocol and identity modules here are declaration/lifecycle probes invoked
+through TestServer, not package-protocol clients, an authentication system or
+a production service. This does not broaden the category scopes above.
+
+Selection and enablement are explicit: installation/registration is not
+activation. Disabled modules expose no routes/workers/connections/store
+effects. Missing or incompatible required modules, invalid cardinality,
+incompatible enabled optional targets and mismatched authority/guarantees
+reject rather than falling back or silently changing the selected providers.
+The fixture initializes selected stores before readiness and request admission.
+Configuration remains fixed for an active request; changing selection requires
+settled stop and explicit fresh restart, not hot replacement.
+
+Cancellation or a finite stop response can leave initialization/request/stop
+work retained. In that state, refuse unsafe root disposal and restart; retain
+ownership until the actual callbacks settle and inspect the existing lifecycle
+result. Do not equate loss of a reference, removal of scratch evidence, eventual
+callback settlement alone, or forced child termination with a cooperatively
+released module root or recovered store. Native exact-child containment and
+process-resource release are separate evidence from module-root cleanup.
+There is no new force-recovery or production host API.
+
+Exact `0e49db127ee1a38b49dd157adc7eba1a02a99b11`,
+[run40620701197](https://github.com/Stonefly-Labs/Hoard/actions/runs/40620701197)
+job122595970901, now confirms all36 CP parameters/110 ordered snapshots,
+41 logical passing subvariants and independent post-release report replay.
+All29 generated-report mutations and both original-proof semantic challenges
+reject despite successful host labels: readiness before initialization and
+completed stop while ownership is retained. The workflow requires the exact
+29/two receipt before success. Inherited525 parameters/58 scopes,3,273 bound
+controller inputs,41 formatting commands, mutation pairs/reference consumer
+and actual process release also verify. T048/T049 are finite control/documentation
+checkpoints, not qualification: nine quality-source rows remain `Incomplete`,
+all qualification/full-controller flags remain false and the public composition
+command retains expected exit2. The compile-only
+[CustomHost](../examples/CustomHost/README.md#f-07-finite-packaged-composition-and-recovery-limits)
+still never calls application `Build`, `Run` or `Start`.
+
+## Finite compatibility evidence and author obligations
+
+The public compatibility diagnostic is available on the supported Linux
+confinement hosts with the repository's pinned .NET SDK, Git history and locked
+package prerequisites. Use a fresh child of an owned, mode0700 private parent,
+outside the checkout:
+
+```bash
+bash scripts/validate-conformance.sh --profile compatibility \
+  --evidence "$HOARD_PRIVATE_PARENT/compatibility"
+```
+
+Its expected result is still `Incomplete`/exit2, even after successful execution
+and process release. It does not run the unfinished independent qualification
+evaluator, and `--verify`/five-profile `--aggregate` remain unfinished. Never
+interpret a diagnostic's component success or workflow conclusion as provider
+qualification. A repeated run needs a different fresh evidence child; do not
+edit or reuse a retained baseline or repair a report in place.
+
+The immutable
+[baseline inventory](../tests/fixtures/conformance/baselines/inventory.json)
+pins these source revisions, not a range of allegedly supported releases:
+
+| Baseline purpose | Exact revision |
+| --- | --- |
+| F-07 pre-extraction F-06 source | `9389016c0285c79f6f515f59805a5a41c69b0767` |
+| Lifecycle predecessor | `837fdf3edf51c3df34710184d018479683c194c2` |
+| Configuration predecessor | `b80c69fc386541be4f56f6ef2edeca40f43a0e1c` |
+| Discovery predecessor | `7fd73267a5154583363c94e9e85b9bac7d4a16b3` |
+| Metadata predecessor | `10ce78851b97b02bd83a8ef7da7ffdc2381d6519` |
+| Artifacts predecessor | `830972f24795ffaaaa18cb35138db7da59022313` |
+
+Historical sources, recipes, locks, dependencies and binaries are sealed before
+candidate compilation. Current local acceptance packages retain version
+`0.1.0`; equal version labels never establish equal bytes. Actual archive
+SHA-256/SHA-512, assembly hashes and source/lock identity must agree before and
+after execution. The tested packages include `Hoard.Abstractions`, `Hoard.Core`,
+`Hoard.Hosting`, inherited fixture modules/providers and the four
+`Hoard.Fixtures.Conformance.Bindings.{Sqlite,Memory,Local,ObjectSemantics}`
+adapters. `Hoard.Testing.Conformance` is new in F-07: its current-source adapters
+are not evidence of a historical SDK release.
+
+Exact `c9a5990462be78df7220469b88342b662ac19edc`,
+[run40621394269](https://github.com/Stonefly-Labs/Hoard/actions/runs/40621394269),
+job122600307923 confirms 24 source recipes: twenty unchanged historical F-06
+consumer/provider sources and four current-source SDK adapters. Nine separately
+retained scenarios observe forty actually loaded assemblies without rebuilding
+the old consumers against the candidate. Old marker consumers establish only
+their consumed API/invocation compatibility, not operational metadata/artifact
+conformance. An intended missing-member source break must fail compilation at
+the named member; compatible sources must compile unchanged. Candidate-rebuilt
+old consumers, accidental resolution to old platform DLLs, altered dependencies
+or substituted same-version baselines do not satisfy these obligations.
+
+That same native receipt confirms all88 architecture parameters over22 graphs
+and eight required real scans, plus114 version parameters/170 observations.
+Declared host/abstractions/required/enabled-optional ranges are tested against
+the finite [version matrix](../specs/007-provider-conformance/contracts/matrix.md),
+including independent prerelease flags and explicit rejection/repair. Invalid,
+out-of-range or unsupported versions reject; disabled/absent optional targets
+do not become active edges or grant capabilities. C-05/06/16/17 remain
+release-policy classifications, not runtime compatibility claims. Source,
+retained-binary, graph and runtime-version checks establish different facts;
+none replaces another or grants untested Cartesian-product support.
+
+The supplemental seven-parameter PE/PDB-source and isolated binary
+break/repair/substitution attempt at `3ca391a` failed schema admission before
+confirming its binary scope. The transport repair permits only the four exact
+frozen public source identities; arbitrary/private paths remain prohibited.
+Exact `74c05878eb6884eabe9438bd2b8fc0824d098dec`,
+[run40627874774](https://github.com/Stonefly-Labs/Hoard/actions/runs/40627874774),
+job122619085176 now confirms all seven through the public compatibility command,
+alongside88 architecture parameters/22 graphs/eight real scans and114 version
+parameters/170 observations. It reconfirms24 source recipes, nine retained
+scenarios/forty loaded assemblies, the intended compiler-break control and
+actual process release. Original compatibility/version/architecture assertion
+source bytes match the preceding accepted native checkpoint. The isolated
+binary break throws the intended `MissingMethodException`; the compatible
+candidate returns the original operation from the unchanged consumer. Matching
+assembly versions never substitute for matching loaded bytes. Immutable receipt
+and assertion hashes are in the [plan](../specs/007-provider-conformance/plan.md#native-compatibility-confirmation-t059t061).
+These seven controls supplement, never replace, the genuine retained scenarios.
+Overall compatibility qualification remains false. These test-only results
+authorize neither package publication, source release, deployment nor production,
+protocol/native-client, identity, external-service or HA support.
+
+### Contributor registration admission, not execution
+
+For metadata/artifact projects, public invocation admission now requires a
+sibling `<Project>.conformance.json` registration. The
+[forwarding fixture registration](../tests/fixtures/conformance/Contributor/Contributor.conformance.json)
+declares the source-root-relative project, source-qualified factory type,
+adapter package, binding declaration, every category component's package/image
+identity and explicit source inventory. Unknown fields, provider-selected
+exclusions, missing hooks/components, unsafe paths and source symlinks reject.
+Bounded source hashing freezes a declared-input fingerprint. An owned staging
+helper rechecks that admission fingerprint, copies only its exact declared
+inventory with descriptor-based stable-file checks and read-only outputs, then
+revalidates original registration/source bytes. Changed inputs and overlapping
+author/output roots reject; the author's project is never built or modified.
+
+This does not prove complete MSBuild source/import/lock closure or full
+factory/category identity for a supplied project. No external project is built
+in place, the typed bridge is not yet integrated into the public consumer, and custom execution still returns
+`EvidenceIncomplete`. Adapter wrappers, underlying provider and shared
+authority/fault helpers remain separately declared; this forwarding example
+does not become an independent provider or inherit built-in runtime evidence.
+Integration of that declared snapshot with complete closure validation,
+owned build/pack, actual package/runtime attribution and separately packaged
+good/red/corrected complete-suite runs remain required by T064..T067.
+Synthetic feed helpers now accept an explicit bounded set of additional local
+package IDs, using exact case-insensitive IDs rather than author-namespace
+wildcards. The default `Hoard.*` policy is unchanged. Independent verification
+rejects unselected IDs, altered/widened mappings and case-folded duplicates;
+the serialized policy omits private feed paths. This supports future external
+adapter archives but does not yet execute a custom restore or contributor run.
+
+The typed source helper verifies selected local adapter/provider package IDs
+and versions plus the adapter's declared `lib/net10.0` image. It emits a direct
+`new global::<factoryType>(actualProviderArchiveSha256)` returning the selected
+metadata/artifact interface, without reflection or directory loading. The
+registered type therefore needs a public constructor accepting that one hash
+string (additional optional parameters are allowed). A managed metadata-only
+Acme component compiles/invokes this path with matching actual archive/image
+bytes and rejects wrong category/constructor types at compilation. This is not
+Linux containment, complete MSBuild closure, generic supplied-project type
+validation or separately packaged good/red/corrected common-suite acceptance.
+The generated factory now validates its returned declaration's binding/category,
+provider identity/version/hash and exact capability/fault sets. Set order does
+not affect admission. Four real managed negative components reject a foreign
+binding ID, wrong archive hash, omitted capability or extra fault with the
+intended `BindingInvalid`, rather than merely observing a failed process.
+
+For artifacts, generated `Create(ArtifactAssertionOptions options)` additionally
+requires the registered type's public constructor accepting the archive hash
+followed by that existing SDK options type. It forwards the exact options object;
+null rejects before provider construction. Both overloads share the same
+declaration admission, while `Create()` retains hash-only construction and
+metadata generation is unchanged. An actual managed artifact component verifies
+both paths, eight declaration-rejection observations, and compiler rejection of
+wrong category, missing options constructor and wrong options type. This is only
+the typed factory seam, not an artifact common consumer, capability/applicability
+mapping, native containment or qualification.
+
+The package-only consumer additionally accepts artifact build inputs for an
+109-row snapshot / 110-row incomplete-enumeration component, independently expanded
+with the actual registered ID. It calls unchanged SDK publication/read/reconciliation/deletion/
+budget/reference helpers and settles actual sessions. A fresh SDK-packed Acme
+adapter at2.4.0-preview.1 passes the component, exact discovery and all eight
+registered role-image matches after fresh-cache locked replay. Missing/unsupported
+properties and mismatched category reject. No built-in applicability/exclusion
+map is borrowed; complete artifact catalog coverage and public dispatch remain
+unfinished. Locally produced archive canonicalization binds the exact admitted
+ID, including explicit non-Hoard IDs. The legacy no-selection policy and signed
+archive rejection are preserved; mismatched IDs reject without rewriting bytes.
+The component now also covers common publication barriers, recovery/expiry,
+cancellation, reference checks, concurrent release and all ten fault controls.
+Existing shared boundary/clock/run-ID helpers are reused unchanged; only their
+test-fixture visibility widens. All 73 selected built-in Local/Object boundary,
+budget, recovery, control and concurrent-release regressions pass. Complete
+durability/enumeration applicability, complete catalog coverage and native
+provenance remain unfinished; this is not native containment or qualification.
+Artifact contributor registrations additionally require exactly one of
+`durable-local-process-crash` / `non-durable-simulation` and exactly one of
+`enumeration-snapshot` / `enumeration-incomplete` in the existing declaration
+capabilities. Missing, unknown or ambiguous classification rejects at admission.
+The generated factory freezes the corresponding SDK enum constants; the consumer
+compares one actual capability snapshot before and after every assertion/control.
+Both actual durable/snapshot and simulated/incomplete adapters pass. False
+durability/enumeration claims and a profile changed during actual work reject at
+the named profile assertion. This contributor-only convention leaves the
+registration shape, SDK interfaces and default fixture declarations unchanged.
+Bundled NativeNonCooperation test consumers now supply the shared test-only
+`ArtifactNativeBoundaryClock` as `context.Clock`. They advance its 100-ms deadline
+only after actual native entry, avoiding an assumption that queued work starts
+before a real-time timer expires. Bindings continue passing the supplied context
+clock to the actual fixture; no product clock or budget changes. A private 200-ms
+pre-entry comparison preserves every assertion and passes all 118 contributor
+parameters after the correction. Other control rows retain their existing clock.
+The component now independently expands sequential recovery using the frozen
+enumeration expectation and includes the incomplete-only direct-availability
+case for that declared class. Both actual profiles match exact discovery and
+eight-role attribution with zero skips; the 73 selected built-in rows still pass.
+False snapshot claims and changed-during-work controls still reject at the named
+profile assertion, rather than borrowing a shorter dataset. This is only one
+input-bound component applicability distinction, not complete catalog coverage
+or qualification.
+The logical reopen row calls the same original shared consumer body, with
+test-only profile checks on original/reopened/final sessions. It checks retained
+or reset public state from declared durability, stale-control fencing, fresh
+store instances and two actual parent-linked origins. Actual profiles pass
+46/47 rows with 47/48 origins; a separately packaged profile-on-reopen mutation
+fails at the named assertion. This does not replace fresh-process/crash evidence.
+Nine additional admission rows reuse the original complete-profile and missing-
+guarantee consumer, including foreign authority and no-I/O rejection. The same
+profile assertion runs before and after admission. Actual snapshot/incomplete
+adapters pass 55/56 rows, 56/57 origins and all 91 selected built-in regressions;
+false claims and changes during commit/reopen still fail at that named assertion.
+This remains partial common-catalog coverage, not native qualification or public
+contributor dispatch.
+The component additionally reuses original damaged-read/payload/progress,
+handoff, history candidate bound/resume and clock-rollback consumers, plus
+unchanged cancelled-descriptor SDK assertions. Declared durability determines
+damaged-read logical reopen and the independently expected two-origin lineage;
+enumeration independently controls direct availability. Actual snapshot/
+incomplete profiles pass 76/77 rows with 79/78 origins and all 134 selected
+built-in regressions. A separately packaged durable adapter changing its profile
+during damaged-read reopen fails at the named assertion. Mixed profile inventory
+expansion is unit-checked, not claimed as actual runtime support.
+Committed-detection and validation-first quarantine now share original consumers
+as well, with durability-bound reopen/origin obligations. Receipt/callback
+ownership, admitted deletion history, transfer queues and released-shutdown work
+also reuse original bodies. Actual snapshot/incomplete profiles pass 88/89 rows
+with 95/90 origins and all158 selected built-in regressions. This is still
+partial common-catalog coverage and logical, not native/crash qualification.
+Eight ordinary cleanup/callback/candidate/acknowledgment error controls share
+original consumers, requiring faulted settlement with the exact injected
+exception and no released-ownership report. Profile checks surround actual work;
+disposal assertions do not mask an earlier profile failure. Actual snapshot/
+incomplete runs pass96/97 rows with103/98 origins and174 selected built-in
+regressions. These remain deliberate negative controls, not permission to
+qualify a run retaining live or unsettled resources.
+Prefix cleanup/stop, committed-residual cleanup, payload-access ownership and
+validation/restoration checks also share original consumers. Frozen durability
+alone selects logical prefix-stop reopen and its extra origin. Actual snapshot/
+incomplete profiles pass103/104 rows with111/105 origins and188 selected built-in
+regressions. Validation-access permission checks retain the explicit Unix
+prerequisite rather than silently omit unsupported environments. Full common
+applicability/native/compiler closure and public dispatch remain open.
+Settled-receipt replacement, admitted reconciliation history and late cleanup
+generation reuse the original consumers. Both bindings use BeforeReconciliation:
+unresolved operation captured, ticket ownership retained, before resolution/
+protection/verification. This conditionally reached boundary does not promise to
+observe every admitted reconciliation. Cleanup retains CleanupCandidate.
+No provider-name/profile inference or new SDK enum is required. Actual snapshot/
+incomplete profiles pass106/107 rows with114/108 origins and194 selected built-in
+regressions; complete common/native closure remains unfinished.
+Admitted-open quarantine uses the existing ReadOpened point for both bindings:
+the read protection and physical stream are held, before the final incarnation/
+quarantine recheck and result handoff. Access-application shutdown also shares
+the original ownership/settlement consumer. Actual snapshot/incomplete profiles
+pass109/110 rows with117/111 origins and201 selected built-in regressions.
+No SDK/binding/provider changes or full native qualification are implied.
+
+The captured-image helper independently selects every registered role from
+actual local package records and the captured consumer image map. It requires
+the exact declared `lib/net10.0/<assemblyName>.dll`; package ID and assembly
+name need not match. Missing owners, wrong versions/members, case-folded
+duplicate package IDs, ambiguous runtime asset ownership and altered image
+bytes reject. Metadata schema and artifact validator/maintenance/lifetime can
+remain provider-owned while authority/fault helpers belong to another package.
+These are input-byte checks, not observations of loaded session components or
+an integrated contributor run. The existing runtime origin reader still needs
+to consume these independently selected mappings in the eventual public route.
+The existing non-qualifying lock preparation helpers also accept an explicit
+captured-package policy for non-Hoard IDs and versions other than `0.1.0`.
+They change only selected local content hashes, preserve requested/resolved
+versions and dependency edges, verify actual archive SHA-256/SHA-512 bytes and
+leave unselected dependencies unchanged. Verification requires the same frozen
+policy; duplicate case-folded IDs/nodes, changed versions or archive bytes and
+missing selected direct/transitive hashes reject. Existing callers retain the
+original `Hoard.*`/`0.1.0` behavior. A trusted managed component packs two actual
+custom-version archives, restores/builds a package-only consumer from a second
+fresh cache in locked mode, invokes it and matches both runtime images to their
+archives. The author's original lock remains unchanged. This finite component
+does not validate arbitrary project closure, native containment or the public
+contributor build/full-suite route.
+An evaluated-input reader now admits only bounded known MSBuild item metadata,
+requires the selected project and toolchain inputs, rejects undeclared source
+paths and rechecks every declared source byte (including unqueried declarations).
+It emits relative source/toolchain hashes without retaining derived private
+vendor paths. Duplicate/malformed rows and unknown metadata reject. A fixed
+repository-owned BuildInputs task uses MSBuild's actual evaluation API, detecting
+conditional imports, expanded source includes, referenced projects and ambient
+sources. Its closed hash-bound request names the frozen source manifest and
+actual SDK toolchain; its receipt contains only relative identities, kinds and
+SHA-256 hashes, never derived private MSBuild metadata paths. Every captured
+file is rehashed before output and claimed hashes are independently admitted.
+Changed or undeclared inputs, links, foreign toolchains, reused output and
+malformed projects reject with fixed safe events. Owned capture uses a read-only
+generated driver/request, explicit SDK/runtime hosts without roll-forward, exact
+count events and post-command source/request/driver/tool/host checks even after
+failure. Actual managed task and modeled orchestration controls pass.
+
+This is evaluation-only component evidence, not a generic source/build input
+tracer. Dynamic/generated compilation inputs, restored-package input ownership,
+full lock/import closure, native parent provenance and public supplied-project
+build/pack integration remain unfinished. MSBuild projects/providers remain
+trusted executable code; this component does not sandbox arbitrary projects.
+
+A separate compiler-source reader admits only closed, bounded per-project
+receipts. Every compiler project must be declared, the selected binding project
+must be observed, and failed/duplicate/foreign project rows reject. Observed
+`source/` hashes must match the frozen declaration; `generated/` hashes are
+independently rechecked beneath a disjoint root. All declared author bytes are
+rechecked, even if not selected by Csc. Unknown fields/namespaces, path escapes,
+links, changed bytes and conflicting generated hashes reject.
+
+The repository-owned BuildInputs compiler observer calls
+`IEventSource3.IncludeTaskInputs()` and correlates actual Csc task contexts. Its
+closed hash-bound request names frozen source hashes, disjoint owned generated/
+package roots, the actual SDK toolchain and create-new outputs. Bounded receipts
+capture physical sources/references/analyzers/additional files/resources/imports
+and actual command/item-metadata hashes. Files are rechecked after compilation;
+changed inputs, observer/build errors and output reuse cannot produce a
+successful completion event. Actual two-project managed controls pass, including
+target-generated input, additional-file/resource capture and a post-compile
+generated-file mutation that rejects before receipts are written.
+The managed component explicitly enables SDK typed task/import event collection,
+keeps CLI verbosity minimal and console logging disabled, and emits only fixed
+events. Native owned-build integration, source-generator/tool-dependency closure,
+portable-PDB/loaded-image attribution and public contributor acceptance remain
+unfinished. The strict native environment and execution guard are unchanged.
+
+Owned compile capture now requires the exact declared project set, equal Csc
+source maps across source/file receipts, all three independently admitted
+receipts, and one exact completion event. Source, generated inputs and immutable
+request/properties/tool/SDK-host bytes are rechecked, including child failure.
+The build/pack helper can run this trusted repository-owned compile action after
+locked restore and before pack, without an unobserved fallback build; failures
+prevent packaging. Bindings cannot supply this action.
+The only new environment admission is the complete fixed pair
+`MSBUILDLOGTASKINPUTS=1` and `MSBUILDLOGIMPORTS=1`; partial pairs, other values and
+other MSBuild variables reject. Defaults, loader rejection, native containment,
+runtime roll-forward, ownership and capacity policies are unchanged.
+A private actual managed bridge completes evaluation, locked restore/graph
+capture, observed build, pack and PDB capture in six commands: one compiler row,
+three document hashes and exact archive/compiled DLL equality. Its forwarding
+command adapter is not native containment evidence. Source-generator/tool-
+dependency closure, full applicability and public dispatch remain unfinished.
+
+The builder now isolates compiler-generated output per project and enables
+emission. The observer admits the actual typed Csc GeneratedFilesOutputPath,
+rejects reused/foreign/overlapping directories, freezes bounded source-only
+output trees at compiler completion and checks them again before publication.
+Separate generatedOutputs hashes never claim these files were Csc input Sources.
+Compiled-document admission accepts only the union of actual input sources and
+those generated outputs, binding both manifests separately. An actual SDK
+GeneratedRegex generator/PDB control passes; changed output bytes, late tree
+changes and missing generator provenance reject. This closes emitted-source
+correspondence, not the remaining generator/tool dependency closure or native
+qualification requirements.
+
+Tool provenance now also records actual loaded MSBuild host/task modules,
+matching their loaded MVIDs to actual PE metadata without loading new assemblies.
+The observer itself remains separately frozen by owned orchestration. Support
+files are a distinct manifest: actual host runtime and installed hostfxr files,
+the muxer/MSBuild configuration, csc dependency-manifest runtime/resources and
+its selected apphost/configuration, and complete co-located analyzer trees.
+Fresh compiler-directory probing configuration and non-default compiler
+selection reject. Analyzer tree membership and all captured bytes are checked
+again before output. Capture and independent revalidation each have a separate
+256 MiB aggregate read cap; per-file, file-count and deadline bounds remain.
+Independent receipt admission rehashes the combined unique inventory under its
+unchanged aggregate proof limit, including frozen package-file ownership.
+Actual controls cover changed tool hashes, changed analyzer support and custom
+compiler rejection. This finite support set is not universal filesystem-I/O
+tracing, arbitrary compiler support or native contributor qualification.
+
+The internal captured-build bridge joins evaluation, locked restore, observed
+compilation, portable-PDB inspection and pack without an unobserved fallback
+build. Actual Csc DLL/PDB outputs are hashed at task completion and rechecked
+before publication. PDB admission and the packed adapter must match those exact
+hashes; neither a different same-source image nor package naming conventions
+can substitute. Actual assembly names are observed, not inferred from package
+IDs. Consumed package members across imports, task modules, support files and
+compiler inputs must match the exact graph-admitted cached archives, including
+build-only dependencies. Archive/member/file/deadline limits remain unchanged.
+After pack, the bridge revalidates compiler inputs/outputs/parameters, documents,
+assets, locks and restored archives. Managed positive and substituted-image
+controls are not native confinement or full contributor acceptance.
+
+The bridge also covers actual referenced-project graphs and emitted images;
+a post-pack dependency-image change rejects. Internal package-only consumer
+lock composition takes an existing frozen consumer lock and explicit archives,
+uses NuGet's own framework/range/content-hash APIs, preserves existing entries
+and adds only the adapter dependency closure. It does not resolve versions,
+contact sources, change author locks or include unrelated build-only packages.
+Conflicting versions, missing archives, cycles, changed inputs and forged
+receipt/closure entries reject. Owned capture freezes the tool's full support
+tree and publishes a read-only derived lock. A managed positive performs a real
+locked NuGet restore; this does not establish a complete native consumer run,
+public dispatch, complete artifact applicability or qualification.
+The first Linux replay passes the consumer-lock component but fails the joined
+builds at content-hash capture. A single closed producer error is now preserved
+through capture orchestration; this is improved diagnosis, not native acceptance.
+The next managed regression exposes ambient SDK selection in restore/pack:
+an enclosing global.json requesting an unavailable SDK breaks the joined build.
+The captured path now invokes both targets through the exact measured
+MSBuild/runtime, retaining locked restore, no-build pack and input revalidation.
+The managed regression passes; Linux failure resolution remains unverified.
+Safe native schema-boundary assertions then identify the v3-only version check.
+NuGet assets v4, introduced with SDK10.0.300, retains the library archive layout
+but pivots framework sections by alias. The private producer/reader now accepts
+v3/v4 only, requiring both v4 framework maps to contain exactly net10.0 with
+matching framework and targetAlias values. Existing graph, edge, hash and
+ownership checks remain; unknown versions and foreign/extra aliases reject.
+Initial local controls passed before native replay.
+The corrected source50a6672 then passes all701 native tooling controls without
+skips, failures, errors or unexpected diagnostic bytes in run40791780057. This
+verifies the owned joined build and both late-image rejection boundaries, not
+the unfinished public contributor/common-consumer journey or qualification.
+
+The next private bridge builds the fixed package-only Consumer with the generated
+typed factory and derived lock, using the same measured MSBuild/runtime. It stages
+only the selected frozen archives in an owned read-only feed and uses a private
+configuration with no remote sources. Restored archive bytes, common SDK/
+Abstractions images and every registered component must match; generated controls,
+source snapshots, original archives and tool support are rechecked after success
+or failure. Redirected output also excludes the baseline project's original
+`obj`/`bin` sources, avoiding duplicate generated assembly attributes.
+The original consumer graph retains SDK-pruned dependency edges without adding
+missing baseline rows; newly added packages still require their exact complete
+nuspec closure. A real lower-bounded framework-pruning fixture passes locked
+restore with unchanged derived lock bytes; incomplete original graphs still
+reject even when the missing archive is supplied. The actual managed example
+build passes50 commands,123 runtime files and six component roles. This is
+preparation, not native containment, logger execution, complete artifact
+applicability, a public contributor journey or qualification; new-package pruning
+contexts outside this finite supported composition are not inferred.
+
+The internal contributor runtime now stages the exact logger package/image,
+captures ordered declaration bytes matching the SDK snapshot, and freezes one
+local feed's complete membership/hash policy without serializing its private
+absolute location. Complete independently derived manifests enter the existing
+logger discovery/execution and origin admission path, with no settings patch or
+provider-selected case list. The managed metadata example passes76 rows and86
+origins. Full build/cache/source/runtime control maps are checked before and
+after commands, including failures; changed bytes and shortened/duplicate/foreign
+manifests reject. The native executor retains its existing pin limits and command
+proofs; managed adapters cannot substitute for native provenance. Native replay,
+complete artifact applicability and public contributor dispatch remain open.
+
+The later all-output boundary puts contributor source/evaluation/build/config/
+consumer workspaces in owned transient stores. Exact original runtime images
+remain as readonly hash-named copies for post-release guide inspection; private
+root plain/base64 values reject before copying, not after publication. Generated
+symbol paths map to `/_generated`; the PDB tool accepts that exact explicit
+marker only with the source marker and resolves every document to the original
+disjoint owned root. PE/PDB identity/checksums, physical document hashes and
+independent compiler-source correspondence still apply. The actual managed
+metadata/artifact consumers and malformed/missing/mapped-link controls pass;
+native complete-owned-tree validation of this change remains pending.
+
+Frozen5e35310 subsequently passes native metadata76/86 and artifact118/128
+parameter/origin diagnostics, including actual artifact crash/recovery and
+256 MiB/4 GiB transfers; both original retained trees pass the finite private-root
+plain/one-level-base64 scan. The first artifact attempt remains a separate
+unexplained failure. At frozenc7dc15b, all five guide blocks pass verbatim:
+good/faulty/corrected runs preserve unchanged common source/image/provider
+archive digests and the exact three intended faulty consumers. All five released
+roots, including both overlapping runs, retain124 original images each and pass
+whole-tree private-root inspection. This closes those named diagnostic replays,
+not independent profile qualification, general secret absence or service support.
+
+Exact-source native ownership job123205181349 atb49fa51 passes all713 controls,
+including native contributor discovery/execution and settlement, without skips
+or unexpected diagnostic bytes. The next supplied-project integration then
+finds a separate real boundary: Directory.Build.props maps source documents to
+`/_/`, which the PDB reader had rejected. An explicit optional prefix admits only
+that repository mapping into the owned source root; other prefixes, malformed
+values and links still reject. PE/PDB identity, document hashes and independent
+captured-Csc correspondence are unchanged. The actual joined managed case passes
+all76 metadata rows with86 origins; later-source native replay is still required.
+
+The next metadata increment connects the public `--binding-project` selection to
+owned prerequisite builds and the captured supplied-project/Consumer/runtime
+pipeline. It uses the common prerequisite project inventory rather than a second
+package list, reserves platform package identities, and builds the selected
+same-version example before freezing the baseline Consumer lock. Explicit archive
+bytes from that lock, supplied restore graphs and newly packed source projects
+form a bounded owned archive universe. Package/version identity is retained
+explicitly when normalizing cache filenames; it is not guessed from filenames.
+Only the existing frozen local feed is available to the final Consumer restore.
+
+Evaluated package identities and packability are captured for every source
+project. Packable reference identities must equal the observed NuGet project
+graph; each exact archive image must equal its actual Csc image, even when the
+package ID/version and assembly name differ. Nonpackable projects still require
+compiler/graph/document proof but not their own package. Missing required NuGet
+closure still rejects at Consumer composition/restore. Feed overwrites, substituted
+reference images and changes to the complete producer support tree reject.
+Revalidation is reusable around runtime; its control map now also freezes source
+build/evaluation receipts, consumed restored files and original archives, not
+volatile cache scratch/socket trees. The actual managed production path passes
+all76 metadata rows with86 origins, including changed build-receipt controls.
+The new public native controller has a separately gated full-entry regression;
+its current-source native result is not yet available. Exact55c94dc native replay
+passes712 controls without skips and metadata extraction, but does not validate
+this later entrypoint. Public metadata success remains diagnostic/incomplete
+until independent qualification is implemented. Artifact dispatch, full artifact
+applicability and the good/red/corrected contributor guide remain unfinished.
+
+The production artifact component regression now uses an explicitly packaged
+Acme adapter over the Local fixture, including its frozen declared source lock,
+captured compiler/archive correspondence, generated factory and local-only
+Consumer restore. It admits114 durable snapshot rows with125 exact origins and
+eight-role package attribution. The manifest now uses the actual component case
+ID rather than falsely labelling these origins as a full artifact binding.
+Five additional durable logical rows reuse the unchanged builtin decision/
+receipt reopen, failed quarantine persistence, record callback and reconciliation
+quarantine assertions. Their fixed applicability comes from the frozen durability
+marker and actual capability checks, never the provider name or a supplied case
+list. The independently expanded durable incomplete-enumeration cross is115 rows/
+126 origins; simulation snapshot/incomplete inventories remain109/110 rows with
+110/111 origins. Only the durable snapshot production path is newly executed.
+This is not full artifact applicability, fresh-process recovery, native transfer
+or public artifact dispatch. The earlier native metadata entrypoint regression
+reaches controller completion but fails when its test passes text to a bytes-only
+JSON reader; the test now encodes that output before admission. Failed native
+evidence remains retained, and new-source native verification is still required.
+
+The additive `IArtifactRecoveryConformanceBinding` test-only facet accepts an
+exact persisted `ArtifactStoreIdentity` and a context whose allocator supplies
+the already owned directory. Local implements it without requiring a live
+previous session: it creates a fresh authority and uses ReopenCompatible,
+rejecting foreign identities and failed initialization while joining shutdown.
+The packaged setup regression proves persisted receipt/content continuity,
+cancellation, incompatible-epoch rejection and actual settlement. Its recovery
+allocator admits one exact directory only after prior settlement; the original
+owner alone performs physical deletion. This is a same-process setup check,
+not abrupt-process proof or complete contributor recovery admission. Existing
+parent-linked live-reopen origins still require the same factory component.
+Unexpected runtime failures retain only a bounded projection of finite codes/
+counts and up to four hashed identities through the tooling supervisor. Raw
+provider messages, paths and payloads are not added. Invalid projections reject;
+observing failures never authorizes contributor qualification or erases them.
+
+The concrete SDK allocator now issues recovery through its instance
+`OpenRecovery(resource)` method. Only the original allocator's exact resource
+reference and successfully settled registered work are admitted. It compares
+original/recovery native directory identities, takes an exclusive directory
+lock, and supplies that exact existing resource once. The existing actual-task,
+bounded observation and retained-history rules still apply. The original owner
+cannot dispose while any issued recovery allocator is live; recovery settlement
+also retains original controller pins. Recovery allocators never delete state
+or report Released. The controller must observe their histories and dispose
+them only after actual work ends, before original physical cleanup. This setup
+API does not by itself admit a crashed process, cross-process origin or native
+contributor recovery proof.
+
+`ConformanceObservedArtifactRecoverySession.OpenAsync` observes this setup through
+the supplied recovery binding. Its separate `ConformanceArtifactRecoveryOrigin`
+payload identifies `artifact-recovery`, `recover`, the source session and the
+recovery-input SHA-256, with no ordinary parent-session field. Only safe JSON
+serialization is exposed; the ordinary origin output/logger channel has no
+recovery overload and continues rejecting recovery payloads. Validate source ID,
+input hash, cancellation and durable capability before calling the binding.
+Live reopen remains functional but returns an unobserved session, so it cannot
+emit an ordinary observed descendant of the unpublished recovery root. This is
+not independent proof of a terminated predecessor or a distinct recovery process.
+
+The independent `ingest_artifact_recovery_origin` leaf reader checks bounded
+closed declaration/source/recovery bytes against the frozen binding/package and
+eight role-image assignments. It requires a durable declaration, a matching
+source create observation, exact source/input/run/case/runtime/architecture and
+fresh component IDs; contradictory aliases and ordinary live-lineage fields
+reject. Its return value is not a runtime witness, process/ownership proof or
+qualification. Actual controller-held command and input/output admission is
+still required.
+
+`ArtifactCrashAssertions` extracts the existing six B0/B1/B2/B3/D0/D1 operations
+and recovery assertions without selecting a provider. Callers supply actual
+store/maintenance/identity, typed boundary registration and the owned pause;
+callers retain initialization, shutdown, physical ownership and containment.
+The original Local crash runner links the same BCL/Abstractions-only source
+without referencing the SDK package; its setup and raw/safe event protocol stay
+local. Continuation state includes an opaque staged handle and must not enter
+safe diagnostics/origin payloads. Six actual original SIGKILL/fresh-process
+checks pass; complete supplied-factory native orchestration remains unfinished.
+
+`OwnedRun.lease_directory` issues a separate original-controller lease: an exact
+private directory with a retained native descriptor/exclusive lock. Only
+recovery-scope commands with executor-held receipts can inherit it. The lease
+counts against the unchanged combined16 input/output pin limit. Verify original
+object/owner, path/native identity, UID and0700 mode before and after the child;
+the safe receipt records resource ID and path/identity hashes, never the raw
+descriptor or directory path. `native_control_record` requires that exact lease
+when reconstructing the held receipt; ordinary callers still reject extra fields.
+
+`ConformanceResourceAllocator.OpenControllerLease` centrally duplicates an
+inherited descriptor with close-on-exec and checks it against one supplied
+resource. Fresh mode requires an empty directory; recovery reuses its exact
+identity. Allocation occurs once, settlement remains real and bounded, and SDK
+disposal cannot close the controller's original pin, delete state or report
+Released. This is a trusted-controller handoff, not proof that a path, descriptor
+number or caller-asserted task establishes original process ownership.
+
+The original controller retains pins through actual group settlement and
+physical cleanup. Failed admission keeps registered pins owned. A completed
+cleanup can retry failed release publication without revalidating deleted paths
+or closing descriptors twice. Partial cleanup retries require both path absence
+and a still-held original unlinked inode; a moved directory is not deletion.
+The latter admission relies on Linux native unlink counts. macOS does not supply
+that witness here and remains fail-closed after partial leased-directory removal;
+no macOS native qualification is claimed. Consumer crash orchestration and
+independent artifact proof admission are still unfinished.
+
+The artifact-selected Consumer now has a private Linux-only
+`ArtifactContributorProcess` entrypoint. It uses only the generated supplied
+factory, requires the frozen durable profile and forwards typed observation
+points into the same six `ArtifactCrashAssertions` bodies. It does not choose
+a built-in runner from a provider name. Source setup writes a private bounded
+continuation outside the provider directory plus safe origin/hash-index files,
+then waits for the owning parent to kill it. Recovery verifies the frozen
+request/state hashes, uses the explicit recovery binding and original descriptor,
+captures a separate recovery origin and joins actual session disposal before
+successful exit. The hash index binds continuation bytes without putting opaque
+staged handles in proof or diagnostic output.
+
+`ConformanceControlFiles` pins private native directory handles, traverses
+relative parents without following links and performs bounded read-only input/
+create-new output I/O. It rejects unsafe paths, foreign/private-mode changes,
+overwrites and directory replacements. File creation uses Linux descriptor-
+relative openat; Darwin variadic interop and descriptor-path traversal are not
+silently substituted. Unsupported creation is an explicit prerequisite failure.
+Capture the file length once before allocating a read buffer, then require
+exact bytes and EOF; a writable handle can grow even a0400 inode.
+
+The existing packaged Acme regression now forwards explicit recovery and
+checks the actual entrypoint as well as all114 logical rows/125 origins.
+On supported Linux it additionally exercises all six actual killed-source/
+distinct-recovery pairs, original command/request/output/directory seals and
+the independent recovery-origin reader. Those pairs are not executed on macOS:
+its explicit prerequisite-denial check cannot count as native recovery.
+Remaining applicable native consumers and public artifact dispatch are still
+unfinished.
+
+The reusable internal `conformance_contributor_crashes` controller now owns
+all six source/recovery pairs and independently admits their original native
+command receipts. Requests and opaque continuation stay under private stores;
+only safe origins/index/readback belong in proofs. The reader reconstructs
+exact argv, input/output hashes and original directory-lease seals; it rejects
+changed/borrowed requests, state, images and command bytes, live children,
+overlapping execution and reused process identity. It checks all shared expected
+content hashes/lengths, fencing/reconstruction/reclamation/outcome and the original
+B3 acknowledged receipt rather than accepting a successful exit alone.
+
+An isolated Linux/arm64 run as UID 10001 passes all ten SDK ownership tests,
+the 114-row/125-origin packaged replay and all six real native crash pairs
+through this production helper. The runtime preparation legitimately adds the
+logger image; the original Consumer images must remain byte-identical members
+of the final frozen runtime map, not equal that larger map. Four portable
+regressions cover strict readback/parent mutation and explicit failure behavior.
+These are component diagnostics, not the remaining native transfers/retention/
+noncooperation, complete applicable category, qualifying CI or public dispatch.
+
+`ArtifactTransferAssertions` now owns the original actual 8 MiB warmup and
+256 MiB/4 GiB generated non-seekable paced stage/commit/full-read checks.
+The original TransferRunner links those same BCL/Abstractions-only sources;
+the package-only Consumer uses the SDK and its generated supplied factory.
+No provider-name switch or new production dependency selects the contributor.
+Actual source/sink byte counts, independently expected hashes and pacing must
+match, with the frozen actual profile checked before/after. Successful final
+control follows actual session disposal.
+
+The internal `conformance_contributor_transfers` controller checks the actual
+supported filesystem and at least 24 GiB free before starting, then independently
+joins each original native proc-status measurement, exact request/input/output
+receipt, producer readback and ordinary session origin. Requests remain private;
+safe admission contains only run/root IDs, the input hash, filesystem and capacity.
+The original controller must settle, stay within 16 combined pins and observe
+at least two RSS samples with at most 64 MiB peak delta. Altered/relabelled
+receipts, changed bytes, insufficient capacity, failed children and live resources
+reject rather than retry or start the second transfer.
+
+An isolated UID 10001 Linux/arm64 btrfs run passes the actual packaged component,
+all six real crash/recovery pairs after context extraction, and both actual
+transfer sizes. Peak deltas are 5,668,864 and 24,399,872 bytes (12 and 303 samples).
+This is diagnostic component execution, not clean CI or full artifact category
+qualification. Real 4 GiB execution stays in explicit native validation rather
+than every bounded tooling replay. Complete catalog/public dispatch and the
+clean-checkout good/red/corrected guide remain unfinished.
+
+`ArtifactNonCooperationAssertions` now shares the original deliberately retained
+source/destination/native child bodies with the source-linked original runner.
+Setup exposes actual worker settlement, the real synchronous hold and a competing
+initialization probe returning actual admission/shutdown results. The probe
+always stops its new lifetime; only shared assertions decide expected failure.
+Existing observation/hold type full names are unchanged. No concrete provider
+or private path enters the common body, and no new production dependency is added.
+
+The generated-factory Consumer checks actual frozen capabilities and reports
+two safe inspections plus an ordinary session origin. Deliberately pending work
+is neither released nor disposed into a fabricated success: the original parent
+inspects, then SIGKILLs within the unchanged 15-second scope. The internal
+`conformance_contributor_noncooperation` reader independently joins the two
+inspection packets, exact native/request/input/output receipts and frozen origin.
+It requires pending workers, intact borrowed streams, unavailable competing
+initialization, retained protection/root and blocked readiness through both
+phases. These are containment observations, explicitly not durability proof.
+
+Actual UID10001 Linux/arm64 btrfs execution passes all three supplied scenarios
+with distinct sessions/process identities and all six original Local/Object
+child cases. The same replay preserves114 rows/125 origins, six crash/recovery
+pairs and both real transfer sizes. Clean artifact preparation now copies all
+six exact linked assertion/control/stream sources; a regression first rejects
+the incomplete copy. Complete applicability/public dispatch and qualification
+remain unfinished.
+
+The contributor component additionally reuses the original payload-access
+release error/cancellation body for both denied/unavailable variants. It checks
+actual restored payload bytes, faulted resource settlement with the exact
+ordinary exception, and no fabricated Released observation. Durable profiles
+also run original reclaimed-incarnation capacity and reclamation candidate
+bounds. Frozen durability, not provider identity, selects those rows;
+actual capabilities are checked before/after their assertions.
+The independent inventories are118/119 rows and128/129 origins for durable
+Snapshot/Incomplete, and113/114 rows and114/115 origins for simulation.
+The actual118-row/128-origin durable Snapshot component passes on macOS and
+isolated unprivileged Linux; the other new profile inventories are expansion
+checks, not a new runtime cross-product claim.
+
+Applicability is contract-neutral: durability/enumeration do not imply a
+`decisions` directory, a third physical record write, Unix-mode restoration,
+filesystem inventory layout or object-publication residuals. Those private
+mechanism assertions remain mandatory for the original built-in bindings;
+contributors cannot select omissions or register extra mechanism traits.
+Explicit artifact `--binding-project` dispatch now runs all common assertions
+selected by the frozen profile plus applicable native obligations. The public
+durable Snapshot journey passes118 rows/128 origins, all six killed-source/fresh
+recovery pairs, source/destination/native retention and measured256 MiB/4 GiB
+transfers in isolated UID10001 Linux. Post-input recomputation and actual Released
+settlement pass. Discovery/execution use the selected SDK's `vstest.console.dll`
+through the exact measured runtime, not ambient SDK CLI startup. No unknown
+output is suppressed or admitted. A bounded manifest freezes the selected SDK's
+flattened runner dependencies, extensions and localized TestPlatform resources.
+Its hash is sealed into input-bound build controls and independently rechecked
+before/after commands. The same sealed controls bind every runtime/component
+image; fixed driver/map pins avoid imposing a component-assembly layout limit.
+All eight distinct role images pass structural native admission within the
+unchanged16-pin policy; this is not an eight-assembly runtime support claim.
+The final native public replay passes86 tests in162.759 seconds, and actual
+packaged macOS execution plus tampering controls passes in137.116 seconds.
+The summary remains explicitly non-qualifying
+and ends with `EvidenceIncomplete` exit2; guide red/green journeys, independent
+qualification/evaluation and CI are not established by this diagnostic run.
+Use the [contributor walkthrough](../examples/ProviderConformance/README.md)
+for clean-checkout commands, a separately copied forwarding project, deliberate
+adapter-only stale replay, safe finite inspection and owned-retention recovery.
+It explicitly distinguishes current diagnostic behavior from future independent
+qualification and never adopts an old directory through a fabricated owner.
+The isolated verbatim guide execution passes76 parameters/86 origins for
+good/corrected and both concurrent runs; adapter-only stale replay fails exactly
+`publication-replay`, `receipts` and `time-ticket`. Common consumer/assertion
+sources and SDK/provider/Memory-binding binaries remain unchanged. All five
+owners release their resources; active-root reuse rejects OwnershipInvalid and
+unavailable service scope rejects UnsupportedProfile without allocating a root.
+
+Compiled-document receipt admission now requires the selected successful
+compiler project, exact expected DLL/PDB paths, a source-document subset with
+matching captured source hashes, and independently rehashed current output
+bytes. Unknown fields, unsafe paths/links, foreign projects/documents and altered
+outputs reject. The reader does not parse PE/PDB bytes or establish producer
+origin by itself.
+
+The repository-owned BuildInputs `pdb-documents` producer opens the emitted
+portable PDB and DLL, matches CodeView GUID/stamp/age, verifies the SHA-256 PDB
+checksum with its20-byte ID zeroed, and checks every document against current
+author/generated bytes. Closed hash-bound requests reject foreign paths/links,
+changed images/sources and output reuse. Owned-run capture requires exact
+compiler/project inventories and source hashes, the owned build workspace,
+explicit runtime selection and exact document-count events. Source/generated,
+image, tool and request bytes are rechecked after success or failure.
+Actual managed producer controls and modeled owned-command controls pass.
+These components do not establish generator/reference/analyzer/package closure,
+native containment, complete catalog coverage or an integrated public build.
+
+Build-file receipt admission now covers observed imports and known physical Csc
+input parameters across disjoint author/generated/toolchain/package roots.
+It requires successful declared compiler projects with source/reference rows
+and rejects any reported build/observer error, even if a cached build-success
+flag is true. Every frozen author input and every observed generated/toolchain
+file is rehashed. Package files must additionally match an independently supplied
+frozen file policy. Unknown fields/parameters/namespaces, undeclared inputs,
+conflicting hashes, overlapping roots, links and changes reject. File-count,
+byte and time budgets apply across all roots, not independently per root.
+
+A private trusted actual build observes116 imported files and305 distinct file
+hashes, including335 reference and16 analyzer observations across two compiler
+tasks. Additional data and embedded resources are observed; changing the actual
+additional file or generated reference image rejects. Import events require
+explicit `MSBUILDLOGIMPORTS=1` in this private component. Null imported-file
+values mean a condition/glob selected no file and are not file inputs. Structured
+observer errors remain blocking rather than being erased by build success.
+No binary/raw diagnostic log is retained, and the public executor environment
+is unchanged.
+
+This is not a complete compiler-option/item-metadata or source-generator trace.
+The supplied package-file policy does not itself prove archive ownership;
+actual archive/member/cache attribution and owned public build integration are
+still unfinished. The fixed component uses only SDK/project-reference inputs,
+not an independently packaged arbitrary contributor.
+
+Registered-package file-policy generation now rechecks actual frozen package
+identity and SHA-256/SHA-512 bytes, then hashes exact explicitly selected archive
+members without extraction. It covers reference/analyzer/build/content members,
+not only runtime DLLs. Missing members, unknown owners/versions, duplicate or
+ambiguous cache prefixes, unsafe paths, changed bytes/hashes and selected-member
+CRC errors reject; archive/member reads share finite aggregate budgets.
+Cache prefixes must come from an independently checked asset graph, not guesses
+about NuGet version normalization. This helper does not resolve that graph.
+
+A private managed component SDK-packs `Acme.Dependency` `2.4.0-preview.1` with
+runtime image, imported props and additional data. Actual restore assets supply
+the cache prefix and SHA-512 correspondence; actual Csc/import observations
+select all three consumed members. Their archive hashes match the fresh NuGet
+cache, and changing its reference image rejects. The complete finite component
+now observes117 imports,308 distinct input files and336 reference observations;
+the16 analyzer/nine compiler-source/five PDB-document observations are unchanged.
+This is not locked full-graph replay, a public build route, native containment or
+complete contributor acceptance. The helper uses current `PackageIdentity`
+records, which require a runtime image; analyzer-only/tool-only package identity
+and general evaluated asset-graph admission remain unfinished.
+
+A separate archive identity now shares the existing bounded archive/metadata
+capture but does not require runtime assets. Runtime `PackageIdentity` still
+requires actual runtime images and rejects build-only archives; it is not
+relaxed or populated with a fake DLL. Selected-member file-policy generation
+accepts either closed identity shape and revalidates the matching actual archive.
+
+The private component now also SDK-packs `Acme.BuildInputs` `3.2.1` with no
+runtime image. Actual imported props/additional data are matched to this archive
+using its actual asset prefix and SHA-512. All five consumed members from both
+archives match the fresh cache; runtime admission still rejects the build-only
+archive. The component now observes118 imports and310 distinct files;336
+references,16 analyzers, nine source observations and five PDB documents remain
+unchanged. General asset-graph/lock admission, full compiler-option/item-metadata/
+source-generator closure, native origin and the public pipeline remain open.
+
+Compiler-parameter receipt admission now requires one command hash and exact
+item-metadata keys for every successful observed compiler project/file. Missing,
+duplicate or foreign projects/parameters/files, malformed hashes, unknown fields
+and oversize receipts reject. Parameter receipts bind the digest of the admitted
+file-compilation rows; no raw commands, metadata values or private paths are
+retained.
+
+A private actual logger hashes two Csc command lines and369 bounded custom
+item-metadata observations. Rebuilding the same frozen source with only a
+different resource logical-name property changes the actual command hash,
+resource metadata hash and emitted DLL, while source/resource bytes remain
+identical. Both exact file/parameter inventories admit independently. This
+demonstrates why physical file hashes alone are insufficient, not complete
+compiler-option interpretation, source-generator closure or native producer
+origin. The producer remains private and public contributor integration is open.
+
+The package-only Consumer now supports an explicit metadata-contributor build
+mode with a directly compiled generated factory and an exact adapter package
+reference. Missing/category-inconsistent build inputs reject rather than fall
+back. Common test data expands using the actual registered binding ID; the
+shared assertion bodies are unchanged and providers cannot choose a row subset.
+The independently expanded common parameter inventory accepts that binding ID
+without borrowing a built-in provider's applicability or exclusions.
+
+A finite managed component uses actual retained SDK-packed archives and a fresh
+cache. All77 metadata common/hook rows pass; exact xUnit discovery matches the
+independent expected identities. The same shared bodies emit87 session origins,
+whose six role-image hashes match the registration's independently selected
+archive members. With no contributor properties, all154 Memory/SQLite rows still
+pass. The frozen source snapshot remains unchanged after both paths. This is
+consumer-bridge component evidence, not a new independent provider, full
+applicable-profile evidence, native containment or supplied-project build/pack
+acceptance. Artifact-contributor integration, complete input provenance and
+public dispatch remain unfinished; T064 stays open.
+
+The build/pack helper now accepts the registered version for archive selection,
+preserving0.1.0 defaults for existing fixtures and rejecting escaping identities
+before commands start. A further managed component actually builds and SDK-packs
+the declared read-only staged forwarding adapter at2.4.0-preview.1, with separate
+intermediate/output roots and an explicitly prepared producer lock. A deliberately
+prepared consumer lock is replayed in a second fresh cache before the actual
+77-row run and87 role-image observations against that new archive. Author and
+staged source bytes remain unchanged. Five actual missing/category-inconsistent
+Consumer builds reject with BindingInvalid. This is not a native public run,
+full input provenance or completion of the three good/red/corrected journeys.
+
+The internal supplied-project builder now allocates disjoint owned output and
+prepared-lock paths for every declared project, leaving author/staged sources
+unchanged. Actual SDK probes pass both a single-project adapter and an adapter
+with a ProjectReference; the single-project archive also passes the77-row
+consumer. Source inventories/read-only modes, configuration and generated controls
+are rechecked even after command failure. This internal recipe uses the
+CustomAfterDirectoryBuildProps hook and requires owned configuration/feed paths
+without semicolons. Hook conflict/evaluation and complete compiler/asset/native
+provenance remain unfinished; it is not the public contributor entry point.
+
+Finite restore-graph admission now matches the exact net10.0 assets/lock package
+and dependency-endpoint inventories, versions, content hashes, cache ownership
+and declared project paths, anchored to the prepared-lock hash. Cached archives
+are independently rehashed and their package metadata checked. A closed separate
+receipt binds NuGet logical content hashes to those exact archive bytes; raw
+archive SHA-512 is not substituted for signed-package content hashes.
+Actual single/two-project probes admit eleven package nodes and one project node;
+NuGet's bundled API computes seven content hashes distinct from raw archive hashes.
+The producer now lives in the non-packable BuildInputs test tool. Its closed
+hash-bound request names owned relative assets/cache/output paths; changed inputs,
+linked/foreign paths, duplicate fields and existing outputs reject. SDK-bundled
+NuGet references are pinned through global.json, not product dependencies.
+Actual single/two-project probes use this repository source, and managed tool
+controls cover unsigned hashes, stale inputs, links, metadata and bounds.
+This is not signature trust, complete dependency-range/evaluated compiler
+provenance, native producer origin, RID/multi-target support or public dispatch.
+The internal owned capture flow now connects build workspaces to the tool and
+graph reader. Requests use descriptor-anchored read-only writes; the command uses
+an explicit runtime with DOTNET_ROLL_FORWARD=Disable and the existing event path.
+Require the exact package-count success event and recheck request/assets/lock/
+tool/source bytes and source modes even after failure. Actual one/two-project
+managed probes exercise this recipe, not native OwnedRun.command containment.
+
+### Earlier F-07 diagnostic checkpoints
+
+The test-only package-mode composition consumer now explicitly references
+`Hoard.Fixtures.Conformance.Host` at `[0.1.0]`; Host source links remain only in
+source mode. Both real SQLite/Local and Memory/ObjectSemantics rows run from the
+same consumer image, check initialization before readiness, make in-process
+protocol/identity probe requests, leave the disabled store untouched and observe
+complete stop. The loaded Host image matches its local archive, and independent
+fresh-cache default locked restore/build passes. These two rows now emit closed,
+bounded before-initialization/ready/stopped snapshots linked to the actual Host
+owner and loaded archive bytes. Independent ingestion admits six actual snapshots,
+requires successful stage invariants, and rejects omitted/replayed observations
+or false readiness/cleanup. Genuine failed attempts retain available ordered
+snapshots and original proofs, never an inferred pass. No output guard is relaxed.
+This is diagnostic component evidence: remaining composition output conversion,
+inherited inventories and independent full-profile evaluation remain unfinished.
+Complete component replay additionally passes all 155 discovered packaged
+composition/version rows and 148 source-mode rows: declaration rejection/
+repairs, mapping ambiguity, optional-target inactivity and capability denial,
+all four version axes, independent prerelease flags and finite inherited
+classifications. Policy-only release classifications remain policy-only;
+these component passes do not widen declared ranges or qualify a profile.
+The packaged Host also owns shared controlled callbacks for all seven
+CP-15/16/17 rows. Both initializer `lateFault` parameters and all three shutdown
+variants are now mandatory catalog witnesses, with exact package discovery/
+result parity. All seven now emit bounded owner-linked observations of actual
+callback/task completion and faults, readiness/admission, stop/root outcomes and
+module counters. Independent stage policies reject false settlement/release;
+settled retained roots remain incomplete. Nine actual safe proofs and nineteen
+snapshots pass together with baseline/replacement. Native containment, complete
+ownership/profile integration and qualification remain open.
+The initializer-failure row also preserves actual task faults and rollback stop
+before complete owner disposal. Ten actual package proofs/twenty-one snapshots
+pass independent ingestion. The dedicated native composition diagnostic records
+the command/input closure and checks process-resource release separately from
+cooperative module-root cleanup. Its first Linux attempt rejects unsealed
+command inputs. Its sealed successor reaches launch but rejects test output
+through the build projector. The corrected test projector passes the Linux
+thirteen-row replay at exact `e9a1589`, including actual process-resource release.
+The schema-denial and corrupt-manifest recovery rows now add distinct actual
+denial/repair owners, closed failure/admission/worker/root counters and retained
+failed prefixes. Actual admission passes thirteen package proofs/thirty-three
+snapshots; a successful repair waits for both real worker entries first.
+The short native component has its own diagnostic workflow, not a qualifying
+profile. Its component environment explicitly leaves SQLite provenance
+unobserved rather than claiming the platform-only probe measured that library.
+Exact `f6e9db4` passes this independent native workflow with all thirteen proofs/
+thirty-three snapshots and real process-resource release. This closes the
+bounded CP-14..18 probe implementation (T044), not complete provider or
+composition qualification. CP-19 authority/guarantee admission and CP-20 active
+request controls now execute from the shared Host package, preserving real
+Local-store pre-I/O denial and explicit settled restart. All four package cases
+pass after three intended consumer-local ownership failures. Safe CP-19/20
+transport, inherited inventories and full profile integration remain unfinished.
+The subsequent safe transport increment independently admits all seventeen
+selected package proofs/fifty-one snapshots, including CP-19 pre-I/O denial/
+repair and CP-20 fixed configuration, request drain and distinct fresh restart.
+Independent challenges reject optimistic cleanup, hidden fallback, premature
+request settlement and hot replacement. This is diagnostic component evidence,
+not complete profile qualification; expanded native replay remains pending.
+The seventeen-row native replay subsequently passes at exact `cb8d6eb`.
+All CP-01..20 safe component rows now independently admit thirty-six actual
+identities/110 snapshots, including every declaration-theory parameter.
+Route-conflict observations preserve the real early rollback stops and zero
+disposal callbacks for unmaterialized fixture services; complete root stop
+does not invent module disposal. Inherited inventories/full-profile acceptance
+remain unfinished. Exact `59d9eff` separately passes the larger native scope
+with actual process-resource release. A bounded inherited configuration
+experiment now admits all twenty historical structure-theory cases, preserving
+unchanged assertion source and candidate platform image/archive agreement.
+Opaque `testCaseSha256` identities bind the actual adapter ID plus private
+display in memory; hashing display alone is insufficient because xUnit truncates
+twenty cases into twelve distinct names. Private arguments are not retained,
+and changed case IDs/displays or duplicate literal aliases reject. This does
+not yet integrate complete inherited inventories or qualify a profile.
+The subsequent committed discovery tool has a locked test-only TranslationLayer
+dependency, bounded typed events and closed diagnostics. The independently pinned
+F-06 catalog covers 203 methods/525 parameters: all 509 composition parameters
+are discovered and admitted, while six architecture methods/16 parameters and
+prepared distribution/controller journeys remain unexecuted in this increment.
+Neither discovery nor an observed count substitutes for those runtime obligations.
+The first native discovery attempt rejects its oversized direct input list
+before child launch. A pinned closure request now verifies all images in the
+child and parent without widening recorder limits; that local check alone does
+not establish native replay.
+Exact `6178a77` subsequently passes Linux run40435964976 with all 509 discovery
+identities, the 36 CP proofs/110 snapshots and actual process-resource release.
+Scoped safe controller preparation then produces five foundation packages/two
+CustomHosts, seven lifecycle journeys/ten graphs, nine configuration journeys/
+thirteen graphs/five actual publication barriers, and nine discovery journeys/
+seven observations/eighteen graphs, including the required retained binaries.
+All 509 inherited composition parameters and 16 boundary parameters subsequently
+pass independent local runtime ingestion in 58 exact class scopes. This is a
+non-qualifying diagnostic, not native inherited execution, complete historical
+controller/mutation acceptance, public profile integration or T046 completion.
+
+Legacy interactive runners preserve the unreaped leader until all owned
+descendants settle, including descendants that close or inherit output handles.
+Post-handshake output drains concurrently within bounded retention; it cannot
+block transfer completion indefinitely. Safe metadata replay additionally
+requires the independently selected provider and explicit configuration digest;
+Memory evidence cannot be relabeled SQLite or replayed against another workspace.
+Fresh metadata recovery and six real Local SIGKILL/reopen journeys pass, still
+with `qualification: false`. Required large-transfer replay remains blocked by
+insufficient local scratch; no capacity threshold, transfer size, applicability
+rule or acceptance gate was reduced.
+The independent C# inventory decoder requires the same actual legacy transport
+input as Python; removing it and resealing command hashes cannot bypass admission.
+
+The test-only `Hoard.Fixtures.Conformance.Contributor` package now exposes
+`ForwardingMetadataBinding(providerPackageSha256, injectStaleReplay: false)`.
+It explicitly forwards Memory setup, schema, authority, faults, reopen and
+actual cleanup ownership. Its declaration identifies a non-durable forwarding
+example, retaining the real underlying provider package identity. Setting
+`injectStaleReplay: true` selects the existing isolated stale-replay decorator;
+it returns an old successful receipt after expiry, so unchanged
+`MetadataTimeAssertions.TicketExpiryAndRollbackAsync` rejects it at the intended
+assertion. Switching only that flag back repairs behavior without changing
+platform, provider, adapter, assertion or consumer image bytes.
+Package-only tests also execute actual legacy upgrade/reopen and reject artifact
+category admission. The package is not published, an independent implementation,
+complete conformance, or a substitute for the still-unbuilt public contributor
+CLI/guide journey.
+
+Metadata test-only corruption controls now retain per-record or exact
+epoch/operation ownership through application and verified restoration. Scope
+overlap and reopen/disposal reject while a target is owned; once closure is
+admitted, later corruption rejects before touching the store. Both adapters use
+their own compare-exchange primitives. `CorruptionCaptured` and `PayloadChanged`
+are typed observation points, not provider strings in shared assertions.
+Cancellation after a mutation restores before releasing the target.
+`RestoreCorruptionsAsync` explicitly retries failed restoration, while an
+applying owner still rejects recovery and closure. No private database image
+type enters the SDK; Memory gains no durability.
+
+Artifact fault drivers additionally expose bounded exact-stamp payload capture,
+replacement and removal. Each provider executes its own tracked controls,
+rejects stale incarnations and enforces a 64 KiB qualification-payload limit;
+capture and replacement copy caller-owned bytes. Controls do not fabricate
+receipts or clear quarantine. They hold genuine authority read protection
+through target selection, I/O and file disposal, excluding concurrent deletion.
+`PayloadSelected` observes that actual check/I/O boundary; the waiting-admission
+counter corroborates genuine deletion blocking without a timing-only assertion.
+`CommitProgress` maps independently to each
+provider's genuine progress boundary. Registration occurs at the common
+assertion's requested installation point, not during its setup publication.
+Local damaged-read consumers preserve compatible-reopen quarantine through the
+observed session; Object does not claim durable reopen. The original permanent
+quarantine helper remains unchanged, with explicit async-reopen denial negatives.
+The 62-row actual artifact selection and local wrapper/assertion parity remain
+diagnostic evidence, not complete extraction or provider certification.
+
+The full artifact diagnostic selection additionally includes thirty unchanged
+recovery/evidence/expiry and stream-ownership consumers, bringing its scope to
+92. Both providers execute exact receipts, bounded/query-bound pages, cursor
+retirement, changed inventories, expired staging generations/reservations,
+finalized outcomes, idle readers, cooperative/non-cooperative streams and all
+three canceled-descriptor shapes. Ownerless reservation expiry preserves the
+original one-byte artifact/staging limits, not a substituted ticket-count limit.
+Every added row requires its actual origin and settled owned resources; local
+thirty-row wrapper/assertion parity does not grant native qualification.
+
+Seventeen further observed rows extend that diagnostic scope to 109, retaining
+original authority/cancellation/capacity limits, sanitized storage errors,
+live/unavailable reference decisions and reclaimed-history bounds. The original
+reclaimed-incarnation case remains Local-only. Each row requires its genuine
+origin and settled resources; complete seventeen-row wrapper parity and named
+SDK-only capacity assertion negatives are local diagnostics, not qualification.
+
+Twenty handoff/progress and rollback rows extend this selection to 129.
+Awaited installation/removal preserves existing synchronous consumers and
+common assertions, with genuine provider observations at the requested point.
+UTC rollback does not rewind controlled monotonic time. Complete local wrapper
+parity and successful-read assertion negatives do not establish native admission.
+
+Twelve admitted-work/reconciliation/cleanup rows extend the selection to 141.
+They retain the original one-identity deletion-history budget, one-slot/one-waiter
+transfer queue, five-second shutdown allowance and one-ticket reconciliation
+budget. Original Local before-resolution versus Object direct-verification
+boundaries remain explicit adapter choices. Recovery installation/removal is
+awaited, and intentional acknowledgment loss uses the owned typed injection;
+ordinary observer failures are not forgiven. Twelve-row identical-SDK wrapper
+parity and three named assertion negatives remain local, non-qualifying evidence.
+Strict native run40271691109 at `831b00c` admits the earlier 129/152 artifact/
+metadata sources, not this 141-row extension or complete category qualification.
+
+Complete local metadata parity passes 152 actual rows and both 63-row original
+families using identical SDK archives. Continuation, query-dimension and lease-
+expiry SDK mutations fail the corresponding named assertions in all families.
+Qualification-input original memory/SQLite scopes now independently reconstruct
+role/creation/reopen attribution and require sealed original runtime packets,
+the exact SDK/provider/host/wrapper images and their held command inputs.
+Exact `74cf619`/run40279501756 admits these original metadata parents on Linux:
+all three jobs pass, 337 native foundations without skips and ten metadata
+parents. Earlier `bc85094`/run40276791513 admits artifact141/metadata152.
+The metadata report remains `Incomplete`, qualification false. All sixteen
+individual parameter mutations also produce exact 2/1/1 actual/memory/SQLite
+named failures across complete 152/63/63 families, but these local diagnostics
+do not supply an admitted native exact-parameter control or complete QC-02.
+
+Eleven further history-candidate rows extend the artifact scope to 152.
+The adapter owns candidate observations and a one-shot ticket-candidate
+failure separately; duplicate registrations reject without replacing the
+current owner. All seven frozen bounds parameters and both resume cases
+retain their shared assertions. Ordinary observer exceptions are recorded
+before the private injection runs and still fault settlement, even if their
+type/message matches the injection. Fresh fourteen-package replay passes
+308 selected metadata/artifact consumers. Complete 304-row actual/nine-row
+frozen replay passes, including duplicate-registration guards; SDK-only bounds
+and resume mutants give both families exactly seven/two named failures,
+respectively, with all other rows passing and identical runtime SDK/archive
+images. Native observation and complete category qualification remain outstanding.
+
+Ten further receipt/read-opening/reconciliation rows extend the artifact scope
+to 162. Owned failure registration admits only read-opened and verified-
+reconciliation points; ordinary callback errors, including the same exception
+type/message, still fault settlement. Awaited overloads preserve all six
+original observation cases and the one-transfer-slot/no-waiter read limits.
+Fresh packages pass 318 selected consumers. Complete 314-row actual/six-row
+frozen parity passes, while each of three SDK-only assertion mutants produces
+two named failures in both families and all other rows pass with exact SDK
+image/archive correspondence. These are local diagnostics, not complete QC-03.
+
+Exact `d30271d`/run40286734253 independently admits artifact162/metadata152
+on Linux: all three jobs and 337 native foundations pass without skips, with
+ten metadata parents. The later argument transport is not covered by that head.
+
+Common metadata assertions now record their closed enum/layout arguments
+against the actual component objects. Late output drains each call once;
+early original-schema output has an explicitly owned disposable observation
+scope. Closure joins output before releasing ownership, overlap cannot replace
+an existing owner, and reused objects cannot replay historical calls. The safe
+logger and parent independently validate schema3 argument/source/role joins;
+schema1/2 remain supported. Metadata category declarations, not reference
+binding names, govern argument admission. This is transport, not an independently
+composed native QC-02 control or completed provider qualification.
+Independent source admission additionally checks the frozen per-witness
+argument map and exact original forest nodes. Original proof digests include
+the independently re-read arguments. Pairing now independently re-admits both
+complete original scopes and joins the current shared graph/SDK images before
+issuing all four QC-02 controls. QC-02 retains the complete 96-key basis and
+authorized exclusions in a compact packet, independently recomputed by report
+admission. Exact-head native confirmation remains pending.
+
+The subsequent artifact scope has 166 rows: pending physical reclamation and
+ordinary same-shaped delete-removed callback failures run on both bindings.
+The awaited shared injection overload preserves the synchronous original
+wrapper and its assertions; only the exact owned exception is intentional.
+Ordinary callbacks fault actual settlement and retain cleanup ownership.
+Fresh packages pass 322 selected consumers; fourteen actual/two original
+controls pass and an SDK-only cleanup assertion mutant gives exactly two named
+failures per family with matching SDK/archive images. This is local parity,
+not full QC-03. Exact `b66e6b0`/run40292115062 independently passes three Linux
+jobs/341 native foundations without skips and admits the earlier artifact162/
+metadata152 argument transport, not the later map/pairing/deletion changes.
+
+Two admitted-open quarantine races extend the artifact scope to 168; fresh
+packages pass 324 selected consumers. Awaited shared hooks preserve both
+original wrappers and assertions. Exact-stamp replacement now permits existing
+readers, matching the original fault without releasing actual deletion
+protection or serialized fault ownership. Both actual/original pairs pass; an
+SDK-only final quarantine assertion mutant gives two named failures per family
+with matching runtime SDK/archive images. QC-03 remains unfinished. Pairing
+run40295489832 was canceled before jobs, not admitted; replacement deletion
+run40297863544 awaits independent observation.
+
+All four validation-first missing/truncated payload rows now run through the
+actual bindings, retaining Local compatible reopen without borrowing it for
+Object. The artifact scope is 172; fresh packages pass 328 selected consumers.
+Four actual/original pairs pass; an SDK-only incarnation assertion mutant gives
+four named failures per family with matching SDK/archive images. Safe-logger
+replay checks 172 witnesses/178 origins, six reopen edges and exact role/image/
+archive matches. Missing, extra and foreign validation origins reject.
+Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
+argument maps with all three Linux jobs/341 native foundations passing without
+skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
+
+The complete artifact shared-consumer source family now has qualification-only
+native reconstruction and original proof retention. It requires all 250 witnesses/
+262 origins, exact six consumer/SDK/binding/provider images and the same SDK in
+original wrappers, plus the executor-held command/input closure. Tooling454
+(19 native skips) passes. Actual native admission and QC-03 pairing remain pending.
+
+Original artifact scopes now reconstruct all 183 mixed and twelve repeated
+witnesses per provider from exact native forests/role images, readonly original
+proofs and wrapper SDK/archive correspondence. The command closure includes all
+manifest images and must fit its containing attempt. Tooling455 (19 native skips)
+passes; this source reconstruction alone is not QC-03 pairing or native admission.
+
+Artifact native parameter pairing now re-admits all original scopes alongside
+the shared-consumer source with cross-source execution/origin/instance isolation.
+QC-03 requires readonly pairing material and a recomputed full AS-01..48 basis,
+including actual transfers, Local recovery and the four Object exclusions.
+Tooling458 (19 native skips) passes. Native admission and full qualification
+remain pending; no provider guarantee or exclusion is changed.
+
+Native run `40320966626` rejected writable original-artifact proofs before
+source admission. All three qualification scopes now use the existing
+settlement/byte-check/read-only sealing path; diagnostic mode and provider
+mechanisms are unchanged. Exact `5ba30af` / run `40328218160` passes all three
+Linux jobs and admits all current category cases (metadata 93 passes/nine
+exclusions; artifacts 99 passes/four exclusions; no failed/incomplete cases).
+The reports still explicitly remain `Incomplete`, qualification false; this
+is not full provider or five-profile acceptance.
+
+Actual completion inputs are retained as read-only category proof packets, bound
+to `postInputSha256` and independently rechecked against admission inputs. Free
+space may vary as a measurement; immutable provider/source/environment inputs
+may not. The reports remain non-qualifying.
+
+`conformance_sdk_checks.py --category metadata|artifacts` selects only one native
+extraction batch after shared package/baseline preparation. It must recheck
+inputs and release synthetic resources before reporting actual ownership.
+The report remains `Incomplete`/non-qualifying; independent public profile
+evaluation and native confirmation of this isolated path are still pending.
+
+The first isolated native run failed report admission after actual cleanup
+because generated runsettings were still stored among disposable synthetic
+resources. Settings now belong to retained read-only input proofs, and native
+command/source attribution uses that exact location. Cleanup is not weakened,
+and fresh native success is not presumed.
+
+Legacy metadata/artifact imports now require original safe-logger attribution,
+actual SDK package/image correspondence and exact per-parameter results, not
+TRX labels alone. Unknown/oversized child diagnostics fail without raw spooling;
+barrier output and post-handshake crash output are drained through termination.
+Runtime staging rejects preexisting logs/reports/dumps before copying any
+execution input. OS peak RSS remains an actual profiler measurement, with only
+its checked numeric projection retained. These transport changes do not waive
+SQLite/Local recovery, real transfers, independent implementations or the
+thirteen authorized simulation exclusions.
+
+The architecture inspector now identifies `Hoard.Testing.Conformance` by its
+case-insensitive package/assembly identity, not the generic SDK category alone.
+Production module paths to it reject, including transitive paths; ordinary
+vendor-driver SDK permissions are preserved. Misclassifying this test SDK as
+BCL/Abstractions/helper is an inspection failure. Explicit test owners may
+consume it. Controlled declared and compiled graph cases do not replace the
+full required project/package scan inventory.
+
+CP-01..20 tests now cover declaration rejection/repair, disabled effects,
+late-fault sanitization, retained ownership, refusal of unsafe restart and
+active-request drain/admission. Focused package-only CP-01/02/18/19 cases pass
+against separately rebound retained archives; that replay is not fresh-source
+profile acceptance and does not change production support claims.
+
+Object's driver-owned access faults now reside in its concrete binding, not the
+provider assembly; native exact-stamp selection/protection and pre-hook handle
+capture are unchanged. The provider has no rename mechanism. The unchanged
+prepared architecture witness fails on the preceding graph and passes on the
+repair. Fresh fourteen-package replay passes 406 consumers; 16 actual/four
+original access cases and the SDK-only negative retain exact assertion parity.
+Safe-logger replay checks 250 witnesses/262 origins. Native admission is pending.
+
+The current artifact250 scope preserves retained prefix, reused/unselected object,
+committed residual and failed-stop cleanup through actual storage facts and mode
+restrictions. Facts contain opaque file IDs/lengths only, stay root-owned even
+after explicit stop, and fail explicitly on overflow/directories/symlinks.
+Enumeration now bounds all entries, repairing the scoped architecture finding.
+Fresh fourteen-package replay passes 406 consumers; 24 actual controls/12 original
+wrappers pass. Six SDK-only mutants cause matching 2/2/1/4/1/2 named failures per
+family with matching loaded SDK/archive images. Six ordinary same-message callback
+errors retain exact faulted settlement. Safe-logger replay checks 250 witnesses/
+262 origins and twelve reopen edges, including Local prefix-stop replacement,
+never Object restart. Native/full QC-03 and final T081 remain unfinished.
+
+The preceding artifact226 scope also owns genuine Local decisions-directory write
+denial. Original failed-quarantine assertions retain failed stop, payload/mode
+restoration, retry and same-lifetime compatible initialization before owned reopen.
+The same single pending access owner captures handles before release callbacks
+and restores modes before closure; Object rejects this Local-only control before
+allocation. Ordinary release errors/cancellation retain exact faulted settlement;
+delivered success remains delivered under unchanged supervisor semantics.
+Fresh fourteen-package replay passes 382 consumers; five actual controls/one
+original wrapper pass. An SDK-only readiness mutant gives one named failure per
+family with matching SDK/archive images. Safe-logger replay checks 226 witnesses/
+237 origins and eleven reopen edges. Scoped review finds no actionable issues,
+not final T081 or native/full qualification.
+
+The preceding artifact217 scope preserves original validation access failures with
+real Unix mode changes/directory removal, not synthetic result codes. Opaque
+exact-stamp scopes retain read protection until restoration, preventing deletion
+or payload resurrection. Their pending owner captures the actual native scope
+before release callbacks, so an ordinary callback exception cannot strand it.
+Shutdown joins pending application/restoration before worker/authority settlement;
+ordinary errors remain explicit `CleanupIncomplete` with faulted settlement.
+Fresh fourteen-package replay passes 373 consumers; sixteen actual controls/
+four original wrappers pass. An SDK-only failure-code mutant gives four named
+failures per family with matching SDK/archive images. Safe-logger replay checks
+217 witnesses/227 origins and ten reopen edges. Scoped findings are repaired,
+not final T081 or full QC-03/feature acceptance.
+
+The preceding artifact201 scope retains Local committed-decision clock rollback
+after 105 retired histories and durable-receipt staging-release recovery.
+Awaited compatible reopen preserves original assertions and synchronous
+wrappers. Exact-occurrence record interruption is owned and mutually exclusive
+with the synchronous hold; ordinary same-message callback errors retain actual
+faulted settlement. Object explicitly rejects the Local record boundary and
+keeps its independent physical deletion hold. Scoped review's alias finding is
+fixed; restoring the unsafe alias privately fails the focused named guard.
+Fresh fourteen-package replay passes 357 consumers, four actual controls/two
+original wrappers and one named failure per SDK-only durable assertion mutant
+in each family with matching runtime/archive SDK images. Safe-logger replay
+checks 201 witnesses/211 origins and ten reopen edges. Full QC-03 remains open.
+
+The preceding artifact197 scope also preserves the Local concurrent read/
+reconciliation quarantine race and all six committed-detection parameters.
+Public recovery rows supply genuine selected stamps checked against exact
+ticket/store/identity before existing typed damage/restoration controls run.
+Awaited common overloads retain synchronous wrappers and every assertion.
+Fresh fourteen-package replay passes 353 selected consumers; both seven-row
+families pass, and SDK-only race/detection mutants produce one/six named
+failures per family with matching SDK/archive images. Safe-logger replay
+checks 197 witnesses/205 origins and eight reopen edges. Local open/publication
+retain compatible reopen, not Object or Local reconciliation. Full QC-03 and
+feature acceptance remain unfinished.
+
+The preceding artifact190 scope adds all eighteen original admission rows through
+genuinely uninitialized owned stores, not stopped initialized ones. Closed
+typed probes change only the selected capability or actual authority scope;
+raw root/readiness observations remain provider facts. Ordinary creation still
+initializes. Original default/configured limits and actual settlement are
+preserved. Fresh fourteen-package replay passes 346 selected consumers; both
+eighteen-row families pass, with SDK-only no-I/O/range mutants producing
+sixteen/two named failures per family and matching SDK/archive images.
+Safe-logger replay admits 190 witnesses/196 origins and all six reopen edges.
+Scoped architecture review finds no actionable issues, not final T081.
+
+Exact `f4e53b4`/run40297863544 now passes all three Linux jobs and 343 native
+foundations without failures/errors/skips. Independent admission includes
+artifact166 and metadata QC-02 pairing: 93 Passed/0 Incomplete/9 NotApplicable/
+0 Failed. The overall report is still `Incomplete`, qualification false;
+artifact190, full QC-03 and feature acceptance remain unfinished.
+
+Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
+an identity-pinned allocator, bounded runtime logger and exact discovery/origin
+transport. Native run
+[40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)
+verified those initial consumers and factory/settlement prerequisites:
+131 foundation checks without failures/errors/skips, 34 scopes/150 observations,
+six historical baselines and eighteen-package/thirteen-lock replay.
+
+`Hoard.Fixtures.Conformance.Bindings.Memory` now implements explicit current/
+legacy setup, typed logical controls, independent committed snapshots and atomic
+logical reopen. Its `MemoryBinding` constructor requires the provider archive's
+actual SHA-256 (and version); declarations do not independently prove package
+provenance. The harness supplies `ConformanceRunContext`, owns cleanup and must
+bind actual observed role/assembly/package origins. The adapter closes admission
+before pinning the genuine work task, preserves that identity on retries, and
+never reports physical `Released`. Memory remains non-durable; logical image/
+upgrade controls grant no backup, durable restart or process-crash guarantee.
+Private encoding mutation is shared by the adapter and existing focused tests,
+without an SDK reference in Memory or private provider types in the SDK.
+Twenty focused adapter rows pass against locally packed packages, including the
+real 30-second incomplete cleanup and actual allocator retention/retry.
+Native run [40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909)
+verified those rows within 37 scopes/170 exact observations, alongside all
+131 foundation checks and unchanged six-baseline/eighteen-package/thirteen-lock replay.
+The SQLite fixture now exposes genuine worker-lifetime settlement and tracked
+async independent read/writer controls. Cancellation of a control caller does
+not release the underlying work; shutdown waits for late native handles.
+The initial SQLite binding uses those tracked controls, with explicit current/
+legacy factories and same-database reopen. A single directory transfers only
+after the old worker actually closes; no old lifetime task is bound to a
+directory subsequently reused by a new worker. Only the final head registers
+that directory's genuine lifetime with the resource observer. Failed/canceled
+handoff keeps the original owner and pending work available for final disposal.
+Real fixture backups authorize upgrades; raw record/operation/token corruption
+preserves SQLite BLOB/TEXT/NULL/REAL distinctions and exact restoration.
+Raw fingerprints use read-only transactions without schema admission/repair,
+native value/progress limits, bounded size preflight and sorted row digests,
+not a native full-payload sorter. The existing synchronous fixture helpers
+retain their caller-owned semantics.
+
+The same logical publication authority source is compiled into both binding
+assemblies, without cross-provider delegation or a new SDK dependency.
+The package-mode graph now has seven local archives. Its intentional NuGet lock
+adds only the SQLite binding/provider and six pinned SQLite dependencies,
+preserving prior graphs/third-party hashes. A separate empty-cache locked build
+passes. All 179 selected Memory/SQLite package tests pass locally without skips
+(95 Memory, 84 SQLite); this includes actual incomplete cleanup, not Linux
+supervisor/category qualification. Native run
+[40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996)
+passed all three jobs, 134 foundation checks without failures/errors/skips and
+50 scopes/254 exact observations, including all 84 SQLite identities.
+An owned package-only environment probe observes
+actual SQLite PRAGMAs/version and the loaded native module, validates its bytes
+against the pinned NuGet archive, and fingerprints runtime native assets.
+That run verified actual SQLite 3.53.3 loading. SQLite test dispatch rejects
+missing actual environment/native-runtime inputs and never borrows `nativeSqlite: not-used`.
+NuGet's normalized signed-package content hash remains pinned separately from
+the downloaded archive hash; both fresh locked-restore receipts and exact native
+member bytes are verified, with unchanged pre/post provenance. Child temporary
+files are routed into private owned caches, not global temporary storage.
+The isolated diagnostic requests actual native non-cooperation in a dedicated owned
+child: publication guards remain held after the caller deadline and failed
+cleanup, and the parent admits proof only after its PID/start-bound watchdog
+confirms SIGKILL and group exit. Native run
+[40067365972](https://github.com/Stonefly-Labs/Hoard/actions/runs/40067365972)
+at `7530cad` verified this complete observation/containment pair; this does not
+complete inherited crash/recovery or category qualification.
+All 53 current SDK logical assertion methods now execute through SQLite too;
+the additional 44 parameterized rows cover actual independent reads, clocks,
+publication, corruption and decision/settlement controls. This local 179-test
+selection is not the catalog's 179 applicable category results or wrapper parity.
+The original MP-01..06/13 wrappers now invoke the same packaged SDK assertions.
+A thin test-side authority bridge delegates to the original fixture authority;
+it does not replace provider setup, clocks, schema preparation or disposal.
+All 72 predecessor tests pass against each provider using the identical compiled
+suite and SDK. Ten more original wrappers now share paging, concurrency,
+publication-evidence and reference assertions (17 delegated methods total);
+all 21 affected class tests pass against each provider without skips.
+Its eight-archive preparation adds the SDK, while the independent binding
+diagnostic still uses seven archives. Other wrappers remain unextracted.
+Five further atomicity/publication wrappers now use scoped typed observations
+(22 delegated methods total). The original fixture adds ownership-safe
+registration and a cancellation-aware independent-read overload without SDK
+dependencies or changing existing operation signatures. Unregistration removes
+only that registration, never another owner or active work. The full 76-test
+suite passed against both providers; after adding the actual schema-hook check
+and SDK-canary assertion, all 16 affected tests passed against each provider.
+Only the additive HostAdapters fixture archive changed; SDK/provider/platform
+archives and repository/historical locks remain unchanged by this increment.
+The subsequent schema-boundary repair adds `SchemaCandidatePrepared`: SQLite
+maps it to U1 after candidate creation with the native writer held, while its
+existing `BeforeSchemaUpgrade` remains U0 before the transaction. Memory maps
+both observations to its actual upgrade decision. The unchanged shared
+exclusion consumer and original MP-35 now select the distinct candidate hook.
+A second real SQLite connection must receive BUSY (5); the regression failed
+at U0 before repair. Final packages pass 180 selected binding/SDK tests and
+11 original schema/observer tests per provider without skips. Fresh locked
+eight-archive replay reproduces exact DLLs; only the tracked SDK archive hash
+changes, preserving the predecessor dependency graph and all other lock entries.
+The requested Linux vector becomes 50 scopes/255 observations, including
+85 SQLite identities. Native
+[40070802352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40070802352)
+at `3bca09c` verified that vector, 136 foundation checks without skips,
+native containment and identical eighteen-package/thirteen-lock replay.
+The six original MP-08 malformed-continuation rows now use the same shared
+consumer, bringing adoption to 23 original methods. Fixture-private mapping
+forwards to each provider's existing independent payload-damage helper.
+A parity guard enumerates every actual cursor field and proves typed omission
+covers it while preserving all other values. Memory's combined epoch/schema
+field is covered without inventing a separate encoded field. Cancelled and
+unknown controls reject without modifying the valid continuation. All 79
+current predecessor tests pass without skips against each provider using the
+same SDK/suite bytes. Fresh locked replay reproduces eight archives and exact
+DLLs; only the additive HostAdapters archive changes from the schema repair.
+Six further original MP-19/20/28/32 wrappers now delegate to the existing
+admission, storage/ledger capacity and lease-generation/fencing consumers
+(29 delegated methods total). Admission still uses fresh unadmitted stores,
+not the prepared ordinary-case helper. A thin counter bridge observes actual
+fixture activity and diagnostic counts; capacity/generation callbacks preserve
+existing controls and check cancellation before dispatch. All 16 affected
+class tests pass against each provider without skips using the same compiled
+suite and seven byte-matched dependencies. No package or source-lock changes
+accompany these delegates.
+Three more MP-17/29/30 wrappers now share clock-dependent consumers through
+callbacks that drive the original `MetadataTestClock` supplied to the store
+(32 delegated methods). Existing SDK clock signatures forward to those same
+assertion bodies. All three final-decision lease actions retain independent
+fresh fixtures. A new actual-store regression proves clock rollback reaches
+the original clock while issued tickets retain their monotonic floor.
+All 80 predecessor tests pass on each provider without skips, alongside
+180 selected SDK/binding tests. Fresh locked replay reproduces eight archives
+and exact DLLs, with the identical SDK archive in both feed families. Only its
+SDK hash changes in the tracked predecessor lock; other entries remain pinned.
+Eleven more original deadline/reconciliation/replay methods now use shared
+consumers (43 delegated methods). The fixture adds a cancellation-aware writer
+overload while preserving its old signature; a test-side disposable lease
+releases only its own holder. Settlement forwards the original actual idle
+observation, not caller-task completion. A new cancellation/ownership regression
+first failed the missing overload assertion, then proved cancellation leaves
+the existing writer held, the timed-out commit absent and same-ticket retry
+successful only after release. All 81 current predecessor tests pass on each
+provider without skips, including genuine 30-second incomplete cleanup.
+Fresh locked replay reproduces eight archives and exact DLLs; only the
+additive HostAdapters archive changes from the clock increment. SDK/provider/
+platform archives and source locks are unchanged.
+Four original corruption wrappers now also share consumers (47 delegated
+methods), including all five query-dimension rows and fourteen receipt shapes.
+Original fixture scopes own target-specific corruption, reject overlapping
+owners and atomically exclude new owners once closure/reopen is admitted.
+Failed restoration retains a recoverable owner; cancellation after mutation
+restores before release. Native capture/observation uses actual separate,
+bounded read-only connections. Replacement checks the captured record/image
+inside the real writer transaction; Memory checks under its own writer.
+An intervening commit yields `Conflict` without restoring the obsolete image.
+Restoration waits for genuine idle settlement before deciding whether mutation
+occurred and verifies original bytes before releasing an applied scope.
+All 87 current predecessor tests pass on each provider, and 181 selected
+SDK/binding tests pass locally. Fresh locked replay reproduces eight archives
+and exact DLLs; seven binding output DLLs match their archives and both feed
+families retain the unchanged SDK. Native
+[40097647586](https://github.com/Stonefly-Labs/Hoard/actions/runs/40097647586)
+at `84e8a4b` verified 50 scopes/256 observations (86 SQLite identities), actual
+containment and identical eighteen-package/thirteen-lock replay.
+The MP-22 diagnostics wrapper now also shares consumers (48 delegated methods).
+Its original connection-shaped failure hook and canary remain fixture-owned;
+an additive overload shares the counter, rollback, failure-shape and diagnostic/
+debug-display assertions without replacing that hook. The prior signature
+continues to install its own scoped hook and forwards to the same core.
+A new actual-store regression proves the original callback still owns its
+registration after the consumer returns. All 88 current predecessor tests pass
+on each provider, and 181 SDK/binding tests pass locally. Fresh locked replay
+reproduces eight archives and exact DLLs; both feeds have identical SDK bytes.
+Only its hash changes in the tracked predecessor lock; other entries stay
+pinned. The native checkpoint predates this increment and does not execute
+original wrappers. Schema extraction and exact origin integration remain open.
+The five original schema wrappers now delegate as well (53 methods total).
+Their narrow `IMetadataSchemaAssertionSession` projection exposes only actual
+original fixture controls; it is not admission as a complete category binding.
+Recovery authorization and same-database reopen retain original ownership.
+SQLite fingerprints stream actual database/WAL bytes inside owned independent
+work; initially observed WALs remain mandatory, while newly created empty WALs
+do not imply mutation. Memory fingerprints its actual immutable logical image.
+Cancelled physical reads settle without false internal-failure diagnostics.
+All 89 current predecessor tests pass on each provider and 183 selected
+SDK/binding tests pass locally, with independently replayed exact package/DLL
+bytes. Run `40098981184` at `11875e5` verified the previous diagnostics checkpoint,
+50 scopes/256 observations and native containment; it does not run original
+wrappers. Schema run `40100325269` at `82a9b09` subsequently verified 50 scopes/
+258 observations, all 88 SQLite identities and actual native containment.
+Exact frozen parity and controller-origin integration remain unfinished.
+The diagnostic now includes the original packaged test assembly, selecting all
+63 frozen original runtime identities per provider, not only newer binding tests.
+Its seven-package graph is privately rebound without changing tracked locks;
+the logger is installed only as a byte-verified runtime adapter. Original
+wrapper, provider, Hosting and shared SDK images enter immutable pre/post inputs.
+Exact safe discovery precedes execution. Native run
+[40101331484](https://github.com/Stonefly-Labs/Hoard/actions/runs/40101331484)
+at `8065dfc` verified all 52 scopes/384 observations, including all 63 original
+identities per provider, and actual native containment. These diagnostics do not establish
+session-origin completeness, legacy acceptance-import safety, recovery controls
+or category qualification.
+Five original artifact publication wrappers now forward to common SDK assertions
+using only `IArtifactStore`. Both actual independent options retain absence/empty
+content, positive short reads and true EOF, exact expectations, unsupported
+requests and fully verified immutable duplicate incarnations. Existing wrapper
+helpers and nested short-read type forward to that same implementation.
+An actual-store source-substitution mutation reaches two successful native
+stages/commits but fails the common duplicate EOF assertion; each unchanged
+store then passes. Fresh eleven-archive locked replay verifies every dependency
+image, and 250 artifact tests pass without skips. This selection excludes the
+seventeen tests requiring actual process/transfer proofs; no inherited proof,
+durability exclusion or category acceptance is replaced by this focused result.
+The legacy artifact preparer still assumes unchanged F-06 metadata and an old
+SDK-free source tree; its historical/candidate recipe split and safe import
+remain unfinished.
+The Linux diagnostic additionally selects all twelve frozen publication
+parameters and both actual-store source-substitution pairs from the original
+artifact test assembly. Its ten-package graph is privately rebound without
+editing tracked locks, and every dependency/logger image is archive-verified.
+The expanded 53-scope/398-observation request awaits native execution; it remains
+diagnostic transport, not artifact binding/session-origin or category evidence.
+Three further original wrappers share provider-free read/deletion checks:
+destination failure/borrowed streams, exact delete receipts with recreation and
+stale-incarnation fencing, and a reader held across deletion admission.
+Original authority setup remains in each fixture; the common reader scope
+releases exactly once before observing deletion, also on assertion failure.
+All 37 affected class tests, 250 non-external-proof artifact tests and 89 metadata
+tests per provider pass with independently replayed eleven-archive bytes.
+The six exact frozen read/deletion parameters are selected separately in the
+native diagnostic, expanding it to 54 scopes/404 observations, pending.
+Exact receipt/protection validation and permanent quarantine assertions now
+share common consumers as well. Fixture-owned Local durable reopen remains
+separate; ObjectSemantics never borrows that proof. Actual-validator mutation
+pairs fail the common receipt assertion and pass with the original validators.
+Fresh eleven-archive replay passes 252 non-external-proof artifact tests and
+89 metadata tests per provider. Their 23-identity diagnostic scope expands the
+pending native request to 55 scopes/427 observations.
+Publication transport is verified by native
+[40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667):
+143 foundation checks, 53 scopes/398 exact observations, actual original
+publication/mutation execution, native containment and eighteen-package/
+thirteen-lock replay. It does not verify these subsequent extractions.
+Native [40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
+verifies the subsequent exact evidence/quarantine scope and mutation pair:
+all three jobs, 145 foundation checks, 55 scopes/427 observations, native
+containment and eighteen-package/thirteen-lock replay. It does not verify the
+later owning-controller or recovery changes.
+
+SQLite recovery diagnostics now use an explicit safe-event runner mode and
+parent-owned barrier termination, requesting all ten mutation/upgrade/restore
+barrier/readback rows plus the actual backup/restore walkthrough. Fresh locked
+builds verify actual runner dependencies; local walkthroughs preserve legacy
+output and pass in safe mode. Linux crash execution is pending, and live-held
+probes, exact wrapper/session attribution and full category qualification remain
+open. These diagnostics confer no memory or ObjectSemantics durability.
+
+Local now has the same explicit safe-event runner integration for its six
+publication/deletion crash/readback rows, sharing only parent receipt admission
+with SQLite, never provider mechanisms or simulation durability. Fresh locked
+runner builds and macOS functional readbacks pass; actual Linux owning-controller
+execution subsequently passed at `e6d79f4`, including all six Local rows.
+Large transfer/RSS proofs and category/session/
+legacy witness integration remain unfinished.
+SQLite's ten actual kill/readback rows and backup/restore walkthrough have
+subsequently passed on Linux at `62c149c`, with all three jobs successful.
+The transfer controller now requests both artifact providers' actual paced
+256 MiB/4 GiB writes and reads, with parent-owned kernel RSS/high-water
+observation and exact producer binding. All four real macOS rows and their OS
+peak bounds pass; Linux owned measurement subsequently passed all four rows at
+`d429dd2`, run `40109299238`. Original wrapper/session imports
+and full category acceptance remain pending. ObjectSemantics borrows no
+SQLite/Local durable recovery proof.
+The same actual runner now exposes safe two-phase live inspection for retained
+source/destination/native workers on both providers. The parent requests the
+second original inspection before owned termination and admits matching
+phase/run/PID/retention records. Linux execution passed all six rows at
+`c7eb90c`, run `40110165383`, with 165 foundation checks and all three jobs
+successful. This work explicitly supplies no durable crash proof.
+All seventeen original external-proof artifact wrappers and four bounded
+child-output cases are now requested after these real diagnostic prerequisites.
+Sixteen identities are frozen category witnesses; the existing cross-process
+root-ownership fact is additional, not a new frozen category entry.
+Two fresh-cache locked builds pass all 21 cases and verify ten dependency images.
+Child captures are bounded before return/persistence; healthy legacy empty error
+files remain, but failure stderr is not copied into proof files. Linux execution passed at
+`4e3ef47`, run `40111391053`, with all three jobs, 167 foundation checks and
+56 scopes/448 exact observations, including all 21 external/capture identities.
+Complete session/category imports remain pending.
+
+Current package preparation now uses current metadata/SDK sources and an
+eleven-archive artifact feed; it does not rebuild historical metadata with
+today's SDK-dependent recipe. Shared explicit lock derivation changes only local
+archive hashes in private alternate locks, verifies original/prepared/feed bytes
+and preserves tracked locks plus all external graph pins. Ordinary and
+package-acceptance lock paths cannot be substituted. Two fresh-cache locked
+preparations reproduce all eleven archives, verify ten loaded dependency images,
+and each pass all 273 artifact cases plus 89 metadata cases on each provider.
+These are actual functional/preparation results, not complete input-bound
+legacy/session/category imports or replacement historical binaries.
+
+The original publication race wrappers now forward all three methods/six frozen
+parameters to provider-free consumers. Real fixture observer and payload
+damage/restore operations remain fixture-side; expectations and ordering remain
+shared. A real-store adapter that repairs a forged length fails the original
+`InvalidInput` type assertion on both providers, while fresh genuine stores pass
+the same unchanged consumer. Mechanical body comparison preserves all original
+checks and control ordering after explicit seam/token forwarding.
+Two fresh-cache locked builds reproduce eleven archives, verify ten loaded
+artifact dependency images and each pass 275 artifact cases plus 89 metadata
+cases per provider without skips; accepted-source formatting also passes.
+The additional exact native scope is six original rows plus two named mutation
+rows. It passed at `91da8f4`, run `40113497329`, with all three jobs, 169
+foundation checks and 57 scopes/456 observations, not category completion.
+
+Private staging and all four original reconciliation methods now use shared
+consumers with their ten frozen parameters intact. Actual prefix barriers,
+clock advancement/rollback, authority setup and lost-acknowledgment observers
+remain fixture-side; common consumers retain every original check and ordering.
+A real-store mutation first reconciles the original ticket, then substitutes a
+genuine receipt from a different actual publication. The unchanged consumer's
+receipt-equality assertion fails on both providers; reconciliation/publication
+counters prove the intended mutation, and fresh genuine stores pass unchanged.
+The next exact native scope adds eight original reconciliation witnesses plus
+two mutation parameters. It passed at `517b911`, run `40114439905`, all three
+jobs and 170 foundations with 58 scopes/466 observations, not category or
+complete session evidence.
+
+The three original visibility bodies now run provider-free shared checks while
+fixture callbacks retain actual receipt/listing/direct-availability boundaries.
+Their exact checks/order are mechanically preserved. A Local mutation starts
+the actual held commit but returns a genuine earlier receipt immediately;
+the unchanged pending-task assertion fails. The test releases the actual hold,
+awaits the genuine commit and verifies its distinct published stamp; a fresh
+genuine provider passes unchanged. The next native request adds these three
+frozen witnesses and the mutation: 59 scopes/470 observations. It passed at
+`793ad65`, run `40115175363`, all three jobs and 171 foundations.
+
+Five original history/budget bodies now run shared checks: incarnation/history
+capacity, bounded candidate examination/resumption and ticket-expiry capacity.
+All original assertions/order remain, with actual clock, limits, authority setup
+and candidate registration fixture-side. Eight identities are frozen category
+witnesses; eight additional existing fixture identities are requested explicitly
+without changing the frozen catalog. A real-store adapter hides the actual
+injected candidate failure behind one actual retry, causing the unchanged
+consumer's expected failure-type assertion to fail on both providers. Counters
+corroborate actual candidate observation, 106 reservations, one hidden failure
+and one retry; genuine stores pass unchanged. The next native vector adds these
+sixteen originals and two mutations: 60 scopes/488 observations. It passed at
+`37ec19a`, run `40116055015`, all three jobs and 172 foundations.
+
+Four original stream-ownership bodies now run shared checks: cooperative
+inactivity, idle-read expiry, noncooperative source and noncooperative destination.
+All eight frozen parameters and all three real stream-helper bodies are
+preserved. The legacy pending-source name forwards to the same SDK helper,
+not a separate implementation. Actual clock and settlement remain fixture-side.
+A real-store mutation requires an actual cancelled source with retained live
+ownership, then falsely reports released cleanup. The unchanged shared equality
+assertion fails on both providers. The original release runs, actual work
+settles, and fresh genuine stores pass unchanged. This is logical stream-
+ownership proof, not a new durable crash or kernel RSS claim. The next ten-row
+native scope requests 61 scopes/498 observations. It passed at `5974f38`,
+run `40116943400`, all three jobs and 173 foundations; complete qualification
+remains unfinished.
+
+Three original cancellation/current-owner bodies now run shared assertions:
+external renewal survives older cancellation, progress renewal fences the same
+admitted owner, and invalid/stale cancelled descriptors preserve the current
+verified handle. Two identities are frozen category witnesses; eight are
+additional existing fixture cases. Actual clocks, publication/progress observers,
+boundary removal/release and worker settlement remain fixture-side. A real-store
+mutation waits for the actual rejected commit to settle, then abandons the
+current verified owner. The unchanged pending-state type assertion fails on
+both providers; one stage, one commit and one actual abandonment corroborate it.
+Fresh genuine stores pass unchanged. The next twelve-row native scope requests
+62 scopes/510 observations. It passed at `631f9c4`, run `40118166329`,
+all three jobs and 174 foundations, not complete binding/category/session proof.
+Four original result-handoff/expiry bodies now also run common checks with all
+twelve frozen parameters. Actual completion/release observers, barriers, clock
+and settlement remain fixture-side. Hiding a genuinely reserved ticket after
+cancellation fails the unchanged success assertion on both providers; publishing
+that same ticket corroborates the intended ownership fault and genuine stores
+pass unchanged. The next fourteen-row native scope requests
+63 scopes/524 observations, pending, not full qualification.
+The remaining six original budget bodies also use shared checks with sixteen
+frozen parameters, covering failed unclaimed cleanup/retry, terminal cancelled
+publication, queue/capacity, authority deadlines and cooperative cancellation.
+Actual controls, limits, settlement/stop and authority setup stay fixture-side;
+shared authority checks use only Abstractions. A genuine input-limit failure
+mislabeled as capacity fails the unchanged expected-code assertion; genuine
+stores pass. The next eighteen-row native request is 64 scopes/542 observations.
+It passed at `70dfdf6`, run `40119412481`, all three jobs and 176 foundations,
+including the fourteen-row handoff scope, not complete qualification.
+Six original authority bodies now also use shared interface-only checks,
+preserving three frozen witnesses, three additional existing facts and the
+copied-guard helper. Actual authority creation, clock, waiting/retained counters,
+reference completion and drain remain fixture-side. Repairing an actual copied-
+handle rejection through genuine recognized retention fails the unchanged
+failure-type assertion; genuine authority passes. The next seven-row native
+request passed at `7ee1c61`, run `40120167356`, all three jobs,
+177 foundations and 65 scopes/549 observations. Handoff run `40118782562` was
+canceled while pending, not admitted; later expanded requests retain that scope.
+Both original capability bodies now run shared interface-only checks, with
+sixteen frozen gap parameters and two additional existing complete profiles.
+Actual injection, construction, filesystem/readiness observation and private-root cleanup
+remain fixture-side. Original rejection-before-I/O, readiness, configured
+limits, optional ranges, SHA-512 and stop checks remain unchanged.
+The eighteen-row native scope passed at `2a7be14`, run `40120937967`,
+all three jobs, 178 foundations and 66 scopes/567 observations, not full
+qualification.
+Four original metadata/artifact integration bodies now also use shared checks
+with sixteen frozen parameters over all four SQLite/Memory and Local/
+ObjectSemantics combinations. Actual composition, proof encoding, waiting
+counters, M1 controls and physical settlement stay fixture-side. An actual
+reference-denial result mislabeled as conflict fails the unchanged expected-
+code assertion in every combination; genuine stores pass unchanged.
+The twenty-row native request passed at `4c87667`, run `40121897879`,
+all three jobs, 179 foundations and 67 scopes/587 observations, not full
+bindings/category/session or authority-integration task acceptance.
+Three original metadata-bridge bodies now use shared interface-only checks.
+The mismatched-authority witness is frozen; exact-evidence and invalid-evidence
+facts are additional existing cases. Actual host bridge/controlled validator,
+encoding, expiry and observed counters remain fixture-side; the validator's
+recognized-reference operation/stamp checks delegate unchanged to the SDK.
+The bridge-only native request was canceled while pending; its three rows are
+included in the expanded lifecycle request, not separately accepted.
+These host-bridge unit checks are not full provider/category qualification.
+Three remaining original lifecycle bodies now use interface-only common checks:
+retained reference-query shutdown, concurrent close/slow guard release and held
+native I/O deadline/stop. Four parameters are frozen; two composed-shutdown
+cases are additional existing facts. Actual composition, query drain, slow
+guard implementation, physical holds/releases and settlement stay fixture-side.
+The next six-row request is 69 scopes/596 observations, pending, not complete
+bindings/category/session or full profile qualification.
+That lifecycle request passed `40123477371` at `f2cc84d`, all three jobs,
+181 foundations and 69 scopes/596 observations, including the three bridge and
+six lifecycle rows plus actual prerequisites/replay. The canceled bridge-only
+run is not separately accepted.
+Two original storage-failure/reconciliation bodies now also share fixed
+classification, sanitizer, borrowed-source, committed-byte and receipt checks
+with four frozen parameters. Actual post-visibility fault registration remains
+fixture-side. Real access-denied failures relabeled as unavailable fail the
+unchanged common code assertion on both providers; genuine stores pass.
+The next six-row request is 70 scopes/602 observations, pending, not complete
+bindings/category/session or full profile qualification.
+
+Four-way integration passed `40121897879` at `4c87667`, all three jobs,
+179 foundations and 67 scopes/587 observations including twenty integration
+rows and all actual prerequisites/replay. These are still diagnostic counts,
+not the 179 applicable category results.
+Three original prefix-cleanup bodies now also share all six frozen parameters
+and unchanged stop/reopen assertions. Actual permissions, observer controls,
+filesystem/readiness snapshots and Local-only durable reopen remain
+fixture-side. The next six-row native request is 71 scopes/608 observations,
+pending, not full binding/session/category/profile qualification.
+Both remaining original object-cleanup bodies now also share five frozen
+parameters and unchanged selected-object/owner/reclamation checks. Actual Unix
+permissions, observers, filesystem snapshots/lengths and worker settlement
+remain fixture-side. Private hook names map to the existing logical during/
+after-assembly input, not provider-selected expected results. The next five-row
+request is 72 scopes/613 observations, pending. Original failure-body extraction
+does not complete T027/T030 or full binding/session/category/profile gates.
+
+Storage-failure passed `40124374635` at `ff50acd`, all three jobs,
+182 foundations and 70 scopes/602 observations, all six new rows and actual
+prerequisites/replay, not full category/profile qualification.
+Configured publication, compatible reopen and fresh-epoch artifact operations
+now also share interface-only checks. Actual host construction/DI/configuration,
+mapping, module identity/readiness, disabled-root checks, restart/stop and
+missing-guarantee inert-start rejection remain fixture-side. No Hosting/Core
+dependency enters the SDK. The next four-row request preserves all frozen host
+cases passed at `9ce6b25`, run `40127065375`: all three jobs, 185 foundations
+and 73 scopes/617 observations, not full binding/category/profile qualification.
+
+Owned artifact sessions now have an authority-quiescence prerequisite: an
+explicit closing fence rejects new acquisitions while retaining existing handles
+and queued work until every recognized guard and retained reference query settles.
+Reopen cannot reuse a completed prior-generation settlement. Both binding
+packages source-link that same fixture authority as internal types, preserving
+their SDK/own-provider-only dependencies instead of importing HostAdapters,
+Hosting or the other provider. No complete binding/fault-control admission or
+physical release is claimed. Three common checks requested 74 scopes/620
+observations; run `40128473761` failed before authority discovery because its
+scope lacked the original-artifact routing prefix. That routing is corrected;
+the failed run is not admitted. Two independent package builds reproduce both private
+authority archives and exercise actual retained-guard/reopen behavior.
+
+`LocalArtifactAssertionSessions` is a partial assertion projection, not an
+`IArtifactConformanceBinding` or complete fault driver. It constructs the real
+Local store beneath an allocator-owned child, registers scoped typed observers,
+reopens with the same identity/authority, and joins actual stop, callback work
+and fenced authority before settling ownership. Disposing a stale session cannot
+release its replacement. Retry reuses a pending allocator observation and the
+same actual task; observer failures remain faulted after physical joins rather
+than becoming successful cleanup. It never deletes roots or reports `Released`.
+Both providers separately track release-callback settlement from public
+operation admission, preserving inherited cancellation/handoff/capacity checks.
+Fifteen package-only Local cases and two common Local/Object callback cases
+pass. All seventeen typed observers can coexist: closed supported-name sets
+already impose a finite bound, so the contradictory sixteen-callback ceiling
+is removed on both fixtures.
+
+Object now has distinct actual receipt-recorded, read-opened and reconciliation
+before/verified hooks. Receipt notification follows the actual receipt mutation;
+opened-read notification remains inside stream/guard/transfer cleanup ownership;
+verified notification follows actual content verification. Six common Local/
+Object checks retain real receipt equality, reclaim resources after callback
+failure with one transfer slot and recover actual uncertain publication after
+verified-callback failure. The deletion fixture explicitly supplies a successful
+zero-reference decision; the default authority correctly denies unproven deletion.
+These hooks are prerequisites, not a complete fault driver.
+
+`ObjectArtifactAssertionSessions` now supplies the corresponding partial owned
+projection. Both artifact binding packages compile one internal source-linked
+ownership/session coordinator; actual provider construction, readiness, worker
+joins and private boundary mappings remain separate. There are no new package
+dependencies on the other provider, Hosting or HostAdapters.
+Local reopen preserves identity/authority/content. Object logical restart joins
+the old store and authority, then uses a new empty child and fresh epoch/authority
+under the same allocation. Old sessions retain immutable identity/authority;
+failed or canceled replacement generations stay tracked until original-handle
+cleanup. This is simulation, never Local recovery or a durability exclusion
+substitute. `CleanupCandidate` maps Object's actual per-target `multipart.cleanup`
+transition, not its synchronous history-index callback. Sixteen package-only
+Object cases and the unchanged fifteen Local cases exercise these surfaces.
+
+Run `40131392286` at `88c5d01` passed foundations/lock replay but failed
+pre-runtime with `ProofMismatch`; it is not admitted. Input enumeration now
+hashes consumed managed/runtime images, active-architecture native assets and
+all locks under unchanged bounds, retaining full-tree symlink/type/race checks.
+Replacement run `40133457888` at exact `c58978e` passed all three jobs,
+191 foundations without skips and strict 76-scope/643-observation admission.
+The earlier failed run remains unadmitted. The owned-Object increment passed
+`40134767571` at exact `36481c0`: all three jobs, 192 foundations without skips
+and strict 77-scope/659-observation admission. Neither partial projection admits
+a full artifact binding/category/profile.
+
+Both factories also accept explicit `ArtifactAssertionOptions`: immutable actual
+`ArtifactLimits` and a live typed reference query. Each actual initialization,
+including compatible/fresh reopen, receives those limits; authority generations
+invoke the source for the exact protected stamp rather than caching a prior
+decision. `ArtifactReferenceObservation` contains availability/count/revision,
+not a pass flag, and rejects negative counts, unavailable nonzero counts and
+available results without revisions. Null queries retain default fail-closed
+deletion; unavailable zero-reference observations cannot authorize deletion.
+Four held-query cases prove that caller timeout does not settle real query work
+or let reopen/final cleanup finish early. Eleven configured rows pass alongside
+the existing thirty-one owned rows. This is test-fixture setup, not product
+configuration or complete fault-driver/metadata integration acceptance.
+Run `40136186008` at exact `853c669` passed all three jobs, 193 foundations
+without skips and strict 78-scope/670-observation admission.
+
+The partial sessions also expose exact-stamp payload damage. Local admits the
+physical mutation through its own `ExecuteAsync`; Object uses its independent
+`OwnedAsync`. Neither moves native file operations into the SDK/binding nor
+changes receipt/quarantine state to fabricate public corruption detection.
+An actual open-file boundary is observed inside that owned work. All observers,
+native disposal and final callbacks must settle before reopen/root cleanup;
+caller cancellation alone cannot release them. Truncating an empty payload
+fails explicitly; byte damage changes the first byte, or adds one to an empty
+payload. Foreign stamps, stale sessions/epochs and removed incarnations cannot
+damage the current replacement. Twenty-three cases cover actual copy/quarantine,
+held work, failed observers, conflicting reads and these boundaries.
+Payload run `40137341231` at exact `1367a51` passed all three jobs,
+194 foundations without skips and strict 79-scope/693-observation admission.
+The frozen four-parameter damaged-read case also now executes the same
+provider-free consumer on both implementations, preserving exact assertions
+and operation order. Actual file capture/damage/restoration remain in the
+legacy fixture; this does not convert those callbacks into owned full-driver
+admission. A real validator's actual corrupt-evidence denial, deliberately
+reported as success, fails the unchanged common assertion on both providers;
+fresh genuine validators pass. Run `40138438076` at exact `4a907c5` passed all
+three jobs, 195 foundations without skips and strict 80-scope/699-observation
+admission, not complete fault-driver/category/profile admission.
+The original Local read/reconciliation quarantine race and both admitted-open
+revalidation rows also now execute provider-free consumers. Actual publication
+faults, provider-specific observation mapping, physical replacement and named
+hold/release barriers remain fixture-side at their original transition points.
+Common code contains no Local/Object switch, filesystem I/O or substitute
+expected outcome. Exact checks/public-operation order remain unchanged.
+Run `40139402208` at exact `f05851a` passed all three jobs, 196 foundations
+without skips and strict 81-scope/702-observation diagnostic admission.
+All six original committed-detection parameters also execute one provider-free
+consumer with mechanically identical checks and public-operation order.
+The independent frozen test variant supplies its inherited durability
+expectation; provider-advertised capabilities or binding-selected outcomes
+cannot weaken the expected receipt/reconciliation checks. Physical removal,
+restoration and publication fault mapping remain fixture-side.
+Run `40140436330` at exact `e089042` passed all three jobs, 197 foundations
+without skips and strict 82-scope/708-observation diagnostic admission.
+Transitive review corrected omitted Local quarantine stop/reopen checks in
+the damaged-read, committed-detection and corrupt-existing consumers. The
+shared helper now retains every original lifecycle operation and assertion;
+a typed context carries only the original public lifetime/identity/authority
+and fixture-side fresh-store construction. The fixed original Local variant
+supplies that context; Object supplies none and gains no durable-restart claim.
+Three real reopened-store mutation pairs require actual corrupt-read denial
+before changing its code, fail the unchanged common assertion, and pass with
+genuine stores. A frozen transitive-body/owner guard rejects helper or wrapper
+omissions. Earlier helper-normalization parity claims did not establish these
+durable checks. Run `40141545447` failed closed with `UnknownDiagnostic` in the
+new quarantine scope and is not admitted. Actual method-level discovery
+reproduced fifteen rows against its Local-only nine-row declaration. The scope
+now declares all twelve frozen provider parameters plus three mutation rows;
+prelaunch admission rejects partial method expansion instead of relaxing the
+logger. Object's logical rows do not establish durable restart.
+All nine remaining original evidence-validation parameters now execute
+provider-free common consumers. Complete-body comparison preserves every
+original assertion, public-operation order and source/guard lifetime, including
+retained ownership after denied quarantine persistence, stop retry and real
+durable reopen, validation-first restoration, replacement incarnation and
+original receipt, and intact content after access denial/unavailability.
+Physical permissions/removal/restoration and actual native readiness observation
+remain fixture-side legacy controls, not full owned fault-driver admission.
+Exact new transport requires all nine original identities; the nine-row request
+passed run `40143552793` at `c1d2a6b`: all three jobs, 200 foundations and
+84 scopes/732 observations, including the corrected fifteen-row quarantine
+scope, not full qualification. Every quarantine
+caller must explicitly supply its durable context or select logical-only
+scope; there is no defaulted reopen parameter.
+
+Six original recovery methods now share provider-free assertions across all
+twelve Local/Object parameters (eight frozen category witnesses and four
+additional existing cases): concurrent cursor capacity/retirement and
+expiry, changed inventory, ownerless ticket expiry, finalized noncommit,
+staging-generation fencing and observation without deletion authority.
+The wrapper retains its original fixed consistency expectation, clock and
+driver lifetime; provider-advertised capabilities do not select expectations.
+Fresh preparation/replay passes 311 artifact and 65 Consumer cases.
+Run `40144435943` at `ffec99a` passed all three jobs, 201 foundations and
+85 scopes/744 observations, not qualification.
+
+Five additional recovery methods now share admitted-reconciliation/deletion
+history, replacement-generation races and progressing-commit checks on ten
+parameters (six frozen witnesses and four additional existing cases).
+Common checks own the unchanged original managed barrier at its original
+source/barrier lifetime position. Physical fault registration stays fixture-side.
+Fresh independent replay passes 311 artifact and 65 Consumer cases.
+Run `40145322908` at `9d19bd1` passed all three jobs, 203 foundations and
+86 scopes/754 observations, not qualification.
+
+All remaining original recovery bodies now forward shared checks: retained
+object stop, committed-decision rollback/reopen and durable-receipt staging
+release/reopen. One frozen witness and two additional existing Local facts retain
+actual independent implementations, 105 retired incarnations, public readback,
+original stop/retry and source lifetimes. Physical permissions, fresh Local
+construction, record-write registration and cleanup authorization stay
+fixture-side; Object gains no durable-reopen claim.
+Fresh independent replay passes 311 artifact and 65 Consumer cases.
+Run `40146117625` at `994f9fb` passed all three jobs, 204 foundations and
+87 scopes/757 observations, not qualification.
+
+Six original admission methods now forward eleven identities (four frozen
+witnesses and seven additional existing cases) to provider-free checks.
+Common consumers retain original deadlines, live initialization ownership,
+exclusive create, missing/foreign/corrupt-root non-reset, fixed original
+Local/Object reopen expectations and symlink sentinel/child checks.
+Actual construction, fault registration, manifest/sentinel I/O, symlink
+try/finally and root-cleanup permission stay fixture-side. The two native
+concurrency/cross-process tests and complete child ownership helper are unchanged.
+Fresh independent replay passes 311 artifact and 65 Consumer cases; the next
+native request `40146850203` was canceled without jobs, not admitted; the latest
+expanded request retains all eleven admission identities.
+
+Both remaining original deletion bodies now share all four frozen parameters:
+lost delete acknowledgment retains pending physical reclamation through exact
+cleanup/receipt settlement, and live or unavailable reference authority denies
+removal without harming public bytes. Common checks own every expected
+code/receipt/size; actual observer registration and reference controls remain
+fixture-side. Fresh independent replay passes 311 artifact and 65 Consumer cases;
+native run `40147381011` at `992b4a5` passed all three jobs, 206 foundations
+and 89 scopes/772 exact discoveries/executions with all actual prerequisites.
+
+The owned projections now expose a distinct `DirectVerification` observation:
+Local's optional `publish.direct` precedes its original direct validation on
+both new and duplicate publication; Object uses its existing `object.direct`.
+Selection, verification and independently readable acknowledgment are not
+interchangeable. Four common rows hold actual publication before acknowledgment,
+then check outcome, same-incarnation duplicate reuse, borrowed source and public
+bytes after genuine settlement. No provider mechanism is shared or replaced,
+and this does not yet admit full fault drivers/bindings. Fresh independent replay
+passes 311 artifact and 69 Consumer cases. Native run `40148199370` at
+`6d1f73b` passed all three jobs, 207 foundations and 90 scopes/776 exact
+discoveries/executions with every actual prerequisite, not full qualification.
+
+`InjectCapacityFailureAsync` returns an owned, counted scope that throws a fixed
+ENOSPC-shaped `IOException` at Local's actual `stage.prefix` or Object's actual
+`multipart.part`, after the real prefix write. It is injected storage failure,
+not physical disk exhaustion. Only the exact internally created exception for
+that registration bypasses observer-failure recording; unexpected observer
+exceptions, including another ENOSPC-shaped exception, still poison the same
+final settlement task. Scope disposal cannot remove a newer registration.
+Common checks exercise repeated failures, exact not-committed reconciliation,
+borrowed sources, replacement scopes and actual publication/readback after
+repair. Package-only tests constrain staging capacity to one full ticket and
+observe genuine successful versus faulted final settlement on both providers.
+Fresh preparations pass 311 artifact and 73 Consumer cases. Native run
+`40148998281` at `53b1433` passed all three jobs, 208 foundations and
+91 scopes/780 exact discoveries/executions with every actual prerequisite.
+This is diagnostic evidence, not full fault-driver admission.
+
+`InjectUnclaimedCleanupFailureAsync` targets the existing actual indexed
+undelivered-result reclaim seam, not prefix/object permission failures. A real
+reservation or read-open completes behind a managed barrier; cancellation rejects
+delivery, and the injected reclaim failure preserves its genuine cleanup index.
+Common checks require one actual failed reclaim, fenced readiness/admission,
+failed stop with retained ownership and a second actual failed reclaim. Removing
+the scope permits the real stop cleanup retry and successful final settlement,
+without clearing observer errors or replacing settlement promises. Four new rows
+pass on both providers; fresh replay covers 311 artifact and 77 Consumer cases.
+Native run `40149692533` at `1acdeb0` passed all three jobs, 209 foundations
+and 92 scopes/784 exact discoveries/executions, not qualification.
+
+`HoldSynchronousStorageAsync` controls Local's existing `BeforeRecordWrite` or
+Object's existing `BeforeObjectDelete`. Reserve the delete ticket before arming,
+and explicitly configure available reference authority; the default partial
+projection correctly denies deletion without it. A counted synchronous hold
+ignores operation cancellation, has a fifteen-second fail-closed watchdog and
+requires explicit release. Disposal disarms only its own registration and joins
+actual workers; stale disposal cannot remove a replacement. Ownership teardown
+removes remaining controls only after provider stop and worker settlement.
+Common checks require real deadline/uncertain caller return with retained work,
+fenced admission/readiness, genuine authority exclusion, failed stop while held
+and actual successful stop after release. This is a synchronous fixture-boundary
+hold, not a stalled filesystem syscall or a replacement for original owned-child
+containment. Fresh replay covers 311 artifact and 79 Consumer cases;
+native run `40150871211` at `f68812e` passed all three jobs, 210 foundations
+and 93 scopes/786 exact discoveries/executions, not qualification.
+
+`LocalBinding` and `ObjectSemanticsBinding` now implement the full typed artifact
+factory/session boundary over their actual independent stores, validators,
+maintenance/lifetimes and authority. All ten mandatory controls are executable:
+publication-selected/direct-verification/receipt/verified-generation gates,
+exact-stamp physical damage, scoped capacity/indexed cleanup failures, synchronous
+fixture holds and genuine borrowed source/sink streams. The generation check
+performs actual expired-owner maintenance cleanup before re-staging and proves
+old descriptors/cleanup cannot affect the replacement. Damage explicitly targets
+the first of two artifacts, rejects a foreign incarnation and preserves the other.
+Source/sink release only unblocks actual I/O; it never substitutes a provider result.
+Caller-owned stream disposal follows actual provider settlement.
+
+Releases share an in-progress task but do not hold the registry semaphore while
+joining workers. A two-provider regression first reproduced the architecture
+review's cross-control release deadlock, then passed with independent release and
+rearming. Native settlement is observed before stable scope disposal, so a join
+timeout does not permanently cache a failed disposal task. Actual full-session
+origin capture/reopen preserves Local identity/publication and gives the simulation
+a fresh empty epoch. Twenty-four new package-only parameters pass; fresh replay
+covers 311 artifact, 103 Consumer and 89+89 metadata cases. The next native request
+passed as run `40153251707` at `f73a55a`: all three jobs, 211 foundations and
+94 scopes/810 exact discoveries/executions, including every prerequisite.
+Parent-origin ingestion, remaining category
+parity/integration and complete profiles remain unfinished; this is not qualification.
+
+Those 24 full-binding rows now emit 26 actual component origins, including the
+two original/reopened pairs. The diagnostic parent independently binds all eight
+roles to the respective adapter/provider runtime DLLs and package archive bytes,
+admits those four images into the safe logger manifest and requires the exact
+per-row origin count and binding descriptor. Missing runtime images reject before
+launch. Local fresh-cache observation corroborates all 208 role/image/archive
+matches and actual reopen lineage without persisting raw output. Origin-enabled
+native run `40154183825` at `d1fd43d` passed all three jobs, 212 foundations
+and 94 scopes/810 exact discoveries/executions with every prerequisite.
+This does not complete other category/profile imports
+or upgrade the simulation to durable recovery.
+
+Six metadata-origin rows now use the actual independent Memory/SQLite factories
+with unchanged shared capacity, writer-budget and publication-protection consumers.
+Each of six origins binds all six actual roles to its own adapter/provider images
+and archives; the safe logger admits those four images and the parent retains
+SQLite environment admission and exact binding/count checks. Local fresh-cache
+observation confirms 36 image/archive correspondences; fresh replay covers
+311 artifact, 109 Consumer and 89+89 metadata cases. The expanded native request
+passed as run `40155045988` at `9034153`: all three jobs, 214 foundations
+and 95 scopes/816 exact discoveries/executions with every prerequisite.
+Metadata reopen attribution and other
+category/profile imports remain unfinished; no durable memory or category
+qualification is claimed.
+
+Two further metadata rows now execute provider-free compatible-reopen assertions:
+actual grouped public readback, fresh store/fault instances, preserved epoch/
+authority and stale-control rejection after stale disposal. Memory uses its actual
+closed logical image, not durable restart. Both real reopen lineages are emitted
+and strict ingestion requires two origins for each exact reopen witness. The
+eight metadata rows yield ten actual origins/60 image/archive correspondences;
+fresh replay passes 311 artifact, 111 Consumer and 89+89 metadata cases.
+The expanded native request passed as run `40155922560` at `4548183`:
+all three jobs, 214 foundations and 95 scopes/818 exact discoveries/executions
+with every prerequisite. Complete category/profile qualification remains unfinished.
+
+The observed metadata scope now also imports twenty actual rows using unchanged
+entity/relationship, final-graph, independent-candidate, faulted-atomic-candidate,
+grouped-read and lease overflow/fence/decision-expiry consumers. Both independent
+factories execute the same consumers with real fault controls and the injected
+clock. All 28 rows produce 30 actual origins/180 role/image/archive matches.
+Fresh preparation/replay pass 311 artifact, 131 Consumer and 89+89 metadata cases;
+its native request passed as run `40156840261` at `2beff54`: all three jobs,
+214 foundations and 95 scopes/838 exact discoveries/executions with every prerequisite. These
+standalone metadata authority checks are not shared artifact-authority integration,
+durable Memory recovery or complete category/profile qualification.
+
+Thirty more observed rows now import unchanged canonical identity, registry/
+authorization partitioning, reference replacement/ABA/rollback, create/revision
+races, reconciliation contention/I/O/acknowledgment/contributions/corrupt receipts
+and both malformed-schema layouts. Layout checks start genuinely unprepared;
+no common assertion or independent provider mechanism changes. All 58 metadata
+rows emit 60 genuine origins/360 actual role/image/archive matches. Fresh
+preparation/replay pass 311 artifact, 161 Consumer and 89+89 metadata cases;
+its native request passed as run `40157571215` at `8fed412`: all three jobs,
+214 foundations and 95 scopes/868 exact discoveries/executions with every prerequisite.
+Metadata zero-reference revision ABA is not artifact-incarnation fencing or
+shared-authority integration; full category/profile qualification remains open.
+
+Eight observed schema rows now invoke unchanged upgrade, invalid-upgrade,
+upgrade-exclusion and future/corrupt-schema consumers through actual legacy/
+current factories. The transparent recorder captures underlying observed
+sessions, not itself as a factory/component, and disposes an unreturned child on
+capture failure. Parent admission requires each exact two/three/four-origin
+lineage and rejects missing, extra or foreign descriptor origins. All 66 rows
+emit 82 actual origins/492 role/image/archive matches; fresh preparation/replay
+pass 311 artifact, 169 Consumer and 89+89 metadata cases. The next native request
+is 215 foundations and 95 scopes/876 observations, not yet admitted. Memory
+upgrades are logical; native backup/recovery and complete profiles remain separate.
+
+Forty-two further rows invoke unchanged bounds/scopes, paging, time rollback,
+cancellation/queue/exception mapping, ledger/diagnostic, publication, corruption,
+admission and disposal consumers. Admission/budget cases start unprepared;
+store-level disposal retains the enclosing session/resource owner. Origins are
+captured while actual components are live and emitted only after assertions
+succeed. Both real incomplete-cleanup cases retain work until barrier release
+and genuine settlement; no timeout is promoted to Released. All 108 rows emit
+124 actual origins/744 role/image/archive matches. Fresh preparation/replay pass
+311 artifact, 211 Consumer and 89+89 metadata cases; the next native request is
+215 foundations and 95 scopes/918 observations, not yet admitted or full
+category/profile qualification.
+
+Twenty-four further actual rows exercise six continuation-corruption shapes
+(each across all six components), five supported query-dimension corruptions
+and independent foreign-store epochs. Both stores in each epoch case are
+genuinely prepared; strict admission requires both actual create origins.
+All 132 rows emit 150 origins/900 role/image/archive matches. Fresh preparation/
+replay pass 311 artifact, 235 Consumer and 89+89 metadata cases; the next native
+request is 215 foundations and 95 scopes/942 observations, not yet admitted.
+Schema run `40158238921` at `9399c3c` passed all three jobs, 215 foundations
+without skips and 95 scopes/876 observations with every prerequisite. It
+predates controls/cursor imports and is not complete category qualification.
+
+The package-only Consumer now runs 32 exact actual authority-integration rows:
+each SQLite/Memory and Local/Object combination exercises reference admission,
+failed transactions, live references, lost acknowledgments, current-incarnation
+ABA, protected readers, foreign/copied handles and shutdown holdings. The real
+bridge and existing common assertion bodies are used, not synthetic standalone
+metadata evidence. A stable separate close task joins authority admissions/
+holdings, genuine metadata worker settlement and both actual disposals. The
+existing unit owner observes that task before reclaiming its root; this is not
+controller-authorized Released or category qualification. Original wrapper
+disposal remains unchanged. Fresh preparation/replay pass 267 Consumer,
+311 artifact and 89+89 metadata cases; fourteen consumed Hoard images match
+their actual archives. The Consumer-only HostAdapters edge and its lock graph
+are updated; SDK/Core dependency boundaries and historical locks are unchanged.
+Bounded architecture review found no confirmed blocker. Controls native run
+`40158951602` at `3fb2705` passed all three jobs, 215 foundations without skips
+and 95 scopes/918 observations; the next request is 216 foundations and
+96 scopes/974 observations, not yet admitted.
+
+Isolated opt-in mutations now wrap the actual metadata and artifact stores.
+Stale metadata replay fails unchanged
+`MetadataTimeAssertions.TicketExpiryAndRollbackAsync`; actual premature artifact
+publication fails unchanged `ArtifactPublicationAssertions.PrivateStagingAsync`.
+Each faulty/corrected pair uses the same caller and common assertions across
+both independent providers. Unexpected successful read sessions are disposed
+before actual artifact-session shutdown. Fresh preparation/replay each produce
+four named assertion failures and four corrected passes, with fourteen actual
+Hoard image/archive matches and unchanged SDK/catalog/assertion bytes.
+Intentional failures are excluded from ordinary builds. The next native request
+is 218 foundations and 100 scopes/982 observations, not yet admitted or complete
+T034/category qualification. No provider operation or SDK dependency changed.
+
+The runtime package-family guard now also admits each exact paired inventory.
+A launch-boundary regression first rejects all four valid scopes, then verifies
+the actual generated filter/settings and independently hashed package files
+after repair. Reduced, duplicate or cross-family selections still reject before
+launch. Earlier mutation-head results are not admitted; provider operations,
+common assertions and qualification requirements remain unchanged.
+
+Cursor native run `40159593512` at `5c7522f` passed all three jobs,
+215 foundations without skips and 95 scopes/942 exact observations with every
+prerequisite. It does not verify authority integrations or category mutations.
+
+An explicit `catalogBindingId` input assignment can project a known fixture
+declaration into its frozen `sqlite`, `memory`, `local` or `object` catalog slot.
+Parent capture verifies the exact category, original declaration ID and package,
+preserving all raw declaration bytes/hashes and provider package attribution.
+Foreign assignments and duplicate original declaration IDs reject, regardless
+of JSON serialization; ordinary
+declaration capture is unchanged. Actual factory/reopen observation and fresh
+replay each verify four cases/eight origins and 56 role/image/archive matches,
+not a complete category run or applicability/exclusion decision.
+Authority native run `40160483040` at `eeaa6bf` passed all three jobs,
+216 foundations without skips and 96 scopes/974 exact observations with every
+prerequisite. It predates mutations and slot input wiring; the next request is
+219 foundations and 100 scopes/982 observations, not yet admitted.
+
+Full-binding batch ingestion now rejects reduced frozen witness inventories
+and preserves shared execution/proof identities, append-only attempts and all
+QC/controller obligations. Missing controls cannot become passing category
+results; actual profile runners/evaluation remain unfinished.
+Prelaunch manifest selection and import share the immutable primary-case map.
+Synthetic positive-origin coverage rejects cross-binding execution-ID replay
+without mutating accepted evidence; actual original-wrapper provenance remains
+unfinished.
+Run `40161613939 @abfa812` exposed a real `Assert.IsType()` logger-prefix gap.
+Its bounded repair retains exact SDK-frame attribution and reproduces four
+named failures/four corrected passes through the actual logger in independent
+local observations. That failed run and canceled `40162771846 @c1f79b2` are not
+admitted receipts. Replacement run `40164176338` at exact `2ecda7f` passed all
+three jobs, 223 foundations without failures/errors/skips and 100 scopes/982
+exact discoveries/executions with every prerequisite, including all mutation
+scopes. It is admitted diagnostic evidence, not full category qualification or
+evidence for later `90fd088`; the wrapper evidence-contract decision remains
+separate from that receipt. The maintainer's autonomous-continuation instruction
+now resolves it through independently catalogued original-instance,
+loaded-contract and unchanged typed-session proof requirements.
+The first original MP-01/AS-01/value-test instrumentation captures actual existing
+owners and interfaces without replacing factory/resource ownership. Actual
+observation and independent fresh-cache locked replay each pass six executions
+and 26 image correspondences. These minimal-input local logger diagnostics do
+not qualify full categories; wider original/reopen/controller coverage remains
+unfinished.
+
+The native diagnostic now also schedules five original-observation scopes
+(eight executions), including both frozen artifact value witnesses rather than
+only the auxiliary identity-bound test. Original and typed-binding inputs retain
+separate immutable manifests and binding IDs, the same actual packages/source/
+invocation group, and independent pre/post recomputation. Native execution of
+this full-input path is not yet admitted. Local observation and fresh-cache
+replay pass eight executions/28 role-image correspondences using minimal inputs,
+not qualifying category evidence.
+Original metadata coverage subsequently adds MP-02/03/13/23..27/31. The actual
+facade passed to each unchanged common assertion is pinned and observed with
+its original owner, never replaced by a companion SDK session. Local observation
+and independent locked replay pass 26 executions/118 image correspondences.
+Native admission must now cover 105 scopes/1,008 observations; wider originals,
+direct/reopen/controller paths and qualifying profiles remain unfinished.
+The publication expansion adds all twelve frozen original artifact publication
+parameters, observing the existing driver's actual private lifetime and
+interfaces without extra construction or ownership transfer. Minimal-input
+local observation and independent locked replay pass 36 executions/188 image
+correspondences. Its native requirement is 105 scopes/1,018 observations,
+still pending. Earlier `40166560899 @8aaa36d` passed all three jobs,
+227 native foundations and 100 scopes/982 observations with every prerequisite;
+that admitted diagnostic receipt predates full-input original execution.
+The following increment selects immutable role images per exact witness,
+not one universal authority image per binding. Fifty-five single-owner metadata
+identities per provider now capture genuine original references: the existing
+fixture authority where no facade was passed, or the exact already-used facade.
+No unused authority is created merely for evidence. Local observation/replay
+pass 126 executions/638 image correspondences with minimal inputs, including
+all query-corruption/continuation parameters and both direct-construction
+admission witnesses. Exact one-observation admission also rejects extra roots.
+The new native vector is 230 foundations and 105 scopes/1,108 observations,
+pending. Multi-owner and reopen witnesses remain explicitly unclassified.
+Earlier full-input `40167209164 @0005638` passed all three jobs,
+229 foundations and 105 scopes/990 observations with distinct original/typed
+input digests and every prerequisite. It admits the earlier eight-original
+diagnostic only, not these expanded sources or qualifying profiles.
+Genuine multi-owner and schema-reopen observation subsequently covers
+62 operational metadata identities per provider. Independent source policy
+selects each exact forest, not arbitrary extra roots. A sequence preserves
+reference-equality aliases across independent roots while parent edges represent
+only actual reopens. Schema observations capture the actual adapter owner and
+its real underlying fixture authority; no unused facade is manufactured.
+Local observation/replay pass 140 executions, 162 records and 818 image
+correspondences with reproduced SDK archive
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+Native admission now requires 231 foundations and 105 scopes/1,123 observations,
+pending. Earlier `40168790991 @3f1409a` passed all three jobs, 230 foundations
+and 105 scopes/1,082 observations with every prerequisite; it does not admit
+the later forest increment or complete profiles.
+The following increment observes both genuinely configured metadata module
+owners, including rejected schema admission, and 38 more artifact parameters
+through their existing driver. Metadata now covers 63 operational identities
+per provider; artifacts cover 181 publication/deletion/reconciliation/read/race/
+failure/budget/recovery/quarantine/rejection/lifecycle witnesses, including exact
+fixed-binding facts and all frozen budget booleans. Nine actual Local fresh stores have
+exact per-node images: original driver owner in the test assembly, reopened
+owner/interfaces/controls in Local, and unchanged shared authority. Explicitly
+passed empty controls are the real fresh store's controls, not companions.
+In-place reinitialization preserves the same original object; reconciliation's
+early return and Object cases have no fabricated fresh-store child.
+Rejected admission/capability roots observe the actual source-created provider
+stores and controls, not a driver facade. Decorated admission observes the exact
+authority passed into the store, not its unused underlying authority. Fixed
+facts retain their real parameter lists and independently frozen bindings.
+Actual metadata-composed sessions and configured modules now own their real
+artifact interfaces. Read-only test-fixture controls retain the exact objects
+passed to store construction, without an SDK dependency or a second controls
+object. Each successful configured-host parameter has two independent real
+module/session roots, not an invented parent edge; SQLite-bearing integration
+rows require actual SQLite environment admission.
+No additional stores, factories or cleanup owners are created.
+Eight actual value/qualification contracts per binding carry loaded-contract
+proofs, not fabricated provider sessions. The partial observer is package-only:
+ordinary predecessor contract tests still have no SDK dependency.
+Four provider-neutral authority/bridge facts and both rejected-module parameters
+now require closed `original-owner` proof: only the genuine existing owner,
+never a fabricated session, provider interface or control. Pure facts run in
+explicit Local/Object contexts without invented provider arguments. The copied
+handle fact observes both independent authorities; rejected modules never expose
+a session. Owner-only evidence cannot replace any full session-role policy.
+Local observation/replay pass 333 executions, 370 records
+(354 original owners/sixteen contracts) and 2,122 image correspondences with the
+extended private-evidence SDK archive. The external-wrapper scope now separately
+admits all sixteen controller/transfer producer packets and links their hashes
+to the actual runtime execution/proof and current input document. Real kill/
+state/readback and both retained-work phases are checked; transfer packets must
+also match the same-run parent measurement receipt. This is no replacement for
+loaded-provider provenance, owned-controller/category acceptance or qualification.
+Native admission requires 236 foundations and
+107 scopes/1,317 observations, pending. Controllers, remaining artifact lifetimes
+and complete qualifying profiles are still unfinished.
+
+Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
+184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
+actual prerequisites/replay, not full category/profile qualification.
+
+Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
+183 foundations and 71 scopes/608 observations, all six cleanup/stop/reopen rows
+and actual prerequisites/replay, not full category/profile qualification.
+
+Complete category suites/adapters, contributor workflow and controller/profile
+ingestion remain unfinished. Focused composition/version fixtures
+do not establish category or host-profile qualification. CP-11 preserves actual
+route rejection during mapping before publication/initialization/readiness;
+declaration validation remains preconstruction. Responsibility IDs are not
+route declarations, and product contracts are unchanged.
+Do not use the new executor as acceptance-ready tooling. See the
+[implementation checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
+
 F-06 adds **fixture-qualified** BCL-only operations in
 `Hoard.Abstractions.Storage`, separate from the unchanged `IArtifactProvider`
 marker and historical `Metadata.ArtifactDigest`. Initialization/coordination

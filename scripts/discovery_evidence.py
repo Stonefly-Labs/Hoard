@@ -466,6 +466,10 @@ def verify_full_evidence(evidence, root, work):
                 or entry.get("mutantSha256") != hashlib.sha256(source.replace(original, replacement).encode()).hexdigest()
                 or entry.get("failedTests") != runtime_failures(work / "mutation-results" / identity / "red.trx", method)):
             raise RuntimeError("Stale or mismatched actual runtime mutation evidence.")
+    verify_materials(evidence, work)
+
+
+def verify_materials(evidence, work):
     verify_journeys(evidence.get("journeys"))
     verify_observations(evidence["journeys"], evidence.get("observations"), evidence.get("responseBodies"))
     verify_performance(evidence.get("performance"), evidence["runId"])
@@ -515,14 +519,10 @@ def runtime_failures(path, method):
 
 def mutations(root, work):
     target = work / "mutations"
-    for relative in ("src", "tests/integration/Hoard.Composition.Tests", "tests/fixtures/discovery/ReferenceConsumer"):
+    for relative in ("src", "tests", "specs", "examples"):
         foundation.copy_source(root / relative, target / relative)
-    for relative in ("Directory.Build.props", "Directory.Packages.props", "global.json"):
+    for relative in ("Directory.Build.props", "Directory.Packages.props", "global.json", "Hoard.slnx"):
         shutil.copy2(root / relative, target / relative)
-    shutil.copy2(root / "tests/FoundationEvidence.cs", target / "tests/FoundationEvidence.cs")
-    contract = target / "specs/004-module-discovery/contracts"
-    contract.mkdir(parents=True)
-    shutil.copy2(root / "specs/004-module-discovery/contracts/openapi.json", contract / "openapi.json")
     project = target / "tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj"
     run("dotnet", "restore", str(project), "--locked-mode", "-v", "quiet")
     detected = []
@@ -591,6 +591,32 @@ def graphs(root, work, config, packages, hosts, consumers, old_provider, registr
     return result
 
 
+def reference_consumer(root, work, bodies):
+    """Run the unchanged BCL-only consumer against an actual serialized host response."""
+    reference = root / "tests/fixtures/discovery/ReferenceConsumer/ReferenceConsumer.csproj"
+    project = ET.parse(reference)
+    if project.findall(".//PackageReference") or project.findall(".//ProjectReference"):
+        raise RuntimeError("Reference consumer is not JSON-only/BCL-only.")
+    run("dotnet", "restore", str(reference), "--locked-mode", "-v", "quiet")
+    run("dotnet", "build", str(reference), "-c", "Release", "--no-restore", "-v", "quiet")
+    body = work / "observation.json"
+    body.write_bytes(base64.b64decode(bodies[0], validate=True))
+    runtime = reference.parent / "bin/Release/net10.0"
+    assembly = runtime / "ReferenceConsumer.dll"
+    output = json.loads(run("dotnet", str(assembly), input=body.read_text()))
+    if not isinstance(output, list) or not output:
+        raise RuntimeError("Missing standalone JSON consumer output.")
+    return {
+        "source": str(reference.parent), "assembly": str(assembly),
+        "assemblySha256": hashlib.sha256(assembly.read_bytes()).hexdigest(),
+        "assets": str(reference.parent / "obj/project.assets.json"),
+        "runtimeConfig": str(runtime / "ReferenceConsumer.runtimeconfig.json"),
+        "dependencies": str(runtime / "ReferenceConsumer.deps.json"),
+        "response": str(body), "responseSha256": hashlib.sha256(body.read_bytes()).hexdigest(),
+        "moduleIds": [module["Id"] for module in output],
+    }
+
+
 def complete(root, work, update, retained_directory):
     inputs = input_hashes(root)
     run_id = str(uuid.uuid4())
@@ -632,16 +658,7 @@ def complete(root, work, update, retained_directory):
     evidence["cases"], evidence["suites"] = inventory(names)
     evidence["performance"] = json.loads((work / "performance.json").read_text())
     p95 = verify_performance(evidence["performance"], run_id)
-    reference = root / "tests/fixtures/discovery/ReferenceConsumer/ReferenceConsumer.csproj"
-    if ET.parse(reference).findall(".//PackageReference") or ET.parse(reference).findall(".//ProjectReference"):
-        raise RuntimeError("Reference consumer is not JSON-only/BCL-only.")
-    run("dotnet", "restore", str(reference), "--locked-mode", "-v", "quiet")
-    run("dotnet", "build", str(reference), "-c", "Release", "--no-restore", "-v", "quiet")
-    body = work / "observation.json"
-    body.write_bytes(base64.b64decode(bodies[0], validate=True))
-    output = json.loads(run("dotnet", str(reference.parent / "bin/Release/net10.0/ReferenceConsumer.dll"), input=body.read_text()))
-    if not isinstance(output, list) or not output:
-        raise RuntimeError("Missing standalone JSON consumer output.")
+    evidence["referenceConsumer"] = reference_consumer(root, work, bodies)
     evidence["referenceConsumerPassed"] = True
     for value in retained:
         verify_binary(Path(value["assembly"]), value["sha256"])

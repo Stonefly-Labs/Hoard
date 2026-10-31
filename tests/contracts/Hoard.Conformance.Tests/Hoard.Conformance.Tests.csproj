@@ -1,0 +1,83 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="AuthorityIntegrationTests.cs;CategoryMutationTests.cs;ContributorJourneyTests.cs" />
+    <Compile Include="../Hoard.Artifacts.Tests/ArtifactSourceCapture.cs" Link="ArtifactSourceCapture.cs" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <Using Include="Xunit" />
+    <EmbeddedResource Include="../../fixtures/conformance/baselines/inventory.json"
+                      LogicalName="Hoard.Conformance.FrozenInventory" />
+    <EmbeddedResource Include="../../fixtures/conformance/Compatibility/source-baseline.json"
+                      LogicalName="Hoard.Conformance.CompatibilitySourceBaseline" />
+    <EmbeddedResource Include="../../fixtures/conformance/baselines/source-consumers.json"
+                      LogicalName="Hoard.Conformance.SourceRecipePolicy" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="../../fixtures/conformance/Compatibility/Broken/Broken.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="../../fixtures/conformance/Compatibility/Compatible/Compatible.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="CopyCompatibilityFixtures" AfterTargets="Build">
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Baseline/Baseline.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityBaselineImage" />
+    </MSBuild>
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Broken/Broken.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityBrokenImage" />
+    </MSBuild>
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Compatible/Compatible.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityCompatibleImage" />
+    </MSBuild>
+    <MSBuild Projects="../../fixtures/conformance/Compatibility/Consumer/RetainedConsumer.csproj" Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="CompatibilityConsumerImage" />
+    </MSBuild>
+    <Copy SourceFiles="@(CompatibilityBaselineImage);@(CompatibilityBaselineImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/baseline" />
+    <Copy SourceFiles="@(CompatibilityBrokenImage);@(CompatibilityBrokenImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/broken" />
+    <Copy SourceFiles="@(CompatibilityCompatibleImage);@(CompatibilityCompatibleImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/compatible" />
+    <Copy SourceFiles="@(CompatibilityConsumerImage);@(CompatibilityConsumerImage->'%(RootDir)%(Directory)%(Filename).pdb')"
+          DestinationFolder="$(TargetDir)compatibility-fixtures/consumer" />
+  </Target>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
+    <ProjectReference Include="../Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />
+    <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
+    <Compile Remove="MemoryMechanismTests.cs" />
+    <Compile Remove="Native/**/*.cs" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <NuGetLockFilePath>PackageAcceptance/packages.lock.json</NuGetLockFilePath>
+    <OutputType>Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <UseAppHost>false</UseAppHost>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <PackageVersion Include="Hoard.Testing.Conformance" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.Memory" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Memory" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Conformance.TestLogger" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.Memory" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />
+    <PackageReference Include="Hoard.Conformance.TestLogger" />
+    <Compile Include="../../fixtures/conformance/Consumer/MemoryBindingTests.cs" Link="MemoryBindingTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/MemoryBindingOwnershipTests.cs" Link="MemoryBindingOwnershipTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteBindingTests.cs" Link="SqliteBindingTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteMechanismTests.cs" Link="SqliteMechanismTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteEnvironmentProbe.cs" Link="SqliteEnvironmentProbe.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteNativeOwnershipProbe.cs" Link="SqliteNativeOwnershipProbe.cs" />
+  </ItemGroup>
+</Project>

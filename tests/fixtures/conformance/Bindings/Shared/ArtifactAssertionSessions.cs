@@ -1,0 +1,933 @@
+using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using Hoard.Abstractions.Storage;
+using Hoard.Fixtures.Artifacts.HostAdapters;
+using Hoard.Testing.Conformance.Bindings;
+
+namespace Hoard.Fixtures.Conformance.Bindings.Shared;
+
+internal enum ArtifactAssertionRestart { Compatible, FreshEpoch }
+
+internal sealed record ArtifactAssertionGeneration(
+    ArtifactStoreIdentity Identity, ArtifactCoordinationAuthority Authority, string DirectoryPath, ArtifactLimits Limits);
+
+internal static class ArtifactAdmissionCapabilities
+{
+    public static ArtifactCapabilities Apply(ArtifactCapabilities value, ArtifactAdmissionProbe probe)
+    {
+        if (!Enum.IsDefined(probe)) { throw new ArgumentException("BindingInvalid"); }
+        return new(probe == ArtifactAdmissionProbe.Version ? 2 : value.Version,
+            value.Durability, value.Enumeration, value.Limits,
+            conditionalPublication: value.ConditionalPublication && probe != ArtifactAdmissionProbe.Publication,
+            conditionalDeletion: value.ConditionalDeletion && probe != ArtifactAdmissionProbe.Deletion,
+            stagingRecovery: value.StagingRecovery && probe != ArtifactAdmissionProbe.Recovery,
+            ownerFencing: value.OwnerFencing && probe != ArtifactAdmissionProbe.Fencing,
+            readerProtection: value.ReaderProtection && probe != ArtifactAdmissionProbe.Readers,
+            boundedStreaming: value.BoundedStreaming && probe != ArtifactAdmissionProbe.Streaming,
+            rangeReads: value.RangeReads, sha512: value.Sha512);
+    }
+}
+
+internal sealed class ArtifactAssertionOwnership
+{
+    private readonly string providerId;
+    private readonly Guid instanceId = Guid.NewGuid();
+    private readonly ArtifactAssertionRestart restart;
+    private readonly ArtifactAssertionOptions options;
+    private readonly Func<ArtifactAssertionOwnership, ArtifactAssertionGeneration, ArtifactAssertionSession> create;
+    private readonly List<ArtifactAssertionSession> sessions = [];
+    private readonly List<ArtifactAssertionGeneration> generations = [];
+    private readonly TaskCompletionSource settlement = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private Task? disposal;
+    private Task<ConformanceCleanupObservation>? cleanup;
+
+    private ArtifactAssertionOwnership(ConformanceRunContext context, ConformanceOwnedDirectory resource,
+        string providerId, ArtifactAssertionRestart restart, ArtifactAssertionOptions options,
+        Func<ArtifactAssertionOwnership, ArtifactAssertionGeneration, ArtifactAssertionSession> create)
+    {
+        Context = context;
+        Resource = resource;
+        this.providerId = providerId;
+        this.restart = restart;
+        this.options = options;
+        this.create = create;
+    }
+
+    public object Gate { get; } = new();
+    public ConformanceRunContext Context { get; }
+    public ConformanceOwnedDirectory Resource { get; }
+    public ArtifactAssertionSession? Current { get; private set; }
+    public bool Closing { get; private set; }
+    public Task? Transition { get; private set; }
+    public ConcurrentQueue<Exception> ObserverFailures { get; } = new();
+
+    public static async ValueTask<IArtifactAssertionSession> CreateAsync(
+        ConformanceRunContext context, string providerId, ArtifactAssertionRestart restart, ArtifactAssertionOptions options,
+        Func<ArtifactAssertionOwnership, ArtifactAssertionGeneration, ArtifactAssertionSession> create,
+        CancellationToken cancellationToken, ArtifactStoreIdentity? recoveryIdentity = null)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(options);
+        if (recoveryIdentity is not null && (recoveryIdentity.ProviderModuleId != providerId
+                || restart != ArtifactAssertionRestart.Compatible || options.AdmissionProbe != ArtifactAdmissionProbe.None))
+        { throw new ArgumentException("BindingInvalid"); }
+        var resource = await context.Resources.AllocateDirectoryAsync(cancellationToken);
+        var ownership = new ArtifactAssertionOwnership(context, resource, providerId, restart, options, create);
+        var handedOff = false;
+        try
+        {
+            var session = ownership.CreateSession(ownership.CreateGeneration("store", recoveryIdentity));
+            ownership.Current = session;
+            if (options.AdmissionProbe == ArtifactAdmissionProbe.None)
+            {
+                await session.InitializeAsync(recoveryIdentity is null
+                    ? ArtifactInitializationMode.CreateEmpty : ArtifactInitializationMode.ReopenCompatible, cancellationToken);
+                if (recoveryIdentity is not null && !session.Ready)
+                { throw new InvalidOperationException("BindingInvalid"); }
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            handedOff = true;
+            return session;
+        }
+        finally
+        {
+            if (!handedOff) { await ownership.DisposeAsync(); }
+        }
+    }
+
+    private ArtifactAssertionGeneration CreateGeneration(string child, ArtifactStoreIdentity? recoveryIdentity = null)
+    {
+        var identity = recoveryIdentity ?? new ArtifactStoreIdentity(providerId, instanceId, Guid.NewGuid());
+        var scope = options.AdmissionProbe == ArtifactAdmissionProbe.ForeignAuthority
+            ? new ArtifactStoreIdentity(providerId, Guid.NewGuid(), Guid.NewGuid()) : identity;
+        var generation = new ArtifactAssertionGeneration(identity,
+            new(scope, Context.Clock, options.References is null ? null : QueryReferencesAsync),
+            Path.Combine(Resource.DirectoryPath, child), options.Limits);
+        generations.Add(generation);
+        return generation;
+    }
+
+    private async ValueTask<ArtifactReferenceDecision> QueryReferencesAsync(
+        ArtifactStamp stamp, CancellationToken cancellationToken)
+    {
+        var query = options.References ?? throw new InvalidOperationException("BindingInvalid");
+        var observation = await query(stamp, cancellationToken)
+            ?? throw new InvalidOperationException("BindingInvalid");
+        return new(observation.Available, observation.LiveReferences, observation.Revision);
+    }
+
+    private ArtifactAssertionSession CreateSession(ArtifactAssertionGeneration generation)
+    {
+        var session = create(this, generation);
+        sessions.Add(session);
+        return session;
+    }
+
+    public ValueTask<IArtifactAssertionSession> ReopenAsync(
+        ArtifactAssertionSession original, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task<IArtifactAssertionSession> task;
+        lock (Gate)
+        {
+            if (Closing || !ReferenceEquals(Current, original) || Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            task = ReopenCoreAsync(original, start.Task, cancellationToken);
+            Transition = task;
+        }
+        start.SetResult();
+        return new(task);
+    }
+
+    private async Task<IArtifactAssertionSession> ReopenCoreAsync(
+        ArtifactAssertionSession original, Task start, CancellationToken cancellationToken)
+    {
+        await start;
+        await CloseStoresAsync(final: false);
+        cancellationToken.ThrowIfCancellationRequested();
+        var admitted = false;
+        try
+        {
+            ArtifactAssertionGeneration generation;
+            ArtifactInitializationMode mode;
+            if (restart == ArtifactAssertionRestart.Compatible)
+            {
+                generation = original.Generation;
+                generation.Authority.ReopenAdmissionsForQualification();
+                mode = ArtifactInitializationMode.ReopenCompatible;
+            }
+            else
+            {
+                generation = CreateGeneration("epoch-" + Guid.NewGuid().ToString("N"));
+                mode = ArtifactInitializationMode.CreateEmpty;
+            }
+            var replacement = CreateSession(generation);
+            await replacement.InitializeAsync(mode, cancellationToken);
+            lock (Gate) { Current = replacement; }
+            admitted = true;
+            return replacement;
+        }
+        finally
+        {
+            if (!admitted) { await CloseStoresAsync(final: false); }
+        }
+    }
+
+    public ValueTask DisposeAsync(ArtifactAssertionSession? requested = null)
+    {
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task task;
+        lock (Gate)
+        {
+            if (requested is not null && !ReferenceEquals(Current, requested)) { return ValueTask.CompletedTask; }
+            if (disposal is { IsCompleted: false } or { IsCompletedSuccessfully: true }) { return new(disposal); }
+            if (Transition is { IsCompleted: false }) { throw new InvalidOperationException("CleanupIncomplete"); }
+            Closing = true;
+            disposal = task = DisposeCoreAsync(start.Task);
+            Transition = task;
+        }
+        start.SetResult();
+        return new(task);
+    }
+
+    private async Task DisposeCoreAsync(Task start)
+    {
+        await start;
+        var started = Stopwatch.GetTimestamp();
+        Task<ConformanceCleanupObservation>? pending;
+        lock (Gate) { pending = cleanup is { IsCompleted: false } ? cleanup : null; }
+        var observation = pending ?? Context.Resources.ReleaseAsync(
+            Resource, settlement.Task, CancellationToken.None).AsTask();
+        lock (Gate) { cleanup = observation; }
+        try
+        {
+            await CloseStoresAsync(final: true);
+            var observed = await observation.WaitAsync(Remaining(started), CancellationToken.None);
+            if (observed.State != ConformanceOwnershipState.Settling)
+            { throw new InvalidOperationException("CleanupIncomplete"); }
+        }
+        catch (TimeoutException error) { throw new InvalidOperationException("CleanupIncomplete", error); }
+    }
+
+    private async Task CloseStoresAsync(bool final)
+    {
+        var started = Stopwatch.GetTimestamp();
+        var authorities = generations.Select(generation =>
+            generation.Authority.CloseAdmissionsAndObserveSettlementForQualificationAsync()).ToArray();
+        try
+        {
+            foreach (var session in sessions)
+            {
+                await session.RestoreAccessRestrictionAsync().AsTask().WaitAsync(Remaining(started));
+                var result = await session.StopAsync(Remaining(started)).WaitAsync(Remaining(started));
+                if (result is not ArtifactResult<ArtifactShutdown>.Success { Value.State: ArtifactCleanupState.Released })
+                { throw new InvalidOperationException("CleanupIncomplete"); }
+                await session.ObserveWorkerSettlement().WaitAsync(Remaining(started));
+                session.RemoveObservations();
+            }
+            await Task.WhenAll(authorities).WaitAsync(Remaining(started));
+            if (final)
+            {
+                if (ObserverFailures.IsEmpty) { settlement.TrySetResult(); }
+                else { settlement.TrySetException(ObserverFailures.ToArray()); }
+            }
+        }
+        catch (TimeoutException error) { throw new InvalidOperationException("CleanupIncomplete", error); }
+    }
+
+    private TimeSpan Remaining(long started)
+    {
+        var remaining = Context.CleanupBudget - Stopwatch.GetElapsedTime(started);
+        if (remaining < TimeSpan.FromMilliseconds(1)) { throw new InvalidOperationException("CleanupIncomplete"); }
+        return remaining;
+    }
+
+    public ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (Gate)
+        {
+            if (cleanup is { IsCompleted: true }) { return new(cleanup); }
+            return ValueTask.FromResult(new ConformanceCleanupObservation(
+                Closing ? ConformanceOwnershipState.Settling : ConformanceOwnershipState.Active,
+                [Resource.ResourceId]));
+        }
+    }
+}
+
+internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
+{
+    private readonly ArtifactAssertionOwnership ownership;
+    private readonly Dictionary<ArtifactObservationPoint, Registration> observations = [];
+    private HistoryRegistration? historyObservation;
+    private HistoryRegistration? historyFailure;
+    private SynchronousHold? synchronousHold;
+    private RecordWriteRegistration? recordWriteFailure;
+    private AccessRegistration? accessRestriction;
+    private readonly object stopGate = new();
+    private Task<ArtifactResult<ArtifactShutdown>>? stopping;
+
+    protected ArtifactAssertionSession(
+        ArtifactAssertionOwnership ownership, ArtifactAssertionGeneration generation)
+    {
+        this.ownership = ownership;
+        Generation = generation;
+    }
+
+    public ArtifactAssertionGeneration Generation { get; }
+    public abstract IArtifactStore Store { get; }
+    public abstract IArtifactEvidenceValidator Validator { get; }
+    public abstract IArtifactMaintenance Maintenance { get; }
+    public abstract IArtifactStoreLifetime Lifetime { get; }
+    protected abstract IArtifactStoreLifetime CreateCompetingLifetime();
+    protected abstract bool ProviderReady { get; }
+    public IArtifactCoordinationAuthority Authority => Generation.Authority;
+    public int WaitingAuthorityAdmissions => Generation.Authority.WaitingAdmissions;
+    public ArtifactStoreIdentity Identity => Generation.Identity;
+    public bool Ready
+    {
+        get
+        {
+            lock (ownership.Gate)
+            {
+                return ReferenceEquals(ownership.Current, this) && !ownership.Closing
+                    && ownership.Transition is not { IsCompleted: false }
+                    && ownership.ObserverFailures.IsEmpty && ProviderReady;
+            }
+        }
+    }
+
+    public ArtifactInitializationObservation ObserveInitialization()
+    {
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return new(Directory.Exists(Generation.DirectoryPath), ProviderReady);
+        }
+    }
+
+    public async Task InitializeAsync(ArtifactInitializationMode mode, CancellationToken cancellationToken)
+    {
+        var result = await Lifetime.InitializeAsync(new(mode, Identity, Authority, Generation.Limits), new(), cancellationToken);
+        if (result is not ArtifactResult<ArtifactAdmission>.Success)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException("BindingInvalid");
+        }
+    }
+
+    public async ValueTask<ArtifactCompetingInitializationObservation> ProbeCompetingInitializationAsync(
+        ArtifactInitializationMode mode, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!Enum.IsDefined(mode)) { throw new ArgumentException("BindingInvalid"); }
+        _ = ObserveInitialization();
+        var competing = CreateCompetingLifetime();
+        ArtifactResult<ArtifactAdmission> admission;
+        ArtifactResult<ArtifactShutdown> shutdown;
+        try
+        {
+            admission = await competing.InitializeAsync(new(mode, Identity, Authority, Generation.Limits),
+                new(ownership.Context.ControlBudget), cancellationToken);
+        }
+        finally
+        {
+            shutdown = await competing.StopAsync(new(ownership.Context.ControlBudget), CancellationToken.None);
+        }
+        return new(admission, shutdown);
+    }
+
+    public ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken) =>
+        ownership.ReopenAsync(this, cancellationToken);
+
+    public ValueTask DisposeAsync() => ownership.DisposeAsync(this);
+
+    public Task<ArtifactResult<ArtifactShutdown>> StopAsync(TimeSpan budget)
+    {
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task<ArtifactResult<ArtifactShutdown>> task;
+        lock (stopGate)
+        {
+            if (stopping is { IsCompleted: false }) { return stopping; }
+            stopping = task = StopCoreAsync(start.Task, budget);
+        }
+        start.SetResult();
+        return task;
+    }
+
+    private async Task<ArtifactResult<ArtifactShutdown>> StopCoreAsync(Task start, TimeSpan budget)
+    {
+        await start;
+        return await Lifetime.StopAsync(new(budget), CancellationToken.None);
+    }
+
+    public ValueTask AwaitSettlementAsync(CancellationToken cancellationToken) =>
+        new(ObserveWorkerSettlement().WaitAsync(ownership.Context.ControlBudget, cancellationToken));
+
+    public abstract Task ObserveWorkerSettlement();
+
+    protected abstract ValueTask<ArtifactResult<long>> DamageProviderPayloadAsync(
+        ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<byte[]>> CaptureProviderPayloadAsync(
+        ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<long>> ReplaceProviderPayloadAsync(
+        ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<long>> RemoveProviderPayloadAsync(
+        ArtifactStamp stamp, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderPayloadAccessAsync(
+        ArtifactStamp stamp, bool unavailable, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken);
+
+    public ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
+        ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        return RestrictAccessAsync((capture, token) =>
+            RestrictProviderPayloadAccessAsync(stamp, unavailable, capture, token), cancellationToken);
+    }
+
+    public virtual ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("FaultControl.Unsupported");
+
+    protected abstract ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)> ObserveProviderStorage();
+    protected abstract ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderStorageCleanupAsync(
+        ArtifactStorageArea area, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken);
+
+    public ValueTask<IAsyncDisposable> RestrictStorageCleanupAsync(
+        ArtifactStorageArea area, CancellationToken cancellationToken)
+    {
+        if (!Enum.IsDefined(area)) { throw new ArgumentException("BindingInvalid"); }
+        return RestrictAccessAsync((capture, token) =>
+            RestrictProviderStorageCleanupAsync(area, capture, token), cancellationToken);
+    }
+
+    public ValueTask<ArtifactStorageObservation> ObserveStorageAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return ObserveProviderStorage() switch
+            {
+                ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)>.Success observed =>
+                    ValueTask.FromResult(new ArtifactStorageObservation(
+                        observed.Value.Staging.Select(file => new ArtifactStorageFile(file.Key, file.Value)).ToImmutableArray(),
+                        observed.Value.Payloads.Select(file => new ArtifactStorageFile(file.Key, file.Value)).ToImmutableArray())),
+                ArtifactResult<(KeyValuePair<string, long>[], KeyValuePair<string, long>[])>.Failure failure =>
+                    throw new InvalidOperationException("FaultControl." + failure.Code),
+                _ => throw new InvalidOperationException("BindingInvalid")
+            };
+        }
+    }
+
+    protected ValueTask<IAsyncDisposable> RestrictAccessAsync(
+        Func<Action<IAsyncDisposable>, CancellationToken, ValueTask<ArtifactResult<IAsyncDisposable>>> apply,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        AccessRegistration registration;
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false } || accessRestriction is not null)
+            { throw new InvalidOperationException("BindingInvalid"); }
+            accessRestriction = registration = new(this, apply, start.Task, cancellationToken);
+        }
+        start.SetResult();
+        return registration.OpenAsync(cancellationToken);
+    }
+
+    public ValueTask RestoreAccessRestrictionAsync()
+    {
+        lock (ownership.Gate)
+        {
+            return accessRestriction is { } current ? current.DisposeAsync() : ValueTask.CompletedTask;
+        }
+    }
+
+    public ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
+        PayloadControlAsync(stamp, () => CaptureProviderPayloadAsync(stamp, maximumBytes, cancellationToken), cancellationToken);
+
+    public async ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken) =>
+        _ = await PayloadControlAsync(stamp, () => ReplaceProviderPayloadAsync(stamp, payload, cancellationToken), cancellationToken);
+
+    public async ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken) =>
+        _ = await PayloadControlAsync(stamp, () => RemoveProviderPayloadAsync(stamp, cancellationToken), cancellationToken);
+
+    private ValueTask<T> PayloadControlAsync<T>(
+        ArtifactStamp stamp, Func<ValueTask<ArtifactResult<T>>> operation, CancellationToken cancellationToken) where T : notnull
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return InvokeAsync();
+        }
+
+        async ValueTask<T> InvokeAsync()
+        {
+            var result = await operation();
+            cancellationToken.ThrowIfCancellationRequested();
+            return result switch
+            {
+                ArtifactResult<T>.Success success => success.Value,
+                ArtifactResult<T>.Failure failure => throw new InvalidOperationException("FaultControl." + failure.Code),
+                _ => throw new InvalidOperationException("BindingInvalid")
+            };
+        }
+    }
+
+    public ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return DamageCoreAsync(stamp, truncate, cancellationToken);
+        }
+    }
+
+    private async ValueTask DamageCoreAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken)
+    {
+        var result = await DamageProviderPayloadAsync(stamp, truncate, cancellationToken);
+        if (result is not ArtifactResult<long>.Success)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException("BindingInvalid");
+        }
+    }
+
+    public ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken) =>
+        ownership.ObserveCleanupAsync(cancellationToken);
+
+    protected abstract string Boundary(ArtifactObservationPoint point);
+    protected abstract void SetObserver(string boundary, Func<ValueTask> observer);
+    protected abstract void RemoveObserver(string boundary);
+    protected abstract void SetSynchronousStorageHold(Action? hold);
+    protected virtual void SetRecordWriteFailure(Action? failure) =>
+        throw new InvalidOperationException("FaultControl.Unsupported");
+    protected abstract void SetHistoryCandidateObserver(Action<string, string>? observer);
+
+    public ValueTask<IAsyncDisposable> ObserveHistoryCandidatesAsync(
+        Action<string, string> observer, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(observer);
+        return ValueTask.FromResult<IAsyncDisposable>(RegisterHistory(observer, cancellationToken));
+    }
+
+    public ValueTask<IArtifactFaultRegistration> InjectHistoryCandidateFailureAsync(CancellationToken cancellationToken) =>
+        ValueTask.FromResult<IArtifactFaultRegistration>(RegisterHistory(null, cancellationToken));
+
+    private HistoryRegistration RegisterHistory(Action<string, string>? observer, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false }
+                || (observer is null ? historyFailure is not null : historyObservation is not null))
+            { throw new InvalidOperationException("BindingInvalid"); }
+            var registration = new HistoryRegistration(this, observer);
+            if (observer is null) { historyFailure = registration; }
+            else { historyObservation = registration; }
+            SetHistoryCandidateObserver(ObserveHistoryCandidate);
+            return registration;
+        }
+    }
+
+    private void ObserveHistoryCandidate(string kind, string id)
+    {
+        HistoryRegistration? observation;
+        HistoryRegistration? failure;
+        lock (ownership.Gate)
+        {
+            observation = historyObservation;
+            failure = historyFailure;
+        }
+        try { observation?.Invoke(kind, id); }
+        catch (Exception error)
+        {
+            ownership.ObserverFailures.Enqueue(error);
+            throw;
+        }
+        if (kind == "tickets" && failure is not null && failure.TryInject())
+        { throw failure.ExpectedFailure; }
+    }
+
+    public ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false } || synchronousHold is not null
+                || recordWriteFailure is not null)
+            { throw new InvalidOperationException("BindingInvalid"); }
+            var registration = new SynchronousHold(this);
+            SetSynchronousStorageHold(registration.Block);
+            synchronousHold = registration;
+            return ValueTask.FromResult<IArtifactSynchronousHold>(registration);
+        }
+    }
+
+    public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
+        ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<IAsyncDisposable>(RegisterBoundary(point, observer, cancellationToken));
+
+    public ValueTask<IArtifactFaultRegistration> InjectCapacityFailureAsync(CancellationToken cancellationToken)
+    {
+        var failure = new IOException("InjectedCapacityFailure", 28);
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(
+            ArtifactObservationPoint.StagePrefix, () => ValueTask.FromException(failure), cancellationToken, failure));
+    }
+
+    public ValueTask<IArtifactFaultRegistration> InjectUnclaimedCleanupFailureAsync(CancellationToken cancellationToken)
+    {
+        var failure = new IOException("InjectedUnclaimedCleanupFailure");
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(
+            ArtifactObservationPoint.OperationReclaim, () => ValueTask.FromException(failure), cancellationToken, failure));
+    }
+
+    public ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken)
+    {
+        var failure = new IOException("InjectedPublicationAcknowledgmentLoss");
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(
+            ArtifactObservationPoint.PublicationSelected, () => ValueTask.FromException(failure), cancellationToken, failure));
+    }
+
+    public ValueTask<IArtifactFaultRegistration> InjectObservationFailureAsync(
+        ArtifactObservationPoint point, Func<ValueTask> beforeFailure, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(beforeFailure);
+        if (point is not (ArtifactObservationPoint.ReadOpened or ArtifactObservationPoint.ReconciliationVerified
+            or ArtifactObservationPoint.DeleteRemoved or ArtifactObservationPoint.StagePrefix
+            or ArtifactObservationPoint.BeforePublicationDecision or ArtifactObservationPoint.CommitProgress))
+        { throw new ArgumentException("BindingInvalid"); }
+        Exception failure = point is ArtifactObservationPoint.DeleteRemoved or ArtifactObservationPoint.StagePrefix
+            or ArtifactObservationPoint.BeforePublicationDecision or ArtifactObservationPoint.CommitProgress
+            ? new IOException(point == ArtifactObservationPoint.DeleteRemoved
+                ? "InjectedDeleteAcknowledgmentLoss" : "InjectedCleanupFailure")
+            : new InvalidOperationException("InjectedObservationFailure");
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(point, async () =>
+        {
+            await beforeFailure();
+            throw failure;
+        }, cancellationToken, failure));
+    }
+
+    public ValueTask<IArtifactFaultRegistration> InjectRecordWriteFailureAsync(
+        int occurrence, Action beforeFailure, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(beforeFailure);
+        if (occurrence is < 1 or > 128) { throw new ArgumentException("BindingInvalid"); }
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false }
+                || synchronousHold is not null || recordWriteFailure is not null)
+            { throw new InvalidOperationException("BindingInvalid"); }
+            var registration = new RecordWriteRegistration(this, occurrence, beforeFailure);
+            SetRecordWriteFailure(registration.Invoke);
+            recordWriteFailure = registration;
+            return ValueTask.FromResult<IArtifactFaultRegistration>(registration);
+        }
+    }
+
+    private Registration RegisterBoundary(
+        ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken,
+        Exception? expectedFailure = null)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(observer);
+        var boundary = Boundary(point);
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false } || observations.ContainsKey(point))
+            { throw new InvalidOperationException("BindingInvalid"); }
+            var registration = new Registration(this, point, boundary);
+            SetObserver(boundary, async () =>
+            {
+                registration.Observe();
+                try { await observer(); }
+                catch (Exception error) when (!ReferenceEquals(error, expectedFailure))
+                {
+                    ownership.ObserverFailures.Enqueue(error);
+                    throw;
+                }
+            });
+            observations.Add(point, registration);
+            return registration;
+        }
+    }
+
+    public void RemoveObservations()
+    {
+        lock (ownership.Gate)
+        {
+            foreach (var registration in observations.Values) { RemoveObserver(registration.Boundary); }
+            observations.Clear();
+            SetHistoryCandidateObserver(null);
+            historyObservation = null;
+            historyFailure = null;
+            if (synchronousHold is not null)
+            {
+                SetSynchronousStorageHold(null);
+                synchronousHold.Release();
+                synchronousHold = null;
+            }
+            if (recordWriteFailure is not null)
+            {
+                SetRecordWriteFailure(null);
+                recordWriteFailure = null;
+            }
+        }
+    }
+
+    private sealed class HistoryRegistration(
+        ArtifactAssertionSession session, Action<string, string>? observer) : IArtifactFaultRegistration
+    {
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private long observationCount;
+        public InvalidOperationException ExpectedFailure { get; } = new("InjectedHistoryCandidateFailure");
+        public long ObservationCount => Interlocked.Read(ref observationCount);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(session.ownership.Context.ControlBudget, cancellationToken));
+        public void Invoke(string kind, string id)
+        {
+            Interlocked.Increment(ref observationCount);
+            entered.TrySetResult();
+            (observer ?? throw new InvalidOperationException("BindingInvalid"))(kind, id);
+        }
+        public bool TryInject()
+        {
+            if (Interlocked.CompareExchange(ref observationCount, 1, 0) != 0) { return false; }
+            entered.TrySetResult();
+            return true;
+        }
+        public ValueTask DisposeAsync()
+        {
+            lock (session.ownership.Gate)
+            {
+                if (ReferenceEquals(session.historyObservation, this)) { session.historyObservation = null; }
+                if (ReferenceEquals(session.historyFailure, this)) { session.historyFailure = null; }
+                if (session.historyObservation is null && session.historyFailure is null)
+                { session.SetHistoryCandidateObserver(null); }
+            }
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class AccessRegistration
+    {
+        private readonly ArtifactAssertionSession session;
+        private readonly Task<ArtifactResult<IAsyncDisposable>> application;
+        private Task? disposal;
+        private IAsyncDisposable? capturedScope;
+
+        public AccessRegistration(ArtifactAssertionSession session,
+            Func<Action<IAsyncDisposable>, CancellationToken, ValueTask<ArtifactResult<IAsyncDisposable>>> apply,
+            Task start, CancellationToken cancellationToken)
+        {
+            this.session = session;
+            application = ApplyAsync();
+            async Task<ArtifactResult<IAsyncDisposable>> ApplyAsync()
+            {
+                await start;
+                return await apply(scope =>
+                {
+                    lock (session.ownership.Gate)
+                    {
+                        if (capturedScope is not null) { throw new InvalidOperationException("BindingInvalid"); }
+                        capturedScope = scope;
+                    }
+                }, cancellationToken);
+            }
+        }
+
+        public async ValueTask<IAsyncDisposable> OpenAsync(CancellationToken cancellationToken)
+        {
+            var result = await application;
+            if (result is ArtifactResult<IAsyncDisposable>.Success && !cancellationToken.IsCancellationRequested)
+            {
+                lock (session.ownership.Gate)
+                {
+                    if (ReferenceEquals(session.ownership.Current, session) && !session.ownership.Closing
+                        && session.ownership.Transition is not { IsCompleted: false }
+                        && ReferenceEquals(session.accessRestriction, this))
+                    { return new AccessScope(this); }
+                }
+            }
+            await DisposeAsync();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException(result is ArtifactResult<IAsyncDisposable>.Failure failure
+                ? "FaultControl." + failure.Code : "BindingInvalid");
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            Task task;
+            lock (session.ownership.Gate)
+            {
+                if (disposal is { IsCompleted: false } or { IsCompletedSuccessfully: true }) { return new(disposal); }
+                disposal = task = RestoreAsync(start.Task);
+            }
+            start.SetResult();
+            return new(task);
+        }
+
+        private async Task RestoreAsync(Task start)
+        {
+            await start;
+            try
+            {
+                var result = await application;
+                if (result is not (ArtifactResult<IAsyncDisposable>.Success or ArtifactResult<IAsyncDisposable>.Failure))
+                { throw new InvalidOperationException("BindingInvalid"); }
+            }
+            catch (Exception error) when (application.IsFaulted)
+            {
+                if (!session.ownership.ObserverFailures.Any(current => ReferenceEquals(current, error)))
+                { session.ownership.ObserverFailures.Enqueue(error); }
+            }
+            IAsyncDisposable? scope;
+            lock (session.ownership.Gate) { scope = capturedScope; }
+            if (scope is not null) { await scope.DisposeAsync(); }
+            lock (session.ownership.Gate)
+            {
+                if (ReferenceEquals(session.accessRestriction, this)) { session.accessRestriction = null; }
+            }
+        }
+
+        private sealed class AccessScope(AccessRegistration registration) : IAsyncDisposable
+        {
+            public ValueTask DisposeAsync() => registration.DisposeAsync();
+        }
+    }
+
+    private sealed class RecordWriteRegistration(
+        ArtifactAssertionSession session, int occurrence, Action beforeFailure) : IArtifactFaultRegistration
+    {
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly IOException expectedFailure = new("Interrupted reservation release.");
+        private long observationCount;
+        public long ObservationCount => Interlocked.Read(ref observationCount);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(session.ownership.Context.ControlBudget, cancellationToken));
+        public void Invoke()
+        {
+            if (Interlocked.Increment(ref observationCount) != occurrence) { return; }
+            entered.TrySetResult();
+            try
+            {
+                beforeFailure();
+                throw expectedFailure;
+            }
+            catch (Exception error) when (!ReferenceEquals(error, expectedFailure))
+            {
+                session.ownership.ObserverFailures.Enqueue(error);
+                throw;
+            }
+        }
+        public ValueTask DisposeAsync()
+        {
+            lock (session.ownership.Gate)
+            {
+                if (ReferenceEquals(session.recordWriteFailure, this))
+                {
+                    session.SetRecordWriteFailure(null);
+                    session.recordWriteFailure = null;
+                }
+            }
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class SynchronousHold(ArtifactAssertionSession session) : IArtifactSynchronousHold
+    {
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource released = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private long observationCount;
+        private Task? disposal;
+        public long ObservationCount => Interlocked.Read(ref observationCount);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(session.ownership.Context.ControlBudget, cancellationToken));
+        public void Release() => released.TrySetResult();
+
+        public void Block()
+        {
+            Interlocked.Increment(ref observationCount);
+            entered.TrySetResult();
+            if (!released.Task.Wait(TimeSpan.FromSeconds(15)))
+            {
+                var error = new InvalidOperationException("CleanupIncomplete");
+                session.ownership.ObserverFailures.Enqueue(error);
+                throw error;
+            }
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            lock (session.ownership.Gate)
+            {
+                if (disposal is not null) { return new(disposal); }
+                if (ReferenceEquals(session.synchronousHold, this))
+                {
+                    session.SetSynchronousStorageHold(null);
+                    session.synchronousHold = null;
+                    Release();
+                    disposal = session.ObserveWorkerSettlement().WaitAsync(session.ownership.Context.ControlBudget);
+                }
+                else
+                {
+                    Release();
+                    disposal = Task.CompletedTask;
+                }
+                return new(disposal);
+            }
+        }
+    }
+
+    private sealed class Registration(
+        ArtifactAssertionSession session, ArtifactObservationPoint point, string boundary) : IArtifactFaultRegistration
+    {
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private long observationCount;
+        public long ObservationCount => Interlocked.Read(ref observationCount);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(session.ownership.Context.ControlBudget, cancellationToken));
+        public void Observe()
+        {
+            Interlocked.Increment(ref observationCount);
+            entered.TrySetResult();
+        }
+        public string Boundary { get; } = boundary;
+        public ValueTask DisposeAsync()
+        {
+            lock (session.ownership.Gate)
+            {
+                if (session.observations.TryGetValue(point, out var current) && ReferenceEquals(current, this))
+                {
+                    session.RemoveObserver(Boundary);
+                    session.observations.Remove(point);
+                }
+            }
+            return ValueTask.CompletedTask;
+        }
+    }
+}

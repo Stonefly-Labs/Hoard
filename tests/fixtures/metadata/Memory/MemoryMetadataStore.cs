@@ -68,7 +68,7 @@ public sealed partial class MemoryMetadataStore : IMetadataStore, IMetadataSchem
 
     private ValueTask<MetadataResult<T>> Dispatch<T>(TimeSpan? timeout, TimeSpan maximum, CancellationToken token,
         MetadataPhase phase, MetadataOperationTicket? ticket, bool requiresAdmission,
-        Func<MemoryActivity, ValueTask<MetadataResult<T>>> action) where T : notnull
+        Func<MemoryActivity, ValueTask<MetadataResult<T>>> action, bool independentRead = false) where T : notnull
     {
         if (timeout is null || timeout < TimeSpan.FromMilliseconds(1) || timeout > maximum)
         { return ValueTask.FromResult(Failure<T>(MetadataFailureCode.InvalidInput, phase)); }
@@ -77,7 +77,7 @@ public sealed partial class MemoryMetadataStore : IMetadataStore, IMetadataSchem
         lock (activitiesLock)
         {
             if (disposed) { return ValueTask.FromResult(Failure<T>(MetadataFailureCode.Disposed, phase)); }
-            if (lateActivities != 0) { return ValueTask.FromResult(Failure<T>(MetadataFailureCode.Unavailable, phase, ticket)); }
+            if (lateActivities != 0 && !independentRead) { return ValueTask.FromResult(Failure<T>(MetadataFailureCode.Unavailable, phase, ticket)); }
             if (requiresAdmission && state.Schema == 4) { return ValueTask.FromResult(Failure<T>(MetadataFailureCode.CorruptState, phase)); }
             if (requiresAdmission && !admitted) { return ValueTask.FromResult(Failure<T>(MetadataFailureCode.IncompatibleSchema, phase)); }
             if (activities.Count >= 33) { return ValueTask.FromResult(Failure<T>(MetadataFailureCode.Capacity, phase, ticket)); }
@@ -122,9 +122,11 @@ public sealed partial class MemoryMetadataStore : IMetadataStore, IMetadataSchem
         return new(WaitAsync(result, activity, phase, ticket));
     }
 
-    public Task WhenIdleAsync()
+    public Task WhenIdleAsync() => ObserveWorkSettlementForTest().WaitAsync(TimeSpan.FromSeconds(10));
+
+    public Task ObserveWorkSettlementForTest()
     {
-        lock (activitiesLock) { return (idle?.Task ?? Task.CompletedTask).WaitAsync(TimeSpan.FromSeconds(10)); }
+        lock (activitiesLock) { return idle?.Task ?? Task.CompletedTask; }
     }
 
     public MemoryFixtureImage CaptureLogicalImage()
@@ -135,6 +137,22 @@ public sealed partial class MemoryMetadataStore : IMetadataStore, IMetadataSchem
             return new(state);
         }
     }
+
+    public MemoryFixtureImage CloseAndCaptureLogicalImageForTest()
+    {
+        lock (activitiesLock)
+        {
+            if (disposed || activities.Count != 0) { throw new InvalidOperationException("Logical reopen requires an idle fixture."); }
+            disposed = true;
+            admitted = false;
+            return new(state);
+        }
+    }
+
+    public ValueTask<MetadataResult<MetadataReadSnapshot>> ReadIndependentSnapshotForTestAsync(
+        MetadataReadGroup request, CancellationToken cancellationToken) =>
+        Dispatch(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30), cancellationToken, MetadataPhase.Read, null, true,
+            activity => ReadCoreAsync(request, activity, false), independentRead: true);
 
     private async Task<MetadataResult<T>> WaitAsync<T>(Task<MetadataResult<T>> task, MemoryActivity activity,
         MetadataPhase phase, MetadataOperationTicket? ticket) where T : notnull
@@ -187,7 +205,8 @@ public sealed partial class MemoryMetadataStore : IMetadataStore, IMetadataSchem
             : new MetadataOption<MetadataOperationTicket>.Some(ticket));
     }
 
-    private async ValueTask<MetadataResult<MetadataReadSnapshot>> ReadCoreAsync(MetadataReadGroup request, MemoryActivity activity)
+    private async ValueTask<MetadataResult<MetadataReadSnapshot>> ReadCoreAsync(
+        MetadataReadGroup request, MemoryActivity activity, bool observeItems = true)
     {
         _ = MetadataEncoding.Encode(request);
         var captured = Volatile.Read(ref state);
@@ -198,7 +217,7 @@ public sealed partial class MemoryMetadataStore : IMetadataStore, IMetadataSchem
             activity.Check();
             result.Add(captured.Records.TryGetValue(selector, out var record)
                 ? new MetadataReadItem.Found(record) : new MetadataReadItem.NotFound(selector));
-            await observe("read.item");
+            if (observeItems) { await observe("read.item"); }
         }
         var snapshot = new MetadataReadSnapshot(result.MoveToImmutable());
         _ = MetadataEncoding.Encode(snapshot);
