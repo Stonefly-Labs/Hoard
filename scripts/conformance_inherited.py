@@ -852,6 +852,11 @@ def execute_inventory_scope(run, source, feed, prior, files, closure_path, inven
         print(json.dumps({
             "qualification": False, "phase": "inherited-runtime-incomplete", "scope": scope,
             "code": "WitnessMissing", "events": [dict(event) for event in result.events],
+            "diagnosticCode": observed["diagnosticCode"],
+            "nonPassingTests": [
+                {"testIdentity": row["testIdentity"], "status": row["status"]}
+                for row in observed["witnesses"] if row["status"] != "Passed"
+            ],
         }), flush=True)
         raise ConformanceError("WitnessMissing")
     print(json.dumps({"qualification": False, "phase": "inherited-runtime", "scope": scope,

@@ -1735,6 +1735,10 @@ derived from the exact admitted method's mapped `/_/tests/` declaring-type
 frame. These ordered diagnostics do not retain raw errors, stack text or
 paths, modify witness/proof schemas, or confer passing status. Named assertion/
 guard controls keep their original completion-only protocol.
+An inherited scope that rejects after valid ingestion also reports that
+completion's closed diagnostic code and exact nonpassing identities/statuses
+from admitted witnesses. It does not copy exception messages, change failure
+classification, or convert absent/failed observations into success.
 Pure CP settings remain retained and subject to their existing strict original
 byte replay. These distinctions do not close the all-output sanitation gate.
 Composition source/build and mutation snapshots also require transient
@@ -1780,6 +1784,14 @@ when all runtime cases pass. They do not replace the full-profile evaluator or
 the planned CI/aggregate support statement below.
 
 ## CI Profiles and Aggregate Check
+
+At exact clean `e4365e1`, the original common-source local five-profile sequence
+and public aggregate qualify all 418 cases (405 passed/13 declared exclusions).
+Independent readonly public aggregation, with separately retained original
+receipt pins, checks all 4,635 per-profile declared proofs and 20 finite
+presentations unchanged; all eleven original owners are Released.
+This proves the local original-owned sequence and receipt-based aggregate,
+not hosted job/upload/download success. The workflow below remains planned.
 
 Delivered modeled transport inspection requires a common full source-manifest
 digest as well as invocation/source revision/state/catalog/SDK context, with

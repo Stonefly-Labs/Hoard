@@ -60,7 +60,13 @@ The existing hosted composition diagnostic at run `41218438268`/job
 `WitnessMissing`, test `UnknownDiagnostic` value 102/control value 24.
 Tooling was not reached; the fallback file reader reports
 `OutputLimitExceeded` for its absent tooling file. The original failure is
-preserved; its precise method/cause is not yet established, and no retry,
+preserved. Direct safe-logger review establishes that test value 102 is the
+normalized source line, while control value 24 is the observed parameter count.
+Line 102 identifies `Cooperative_response_completion_releases_one_request_only_after_all_host_and_handler_callbacks`:
+the cleanup `response.WaitAsync(5 seconds)`, which can mask an earlier exception.
+The failing parameter/exception cause is not yet established. Failed-scope
+output now retains the already admitted nonpassing test identities/statuses
+and completion diagnostic, never raw exception text. No retry,
 relaxed test, inferred CI success or merge is authorized.
 
 ### T074 original common-source baseline wiring

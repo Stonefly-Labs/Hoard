@@ -4719,6 +4719,11 @@ in inherited `LifecycleOwnershipTests` with `WitnessMissing`/`UnknownDiagnostic`
 before tooling; its fallback `OutputLimitExceeded` means the tooling file is
 absent, not that a tooling size limit was exceeded. This failure is preserved
 and must not be bypassed.
+Its safe test value `102` is a source line, not a byte count: it identifies the
+cooperative response-completion test's cleanup wait. Failed inherited scopes
+now report admitted nonpassing test identities/statuses and the completion
+diagnostic alongside the existing safe events; private exception text remains
+excluded and the original rejection is unchanged.
 
 **Metadata evidence correction and category controls:** moving origin output
 before assertions also flushed argument evidence too early. Origins now emit

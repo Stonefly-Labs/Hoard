@@ -434,7 +434,14 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     output = root / ("runtime-" + json.loads(transport["manifest_data"])["attemptId"])
                     for path in output.iterdir():
                         self.assertEqual(path.stat().st_mode & 0o777, 0o400)
-                    return {"diagnosticCode": "UnknownDiagnostic" if failed else "None", "witnesses": []}
+                    return {
+                        "diagnosticCode": "UnknownDiagnostic" if failed else "None",
+                        "witnesses": [
+                            {"testIdentity": "Fixture.Tests.Completion(fault: true)", "status": "Failed"},
+                            {"testIdentity": "Fixture.Tests.Pending", "status": "Incomplete"},
+                            {"testIdentity": "Fixture.Tests.Completed", "status": "Passed"},
+                        ] if failed else [],
+                    }
 
                 run = SimpleNamespace(root=root, run_id=prior["runId"], command=execute, command_sequence=1)
                 with patch.object(sources, "runtime_runner", return_value=runner) as resolve, \
@@ -451,8 +458,14 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                     if failed:
                         with self.assertRaisesRegex(ConformanceError, "^WitnessMissing$"):
                             execute_scope()
-                        self.assertEqual(json.loads(output.getvalue())["events"], [
+                        failure = json.loads(output.getvalue())
+                        self.assertEqual(failure["events"], [
                             {"event": "test", "code": "UnknownDiagnostic", "value": 105}])
+                        self.assertEqual(failure["diagnosticCode"], "UnknownDiagnostic")
+                        self.assertEqual(failure["nonPassingTests"], [
+                            {"testIdentity": "Fixture.Tests.Completion(fault: true)", "status": "Failed"},
+                            {"testIdentity": "Fixture.Tests.Pending", "status": "Incomplete"},
+                        ])
                     else:
                         execute_scope()
                 resolve.assert_called_once_with(root, prior)

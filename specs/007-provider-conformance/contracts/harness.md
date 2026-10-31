@@ -21,6 +21,10 @@ frozen-admission, original-runtime/evaluation and actual-release guards enforce
 ordering before Complete derivation; no additional lifecycle journal is exposed.
 Current-source native publication and full baseline remain final acceptance
 work, not consequences of modeled renderer tests.
+The original common-source local baseline/public aggregate and independent
+readonly receipt replay are now verified at exact clean `e4365e1`: all 418
+cases, 4,635 declared proofs, 20 finite presentations and eleven Released
+owners. Hosted qualification and fresh final-source acceptance remain open.
 
 ## Package and Binding Boundary
 
