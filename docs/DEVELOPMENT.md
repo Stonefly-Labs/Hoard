@@ -4668,6 +4668,15 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+**Harness catalog component:** the original QC-01 transport now reuses the
+existing locked builder, native command receipts and HoardSafe discovery/
+execution protocol. Ten actual C# witnesses pass; fresh readonly replay after
+actual release passes, and ten altered-packet controls reject on an isolated
+copy. The 16-file owned-command ceiling is unchanged. The affected SDK/CI/CLI
+selection passes 210 Linux tests, zero skips. This internal component is not a
+public harness command or a complete profile; twenty other harness cases,
+original profile authority and genuine all-five acceptance remain unfinished.
+
 **Trusted verification:** public `--verify` now consumes separately trusted
 schema-2 input/report assignments and original-owner receipts for metadata,
 artifacts, composition and compatibility. Actual readonly packets from all four

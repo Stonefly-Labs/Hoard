@@ -15,6 +15,63 @@ unfinished. Public product contracts and required outcomes remain unchanged.
 
 ## Acceptance reset: bounded T071 checkpoint
 
+### T073 harness catalog seam: original component verified, profile still open
+
+`conformance_harness.py` now supplies the original QC-01 component using the
+existing locked builder, SDK selection, HoardSafe transport and native command
+proof reader. It builds only Abstractions/SDK/logger plus the existing catalog
+test project, freezes actual input archives/locks/runtime images and normalized
+configuration, discovers and executes all ten C# catalog witnesses, and replays
+their original manifests, native command parents and observed proofs. It does
+not borrow another profile's witness/run/input IDs, synthesize catalog passes
+from tooling counters, add a second evaluator, change C# tests or publish
+harness qualification. Existing public harness admission remains unfinished.
+
+The original retained component is
+`hoard-f07-transfer-c4e36cb-diag:/probe/work/harness-catalog-ed4770d-4`,
+with input digest
+`13658e44c687a2c357688cd5960c66ef73a52b452528d0b11154c9bbccf5f044`.
+All ten witnesses pass. Input recomputation and actual release complete; a
+fresh process mounting the original volume readonly independently accepts 184
+proof files and observes `Released`, zero children and zero groups. Source is
+`dirty-local`, and the result explicitly remains `qualification:false`.
+This is a finite component observation, not current clean-source/profile or
+baseline acceptance.
+
+Original preceding roots `harness-catalog-ed4770d-1..3` remain preserved and
+Released. The first rejects an overlong command input list at the existing
+16-file ceiling; the second rejects writable compiler outputs before execution;
+the third executes ten passing C# witnesses but rejects the reader's mistaken
+raw-XML comparison against a normalized configuration fingerprint. The
+corrections bind the actual driver/SDK/logger runtime within the unchanged
+ceiling, freeze original packets while owned/Active, and independently compare
+the exact synthetic XML plus its normalized policy fingerprint. No test or
+budget is weakened. The fourth run's session-only display wrapper initially
+cannot JSON-encode an immutable resource projection; fresh readonly replay,
+not rewriting evidence or rerunning the runtime, establishes the result above.
+
+On a separate volume copied at the original absolute path, ten actual
+packet mutations reject: duplicate attempt, changed input pin, foreign native
+case, retained native process, missing witness, changed package bytes, changed
+configuration, unknown frame field, overlapping attempts and unbounded attempt.
+Original bytes are restored after each
+control and the unaltered ten-witness replay passes each time. The original
+evidence volume is never writable in these controls.
+
+Linux
+`PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=scripts:tests/tooling python3 -B -m unittest test_conformance_sdk_checks test_conformance_ci test_conformance_cli -q`
+passes 210 tests in 30.653 seconds, zero skips. The three new focused regressions
+also pass on the host. T073 remains unchecked: twenty other harness cases,
+the original harness authority/reader and successful exact-five aggregate are
+still required. The next seam is the existing package-only contributor
+good/faulty/corrected journey, not another implementation of its assertions.
+
+README/development/evidence-contract changes describe only this internal
+component. Public quickstart/contributor commands, provider/product contracts,
+charter/product spec/architecture/ADR/diagrams, governance/backlog/predecessor
+guides, IaC, release and UI documents are unaffected: no corresponding public
+command, provider boundary, deployment or product behavior changes.
+
 ### T073 public receipt verification: four real profiles, aggregate still open
 
 `--verify` now dispatches to the existing independent category/composition/

@@ -2732,6 +2732,13 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
             path.chmod(0o400)
     if runtime_options.get("category_scope", (None,))[0] == "compatibility":
         data["discovery_manifest_path"] = f'runtime-input-{discovery_manifest["attemptId"]}.json'
+    if runtime_options.get("category_scope") == ("harness", "catalog"):
+        data["catalogTransports"] = {
+            "discovery": {"attemptId": discovery_manifest["attemptId"],
+                          "startedMs": discovery_transport["started_ms"], "endedMs": discovery_transport["ended_ms"]},
+            "execution": {"attemptId": manifest["attemptId"],
+                          "startedMs": transport["started_ms"], "endedMs": transport["ended_ms"]},
+        }
     return result, ingested, MappingProxyType(data), hashlib.sha256(discovery_completion).hexdigest()
 
 
@@ -3399,10 +3406,33 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
             "executionRecordSha256": getattr(result, "execution_record_sha256", None), **sources})})
 
 
+def harness_catalog_runtime_inputs(inputs, assembly):
+    directory = Path(assembly).parent
+    names = (
+        "Hoard.Conformance.Tests.dll", "Hoard.Conformance.Tests.deps.json",
+        "Hoard.Conformance.Tests.runtimeconfig.json", "Hoard.Testing.Conformance.dll",
+        "Hoard.Abstractions.dll", "Hoard.Conformance.TestLogger.dll",
+    )
+    paths = [(directory / name).as_posix() for name in names]
+    if any(path not in inputs["runtimeAssemblies"] for path in paths):
+        raise evidence.ConformanceError("InputChanged")
+    packages = {row["packageId"]: row for row in inputs["packages"]}
+    for package_id in ("Hoard.Testing.Conformance", "Hoard.Abstractions", "Hoard.Conformance.TestLogger"):
+        package = packages.get(package_id)
+        name = package_id + ".dll"
+        if (package is None or package["runtimeAssemblies"].get("lib/net10.0/" + name)
+                != inputs["runtimeAssemblies"][(directory / name).as_posix()]):
+            raise evidence.ConformanceError("InputChanged")
+    return {path: inputs["runtimeAssemblies"][path] for path in paths}
+
+
 def _category_scope_tests(category_scope):
     if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
         raise evidence.ConformanceError("WitnessMissing")
     profile, scope_id = category_scope
+    if (profile, scope_id) == ("harness", "catalog"):
+        from conformance_case_catalog import catalog_admission_witnesses
+        return {identity: ("none", "QC-01") for identity in catalog_admission_witnesses()}
     if (profile, scope_id) == ("compatibility", "architecture"):
         from conformance_case_catalog import architecture_runtime_tests
         return architecture_runtime_tests()
@@ -3438,6 +3468,9 @@ def _category_manifest_tests(category_scope, manifest):
     if category_scope[1] in ("mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission") and any(
             entry["assertionSymbol"] != (CATEGORY_MUTATION_METHODS[category_scope[0]][2]
                                         if category_scope[1] == "mutation-faulty" else None) for entry in expected):
+        raise evidence.ConformanceError("WitnessMissing")
+    if tuple(category_scope) == ("harness", "catalog") and any(
+            entry["assertionSymbol"] is not None for entry in expected):
         raise evidence.ConformanceError("WitnessMissing")
     return tests
 
@@ -3954,13 +3987,13 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     owner_sha = hashlib.sha256(owner_data).hexdigest()
     write_new(run.root / f"runtime-input-{attempt_id}.json", manifest_data)
     settings_directory = ("stores" if contributor_binding is not None or category_scope is not None
-                          and category_scope[0] in ("metadata", "artifacts") else "proofs")
+                          and category_scope[0] in ("metadata", "artifacts", "harness") else "proofs")
     settings = run.root / settings_directory / f"settings-{attempt_id}.runsettings"
     settings_data = runtime_settings(run.root, assembly, attempt_id, manifest_sha, owner_sha, origin_environment)
     write_new(settings, settings_data)
     started = time.monotonic() * 1000
     runner, runner_inputs = None, None
-    if category_scope is not None and category_scope[0] in ("metadata", "artifacts", "compatibility"):
+    if category_scope is not None and category_scope[0] in ("metadata", "artifacts", "compatibility", "harness"):
         runner_inputs = manifest["runInputsPath"]
         runner = runtime_runner(run.root, runner_inputs)
     arguments = runtime_arguments(
@@ -3981,6 +4014,15 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         execution_inputs = [
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
             settings.relative_to(run.root).as_posix(), assembly.relative_to(run.root).as_posix()]
+        if category_scope == ("harness", "catalog"):
+            inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+                read_bounded(run.root / manifest["runInputsPath"], 16 * 1024 * 1024)))
+            if (inputs["profileId"] != "harness" or inputs["mode"] != "qualification"
+                    or assembly.name != "Hoard.Conformance.Tests.dll"):
+                raise evidence.ConformanceError("WitnessMissing")
+            execution_inputs.extend(path for path in harness_catalog_runtime_inputs(
+                inputs, assembly.relative_to(run.root).as_posix())
+                                    if path not in execution_inputs and path not in runner["inputFiles"])
         if architecture_preparation is not None:
             execution_inputs.extend((
                 prepared["inputMapPath"], prepared["manifestPath"],

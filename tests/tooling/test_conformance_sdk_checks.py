@@ -28,6 +28,117 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_harness_catalog_transport_requires_every_native_catalog_witness(self):
+        from conformance_case_catalog import catalog_admission_witnesses
+
+        scope = ("harness", "catalog")
+        expected = [{
+            "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+            "bindingId": "none", "caseId": "QC-01", "assertionSymbol": None,
+        } for identity in catalog_admission_witnesses()]
+        manifest = {"expected": expected}
+        self.assertEqual(checks._category_manifest_tests(scope, manifest), {
+            row["testIdentity"]: ("none", "QC-01") for row in expected})
+        for defect in ("missing", "duplicate", "foreign", "binding", "case", "assertion"):
+            changed = [dict(row) for row in expected]
+            if defect == "missing":
+                changed.pop()
+            elif defect == "duplicate":
+                changed.append(dict(changed[0]))
+            elif defect == "foreign":
+                changed[0]["testIdentity"] += ".Foreign"
+            else:
+                field = {"binding": "bindingId", "case": "caseId", "assertion": "assertionSymbol"}[defect]
+                changed[0][field] = "foreign"
+            with self.subTest(defect=defect), self.assertRaisesRegex(
+                    checks.evidence.ConformanceError, "^WitnessMissing$"):
+                checks._category_manifest_tests(scope, {"expected": changed})
+
+    def test_harness_catalog_command_binds_its_runtime_without_exceeding_owned_input_ceiling(self):
+        import conformance_harness as harness
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(profileId="harness", mode="qualification", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        folder = "stores/catalog-runtime/"
+        names = (
+            "Hoard.Conformance.Tests.dll", "Hoard.Conformance.Tests.deps.json",
+            "Hoard.Conformance.Tests.runtimeconfig.json", "Hoard.Testing.Conformance.dll",
+            "Hoard.Abstractions.dll", "Hoard.Conformance.TestLogger.dll",
+        )
+        inputs["runtimeAssemblies"] = {folder + name: hashlib.sha256(name.encode()).hexdigest() for name in names}
+        inputs["runtimeAssemblies"].update({
+            folder + f"unused-{index}.dll": "b" * 64 for index in range(20)})
+        inputs["packages"] = [{
+            **inputs["packages"][0], "packageId": name,
+            "runtimeAssemblies": {"lib/net10.0/" + name + ".dll": inputs["runtimeAssemblies"][folder + name + ".dll"]},
+        } for name in ("Hoard.Testing.Conformance", "Hoard.Abstractions", "Hoard.Conformance.TestLogger")]
+        (self.directory / "stores").mkdir()
+        (self.directory / "proofs").mkdir()
+        checks.write_new(self.directory / harness.CATALOG_INPUTS, checks.evidence.canonical_bytes(inputs))
+        checks.write_new(self.directory / "runtime-owner.json", b"owner")
+        assembly = folder + names[0]
+        manifest = harness._catalog_manifest(inputs, assembly, str(uuid.uuid4()))
+        run = SimpleNamespace(root=self.directory)
+        with patch.object(run, "command", create=True,
+                          side_effect=checks.evidence.ConformanceError("PrerequisiteMissing")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "^PrerequisiteMissing$"):
+                checks.runtime_command(run, self.directory / assembly, manifest, category_scope=("harness", "catalog"))
+        actual = launch.call_args.kwargs
+        self.assertTrue(actual["record_execution"])
+        self.assertEqual(len(actual["execution_inputs"]), len(set(actual["execution_inputs"])))
+        self.assertLessEqual(len(actual["execution_inputs"]), 16)
+        self.assertTrue({folder + name for name in names} <= set(actual["execution_inputs"]))
+        self.assertFalse(any("unused-" in path for path in actual["execution_inputs"]))
+        for defect in ("profile", "runtime", "substituted-runtime"):
+            changed = json.loads(checks.evidence.canonical_bytes(inputs))
+            if defect == "profile":
+                changed["profileId"] = "metadata"
+            elif defect == "runtime":
+                del changed["runtimeAssemblies"][folder + "Hoard.Testing.Conformance.dll"]
+            else:
+                changed["runtimeAssemblies"][folder + "Hoard.Testing.Conformance.dll"] = "0" * 64
+            path = self.directory / harness.CATALOG_INPUTS
+            path.chmod(0o600)
+            path.write_bytes(checks.evidence.canonical_bytes(changed))
+            path.chmod(0o400)
+            with self.subTest(defect=defect), patch.object(run, "command", create=True) as launch:
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.runtime_command(
+                        run, self.directory / assembly,
+                        {**manifest, "attemptId": str(uuid.uuid4())}, category_scope=("harness", "catalog"))
+                launch.assert_not_called()
+
+    def test_harness_catalog_reader_rejects_overlapping_or_unbounded_native_attempts(self):
+        import conformance_harness as harness
+        from test_conformance_evidence import ConformanceAdmissionTests
+
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs.update(profileId="harness", mode="qualification", bindings=[])
+        inputs["budgets"]["profileSeconds"] = 3600
+        frame = {
+            "schemaVersion": 1, "qualification": False, "scope": "harness-native-catalog",
+            "inputsSha256": checks.evidence.digest(inputs), "assemblyPath": "runtime/Hoard.Conformance.Tests.dll",
+            "discovery": {"attemptId": str(uuid.uuid4()), "startedMs": 1, "endedMs": 2},
+            "execution": {"attemptId": str(uuid.uuid4()), "startedMs": 3, "endedMs": 4},
+        }
+        for defect in ("overlap", "reversed", "over-budget"):
+            changed = json.loads(checks.evidence.canonical_bytes(frame))
+            if defect == "overlap":
+                changed["discovery"]["endedMs"] = 4
+            elif defect == "reversed":
+                changed["execution"]["endedMs"] = 2
+            else:
+                changed["execution"]["endedMs"] = 180004
+            raw = checks.evidence.canonical_bytes(changed)
+            with self.subTest(defect=defect), patch.object(
+                    checks.evidence, "_readonly_report_proof",
+                    return_value=(hashlib.sha256(raw).hexdigest(), raw)) as read:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "^ProofMismatch$"):
+                    harness.inspect_catalog(self.directory, inputs)
+                read.assert_called_once_with(self.directory, harness.CATALOG_FRAME)
+
     def test_sdk_runner_capture_does_not_walk_unselected_sdk_tool_subtrees(self):
         from conformance_contributors import vstest_runner_inputs
 

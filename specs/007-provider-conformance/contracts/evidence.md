@@ -1037,6 +1037,24 @@ baseline artifacts are a different explicit entity, not current-run evidence.
 
 ## Deterministic Evaluation
 
+### Original harness catalog component
+
+The internal QC-01 component in `conformance_harness.py` reuses existing locked
+builds, native command parents and HoardSafe discovery/execution. Its readonly
+`proofs/harness-catalog.json` frame pins the original complete input digest,
+assembly path and distinct discovery/execution attempt IDs and time bounds.
+The reader reconstructs the exact ten catalog witnesses/manifests, validates
+the actual driver/SDK/logger runtime and native parents, reingests original
+discovery/witness/completion/proof bytes, and rejects shortened or foreign sets.
+Archives, locks and runtime bytes are retained under their actual hashes;
+synthetic configuration is separately checked against its normalized policy
+fingerprint, not misrepresented as raw XML SHA-256. Original runtime packets
+are frozen while owned/Active before evaluation or release.
+
+The internal result is always `qualification:false`; it supplies neither the
+twenty other harness cases nor a trusted harness origin or five-profile
+baseline. No public harness command is added by this component.
+
 ### Trusted original-receipt verification
 
 Public `--verify` now replays finite native metadata/artifact/composition/

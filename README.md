@@ -181,6 +181,9 @@ metadata/artifact/composition/compatibility replay passes, with 16 rejecting
 public-CLI controls. Schema-1 inspection remains nonqualifying. The harness
 reader/producer and successful five-profile aggregate are still missing, so
 T073 is not marked complete.
+The internal harness catalog component now executes its ten actual C# witnesses,
+replays original released proofs independently and rejects ten altered packets.
+It is not a harness/profile qualification or a new public command.
 See the [bounded checkpoint and next correction](specs/007-provider-conformance/plan.md#acceptance-reset-bounded-t071-checkpoint).
 
 The in-progress F-07 legacy adapters now retain interactive process-group
